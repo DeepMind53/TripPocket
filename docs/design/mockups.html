@@ -1,0 +1,614 @@
+<title>트립포켓 화면 시안</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: 시안 설명 헤더 + 휴대폰 프레임(360 비율) 그리드. 프레임 내부는 docs/11 디자인 토큰(A안 바다 블루)을 그대로 사용 */
+:root {
+  --primary: #2F6BFF;
+  --primary-weak: #EAF0FF;
+  --bg: #FFFFFF;
+  --bg-subtle: #F4F6F9;
+  --surface: #FFFFFF;
+  --border: #E5E8EE;
+  --text: #191F28;
+  --text-sub: #4E5968;
+  --text-muted: #8B95A1;
+  --success: #16A34A;
+  --warning: #F59E0B;
+  --danger: #EF4444;
+  --rating: #E9A800;
+  --canvas: #E9EDF3;
+  --map-land: #EEF1EA;
+  --map-water: #CFE0F5;
+  --map-road: #FFFFFF;
+  --frame: #191F28;
+  --d1: #2F6BFF; --d2: #FF6B4A; --d3: #12B5A5;
+  --font: 'Pretendard Variable', 'Pretendard', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --primary: #5B8CFF; --primary-weak: #1B2747; --bg: #0F1115; --bg-subtle: #171A21; --surface: #1D2129;
+    --border: #2A2F3A; --text: #F2F4F7; --text-sub: #B0B8C4; --text-muted: #7D8794; --success: #4ADE80;
+    --warning: #FBBF24; --danger: #F87171; --rating: #FFC933; --canvas: #08090C;
+    --map-land: #1E232B; --map-water: #18304F; --map-road: #2C333E; --frame: #3A404C; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --primary: #5B8CFF; --primary-weak: #1B2747; --bg: #0F1115; --bg-subtle: #171A21; --surface: #1D2129;
+  --border: #2A2F3A; --text: #F2F4F7; --text-sub: #B0B8C4; --text-muted: #7D8794; --success: #4ADE80;
+  --warning: #FBBF24; --danger: #F87171; --rating: #FFC933; --canvas: #08090C;
+  --map-land: #1E232B; --map-water: #18304F; --map-road: #2C333E; --frame: #3A404C; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--canvas); color: var(--text); font-family: var(--font);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 32px 64px;
+  word-break: keep-all; overflow-wrap: anywhere;
+}
+.intro { max-width: 1120px; margin: 0 auto 28px; display: grid; gap: 10px; }
+.intro h1 { font-size: 1.75rem; line-height: 1.3; margin: 0; letter-spacing: -0.02em; text-wrap: balance; }
+.intro p { margin: 0; color: var(--text-sub); max-width: 62ch; line-height: 1.6; font-size: 0.95rem; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+.legend span { font-size: 0.78rem; padding: 4px 10px; border-radius: 999px; background: var(--surface); border: 1px solid var(--border); color: var(--text-sub); }
+
+.board { max-width: 1120px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 36px 24px; justify-items: center; }
+figure { margin: 0; display: grid; gap: 12px; width: 100%; max-width: 320px; }
+figcaption { display: grid; gap: 2px; }
+figcaption b { font-size: 0.95rem; }
+figcaption small { color: var(--text-muted); font-size: 0.8rem; line-height: 1.45; }
+.sid { font-variant-numeric: tabular-nums; color: var(--primary); font-weight: 700; margin-right: 6px; }
+
+/* ---------- phone frame ---------- */
+.phone {
+  width: 100%; aspect-ratio: 360 / 740; max-width: 100%; border-radius: 34px; border: 8px solid var(--frame);
+  background: var(--bg); overflow: hidden; position: relative; display: flex; flex-direction: column;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.16);
+  font-size: 13px;
+}
+.status { height: 26px; flex: none; display: flex; align-items: center; justify-content: space-between; padding: 0 18px; font-size: 11px; font-weight: 600; color: var(--text); }
+.screen { flex: 1; min-height: 0; display: flex; flex-direction: column; position: relative; }
+.scroll { flex: 1; min-height: 0; overflow: hidden; }
+.hdr { display: flex; align-items: center; gap: 8px; padding: 6px 14px 8px; }
+.hdr .t { flex: 1; min-width: 0; }
+.hdr .t b { display: block; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hdr .t small { color: var(--text-muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+.ib { width: 30px; height: 30px; border-radius: 10px; display: grid; place-items: center; color: var(--text-sub); flex: none; }
+.ib svg { width: 18px; height: 18px; }
+.ib.bolt { background: var(--primary-weak); color: var(--primary); }
+.h1 { font-size: 21px; font-weight: 700; letter-spacing: -0.02em; padding: 4px 16px 10px; margin: 0; }
+
+.tabbar { flex: none; height: 54px; border-top: 1px solid var(--border); display: grid; grid-template-columns: repeat(4, 1fr); background: var(--surface); }
+.tabbar div { display: grid; place-items: center; align-content: center; gap: 2px; font-size: 10px; color: var(--text-muted); }
+.tabbar div.on { color: var(--primary); font-weight: 700; }
+.tabbar svg { width: 19px; height: 19px; }
+
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; }
+.pad { padding: 0 14px; display: grid; gap: 10px; }
+.label { font-size: 11px; color: var(--text-muted); font-weight: 600; letter-spacing: 0.02em; }
+.btn { height: 36px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-weight: 600; font-size: 12.5px; padding: 0 12px; border: 0; font-family: inherit; }
+.btn.pri { background: var(--primary); color: #fff; }
+.btn.sec { background: var(--bg-subtle); color: var(--text); }
+.chip { display: inline-flex; align-items: center; gap: 5px; height: 28px; padding: 0 11px; border-radius: 999px; border: 1px solid var(--border); font-size: 11.5px; color: var(--text-sub); white-space: nowrap; background: var(--surface); }
+.chip.on { background: var(--primary-weak); border-color: transparent; color: var(--primary); font-weight: 700; }
+.chips { display: flex; gap: 6px; overflow: hidden; padding: 0 14px; }
+.dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+.num { width: 22px; height: 22px; border-radius: 50%; color: #fff; font-size: 11px; font-weight: 700; display: grid; place-items: center; flex: none; font-variant-numeric: tabular-nums; }
+.muted { color: var(--text-muted); }
+.sub { color: var(--text-sub); }
+.tab { font-variant-numeric: tabular-nums; }
+
+/* 홈 */
+.next { padding: 14px; display: grid; gap: 8px; background: var(--primary); color: #fff; border: 0; }
+.next small { opacity: .85; font-size: 11px; }
+.next b { font-size: 17px; }
+.next .row { display: flex; gap: 6px; }
+.next .btn { background: rgba(255,255,255,.18); color: #fff; height: 32px; }
+.list { display: grid; }
+.li { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--border); }
+.li:last-child { border-bottom: 0; }
+.li .tm { width: 40px; font-variant-numeric: tabular-nums; color: var(--text-sub); font-size: 12px; }
+.li .nm { flex: 1; min-width: 0; font-weight: 600; }
+.chk { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--border); flex: none; }
+.chk.done { background: var(--success); border-color: var(--success); }
+.done-t { color: var(--text-muted); text-decoration: line-through; font-weight: 500 !important; }
+.lodge { display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: var(--bg-subtle); border-radius: 12px; font-size: 12px; }
+.lodge b { flex: 1; min-width: 0; }
+.copy { color: var(--primary); font-weight: 700; font-size: 11.5px; }
+
+/* 일정 */
+.map { position: relative; height: 38%; flex: none; background: var(--map-land); overflow: hidden; }
+.map svg { width: 100%; height: 100%; display: block; }
+.sheet { flex: 1; min-height: 0; margin-top: -14px; background: var(--bg); border-radius: 18px 18px 0 0; position: relative; display: flex; flex-direction: column; box-shadow: 0 -4px 16px rgba(0,0,0,.08); }
+.grab { width: 36px; height: 4px; border-radius: 4px; background: var(--border); margin: 7px auto 8px; flex: none; }
+.dayhdr { display: flex; align-items: baseline; justify-content: space-between; padding: 8px 14px 4px; }
+.dayhdr b { font-size: 14px; }
+.it { display: flex; gap: 10px; padding: 7px 14px; align-items: flex-start; }
+.it .tm { width: 36px; font-size: 12px; font-variant-numeric: tabular-nums; color: var(--text-sub); padding-top: 3px; }
+.it .body { flex: 1; min-width: 0; display: grid; gap: 1px; }
+.it .body b { font-size: 13px; }
+.it .body small { color: var(--text-muted); font-size: 11px; }
+.kind { font-size: 10px; padding: 2px 7px; border-radius: 6px; background: var(--bg-subtle); color: var(--text-sub); align-self: center; }
+.gap { margin-left: 61px; padding: 0 14px 0 10px; border-left: 2px dotted var(--border); font-size: 11px; color: var(--text-muted); display: flex; gap: 6px; }
+.gap a { color: var(--primary); font-weight: 600; text-decoration: none; }
+.add { margin: 4px 14px; height: 34px; border: 1px dashed var(--border); border-radius: 10px; display: grid; place-items: center; color: var(--text-sub); font-size: 12px; font-weight: 600; }
+
+/* 장소 */
+.search { margin: 0 14px; height: 40px; border-radius: 12px; background: var(--bg-subtle); display: flex; align-items: center; gap: 8px; padding: 0 12px; color: var(--text-muted); }
+.search svg { width: 16px; height: 16px; }
+.place { display: grid; gap: 4px; padding: 11px 0; border-bottom: 1px solid var(--border); }
+.place .top { display: flex; justify-content: space-between; gap: 8px; }
+.place b { font-size: 13.5px; }
+.stars { color: var(--rating); font-weight: 700; font-variant-numeric: tabular-nums; }
+.meta { font-size: 11.5px; color: var(--text-sub); display: flex; gap: 6px; flex-wrap: wrap; }
+.open { color: var(--success); font-weight: 600; }
+.acts { display: flex; gap: 6px; margin-top: 3px; }
+.acts .btn { height: 30px; font-size: 11.5px; }
+.powered { text-align: right; font-size: 10px; color: var(--text-muted); padding: 6px 14px; }
+
+/* 빠른 메뉴 */
+.dim { position: absolute; inset: 0; background: rgba(10, 14, 22, .45); }
+.qsheet { position: absolute; left: 0; right: 0; bottom: 0; background: var(--bg); border-radius: 20px 20px 0 0; padding: 0 14px 14px; display: grid; gap: 9px; }
+.fx.ai { background: var(--primary-weak); }
+.fx.ai b { font-size: 14px; }
+.fx { padding: 10px 12px; }
+.fx { display: flex; align-items: center; gap: 10px; padding: 12px; background: var(--bg-subtle); border-radius: 14px; }
+.fx .v { flex: 1; display: grid; gap: 2px; }
+.fx .v b { font-size: 16px; font-variant-numeric: tabular-nums; }
+.fx .v small { font-size: 10.5px; color: var(--text-muted); }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.sc { display: flex; align-items: center; gap: 8px; height: 44px; border-radius: 12px; background: var(--bg-subtle); padding: 0 10px; font-size: 12px; font-weight: 600; }
+.sc svg { width: 16px; height: 16px; color: var(--primary); flex: none; }
+.qrow { display: grid; gap: 6px; }
+.qrow span { font-size: 11.5px; color: var(--text-sub); font-weight: 600; }
+.more { display: flex; justify-content: space-between; align-items: center; padding: 10px 2px 0; border-top: 1px solid var(--border); font-weight: 600; font-size: 12.5px; }
+
+/* 세그먼트 · 스위치 · 스테퍼 · 슬라이더 (실제 동작) */
+.seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; background: var(--bg-subtle); border-radius: 10px; padding: 3px; gap: 3px; }
+.seg button { border: 0; background: transparent; height: 30px; border-radius: 8px; font: inherit; font-size: 11.5px; color: var(--text-sub); cursor: pointer; }
+.seg button[aria-checked="true"] { background: var(--surface); color: var(--text); font-weight: 700; box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+.sw { width: 42px; height: 25px; border-radius: 999px; background: var(--border); position: relative; border: 0; cursor: pointer; flex: none; }
+.sw::after { content: ""; position: absolute; top: 3px; left: 3px; width: 19px; height: 19px; border-radius: 50%; background: #fff; transition: transform .2s; box-shadow: 0 1px 2px rgba(0,0,0,.25); }
+.sw[aria-checked="true"] { background: var(--primary); }
+.sw[aria-checked="true"]::after { transform: translateX(17px); }
+.stp { display: flex; align-items: center; gap: 4px; }
+.stp button { width: 30px; height: 30px; border-radius: 9px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font: inherit; font-size: 15px; cursor: pointer; }
+.stp button:disabled { opacity: .35; cursor: default; }
+.stp output { min-width: 42px; text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; }
+.setgrp { display: grid; gap: 0; }
+.setrow { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; border-bottom: 1px solid var(--border); }
+.setrow:last-child { border-bottom: 0; }
+.setcol { display: grid; gap: 7px; padding: 10px 12px; border-bottom: 1px solid var(--border); }
+.setcol .lab { display: flex; justify-content: space-between; font-size: 12.5px; font-weight: 600; }
+.setcol .lab output { color: var(--primary); font-variant-numeric: tabular-nums; }
+.radio { display: flex; align-items: center; gap: 10px; padding: 8px 12px; font-size: 12.5px; cursor: pointer; border: 0; background: transparent; width: 100%; font-family: inherit; color: var(--text); text-align: left; }
+.radio .logo { width: 22px; height: 22px; border-radius: 6px; display: grid; place-items: center; color: #fff; font-size: 11px; font-weight: 800; }
+.radio .r { margin-left: auto; width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--border); }
+.radio[aria-checked="true"] .r { border: 6px solid var(--primary); }
+input[type=range] { width: 100%; accent-color: var(--primary); }
+.preview { font-size: 12px; color: var(--text-sub); background: var(--bg-subtle); border-radius: 8px; padding: 6px 9px; }
+.grptitle { font-size: 11px; color: var(--text-muted); font-weight: 700; padding: 10px 2px 6px; }
+
+/* 환율 계산기 */
+.cur { display: grid; gap: 5px; }
+.cur .name { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-sub); font-weight: 600; }
+.amt { height: 50px; border-radius: 12px; background: var(--bg-subtle); display: flex; align-items: center; justify-content: flex-end; padding: 0 14px; font-size: 21px; font-weight: 700; font-variant-numeric: tabular-nums; border: 2px solid transparent; }
+.amt.active { border-color: var(--primary); background: var(--surface); }
+.swap { justify-self: center; width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--border); display: grid; place-items: center; color: var(--text-sub); background: var(--surface); cursor: pointer; }
+.qa { display: flex; gap: 6px; flex-wrap: wrap; }
+.qa button { cursor: pointer; font-family: inherit; }
+.rate { display: grid; gap: 2px; font-size: 12px; }
+.rate small { color: var(--text-muted); font-size: 10.5px; }
+.naver { font-size: 11.5px; color: var(--primary); font-weight: 600; text-decoration: none; }
+.pad3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: auto; }
+.pad3 button { height: 42px; border-radius: 10px; border: 0; background: var(--bg-subtle); color: var(--text); font: inherit; font-size: 17px; font-weight: 600; cursor: pointer; font-variant-numeric: tabular-nums; }
+.pad3 button:active { background: var(--primary-weak); }
+.example { position: absolute; top: 8px; right: 10px; font-size: 9.5px; padding: 2px 7px; border-radius: 999px; background: var(--warning); color: #191F28; font-weight: 700; z-index: 2; }
+
+button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .sw::after { transition: none; } }
+@media (max-width: 420px) { .intro h1 { font-size: 1.45rem; } }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></symbol>
+    <symbol id="i-bag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="14" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+    <symbol id="i-cal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+    <symbol id="i-ticket" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8a2 2 0 0 0 0 4v0a2 2 0 0 1 0 4v2h18v-2a2 2 0 0 1 0-4 2 2 0 0 0 0-4V6H3z"/><path d="M14 6v12"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="m8 12 3 3 5-6"/></symbol>
+    <symbol id="i-bolt" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></symbol>
+    <symbol id="i-cloud" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18h10a4 4 0 0 0 .5-8A6 6 0 0 0 6 9.5 4.3 4.3 0 0 0 7 18z"/><path d="m9.5 13.5 2 2 3.5-4"/></symbol>
+    <symbol id="i-more" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></symbol>
+    <symbol id="i-route" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/><path d="M8 19h8a3 3 0 0 0 0-6H8a3 3 0 0 1 0-6h8"/></symbol>
+    <symbol id="i-bed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18V6M3 13h18v5M21 13a3 3 0 0 0-3-3h-7v3"/><circle cx="7" cy="10" r="1.5"/></symbol>
+    <symbol id="i-swap" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4v16M3 8l4-4 4 4M17 20V4M13 16l4 4 4-4"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></symbol>
+    <symbol id="i-gear" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
+  </defs>
+</svg>
+
+<header class="intro">
+  <h1>트립포켓 화면 시안</h1>
+  <p>디자인 문서(docs/11, 12, 14)를 바탕으로 만든 주요 화면 7개입니다. 색은 A안(바다 블루)이고, 기기의 다크 모드 설정을 따라 바뀝니다. 장소·일정·환율 숫자는 모두 예시입니다. 설정 화면과 환율 계산기는 직접 눌러볼 수 있어요.</p>
+  <div class="legend"><span>360px 기준 모바일</span><span>한국어 중심</span><span>하단 탭 4개 + 헤더 ⚡ 빠른 메뉴</span><span>가계부 제외</span></div>
+</header>
+
+<main class="board">
+
+  <!-- S-01 홈 -->
+  <figure>
+    <div class="phone" role="img" aria-label="홈 화면 시안: 여행 중일 때 다음 일정과 오늘 일정, 숙소를 보여줌">
+      <div class="status"><span class="tab">9:41</span><span>●●● 100%</span></div>
+      <div class="screen">
+        <div class="hdr"><div class="t"><b>도쿄 가을여행</b><small>여행 중 · 2일차 / 5일</small></div><div class="ib bolt"><svg><use href="#i-bolt"/></svg></div></div>
+        <div class="scroll pad">
+          <div class="card next">
+            <small>다음 일정 · 35분 후</small>
+            <b>🍜 이치란 라멘 신주쿠점</b>
+            <small class="tab">11:30 · 신주쿠구 신주쿠 3-34-11</small>
+            <div class="row"><span class="btn">길찾기</span><span class="btn">상세 보기</span></div>
+          </div>
+          <div class="label">오늘 일정 4개</div>
+          <div class="list">
+            <div class="li"><span class="chk done"></span><span class="tm">09:00</span><span class="nm done-t">센소지</span></div>
+            <div class="li"><span class="chk"></span><span class="tm">11:30</span><span class="nm">이치란 라멘</span></div>
+            <div class="li"><span class="chk"></span><span class="tm">14:00</span><span class="nm">긴자 쇼핑</span></div>
+            <div class="li"><span class="chk"></span><span class="tm">19:00</span><span class="nm">시부야 스카이</span></div>
+          </div>
+          <div class="lodge"><svg width="16" height="16"><use href="#i-bed"/></svg><b>신주쿠 그레이스리 호텔</b><span class="copy tab">AB12CD 복사</span></div>
+        </div>
+        <nav class="tabbar">
+          <div class="on"><svg><use href="#i-home"/></svg>홈</div>
+          <div><svg><use href="#i-bag"/></svg>내 여행</div>
+          <div><svg><use href="#i-heart"/></svg>저장</div>
+          <div><svg><use href="#i-user"/></svg>마이</div>
+        </nav>
+      </div>
+    </div>
+    <figcaption><b><span class="sid">S-01</span>홈 · 여행 중</b><small>앱을 열면 3초 안에 다음 일정, 길찾기, 숙소 예약번호까지 보입니다.</small></figcaption>
+  </figure>
+
+  <!-- S-10 일정 -->
+  <figure>
+    <div class="phone" role="img" aria-label="일정 화면 시안: 위에 지도, 아래에 2일차 일정 목록">
+      <div class="status"><span class="tab">9:41</span><span>●●● 100%</span></div>
+      <div class="screen">
+        <div class="hdr">
+          <div class="ib"><svg><use href="#i-back"/></svg></div>
+          <div class="t"><b>🗼 도쿄 가을여행</b><small>10.24 (금) – 10.28 (화) · 여행 중</small></div>
+          <div class="ib" style="color:var(--success)"><svg><use href="#i-cloud"/></svg></div>
+          <div class="ib bolt"><svg><use href="#i-bolt"/></svg></div>
+        </div>
+        <div class="map">
+          <svg viewBox="0 0 320 200" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+            <rect width="320" height="200" fill="var(--map-land)"/>
+            <path d="M240 0 C 225 60, 280 110, 250 200 L 320 200 L 320 0 Z" fill="var(--map-water)"/>
+            <path d="M0 70 L320 95 M60 0 L95 200 M0 150 L320 130 M170 0 L150 200" stroke="var(--map-road)" stroke-width="6" fill="none"/>
+            <path d="M205 48 L 130 112 L 180 150" stroke="var(--d2)" stroke-width="3" stroke-dasharray="6 5" fill="none"/>
+            <g font-family="sans-serif" font-size="11" font-weight="700" text-anchor="middle">
+              <circle cx="205" cy="48" r="12" fill="var(--d2)"/><text x="205" y="52" fill="#fff">1</text>
+              <circle cx="130" cy="112" r="12" fill="var(--d2)"/><text x="130" y="116" fill="#fff">2</text>
+              <circle cx="180" cy="150" r="12" fill="var(--d2)"/><text x="180" y="154" fill="#fff">3</text>
+            </g>
+          </svg>
+          <span class="example">지도 예시</span>
+        </div>
+        <div class="sheet">
+          <div class="grab"></div>
+          <div class="chips">
+            <span class="chip">전체</span>
+            <span class="chip"><i class="dot" style="background:var(--d1)"></i>1일차 10.24</span>
+            <span class="chip on"><i class="dot" style="background:var(--d2)"></i>2일차 10.25</span>
+            <span class="chip"><i class="dot" style="background:var(--d3)"></i>3일차</span>
+          </div>
+          <div class="scroll">
+            <div class="dayhdr"><b>2일차 · 10.25 (토)</b><span class="muted" style="font-size:12px">편집</span></div>
+            <div class="it"><span class="num" style="background:var(--d2)">1</span><span class="tm">09:00</span><div class="body"><b>센소지</b><small>아사쿠사 2-3-1</small></div><span class="kind">관광</span></div>
+            <div class="gap">직선 2.1km · <a href="#">길찾기</a></div>
+            <div class="it"><span class="num" style="background:var(--d2)">2</span><span class="tm">11:30</span><div class="body"><b>이치란 라멘</b><small>신주쿠 3-34-11</small></div><span class="kind">맛집</span></div>
+            <div class="gap">직선 650m · <a href="#">길찾기</a></div>
+            <div class="it"><span class="num" style="background:var(--d2)">3</span><span class="tm">—</span><div class="body"><b>긴자 쇼핑</b><small>시간 미정</small></div><span class="kind">쇼핑</span></div>
+            <div class="add">+ 일정 추가</div>
+          </div>
+          <nav class="tabbar">
+            <div class="on"><svg><use href="#i-cal"/></svg>일정</div>
+            <div><svg><use href="#i-search"/></svg>장소</div>
+            <div><svg><use href="#i-ticket"/></svg>예약</div>
+            <div><svg><use href="#i-check"/></svg>준비</div>
+          </nav>
+        </div>
+      </div>
+    </div>
+    <figcaption><b><span class="sid">S-10</span>일정 · 지도 + 목록</b><small>지도 핀 번호와 목록 번호가 같은 색으로 연결됩니다. 카드 사이에는 직선거리와 길찾기 링크가 있어요.</small></figcaption>
+  </figure>
+
+  <!-- S-14 장소 찾기 -->
+  <figure>
+    <div class="phone" role="img" aria-label="장소 찾기 시안: 맛집 카테고리, 평점 4.0 이상, 리뷰 100개 이상 필터">
+      <div class="status"><span class="tab">9:41</span><span>●●● 100%</span></div>
+      <div class="screen">
+        <div class="hdr"><div class="ib"><svg><use href="#i-back"/></svg></div><div class="t"><b>장소 찾기</b><small>기준: 숙소 근처 · 신주쿠</small></div><div class="ib bolt"><svg><use href="#i-bolt"/></svg></div></div>
+        <div class="search"><svg><use href="#i-search"/></svg>라멘</div>
+        <div class="chips" style="margin-top:10px"><span class="chip">🏨 숙소</span><span class="chip on">🍜 맛집</span><span class="chip">☕ 카페</span><span class="chip">🏯 관광</span></div>
+        <div class="chips" style="margin-top:6px"><span class="chip on">⭐ 4.0+</span><span class="chip on">리뷰 100+</span><span class="chip">가격</span><span class="chip">영업 중</span></div>
+        <div class="scroll pad" style="gap:0;margin-top:4px">
+          <div class="muted" style="font-size:11.5px;padding-top:6px">추천순 ▾ · 결과 18곳</div>
+          <div class="place">
+            <div class="top"><b>이치란 라멘 신주쿠점</b><span class="muted" style="font-size:11px">450m</span></div>
+            <div class="meta"><span class="stars">★ 4.4</span><span class="tab">(3,210)</span><span>₩₩</span><span class="open">영업 중</span></div>
+            <div class="acts"><span class="btn pri">+ 일정에 담기</span><span class="btn sec">길찾기</span><span class="btn sec">♡</span></div>
+          </div>
+          <div class="place">
+            <div class="top"><b>후운지 츠케멘</b><span class="muted" style="font-size:11px">1.1km</span></div>
+            <div class="meta"><span class="stars">★ 4.5</span><span class="tab">(1,870)</span><span>₩</span><span class="open">영업 중</span></div>
+            <div class="acts"><span class="btn pri">+ 일정에 담기</span><span class="btn sec">길찾기</span><span class="btn sec">♡</span></div>
+          </div>
+          <div class="place" style="border-bottom:0">
+            <div class="top"><b>멘야 무사시</b><span class="muted" style="font-size:11px">700m</span></div>
+            <div class="meta"><span class="stars">★ 4.2</span><span class="tab">(2,045)</span><span>₩₩</span><span class="muted">11:00 영업 시작</span></div>
+          </div>
+        </div>
+        <div class="powered">Powered by Google · 예시 데이터</div>
+        <nav class="tabbar">
+          <div><svg><use href="#i-cal"/></svg>일정</div>
+          <div class="on"><svg><use href="#i-search"/></svg>장소</div>
+          <div><svg><use href="#i-ticket"/></svg>예약</div>
+          <div><svg><use href="#i-check"/></svg>준비</div>
+        </nav>
+      </div>
+    </div>
+    <figcaption><b><span class="sid">S-14</span>장소 찾기 · 평점 필터</b><small>카테고리와 필터는 칩으로 한 번에 켜고 끕니다. 추천순은 리뷰 수까지 반영한 가중 평점이에요.</small></figcaption>
+  </figure>
+
+  <!-- S-50 빠른 메뉴 -->
+  <figure>
+    <div class="phone">
+      <div class="status"><span class="tab">9:41</span><span>●●● 100%</span></div>
+      <div class="screen">
+        <div class="hdr"><div class="ib"><svg><use href="#i-back"/></svg></div><div class="t"><b>🗼 도쿄 가을여행</b><small>2일차</small></div><div class="ib bolt"><svg><use href="#i-bolt"/></svg></div></div>
+        <div class="dim"></div>
+        <div class="qsheet">
+          <div class="grab" style="margin-bottom:0"></div>
+          <b style="font-size:16px">빠른 메뉴</b>
+          <div class="fx">
+            <div class="v"><b>¥100 = 912.34원</b><small>수출입은행 매매기준율 · 10.22 11:02 · 예시</small></div>
+            <span class="copy">계산기 ›</span>
+          </div>
+          <div class="fx ai">
+            <div class="v"><b>✨ AI 추천</b><small>신주쿠역 근처 지금 뜨는 맛집·핫플·놀거리</small></div>
+            <span class="copy">보기 ›</span>
+          </div>
+          <div class="grid2">
+            <div class="sc"><svg><use href="#i-bed"/></svg>숙소로 길찾기</div>
+            <div class="sc"><svg><use href="#i-ticket"/></svg>예약번호</div>
+            <div class="sc"><svg><use href="#i-pin"/></svg>다음 일정</div>
+            <div class="sc"><svg><use href="#i-cal"/></svg>오늘 일정</div>
+          </div>
+          <div class="qrow"><span>화면</span>
+            <div class="seg" role="radiogroup" aria-label="화면 테마" data-group="q-theme">
+              <button type="button" role="radio" aria-checked="false" id="q-theme-light">라이트</button>
+              <button type="button" role="radio" aria-checked="false" id="q-theme-dark">다크</button>
+              <button type="button" role="radio" aria-checked="true" id="q-theme-system">시스템</button>
+            </div>
+          </div>
+          <div class="qrow"><span>길찾기 앱</span>
+            <div class="seg" role="radiogroup" aria-label="길찾기 앱" data-group="q-app">
+              <button type="button" role="radio" aria-checked="true" id="q-app-naver">네이버</button>
+              <button type="button" role="radio" aria-checked="false" id="q-app-google">구글</button>
+              <button type="button" role="radio" aria-checked="false" id="q-app-ask">매번 묻기</button>
+            </div>
+          </div>
+          <div class="qrow"><span>이동수단</span>
+            <div class="seg" role="radiogroup" aria-label="기본 이동수단" data-group="q-mode">
+              <button type="button" role="radio" aria-checked="true" id="q-mode-transit">대중교통</button>
+              <button type="button" role="radio" aria-checked="false" id="q-mode-walk">도보</button>
+              <button type="button" role="radio" aria-checked="false" id="q-mode-car">자동차</button>
+            </div>
+          </div>
+          <div class="more"><span style="display:flex;gap:6px;align-items:center"><svg width="16" height="16"><use href="#i-gear"/></svg>전체 설정</span><span class="muted">›</span></div>
+        </div>
+      </div>
+    </div>
+    <figcaption><b><span class="sid">S-50</span>빠른 메뉴 ⚡</b><small>환율, AI 추천, 바로가기 4개, 자주 바꾸는 설정 3개가 한 시트에 있습니다. 세그먼트 버튼은 눌러볼 수 있어요.</small></figcaption>
+  </figure>
+
+  <!-- S-51 환율 계산기 -->
+  <figure>
+    <div class="phone">
+      <div class="status"><span class="tab">9:41</span><span>●●● 100%</span></div>
+      <div class="screen">
+        <div class="hdr"><div class="ib"><svg><use href="#i-back"/></svg></div><div class="t"><b>환율 계산기</b></div></div>
+        <div class="pad" style="flex:1;min-height:0;padding-bottom:14px;display:flex;flex-direction:column;gap:9px">
+          <div class="cur"><div class="name" id="fx-from-name">🇯🇵 일본 엔 JPY ▾</div><div class="amt active" id="fx-from" aria-live="polite">¥ 3,500</div></div>
+          <button type="button" class="swap" id="fx-swap" aria-label="통화 바꾸기"><svg width="15" height="15"><use href="#i-swap"/></svg></button>
+          <div class="cur"><div class="name" id="fx-to-name">🇰🇷 대한민국 원 KRW</div><div class="amt" id="fx-to" aria-live="polite">31,932원</div></div>
+          <div class="qa" id="fx-quick"></div>
+          <div class="rate"><span id="fx-rate-line">¥100 = 912.34원</span><small>수출입은행 매매기준율 · 10.22 (수) 11:02 · 예시 환율</small></div>
+          <a class="naver" href="https://search.naver.com/search.naver?query=%EC%97%94%ED%99%94+%ED%99%98%EC%9C%A8" target="_blank" rel="noopener">네이버 환율에서 실시간 확인 ›</a>
+          <div class="pad3" id="fx-pad">
+            <button type="button">1</button><button type="button">2</button><button type="button">3</button>
+            <button type="button">4</button><button type="button">5</button><button type="button">6</button>
+            <button type="button">7</button><button type="button">8</button><button type="button">9</button>
+            <button type="button">00</button><button type="button">0</button><button type="button" aria-label="지우기">⌫</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <figcaption><b><span class="sid">S-51</span>환율 계산기</b><small>앱 안 큰 숫자 키패드로 입력하면 바로 계산됩니다. ⇅로 방향을 바꾸고, 빠른 금액 칩을 눌러볼 수 있어요.</small></figcaption>
+  </figure>
+
+  <!-- S-52 AI 추천 -->
+  <figure>
+    <div class="phone" role="img" aria-label="AI 추천 화면 시안: 신주쿠역 기준 최근 1개월 맛집 추천">
+      <div class="status"><span class="tab">9:41</span><span>●●● 100%</span></div>
+      <div class="screen">
+        <div class="hdr"><div class="ib"><svg><use href="#i-back"/></svg></div><div class="t"><b>✨ AI 추천</b><small>오늘 남은 횟수 4/5</small></div></div>
+        <div class="pad" style="gap:8px">
+          <div class="seg" role="radiogroup" aria-label="기준 위치" data-group="ai-anchor">
+            <button type="button" role="radio" aria-checked="true" id="ai-anchor-station">가까운 역</button>
+            <button type="button" role="radio" aria-checked="false" id="ai-anchor-lodging">숙소</button>
+            <button type="button" role="radio" aria-checked="false" id="ai-anchor-text">직접 입력</button>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:12px"><span><b>📍 신주쿠역</b> <span class="muted">내 위치에서 350m</span></span><span class="copy">변경</span></div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap"><span class="chip on">🍜 맛집</span><span class="chip on">☕ 카페·핫플</span><span class="chip">🎡 놀거리</span></div>
+        </div>
+        <div class="scroll pad" style="gap:0;margin-top:8px">
+          <div class="label" style="padding:6px 0 2px">🍜 맛집 · 최근 1개월 기준</div>
+          <div class="place">
+            <div class="top"><b><span class="num" style="background:var(--primary);display:inline-grid;width:18px;height:18px;font-size:10px;margin-right:4px">1</span>후운지 츠케멘</b><span class="stars">★ 4.5</span></div>
+            <div class="sub" style="font-size:12px">진한 어패류 국물 츠케멘, 점심 웨이팅 30분 정도예요</div>
+            <div class="meta"><span>블로그 언급 23회</span><span>· 최근 10.20</span><span>· 820m</span></div>
+            <div class="acts"><span class="btn sec">근거 보기</span><span class="btn pri">+ 담기</span><span class="btn sec">길찾기</span></div>
+          </div>
+          <div class="place">
+            <div class="top"><b><span class="num" style="background:var(--primary);display:inline-grid;width:18px;height:18px;font-size:10px;margin-right:4px">2</span>규카츠 모토무라</b><span class="stars">★ 4.6</span></div>
+            <div class="sub" style="font-size:12px">돌판에 직접 구워 먹는 규카츠, 늦은 저녁이 덜 붐벼요</div>
+            <div class="meta"><span>블로그 언급 17회</span><span>· 최근 10.21</span><span>· 400m</span></div>
+          </div>
+          <div class="label" style="padding:8px 0 2px">☕ 카페·핫플 · 정보가 적어 최근 3개월로 넓혔어요</div>
+          <div class="muted" style="font-size:10.5px;padding:6px 0">AI가 블로그 글을 요약했어요. 방문 전 영업시간을 확인하세요. 출처: 네이버 블로그 · Powered by Google · 예시 데이터</div>
+        </div>
+      </div>
+    </div>
+    <figcaption><b><span class="sid">S-52</span>AI 추천 · 내 근처</b><small>가까운 역, 숙소, 직접 입력 중 기준을 고릅니다. 최근 1개월 글이 적으면 3개월, 6개월로 넓히고 그 사실을 표시해요. 모든 추천에 근거 글이 붙어요.</small></figcaption>
+  </figure>
+
+  <!-- S-23 설정 -->
+  <figure>
+    <div class="phone">
+      <div class="status"><span class="tab">9:41</span><span>●●● 100%</span></div>
+      <div class="screen">
+        <div class="hdr"><div class="ib"><svg><use href="#i-back"/></svg></div><div class="t"><b>설정</b></div></div>
+        <div class="scroll" style="padding:0 14px;overflow-y:auto">
+          <div class="grptitle">화면</div>
+          <div class="card setgrp">
+            <div class="setcol"><div class="lab">테마</div>
+              <div class="seg" role="radiogroup" aria-label="테마" data-group="s-theme">
+                <button type="button" role="radio" aria-checked="false" id="s-theme-light">라이트</button>
+                <button type="button" role="radio" aria-checked="false" id="s-theme-dark">다크</button>
+                <button type="button" role="radio" aria-checked="true" id="s-theme-system">시스템</button>
+              </div>
+            </div>
+            <div class="setcol"><div class="lab">글자 크기 <output id="font-out">보통</output></div>
+              <input type="range" id="font-range" min="0" max="3" step="1" value="1" aria-label="글자 크기">
+              <div class="preview" id="font-prev">2일차 · 센소지 09:00</div>
+            </div>
+            <div class="setcol"><div class="lab">시간 표기</div>
+              <div class="seg" role="radiogroup" aria-label="시간 표기" data-group="s-time">
+                <button type="button" role="radio" aria-checked="true" id="s-time-24">24시간 09:00</button>
+                <button type="button" role="radio" aria-checked="false" id="s-time-12">오전 9:00</button>
+              </div>
+            </div>
+            <div class="setrow"><span style="font-weight:600;font-size:12.5px">진동</span><button type="button" class="sw" role="switch" aria-checked="true" aria-label="진동" id="s-haptic"></button></div>
+          </div>
+          <div class="grptitle">지도·길찾기</div>
+          <div class="card setgrp" role="radiogroup" aria-label="기본 길찾기 앱" data-group="s-app">
+            <button type="button" class="radio" role="radio" aria-checked="true" id="s-app-naver"><span class="logo" style="background:#03C75A">N</span>네이버 지도<span class="r"></span></button>
+            <button type="button" class="radio" role="radio" aria-checked="false" id="s-app-google"><span class="logo" style="background:#4285F4">G</span>Google 지도<span class="r"></span></button>
+            <button type="button" class="radio" role="radio" aria-checked="false" id="s-app-kakao"><span class="logo" style="background:#FEE500;color:#191F28">K</span>카카오맵<span class="r"></span></button>
+            <button type="button" class="radio" role="radio" aria-checked="false" id="s-app-ask"><span class="logo" style="background:var(--text-muted)">?</span>매번 묻기<span class="r"></span></button>
+          </div>
+          <div class="grptitle">장소 찾기</div>
+          <div class="card setgrp">
+            <div class="setcol"><div class="lab">기본 검색 반경 <output id="rad-out">3km</output></div>
+              <input type="range" id="rad-range" min="0.5" max="20" step="0.5" value="3" aria-label="기본 검색 반경">
+            </div>
+          </div>
+          <div class="grptitle">데이터</div>
+          <div class="card setgrp" style="margin-bottom:14px">
+            <div class="setrow"><span style="font-weight:600;font-size:12.5px">백업 알림 주기</span>
+              <div class="stp"><button type="button" id="bk-minus" aria-label="줄이기">−</button><output id="bk-out">14일</output><button type="button" id="bk-plus" aria-label="늘리기">+</button></div>
+            </div>
+            <div class="setrow"><span style="font-weight:600;font-size:12.5px">자동 동기화</span><button type="button" class="sw" role="switch" aria-checked="true" aria-label="자동 동기화" id="s-sync"></button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <figcaption><b><span class="sid">S-23</span>설정 · 컨트롤 원칙</b><small>선택지 2~4개는 세그먼트, 켜기/끄기는 스위치, 5개 이상은 라디오 목록, 범위는 슬라이더, 간격 있는 숫자는 스테퍼를 씁니다. 모두 즉시 적용돼요.</small></figcaption>
+  </figure>
+</main>
+
+<script>
+(function () {
+  // 세그먼트 · 라디오 그룹: 같은 그룹 안에서 하나만 선택
+  document.querySelectorAll('[data-group]').forEach(function (group) {
+    group.addEventListener('click', function (e) {
+      var btn = e.target.closest('[role="radio"]');
+      if (!btn || !group.contains(btn)) return;
+      group.querySelectorAll('[role="radio"]').forEach(function (b) { b.setAttribute('aria-checked', String(b === btn)); });
+    });
+  });
+  // 스위치
+  document.querySelectorAll('.sw').forEach(function (sw) {
+    sw.addEventListener('click', function () { sw.setAttribute('aria-checked', String(sw.getAttribute('aria-checked') !== 'true')); });
+  });
+  // 글자 크기 슬라이더 (4단계)
+  var fontNames = ['작게', '보통', '크게', '아주 크게'], fontScale = [0.9, 1, 1.15, 1.3];
+  var fr = document.getElementById('font-range');
+  fr.addEventListener('input', function () {
+    document.getElementById('font-out').textContent = fontNames[fr.value];
+    document.getElementById('font-prev').style.fontSize = (12 * fontScale[fr.value]) + 'px';
+  });
+  // 검색 반경 슬라이더
+  var rr = document.getElementById('rad-range');
+  rr.addEventListener('input', function () { document.getElementById('rad-out').textContent = (+rr.value) + 'km'; });
+  // 백업 알림 스테퍼: 끄기, 7~56일 (7일 단위)
+  var bk = 14, out = document.getElementById('bk-out'), minus = document.getElementById('bk-minus'), plus = document.getElementById('bk-plus');
+  function renderBk() { out.textContent = bk === 0 ? '끄기' : bk + '일'; minus.disabled = bk === 0; plus.disabled = bk === 56; }
+  minus.addEventListener('click', function () { bk = Math.max(0, bk - 7); renderBk(); });
+  plus.addEventListener('click', function () { bk = Math.min(56, bk + 7); renderBk(); });
+  renderBk();
+
+  // 환율 계산기 (예시 환율: 100엔 = 912.34원)
+  var perYen = 9.1234, digits = '3500', yenToWon = true;
+  var fromEl = document.getElementById('fx-from'), toEl = document.getElementById('fx-to');
+  var fromName = document.getElementById('fx-from-name'), toName = document.getElementById('fx-to-name');
+  var quick = document.getElementById('fx-quick');
+  var fmt = new Intl.NumberFormat('ko-KR');
+  function renderQuick() {
+    var list = yenToWon ? [1000, 5000, 10000, 50000] : [10000, 50000, 100000, 500000];
+    quick.innerHTML = '';
+    list.forEach(function (v) {
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'chip';
+      b.textContent = yenToWon ? '¥' + fmt.format(v) : fmt.format(v) + '원';
+      b.addEventListener('click', function () { digits = String(v); render(); });
+      quick.appendChild(b);
+    });
+  }
+  function render() {
+    var n = +digits || 0;
+    if (yenToWon) {
+      fromEl.textContent = '¥ ' + fmt.format(n);
+      toEl.textContent = fmt.format(Math.round(n * perYen)) + '원';
+    } else {
+      fromEl.textContent = fmt.format(n) + '원';
+      toEl.textContent = '¥ ' + fmt.format(Math.round(n / perYen));
+    }
+  }
+  document.getElementById('fx-pad').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    var k = b.textContent;
+    if (k === '⌫') digits = digits.slice(0, -1);
+    else if (digits.length < 9) digits = (digits === '0' ? '' : digits) + k;
+    digits = digits.replace(/^0+(?=\d)/, '');
+    render();
+  });
+  document.getElementById('fx-swap').addEventListener('click', function () {
+    yenToWon = !yenToWon;
+    var a = fromName.textContent.replace(' ▾', ''), c = toName.textContent.replace(' ▾', '');
+    fromName.textContent = c + ' ▾'; toName.textContent = a;
+    digits = yenToWon ? '3500' : '30000';
+    renderQuick(); render();
+  });
+  renderQuick(); render();
+})();
+</script>
