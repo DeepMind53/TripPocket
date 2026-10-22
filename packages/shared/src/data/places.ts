@@ -6,6 +6,8 @@
  * - 국가 이름은 브라우저 내장 Intl.DisplayNames로 한글·영어를 만든다 (데이터 0바이트).
  */
 import { ASIA_ROWS, type PlaceRow } from './placesAsia';
+import { GEN_ALIASES, GEN_PLACES } from './placesGen';
+import { AIRPORT_ALIASES, TRAVEL_ROWS } from './placesTravel';
 
 type Row = PlaceRow;
 
@@ -359,10 +361,23 @@ function regionName(code: string, locale: 'ko' | 'en'): string {
   }
 }
 
+const GEN_TZ: Record<string, string> = { KR: 'Asia/Seoul', JP: 'Asia/Tokyo', TW: 'Asia/Taipei' };
+
+/** 자동 생성한 전체 시·군·정·촌 목록 (placesGen.ts) → 행 */
+function genRows(): PlaceRow[] {
+  return Object.entries(GEN_PLACES).flatMap(([cc, text]) =>
+    text.split('\n').map((line): PlaceRow => {
+      const [ko = '', en = '', lat = '0', lng = '0', aliases] = line.split(',');
+      const tz = GEN_TZ[cc] ?? 'UTC';
+      return aliases ? [ko, en, cc, tz, +lat, +lng, aliases] : [ko, en, cc, tz, +lat, +lng];
+    }),
+  );
+}
+
 function load() {
   if (cache) return cache;
   const seen = new Set<string>();
-  const rows = [...ROWS, ...ASIA_ROWS].filter(([ko, , cc]) => {
+  const rows = [...ROWS, ...ASIA_ROWS, ...TRAVEL_ROWS, ...genRows()].filter(([ko, , cc]) => {
     const key = `${ko}|${cc}`;
     if (seen.has(key)) return false;
     seen.add(key);
@@ -377,6 +392,12 @@ function load() {
     lng,
     aliases: aliases ? aliases.split('|') : [],
   }));
+  // 구·도쿄 23구 같은 별칭을 기존 도시에 붙인다
+  for (const line of `${GEN_ALIASES}\n${AIRPORT_ALIASES}`.split('\n')) {
+    const [cc, ko, names = ''] = line.split(',');
+    const city = cities.find((c) => c.countryCode === cc && c.ko === ko);
+    if (city) city.aliases.push(...names.split('|'));
+  }
   const countries: CountryInfo[] = [];
   for (const c of cities) {
     if (countries.some((x) => x.countryCode === c.countryCode)) continue;
@@ -439,13 +460,14 @@ const isChoseongQuery = (q: string) => /^[ㄱ-ㅎ]+$/.test(q);
 
 function scoreNames(q: string, names: readonly string[], ko: string): number {
   let best = 0;
-  for (const name of names) {
+  names.forEach((name, i) => {
     const n = normalize(name);
-    if (!n) continue;
-    if (n === q) best = Math.max(best, 100);
+    if (!n) return;
+    // 별칭(3번째부터)이 정확히 맞으면 이름보다 조금 낮게 — "비에이"는 비에이가 후라노(별칭)보다 먼저
+    if (n === q) best = Math.max(best, i < 2 ? 100 : 95);
     else if (n.startsWith(q)) best = Math.max(best, 80);
     else if (q.length >= 2 && n.includes(q)) best = Math.max(best, 50);
-  }
+  });
   if (isChoseongQuery(q)) {
     const cs = choseong(normalize(ko));
     if (cs === q) best = Math.max(best, 70);
@@ -479,7 +501,18 @@ export function searchPlaces(query: string, limit = 20): PlaceHit[] {
     }
   });
   // 정렬은 안정 정렬이라 같은 점수면 데이터 순서(인기순)가 유지된다
-  return hits.sort((a, b) => b.score - a.score).slice(0, limit);
+  const top = hits.sort((a, b) => b.score - a.score).slice(0, limit);
+  // 나라 이름을 정확히 치면 ("일본", "japan") 그 나라 도시 전부를 인기순으로 뒤에 붙인다
+  const exact = top.find((h) => h.kind === 'country' && h.score > 100);
+  if (!exact) return top;
+  const shown = new Set(top.map((h) => `${h.ko}|${h.countryCode}`));
+  const countryKo = exact.ko;
+  return [
+    ...top,
+    ...cities
+      .filter((c) => c.countryCode === exact.countryCode && !shown.has(`${c.ko}|${c.countryCode}`))
+      .map((c): PlaceHit => ({ kind: 'city', score: 0, ...c, countryKo })),
+  ];
 }
 
 /** 검색어가 없을 때 보여줄 인기 도시 */

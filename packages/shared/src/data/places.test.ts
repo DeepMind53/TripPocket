@@ -90,3 +90,39 @@ describe('도시·국가 검색', () => {
     expect(all.length).toBeGreaterThan(500);
   });
 });
+
+describe('전체 도시 (GeoNames 생성 데이터)', () => {
+  const names = (q: string) => searchPlaces(q).map((h) => h.ko);
+  it('한국·일본·대만 작은 도시도 찾는다', () => {
+    expect(names('울주')[0]).toBe('울주');
+    expect(names('가루이자와')[0]).toBe('가루이자와');
+    expect(names('하코네')[0]).toBe('하코네');
+    expect(names('비에이')[0]).toBe('비에이');
+    expect(names('루이팡')[0]).toBe('루이팡');
+  });
+  it('구 이름으로 소속 도시를 찾는다', () => {
+    expect(names('강남구')[0]).toBe('서울');
+    expect(names('신주쿠')[0]).toBe('도쿄');
+  });
+  it('나라 이름을 정확히 치면 그 나라 도시가 전부 나온다', () => {
+    const hits = searchPlaces('일본');
+    expect(hits[0]).toMatchObject({ kind: 'country', countryCode: 'JP' });
+    expect(hits.filter((h) => h.kind === 'city' && h.countryCode === 'JP').length).toBeGreaterThan(
+      1000,
+    );
+    expect(searchPlaces('일').length).toBeLessThanOrEqual(20);
+  });
+});
+
+describe('공항·관광지', () => {
+  const names = (q: string) => searchPlaces(q).map((h) => h.ko);
+  it('공항 이름·코드로 도시를 찾는다', () => {
+    expect(names('나리타공항')[0]).toBe('도쿄');
+    expect(names('수완나품')[0]).toBe('방콕');
+    expect(names('icn')[0]).toBe('인천');
+  });
+  it('추가 관광지', () => {
+    expect(names('시안')[0]).toBe('시안');
+    expect(names('앤털로프캐니언')[0]).toBe('페이지');
+  });
+});
