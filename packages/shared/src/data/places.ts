@@ -5,20 +5,30 @@
  * - 순서 = 인기순(검색 점수가 같으면 앞쪽이 먼저).
  * - 국가 이름은 브라우저 내장 Intl.DisplayNames로 한글·영어를 만든다 (데이터 0바이트).
  */
-type Row = [string, string, string, string, number, number, string?];
+import { ASIA_ROWS, type PlaceRow } from './placesAsia';
+
+type Row = PlaceRow;
 
 const ROWS: Row[] = [
   // 대한민국
-  ['서울', 'Seoul', 'KR', 'Asia/Seoul', 37.57, 126.98],
-  ['부산', 'Busan', 'KR', 'Asia/Seoul', 35.18, 129.08, '해운대|Pusan'],
-  ['제주', 'Jeju', 'KR', 'Asia/Seoul', 33.5, 126.53, '제주도|Jeju Island'],
-  ['서귀포', 'Seogwipo', 'KR', 'Asia/Seoul', 33.25, 126.56],
+  [
+    '서울',
+    'Seoul',
+    'KR',
+    'Asia/Seoul',
+    37.57,
+    126.98,
+    '강남|홍대|명동|이태원|성수|잠실|여의도|종로|인사동|북촌',
+  ],
+  ['부산', 'Busan', 'KR', 'Asia/Seoul', 35.18, 129.08, '해운대|광안리|서면|남포동|기장|송정|Pusan'],
+  ['제주', 'Jeju', 'KR', 'Asia/Seoul', 33.5, 126.53, '제주도|Jeju Island|애월|협재|함덕|한림'],
+  ['서귀포', 'Seogwipo', 'KR', 'Asia/Seoul', 33.25, 126.56, '중문|성산|성산일출봉|표선'],
   ['강릉', 'Gangneung', 'KR', 'Asia/Seoul', 37.75, 128.88],
   ['경주', 'Gyeongju', 'KR', 'Asia/Seoul', 35.86, 129.22],
   ['여수', 'Yeosu', 'KR', 'Asia/Seoul', 34.76, 127.66],
   ['전주', 'Jeonju', 'KR', 'Asia/Seoul', 35.82, 127.15],
   ['속초', 'Sokcho', 'KR', 'Asia/Seoul', 38.21, 128.59],
-  ['인천', 'Incheon', 'KR', 'Asia/Seoul', 37.46, 126.71],
+  ['인천', 'Incheon', 'KR', 'Asia/Seoul', 37.46, 126.71, '인천공항|영종도|송도|월미도'],
   ['대구', 'Daegu', 'KR', 'Asia/Seoul', 35.87, 128.6],
   ['대전', 'Daejeon', 'KR', 'Asia/Seoul', 36.35, 127.38],
   ['광주', 'Gwangju', 'KR', 'Asia/Seoul', 35.16, 126.85],
@@ -41,10 +51,26 @@ const ROWS: Row[] = [
   ['태안', 'Taean', 'KR', 'Asia/Seoul', 36.75, 126.3],
   ['울릉도', 'Ulleungdo', 'KR', 'Asia/Seoul', 37.48, 130.9, '울릉'],
   // 일본
-  ['도쿄', 'Tokyo', 'JP', 'Asia/Tokyo', 35.68, 139.69, '동경|토쿄'],
-  ['오사카', 'Osaka', 'JP', 'Asia/Tokyo', 34.69, 135.5],
-  ['후쿠오카', 'Fukuoka', 'JP', 'Asia/Tokyo', 33.59, 130.4, '하카타|Hakata'],
-  ['교토', 'Kyoto', 'JP', 'Asia/Tokyo', 35.01, 135.77],
+  [
+    '도쿄',
+    'Tokyo',
+    'JP',
+    'Asia/Tokyo',
+    35.68,
+    139.69,
+    '동경|토쿄|신주쿠|시부야|긴자|아사쿠사|이케부쿠로|오다이바',
+  ],
+  [
+    '오사카',
+    'Osaka',
+    'JP',
+    'Asia/Tokyo',
+    34.69,
+    135.5,
+    '난바|우메다|도톤보리|신사이바시|유니버설|USJ',
+  ],
+  ['후쿠오카', 'Fukuoka', 'JP', 'Asia/Tokyo', 33.59, 130.4, '하카타|Hakata|텐진|다자이후'],
+  ['교토', 'Kyoto', 'JP', 'Asia/Tokyo', 35.01, 135.77, '아라시야마|기온|후시미이나리'],
   ['삿포로', 'Sapporo', 'JP', 'Asia/Tokyo', 43.06, 141.35, '홋카이도|Hokkaido'],
   ['오키나와', 'Okinawa', 'JP', 'Asia/Tokyo', 26.21, 127.68, '나하|Naha'],
   ['나라', 'Nara', 'JP', 'Asia/Tokyo', 34.69, 135.8],
@@ -73,11 +99,19 @@ const ROWS: Row[] = [
   ['타이베이', 'Taipei', 'TW', 'Asia/Taipei', 25.03, 121.57, '타이페이|대북'],
   ['가오슝', 'Kaohsiung', 'TW', 'Asia/Taipei', 22.63, 120.3],
   ['타이중', 'Taichung', 'TW', 'Asia/Taipei', 24.15, 120.67],
-  ['화롄', 'Hualien', 'TW', 'Asia/Taipei', 23.99, 121.6, '화련'],
+  ['화롄', 'Hualien', 'TW', 'Asia/Taipei', 23.99, 121.6, '화련|타이루거|Taroko'],
   ['홍콩', 'Hong Kong', 'HK', 'Asia/Hong_Kong', 22.32, 114.17],
   ['마카오', 'Macau', 'MO', 'Asia/Macau', 22.2, 113.54, 'Macao'],
-  ['상하이', 'Shanghai', 'CN', 'Asia/Shanghai', 31.23, 121.47, '상해'],
-  ['베이징', 'Beijing', 'CN', 'Asia/Shanghai', 39.9, 116.41, '북경|Peking'],
+  [
+    '상하이',
+    'Shanghai',
+    'CN',
+    'Asia/Shanghai',
+    31.23,
+    121.47,
+    '상해|와이탄|푸동|디즈니랜드 상하이',
+  ],
+  ['베이징', 'Beijing', 'CN', 'Asia/Shanghai', 39.9, 116.41, '북경|Peking|만리장성|자금성'],
   ['칭다오', 'Qingdao', 'CN', 'Asia/Shanghai', 36.07, 120.38, '청도'],
   ['청두', 'Chengdu', 'CN', 'Asia/Shanghai', 30.57, 104.07, '성도'],
   ['시안', "Xi'an", 'CN', 'Asia/Shanghai', 34.34, 108.94, '서안|Xian'],
@@ -327,7 +361,14 @@ function regionName(code: string, locale: 'ko' | 'en'): string {
 
 function load() {
   if (cache) return cache;
-  const cities = ROWS.map(([ko, en, countryCode, timezone, lat, lng, aliases]) => ({
+  const seen = new Set<string>();
+  const rows = [...ROWS, ...ASIA_ROWS].filter(([ko, , cc]) => {
+    const key = `${ko}|${cc}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+  const cities = rows.map(([ko, en, countryCode, timezone, lat, lng, aliases]) => ({
     ko,
     en,
     countryCode,

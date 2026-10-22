@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { choseong, flagEmoji, normalize, searchPlaces } from './places';
+import { allCities, choseong, flagEmoji, normalize, searchPlaces } from './places';
 
 const names = (q: string) => searchPlaces(q).map((h) => (h.kind === 'city' ? h.ko : `[${h.ko}]`));
 
@@ -53,5 +53,40 @@ describe('도시·국가 검색', () => {
   it('정규화·국기', () => {
     expect(normalize(' São-Paulo ')).toBe('saopaulo');
     expect(flagEmoji('JP')).toBe('🇯🇵');
+  });
+
+  it('아시아 도시 확장: 한국 시·군, 일본·대만·중국 주요 도시', () => {
+    expect(names('용인')[0]).toBe('용인');
+    expect(names('김포')[0]).toBe('김포');
+    expect(names('gimpo')[0]).toBe('김포');
+    expect(names('에버랜드')[0]).toBe('용인');
+    expect(names('강남')[0]).toBe('서울');
+    expect(names('광주')[0]).toBe('광주');
+    expect(names('광주')).toContain('경기 광주');
+    expect(names('고성')).toEqual(expect.arrayContaining(['강원 고성', '경남 고성']));
+    expect(names('지우펀')[0]).toBe('신베이');
+    expect(names('연길')[0]).toBe('옌지');
+    expect(names('다카야마')[0]).toBe('다카야마');
+    expect(names('후에')[0]).toBe('후에');
+  });
+
+  it('데이터 품질: 같은 이름·국가 중복 없음, 좌표·시간대 형식', () => {
+    const all = allCities();
+    const keys = all.map((c) => `${c.ko}|${c.countryCode}`);
+    expect(new Set(keys).size).toBe(keys.length);
+    for (const c of all) {
+      expect(c.countryCode).toMatch(/^[A-Z]{2}$/);
+      expect(Math.abs(c.lat)).toBeLessThanOrEqual(90);
+      expect(Math.abs(c.lng)).toBeLessThanOrEqual(180);
+      expect(() => new Intl.DateTimeFormat('en', { timeZone: c.timezone })).not.toThrow();
+    }
+    // 한국 도시 좌표는 한반도 범위 안
+    for (const c of all.filter((x) => x.countryCode === 'KR')) {
+      expect(c.lat).toBeGreaterThan(33);
+      expect(c.lat).toBeLessThan(38.7);
+      expect(c.lng).toBeGreaterThan(124.5);
+      expect(c.lng).toBeLessThan(131);
+    }
+    expect(all.length).toBeGreaterThan(500);
   });
 });
