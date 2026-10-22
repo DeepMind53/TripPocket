@@ -1,6 +1,6 @@
 # 04. 데이터 모델
 
-- 저장소: IndexedDB (Dexie). DB 이름 `travel-planner`.
+- 저장소: IndexedDB (Dexie). DB 이름 `trippocket` (로그인 계정별 분리는 G5에서 결정).
 - 모든 타입은 `src/domain/types/`에 **Zod 스키마**로 정의하고 `z.infer`로 TS 타입을 만든다 (단일 정의).
 
 ## 1. 공통 규칙

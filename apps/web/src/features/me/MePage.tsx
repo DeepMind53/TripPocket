@@ -1,4 +1,11 @@
-import { ChevronRight, CircleHelp, DatabaseBackup, Palette, Settings } from 'lucide-react';
+import {
+  ChevronRight,
+  CircleHelp,
+  Database,
+  DatabaseBackup,
+  Palette,
+  Settings,
+} from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
@@ -22,7 +29,12 @@ export function MePage() {
           <MenuRow to="/settings" icon={<Settings />} label={t('me.settings')} />
           <MenuRow icon={<DatabaseBackup />} label={t('me.backup')} step={11} />
           <MenuRow icon={<CircleHelp />} label={t('me.help')} step={23} />
-          {import.meta.env.DEV && <MenuRow to="/dev/ui" icon={<Palette />} label={t('me.devUi')} />}
+          {import.meta.env.DEV && (
+            <>
+              <MenuRow to="/dev/ui" icon={<Palette />} label={t('me.devUi')} />
+              <MenuRow to="/dev/db" icon={<Database />} label={t('me.devDb')} />
+            </>
+          )}
         </ul>
       </div>
     </>

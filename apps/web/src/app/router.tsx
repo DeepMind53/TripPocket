@@ -42,6 +42,13 @@ export const routes: RouteObject[] = [
       return { Component: DevUiPage };
     },
   },
+  {
+    path: 'dev/db',
+    lazy: async () => {
+      const { DevDbPage } = await import('../features/dev/DevDbPage');
+      return { Component: DevDbPage };
+    },
+  },
   { path: '*', element: <NotFoundPage /> },
 ];
 
