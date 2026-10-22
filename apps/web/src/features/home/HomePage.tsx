@@ -1,3 +1,4 @@
+import { useTimeText } from '../../shared/hooks/useTimeText';
 import {
   dayNumberOf,
   getTripStatus,
@@ -20,6 +21,7 @@ import type { Destination } from '../../shared/lib/directions';
 import { Button, EmptyState } from '../../shared/ui';
 import { Wordmark } from './Wordmark';
 import { DirectionsSheet } from '../common/DirectionsSheet';
+import { openDirectionsDirect } from '../common/openDirections';
 import { QuickMenuButton } from '../common/QuickMenu';
 import { isDomesticTrip } from '../../domain/tripPlace';
 
@@ -127,6 +129,7 @@ function UpcomingTrip({ trip }: { trip: Trip }) {
 }
 
 function OngoingTrip({ trip }: { trip: Trip }) {
+  const { time, wide } = useTimeText();
   const { t } = useTranslation();
   useMinuteTick();
   const items = useTripItems(trip.id);
@@ -143,6 +146,7 @@ function OngoingTrip({ trip }: { trip: Trip }) {
   const planUrl = `/trips/${trip.id}/plan?day=${day}`;
 
   function directions(d: Destination) {
+    if (openDirectionsDirect(d)) return;
     setDest(d);
     setDirOpen(true);
   }
@@ -237,8 +241,13 @@ function OngoingTrip({ trip }: { trip: Trip }) {
                 >
                   {item.done && <Check aria-hidden="true" className="size-3.5" />}
                 </button>
-                <span className="tabular w-11 shrink-0 text-caption text-fg-sub">
-                  {item.startTime ?? '—'}
+                <span
+                  className={cn(
+                    'tabular shrink-0 text-caption text-fg-sub',
+                    wide ? 'w-16' : 'w-11',
+                  )}
+                >
+                  {time(item.startTime) ?? '—'}
                 </span>
                 <span
                   className={cn(

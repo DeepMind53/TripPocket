@@ -1,3 +1,5 @@
+import { useSettings } from '../../data/settingsStore';
+import { useTimeText } from '../../shared/hooks/useTimeText';
 import {
   dayNumberOf,
   getTripDays,
@@ -27,6 +29,7 @@ import { formatMonthDay } from '../../shared/lib/dateFormat';
 import { sortByTimeKeepingUntimed } from '../../domain/schedule';
 import { BottomSheet, Button, Chip, IconButton, snackbar, toast } from '../../shared/ui';
 import { DirectionsSheet } from '../common/DirectionsSheet';
+import { openDirectionsDirect } from '../common/openDirections';
 import { ItemDetailSheet } from './ItemDetailSheet';
 import { ItemFormSheet } from './ItemFormSheet';
 import { dayColor, KIND_ICON } from './itemKinds';
@@ -67,6 +70,7 @@ function PlanView({
   const [params, setParams] = useSearchParams();
   const days = getTripDays(trip.startDate, trip.endDate);
   const today = todayIn(trip.timezone);
+  const dimPast = useSettings((st) => st.dimPastItems);
   const ongoing = getTripStatus(trip.startDate, trip.endDate, today) === 'ongoing';
   const isDomestic = isDomesticTrip(trip);
 
@@ -230,11 +234,14 @@ function PlanView({
               index={index}
               items={items.filter((i) => i.date === date)}
               isToday={date === today}
+              isPast={dimPast && date !== null && date < today}
               lodging={date ? lodgingForNight(bookings, date) : null}
               bookingRows={date ? bookingRowsForDay(bookings, date) : []}
               onBooking={() => void navigate(`/trips/${trip.id}/bookings`)}
               onLodging={(b) => {
-                setDirDest({ name: b.title, address: b.details?.address });
+                const d = { name: b.title, address: b.details?.address };
+                if (openDirectionsDirect(d)) return;
+                setDirDest(d);
                 setDirOpen(true);
               }}
               onAdd={() => openAdd(date)}
@@ -283,11 +290,13 @@ function PlanView({
         mapApp={isDomestic ? 'naver' : 'google'}
         onDirections={() => {
           if (!selected) return;
-          setDirDest({
+          const d = {
             name: selected.title,
             address: selected.place?.address,
             coords: selected.place?.coords,
-          });
+          };
+          if (openDirectionsDirect(d)) return;
+          setDirDest(d);
           setDirOpen(true);
         }}
         onEdit={() => {
@@ -326,6 +335,7 @@ function DaySection({
   index,
   items,
   isToday,
+  isPast,
   onAdd,
   onOpen,
   onMenu,
@@ -339,6 +349,8 @@ function DaySection({
   index: number;
   items: ItineraryItem[];
   isToday: boolean;
+  /** 지난 날 (설정에서 켜면 흐리게) */
+  isPast: boolean;
   onAdd: () => void;
   onOpen: (item: ItineraryItem) => void;
   onMenu: () => void;
@@ -358,7 +370,10 @@ function DaySection({
   return (
     <section
       aria-label={title}
-      className="flex flex-col overflow-hidden rounded-2xl border border-line bg-surface"
+      className={cn(
+        'flex flex-col overflow-hidden rounded-2xl border border-line bg-surface',
+        isPast && 'opacity-60',
+      )}
     >
       {/* 날짜 머리글: 날짜 색 띠 + "1일차" 알약 (일정 번호 색과 같음) */}
       <div
@@ -444,6 +459,7 @@ function DaySection({
 }
 
 function BookingLine({ row, onOpen }: { row: BookingRow; onOpen: () => void }) {
+  const { time, wide } = useTimeText();
   const { t } = useTranslation();
   const b = row.booking;
   const Icon = BOOKING_ICON[b.kind];
@@ -465,7 +481,9 @@ function BookingLine({ row, onOpen }: { row: BookingRow; onOpen: () => void }) {
         >
           <Icon className="size-3.5" />
         </span>
-        <span className="tabular w-11 shrink-0 text-caption text-fg-sub">{row.time ?? '—'}</span>
+        <span className={cn('tabular shrink-0 text-caption text-fg-sub', wide ? 'w-16' : 'w-11')}>
+          {time(row.time) ?? '—'}
+        </span>
         <span className="flex min-w-0 flex-1 flex-col">
           <span className="truncate text-body-2 font-medium">
             {row.part === 'arrive' && `${t('plan.arrive')} · `}
@@ -496,6 +514,7 @@ function ItemRow({
   color: string;
   onOpen: () => void;
 }) {
+  const { time, wide } = useTimeText();
   const { t } = useTranslation();
   const Icon = KIND_ICON[item.kind];
   return (
@@ -514,8 +533,13 @@ function ItemRow({
         >
           {item.done ? <Check className="size-3.5" /> : n}
         </span>
-        <span className="tabular w-11 shrink-0 text-caption leading-6 font-semibold text-fg-sub">
-          {item.startTime ?? '—'}
+        <span
+          className={cn(
+            'tabular shrink-0 text-caption leading-6 font-semibold text-fg-sub',
+            wide ? 'w-16' : 'w-11',
+          )}
+        >
+          {time(item.startTime) ?? '—'}
         </span>
         <span className={cn('flex min-w-0 flex-1 flex-col', item.done && 'opacity-50')}>
           <span className={cn('text-body-1', item.done && 'line-through')}>{item.title}</span>

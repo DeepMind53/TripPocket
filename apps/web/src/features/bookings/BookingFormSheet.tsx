@@ -1,3 +1,4 @@
+import { useSettings } from '../../data/settingsStore';
 import { addDays, diffDays, type Booking, type Trip } from '@trippocket/shared';
 import { Trash2 } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
@@ -537,6 +538,7 @@ function DateTimeRow(props: {
   onTime: (e: { target: { value: string } }) => void;
   idPrefix: string;
 }) {
+  const timeStep = useSettings((st) => st.timeStepMin) * 60;
   return (
     <Row>
       <Field label={props.dateLabel}>
@@ -553,6 +555,7 @@ function DateTimeRow(props: {
         <input
           id={`${props.idPrefix}-time`}
           type="time"
+          step={timeStep}
           value={props.time}
           onChange={props.onTime}
           className={`${inputClass} tabular`}

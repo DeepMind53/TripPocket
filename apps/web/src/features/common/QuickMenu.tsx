@@ -19,9 +19,10 @@ import { lodgingForNight } from '../../domain/lodging';
 import { copyText } from '../../shared/lib/clipboard';
 import type { Destination } from '../../shared/lib/directions';
 import { useRouteSheet } from '../../shared/hooks/useRouteSheet';
-import { applyTheme, type ThemePref } from '../../shared/lib/theme';
+import { updateSettings, useSettings } from '../../data/settingsStore';
 import { BottomSheet, IconButton, SegmentedControl, toast } from '../../shared/ui';
 import { DirectionsSheet } from './DirectionsSheet';
+import { openDirectionsDirect } from './openDirections';
 import { isDomesticTrip } from '../../domain/tripPlace';
 
 const SHEET_KEY = 'quick-menu';
@@ -71,7 +72,9 @@ function TripQuickMenu({ open, setOpen }: { open: boolean; setOpen: (open: boole
         toast(t('quickMenu.noLodging'));
         return;
       }
-      setDest({ name: lodging.title, address: lodging.details?.address });
+      const d = { name: lodging.title, address: lodging.details?.address };
+      if (openDirectionsDirect(d)) return;
+      setDest(d);
       setDirOpen(true);
     },
     bookingNo: () => {
@@ -141,10 +144,9 @@ interface Shortcuts {
 function QuickMenuContent({ shortcuts }: { shortcuts?: Shortcuts }) {
   const inTrip = shortcuts !== undefined;
   const { t } = useTranslation();
-  // 10단계(설정)에서 저장소에 연결한다. 지금은 화면에서만 바뀐다.
-  const [theme, setTheme] = useState<ThemePref>(
-    (document.documentElement.dataset.theme as ThemePref | undefined) ?? 'system',
-  );
+  const theme = useSettings((st) => st.theme);
+  const app = useSettings((st) => st.directionsApp);
+  const mode = useSettings((st) => st.travelMode);
 
   return (
     <div className="flex flex-col gap-5">
@@ -198,14 +200,38 @@ function QuickMenuContent({ shortcuts }: { shortcuts?: Shortcuts }) {
         <SegmentedControl
           label={t('quickMenu.theme')}
           value={theme}
-          onChange={(v) => {
-            setTheme(v);
-            applyTheme(v);
-          }}
+          onChange={(v) => updateSettings({ theme: v })}
           options={[
             { value: 'light', label: t('quickMenu.themeLight') },
             { value: 'dark', label: t('quickMenu.themeDark') },
             { value: 'system', label: t('quickMenu.themeSystem') },
+          ]}
+        />
+        <span className="mt-1 text-caption font-semibold text-fg-sub">
+          {t('settings.directionsApp')}
+        </span>
+        <SegmentedControl
+          label={t('settings.directionsApp')}
+          value={app}
+          onChange={(v) => updateSettings({ directionsApp: v })}
+          options={[
+            { value: 'naver', label: t('quickMenu.appNaver') },
+            { value: 'google', label: t('quickMenu.appGoogle') },
+            { value: 'kakao', label: t('quickMenu.appKakao') },
+            { value: 'ask', label: t('quickMenu.appAsk') },
+          ]}
+        />
+        <span className="mt-1 text-caption font-semibold text-fg-sub">
+          {t('settings.travelMode')}
+        </span>
+        <SegmentedControl
+          label={t('settings.travelMode')}
+          value={mode}
+          onChange={(v) => updateSettings({ travelMode: v })}
+          options={[
+            { value: 'transit', label: t('dir.transit') },
+            { value: 'walk', label: t('dir.walk') },
+            { value: 'car', label: t('dir.car') },
           ]}
         />
       </section>

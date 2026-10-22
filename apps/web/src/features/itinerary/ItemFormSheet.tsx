@@ -1,3 +1,4 @@
+import { useSettings } from '../../data/settingsStore';
 import { ITEM_KINDS, type ItemKind, type ItineraryItem, type LocalDate } from '@trippocket/shared';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from '../../i18n';
@@ -56,6 +57,8 @@ function ItemForm({
   const [kind, setKind] = useState<ItemKind>(item?.kind ?? 'place');
   const [title, setTitle] = useState(item?.title ?? '');
   const [startTime, setStartTime] = useState(item?.startTime ?? '');
+  // 설정의 시간 입력 간격 (분 → 초)
+  const timeStep = useSettings((st) => st.timeStepMin) * 60;
   const [endTime, setEndTime] = useState(item?.endTime ?? '');
   const [address, setAddress] = useState(item?.place?.address ?? '');
   const [memo, setMemo] = useState(item?.memo ?? '');
@@ -155,6 +158,7 @@ function ItemForm({
           <input
             id="item-start"
             type="time"
+            step={timeStep}
             value={startTime}
             onChange={(e) => setStartTime(e.target.value)}
             className={`${inputClass} tabular`}
@@ -164,6 +168,7 @@ function ItemForm({
           <input
             id="item-end"
             type="time"
+            step={timeStep}
             value={endTime}
             onChange={(e) => setEndTime(e.target.value)}
             className={`${inputClass} tabular`}

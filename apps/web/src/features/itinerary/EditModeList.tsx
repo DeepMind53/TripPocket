@@ -1,3 +1,5 @@
+import { useTimeText } from '../../shared/hooks/useTimeText';
+import { haptic } from '../../data/settingsStore';
 import {
   closestCorners,
   DndContext,
@@ -120,7 +122,7 @@ export default function EditModeList({ sections, items }: EditModeListProps) {
       collisionDetection={closestCorners}
       onDragStart={() => {
         dragging.current = true;
-        navigator.vibrate?.(10);
+        haptic();
       }}
       onDragOver={onDragOver}
       onDragEnd={onDragEnd}
@@ -200,6 +202,7 @@ function DayColumn({
 }
 
 function SortableRow({ item, n, color }: { item: ItineraryItem; n: number; color: string }) {
+  const { time, wide } = useTimeText();
   const { t } = useTranslation();
   const {
     attributes,
@@ -237,8 +240,8 @@ function SortableRow({ item, n, color }: { item: ItineraryItem; n: number; color
       >
         {n}
       </span>
-      <span className="tabular w-11 shrink-0 text-caption text-fg-sub">
-        {item.startTime ?? '—'}
+      <span className={cn('tabular shrink-0 text-caption text-fg-sub', wide ? 'w-16' : 'w-11')}>
+        {time(item.startTime) ?? '—'}
       </span>
       <span className="min-w-0 flex-1 truncate text-body-2 font-medium">{item.title}</span>
       <Icon aria-hidden="true" className="size-4 shrink-0 text-fg-muted" />

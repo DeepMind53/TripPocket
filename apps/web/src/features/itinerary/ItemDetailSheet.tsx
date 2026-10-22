@@ -1,3 +1,4 @@
+import { useTimeText } from '../../shared/hooks/useTimeText';
 import type { ItineraryItem } from '@trippocket/shared';
 import {
   ArrowDown,
@@ -70,8 +71,9 @@ export function ItemDetailSheet({
   }
 
   const Icon = item ? KIND_ICON[item.kind] : null;
+  const { time: fmt } = useTimeText();
   const time = item?.startTime
-    ? `${item.startTime}${item.endTime ? ` – ${item.endTime}` : ''}`
+    ? `${fmt(item.startTime)}${item.endTime ? ` – ${fmt(item.endTime)}` : ''}`
     : null;
   const dest = item ? { name: item.title, address, coords: item.place?.coords } : null;
 

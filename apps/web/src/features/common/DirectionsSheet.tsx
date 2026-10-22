@@ -1,27 +1,14 @@
 import { ChevronRight } from 'lucide-react';
 import { useTranslation } from '../../i18n';
-import { useSetting } from '../../data/hooks';
-import { settingsRepo } from '../../data/repositories/settingsRepo';
+import { updateSettings, useSettings } from '../../data/settingsStore';
 import {
   directionsLink,
   openMapLink,
   preferredAppOrder,
   type Destination,
-  type MapApp,
-  type TravelMode,
 } from '../../shared/lib/directions';
 import { BottomSheet, SegmentedControl } from '../../shared/ui';
-
-const PREFS_KEY = 'directions';
-interface DirectionsPrefs {
-  mode: TravelMode;
-}
-
-const APP_MARK: Record<MapApp, { bg: string; fg: string; letter: string }> = {
-  naver: { bg: '#03C75A', fg: '#FFFFFF', letter: 'N' },
-  google: { bg: '#4285F4', fg: '#FFFFFF', letter: 'G' },
-  kakao: { bg: '#FEE500', fg: '#191F28', letter: 'K' },
-};
+import { MapAppMark } from './MapAppMark';
 
 export interface DirectionsSheetProps {
   open: boolean;
@@ -39,7 +26,7 @@ export function DirectionsSheet({
   isDomestic,
 }: DirectionsSheetProps) {
   const { t } = useTranslation();
-  const { mode } = useSetting<DirectionsPrefs>(PREFS_KEY, { mode: 'transit' });
+  const mode = useSettings((st) => st.travelMode);
   const appName = window.location.hostname;
 
   return (
@@ -56,9 +43,7 @@ export function DirectionsSheet({
             <SegmentedControl
               label={t('dir.mode')}
               value={mode}
-              onChange={(m) =>
-                void settingsRepo.set(PREFS_KEY, { mode: m } satisfies DirectionsPrefs)
-              }
+              onChange={(m) => updateSettings({ travelMode: m })}
               options={[
                 { value: 'transit', label: t('dir.transit') },
                 { value: 'walk', label: t('dir.walk') },
@@ -69,7 +54,6 @@ export function DirectionsSheet({
           <ul className="flex flex-col divide-y divide-line overflow-hidden rounded-card border border-line">
             {preferredAppOrder(isDomestic).map((app) => {
               const link = directionsLink(app, mode, destination, appName);
-              const mark = APP_MARK[app];
               return (
                 <li key={app}>
                   <a
@@ -82,13 +66,7 @@ export function DirectionsSheet({
                     }}
                     className="flex min-h-14 items-center gap-3 bg-surface px-4"
                   >
-                    <span
-                      aria-hidden="true"
-                      className="grid size-7 place-items-center rounded-lg text-caption font-extrabold"
-                      style={{ background: mark.bg, color: mark.fg }}
-                    >
-                      {mark.letter}
-                    </span>
+                    <MapAppMark app={app} />
                     <span className="flex-1 text-body-2 font-medium">
                       {t('dir.openWith', { app: t(`dir.${app}`) })}
                     </span>

@@ -35,3 +35,9 @@ export {
   type CountryInfo,
   type PlaceHit,
 } from './data/places';
+export {
+  DEVICE_SETTINGS,
+  parseSettings,
+  SETTINGS_DEFAULTS,
+  type Settings,
+} from './settings/settings';

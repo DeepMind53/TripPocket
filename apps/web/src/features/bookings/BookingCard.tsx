@@ -1,3 +1,4 @@
+import { useTimeText } from '../../shared/hooks/useTimeText';
 import { nightsBetween, type Booking } from '@trippocket/shared';
 import { BedDouble, Copy, Plane } from 'lucide-react';
 import { useTranslation } from '../../i18n';
@@ -83,16 +84,18 @@ function Point({
   terminal?: string | undefined;
   align?: 'start' | 'end';
 }) {
+  const { time: fmt } = useTimeText();
   return (
     <span className={`flex flex-col ${align === 'end' ? 'items-end' : ''}`}>
       <span className="text-title-1 leading-none">{code || '—'}</span>
-      <span className="mt-1 text-body-2 text-fg-sub">{time ?? '--:--'}</span>
+      <span className="mt-1 text-body-2 text-fg-sub">{fmt(time) ?? '--:--'}</span>
       {terminal && <span className="text-micro text-fg-muted">{terminal}</span>}
     </span>
   );
 }
 
 function LodgingBody({ booking: b }: { booking: Booking }) {
+  const { time } = useTimeText();
   const { t } = useTranslation();
   const nights = b.end ? nightsBetween(b.start.date, b.end.date) : 0;
   return (
@@ -110,14 +113,14 @@ function LodgingBody({ booking: b }: { booking: Booking }) {
         <span className="flex flex-col">
           <span className="text-fg-muted">{t('bookings.checkIn')}</span>
           <span className="text-body-2">
-            {formatMonthDay(b.start.date)} {b.start.time ?? ''}
+            {formatMonthDay(b.start.date)} {time(b.start.time) ?? ''}
           </span>
         </span>
         {b.end && (
           <span className="flex flex-col">
             <span className="text-fg-muted">{t('bookings.checkOut')}</span>
             <span className="text-body-2">
-              {formatMonthDay(b.end.date)} {b.end.time ?? ''}
+              {formatMonthDay(b.end.date)} {time(b.end.time) ?? ''}
             </span>
           </span>
         )}
@@ -130,6 +133,7 @@ function LodgingBody({ booking: b }: { booking: Booking }) {
 }
 
 function BasicBody({ booking: b }: { booking: Booking }) {
+  const { time } = useTimeText();
   const { t } = useTranslation();
   const Icon = BOOKING_ICON[b.kind];
   return (
@@ -138,7 +142,7 @@ function BasicBody({ booking: b }: { booking: Booking }) {
       <span className="flex min-w-0 flex-1 flex-col">
         <span className="text-body-1">{b.title}</span>
         <span className="tabular text-caption text-fg-muted">
-          {t(`bookingKind.${b.kind}`)} · {formatMonthDay(b.start.date)} {b.start.time ?? ''}
+          {t(`bookingKind.${b.kind}`)} · {formatMonthDay(b.start.date)} {time(b.start.time) ?? ''}
           {b.start.place ? ` · ${b.start.place}` : ''}
           {b.details?.partySize
             ? ` · ${t('bookings.partySizeValue', { n: b.details.partySize })}`

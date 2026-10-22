@@ -1,3 +1,4 @@
+import { haptic } from '../../data/settingsStore';
 import {
   closestCorners,
   DndContext,
@@ -102,7 +103,7 @@ export function ChecklistBoard({
     <DndContext
       sensors={sensors}
       collisionDetection={closestCorners}
-      onDragStart={() => navigator.vibrate?.(10)}
+      onDragStart={() => haptic()}
       onDragOver={onDragOver}
       onDragEnd={onDragEnd}
       accessibility={{
@@ -231,7 +232,10 @@ function Row({
         type="button"
         role="checkbox"
         aria-checked={item.checked}
-        onClick={onToggle}
+        onClick={() => {
+          haptic();
+          onToggle();
+        }}
         className="flex min-h-11 min-w-0 flex-1 items-center gap-3 rounded-btn pr-2 text-left active:bg-bg-subtle"
       >
         <span

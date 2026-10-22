@@ -20,6 +20,14 @@ export function weekdayChar(date: LocalDate): string {
 }
 
 /** "10.24 (금)" */
+/** "09:30" → 24시간이면 그대로, 12시간이면 "오전 9:30" */
+export function formatTime(time: string, format: '24h' | '12h'): string {
+  if (format === '24h') return time;
+  const [h = 0, m = 0] = time.split(':').map(Number);
+  const half = h < 12 ? i18n.t('date.am') : i18n.t('date.pm');
+  return `${half} ${h % 12 === 0 ? 12 : h % 12}:${String(m).padStart(2, '0')}`;
+}
+
 export function formatMonthDay(date: LocalDate): string {
   const { m, d } = parts(date);
   return i18n.t('date.monthDay', { m, d, w: weekdayChar(date) });
