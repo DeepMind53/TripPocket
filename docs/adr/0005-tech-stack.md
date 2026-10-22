@@ -32,6 +32,7 @@
 | 코드 품질 | ESLint (flat config) + typescript-eslint + Prettier, Husky + lint-staged |
 | 호스팅 | 웹: Cloudflare Pages / API: 홈 PC + Cloudflare Tunnel |
 
+- TypeScript는 **6.0.x로 고정**(`~6.0.3`): TypeScript 7은 typescript-eslint가 아직 지원하지 않음 (peer `<6.1.0`, 2026-10-22 확인). 지원되면 별도 단계에서 올린다.
 - 각 라이브러리의 정확한 버전은 1단계에서 설치 시점 기준 최신 안정 버전으로 고정(lockfile)한다.
 - 위 목록에 없는 의존성 추가는 CLAUDE.md 규칙대로 사용자 확인 후 진행.
 

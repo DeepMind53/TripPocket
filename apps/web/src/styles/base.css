@@ -1,0 +1,43 @@
+/* 1단계 임시 스타일. 2단계에서 디자인 토큰(docs/11-design-system.md)으로 교체. */
+:root {
+  color-scheme: light dark;
+  font-family:
+    'Pretendard Variable', Pretendard, 'Apple SD Gothic Neo', 'Malgun Gothic', system-ui, sans-serif;
+  word-break: keep-all;
+}
+body {
+  margin: 0;
+  background: #ffffff;
+  color: #191f28;
+}
+@media (prefers-color-scheme: dark) {
+  body {
+    background: #0f1115;
+    color: #f2f4f7;
+  }
+}
+.start {
+  min-height: 100dvh;
+  display: grid;
+  place-content: center;
+  gap: 8px;
+  padding: 24px 20px;
+  text-align: center;
+}
+.start__badge {
+  margin: 0;
+  font-size: 13px;
+  color: #2f6bff;
+  font-weight: 600;
+}
+.start__title {
+  margin: 0;
+  font-size: 32px;
+  letter-spacing: -0.02em;
+}
+.start__desc,
+.start__sample {
+  margin: 0;
+  font-size: 15px;
+  opacity: 0.8;
+}

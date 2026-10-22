@@ -1,0 +1,48 @@
+import js from '@eslint/js';
+import globals from 'globals';
+import reactHooks from 'eslint-plugin-react-hooks';
+import reactRefresh from 'eslint-plugin-react-refresh';
+import tseslint from 'typescript-eslint';
+
+export default tseslint.config(
+  { ignores: ['**/dist', '**/coverage', '**/playwright-report', '**/test-results', 'docs'] },
+  js.configs.recommended,
+  ...tseslint.configs.recommended,
+  {
+    files: ['**/*.{ts,tsx}'],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'error',
+      '@typescript-eslint/consistent-type-imports': 'error',
+    },
+  },
+  {
+    files: ['apps/web/**/*.{ts,tsx}'],
+    languageOptions: { globals: globals.browser },
+    plugins: { 'react-hooks': reactHooks, 'react-refresh': reactRefresh },
+    rules: {
+      ...reactHooks.configs.recommended.rules,
+      'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
+    },
+  },
+  {
+    // 공용 패키지는 React·브라우저에 의존하지 않는다 (CLAUDE.md §4)
+    files: ['packages/shared/**/*.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['react', 'react-*', '@trippocket/web*'],
+              message: 'shared는 앱 코드에 의존하지 않아요',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ['**/*.config.{ts,js}', 'eslint.config.js'],
+    languageOptions: { globals: globals.node },
+  },
+);
