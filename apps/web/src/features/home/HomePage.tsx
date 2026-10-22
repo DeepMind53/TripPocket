@@ -17,7 +17,8 @@ import { copyText } from '../../shared/lib/clipboard';
 import { cn } from '../../shared/lib/cn';
 import { formatPeriod, formatTripBadge, formatTripLength } from '../../shared/lib/dateFormat';
 import type { Destination } from '../../shared/lib/directions';
-import { Button, EmptyState, TopBar } from '../../shared/ui';
+import { Button, EmptyState } from '../../shared/ui';
+import { Wordmark } from './Wordmark';
 import { DirectionsSheet } from '../common/DirectionsSheet';
 import { QuickMenuButton } from '../common/QuickMenu';
 import { isDomesticTrip } from '../../domain/tripPlace';
@@ -51,7 +52,12 @@ export function HomePage() {
 
   return (
     <>
-      <TopBar title={t('app.name')} actions={<QuickMenuButton />} />
+      {/* 홈만 가운데 로고. 빠른 메뉴 버튼은 다른 화면과 같은 오른쪽 위치 */}
+      <header className="sticky top-[env(safe-area-inset-top)] z-20 grid min-h-14 grid-cols-[44px_1fr_44px] items-center bg-bg/95 px-1 backdrop-blur">
+        <span />
+        <Wordmark label={t('app.name')} />
+        <QuickMenuButton />
+      </header>
       {trips && !featured && (
         <EmptyState
           emoji="🧳"

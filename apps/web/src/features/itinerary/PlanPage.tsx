@@ -211,7 +211,7 @@ function PlanView({
         </Button>
       </div>
 
-      <div className="flex flex-col gap-6 px-5 pt-2">
+      <div className={cn('flex flex-col px-5 pt-2', editing ? 'gap-6' : 'gap-4 pb-4')}>
         {editing ? (
           <Suspense fallback={null}>
             <EditModeList
@@ -356,10 +356,29 @@ function DaySection({
     : t('plan.wishlist');
 
   return (
-    <section aria-label={title} className="flex flex-col gap-1">
-      <div className="flex items-center gap-2">
-        <h2 className="tabular flex flex-1 items-center gap-2 text-title-2">
-          {title}
+    <section
+      aria-label={title}
+      className="flex flex-col overflow-hidden rounded-2xl border border-line bg-surface"
+    >
+      {/* 날짜 머리글: 날짜 색 띠 + "1일차" 알약 (일정 번호 색과 같음) */}
+      <div
+        className="flex min-h-12 items-center gap-2 border-b border-line bg-bg-subtle/60 pr-2 pl-4"
+        style={{ boxShadow: `inset 4px 0 0 ${color}` }}
+      >
+        <h2 aria-label={title} className="tabular flex flex-1 items-center gap-2 py-2">
+          {date ? (
+            <>
+              <span
+                className="rounded-full px-2.5 py-0.5 text-caption font-bold text-white"
+                style={{ background: color }}
+              >
+                {t('plan.dayN', { n: index + 1 })}
+              </span>
+              <span className="text-body-1 font-bold">{formatMonthDay(date)}</span>
+            </>
+          ) : (
+            <span className="text-body-1 font-bold">{title}</span>
+          )}
           {isToday && (
             <span className="rounded-full bg-primary-weak px-2 py-0.5 text-micro text-primary">
               {t('date.today')}
@@ -371,23 +390,22 @@ function DaySection({
             label={t('plan.dayMenu', { day: title })}
             icon={<Ellipsis />}
             onClick={onMenu}
-            className="-mr-2"
           />
         )}
       </div>
       {bookingRows.length > 0 && (
-        <ul aria-label={t('plan.bookingsLabel')} className="flex flex-col gap-1 py-1">
+        <ul aria-label={t('plan.bookingsLabel')} className="flex flex-col gap-1 px-3 pt-2">
           {bookingRows.map((row) => (
             <BookingLine key={`${row.booking.id}-${row.part}`} row={row} onOpen={onBooking} />
           ))}
         </ul>
       )}
       {items.length === 0 && (
-        <p className="py-2 text-body-2 text-fg-muted">
+        <p className="px-4 py-3 text-body-2 text-fg-muted">
           {date ? t('plan.emptyDay') : t('plan.wishEmpty')}
         </p>
       )}
-      <ol className="flex flex-col">
+      <ol className="flex flex-col divide-y divide-line/70 px-4">
         {items.map((item, i) => (
           <ItemRow key={item.id} item={item} n={i + 1} color={color} onOpen={() => onOpen(item)} />
         ))}
@@ -395,7 +413,7 @@ function DaySection({
       <button
         type="button"
         onClick={onAdd}
-        className="mt-1 flex h-11 items-center justify-center gap-1 rounded-btn border border-dashed border-line text-body-2 font-semibold text-fg-sub"
+        className="mx-3 mb-3 flex h-11 items-center justify-center gap-1 rounded-btn border border-dashed border-line text-body-2 font-semibold text-fg-sub"
       >
         <Plus aria-hidden="true" className="size-4" />
         {t('plan.addItem')}
@@ -408,7 +426,7 @@ function DaySection({
             title: lodging.booking.title,
             night: lodging.night,
           })}
-          className="mt-2 flex items-center gap-2 rounded-btn bg-bg-subtle px-3 py-2.5 text-left"
+          className="mx-3 mb-3 -mt-1 flex items-center gap-2 rounded-btn bg-bg-subtle px-3 py-2.5 text-left"
         >
           <BedDouble aria-hidden="true" className="size-4 shrink-0 text-day-4" />
           <span className="text-caption font-semibold text-fg-sub">{t('plan.lodging')}</span>
@@ -486,16 +504,17 @@ function ItemRow({
         type="button"
         onClick={onOpen}
         aria-label={t('plan.itemLabel', { n, title: item.title })}
-        className="flex w-full items-start gap-3 rounded-btn py-2.5 text-left active:bg-bg-subtle"
+        className="flex w-full items-start gap-3 py-3 text-left active:bg-bg-subtle"
       >
+        {/* 번호·시간·종류는 제목 첫 줄 높이(24px)에 가운데 맞춤 */}
         <span
           aria-hidden="true"
-          className="tabular mt-0.5 grid size-6 shrink-0 place-items-center rounded-full text-micro text-white"
+          className="tabular grid size-6 shrink-0 place-items-center rounded-full text-micro font-bold text-white"
           style={{ background: color }}
         >
           {item.done ? <Check className="size-3.5" /> : n}
         </span>
-        <span className="tabular w-11 shrink-0 pt-0.5 text-caption text-fg-sub">
+        <span className="tabular w-11 shrink-0 text-caption leading-6 font-semibold text-fg-sub">
           {item.startTime ?? '—'}
         </span>
         <span className={cn('flex min-w-0 flex-1 flex-col', item.done && 'opacity-50')}>
@@ -504,7 +523,7 @@ function ItemRow({
             <span className="truncate text-caption text-fg-muted">{item.place.address}</span>
           )}
         </span>
-        <span className="flex shrink-0 items-center gap-1 rounded-md bg-bg-subtle px-1.5 py-0.5 text-micro text-fg-sub">
+        <span className="flex h-6 shrink-0 items-center gap-1 rounded-md bg-bg-subtle px-1.5 text-micro text-fg-sub">
           <Icon aria-hidden="true" className="size-3" />
           {t(`kind.${item.kind}`)}
         </span>
