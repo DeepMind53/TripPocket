@@ -87,4 +87,18 @@ export const MIGRATIONS: readonly string[] = [
     PRIMARY KEY (date, currency)
   );
   `,
+  // 4: AI 추천 사용량·캐시 (docs/14 §9) — 기준점 이름만, 좌표 없음
+  `
+  CREATE TABLE ai_usage (
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    date TEXT NOT NULL,
+    count INTEGER NOT NULL,
+    PRIMARY KEY (user_id, date)
+  );
+  CREATE TABLE ai_cache (
+    key TEXT PRIMARY KEY,
+    result_json TEXT NOT NULL,
+    expires_at TEXT NOT NULL
+  );
+  `,
 ];

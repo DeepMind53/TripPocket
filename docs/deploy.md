@@ -90,3 +90,8 @@
 ## 6. 환율 인증키 (19단계, 사용자 작업 — 무료, 선택)
 - 한국수출입은행 https://www.koreaexim.go.kr → 오픈API → 현재환율 → 인증키 발급 신청 → `apps/server/.env`의 `EXIM_API_KEY`
 - 키가 없거나 홈 PC가 꺼져 있어도 앱은 무료 국제 시세(currency-api, 하루 1회)로 계산하고, 화면에 "국제 시세(참고용)"로 표시한다
+
+## 7. AI 추천 수집 키 (20단계, 사용자 작업 — 무료)
+- 네이버: 5절에서 만든 애플리케이션 → API 설정 → 사용 API에 **검색** 추가 (같은 Client ID·Secret 사용). 따로 만들면 `.env`의 `NAVER_SEARCH_ID`·`NAVER_SEARCH_SECRET`
+- 카카오: 5절 앱의 REST API 키를 그대로 사용 (가까운 역 찾기, 국내). 해외는 OpenStreetMap(키 없음)
+- 확인: 로그인 → 마이 → AI 추천 수집(개발용) (개발 빌드에서만 메뉴 표시, 주소 `/dev/ai`)

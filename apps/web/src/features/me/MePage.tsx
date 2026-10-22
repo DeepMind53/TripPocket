@@ -6,6 +6,7 @@ import {
   Palette,
   Settings,
   Smartphone,
+  Sparkles,
 } from 'lucide-react';
 import { useInstall } from '../../app/pwa';
 import { useRouteSheet } from '../../shared/hooks/useRouteSheet';
@@ -42,6 +43,7 @@ export function MePage() {
             <>
               <MenuRow to="/dev/ui" icon={<Palette />} label={t('me.devUi')} />
               <MenuRow to="/dev/db" icon={<Database />} label={t('me.devDb')} />
+              <MenuRow to="/dev/ai" icon={<Sparkles />} label={t('me.devAi')} />
             </>
           )}
         </ul>

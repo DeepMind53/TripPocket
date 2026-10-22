@@ -72,3 +72,12 @@ export {
   toKrw,
   type FxSnapshot,
 } from './fx/fx';
+export {
+  choosePeriod,
+  countByPeriod,
+  DEFAULT_RULE,
+  PERIOD_MONTHS,
+  withinMonths,
+  type PeriodMonths,
+  type PeriodRule,
+} from './ai/periods';

@@ -96,6 +96,12 @@ export const routes: RouteObject[] = [
     },
   },
   {
+    path: 'dev/ai',
+    lazy: async () => ({
+      Component: (await import('../features/dev/DevAiPage')).DevAiPage,
+    }),
+  },
+  {
     path: 'dev/db',
     lazy: async () => {
       const { DevDbPage } = await import('../features/dev/DevDbPage');

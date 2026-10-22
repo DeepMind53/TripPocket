@@ -6,6 +6,7 @@ import { timingSafeEqual } from 'node:crypto';
 import type { Config } from './config';
 import type { Db } from './db/database';
 import { authRoutes } from './routes/auth';
+import { aiRoutes } from './routes/ai';
 import { meRoutes } from './routes/me';
 import { syncRoutes } from './routes/sync';
 import { latestFx } from './services/fx';
@@ -75,6 +76,7 @@ export async function buildApp(config: Config, db: Db): Promise<FastifyInstance>
   authRoutes(app, config, db);
   meRoutes(app, db);
   syncRoutes(app, db);
+  aiRoutes(app, config, db);
 
   // 환율: 로그인 불필요(공개 데이터), IP당 제한, 1시간 캐시 (docs/12 §2.2)
   app.get(
