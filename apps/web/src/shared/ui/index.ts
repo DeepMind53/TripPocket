@@ -1,7 +1,8 @@
 export { BottomSheet } from './BottomSheet';
 export { Button } from './Button';
 export { Chip } from './Chip';
-export { DateRangePicker } from './DateRangePicker';
+export { DateRangePicker, type DayNote } from './DateRangePicker';
+export { WeatherIcon } from './WeatherIcon';
 export { EmptyState } from './EmptyState';
 export { IconButton } from './IconButton';
 export { RadioList } from './RadioList';

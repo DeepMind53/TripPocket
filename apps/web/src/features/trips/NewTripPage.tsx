@@ -15,7 +15,8 @@ import { cn } from '../../shared/lib/cn';
 import { COVER_COLORS, DEFAULT_EMOJIS } from '../../shared/lib/coverColors';
 import { formatMonthDay, formatTripLength } from '../../shared/lib/dateFormat';
 import type { DateRange } from '../../shared/lib/dateRange';
-import { Button, Chip, DateRangePicker, TopBar, toast } from '../../shared/ui';
+import { Button, Chip, TopBar, toast } from '../../shared/ui';
+import { TripCalendar } from './TripCalendar';
 
 type Step = 1 | 2 | 3;
 
@@ -145,7 +146,12 @@ export function NewTripPage() {
             </div>
           }
         >
-          <DateRangePicker value={range} onChange={setRange} today={today} />
+          <TripCalendar
+            destinations={destinations}
+            value={range}
+            onChange={setRange}
+            today={today}
+          />
         </StepBody>
       )}
 

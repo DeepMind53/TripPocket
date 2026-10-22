@@ -1,4 +1,5 @@
-import { expect, test, type Locator } from '@playwright/test';
+import { type Locator } from '@playwright/test';
+import { expect, test } from './fixtures';
 import { createTrip } from './helpers';
 
 // 실제 PC처럼 스크롤바를 보이게 띄운다 (Playwright 기본값은 스크롤바 숨김이라 화면 밀림을 재현 못 함)

@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 import { createTrip } from './helpers';
 
 test('홈이 열리고 탭으로 이동한다', async ({ page }) => {

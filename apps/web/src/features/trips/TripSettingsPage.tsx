@@ -11,15 +11,9 @@ import { cn } from '../../shared/lib/cn';
 import { COVER_COLORS, DEFAULT_EMOJIS } from '../../shared/lib/coverColors';
 import { formatPeriod, formatTripLength } from '../../shared/lib/dateFormat';
 import type { DateRange } from '../../shared/lib/dateRange';
-import {
-  BottomSheet,
-  Button,
-  DateRangePicker,
-  SegmentedControl,
-  TopBar,
-  toast,
-} from '../../shared/ui';
+import { BottomSheet, Button, SegmentedControl, TopBar, toast } from '../../shared/ui';
 import { deleteTripWithUndo } from './tripActions';
+import { TripCalendar } from './TripCalendar';
 
 /** S-19 여행 설정 */
 export function TripSettingsPage() {
@@ -240,12 +234,13 @@ function TripSettingsForm({ trip, items }: { trip: Trip; items: ItineraryItem[] 
           </Button>
         }
       >
-        <DateRangePicker
+        <TripCalendar
+          destinations={trip.destinations}
           value={draft}
           onChange={setDraft}
           today={today}
           from={calendarFrom}
-          inSheet
+          excludeTripId={trip.id}
         />
       </BottomSheet>
     </div>

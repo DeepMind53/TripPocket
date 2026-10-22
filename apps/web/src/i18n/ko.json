@@ -136,7 +136,8 @@
     "lodging": "숙소",
     "bookingsLabel": "이날 예약",
     "arrive": "도착",
-    "openBooking": "{{title}} 예약 보기"
+    "openBooking": "{{title}} 예약 보기",
+    "dayN": "{{n}}일차"
   },
   "places": {
     "emptyTitle": "장소 찾기",
@@ -398,5 +399,13 @@
     "tour": "투어",
     "ticket": "티켓",
     "other": "기타"
+  },
+  "calendarInfo": {
+    "weather": "날씨",
+    "holidays": "공휴일",
+    "weatherNote": "날씨: {{place}} 기준, 오늘부터 16일까지 예보",
+    "weatherNoPlace": "날씨: 도시를 고르면 보여요",
+    "holidayUnsupported": "{{countries}} 공휴일은 무료 정보가 없어 빠져요",
+    "otherTrip": "여행: {{title}}"
   }
 }

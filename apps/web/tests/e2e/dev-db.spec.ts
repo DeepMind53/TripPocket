@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 
 test('저장소: 새로고침해도 여행이 남아 있고 삭제·실행 취소가 된다', async ({ page }) => {
   await page.goto('/dev/db');

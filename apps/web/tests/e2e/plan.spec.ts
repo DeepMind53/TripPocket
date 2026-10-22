@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 import { createTrip } from './helpers';
 
 test('일정: 추가 → 상세 → 길찾기 → 삭제·실행 취소', async ({ page }) => {

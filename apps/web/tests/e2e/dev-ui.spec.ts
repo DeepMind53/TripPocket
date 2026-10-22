@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 
 test('컴포넌트 미리보기: 테마 전환과 바텀시트', async ({ page }) => {
   await page.goto('/dev/ui');

@@ -1,4 +1,5 @@
-import { expect, test, type Locator, type Page } from '@playwright/test';
+import { type Locator, type Page } from '@playwright/test';
+import { expect, test } from './fixtures';
 
 /** 손잡이를 잡고 target 위로 천천히 끌어 놓는다 (dnd-kit 포인터 센서) */
 async function drag(page: Page, handle: Locator, target: Locator, offsetY = -4) {

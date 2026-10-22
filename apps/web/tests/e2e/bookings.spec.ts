@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 import { createTrip } from './helpers';
 
 test('예약: 숙소를 추가하면 예약 탭 카드와 일정 화면 숙소 띠에 보인다', async ({ page }) => {
