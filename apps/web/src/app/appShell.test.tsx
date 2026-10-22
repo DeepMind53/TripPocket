@@ -75,4 +75,21 @@ describe('앱 셸', () => {
     renderAt('/없는-주소');
     expect(screen.getByText('페이지를 찾을 수 없어요')).toBeInTheDocument();
   });
+
+  it('뒤로 버튼이 있는 화면에는 왼쪽에 홈 버튼이 있고, 누르면 홈으로 간다', async () => {
+    const user = userEvent.setup();
+    const router = renderAt(`/trips/${tripId}/plan`);
+    const home = await screen.findByRole('button', { name: '홈으로' });
+    const back = screen.getByRole('button', { name: '뒤로' });
+    // 홈 버튼이 뒤로 버튼보다 앞(왼쪽)에 있다
+    expect(home.compareDocumentPosition(back) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    await user.click(home);
+    expect(router.state.location.pathname).toBe('/');
+  });
+
+  it('홈 화면 헤더에는 홈·뒤로 버튼이 없다', () => {
+    renderAt('/');
+    expect(screen.queryByRole('button', { name: '홈으로' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '뒤로' })).not.toBeInTheDocument();
+  });
 });

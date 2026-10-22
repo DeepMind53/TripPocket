@@ -21,7 +21,8 @@
     "back": "뒤로",
     "quickMenu": "빠른 메뉴",
     "more": "더보기",
-    "syncLocal": "이 기기에만 저장돼요"
+    "syncLocal": "이 기기에만 저장돼요",
+    "home": "홈으로"
   },
   "common": {
     "comingInStep": "{{step}}단계에서 만들어요",
@@ -73,7 +74,8 @@
     "openMenu": "{{title}} 메뉴",
     "notFound": "여행을 찾을 수 없어요",
     "notFoundDesc": "삭제됐거나 다른 기기에서 만든 여행일 수 있어요.",
-    "backToList": "내 여행으로"
+    "backToList": "내 여행으로",
+    "settings": "여행 설정"
   },
   "saved": {
     "title": "저장",
@@ -100,7 +102,15 @@
     "emptyDay": "아직 일정이 없어요",
     "wishEmpty": "날짜를 정하지 않은 장소를 모아두는 곳이에요",
     "itemLabel": "{{n}}번째 일정, {{title}}",
-    "doneMark": "다녀옴"
+    "doneMark": "다녀옴",
+    "edit": "편집",
+    "editDone": "완료",
+    "editHint": "손잡이(⠿)를 끌어 순서를 바꾸거나 다른 날로 옮기세요",
+    "dayMenu": "{{day}} 메뉴",
+    "sortByTime": "시간순 정렬",
+    "sortByTimeDesc": "시간이 있는 일정만 시간 순서로 바꾸고, 시간 없는 일정은 제자리에 둬요",
+    "sorted": "시간순으로 정렬했어요",
+    "sortNeedsTime": "시간이 있는 일정이 2개 이상이어야 해요"
   },
   "places": {
     "emptyTitle": "장소 찾기",
@@ -232,5 +242,25 @@
     "title": "어느 날로 옮길까요?",
     "count": "일정 {{n}}개",
     "moved": "일정을 옮겼어요"
+  },
+  "edit": {
+    "handle": "{{title}} 옮기기",
+    "dropHere": "여기로 끌어 놓을 수 있어요",
+    "srInstructions": "스페이스바를 눌러 집고, 화살표 키로 옮긴 뒤 다시 스페이스바로 놓으세요. ESC를 누르면 취소돼요.",
+    "srPicked": "{{title}}을(를) 집었어요",
+    "srDropped": "{{title}}을(를) 놓았어요",
+    "srCancelled": "옮기기를 취소했어요"
+  },
+  "tripSettings": {
+    "title": "여행 설정",
+    "period": "기간",
+    "change": "변경",
+    "timezone": "시간대",
+    "reflowMode": "일정 처리 방법",
+    "keepDayNumber": "일차 유지",
+    "keepDate": "날짜 유지",
+    "previewNone": "일정은 그대로예요.",
+    "previewShift": "일정 {{n}}개의 날짜가 함께 옮겨져요.",
+    "previewWish": "일정 {{n}}개가 '가고 싶은 곳'으로 옮겨져요."
   }
 }

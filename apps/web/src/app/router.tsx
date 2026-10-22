@@ -28,6 +28,12 @@ export const routes: RouteObject[] = [
     },
   },
   {
+    path: 'trips/:tripId/settings',
+    lazy: async () => ({
+      Component: (await import('../features/trips/TripSettingsPage')).TripSettingsPage,
+    }),
+  },
+  {
     path: 'trips/:tripId',
     element: <TripLayout />,
     children: [

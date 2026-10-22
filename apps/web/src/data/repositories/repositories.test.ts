@@ -1,5 +1,6 @@
 import { db } from '../db';
 import { resetLocalDb } from '../dev';
+import { updateTripWithReflow } from '../services/tripService';
 import { itemRepo } from './itemRepo';
 import { tripRepo, type NewTrip } from './tripRepo';
 
@@ -146,5 +147,57 @@ describe('itemRepo', () => {
         startTime: '9시',
       }),
     ).rejects.toThrow();
+  });
+
+  it('하루 순서를 통째로 다시 매긴다 (목록이 다르면 거부)', async () => {
+    const { trip, add } = await setup();
+    const a = await add('A');
+    const b = await add('B');
+    const c = await add('C');
+    await itemRepo.reorderDay(trip.id, '2026-10-25', [c.id, a.id, b.id]);
+    expect((await itemRepo.listByDay(trip.id, '2026-10-25')).map((i) => i.title)).toEqual([
+      'C',
+      'A',
+      'B',
+    ]);
+    await expect(itemRepo.reorderDay(trip.id, '2026-10-25', [a.id, b.id])).rejects.toThrow();
+  });
+
+  it('날짜 일괄 변경: 가고 싶은 곳으로 가는 일정은 기존 목록 뒤에 붙는다', async () => {
+    const { trip, add } = await setup();
+    await add('찜', null);
+    const a = await add('A', '2026-10-28');
+    const b = await add('B', '2026-10-24');
+    await itemRepo.setDates(trip.id, [
+      { id: a.id, to: null },
+      { id: b.id, to: '2026-10-25' },
+    ]);
+    expect((await itemRepo.listByDay(trip.id, null)).map((i) => i.title)).toEqual(['찜', 'A']);
+    expect((await itemRepo.listByDay(trip.id, '2026-10-25')).map((i) => i.title)).toEqual(['B']);
+  });
+});
+
+describe('tripService', () => {
+  it('기간 변경과 일정 이동을 한 번에 저장한다 (실패하면 둘 다 취소)', async () => {
+    const trip = await tripRepo.create(tokyo);
+    const item = await itemRepo.create({
+      tripId: trip.id,
+      date: '2026-10-24',
+      kind: 'place',
+      title: 'A',
+    });
+    await updateTripWithReflow(trip.id, { startDate: '2026-10-25', endDate: '2026-10-29' }, [
+      { id: item.id, to: '2026-10-25' },
+    ]);
+    expect((await tripRepo.get(trip.id))?.startDate).toBe('2026-10-25');
+    expect((await itemRepo.get(item.id))?.date).toBe('2026-10-25');
+
+    // 잘못된 기간이면 일정 이동도 되돌린다
+    await expect(
+      updateTripWithReflow(trip.id, { startDate: '2026-10-30', endDate: '2026-10-20' }, [
+        { id: item.id, to: null },
+      ]),
+    ).rejects.toThrow();
+    expect((await itemRepo.get(item.id))?.date).toBe('2026-10-25');
   });
 });

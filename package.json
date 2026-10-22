@@ -17,7 +17,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "check": "pnpm lint && pnpm typecheck && pnpm test",
-    "prepare": "husky"
+    "prepare": "husky",
+    "size": "pnpm build && pnpm --filter @trippocket/web size"
   },
   "lint-staged": {
     "*.{ts,tsx,js}": [

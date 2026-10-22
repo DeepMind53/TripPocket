@@ -126,6 +126,53 @@ export const itemRepo = {
     });
   },
 
+  /** 하루의 순서를 통째로 다시 매긴다 (시간순 정렬 등). ids는 그날 일정 전체여야 한다 */
+  async reorderDay(tripId: string, date: LocalDate | null, ids: readonly string[]): Promise<void> {
+    await db.transaction('rw', db.items, async () => {
+      const rows = await dayRows(tripId, date);
+      const byId = new Map(rows.map((r) => [r.id, r]));
+      if (ids.length !== rows.length || ids.some((id) => !byId.has(id))) {
+        throw new Error('그날 일정 목록이 바뀌었어요. 다시 시도해 주세요');
+      }
+      const keys = keysBetween(null, null, ids.length);
+      const now = nowIso();
+      await db.items.bulkPut(
+        ids.map((id, i) => ({
+          ...(byId.get(id) as Row),
+          order: keys[i] as string,
+          updatedAt: now,
+          dirty: 1 as const,
+        })),
+      );
+    });
+  },
+
+  /**
+   * 여러 일정의 날짜를 한 번에 바꾼다 (기간 변경). 같은 날 안의 순서는 유지하고,
+   * '가고 싶은 곳'으로 가는 일정은 기존 목록 뒤에 붙인다.
+   */
+  async setDates(
+    tripId: string,
+    moves: ReadonlyArray<{ id: string; to: LocalDate | null }>,
+  ): Promise<void> {
+    if (moves.length === 0) return;
+    await db.transaction('rw', db.items, async () => {
+      const now = nowIso();
+      const toWish = moves.filter((m) => m.to === null);
+      const wishTail = (await dayRows(tripId, null)).at(-1)?.order ?? null;
+      const wishKeys = keysBetween(wishTail, null, toWish.length);
+      for (const m of moves) {
+        const wishIndex = toWish.indexOf(m);
+        await db.items.update(m.id, {
+          date: m.to,
+          ...(m.to === null ? { order: wishKeys[wishIndex] as string } : {}),
+          updatedAt: now,
+          dirty: 1,
+        });
+      }
+    });
+  },
+
   async softDelete(id: string): Promise<void> {
     const now = nowIso();
     await db.items.update(id, { deletedAt: now, updatedAt: now, dirty: 1 });

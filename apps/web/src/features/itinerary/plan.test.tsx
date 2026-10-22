@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { routes } from '../../app/router';
@@ -191,5 +191,46 @@ describe('일정 화면', () => {
         expect.stringContaining('travelmode=walking'),
       ),
     );
+  });
+
+  it('일차 메뉴: 시간순 정렬 (시간 없는 일정은 제자리)', async () => {
+    const user = userEvent.setup();
+    await itemRepo.create({
+      tripId,
+      date: '2026-10-24',
+      kind: 'place',
+      title: '오후',
+      startTime: '15:00',
+    });
+    await itemRepo.create({ tripId, date: '2026-10-24', kind: 'note', title: '메모' });
+    await itemRepo.create({
+      tripId,
+      date: '2026-10-24',
+      kind: 'food',
+      title: '아침',
+      startTime: '08:00',
+    });
+    await renderPlan();
+    await user.click(await screen.findByRole('button', { name: '1일차 · 10.24 (토) 메뉴' }));
+    await user.click(screen.getByRole('button', { name: /시간순 정렬/ }));
+    expect(await screen.findByText('시간순으로 정렬했어요')).toBeInTheDocument();
+    expect((await itemRepo.listByDay(tripId, '2026-10-24')).map((i) => i.title)).toEqual([
+      '아침',
+      '메모',
+      '오후',
+    ]);
+  });
+
+  it('편집 모드: 손잡이가 보이고 뒤로가기로 끝난다', async () => {
+    const user = userEvent.setup();
+    await itemRepo.create({ tripId, date: '2026-10-24', kind: 'place', title: '센소지' });
+    const router = await renderPlan();
+    await user.click(await screen.findByRole('button', { name: '편집' }));
+    expect(await screen.findByRole('button', { name: '센소지 옮기기' })).toBeInTheDocument();
+    expect(screen.getAllByText('여기로 끌어 놓을 수 있어요').length).toBeGreaterThan(0);
+    await act(async () => {
+      await router.navigate(-1);
+    });
+    expect(screen.queryByRole('button', { name: '센소지 옮기기' })).not.toBeInTheDocument();
   });
 });

@@ -4,11 +4,11 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router';
 import { useTrips } from '../../data/hooks';
-import { tripRepo } from '../../data/repositories/tripRepo';
 import { useRouteSheet } from '../../shared/hooks/useRouteSheet';
 import { formatPeriod, formatTripBadge, formatTripLength } from '../../shared/lib/dateFormat';
-import { BottomSheet, Button, EmptyState, IconButton, TopBar, snackbar } from '../../shared/ui';
+import { BottomSheet, Button, EmptyState, IconButton, TopBar } from '../../shared/ui';
 import { QuickMenuButton } from '../quick-menu/QuickMenu';
+import { deleteTripWithUndo } from './tripActions';
 
 /** S-02 내 여행: 여행 중 · 다가오는 여행 · 다녀온 여행(접힘) */
 export function TripsPage() {
@@ -27,11 +27,7 @@ export function TripsPage() {
 
   async function remove(trip: Trip) {
     setMenuOpen(false);
-    await tripRepo.softDelete(trip.id);
-    snackbar(t('trips.deleted'), {
-      label: t('common.undo'),
-      onAction: () => void tripRepo.restore(trip.id),
-    });
+    await deleteTripWithUndo(trip);
   }
 
   const openMenu = (trip: Trip) => {

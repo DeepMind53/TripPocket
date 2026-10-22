@@ -1,4 +1,4 @@
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, House } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
@@ -14,7 +14,10 @@ export interface TopBarProps {
   actions?: ReactNode;
 }
 
-/** 화면 상단 헤더. 스크롤해도 위에 고정된다 */
+/**
+ * 화면 상단 헤더. 스크롤해도 위에 고정된다.
+ * 뒤로 버튼이 있는 화면에는 그 왼쪽에 홈 버튼을 항상 둔다 (어디서든 한 번에 홈으로 — 사용자 요청).
+ */
 export function TopBar({ title, subtitle, backTo, actions }: TopBarProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -29,7 +32,14 @@ export function TopBar({ title, subtitle, backTo, actions }: TopBarProps) {
   return (
     <header className="sticky top-[env(safe-area-inset-top)] z-20 flex min-h-14 items-center gap-1 bg-bg/95 px-1 backdrop-blur">
       {backTo !== undefined ? (
-        <IconButton label={t('header.back')} icon={<ArrowLeft />} onClick={goBack} />
+        <div className="flex shrink-0 items-center">
+          <IconButton
+            label={t('header.home')}
+            icon={<House />}
+            onClick={() => void navigate('/')}
+          />
+          <IconButton label={t('header.back')} icon={<ArrowLeft />} onClick={goBack} />
+        </div>
       ) : (
         <span className="w-3" />
       )}

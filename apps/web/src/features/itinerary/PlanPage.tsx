@@ -7,8 +7,8 @@ import {
   type LocalDate,
   type Trip,
 } from '@trippocket/shared';
-import { Check, Plus } from 'lucide-react';
-import { useState } from 'react';
+import { ArrowDownWideNarrow, Check, Ellipsis, Plus } from 'lucide-react';
+import { lazy, Suspense, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { useTrip, useTripItems } from '../../data/hooks';
@@ -16,12 +16,16 @@ import { itemRepo } from '../../data/repositories/itemRepo';
 import { useRouteSheet } from '../../shared/hooks/useRouteSheet';
 import { cn } from '../../shared/lib/cn';
 import { formatMonthDay } from '../../shared/lib/dateFormat';
-import { Chip, snackbar, toast } from '../../shared/ui';
+import { sortByTimeKeepingUntimed } from '../../domain/schedule';
+import { BottomSheet, Button, Chip, IconButton, snackbar, toast } from '../../shared/ui';
 import { DirectionsSheet } from './DirectionsSheet';
 import { ItemDetailSheet } from './ItemDetailSheet';
 import { ItemFormSheet } from './ItemFormSheet';
 import { dayColor, KIND_ICON } from './itemKinds';
 import { MoveDaySheet } from './MoveDaySheet';
+
+// 드래그 편집은 편집 모드에 들어갈 때만 불러온다 (dnd-kit 포함)
+const EditModeList = lazy(() => import('./EditModeList'));
 
 /** 화면에 보여줄 날: 'all' | 'wish' | 일차 번호(1부터) */
 type DayFilter = 'all' | 'wish' | number;
@@ -62,6 +66,9 @@ function PlanView({ trip, items }: { trip: Trip; items: ItineraryItem[] }) {
   const [detailOpen, setDetailOpen] = useRouteSheet('item-detail');
   const [dirOpen, setDirOpen] = useRouteSheet('directions');
   const [moveOpen, setMoveOpen] = useRouteSheet('move-day');
+  const [editing, setEditing] = useRouteSheet('edit-mode');
+  const [dayMenuOpen, setDayMenuOpen] = useRouteSheet('day-menu');
+  const [menuDate, setMenuDate] = useState<LocalDate | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [formTarget, setFormTarget] = useState<{ date: LocalDate | null; editing: boolean }>({
     date: null,
@@ -107,6 +114,24 @@ function PlanView({ trip, items }: { trip: Trip; items: ItineraryItem[] }) {
     });
   }
 
+  async function sortDay(date: LocalDate | null) {
+    const dayItems = items.filter((i) => i.date === date);
+    setDayMenuOpen(false);
+    if (dayItems.filter((i) => i.startTime).length < 2) {
+      toast(t('plan.sortNeedsTime'));
+      return;
+    }
+    await itemRepo.reorderDay(trip.id, date, sortByTimeKeepingUntimed(dayItems));
+    toast(t('plan.sorted'));
+  }
+
+  const dayTitle = (date: LocalDate | null) => {
+    const i = date ? days.indexOf(date) : -1;
+    return date
+      ? t('plan.dayHeader', { n: i + 1, date: formatMonthDay(date) })
+      : t('plan.wishlist');
+  };
+
   async function moveTo(date: LocalDate | null) {
     if (!selected) return;
     const count = items.filter((i) => i.date === date).length;
@@ -150,20 +175,70 @@ function PlanView({ trip, items }: { trip: Trip; items: ItineraryItem[] }) {
         </Chip>
       </div>
 
-      <div className="flex flex-col gap-6 px-5 pt-3">
-        {sections.map(({ date, index }) => (
-          <DaySection
-            key={date ?? 'wish'}
-            date={date}
-            index={index}
-            items={items.filter((i) => i.date === date)}
-            isToday={date === today}
-            onAdd={() => openAdd(date)}
-            onOpen={openDetail}
-            hideWhenEmpty={filter === 'all' && date === null}
-          />
-        ))}
+      <div className="flex items-center justify-between gap-2 px-5 pt-1">
+        {editing ? (
+          <p className="flex-1 text-caption text-fg-muted">{t('plan.editHint')}</p>
+        ) : (
+          <span />
+        )}
+        <Button
+          size="sm"
+          variant={editing ? 'primary' : 'ghost'}
+          disabled={items.length === 0 && !editing}
+          onClick={() => setEditing(!editing)}
+        >
+          {editing ? t('plan.editDone') : t('plan.edit')}
+        </Button>
       </div>
+
+      <div className="flex flex-col gap-6 px-5 pt-2">
+        {editing ? (
+          <Suspense fallback={null}>
+            <EditModeList
+              sections={sections.map((s) => ({
+                ...s,
+                color: s.date ? dayColor(s.index) : 'var(--tp-fg-muted)',
+              }))}
+              items={items}
+            />
+          </Suspense>
+        ) : (
+          sections.map(({ date, index }) => (
+            <DaySection
+              key={date ?? 'wish'}
+              date={date}
+              index={index}
+              items={items.filter((i) => i.date === date)}
+              isToday={date === today}
+              onAdd={() => openAdd(date)}
+              onOpen={openDetail}
+              onMenu={() => {
+                setMenuDate(date);
+                setDayMenuOpen(true);
+              }}
+              hideWhenEmpty={filter === 'all' && date === null}
+            />
+          ))
+        )}
+      </div>
+
+      <BottomSheet
+        open={dayMenuOpen}
+        onOpenChange={setDayMenuOpen}
+        title={t('plan.dayMenu', { day: dayTitle(menuDate) })}
+      >
+        <button
+          type="button"
+          onClick={() => void sortDay(menuDate)}
+          className="flex w-full items-start gap-3 rounded-btn py-3 text-left"
+        >
+          <ArrowDownWideNarrow aria-hidden="true" className="mt-0.5 size-5 text-fg-sub" />
+          <span className="flex flex-col">
+            <span className="text-body-1">{t('plan.sortByTime')}</span>
+            <span className="text-caption text-fg-muted">{t('plan.sortByTimeDesc')}</span>
+          </span>
+        </button>
+      </BottomSheet>
 
       <ItemFormSheet
         open={formOpen}
@@ -226,6 +301,7 @@ function DaySection({
   isToday,
   onAdd,
   onOpen,
+  onMenu,
   hideWhenEmpty,
 }: {
   date: LocalDate | null;
@@ -234,6 +310,7 @@ function DaySection({
   isToday: boolean;
   onAdd: () => void;
   onOpen: (item: ItineraryItem) => void;
+  onMenu: () => void;
   hideWhenEmpty: boolean;
 }) {
   const { t } = useTranslation();
@@ -245,14 +322,24 @@ function DaySection({
 
   return (
     <section aria-label={title} className="flex flex-col gap-1">
-      <h2 className="tabular flex items-center gap-2 text-title-2">
-        {title}
-        {isToday && (
-          <span className="rounded-full bg-primary-weak px-2 py-0.5 text-micro text-primary">
-            {t('date.today')}
-          </span>
+      <div className="flex items-center gap-2">
+        <h2 className="tabular flex flex-1 items-center gap-2 text-title-2">
+          {title}
+          {isToday && (
+            <span className="rounded-full bg-primary-weak px-2 py-0.5 text-micro text-primary">
+              {t('date.today')}
+            </span>
+          )}
+        </h2>
+        {items.length > 1 && (
+          <IconButton
+            label={t('plan.dayMenu', { day: title })}
+            icon={<Ellipsis />}
+            onClick={onMenu}
+            className="-mr-2"
+          />
         )}
-      </h2>
+      </div>
       {items.length === 0 && (
         <p className="py-2 text-body-2 text-fg-muted">
           {date ? t('plan.emptyDay') : t('plan.wishEmpty')}

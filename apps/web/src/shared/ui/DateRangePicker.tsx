@@ -1,4 +1,4 @@
-import { weekday, type LocalDate } from '@trippocket/shared';
+import { diffDays, weekday, type LocalDate } from '@trippocket/shared';
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '../lib/cn';
@@ -9,14 +9,28 @@ export interface DateRangePickerProps {
   value: DateRange;
   onChange: (range: DateRange) => void;
   today: LocalDate;
-  /** 보여줄 개월 수 (오늘이 속한 달부터) */
+  /** 오늘 이후로 보여줄 개월 수 */
   months?: number;
+  /** 이 날짜가 속한 달부터 보여준다 (기본: 오늘). 지난 여행 수정용 */
+  from?: LocalDate;
+  /** 바텀시트 안에서 쓰면 요일 줄을 시트 맨 위에 고정 */
+  inSheet?: boolean;
 }
 
 /** S-32 날짜 범위 선택: 세로 스크롤 달력 (외부 라이브러리 없이) */
-export function DateRangePicker({ value, onChange, today, months = 13 }: DateRangePickerProps) {
+export function DateRangePicker({
+  value,
+  onChange,
+  today,
+  months = 13,
+  from,
+  inSheet = false,
+}: DateRangePickerProps) {
   const { t } = useTranslation();
-  const grids = useMemo(() => buildMonths(today, months), [today, months]);
+  const start = from && diffDays(from, today) > 0 ? from : today;
+  // 시작 달이 앞당겨진 만큼 개월 수를 늘린다 (대략 30일 = 1개월)
+  const extra = Math.ceil(diffDays(start, today) / 30);
+  const grids = useMemo(() => buildMonths(start, months + extra), [start, months, extra]);
   const weekdays = t('date.weekdayChars');
   // 클릭 함수를 고정해 바뀐 칸만 다시 그리게 한다 (최신 값은 ref로)
   const valueRef = useRef(value);
@@ -29,7 +43,10 @@ export function DateRangePicker({ value, onChange, today, months = 13 }: DateRan
     <div role="group" aria-label={t('date.rangeLabel')} className="flex flex-col gap-6">
       <div
         aria-hidden="true"
-        className="sticky top-[calc(env(safe-area-inset-top)+56px)] z-10 grid grid-cols-7 bg-bg py-1 text-center text-caption text-fg-muted"
+        className={cn(
+          'sticky z-10 grid grid-cols-7 py-1 text-center text-caption text-fg-muted',
+          inSheet ? 'top-0 bg-surface' : 'top-[calc(env(safe-area-inset-top)+56px)] bg-bg',
+        )}
       >
         {[...weekdays].map((w, i) => (
           <span key={w} className={cn(i === 0 && 'text-danger', i === 6 && 'text-primary')}>
