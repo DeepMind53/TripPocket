@@ -51,3 +51,38 @@
 ## 4. 나중에 내 도메인으로 바꾸려면
 - Cloudflare Pages → Custom domains에서 연결만 하면 되지만, **주소가 바뀌면 기기 데이터가 따로**다.
   바꾸기 전에 모든 기기에서 백업 파일을 만들고, 새 주소에서 복원한다 (로그인·동기화(15단계) 이후라면 서버에서 자동으로 받음).
+
+## 5. 소셜 로그인 앱 등록 (14단계, 사용자 작업 — 모두 무료)
+콜백 주소는 모두 **웹앱 주소** 기준이다 (Pages 프록시가 홈 서버로 전달, ADR-0006). 아래 `<앱주소>` = `https://trippocket.pages.dev`.
+받은 아이디·시크릿은 **홈 PC의 `apps/server/.env`에만** 넣는다 (저장소·웹앱에 넣지 않음).
+
+### 카카오 (https://developers.kakao.com)
+1. 내 애플리케이션 → 애플리케이션 추가 → 앱 이름 `트립포켓`
+2. 앱 키의 **REST API 키** → `.env`의 `KAKAO_CLIENT_ID`
+3. 카카오 로그인 → 활성화 ON, **Redirect URI**: `<앱주소>/auth/kakao/callback`
+4. 카카오 로그인 → 보안 → **Client Secret** 생성·사용함 → `KAKAO_CLIENT_SECRET`
+5. 동의항목 → **닉네임**만 "필수 동의" (그 밖은 받지 않음)
+6. 플랫폼 → Web → 사이트 도메인 `<앱주소>`
+
+### 네이버 (https://developers.naver.com/apps)
+1. Application 등록 → 사용 API **네이버 로그인** → 제공 정보 **별명(닉네임)** 만 필수
+2. 환경: PC 웹 → 서비스 URL `<앱주소>`, Callback URL `<앱주소>/auth/naver/callback`
+3. Client ID → `NAVER_CLIENT_ID`, Client Secret → `NAVER_CLIENT_SECRET`
+4. 처음에는 "개발 중" 상태 — 멤버관리에 등록한 아이디(최대 20명)만 로그인 가능. 가족·지인만 쓰면 그대로 두어도 됨 (공개하려면 검수 요청)
+
+### Google (https://console.cloud.google.com)
+1. 새 프로젝트 → API 및 서비스 → **OAuth 동의 화면**: 외부, 앱 이름 `트립포켓`, 범위는 기본(openid·profile)만 — 민감 범위가 없어 심사 불필요
+2. 테스트 사용자에 로그인할 Google 계정 추가 (게시 전 100명까지)
+3. 사용자 인증 정보 → OAuth 클라이언트 ID → 웹 애플리케이션
+   - 승인된 리디렉션 URI: `<앱주소>/auth/google/callback`
+4. 클라이언트 ID → `GOOGLE_CLIENT_ID`, 보안 비밀 → `GOOGLE_CLIENT_SECRET`
+   (결제 정보 등록 필요 없음)
+
+### 가입 정책 (docs/08 G1, 기본 초대제)
+- 처음 로그인한 계정 1개만 자동 가입. 다른 사람은 로그인하면 "초대받지 않은 계정" 화면에 `kakao:12345` 같은 값이 나온다
+  → 그 값을 `.env`의 `ALLOWED_ACCOUNTS`에 쉼표로 추가하고 서버 재시작. 누구나 가입하게 하려면 `SIGNUP=open`
+
+### 개발 중 로컬에서 시험
+- `apps/server/.env`에 `WEB_ORIGIN=http://localhost:5173`, 같은 `PROXY_SECRET`
+- 터미널 1: `pnpm dev:server` / 터미널 2: `TP_PROXY_SECRET=<같은값> pnpm dev` (Vite가 /api·/auth를 서버로 전달)
+- 제공자 콜백 주소에 `http://localhost:5173/auth/<제공자>/callback`도 추가

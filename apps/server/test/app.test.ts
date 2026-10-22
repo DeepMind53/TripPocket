@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { buildApp, PROXY_HEADER } from '../src/app';
 import { loadConfig, type Config } from '../src/config';
 import { migrate, openDb, type Db } from '../src/db/database';
+import { MIGRATIONS } from '../src/db/migrations';
 
 export const SECRET = 's'.repeat(40);
 export const ORIGIN = 'https://trippocket.pages.dev';
@@ -112,7 +113,7 @@ describe('DB 마이그레이션', () => {
     migrate(db);
     migrate(db);
     const rows = db.prepare('SELECT version FROM schema_migrations').all();
-    expect(rows).toHaveLength(1);
+    expect(rows).toHaveLength(MIGRATIONS.length);
     expect(db.prepare("SELECT value FROM counters WHERE name = 'rev'").get()).toEqual({ value: 0 });
   });
 });

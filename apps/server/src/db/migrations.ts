@@ -67,4 +67,14 @@ export const MIGRATIONS: readonly string[] = [
   CREATE TABLE counters (name TEXT PRIMARY KEY, value INTEGER NOT NULL);
   INSERT INTO counters (name, value) VALUES ('rev', 0);
   `,
+  // 2: 로그인 진행 중 상태 (10분, 한 번만 사용)
+  `
+  CREATE TABLE oauth_states (
+    state_hash TEXT PRIMARY KEY,
+    provider TEXT NOT NULL,
+    code_verifier TEXT,
+    return_to TEXT NOT NULL,
+    created_at TEXT NOT NULL
+  );
+  `,
 ];

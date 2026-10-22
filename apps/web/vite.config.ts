@@ -32,6 +32,13 @@ function serviceWorker(): Plugin {
   };
 }
 
+function devApiProxy() {
+  const secret = process.env.TP_PROXY_SECRET;
+  if (!secret) return {};
+  const target = { target: 'http://127.0.0.1:8787', headers: { 'x-tp-proxy': secret } };
+  return { proxy: { '/api': target, '/auth': target } };
+}
+
 /** public/_headers 의 "/*" 블록을 읽는다 */
 function pagesHeaders(): Record<string, string> {
   const block = readFileSync('public/_headers', 'utf8')
@@ -49,7 +56,8 @@ function pagesHeaders(): Record<string, string> {
 
 export default defineConfig({
   plugins: [react(), tailwindcss(), serviceWorker()],
-  server: { port: 5173, strictPort: true },
+  // 개발 중에는 Cloudflare Pages 프록시 대신 Vite가 홈 서버(127.0.0.1:8787)로 전달 (ADR-0006)
+  server: { port: 5173, strictPort: true, ...devApiProxy() },
   // 배포(Cloudflare Pages)와 같은 보안 헤더로 미리보기 → E2E에서 CSP 위반을 잡는다
   preview: { port: 4173, strictPort: true, headers: pagesHeaders() },
   test: {

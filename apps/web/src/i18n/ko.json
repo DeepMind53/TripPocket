@@ -503,5 +503,48 @@
     "openBrowser": "다른 브라우저로 열기",
     "copyLink": "주소 복사",
     "copied": "주소를 복사했어요. Safari·Chrome에 붙여넣어 주세요"
+  },
+  "login": {
+    "title": "로그인",
+    "why": "로그인하면 휴대폰을 바꾸거나 여러 기기에서 같은 여행을 볼 수 있어요. 로그인하지 않아도 앱은 그대로 쓸 수 있어요.",
+    "with": {
+      "kakao": "카카오로 시작하기",
+      "naver": "네이버로 시작하기",
+      "google": "Google로 시작하기"
+    },
+    "name": {
+      "kakao": "카카오",
+      "naver": "네이버",
+      "google": "Google"
+    },
+    "unavailable": "지금은 로그인 서버에 연결할 수 없어요. 앱은 이 기기에서 그대로 쓸 수 있어요.",
+    "serverOffline": "로그인 서버에 연결할 수 없어요 — 앱은 그대로 쓸 수 있어요",
+    "privacy": "닉네임과 로그인 계정 번호만 저장해요. 비밀번호·연락처·위치는 저장하지 않아요.",
+    "error": {
+      "cancelled": "로그인을 취소했어요",
+      "provider": "로그인 중 문제가 생겼어요. 잠시 뒤 다시 시도해 주세요",
+      "state": "로그인 시간이 지났어요. 다시 시도해 주세요",
+      "invite": "아직 초대받지 않은 계정이에요. 아래 값을 관리자에게 보내 주세요"
+    },
+    "copied": "복사했어요"
+  },
+  "account": {
+    "devices": "기기",
+    "logout": "로그아웃",
+    "delete": "탈퇴",
+    "devicesTitle": "로그인한 기기",
+    "logoutTitle": "로그아웃",
+    "deleteTitle": "회원 탈퇴",
+    "thisDevice": "이 기기",
+    "revoke": "로그아웃",
+    "keepData": "이 기기의 여행은 남기기",
+    "keepDataDesc": "로그인하지 않고 계속 쓸 수 있어요",
+    "wipeData": "이 기기의 여행도 지우기",
+    "wipeDataDesc": "다른 사람과 같이 쓰는 기기라면 선택하세요",
+    "deleteDesc": "계정과 서버에 저장된 여행이 바로 지워져요. 이 기기에 있는 여행은 남아요.",
+    "deleteConfirm": "탈퇴하기",
+    "loggedOut": "로그아웃했어요",
+    "deleted": "탈퇴했어요",
+    "failed": "처리하지 못했어요. 잠시 뒤 다시 시도해 주세요"
   }
 }

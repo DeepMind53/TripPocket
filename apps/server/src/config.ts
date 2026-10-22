@@ -18,6 +18,17 @@ const Env = z.object({
    * 터널 주소로 직접 들어온 요청은 이 값이 없어 거부된다 (ADR-0006)
    */
   PROXY_SECRET: z.string().check(z.minLength(32)),
+  /** 소셜 로그인 (docs/08 G2: 셋 다). 아이디·시크릿이 모두 있는 제공자만 켜진다 */
+  KAKAO_CLIENT_ID: z.optional(z.string()),
+  KAKAO_CLIENT_SECRET: z.optional(z.string()),
+  NAVER_CLIENT_ID: z.optional(z.string()),
+  NAVER_CLIENT_SECRET: z.optional(z.string()),
+  GOOGLE_CLIENT_ID: z.optional(z.string()),
+  GOOGLE_CLIENT_SECRET: z.optional(z.string()),
+  /** 가입 정책 (docs/08 G1): invite = 첫 계정 + 허용 목록만, open = 누구나 */
+  SIGNUP: z._default(z.enum(['invite', 'open']), 'invite'),
+  /** 허용 목록: "kakao:123,naver:abc" — 가입 거절 화면에 표시되는 값을 넣는다 */
+  ALLOWED_ACCOUNTS: z.optional(z.string()),
 });
 
 export type Config = z.infer<typeof Env>;

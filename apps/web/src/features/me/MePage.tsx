@@ -9,14 +9,15 @@ import {
 } from 'lucide-react';
 import { useInstall } from '../../app/pwa';
 import { useRouteSheet } from '../../shared/hooks/useRouteSheet';
+import { AccountCard } from './AccountCard';
 import { InstallSheet } from './InstallSheet';
 import type { ReactNode } from 'react';
 import { useTranslation } from '../../i18n';
 import { Link } from 'react-router';
 import { QuickMenuButton } from '../common/QuickMenu';
-import { Button, TopBar, toast } from '../../shared/ui';
+import { TopBar, toast } from '../../shared/ui';
 
-/** S-05 마이 — 로그인은 14단계, 백업은 11단계 */
+/** S-05 마이 — 계정(로그인), 설정, 백업, 앱 설치 */
 export function MePage() {
   const { t } = useTranslation();
   const installed = useInstall((s) => s.installed);
@@ -25,12 +26,7 @@ export function MePage() {
     <>
       <TopBar title={t('me.title')} actions={<QuickMenuButton />} />
       <div className="flex flex-col gap-4 px-5 pt-2">
-        <section className="flex flex-col gap-3 rounded-card bg-bg-subtle p-4">
-          <p className="text-body-2 text-fg-sub">{t('me.loginPrompt')}</p>
-          <Button variant="secondary" onClick={() => toast(t('common.comingInStep', { step: 14 }))}>
-            {t('me.login')}
-          </Button>
-        </section>
+        <AccountCard />
         <ul className="flex flex-col divide-y divide-line overflow-hidden rounded-card border border-line">
           <MenuRow to="/settings" icon={<Settings />} label={t('me.settings')} />
           <MenuRow to="/backup" icon={<DatabaseBackup />} label={t('me.backup')} />
