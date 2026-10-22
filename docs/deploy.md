@@ -86,3 +86,7 @@
 - `apps/server/.env`에 `WEB_ORIGIN=http://localhost:5173`, 같은 `PROXY_SECRET`
 - 터미널 1: `pnpm dev:server` / 터미널 2: `TP_PROXY_SECRET=<같은값> pnpm dev` (Vite가 /api·/auth를 서버로 전달)
 - 제공자 콜백 주소에 `http://localhost:5173/auth/<제공자>/callback`도 추가
+
+## 6. 환율 인증키 (19단계, 사용자 작업 — 무료, 선택)
+- 한국수출입은행 https://www.koreaexim.go.kr → 오픈API → 현재환율 → 인증키 발급 신청 → `apps/server/.env`의 `EXIM_API_KEY`
+- 키가 없거나 홈 PC가 꺼져 있어도 앱은 무료 국제 시세(currency-api, 하루 1회)로 계산하고, 화면에 "국제 시세(참고용)"로 표시한다

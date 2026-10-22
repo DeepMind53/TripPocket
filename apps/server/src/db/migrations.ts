@@ -77,4 +77,14 @@ export const MIGRATIONS: readonly string[] = [
     created_at TEXT NOT NULL
   );
   `,
+  // 3: 환율 (공개 데이터, 수출입은행 매매기준율 — 1단위 원화)
+  `
+  CREATE TABLE fx_rates (
+    date TEXT NOT NULL,
+    currency TEXT NOT NULL,
+    rate REAL NOT NULL,
+    fetched_at TEXT NOT NULL,
+    PRIMARY KEY (date, currency)
+  );
+  `,
 ];

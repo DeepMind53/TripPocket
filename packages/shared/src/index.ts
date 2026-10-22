@@ -63,3 +63,12 @@ export {
   type SyncRecord,
   type SyncTable,
 } from './sync/sync';
+export {
+  COUNTRY_CURRENCY,
+  fromKrw,
+  HUNDRED_UNIT,
+  parseEximRow,
+  POPULAR_CURRENCIES,
+  toKrw,
+  type FxSnapshot,
+} from './fx/fx';

@@ -71,6 +71,12 @@ export const routes: RouteObject[] = [
     }),
   },
   {
+    path: 'fx',
+    lazy: async () => ({
+      Component: (await import('../features/fx/FxPage')).FxPage,
+    }),
+  },
+  {
     path: 'login',
     lazy: async () => ({
       Component: (await import('../features/me/LoginPage')).LoginPage,

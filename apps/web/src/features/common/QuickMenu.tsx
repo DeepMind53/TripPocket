@@ -143,6 +143,7 @@ interface Shortcuts {
 
 function QuickMenuContent({ shortcuts }: { shortcuts?: Shortcuts }) {
   const inTrip = shortcuts !== undefined;
+  const { tripId } = useParams();
   const { t } = useTranslation();
   const theme = useSettings((st) => st.theme);
   const app = useSettings((st) => st.directionsApp);
@@ -151,12 +152,19 @@ function QuickMenuContent({ shortcuts }: { shortcuts?: Shortcuts }) {
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-col gap-2">
-        <ToolCard
-          icon={<Wallet />}
-          title={t('quickMenu.fx')}
-          desc={t('quickMenu.fxDesc')}
-          step={19}
-        />
+        <Link
+          to={tripId ? `/fx?trip=${tripId}` : '/fx'}
+          className="flex items-center gap-3 rounded-card bg-bg-subtle px-4 py-3 text-left"
+        >
+          <span aria-hidden="true" className="text-primary [&>svg]:size-5">
+            <Wallet />
+          </span>
+          <span className="flex min-w-0 flex-1 flex-col">
+            <span className="text-body-1">{t('quickMenu.fx')}</span>
+            <span className="text-caption text-fg-muted">{t('quickMenu.fxDesc')}</span>
+          </span>
+          <ChevronRight aria-hidden="true" className="size-5 text-fg-muted" />
+        </Link>
         <ToolCard
           icon={<Sparkles />}
           title={t('quickMenu.ai')}

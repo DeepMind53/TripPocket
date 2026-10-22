@@ -13,6 +13,10 @@ export interface Settings {
   dimPastItems: boolean;
   /** 0 = 끄기 */
   backupReminderDays: number;
+  /** 환율 계산에 환전 수수료 반영 (현찰 살 때 추정) */
+  fxFeeEnabled: boolean;
+  /** 0 ~ 10%, 0.05 단위 */
+  fxFeePercent: number;
   language: 'ko' | 'en';
 }
 
@@ -26,6 +30,8 @@ export const SETTINGS_DEFAULTS: Settings = {
   timeStepMin: 15,
   dimPastItems: true,
   backupReminderDays: 14,
+  fxFeeEnabled: false,
+  fxFeePercent: 1.75,
   language: 'ko',
 };
 
@@ -47,6 +53,9 @@ const VALID: { [K in keyof Settings]: (v: unknown) => v is Settings[K] } = {
   backupReminderDays: (v): v is number =>
     typeof v === 'number' && Number.isInteger(v) && v >= 0 && v <= 56 && v % 7 === 0,
   language: oneOf('ko', 'en'),
+  fxFeeEnabled: (v): v is boolean => typeof v === 'boolean',
+  fxFeePercent: (v): v is number =>
+    typeof v === 'number' && v >= 0 && v <= 10 && Math.abs(Math.round(v * 20) - v * 20) < 1e-9,
 };
 
 /** 저장된 값(무엇이든) → 올바른 설정. 모르는 키는 버리고, 틀린 값은 기본값 */

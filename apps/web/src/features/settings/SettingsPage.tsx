@@ -136,6 +136,47 @@ export function SettingsPage() {
           />
         </Group>
 
+        <Group
+          title={t('settings.fx')}
+          onReset={() => resetSettings(['fxFeeEnabled', 'fxFeePercent'])}
+        >
+          <SwitchRow
+            label={t('settings.fxFee')}
+            checked={s.fxFeeEnabled}
+            onChange={set('fxFeeEnabled')}
+          />
+          {s.fxFeeEnabled && (
+            <label className="flex items-center justify-between gap-3">
+              <span className="flex flex-col">
+                <span className="text-body-2 font-medium">{t('settings.fxFeePercent')}</span>
+                <span className="text-caption text-fg-muted">{t('settings.fxFeeDesc')}</span>
+              </span>
+              <span className="flex items-center gap-1">
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  min={0}
+                  max={10}
+                  step={0.05}
+                  defaultValue={s.fxFeePercent}
+                  onBlur={(e) => {
+                    // 범위 밖·잘못된 값은 가까운 올바른 값으로 (docs/12 §4 NumberInput)
+                    const v = Math.min(
+                      10,
+                      Math.max(0, Math.round(Number(e.target.value) * 20) / 20),
+                    );
+                    const next = Number.isFinite(v) ? v : 1.75;
+                    e.target.value = String(next);
+                    updateSettings({ fxFeePercent: next });
+                  }}
+                  className="tabular h-11 w-20 rounded-btn bg-bg-subtle px-2 text-right text-body-1"
+                />
+                <span className="text-body-2">%</span>
+              </span>
+            </label>
+          )}
+        </Group>
+
         <Group title={t('settings.data')} onReset={() => resetSettings(['backupReminderDays'])}>
           <div className="flex items-center justify-between gap-3">
             <span className="flex flex-col">

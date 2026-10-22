@@ -12,7 +12,10 @@ import { LAST_BACKUP_KEY } from '../repositories/backupMeta';
 
 /** 설정 표에서 백업하지 않는 것: 다시 받을 수 있는 캐시, 백업 시각 자체 */
 const isCacheKey = (key: string) =>
-  key.startsWith('holidays:') || key.startsWith('weather:') || key === LAST_BACKUP_KEY;
+  key.startsWith('holidays:') ||
+  key.startsWith('weather:') ||
+  key === 'fxCache' ||
+  key === LAST_BACKUP_KEY;
 
 const tables = () => [...BACKUP_TABLE_NAMES.map((t) => db[t]), db.settings];
 

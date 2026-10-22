@@ -8,6 +8,7 @@ import type { Db } from './db/database';
 import { authRoutes } from './routes/auth';
 import { meRoutes } from './routes/me';
 import { syncRoutes } from './routes/sync';
+import { latestFx } from './services/fx';
 
 export const PROXY_HEADER = 'x-tp-proxy';
 
@@ -74,6 +75,18 @@ export async function buildApp(config: Config, db: Db): Promise<FastifyInstance>
   authRoutes(app, config, db);
   meRoutes(app, db);
   syncRoutes(app, db);
+
+  // 환율: 로그인 불필요(공개 데이터), IP당 제한, 1시간 캐시 (docs/12 §2.2)
+  app.get(
+    '/api/fx/latest',
+    { config: { rateLimit: { max: 60, timeWindow: '1 minute' } } },
+    async (_req, reply) => {
+      const fx = latestFx(db);
+      if (!fx) return reply.code(404).send({ error: 'no_rates' });
+      reply.header('cache-control', 'public, max-age=3600');
+      return fx;
+    },
+  );
 
   // 상태 확인 (외부 모니터용, 프록시 없이도 응답) — 내부 정보는 내보내지 않는다
   app.get('/healthz', async () => {

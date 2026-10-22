@@ -13,6 +13,12 @@ export const test = base.extend<{ offlineApis: void }>({
       await page.route('https://api.open-meteo.com/**', (r) =>
         r.fulfill({ json: { daily: { time: [] } } }),
       );
+      // jsDelivr: 환율 보조 출처는 고정 값, 대만 공휴일은 정보 없음
+      await page.route('https://cdn.jsdelivr.net/**', (r) =>
+        r.request().url().includes('currency-api')
+          ? r.fulfill({ json: { date: '2026-10-22', krw: { jpy: 0.1, usd: 0.0008, eur: 0.0007 } } })
+          : r.fulfill({ status: 404, body: '' }),
+      );
       await use();
     },
     { auto: true },
