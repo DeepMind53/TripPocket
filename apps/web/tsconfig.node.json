@@ -4,5 +4,7 @@
     "lib": ["ES2023", "DOM"],
     "types": ["node"]
   },
-  "include": ["vite.config.ts", "playwright.config.ts", "tests"]
+  "include": ["vite.config.ts", "playwright.config.ts", "tests"],
+  // 통합 테스트는 서버·웹 코드를 함께 불러 타입 설정이 달라 vitest만 실행 (타입 검사는 각 패키지에서)
+  "exclude": ["tests/integration"]
 }

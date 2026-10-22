@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { api } from './api/client';
+import { db } from './db';
 import { resetLocalDb } from './dev';
 
 export interface Me {
@@ -35,6 +36,8 @@ export async function refreshMe(): Promise<void> {
 export async function logout(wipe: boolean): Promise<void> {
   await api('/auth/logout', { method: 'POST', body: '{}' });
   if (wipe) await resetLocalDb();
+  // 다음 로그인 때 "이 기기 데이터를 올릴까요?"를 다시 묻도록
+  else await db.syncState.clear();
   useAuth.setState({ status: 'anon', me: null });
 }
 

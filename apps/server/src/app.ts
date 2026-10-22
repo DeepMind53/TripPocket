@@ -7,6 +7,7 @@ import type { Config } from './config';
 import type { Db } from './db/database';
 import { authRoutes } from './routes/auth';
 import { meRoutes } from './routes/me';
+import { syncRoutes } from './routes/sync';
 
 export const PROXY_HEADER = 'x-tp-proxy';
 
@@ -72,6 +73,7 @@ export async function buildApp(config: Config, db: Db): Promise<FastifyInstance>
 
   authRoutes(app, config, db);
   meRoutes(app, db);
+  syncRoutes(app, db);
 
   // 상태 확인 (외부 모니터용, 프록시 없이도 응답) — 내부 정보는 내보내지 않는다
   app.get('/healthz', async () => {

@@ -50,3 +50,16 @@ export {
   type BackupTable,
   type ParsedBackup,
 } from './backup/backup';
+export {
+  parsePush,
+  parseRecord,
+  SYNC_BATCH,
+  SYNC_TABLES,
+  TRIP_SCOPED,
+  USER_SCOPED,
+  type PullResult,
+  type PushChange,
+  type PushResult,
+  type SyncRecord,
+  type SyncTable,
+} from './sync/sync';

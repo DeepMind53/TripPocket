@@ -40,7 +40,8 @@ export const templateRepo = {
             createdAt: now,
             updatedAt: now,
           }),
-          dirty: 1 as const,
+          // 손대지 않은 기본 템플릿은 계정에 올리지 않는다 (기기마다 만들어져 중복되므로) — 고치면 dirty
+          dirty: 0 as const,
         })),
       );
       await settingsRepo.set(SEEDED_KEY, true);

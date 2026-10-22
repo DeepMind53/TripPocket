@@ -13,6 +13,8 @@ polyfillCountryFlagEmojis('Twemoji Country Flags', flagFontUrl);
 
 void loadSettings();
 setupPwa();
+// 동기화는 첫 화면을 그린 뒤 불러온다 (로그인 안 했으면 아무것도 안 함)
+void import('./data/sync/syncTriggers').then((m) => m.startSync());
 
 const root = document.getElementById('root');
 if (!root) throw new Error('#root 요소가 없어요');

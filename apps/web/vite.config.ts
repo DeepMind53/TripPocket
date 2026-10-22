@@ -64,7 +64,8 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./src/test/setup.ts'],
-    include: ['src/**/*.test.{ts,tsx}'],
+    // tests/integration: 서버 코드와 함께 도는 통합 테스트 (동기화)
+    include: ['src/**/*.test.{ts,tsx}', 'tests/integration/**/*.test.ts'],
     css: false,
     // 화면 흐름 테스트가 여러 개 동시에 돌면 5초를 넘길 수 있다
     testTimeout: 15_000,
