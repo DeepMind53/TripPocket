@@ -7,6 +7,8 @@
     "build": "pnpm typecheck && vite build",
     "dev": "vite build && node --env-file-if-exists=.env dist/index.js",
     "start": "node --env-file-if-exists=.env dist/index.js",
+    "backup": "node --env-file-if-exists=.env dist/backup.js",
+    "restore": "node --env-file-if-exists=.env dist/restore.js",
     "test": "vitest run",
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },

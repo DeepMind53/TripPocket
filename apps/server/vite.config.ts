@@ -7,11 +7,15 @@ import { defineConfig } from 'vite';
  */
 export default defineConfig({
   build: {
-    ssr: 'src/index.ts',
+    // 서버 + 운영 도구(백업·복구)
+    ssr: true,
     outDir: 'dist',
     target: 'node24',
     emptyOutDir: true,
-    rollupOptions: { output: { entryFileNames: 'index.js' } },
+    rollupOptions: {
+      input: { index: 'src/index.ts', backup: 'src/cli/backup.ts', restore: 'src/cli/restore.ts' },
+      output: { entryFileNames: '[name].js' },
+    },
   },
   ssr: { noExternal: ['@trippocket/shared'] },
   test: {
