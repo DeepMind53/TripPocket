@@ -35,3 +35,10 @@ console.log(`${(total / 1024).toFixed(1).padStart(7)} KB  첫 화면 합계 (gzi
 
 const lazy = readdirSync(join(dist, 'assets')).filter((f) => f.endsWith('.js') && !seen.has(f));
 console.log(`\n나중에 불러오는 파일 ${lazy.length}개`);
+
+// 예산 (CLAUDE.md: 첫 화면 합계 200KB) — 넘으면 CI 실패
+const BUDGET_KB = 200;
+if (total / 1024 > BUDGET_KB) {
+  console.error(`\n첫 화면 합계가 예산 ${BUDGET_KB}KB를 넘었어요`);
+  process.exitCode = 1;
+}

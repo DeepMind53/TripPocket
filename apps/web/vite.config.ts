@@ -21,7 +21,7 @@ function serviceWorker(): Plugin {
         .filter((f) => !f.endsWith('.map') && !f.endsWith('.woff2') && f !== 'sw.js')
         .map((f) => `/${f}`)
         .filter((f) => f !== '/index.html')
-        .concat('/index.html', '/manifest.webmanifest', ...icons)
+        .concat('/index.html', '/boot.js', '/manifest.webmanifest', ...icons)
         .sort();
       const version = createHash('sha256').update(files.join(' ')).digest('hex').slice(0, 12);
       const source = readFileSync('src/sw/sw-template.js', 'utf8')
@@ -32,10 +32,26 @@ function serviceWorker(): Plugin {
   };
 }
 
+/** public/_headers 의 "/*" 블록을 읽는다 */
+function pagesHeaders(): Record<string, string> {
+  const block = readFileSync('public/_headers', 'utf8')
+    .split(/\n(?=\S)/)
+    .find((b) => b.startsWith('/*'));
+  return Object.fromEntries(
+    (block ?? '')
+      .split('\n')
+      .slice(1)
+      .map((l) => l.trim())
+      .filter((l) => l && !l.startsWith('#'))
+      .map((l) => [l.slice(0, l.indexOf(':')), l.slice(l.indexOf(':') + 1).trim()]),
+  );
+}
+
 export default defineConfig({
   plugins: [react(), tailwindcss(), serviceWorker()],
   server: { port: 5173, strictPort: true },
-  preview: { port: 4173, strictPort: true },
+  // 배포(Cloudflare Pages)와 같은 보안 헤더로 미리보기 → E2E에서 CSP 위반을 잡는다
+  preview: { port: 4173, strictPort: true, headers: pagesHeaders() },
   test: {
     environment: 'jsdom',
     globals: true,

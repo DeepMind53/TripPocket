@@ -47,6 +47,11 @@ export default tseslint.config(
     },
   },
   {
+    // 화면 그리기 전 실행되는 작은 스크립트 (public/boot.js)
+    files: ['apps/web/public/*.js'],
+    languageOptions: { globals: globals.browser },
+  },
+  {
     // 서비스 워커 원본: __PRECACHE__ 는 빌드 때 채워진다 (vite.config.ts)
     files: ['apps/web/src/sw/*.js'],
     languageOptions: { globals: { ...globals.serviceworker, __PRECACHE__: 'readonly' } },
