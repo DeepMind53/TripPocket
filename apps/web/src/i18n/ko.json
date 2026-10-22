@@ -25,7 +25,11 @@
   },
   "common": {
     "comingInStep": "{{step}}단계에서 만들어요",
-    "goHome": "홈으로"
+    "goHome": "홈으로",
+    "undo": "실행 취소",
+    "next": "다음",
+    "close": "닫기",
+    "cancel": "취소"
   },
   "quickMenu": {
     "title": "빠른 메뉴",
@@ -58,8 +62,17 @@
     "emptyTitle": "아직 여행이 없어요",
     "emptyDesc": "첫 여행을 만들어 일정을 정리해 보세요.",
     "emptyCta": "첫 여행 만들기",
-    "demo": "샘플 여행 열어보기",
-    "demoTitle": "샘플 여행"
+    "sectionOngoing": "여행 중",
+    "sectionUpcoming": "다가오는 여행",
+    "sectionPast": "다녀온 여행",
+    "new": "새 여행",
+    "menuTitle": "여행 메뉴",
+    "delete": "여행 삭제",
+    "deleted": "여행을 삭제했어요",
+    "openMenu": "{{title}} 메뉴",
+    "notFound": "여행을 찾을 수 없어요",
+    "notFoundDesc": "삭제됐거나 다른 기기에서 만든 여행일 수 있어요.",
+    "backToList": "내 여행으로"
   },
   "saved": {
     "title": "저장",
@@ -103,5 +116,47 @@
     "stepperDecrease": "{{label}} 줄이기",
     "stepperIncrease": "{{label}} 늘리기",
     "loading": "처리 중"
+  },
+  "newTrip": {
+    "title": "새 여행",
+    "progress": "{{step}}/3",
+    "whereTitle": "어디로 떠나세요?",
+    "whereHint": "여러 곳을 골라도 돼요",
+    "searchLabel": "도시 검색",
+    "searchPlaceholder": "도시 이름 검색",
+    "addCustom": "‘{{name}}’ 직접 추가",
+    "noMatch": "추천 목록에 없어요. 직접 추가할 수 있어요.",
+    "selected": "고른 곳",
+    "remove": "{{name}} 빼기",
+    "whenTitle": "언제 떠나세요?",
+    "nameTitle": "여행 이름을 정해주세요",
+    "nameLabel": "여행 이름",
+    "emojiLabel": "이모지",
+    "colorLabel": "색",
+    "colorOption": "{{n}}번 색",
+    "titleDefault": "{{dest}} 여행",
+    "create": "여행 만들기",
+    "created": "여행을 만들었어요",
+    "needCity": "가고 싶은 곳을 하나 이상 골라주세요",
+    "needDates": "출발일과 도착일을 골라주세요",
+    "needTitle": "여행 이름을 입력해 주세요"
+  },
+  "date": {
+    "weekdayChars": "일월화수목금토",
+    "monthDay": "{{m}}.{{d}} ({{w}})",
+    "fullDate": "{{y}}.{{m}}.{{d}}",
+    "period": "{{start}} – {{end}}",
+    "nightsDays": "{{nights}}박 {{days}}일",
+    "dayTrip": "당일치기",
+    "dday": "D-{{n}}",
+    "ddayToday": "D-DAY",
+    "ongoing": "여행 중 · {{n}}일차",
+    "past": "다녀온 여행",
+    "monthTitle": "{{y}}년 {{m}}월",
+    "pickStart": "출발일을 골라주세요",
+    "pickEnd": "도착일을 골라주세요",
+    "done": "선택 완료",
+    "today": "오늘",
+    "rangeLabel": "여행 날짜"
   }
 }

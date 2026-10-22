@@ -1,13 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { formatTripLength, nightsBetween } from './tripLength';
+import { nightsBetween } from './tripLength';
 
-describe('formatTripLength', () => {
-  it('4박 5일을 계산한다', () => {
-    expect(formatTripLength('2026-10-24', '2026-10-28')).toBe('4박 5일');
-  });
-
-  it('시작일과 종료일이 같으면 당일치기', () => {
-    expect(formatTripLength('2026-10-24', '2026-10-24')).toBe('당일치기');
+describe('nightsBetween', () => {
+  it('박 수를 계산한다', () => {
+    expect(nightsBetween('2026-10-24', '2026-10-28')).toBe(4);
+    expect(nightsBetween('2026-10-24', '2026-10-24')).toBe(0);
   });
 
   it('월말과 윤년을 넘어가도 정확하다', () => {

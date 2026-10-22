@@ -1,6 +1,8 @@
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
+import { resetLocalDb } from '../data/dev';
+import { tripRepo } from '../data/repositories/tripRepo';
 import { routes } from './router';
 
 function renderAt(path: string) {
@@ -8,6 +10,21 @@ function renderAt(path: string) {
   render(<RouterProvider router={router} />);
   return router;
 }
+
+let tripId = '';
+
+beforeEach(async () => {
+  await resetLocalDb();
+  const trip = await tripRepo.create({
+    title: '도쿄 가을여행',
+    destinations: ['도쿄'],
+    startDate: '2026-10-24',
+    endDate: '2026-10-28',
+    timezone: 'Asia/Tokyo',
+    cover: { emoji: '🗼' },
+  });
+  tripId = trip.id;
+});
 
 describe('앱 셸', () => {
   it('앱 하단 탭 4개가 있고 현재 탭을 표시한다', () => {
@@ -27,10 +44,11 @@ describe('앱 셸', () => {
     expect(screen.getByRole('heading', { name: '내 여행' })).toBeInTheDocument();
   });
 
-  it('여행 상세는 여행 탭 4개를 보여주고 기본은 일정 탭이다', () => {
-    const router = renderAt('/trips/demo');
-    expect(router.state.location.pathname).toBe('/trips/demo/plan');
-    const nav = screen.getByRole('navigation', { name: '여행 메뉴' });
+  it('여행 상세는 여행 탭 4개를 보여주고 기본은 일정 탭이다', async () => {
+    const router = renderAt(`/trips/${tripId}`);
+    const nav = await screen.findByRole('navigation', { name: '여행 메뉴' });
+    await screen.findByText('아직 일정이 없어요');
+    expect(router.state.location.pathname).toBe(`/trips/${tripId}/plan`);
     for (const name of ['일정', '장소', '예약', '준비']) {
       expect(nav).toContainElement(screen.getByRole('link', { name }));
     }
@@ -39,7 +57,8 @@ describe('앱 셸', () => {
 
   it('빠른 메뉴는 뒤로가기로 닫힌다', async () => {
     const user = userEvent.setup();
-    const router = renderAt('/trips/demo/plan');
+    const router = renderAt(`/trips/${tripId}/plan`);
+    await screen.findByRole('heading', { name: '🗼 도쿄 가을여행' });
     await user.click(screen.getByRole('button', { name: '빠른 메뉴' }));
     expect(screen.getByRole('dialog', { name: '빠른 메뉴' })).toBeInTheDocument();
     // 여행 안에서는 바로가기가 보인다
@@ -49,7 +68,7 @@ describe('앱 셸', () => {
       await router.navigate(-1);
     });
     expect(screen.queryByRole('dialog', { name: '빠른 메뉴' })).not.toBeInTheDocument();
-    expect(router.state.location.pathname).toBe('/trips/demo/plan');
+    expect(router.state.location.pathname).toBe(`/trips/${tripId}/plan`);
   });
 
   it('없는 주소는 안내 화면을 보여준다', () => {

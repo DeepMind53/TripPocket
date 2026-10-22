@@ -24,6 +24,14 @@ export const routes: RouteObject[] = [
     ],
   },
   {
+    // 만들기 화면은 열 때만 불러온다 (도시 목록·달력 포함)
+    path: 'trips/new',
+    lazy: async () => {
+      const { NewTripPage } = await import('../features/trips/NewTripPage');
+      return { Component: NewTripPage };
+    },
+  },
+  {
     path: 'trips/:tripId',
     element: <TripLayout />,
     children: [

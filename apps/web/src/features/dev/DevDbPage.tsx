@@ -1,7 +1,6 @@
 import {
   dayNumberOf,
   daysUntil,
-  formatTripLength,
   getTripDays,
   getTripStatus,
   todayIn,
@@ -12,6 +11,7 @@ import { ArrowDown, ArrowLeft, ArrowUp, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router';
 import { resetLocalDb, seedSampleTrip } from '../../data/dev';
+import { formatTripLength } from '../../shared/lib/dateFormat';
 import { useTripItems, useTrips } from '../../data/hooks';
 import { itemRepo } from '../../data/repositories/itemRepo';
 import { tripRepo } from '../../data/repositories/tripRepo';

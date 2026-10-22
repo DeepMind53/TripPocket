@@ -1,6 +1,7 @@
 export { BottomSheet } from './BottomSheet';
 export { Button } from './Button';
 export { Chip } from './Chip';
+export { DateRangePicker } from './DateRangePicker';
 export { EmptyState } from './EmptyState';
 export { IconButton } from './IconButton';
 export { RadioList } from './RadioList';

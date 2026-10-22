@@ -11,7 +11,7 @@ export {
   type LocalDate,
   type LocalTime,
 } from './date/localDate';
-export { formatTripLength, nightsBetween } from './date/tripLength';
+export { nightsBetween } from './date/tripLength';
 export {
   dayNumberOf,
   daysUntil,
@@ -22,3 +22,4 @@ export {
 export { uuidv7 } from './id/uuidv7';
 export { compareKeys, keyBetween, keysBetween } from './order/fractionalIndex';
 export * from './schema/entities';
+export { CITIES, findCity, searchCities, type City } from './data/cities';

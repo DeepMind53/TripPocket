@@ -11,8 +11,12 @@ export async function resetLocalDb(): Promise<void> {
   await db.open();
 }
 
-/** 3일 뒤 출발하는 도쿄 4박 5일 샘플 여행 */
-export async function seedSampleTrip(): Promise<string> {
+/** 3일 뒤 출발하는 도쿄 4박 5일 샘플 여행 (한 트랜잭션: 전부 저장되거나 전부 취소) */
+export function seedSampleTrip(): Promise<string> {
+  return db.transaction('rw', db.trips, db.items, seedInTransaction);
+}
+
+async function seedInTransaction(): Promise<string> {
   const start = addDays(todayIn('Asia/Tokyo'), 3);
   const trip = await tripRepo.create({
     title: '도쿄 가을여행',

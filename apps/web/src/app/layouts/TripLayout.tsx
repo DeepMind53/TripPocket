@@ -1,9 +1,12 @@
+import { todayIn } from '@trippocket/shared';
 import { CalendarDays, CloudOff, Ellipsis, ListChecks, Search, Ticket } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Outlet, useParams } from 'react-router';
+import { Link, Outlet, useParams } from 'react-router';
+import { useTrip } from '../../data/hooks';
 import { QuickMenuButton } from '../../features/quick-menu/QuickMenu';
 import { useBottomInset } from '../../shared/hooks/useBottomInset';
-import { IconButton, TabBar, TopBar, toast } from '../../shared/ui';
+import { formatPeriod, formatTripBadge } from '../../shared/lib/dateFormat';
+import { EmptyState, IconButton, TabBar, TopBar, toast } from '../../shared/ui';
 import { TAB_BAR_HEIGHT } from './AppShell';
 
 /**
@@ -13,17 +16,42 @@ import { TAB_BAR_HEIGHT } from './AppShell';
 export function TripLayout() {
   const { t } = useTranslation();
   const { tripId = '' } = useParams();
-  useBottomInset(TAB_BAR_HEIGHT);
+  const trip = useTrip(tripId);
+  useBottomInset(trip ? TAB_BAR_HEIGHT : 0);
 
-  // 4~5단계에서 저장소의 여행 정보로 바뀐다
-  const title = tripId === 'demo' ? `🗼 ${t('trips.demoTitle')}` : t('trips.title');
+  if (trip === null) {
+    return (
+      <div className="mx-auto min-h-dvh max-w-[560px]">
+        <TopBar title={t('trips.notFound')} backTo="/trips" />
+        <EmptyState
+          emoji="🧭"
+          title={t('trips.notFound')}
+          description={t('trips.notFoundDesc')}
+          action={
+            <Link
+              to="/trips"
+              replace
+              className="inline-flex h-11 items-center rounded-btn bg-primary px-4 font-semibold text-on-primary"
+            >
+              {t('trips.backToList')}
+            </Link>
+          }
+        />
+      </div>
+    );
+  }
+
   const base = `/trips/${encodeURIComponent(tripId)}`;
 
   return (
     <div className="mx-auto min-h-dvh max-w-[560px]">
       <TopBar
-        title={title}
-        {...(tripId === 'demo' ? { subtitle: '10.24 (금) – 10.28 (화) · 4박 5일' } : {})}
+        title={trip ? `${trip.cover.emoji ?? ''} ${trip.title}`.trim() : ''}
+        {...(trip
+          ? {
+              subtitle: `${formatPeriod(trip.startDate, trip.endDate)} · ${formatTripBadge(trip.startDate, trip.endDate, todayIn(trip.timezone))}`,
+            }
+          : {})}
         backTo="/trips"
         actions={
           <>
@@ -42,9 +70,7 @@ export function TripLayout() {
           </>
         }
       />
-      <main className="pb-[calc(56px+env(safe-area-inset-bottom)+16px)]">
-        <Outlet />
-      </main>
+      <main className="pb-[calc(56px+env(safe-area-inset-bottom)+16px)]">{trip && <Outlet />}</main>
       <TabBar
         label={t('tripNav.label')}
         items={[
