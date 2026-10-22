@@ -1,6 +1,6 @@
 import { Minus, Plus } from 'lucide-react';
 import { useEffect, useRef } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from '../../i18n';
 import { cn } from '../lib/cn';
 
 export interface StepperProps {

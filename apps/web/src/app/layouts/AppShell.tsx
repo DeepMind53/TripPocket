@@ -1,5 +1,5 @@
 import { Heart, House, Luggage, UserRound } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from '../../i18n';
 import { Outlet } from 'react-router';
 import { useBottomInset } from '../../shared/hooks/useBottomInset';
 import { TabBar } from '../../shared/ui';

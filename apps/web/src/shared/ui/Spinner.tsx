@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from '../../i18n';
 
 export function Spinner({ label }: { label?: string }) {
   const { t } = useTranslation();

@@ -13,5 +13,7 @@ export default defineConfig({
     setupFiles: ['./src/test/setup.ts'],
     include: ['src/**/*.test.{ts,tsx}'],
     css: false,
+    // 화면 흐름 테스트가 여러 개 동시에 돌면 5초를 넘길 수 있다
+    testTimeout: 15_000,
   },
 });

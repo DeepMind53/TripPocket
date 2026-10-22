@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from '../../i18n';
 import { EmptyState, TopBar } from '../../shared/ui';
 
 /** S-23 설정 — 10단계에서 항목이 들어온다 (docs/12 §3) */

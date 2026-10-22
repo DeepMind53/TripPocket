@@ -7,9 +7,9 @@ import {
   Settings,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from '../../i18n';
 import { Link } from 'react-router';
-import { QuickMenuButton } from '../quick-menu/QuickMenu';
+import { QuickMenuButton } from '../common/QuickMenu';
 import { Button, TopBar, toast } from '../../shared/ui';
 
 /** S-05 마이 — 로그인은 14단계, 백업은 11단계 */

@@ -21,7 +21,7 @@ import { CSS } from '@dnd-kit/utilities';
 import type { ItineraryItem, LocalDate } from '@trippocket/shared';
 import { GripVertical } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from '../../i18n';
 import { itemRepo } from '../../data/repositories/itemRepo';
 import { cn } from '../../shared/lib/cn';
 import { formatMonthDay } from '../../shared/lib/dateFormat';

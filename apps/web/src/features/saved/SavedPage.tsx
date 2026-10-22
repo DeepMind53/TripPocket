@@ -1,5 +1,5 @@
-import { useTranslation } from 'react-i18next';
-import { QuickMenuButton } from '../quick-menu/QuickMenu';
+import { useTranslation } from '../../i18n';
+import { QuickMenuButton } from '../common/QuickMenu';
 import { EmptyState, TopBar } from '../../shared/ui';
 
 /** S-04 저장한 장소 — 18단계 */

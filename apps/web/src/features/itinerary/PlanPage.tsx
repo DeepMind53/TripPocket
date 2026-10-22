@@ -3,26 +3,35 @@ import {
   getTripDays,
   getTripStatus,
   todayIn,
+  type Booking,
   type ItineraryItem,
   type LocalDate,
   type Trip,
 } from '@trippocket/shared';
-import { ArrowDownWideNarrow, Check, Ellipsis, Plus } from 'lucide-react';
+import { ArrowDownWideNarrow, BedDouble, Check, ChevronRight, Ellipsis, Plus } from 'lucide-react';
 import { lazy, Suspense, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from '../../i18n';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
-import { useTrip, useTripItems } from '../../data/hooks';
+import { useTrip, useTripBookings, useTripItems } from '../../data/hooks';
+import {
+  bookingRowsForDay,
+  lodgingForNight,
+  type BookingRow,
+  type LodgingNight,
+} from '../../domain/lodging';
+import type { Destination } from '../../shared/lib/directions';
 import { itemRepo } from '../../data/repositories/itemRepo';
 import { useRouteSheet } from '../../shared/hooks/useRouteSheet';
 import { cn } from '../../shared/lib/cn';
 import { formatMonthDay } from '../../shared/lib/dateFormat';
 import { sortByTimeKeepingUntimed } from '../../domain/schedule';
 import { BottomSheet, Button, Chip, IconButton, snackbar, toast } from '../../shared/ui';
-import { DirectionsSheet } from './DirectionsSheet';
+import { DirectionsSheet } from '../common/DirectionsSheet';
 import { ItemDetailSheet } from './ItemDetailSheet';
 import { ItemFormSheet } from './ItemFormSheet';
 import { dayColor, KIND_ICON } from './itemKinds';
 import { MoveDaySheet } from './MoveDaySheet';
+import { BOOKING_ICON } from '../common/bookingKinds';
 
 // 드래그 편집은 편집 모드에 들어갈 때만 불러온다 (dnd-kit 포함)
 const EditModeList = lazy(() => import('./EditModeList'));
@@ -38,11 +47,20 @@ export function PlanPage() {
   const { tripId = '' } = useParams();
   const trip = useTrip(tripId);
   const items = useTripItems(tripId);
-  if (!trip || !items) return null;
-  return <PlanView trip={trip} items={items} />;
+  const bookings = useTripBookings(tripId);
+  if (!trip || !items || !bookings) return null;
+  return <PlanView trip={trip} items={items} bookings={bookings} />;
 }
 
-function PlanView({ trip, items }: { trip: Trip; items: ItineraryItem[] }) {
+function PlanView({
+  trip,
+  items,
+  bookings,
+}: {
+  trip: Trip;
+  items: ItineraryItem[];
+  bookings: Booking[];
+}) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
@@ -69,6 +87,7 @@ function PlanView({ trip, items }: { trip: Trip; items: ItineraryItem[] }) {
   const [editing, setEditing] = useRouteSheet('edit-mode');
   const [dayMenuOpen, setDayMenuOpen] = useRouteSheet('day-menu');
   const [menuDate, setMenuDate] = useState<LocalDate | null>(null);
+  const [dirDest, setDirDest] = useState<Destination | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [formTarget, setFormTarget] = useState<{ date: LocalDate | null; editing: boolean }>({
     date: null,
@@ -210,6 +229,13 @@ function PlanView({ trip, items }: { trip: Trip; items: ItineraryItem[] }) {
               index={index}
               items={items.filter((i) => i.date === date)}
               isToday={date === today}
+              lodging={date ? lodgingForNight(bookings, date) : null}
+              bookingRows={date ? bookingRowsForDay(bookings, date) : []}
+              onBooking={() => void navigate(`/trips/${trip.id}/bookings`)}
+              onLodging={(b) => {
+                setDirDest({ name: b.title, address: b.details?.address });
+                setDirOpen(true);
+              }}
               onAdd={() => openAdd(date)}
               onOpen={openDetail}
               onMenu={() => {
@@ -254,7 +280,15 @@ function PlanView({ trip, items }: { trip: Trip; items: ItineraryItem[] }) {
         dayLabel={selectedDayLabel}
         showDone={ongoing}
         mapApp={isDomestic ? 'naver' : 'google'}
-        onDirections={() => setDirOpen(true)}
+        onDirections={() => {
+          if (!selected) return;
+          setDirDest({
+            name: selected.title,
+            address: selected.place?.address,
+            coords: selected.place?.coords,
+          });
+          setDirOpen(true);
+        }}
         onEdit={() => {
           setFormTarget({ date: selected?.date ?? null, editing: true });
           setFormOpen(true);
@@ -271,15 +305,7 @@ function PlanView({ trip, items }: { trip: Trip; items: ItineraryItem[] }) {
       <DirectionsSheet
         open={dirOpen}
         onOpenChange={setDirOpen}
-        destination={
-          selected
-            ? {
-                name: selected.title,
-                address: selected.place?.address,
-                coords: selected.place?.coords,
-              }
-            : null
-        }
+        destination={dirDest}
         isDomestic={isDomestic}
       />
       <MoveDaySheet
@@ -302,6 +328,10 @@ function DaySection({
   onAdd,
   onOpen,
   onMenu,
+  lodging,
+  onLodging,
+  bookingRows,
+  onBooking,
   hideWhenEmpty,
 }: {
   date: LocalDate | null;
@@ -311,6 +341,10 @@ function DaySection({
   onAdd: () => void;
   onOpen: (item: ItineraryItem) => void;
   onMenu: () => void;
+  lodging: LodgingNight | null;
+  onLodging: (booking: Booking) => void;
+  bookingRows: BookingRow[];
+  onBooking: () => void;
   hideWhenEmpty: boolean;
 }) {
   const { t } = useTranslation();
@@ -340,6 +374,13 @@ function DaySection({
           />
         )}
       </div>
+      {bookingRows.length > 0 && (
+        <ul aria-label={t('plan.bookingsLabel')} className="flex flex-col gap-1 py-1">
+          {bookingRows.map((row) => (
+            <BookingLine key={`${row.booking.id}-${row.part}`} row={row} onOpen={onBooking} />
+          ))}
+        </ul>
+      )}
       {items.length === 0 && (
         <p className="py-2 text-body-2 text-fg-muted">
           {date ? t('plan.emptyDay') : t('plan.wishEmpty')}
@@ -358,7 +399,70 @@ function DaySection({
         <Plus aria-hidden="true" className="size-4" />
         {t('plan.addItem')}
       </button>
+      {lodging && (
+        <button
+          type="button"
+          onClick={() => onLodging(lodging.booking)}
+          aria-label={t('plan.lodgingLabel', {
+            title: lodging.booking.title,
+            night: lodging.night,
+          })}
+          className="mt-2 flex items-center gap-2 rounded-btn bg-bg-subtle px-3 py-2.5 text-left"
+        >
+          <BedDouble aria-hidden="true" className="size-4 shrink-0 text-day-4" />
+          <span className="text-caption font-semibold text-fg-sub">{t('plan.lodging')}</span>
+          <span className="min-w-0 flex-1 truncate text-body-2 font-medium">
+            {lodging.booking.title}
+          </span>
+          <span className="tabular shrink-0 text-caption text-fg-muted">
+            {lodging.night}/{lodging.nights}
+          </span>
+          <ChevronRight aria-hidden="true" className="size-4 shrink-0 text-fg-muted" />
+        </button>
+      )}
     </section>
+  );
+}
+
+function BookingLine({ row, onOpen }: { row: BookingRow; onOpen: () => void }) {
+  const { t } = useTranslation();
+  const b = row.booking;
+  const Icon = BOOKING_ICON[b.kind];
+  const route =
+    b.kind === 'flight' && (b.start.place || b.end?.place)
+      ? `${b.start.place ?? ''} → ${b.end?.place ?? ''}`
+      : null;
+  return (
+    <li>
+      <button
+        type="button"
+        onClick={onOpen}
+        aria-label={t('plan.openBooking', { title: b.title })}
+        className="flex w-full items-center gap-3 rounded-btn border border-dashed border-line px-2 py-2 text-left"
+      >
+        <span
+          aria-hidden="true"
+          className="grid size-6 shrink-0 place-items-center rounded-full bg-primary-weak text-primary"
+        >
+          <Icon className="size-3.5" />
+        </span>
+        <span className="tabular w-11 shrink-0 text-caption text-fg-sub">{row.time ?? '—'}</span>
+        <span className="flex min-w-0 flex-1 flex-col">
+          <span className="truncate text-body-2 font-medium">
+            {row.part === 'arrive' && `${t('plan.arrive')} · `}
+            {b.title}
+          </span>
+          {(route || b.confirmationNo) && (
+            <span className="tabular truncate text-caption text-fg-muted">
+              {[route, b.confirmationNo].filter(Boolean).join(' · ')}
+            </span>
+          )}
+        </span>
+        <span className="shrink-0 rounded-md bg-bg-subtle px-1.5 py-0.5 text-micro text-fg-sub">
+          {t(`bookingKind.${b.kind}`)}
+        </span>
+      </button>
+    </li>
   );
 }
 

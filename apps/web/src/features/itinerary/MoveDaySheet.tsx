@@ -1,6 +1,6 @@
 import type { ItineraryItem, LocalDate } from '@trippocket/shared';
 import { Check } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from '../../i18n';
 import { formatMonthDay } from '../../shared/lib/dateFormat';
 import { BottomSheet } from '../../shared/ui';
 import { dayColor } from './itemKinds';

@@ -1,5 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import type { ItineraryItem, Trip } from '@trippocket/shared';
+import type { Booking, ItineraryItem, Trip } from '@trippocket/shared';
+import { bookingRepo } from './repositories/bookingRepo';
 import { itemRepo } from './repositories/itemRepo';
 import { settingsRepo } from './repositories/settingsRepo';
 import { tripRepo } from './repositories/tripRepo';
@@ -22,4 +23,8 @@ export function useTripItems(tripId: string | undefined): ItineraryItem[] | unde
 /** 설정 값 하나 (불러오는 중에는 fallback) */
 export function useSetting<T>(key: string, fallback: T): T {
   return useLiveQuery(() => settingsRepo.get(key, fallback), [key]) ?? fallback;
+}
+
+export function useTripBookings(tripId: string | undefined): Booking[] | undefined {
+  return useLiveQuery(async () => (tripId ? bookingRepo.listByTrip(tripId) : []), [tripId]);
 }

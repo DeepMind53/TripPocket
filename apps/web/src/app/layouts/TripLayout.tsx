@@ -9,10 +9,10 @@ import {
   Ticket,
   Trash2,
 } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from '../../i18n';
 import { Link, Outlet, useNavigate, useParams } from 'react-router';
 import { useTrip } from '../../data/hooks';
-import { QuickMenuButton } from '../../features/quick-menu/QuickMenu';
+import { QuickMenuButton } from '../../features/common/QuickMenu';
 import { deleteTripWithUndo } from '../../features/trips/tripActions';
 import { useRouteSheet } from '../../shared/hooks/useRouteSheet';
 import { useBottomInset } from '../../shared/hooks/useBottomInset';

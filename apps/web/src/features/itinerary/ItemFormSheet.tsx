@@ -1,6 +1,6 @@
 import { ITEM_KINDS, type ItemKind, type ItineraryItem, type LocalDate } from '@trippocket/shared';
 import { useState, type ReactNode } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from '../../i18n';
 import { itemRepo } from '../../data/repositories/itemRepo';
 import { BottomSheet, Button, Chip, toast } from '../../shared/ui';
 import { KIND_ICON } from './itemKinds';

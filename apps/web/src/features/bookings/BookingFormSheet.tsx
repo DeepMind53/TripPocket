@@ -1,0 +1,563 @@
+import { addDays, diffDays, type Booking, type Trip } from '@trippocket/shared';
+import { Trash2 } from 'lucide-react';
+import { useState, type ReactNode } from 'react';
+import { useTranslation } from '../../i18n';
+import { bookingRepo, type NewBooking } from '../../data/repositories/bookingRepo';
+import { BottomSheet, Button, Chip, snackbar, toast } from '../../shared/ui';
+import { BOOKING_ICON } from '../common/bookingKinds';
+
+const KINDS: Booking['kind'][] = [
+  'flight',
+  'lodging',
+  'restaurant',
+  'train',
+  'car',
+  'tour',
+  'ticket',
+  'other',
+];
+
+export interface BookingFormSheetProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  trip: Trip;
+  /** 있으면 편집 */
+  booking?: Booking | undefined;
+}
+
+/** S-17 예약 추가·편집: 종류를 고르면 종류에 맞는 칸만 보인다 */
+export function BookingFormSheet({ open, onOpenChange, trip, booking }: BookingFormSheetProps) {
+  const { t } = useTranslation();
+  return (
+    <BottomSheet
+      open={open}
+      onOpenChange={onOpenChange}
+      title={t(booking ? 'bookings.editTitle' : 'bookings.addTitle')}
+    >
+      {open && (
+        <BookingForm
+          key={booking?.id ?? 'new'}
+          trip={trip}
+          booking={booking}
+          onDone={() => onOpenChange(false)}
+        />
+      )}
+    </BottomSheet>
+  );
+}
+
+const inputClass =
+  'h-12 w-full min-w-0 rounded-btn border border-line bg-bg-subtle px-3 text-body-1 outline-none focus:border-primary';
+
+/** 빈 문자열 → undefined (저장소에서 그 항목을 지운다) */
+const v = (s: string) => (s.trim() ? s.trim() : undefined);
+
+function BookingForm({
+  trip,
+  booking: b,
+  onDone,
+}: {
+  trip: Trip;
+  booking: Booking | undefined;
+  onDone: () => void;
+}) {
+  const { t } = useTranslation();
+  const [kind, setKind] = useState<Booking['kind']>(b?.kind ?? 'flight');
+  const [f, setF] = useState({
+    title: b?.title ?? '',
+    provider: b?.provider ?? '',
+    flightNo: b?.details?.flightNo ?? '',
+    from: b?.start.place ?? '',
+    to: b?.end?.place ?? '',
+    startDate: b?.start.date ?? trip.startDate,
+    startTime: b?.start.time ?? '',
+    endDate: b?.end?.date ?? '',
+    endTime: b?.end?.time ?? '',
+    seat: b?.details?.seat ?? '',
+    terminal: b?.details?.terminal ?? '',
+    confirmationNo: b?.confirmationNo ?? '',
+    address: b?.details?.address ?? '',
+    phone: b?.details?.phone ?? '',
+    priceNote: b?.priceNote ?? '',
+    partySize: b?.details?.partySize ? String(b.details.partySize) : '',
+    memo: b?.memo ?? '',
+  });
+  const [saving, setSaving] = useState(false);
+  const set = (key: keyof typeof f) => (e: { target: { value: string } }) =>
+    setF((prev) => ({ ...prev, [key]: e.target.value }));
+
+  // 숙소 체크아웃 기본값: 여행 마지막 날 (체크인보다 뒤일 때), 아니면 다음 날
+  const endDate =
+    f.endDate ||
+    (kind === 'lodging'
+      ? diffDays(f.startDate, trip.endDate) > 0
+        ? trip.endDate
+        : addDays(f.startDate, 1)
+      : f.startDate);
+
+  /** 종류별 입력값 → 저장할 예약. 문제가 있으면 안내 문구 */
+  function build(): NewBooking | string {
+    const common = {
+      tripId: trip.id,
+      kind,
+      confirmationNo: v(f.confirmationNo),
+      memo: v(f.memo),
+    };
+    if (kind === 'flight') {
+      if (!v(f.flightNo) && !v(f.from) && !v(f.to) && !v(f.title)) return t('bookings.needFlight');
+      const title =
+        v(f.title) ??
+        t('bookings.flightTitle', {
+          flightNo: f.flightNo.trim().toUpperCase(),
+          from: f.from.trim().toUpperCase(),
+          to: f.to.trim().toUpperCase(),
+        }).trim();
+      return clean({
+        ...common,
+        title,
+        provider: v(f.provider),
+        start: clean({ date: f.startDate, time: v(f.startTime), place: v(f.from)?.toUpperCase() }),
+        end: clean({ date: endDate, time: v(f.endTime), place: v(f.to)?.toUpperCase() }),
+        details: cleanOrUndefined({
+          flightNo: v(f.flightNo)?.toUpperCase(),
+          seat: v(f.seat),
+          terminal: v(f.terminal),
+        }),
+      });
+    }
+    if (!v(f.title)) return t('bookings.needName');
+    if (kind === 'restaurant') {
+      const party = Number(f.partySize);
+      return clean({
+        ...common,
+        title: f.title.trim(),
+        provider: v(f.provider),
+        start: clean({ date: f.startDate, time: v(f.startTime) }),
+        details: cleanOrUndefined({
+          address: v(f.address),
+          phone: v(f.phone),
+          partySize: Number.isInteger(party) && party >= 1 && party <= 99 ? party : undefined,
+        }),
+        priceNote: v(f.priceNote),
+      });
+    }
+    if (kind === 'lodging') {
+      if (diffDays(f.startDate, endDate) < 1) return t('bookings.checkOutBeforeIn');
+      return clean({
+        ...common,
+        title: f.title.trim(),
+        provider: v(f.provider),
+        start: clean({ date: f.startDate, time: v(f.startTime) }),
+        end: clean({ date: endDate, time: v(f.endTime) }),
+        details: cleanOrUndefined({ address: v(f.address), phone: v(f.phone) }),
+        priceNote: v(f.priceNote),
+      });
+    }
+    return clean({
+      ...common,
+      title: f.title.trim(),
+      provider: v(f.provider),
+      start: clean({ date: f.startDate, time: v(f.startTime), place: v(f.from) }),
+      priceNote: v(f.priceNote),
+    });
+  }
+
+  async function submit() {
+    const input = build();
+    if (typeof input === 'string') {
+      toast(input);
+      return;
+    }
+    setSaving(true);
+    try {
+      if (b) {
+        // 편집: 이번 종류에 없는 칸은 undefined로 지운다
+        await bookingRepo.update(b.id, {
+          kind: input.kind,
+          title: input.title,
+          provider: input.provider,
+          confirmationNo: input.confirmationNo,
+          start: input.start,
+          end: input.end,
+          details: input.details,
+          priceNote: input.priceNote,
+          memo: input.memo,
+        });
+        toast(t('form.saved'));
+      } else {
+        await bookingRepo.create(input);
+        toast(t('bookings.added'));
+      }
+      onDone();
+    } catch {
+      setSaving(false);
+      toast(t('form.failed'));
+    }
+  }
+
+  async function remove() {
+    if (!b) return;
+    onDone();
+    await bookingRepo.softDelete(b.id);
+    snackbar(t('bookings.deleted'), {
+      label: t('common.undo'),
+      onAction: () => void bookingRepo.restore(b.id),
+    });
+  }
+
+  return (
+    <form
+      className="flex flex-col gap-5"
+      onSubmit={(e) => {
+        e.preventDefault();
+        void submit();
+      }}
+    >
+      <fieldset>
+        <legend className="mb-2 text-caption font-semibold text-fg-sub">
+          {t('bookings.kind')}
+        </legend>
+        <div className="flex flex-wrap gap-2">
+          {KINDS.map((k) => {
+            const Icon = BOOKING_ICON[k];
+            return (
+              <Chip
+                key={k}
+                selected={k === kind}
+                onClick={() => setKind(k)}
+                leading={<Icon aria-hidden="true" className="size-4" />}
+              >
+                {t(`bookingKind.${k}`)}
+              </Chip>
+            );
+          })}
+        </div>
+      </fieldset>
+
+      {kind === 'flight' ? (
+        <>
+          <Row>
+            <Field label={t('bookings.provider')}>
+              <input
+                id="bk-provider"
+                value={f.provider}
+                maxLength={60}
+                onChange={set('provider')}
+                className={inputClass}
+              />
+            </Field>
+            <Field label={t('bookings.flightNo')}>
+              <input
+                id="bk-flight"
+                value={f.flightNo}
+                maxLength={20}
+                placeholder="KE703"
+                onChange={set('flightNo')}
+                className={`${inputClass} uppercase`}
+              />
+            </Field>
+          </Row>
+          <Row>
+            <Field label={t('bookings.from')}>
+              <input
+                id="bk-from"
+                value={f.from}
+                maxLength={20}
+                placeholder="ICN"
+                onChange={set('from')}
+                className={`${inputClass} uppercase`}
+              />
+            </Field>
+            <Field label={t('bookings.to')}>
+              <input
+                id="bk-to"
+                value={f.to}
+                maxLength={20}
+                placeholder="NRT"
+                onChange={set('to')}
+                className={`${inputClass} uppercase`}
+              />
+            </Field>
+          </Row>
+          <DateTimeRow
+            dateLabel={t('bookings.departDate')}
+            timeLabel={t('bookings.departTime')}
+            date={f.startDate}
+            time={f.startTime}
+            onDate={set('startDate')}
+            onTime={set('startTime')}
+            idPrefix="bk-depart"
+          />
+          <DateTimeRow
+            dateLabel={t('bookings.arriveDate')}
+            timeLabel={t('bookings.arriveTime')}
+            date={endDate}
+            time={f.endTime}
+            onDate={set('endDate')}
+            onTime={set('endTime')}
+            idPrefix="bk-arrive"
+          />
+          <Row>
+            <Field label={t('bookings.seat')}>
+              <input
+                id="bk-seat"
+                value={f.seat}
+                maxLength={20}
+                onChange={set('seat')}
+                className={inputClass}
+              />
+            </Field>
+            <Field label={t('bookings.terminal')}>
+              <input
+                id="bk-terminal"
+                value={f.terminal}
+                maxLength={20}
+                onChange={set('terminal')}
+                className={inputClass}
+              />
+            </Field>
+          </Row>
+        </>
+      ) : (
+        <>
+          <Field
+            label={
+              kind === 'lodging'
+                ? t('bookings.lodgingName')
+                : kind === 'restaurant'
+                  ? t('bookings.restaurantName')
+                  : t('bookings.name')
+            }
+          >
+            <input
+              id="bk-title"
+              value={f.title}
+              maxLength={100}
+              onChange={set('title')}
+              className={inputClass}
+            />
+          </Field>
+          {kind === 'lodging' ? (
+            <>
+              <DateTimeRow
+                dateLabel={t('bookings.checkIn')}
+                timeLabel={t('bookings.checkInTime')}
+                date={f.startDate}
+                time={f.startTime}
+                onDate={set('startDate')}
+                onTime={set('startTime')}
+                idPrefix="bk-in"
+              />
+              <DateTimeRow
+                dateLabel={t('bookings.checkOut')}
+                timeLabel={t('bookings.checkOutTime')}
+                date={endDate}
+                time={f.endTime}
+                onDate={set('endDate')}
+                onTime={set('endTime')}
+                idPrefix="bk-out"
+              />
+              <Field label={t('bookings.address')}>
+                <input
+                  id="bk-address"
+                  value={f.address}
+                  maxLength={200}
+                  onChange={set('address')}
+                  className={inputClass}
+                />
+              </Field>
+              <Field label={t('bookings.phone')}>
+                <input
+                  id="bk-phone"
+                  type="tel"
+                  value={f.phone}
+                  maxLength={40}
+                  onChange={set('phone')}
+                  className={inputClass}
+                />
+              </Field>
+            </>
+          ) : kind === 'restaurant' ? (
+            <>
+              <DateTimeRow
+                dateLabel={t('bookings.date')}
+                timeLabel={t('bookings.time')}
+                date={f.startDate}
+                time={f.startTime}
+                onDate={set('startDate')}
+                onTime={set('startTime')}
+                idPrefix="bk-meal"
+              />
+              <Row>
+                <Field label={t('bookings.partySize')}>
+                  <input
+                    id="bk-party"
+                    type="number"
+                    inputMode="numeric"
+                    min={1}
+                    max={99}
+                    value={f.partySize}
+                    onChange={set('partySize')}
+                    className={`${inputClass} tabular`}
+                  />
+                </Field>
+                <Field label={t('bookings.phone')}>
+                  <input
+                    id="bk-phone"
+                    type="tel"
+                    value={f.phone}
+                    maxLength={40}
+                    onChange={set('phone')}
+                    className={inputClass}
+                  />
+                </Field>
+              </Row>
+              <Field label={t('bookings.address')}>
+                <input
+                  id="bk-address"
+                  value={f.address}
+                  maxLength={200}
+                  onChange={set('address')}
+                  className={inputClass}
+                />
+              </Field>
+            </>
+          ) : (
+            <>
+              <DateTimeRow
+                dateLabel={t('bookings.date')}
+                timeLabel={t('bookings.time')}
+                date={f.startDate}
+                time={f.startTime}
+                onDate={set('startDate')}
+                onTime={set('startTime')}
+                idPrefix="bk-start"
+              />
+              <Field label={t('bookings.place')}>
+                <input
+                  id="bk-place"
+                  value={f.from}
+                  maxLength={100}
+                  onChange={set('from')}
+                  className={inputClass}
+                />
+              </Field>
+            </>
+          )}
+          <Field label={t('bookings.reseller')}>
+            <input
+              id="bk-provider"
+              value={f.provider}
+              maxLength={60}
+              onChange={set('provider')}
+              className={inputClass}
+            />
+          </Field>
+          <Field label={t('bookings.priceNote')}>
+            <input
+              id="bk-price"
+              value={f.priceNote}
+              maxLength={100}
+              placeholder={t('bookings.priceNotePlaceholder')}
+              onChange={set('priceNote')}
+              className={inputClass}
+            />
+          </Field>
+        </>
+      )}
+
+      <Field label={t('bookings.confirmationNo')}>
+        <input
+          id="bk-no"
+          value={f.confirmationNo}
+          maxLength={60}
+          onChange={set('confirmationNo')}
+          className={`${inputClass} tabular`}
+        />
+      </Field>
+      <Field label={t('bookings.memo')}>
+        <textarea
+          id="bk-memo"
+          value={f.memo}
+          maxLength={2000}
+          rows={2}
+          onChange={set('memo')}
+          className={`${inputClass} h-auto py-2`}
+        />
+      </Field>
+
+      <Button type="submit" size="lg" fullWidth loading={saving}>
+        {t(b ? 'form.save' : 'bookings.add')}
+      </Button>
+      {b && (
+        <Button
+          variant="secondary"
+          className="text-danger"
+          leading={<Trash2 aria-hidden="true" className="size-4" />}
+          onClick={() => void remove()}
+        >
+          {t('bookings.delete')}
+        </Button>
+      )}
+    </form>
+  );
+}
+
+/** undefined 값을 가진 키를 뺀다 (exactOptionalPropertyTypes) */
+function clean<T extends object>(obj: T): { [K in keyof T]: Exclude<T[K], undefined> } {
+  return Object.fromEntries(Object.entries(obj).filter(([, val]) => val !== undefined)) as {
+    [K in keyof T]: Exclude<T[K], undefined>;
+  };
+}
+
+function cleanOrUndefined<T extends object>(obj: T) {
+  const c = clean(obj);
+  return Object.keys(c).length ? c : undefined;
+}
+
+function Row({ children }: { children: ReactNode }) {
+  return <div className="grid grid-cols-2 gap-3">{children}</div>;
+}
+
+function Field({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <label className="flex min-w-0 flex-col gap-1.5">
+      <span className="text-caption font-semibold text-fg-sub">{label}</span>
+      {children}
+    </label>
+  );
+}
+
+function DateTimeRow(props: {
+  dateLabel: string;
+  timeLabel: string;
+  date: string;
+  time: string;
+  onDate: (e: { target: { value: string } }) => void;
+  onTime: (e: { target: { value: string } }) => void;
+  idPrefix: string;
+}) {
+  return (
+    <Row>
+      <Field label={props.dateLabel}>
+        <input
+          id={`${props.idPrefix}-date`}
+          type="date"
+          required
+          value={props.date}
+          onChange={props.onDate}
+          className={`${inputClass} tabular`}
+        />
+      </Field>
+      <Field label={props.timeLabel}>
+        <input
+          id={`${props.idPrefix}-time`}
+          type="time"
+          value={props.time}
+          onChange={props.onTime}
+          className={`${inputClass} tabular`}
+        />
+      </Field>
+    </Row>
+  );
+}

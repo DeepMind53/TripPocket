@@ -1,7 +1,7 @@
 import { CITIES, todayIn, type ItineraryItem, type Trip } from '@trippocket/shared';
 import { CalendarRange, Check, Trash2 } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from '../../i18n';
 import { useNavigate, useParams } from 'react-router';
 import { planReflow, type ReflowMode } from '../../domain/schedule';
 import { useTrip, useTripItems } from '../../data/hooks';

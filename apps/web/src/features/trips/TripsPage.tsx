@@ -1,13 +1,13 @@
 import { getTripStatus, todayIn, type Trip, type TripStatus } from '@trippocket/shared';
 import { ChevronDown, Ellipsis, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from '../../i18n';
 import { Link, useNavigate } from 'react-router';
 import { useTrips } from '../../data/hooks';
 import { useRouteSheet } from '../../shared/hooks/useRouteSheet';
 import { formatPeriod, formatTripBadge, formatTripLength } from '../../shared/lib/dateFormat';
 import { BottomSheet, Button, EmptyState, IconButton, TopBar } from '../../shared/ui';
-import { QuickMenuButton } from '../quick-menu/QuickMenu';
+import { QuickMenuButton } from '../common/QuickMenu';
 import { deleteTripWithUndo } from './tripActions';
 
 /** S-02 내 여행: 여행 중 · 다가오는 여행 · 다녀온 여행(접힘) */

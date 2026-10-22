@@ -1,5 +1,5 @@
 import { ChevronRight } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from '../../i18n';
 import { useSetting } from '../../data/hooks';
 import { settingsRepo } from '../../data/repositories/settingsRepo';
 import {

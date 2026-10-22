@@ -1,6 +1,6 @@
 import { diffDays, weekday, type LocalDate } from '@trippocket/shared';
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from '../../i18n';
 import { cn } from '../lib/cn';
 import { formatMonthDay } from '../lib/dateFormat';
 import { buildMonths, isInRange, pickRange, type DateRange } from '../lib/dateRange';

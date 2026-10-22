@@ -11,7 +11,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from '../../i18n';
 import { placeLink, openMapLink, type MapApp } from '../../shared/lib/directions';
 import { BottomSheet, Button, Switch, toast } from '../../shared/ui';
 import { KIND_ICON } from './itemKinds';

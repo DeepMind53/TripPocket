@@ -1,7 +1,7 @@
 import { findCity, searchCities, todayIn } from '@trippocket/shared';
 import { Check, Search, X } from 'lucide-react';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from '../../i18n';
 import { useNavigate, useSearchParams } from 'react-router';
 import { tripRepo } from '../../data/repositories/tripRepo';
 import { cn } from '../../shared/lib/cn';

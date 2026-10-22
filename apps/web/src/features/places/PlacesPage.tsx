@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from '../../i18n';
 import { EmptyState } from '../../shared/ui';
 
 /** S-14 장소 찾기 — 18단계 */
