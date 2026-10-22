@@ -1,5 +1,13 @@
 import Dexie, { type EntityTable } from 'dexie';
-import type { Booking, ChecklistItem, ItineraryItem, SavedPlace, Trip } from '@trippocket/shared';
+import { upgradeToV2 } from './migrations/v2';
+import type {
+  Booking,
+  ChecklistItem,
+  ChecklistTemplate,
+  ItineraryItem,
+  SavedPlace,
+  Trip,
+} from '@trippocket/shared';
 
 /** 서버에 아직 보내지 않은 변경 표시 (로컬 전용, 15단계 동기화에서 사용) */
 export type Dirty = 0 | 1;
@@ -22,6 +30,7 @@ export class TripPocketDB extends Dexie {
   bookings!: EntityTable<Stored<Booking>, 'id'>;
   checklistItems!: EntityTable<Stored<ChecklistItem>, 'id'>;
   savedPlaces!: EntityTable<Stored<SavedPlace>, 'id'>;
+  checklistTemplates!: EntityTable<Stored<ChecklistTemplate>, 'id'>;
   settings!: EntityTable<KeyValueRow, 'key'>;
   syncState!: EntityTable<KeyValueRow, 'key'>;
 
@@ -36,6 +45,10 @@ export class TripPocketDB extends Dexie {
       settings: 'key',
       syncState: 'key',
     });
+    // v2 (9단계): 여행 목적지를 문자열 → 객체(이름·종류·국가·좌표·시간대). 인덱스는 그대로
+    this.version(2).stores({}).upgrade(upgradeToV2);
+    // v3 (9단계): 사용자가 고칠 수 있는 준비물·할 일 템플릿
+    this.version(3).stores({ checklistTemplates: 'id, list, updatedAt, dirty' });
   }
 }
 

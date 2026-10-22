@@ -32,6 +32,7 @@ import { ItemFormSheet } from './ItemFormSheet';
 import { dayColor, KIND_ICON } from './itemKinds';
 import { MoveDaySheet } from './MoveDaySheet';
 import { BOOKING_ICON } from '../common/bookingKinds';
+import { isDomesticTrip } from '../../domain/tripPlace';
 
 // 드래그 편집은 편집 모드에 들어갈 때만 불러온다 (dnd-kit 포함)
 const EditModeList = lazy(() => import('./EditModeList'));
@@ -67,7 +68,7 @@ function PlanView({
   const days = getTripDays(trip.startDate, trip.endDate);
   const today = todayIn(trip.timezone);
   const ongoing = getTripStatus(trip.startDate, trip.endDate, today) === 'ongoing';
-  const isDomestic = trip.timezone === 'Asia/Seoul';
+  const isDomestic = isDomesticTrip(trip);
 
   // 기본: 여행 중이면 오늘, 아니면 전체
   const dayParam = params.get('day');

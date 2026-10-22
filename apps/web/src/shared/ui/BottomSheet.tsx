@@ -33,6 +33,10 @@ export function BottomSheet({
         <Dialog.Overlay className="tp-scrim fixed inset-0 z-40 bg-scrim" />
         <Dialog.Content
           {...(description ? {} : { 'aria-describedby': undefined })}
+          // 하단 알림(실행 취소 등)을 눌러도 시트가 닫히지 않게
+          onPointerDownOutside={(e) => {
+            if ((e.target as Element | null)?.closest('[data-toaster]')) e.preventDefault();
+          }}
           className={cn(
             'tp-sheet fixed inset-x-0 bottom-0 z-50 mx-auto flex max-h-[90dvh] w-full max-w-[560px] flex-col',
             'rounded-t-sheet bg-surface text-fg shadow-card outline-none',

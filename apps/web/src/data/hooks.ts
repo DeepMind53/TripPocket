@@ -1,6 +1,14 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import type { Booking, ItineraryItem, Trip } from '@trippocket/shared';
+import type {
+  Booking,
+  ChecklistItem,
+  ChecklistTemplate,
+  ItineraryItem,
+  Trip,
+} from '@trippocket/shared';
 import { bookingRepo } from './repositories/bookingRepo';
+import { checklistRepo, type ListKind } from './repositories/checklistRepo';
+import { templateRepo } from './repositories/templateRepo';
 import { itemRepo } from './repositories/itemRepo';
 import { settingsRepo } from './repositories/settingsRepo';
 import { tripRepo } from './repositories/tripRepo';
@@ -27,4 +35,15 @@ export function useSetting<T>(key: string, fallback: T): T {
 
 export function useTripBookings(tripId: string | undefined): Booking[] | undefined {
   return useLiveQuery(async () => (tripId ? bookingRepo.listByTrip(tripId) : []), [tripId]);
+}
+
+export function useChecklist(
+  tripId: string | undefined,
+  list: ListKind,
+): ChecklistItem[] | undefined {
+  return useLiveQuery(async () => (tripId ? checklistRepo.list(tripId, list) : []), [tripId, list]);
+}
+
+export function useTemplates(list: ListKind): ChecklistTemplate[] | undefined {
+  return useLiveQuery(() => templateRepo.list(list), [list]);
 }

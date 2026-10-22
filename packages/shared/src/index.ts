@@ -22,4 +22,16 @@ export {
 export { uuidv7 } from './id/uuidv7';
 export { compareKeys, keyBetween, keysBetween } from './order/fractionalIndex';
 export * from './schema/entities';
-export { CITIES, findCity, searchCities, type City } from './data/cities';
+export {
+  allCities,
+  choseong,
+  findCityByName,
+  findCountry,
+  flagEmoji,
+  normalize,
+  popularCities,
+  searchPlaces,
+  type CityInfo,
+  type CountryInfo,
+  type PlaceHit,
+} from './data/places';

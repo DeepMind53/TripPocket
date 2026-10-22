@@ -56,33 +56,58 @@ describe('여행 만들기', () => {
     const [trip] = await tripRepo.listActive();
     expect(trip).toMatchObject({
       title: '도쿄 가을여행',
-      destinations: ['도쿄'],
+      destinations: [
+        {
+          name: '도쿄',
+          kind: 'city',
+          countryCode: 'JP',
+          timezone: 'Asia/Tokyo',
+          coords: { lat: 35.68, lng: 139.69 },
+        },
+      ],
       startDate: '2026-10-24',
       endDate: '2026-10-28',
       timezone: 'Asia/Tokyo',
-      cover: { emoji: '🗼' },
+      cover: { emoji: '🇯🇵' },
     });
     // 헤더에 실제 여행 정보
-    expect(await screen.findByRole('heading', { name: '🗼 도쿄 가을여행' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: '🇯🇵 도쿄 가을여행' })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe(`/trips/${trip?.id}/plan`);
     // 만들기 단계 기록은 걷어내서, 뒤로 가면 만들기 전 화면
     expect(router.state.historyAction).toBe('REPLACE');
     expect(screen.getByText('2026.10.24 – 10.28 · D-2')).toBeInTheDocument();
   });
 
-  it('목록에 없는 도시는 직접 추가할 수 있다', async () => {
+  it('영어·나라 이름으로 찾고, 나라를 고르면 대표 도시 시간대가 들어간다', async () => {
     const user = userEvent.setup();
     renderAt('/trips/new');
-    await user.type(await screen.findByLabelText('도시 검색'), '치앙마이');
-    await user.click(screen.getByRole('button', { name: '‘치앙마이’ 직접 추가' }));
-    expect(screen.getByRole('button', { name: '치앙마이 빼기' })).toBeInTheDocument();
+    const search = await screen.findByLabelText('도시 검색');
+
+    await user.type(search, 'danang');
+    const results = screen.getByRole('list', { name: '검색 결과' });
+    expect(within(results).getAllByRole('button')[0]).toHaveTextContent('Da Nang · 베트남');
+
+    await user.clear(search);
+    await user.type(search, '일본');
+    const first = within(screen.getByRole('list', { name: '검색 결과' })).getAllByRole('button')[0];
+    expect(first).toHaveTextContent('나라 전체');
+    await user.click(first as HTMLElement);
+    expect(screen.getByRole('button', { name: '일본 빼기' })).toBeInTheDocument();
+  });
+
+  it('목록에 없는 곳은 직접 추가할 수 있다', async () => {
+    const user = userEvent.setup();
+    renderAt('/trips/new');
+    await user.type(await screen.findByLabelText('도시 검색'), '우리 동네 바닷가');
+    await user.click(screen.getByRole('button', { name: /‘우리 동네 바닷가’ 직접 추가/ }));
+    expect(screen.getByRole('button', { name: '우리 동네 바닷가 빼기' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '다음' })).toBeEnabled();
   });
 });
 
 describe('내 여행 목록', () => {
   const base = {
-    destinations: ['도쿄'],
+    destinations: [{ name: '도쿄', kind: 'city' as const, countryCode: 'JP' }],
     timezone: 'Asia/Seoul',
     cover: { emoji: '🗼' },
   };

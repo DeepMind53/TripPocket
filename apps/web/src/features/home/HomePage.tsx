@@ -9,7 +9,7 @@ import { BedDouble, Check, ChevronRight, Copy, Navigation } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from '../../i18n';
 import { Link, useNavigate } from 'react-router';
-import { useTripBookings, useTripItems, useTrips } from '../../data/hooks';
+import { useChecklist, useTripBookings, useTripItems, useTrips } from '../../data/hooks';
 import { itemRepo } from '../../data/repositories/itemRepo';
 import { lodgingForNight, minutesUntil, nextItem, nowTimeIn } from '../../domain/lodging';
 import { useRouteSheet } from '../../shared/hooks/useRouteSheet';
@@ -20,6 +20,7 @@ import type { Destination } from '../../shared/lib/directions';
 import { Button, EmptyState, TopBar } from '../../shared/ui';
 import { DirectionsSheet } from '../common/DirectionsSheet';
 import { QuickMenuButton } from '../common/QuickMenu';
+import { isDomesticTrip } from '../../domain/tripPlace';
 
 /** 1분마다 다시 그려 "35분 후"를 갱신한다 */
 function useMinuteTick() {
@@ -84,6 +85,8 @@ function UpcomingTrip({ trip }: { trip: Trip }) {
   const { t } = useTranslation();
   const items = useTripItems(trip.id) ?? [];
   const bookings = useTripBookings(trip.id) ?? [];
+  const packing = useChecklist(trip.id, 'packing') ?? [];
+  const packed = packing.filter((p) => p.checked).length;
   return (
     <Link
       to={`/trips/${trip.id}/plan`}
@@ -110,6 +113,8 @@ function UpcomingTrip({ trip }: { trip: Trip }) {
       <span className="text-caption opacity-90">
         {t('home.itemCount', { n: items.length })} ·{' '}
         {t('home.bookingCount', { n: bookings.length })}
+        {packing.length > 0 &&
+          ` · ${t('home.checklistProgress', { done: packed, total: packing.length })}`}
       </span>
     </Link>
   );
@@ -293,7 +298,7 @@ function OngoingTrip({ trip }: { trip: Trip }) {
         open={dirOpen}
         onOpenChange={setDirOpen}
         destination={dest}
-        isDomestic={trip.timezone === 'Asia/Seoul'}
+        isDomestic={isDomesticTrip(trip)}
       />
     </>
   );

@@ -12,11 +12,26 @@ import {
 
 // 엔티티 정의: docs/04-data-model.md §3 (가계부 엔티티는 범위 제외)
 
+/**
+ * 여행 목적지. 도시·국가를 고르면 국가 코드·좌표·시간대가 함께 저장되어
+ * 지도 중심, 장소 검색 범위, 추천 기준, 국내/해외 판단에 쓰인다.
+ * custom = 목록에 없어 직접 입력한 이름 (좌표 없음)
+ */
+export const DestinationSchema = z.object({
+  name: nonEmpty(60),
+  kind: z.enum(['city', 'country', 'custom']),
+  /** ISO 3166-1 alpha-2 (KR, JP …) */
+  countryCode: z.optional(z.string().check(z.regex(/^[A-Z]{2}$/))),
+  coords: z.optional(CoordsSchema),
+  timezone: z.optional(z.string()),
+});
+export type Destination = z.infer<typeof DestinationSchema>;
+
 export const TripSchema = z
   .object({
     ...baseFields,
     title: nonEmpty(60),
-    destinations: z.array(z.string().check(z.maxLength(40))).check(z.maxLength(10)),
+    destinations: z.array(DestinationSchema).check(z.maxLength(10)),
     startDate: LocalDateSchema,
     endDate: LocalDateSchema,
     /** IANA 타임존 (예: Asia/Tokyo) */
@@ -156,3 +171,20 @@ export const SavedPlaceSchema = z.object({
   memo: z.optional(z.string().check(z.maxLength(2000))),
 });
 export type SavedPlace = z.infer<typeof SavedPlaceSchema>;
+
+/** 준비물·할 일 템플릿 (여행과 무관, 사용자가 이름 수정·추가·삭제) */
+export const ChecklistTemplateSchema = z.object({
+  ...baseFields,
+  list: z.enum(['packing', 'todo']),
+  name: nonEmpty(40),
+  items: z
+    .array(
+      z.object({
+        text: nonEmpty(100),
+        category: z.optional(z.string().check(z.maxLength(30))),
+      }),
+    )
+    .check(z.maxLength(300)),
+  order: z.string().check(z.minLength(1)),
+});
+export type ChecklistTemplate = z.infer<typeof ChecklistTemplateSchema>;

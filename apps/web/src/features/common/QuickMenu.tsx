@@ -22,6 +22,7 @@ import { useRouteSheet } from '../../shared/hooks/useRouteSheet';
 import { applyTheme, type ThemePref } from '../../shared/lib/theme';
 import { BottomSheet, IconButton, SegmentedControl, toast } from '../../shared/ui';
 import { DirectionsSheet } from './DirectionsSheet';
+import { isDomesticTrip } from '../../domain/tripPlace';
 
 const SHEET_KEY = 'quick-menu';
 
@@ -82,6 +83,7 @@ function TripQuickMenu({ open, setOpen }: { open: boolean; setOpen: (open: boole
       // 메뉴 기록 자리를 일정 화면으로 바꿔서, 뒤로 가면 원래 화면
       void navigate(`/trips/${tripId}/plan?day=${day}`, { replace: true });
     },
+    checklist: () => void navigate(`/trips/${tripId}/checklist`, { replace: true }),
   };
 
   return (
@@ -99,7 +101,7 @@ function TripQuickMenu({ open, setOpen }: { open: boolean; setOpen: (open: boole
         open={dirOpen}
         onOpenChange={setDirOpen}
         destination={dest}
-        isDomestic={trip?.timezone === 'Asia/Seoul'}
+        isDomestic={trip ? isDomesticTrip(trip) : false}
       />
       <BottomSheet
         open={numbersOpen}
@@ -133,6 +135,7 @@ interface Shortcuts {
   lodging: () => void;
   bookingNo: () => void;
   nextItem: () => void;
+  checklist: () => void;
 }
 
 function QuickMenuContent({ shortcuts }: { shortcuts?: Shortcuts }) {
@@ -183,7 +186,7 @@ function QuickMenuContent({ shortcuts }: { shortcuts?: Shortcuts }) {
             <Shortcut
               icon={<ListChecks />}
               label={t('quickMenu.shortcut.checklist')}
-              onClick={() => toast(t('common.comingInStep', { step: 9 }))}
+              onClick={shortcuts.checklist}
             />
           </div>
         </section>

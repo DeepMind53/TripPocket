@@ -43,7 +43,9 @@ SavedPlace (여행과 무관한 '저장한 장소'), AppSetting (key-value), Che
 type Trip = {
   id: string;
   title: string;                 // "도쿄 가을여행"
-  destinations: string[];        // ["도쿄", "하코네"] 자유 텍스트
+  /** v2(9단계): 도시·국가 검색으로 고른 목적지. 국가·좌표·시간대가 지도·검색·추천 기준 */
+  destinations: Array<{ name: string; kind: "city" | "country" | "custom";
+                        countryCode?: string; coords?: { lat; lng }; timezone?: string }>;
   startDate: LocalDate;
   endDate: LocalDate;            // startDate 이상
   timezone: string;              // 기본 여행지 타임존 (기본값: 기기 타임존)
@@ -184,6 +186,13 @@ db.version(1).stores({
 - 인덱스에 없는 필드는 저장은 되지만 검색 불가 → 쿼리 패턴이 생기면 인덱스 추가(버전업).
 
 ## 5. 마이그레이션 정책
+
+| 버전 | 단계 | 내용 |
+|---|---|---|
+| v1 | 4 | 최초 스키마 |
+| v2 | 9 | `Trip.destinations` 문자열 → 객체 (기존 값은 `kind: custom`) — `apps/web/src/data/migrations/v2.ts` + 테스트 |
+| v3 | 9 | `checklistTemplates` 표 추가 (사용자가 이름 수정·추가·삭제하는 준비물·할 일 템플릿, 기본 템플릿은 처음 한 번 복사) |
+
 1. 스키마/형태 변경 = `db.version(N+1).stores(...).upgrade(tx => ...)` 추가. **기존 version 블록은 절대 수정하지 않는다.**
 2. 각 마이그레이션은 `src/data/migrations/vN.ts`로 분리 + `vN.test.ts`(fake-indexeddb에 v(N-1) 데이터 넣고 업그레이드 검증).
 3. 백업 JSON도 `schemaVersion`을 가지며, 가져오기 시 `migrateBackup(json)` 파이프라인으로 최신 형태로 올린 뒤 저장.

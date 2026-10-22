@@ -8,6 +8,7 @@ export function Toaster() {
     <div
       role="status"
       aria-live="polite"
+      data-toaster=""
       className="pointer-events-none fixed inset-x-0 z-[60] mx-auto flex w-full max-w-[560px] flex-col gap-2 px-4"
       style={{ bottom: 'calc(var(--tp-bottom-inset) + 16px + env(safe-area-inset-bottom))' }}
     >
@@ -27,7 +28,11 @@ function ToastView({ item }: { item: ToastItem }) {
   }, [item.id, item.duration, dismiss]);
 
   return (
-    <div className="tp-toast pointer-events-auto flex min-h-12 items-center gap-3 rounded-btn bg-toast px-4 py-2.5 text-body-2 text-on-toast shadow-card">
+    <div
+      // 시트가 열려 body가 클릭을 막아도(pointer-events: none) 알림은 눌려야 한다
+      style={{ pointerEvents: 'auto' }}
+      className="tp-toast flex min-h-12 items-center gap-3 rounded-btn bg-toast px-4 py-2.5 text-body-2 text-on-toast shadow-card"
+    >
       <span className="flex-1">{item.message}</span>
       {item.action && (
         <button

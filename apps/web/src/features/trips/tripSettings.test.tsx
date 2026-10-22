@@ -15,7 +15,7 @@ beforeEach(async () => {
   vi.setSystemTime(new Date('2026-10-22T03:00:00Z'));
   const trip = await tripRepo.create({
     title: '도쿄 가을여행',
-    destinations: ['도쿄'],
+    destinations: [{ name: '도쿄', kind: 'city', countryCode: 'JP' }],
     startDate: '2026-10-24',
     endDate: '2026-10-26',
     timezone: 'Asia/Tokyo',

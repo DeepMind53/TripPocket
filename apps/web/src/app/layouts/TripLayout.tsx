@@ -1,14 +1,5 @@
 import { todayIn } from '@trippocket/shared';
-import {
-  CalendarDays,
-  CloudOff,
-  Ellipsis,
-  ListChecks,
-  Search,
-  Settings,
-  Ticket,
-  Trash2,
-} from 'lucide-react';
+import { CalendarDays, Ellipsis, ListChecks, Search, Settings, Ticket, Trash2 } from 'lucide-react';
 import { useTranslation } from '../../i18n';
 import { Link, Outlet, useNavigate, useParams } from 'react-router';
 import { useTrip } from '../../data/hooks';
@@ -17,15 +8,7 @@ import { deleteTripWithUndo } from '../../features/trips/tripActions';
 import { useRouteSheet } from '../../shared/hooks/useRouteSheet';
 import { useBottomInset } from '../../shared/hooks/useBottomInset';
 import { formatPeriod, formatTripBadge } from '../../shared/lib/dateFormat';
-import {
-  BottomSheet,
-  Button,
-  EmptyState,
-  IconButton,
-  TabBar,
-  TopBar,
-  toast,
-} from '../../shared/ui';
+import { BottomSheet, Button, EmptyState, IconButton, TabBar, TopBar } from '../../shared/ui';
 import { TAB_BAR_HEIGHT } from './AppShell';
 
 /**
@@ -76,12 +59,7 @@ export function TripLayout() {
         backTo="/trips"
         actions={
           <>
-            {/* 15단계(동기화)까지는 항상 "이 기기에만 저장" 상태 */}
-            <IconButton
-              label={t('header.syncLocal')}
-              icon={<CloudOff />}
-              onClick={() => toast(t('header.syncLocal'))}
-            />
+            {/* 동기화 상태 아이콘은 15단계(동기화)에서 추가 — 그전엔 제목 자리를 넓히려고 비워 둔다 */}
             <QuickMenuButton inTrip />
             <IconButton
               label={t('header.more')}

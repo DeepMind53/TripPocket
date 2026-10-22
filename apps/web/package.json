@@ -28,6 +28,7 @@
     "@radix-ui/react-slider": "^1.6.1",
     "@radix-ui/react-switch": "^1.4.1",
     "@trippocket/shared": "workspace:*",
+    "country-flag-emoji-polyfill": "^0.1.10",
     "dexie": "^4.4.6",
     "dexie-react-hooks": "^4.4.0",
     "lucide-react": "^1.61.0",

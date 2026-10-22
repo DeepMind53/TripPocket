@@ -1,4 +1,4 @@
-import { CITIES, todayIn, type ItineraryItem, type Trip } from '@trippocket/shared';
+import { allCities, todayIn, type ItineraryItem, type Trip } from '@trippocket/shared';
 import { CalendarRange, Check, Trash2 } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from '../../i18n';
@@ -54,9 +54,11 @@ function TripSettingsForm({ trip, items }: { trip: Trip; items: ItineraryItem[] 
   // 지난 여행도 고칠 수 있게 달력은 여행 시작 달과 오늘 중 이른 달부터
   const calendarFrom = trip.startDate < today ? trip.startDate : today;
 
-  const timezones = [...new Set([trip.timezone, ...CITIES.map((c) => c.timezone)])];
+  const timezones = [...new Set([trip.timezone, ...allCities().map((c) => c.timezone)])];
   const tzLabel = (tz: string) => {
-    const names = CITIES.filter((c) => c.timezone === tz).map((c) => c.name);
+    const names = allCities()
+      .filter((c) => c.timezone === tz)
+      .map((c) => c.ko);
     return names.length ? `${names.slice(0, 3).join('·')} (${tz})` : tz;
   };
 

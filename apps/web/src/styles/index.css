@@ -34,9 +34,10 @@
 }
 
 @theme {
+  /* 국기 글꼴은 국기 글자만 들어 있어 다른 글자는 다음 글꼴로 넘어간다 (main.tsx 폴리필) */
   --font-sans:
-    'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo',
-    'Malgun Gothic', system-ui, sans-serif;
+    'Twemoji Country Flags', 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont,
+    'Apple SD Gothic Neo', 'Malgun Gothic', system-ui, sans-serif;
 
   /* 타입 스케일 (docs/11 §4) */
   --text-display: 1.75rem;
@@ -71,6 +72,15 @@
   html {
     -webkit-text-size-adjust: 100%;
     -webkit-tap-highlight-color: transparent;
+    /* PC: 스크롤바가 생기고 없어질 때 화면이 옆으로 밀리지 않게 자리를 항상 비워 둔다 */
+    scrollbar-gutter: stable;
+  }
+  /* 시트가 열려 스크롤을 잠글 때(react-remove-scroll) 스크롤바 폭만큼 여백을 더하는 보정은
+     위에서 자리를 이미 비워 두었으므로 끈다 — 안 그러면 뒤 화면이 오히려 밀린다 */
+  html body[data-scroll-locked] {
+    margin-right: 0 !important;
+    padding-right: 0 !important;
+    --removed-body-scroll-bar-size: 0px !important;
   }
   body {
     @apply bg-bg text-fg font-sans text-body-2 antialiased;

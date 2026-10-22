@@ -20,7 +20,7 @@ async function seedInTransaction(): Promise<string> {
   const start = addDays(todayIn('Asia/Tokyo'), 3);
   const trip = await tripRepo.create({
     title: '도쿄 가을여행',
-    destinations: ['도쿄'],
+    destinations: [{ name: '도쿄', kind: 'city', countryCode: 'JP' }],
     startDate: start,
     endDate: addDays(start, 4),
     timezone: 'Asia/Tokyo',

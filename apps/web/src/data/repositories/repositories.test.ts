@@ -6,7 +6,7 @@ import { tripRepo, type NewTrip } from './tripRepo';
 
 const tokyo: NewTrip = {
   title: '도쿄 가을여행',
-  destinations: ['도쿄'],
+  destinations: [{ name: '도쿄', kind: 'city', countryCode: 'JP' }],
   startDate: '2026-10-24',
   endDate: '2026-10-28',
   timezone: 'Asia/Tokyo',

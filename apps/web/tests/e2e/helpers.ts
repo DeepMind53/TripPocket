@@ -19,5 +19,5 @@ export async function createTrip(page: Page, title: string) {
   await page.getByRole('button', { name: '다음' }).click();
   await page.getByLabel('여행 이름').fill(title);
   await page.getByRole('button', { name: '여행 만들기' }).click();
-  await expect(page.getByRole('heading', { name: `🗼 ${title}` })).toBeVisible();
+  await expect(page.getByRole('heading', { name: `🇯🇵 ${title}` })).toBeVisible();
 }

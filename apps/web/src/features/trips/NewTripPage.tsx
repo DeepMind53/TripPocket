@@ -1,5 +1,12 @@
-import { findCity, searchCities, todayIn } from '@trippocket/shared';
-import { Check, Search, X } from 'lucide-react';
+import {
+  flagEmoji,
+  popularCities,
+  searchPlaces,
+  todayIn,
+  type Destination,
+  type PlaceHit,
+} from '@trippocket/shared';
+import { Check, Globe, MapPin, Plus, Search, X } from 'lucide-react';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from '../../i18n';
 import { useNavigate, useSearchParams } from 'react-router';
@@ -23,7 +30,7 @@ export function NewTripPage() {
   const [params, setParams] = useSearchParams();
   const step = (Number(params.get('step')) || 1) as Step;
 
-  const [destinations, setDestinations] = useState<string[]>([]);
+  const [destinations, setDestinations] = useState<Destination[]>([]);
   const [range, setRange] = useState<DateRange>({ start: null, end: null });
   const [title, setTitle] = useState<string | null>(null); // null = 아직 안 고침 → 기본 제안 사용
   const [emoji, setEmoji] = useState<string | null>(null);
@@ -45,12 +52,16 @@ export function NewTripPage() {
     }
   }, [step, navigate]);
 
-  const firstCity = destinations[0] ? findCity(destinations[0]) : undefined;
-  const timezone = firstCity?.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
+  // 첫 목적지의 시간대·국기가 여행 기본값 (목록에 없는 곳이면 기기 시간대)
+  const first = destinations[0];
+  const timezone = first?.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
   const today = todayIn();
-  const suggestedTitle = t('newTrip.titleDefault', { dest: destinations.join('·') });
+  const suggestedTitle = t('newTrip.titleDefault', {
+    dest: destinations.map((d) => d.name).join('·'),
+  });
   const effectiveTitle = title ?? suggestedTitle;
-  const effectiveEmoji = emoji ?? firstCity?.emoji ?? DEFAULT_EMOJIS[0];
+  const effectiveEmoji =
+    emoji ?? (first?.countryCode ? flagEmoji(first.countryCode) : DEFAULT_EMOJIS[0]);
 
   function goTo(next: Step) {
     setParams(next === 1 ? {} : { step: String(next) });
@@ -216,9 +227,9 @@ export function NewTripPage() {
   );
 }
 
-function emojiOptions(destinations: string[]): string[] {
-  const fromCities = destinations.map((d) => findCity(d)?.emoji).filter((e): e is string => !!e);
-  return [...new Set([...fromCities, ...DEFAULT_EMOJIS])].slice(0, 10);
+function emojiOptions(destinations: Destination[]): string[] {
+  const flags = destinations.flatMap((d) => (d.countryCode ? [flagEmoji(d.countryCode)] : []));
+  return [...new Set([...flags, ...DEFAULT_EMOJIS])].slice(0, 10);
 }
 
 function StepBody({
@@ -243,23 +254,46 @@ function StepBody({
   );
 }
 
+/** 검색 결과 → 저장할 목적지 */
+function toDestination(hit: PlaceHit): Destination {
+  return {
+    name: hit.ko,
+    kind: hit.kind,
+    countryCode: hit.countryCode,
+    coords: { lat: hit.lat, lng: hit.lng },
+    timezone: hit.timezone,
+  };
+}
+
+const sameDest = (a: Destination, b: Destination) =>
+  a.name === b.name && a.countryCode === b.countryCode;
+
+/**
+ * ① 어디로: 도시·국가 검색 (한글·영어·별칭·초성). 고른 곳의 국가·좌표·시간대가 저장되어
+ * 지도·장소 검색·추천의 기준이 된다. 목록에 없으면 직접 추가.
+ */
 function WhereStep({
   selected,
   onChange,
   footer,
 }: {
-  selected: string[];
-  onChange: (next: string[]) => void;
+  selected: Destination[];
+  onChange: (next: Destination[]) => void;
   footer: ReactNode;
 }) {
   const { t } = useTranslation();
   const [query, setQuery] = useState('');
-  const results = searchCities(query);
   const trimmed = query.trim();
-  const canAddCustom = trimmed.length > 0 && !findCity(trimmed) && !selected.includes(trimmed);
+  const hits = searchPlaces(trimmed);
+  const exact = hits.some((h) => h.ko === trimmed || h.en.toLowerCase() === trimmed.toLowerCase());
+  const canAddCustom = trimmed.length > 0 && !exact && !selected.some((d) => d.name === trimmed);
 
-  function toggle(name: string) {
-    onChange(selected.includes(name) ? selected.filter((n) => n !== name) : [...selected, name]);
+  function toggle(dest: Destination) {
+    onChange(
+      selected.some((d) => sameDest(d, dest))
+        ? selected.filter((d) => !sameDest(d, dest))
+        : [...selected, dest],
+    );
   }
 
   return (
@@ -274,6 +308,7 @@ function WhereStep({
           placeholder={t('newTrip.searchPlaceholder')}
           value={query}
           maxLength={40}
+          autoComplete="off"
           onChange={(e) => setQuery(e.target.value)}
           className="h-full min-w-0 flex-1 bg-transparent text-body-1 text-fg outline-none"
         />
@@ -283,14 +318,19 @@ function WhereStep({
         <div className="mt-4 flex flex-col gap-2">
           <span className="text-caption font-semibold text-fg-sub">{t('newTrip.selected')}</span>
           <div className="flex flex-wrap gap-2">
-            {selected.map((name) => (
+            {selected.map((d) => (
               <Chip
-                key={name}
+                key={`${d.name}-${d.countryCode ?? ''}`}
                 selected
-                aria-label={t('newTrip.remove', { name })}
-                onClick={() => toggle(name)}
+                aria-label={t('newTrip.remove', { name: d.name })}
+                onClick={() => toggle(d)}
+                leading={
+                  d.countryCode ? (
+                    <span aria-hidden="true">{flagEmoji(d.countryCode)}</span>
+                  ) : undefined
+                }
               >
-                {name}
+                {d.name}
                 <X aria-hidden="true" className="size-3.5" />
               </Chip>
             ))}
@@ -298,26 +338,87 @@ function WhereStep({
         </div>
       )}
 
-      <div className="mt-5 flex flex-wrap gap-2">
-        {canAddCustom && (
-          <Chip
-            className="border-dashed"
-            onClick={() => {
-              toggle(trimmed);
-              setQuery('');
-            }}
-          >
-            {t('newTrip.addCustom', { name: trimmed })}
-          </Chip>
-        )}
-        {results.map((c) => (
-          <Chip key={c.name} selected={selected.includes(c.name)} onClick={() => toggle(c.name)}>
-            {c.emoji} {c.name}
-          </Chip>
-        ))}
-      </div>
-      {results.length === 0 && trimmed && (
-        <p className="mt-3 text-caption text-fg-muted">{t('newTrip.noMatch')}</p>
+      {trimmed ? (
+        <ul aria-label={t('newTrip.results')} className="mt-4 flex flex-col divide-y divide-line">
+          {hits.map((h) => {
+            const dest = toDestination(h);
+            const on = selected.some((d) => sameDest(d, dest));
+            return (
+              <li key={`${h.kind}-${h.ko}-${h.countryCode}`}>
+                <button
+                  type="button"
+                  aria-pressed={on}
+                  onClick={() => {
+                    toggle(dest);
+                    setQuery('');
+                  }}
+                  className="flex min-h-14 w-full items-center gap-3 py-2 text-left"
+                >
+                  <span aria-hidden="true" className="text-[22px] leading-none">
+                    {flagEmoji(h.countryCode)}
+                  </span>
+                  <span className="flex min-w-0 flex-1 flex-col">
+                    <span className="text-body-1">{h.ko}</span>
+                    <span className="truncate text-caption text-fg-muted">
+                      {h.kind === 'city'
+                        ? `${h.en} · ${h.countryKo}`
+                        : `${h.en} · ${t('newTrip.wholeCountry')}`}
+                    </span>
+                  </span>
+                  {h.kind === 'country' ? (
+                    <Globe aria-hidden="true" className="size-4 shrink-0 text-fg-muted" />
+                  ) : (
+                    <MapPin aria-hidden="true" className="size-4 shrink-0 text-fg-muted" />
+                  )}
+                  {on && <Check aria-hidden="true" className="size-5 shrink-0 text-primary" />}
+                </button>
+              </li>
+            );
+          })}
+          {canAddCustom && (
+            <li>
+              <button
+                type="button"
+                onClick={() => {
+                  toggle({ name: trimmed, kind: 'custom' });
+                  setQuery('');
+                }}
+                className="flex min-h-14 w-full items-center gap-3 py-2 text-left"
+              >
+                <Plus aria-hidden="true" className="size-5 text-primary" />
+                <span className="flex flex-col">
+                  <span className="text-body-1">{t('newTrip.addCustom', { name: trimmed })}</span>
+                  <span className="text-caption text-fg-muted">{t('newTrip.customHint')}</span>
+                </span>
+              </button>
+            </li>
+          )}
+        </ul>
+      ) : (
+        <div className="mt-5 flex flex-col gap-2">
+          <span className="text-caption font-semibold text-fg-sub">{t('newTrip.popular')}</span>
+          <div className="flex flex-wrap gap-2">
+            {popularCities().map((c) => {
+              const dest: Destination = {
+                name: c.ko,
+                kind: 'city',
+                countryCode: c.countryCode,
+                coords: { lat: c.lat, lng: c.lng },
+                timezone: c.timezone,
+              };
+              return (
+                <Chip
+                  key={c.ko}
+                  selected={selected.some((d) => sameDest(d, dest))}
+                  onClick={() => toggle(dest)}
+                  leading={<span aria-hidden="true">{flagEmoji(c.countryCode)}</span>}
+                >
+                  {c.ko}
+                </Chip>
+              );
+            })}
+          </div>
+        </div>
       )}
     </StepBody>
   );
