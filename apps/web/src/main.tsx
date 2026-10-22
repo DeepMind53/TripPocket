@@ -3,6 +3,7 @@ import { polyfillCountryFlagEmojis } from 'country-flag-emoji-polyfill';
 import flagFontUrl from 'country-flag-emoji-polyfill/dist/TwemojiCountryFlags.woff2?url';
 import { createRoot } from 'react-dom/client';
 import { App } from './app/App';
+import { setupPwa } from './app/pwa';
 import { loadSettings } from './data/settingsStore';
 import './i18n';
 import './styles/index.css';
@@ -11,6 +12,7 @@ import './styles/index.css';
 polyfillCountryFlagEmojis('Twemoji Country Flags', flagFontUrl);
 
 void loadSettings();
+setupPwa();
 
 const root = document.getElementById('root');
 if (!root) throw new Error('#root 요소가 없어요');

@@ -41,3 +41,12 @@ export {
   SETTINGS_DEFAULTS,
   type Settings,
 } from './settings/settings';
+export {
+  BACKUP_FORMAT,
+  BACKUP_SCHEMA_VERSION,
+  BACKUP_TABLE_NAMES,
+  parseBackup,
+  type BackupFile,
+  type BackupTable,
+  type ParsedBackup,
+} from './backup/backup';

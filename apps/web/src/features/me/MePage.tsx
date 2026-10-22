@@ -5,7 +5,11 @@ import {
   DatabaseBackup,
   Palette,
   Settings,
+  Smartphone,
 } from 'lucide-react';
+import { useInstall } from '../../app/pwa';
+import { useRouteSheet } from '../../shared/hooks/useRouteSheet';
+import { InstallSheet } from './InstallSheet';
 import type { ReactNode } from 'react';
 import { useTranslation } from '../../i18n';
 import { Link } from 'react-router';
@@ -15,6 +19,8 @@ import { Button, TopBar, toast } from '../../shared/ui';
 /** S-05 마이 — 로그인은 14단계, 백업은 11단계 */
 export function MePage() {
   const { t } = useTranslation();
+  const installed = useInstall((s) => s.installed);
+  const [installOpen, setInstallOpen] = useRouteSheet('install');
   return (
     <>
       <TopBar title={t('me.title')} actions={<QuickMenuButton />} />
@@ -27,7 +33,14 @@ export function MePage() {
         </section>
         <ul className="flex flex-col divide-y divide-line overflow-hidden rounded-card border border-line">
           <MenuRow to="/settings" icon={<Settings />} label={t('me.settings')} />
-          <MenuRow icon={<DatabaseBackup />} label={t('me.backup')} step={11} />
+          <MenuRow to="/backup" icon={<DatabaseBackup />} label={t('me.backup')} />
+          {!installed && (
+            <MenuRow
+              icon={<Smartphone />}
+              label={t('pwa.installTitle')}
+              onClick={() => setInstallOpen(true)}
+            />
+          )}
           <MenuRow icon={<CircleHelp />} label={t('me.help')} step={23} />
           {import.meta.env.DEV && (
             <>
@@ -37,6 +50,7 @@ export function MePage() {
           )}
         </ul>
       </div>
+      <InstallSheet open={installOpen} onOpenChange={setInstallOpen} />
     </>
   );
 }
@@ -46,9 +60,10 @@ interface MenuRowProps {
   icon: ReactNode;
   label: string;
   step?: number;
+  onClick?: () => void;
 }
 
-function MenuRow({ to, icon, label, step }: MenuRowProps) {
+function MenuRow({ to, icon, label, step, onClick }: MenuRowProps) {
   const { t } = useTranslation();
   const inner = (
     <>
@@ -70,7 +85,7 @@ function MenuRow({ to, icon, label, step }: MenuRowProps) {
         <button
           type="button"
           className={cls}
-          onClick={() => toast(t('common.comingInStep', { step: step ?? 0 }))}
+          onClick={onClick ?? (() => toast(t('common.comingInStep', { step: step ?? 0 })))}
         >
           {inner}
         </button>

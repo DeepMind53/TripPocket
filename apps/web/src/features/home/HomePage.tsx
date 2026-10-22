@@ -1,3 +1,4 @@
+import { BackupReminder } from '../backup/BackupReminder';
 import { useTimeText } from '../../shared/hooks/useTimeText';
 import {
   dayNumberOf,
@@ -73,6 +74,12 @@ export function HomePage() {
         />
       )}
       <div className="flex flex-col gap-4 px-5 pt-2">
+        <BackupReminder
+          firstDataAt={(trips ?? []).reduce<string | null>(
+            (min, tr) => (min === null || tr.createdAt < min ? tr.createdAt : min),
+            null,
+          )}
+        />
         {ongoing && <OngoingTrip trip={ongoing} />}
         {!ongoing && upcoming && <UpcomingTrip trip={upcoming} />}
         {others > 0 && (

@@ -47,6 +47,11 @@ export default tseslint.config(
     },
   },
   {
+    // 서비스 워커 원본: __PRECACHE__ 는 빌드 때 채워진다 (vite.config.ts)
+    files: ['apps/web/src/sw/*.js'],
+    languageOptions: { globals: { ...globals.serviceworker, __PRECACHE__: 'readonly' } },
+  },
+  {
     files: ['**/*.config.{ts,js}', 'eslint.config.js', '**/scripts/**/*.mjs'],
     languageOptions: { globals: globals.node },
   },

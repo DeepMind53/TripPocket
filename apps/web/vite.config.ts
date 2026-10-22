@@ -1,10 +1,39 @@
 /// <reference types="vitest/config" />
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
+import { createHash } from 'node:crypto';
+import { readdirSync, readFileSync } from 'node:fs';
+
+/**
+ * 서비스 워커 생성 (라이브러리 없이): 빌드 결과 파일 목록을 src/sw/sw-template.js에 넣어 dist/sw.js로.
+ * 글꼴(woff2)은 미리 받지 않고 쓸 때 저장 — Pretendard 조각이 많아(약 3MB) 설치가 무거워지므로
+ */
+function serviceWorker(): Plugin {
+  return {
+    name: 'trippocket-sw',
+    apply: 'build',
+    generateBundle(_options, bundle) {
+      const icons = readdirSync('public/icons')
+        .filter((f) => f.endsWith('.png'))
+        .map((f) => `/icons/${f}`);
+      const files = Object.keys(bundle)
+        .filter((f) => !f.endsWith('.map') && !f.endsWith('.woff2') && f !== 'sw.js')
+        .map((f) => `/${f}`)
+        .filter((f) => f !== '/index.html')
+        .concat('/index.html', '/manifest.webmanifest', ...icons)
+        .sort();
+      const version = createHash('sha256').update(files.join(' ')).digest('hex').slice(0, 12);
+      const source = readFileSync('src/sw/sw-template.js', 'utf8')
+        .replace('__VERSION__', version)
+        .replace('__PRECACHE__', JSON.stringify(files));
+      this.emitFile({ type: 'asset', fileName: 'sw.js', source });
+    },
+  };
+}
 
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [react(), tailwindcss(), serviceWorker()],
   server: { port: 5173, strictPort: true },
   preview: { port: 4173, strictPort: true },
   test: {

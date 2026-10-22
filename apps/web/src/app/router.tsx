@@ -2,7 +2,6 @@ import { createBrowserRouter, Navigate, type RouteObject } from 'react-router';
 import { HomePage } from '../features/home/HomePage';
 import { MePage } from '../features/me/MePage';
 import { SavedPage } from '../features/saved/SavedPage';
-import { SettingsPage } from '../features/settings/SettingsPage';
 import { TripsPage } from '../features/trips/TripsPage';
 import { AppShell } from './layouts/AppShell';
 import { TripLayout } from './layouts/TripLayout';
@@ -65,7 +64,18 @@ export const routes: RouteObject[] = [
       },
     ],
   },
-  { path: 'settings', element: <SettingsPage /> },
+  {
+    path: 'settings',
+    lazy: async () => ({
+      Component: (await import('../features/settings/SettingsPage')).SettingsPage,
+    }),
+  },
+  {
+    path: 'backup',
+    lazy: async () => ({
+      Component: (await import('../features/backup/BackupPage')).BackupPage,
+    }),
+  },
   {
     path: 'dev/ui',
     lazy: async () => {
