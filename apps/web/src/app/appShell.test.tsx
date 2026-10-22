@@ -47,7 +47,7 @@ describe('앱 셸', () => {
   it('여행 상세는 여행 탭 4개를 보여주고 기본은 일정 탭이다', async () => {
     const router = renderAt(`/trips/${tripId}`);
     const nav = await screen.findByRole('navigation', { name: '여행 메뉴' });
-    await screen.findByText('아직 일정이 없어요');
+    await screen.findAllByText('아직 일정이 없어요');
     expect(router.state.location.pathname).toBe(`/trips/${tripId}/plan`);
     for (const name of ['일정', '장소', '예약', '준비']) {
       expect(nav).toContainElement(screen.getByRole('link', { name }));

@@ -14,8 +14,9 @@ export type NewItem = Omit<
   ItineraryItem,
   'id' | 'createdAt' | 'updatedAt' | 'deletedAt' | 'rev' | 'order'
 >;
-/** 날짜·순서는 move()로만 바꾼다 */
-export type ItemPatch = Partial<Omit<NewItem, 'tripId' | 'date'>>;
+type Editable = Omit<NewItem, 'tripId' | 'date'>;
+/** 날짜·순서는 move()로만 바꾼다. 값을 undefined로 주면 그 항목을 지운다 */
+export type ItemPatch = { [K in keyof Editable]?: Editable[K] | undefined };
 
 type Row = Stored<ItineraryItem>;
 
@@ -79,7 +80,9 @@ export const itemRepo = {
     return db.transaction('rw', db.items, async () => {
       const row = await db.items.get(id);
       if (!row || row.deletedAt) throw new Error(`일정을 찾을 수 없어요: ${id}`);
-      const item = ItineraryItemSchema.parse({ ...toDomain(row), ...patch, updatedAt: nowIso() });
+      const merged: Record<string, unknown> = { ...toDomain(row), ...patch, updatedAt: nowIso() };
+      for (const key of Object.keys(merged)) if (merged[key] === undefined) delete merged[key];
+      const item = ItineraryItemSchema.parse(merged);
       await db.items.put({ ...item, dirty: 1 });
       return item;
     });

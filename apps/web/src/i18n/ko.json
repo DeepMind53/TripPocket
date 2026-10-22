@@ -29,7 +29,8 @@
     "undo": "실행 취소",
     "next": "다음",
     "close": "닫기",
-    "cancel": "취소"
+    "cancel": "취소",
+    "copyFailed": "복사하지 못했어요. 길게 눌러 직접 복사해 주세요"
   },
   "quickMenu": {
     "title": "빠른 메뉴",
@@ -90,8 +91,16 @@
     "devDb": "저장소 확인 (개발용)"
   },
   "plan": {
-    "emptyTitle": "아직 일정이 없어요",
-    "emptyDesc": "가고 싶은 곳부터 담아볼까요?"
+    "dayChipsLabel": "날짜 선택",
+    "all": "전체",
+    "dayChip": "{{n}}일차 {{date}}",
+    "wishlist": "가고 싶은 곳",
+    "dayHeader": "{{n}}일차 · {{date}}",
+    "addItem": "일정 추가",
+    "emptyDay": "아직 일정이 없어요",
+    "wishEmpty": "날짜를 정하지 않은 장소를 모아두는 곳이에요",
+    "itemLabel": "{{n}}번째 일정, {{title}}",
+    "doneMark": "다녀옴"
   },
   "places": {
     "emptyTitle": "장소 찾기",
@@ -158,5 +167,70 @@
     "done": "선택 완료",
     "today": "오늘",
     "rangeLabel": "여행 날짜"
+  },
+  "kind": {
+    "place": "관광",
+    "food": "맛집",
+    "cafe": "카페",
+    "shopping": "쇼핑",
+    "transport": "이동",
+    "lodging": "숙소",
+    "activity": "액티비티",
+    "note": "메모"
+  },
+  "form": {
+    "addTitle": "일정 추가",
+    "editTitle": "일정 편집",
+    "kind": "종류",
+    "name": "이름",
+    "namePlaceholder": "예: 센소지",
+    "start": "시작",
+    "end": "종료",
+    "address": "주소",
+    "addressPlaceholder": "주소나 위치 설명",
+    "memo": "메모",
+    "url": "링크",
+    "date": "날짜",
+    "add": "일정에 추가",
+    "save": "저장",
+    "added": "일정을 추가했어요",
+    "saved": "저장했어요",
+    "needName": "이름을 입력해 주세요",
+    "invalidUrl": "링크는 http:// 또는 https:// 로 시작해야 해요",
+    "failed": "저장하지 못했어요. 입력 내용을 확인해 주세요"
+  },
+  "detail": {
+    "directions": "길찾기",
+    "copyAddress": "주소 복사",
+    "addressCopied": "주소를 복사했어요",
+    "viewOnMap": "지도에서 보기",
+    "edit": "편집",
+    "moveDay": "다른 날로 이동",
+    "delete": "삭제",
+    "deleted": "일정을 삭제했어요",
+    "done": "다녀왔어요",
+    "openLink": "링크 열기",
+    "noAddress": "주소가 없어요. 편집에서 추가할 수 있어요.",
+    "order": "순서",
+    "moveUp": "위로",
+    "moveDown": "아래로",
+    "position": "{{n}}번째 / {{total}}개"
+  },
+  "dir": {
+    "title": "{{name}}까지",
+    "mode": "이동 방법",
+    "transit": "대중교통",
+    "walk": "도보",
+    "car": "자동차",
+    "naver": "네이버 지도",
+    "google": "Google 지도",
+    "kakao": "카카오맵",
+    "openWith": "{{app}}로 열기",
+    "hint": "출발지는 지금 내 위치예요. 좌표가 없는 장소는 지도 앱에서 검색 결과가 열려요."
+  },
+  "move": {
+    "title": "어느 날로 옮길까요?",
+    "count": "일정 {{n}}개",
+    "moved": "일정을 옮겼어요"
   }
 }

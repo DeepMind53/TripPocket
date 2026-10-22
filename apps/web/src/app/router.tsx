@@ -1,10 +1,6 @@
 import { createBrowserRouter, Navigate, type RouteObject } from 'react-router';
-import { BookingsPage } from '../features/bookings/BookingsPage';
-import { ChecklistPage } from '../features/checklist/ChecklistPage';
 import { HomePage } from '../features/home/HomePage';
-import { PlanPage } from '../features/itinerary/PlanPage';
 import { MePage } from '../features/me/MePage';
-import { PlacesPage } from '../features/places/PlacesPage';
 import { SavedPage } from '../features/saved/SavedPage';
 import { SettingsPage } from '../features/settings/SettingsPage';
 import { TripsPage } from '../features/trips/TripsPage';
@@ -36,10 +32,31 @@ export const routes: RouteObject[] = [
     element: <TripLayout />,
     children: [
       { index: true, element: <Navigate to="plan" replace /> },
-      { path: 'plan', element: <PlanPage /> },
-      { path: 'places', element: <PlacesPage /> },
-      { path: 'bookings', element: <BookingsPage /> },
-      { path: 'checklist', element: <ChecklistPage /> },
+      // 여행 탭 화면은 열 때 불러온다 (첫 화면 크기 줄이기)
+      {
+        path: 'plan',
+        lazy: async () => ({
+          Component: (await import('../features/itinerary/PlanPage')).PlanPage,
+        }),
+      },
+      {
+        path: 'places',
+        lazy: async () => ({
+          Component: (await import('../features/places/PlacesPage')).PlacesPage,
+        }),
+      },
+      {
+        path: 'bookings',
+        lazy: async () => ({
+          Component: (await import('../features/bookings/BookingsPage')).BookingsPage,
+        }),
+      },
+      {
+        path: 'checklist',
+        lazy: async () => ({
+          Component: (await import('../features/checklist/ChecklistPage')).ChecklistPage,
+        }),
+      },
     ],
   },
   { path: 'settings', element: <SettingsPage /> },

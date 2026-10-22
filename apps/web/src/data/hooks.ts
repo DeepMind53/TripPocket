@@ -1,6 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import type { ItineraryItem, Trip } from '@trippocket/shared';
 import { itemRepo } from './repositories/itemRepo';
+import { settingsRepo } from './repositories/settingsRepo';
 import { tripRepo } from './repositories/tripRepo';
 
 // 저장소가 바뀌면 화면이 자동으로 다시 그려진다. 불러오는 중에는 undefined.
@@ -16,4 +17,9 @@ export function useTrip(id: string | undefined): Trip | null | undefined {
 
 export function useTripItems(tripId: string | undefined): ItineraryItem[] | undefined {
   return useLiveQuery(async () => (tripId ? itemRepo.listByTrip(tripId) : []), [tripId]);
+}
+
+/** 설정 값 하나 (불러오는 중에는 fallback) */
+export function useSetting<T>(key: string, fallback: T): T {
+  return useLiveQuery(() => settingsRepo.get(key, fallback), [key]) ?? fallback;
 }
