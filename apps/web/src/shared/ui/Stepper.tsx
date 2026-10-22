@@ -1,5 +1,6 @@
 import { Minus, Plus } from 'lucide-react';
 import { useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { cn } from '../lib/cn';
 
 export interface StepperProps {
@@ -18,6 +19,7 @@ const HOLD_INTERVAL = 100;
 
 /** 정해진 간격의 작은 숫자 (docs/12 §3.1). 버튼을 길게 누르면 연속으로 바뀐다. */
 export function Stepper({ value, onChange, min, max, step = 1, format, label }: StepperProps) {
+  const { t } = useTranslation();
   // 길게 누르는 동안 최신 값을 써야 하므로 ref로 보관
   const valueRef = useRef(value);
   const timers = useRef<{ delay?: number; repeat?: number }>({});
@@ -73,7 +75,7 @@ export function Stepper({ value, onChange, min, max, step = 1, format, label }: 
     <div role="group" aria-label={label} className="flex items-center gap-1">
       <button
         type="button"
-        aria-label={`${label} 줄이기`}
+        aria-label={t('ui.stepperDecrease', { label })}
         className={buttonClass}
         disabled={value <= min}
         onClick={() => handleClick(-1)}
@@ -89,7 +91,7 @@ export function Stepper({ value, onChange, min, max, step = 1, format, label }: 
       </output>
       <button
         type="button"
-        aria-label={`${label} 늘리기`}
+        aria-label={t('ui.stepperIncrease', { label })}
         className={buttonClass}
         disabled={value >= max}
         onClick={() => handleClick(1)}

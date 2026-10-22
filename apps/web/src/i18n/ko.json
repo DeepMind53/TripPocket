@@ -1,0 +1,106 @@
+{
+  "app": {
+    "name": "트립포켓",
+    "tagline": "여행 일정을 주머니에 넣고 다니세요."
+  },
+  "nav": {
+    "label": "주요 메뉴",
+    "home": "홈",
+    "trips": "내 여행",
+    "saved": "저장",
+    "me": "마이"
+  },
+  "tripNav": {
+    "label": "여행 메뉴",
+    "plan": "일정",
+    "places": "장소",
+    "bookings": "예약",
+    "checklist": "준비"
+  },
+  "header": {
+    "back": "뒤로",
+    "quickMenu": "빠른 메뉴",
+    "more": "더보기",
+    "syncLocal": "이 기기에만 저장돼요"
+  },
+  "common": {
+    "comingInStep": "{{step}}단계에서 만들어요",
+    "goHome": "홈으로"
+  },
+  "quickMenu": {
+    "title": "빠른 메뉴",
+    "fx": "환율",
+    "fxDesc": "여행 국가 통화를 원화로 바로 계산",
+    "ai": "AI 추천",
+    "aiDesc": "내 근처 지금 뜨는 맛집·핫플·놀거리",
+    "soon": "준비 중",
+    "shortcuts": "바로가기",
+    "shortcut": {
+      "lodging": "숙소로 길찾기",
+      "bookingNo": "예약번호",
+      "nextItem": "다음 일정",
+      "checklist": "준비물"
+    },
+    "quickSettings": "빠른 설정",
+    "theme": "화면",
+    "themeLight": "라이트",
+    "themeDark": "다크",
+    "themeSystem": "시스템",
+    "allSettings": "전체 설정"
+  },
+  "home": {
+    "emptyTitle": "어디로 떠나볼까요?",
+    "emptyDesc": "여행을 만들면 여기에서 다음 일정과 오늘 숙소를 바로 볼 수 있어요.",
+    "emptyCta": "새 여행 만들기"
+  },
+  "trips": {
+    "title": "내 여행",
+    "emptyTitle": "아직 여행이 없어요",
+    "emptyDesc": "첫 여행을 만들어 일정을 정리해 보세요.",
+    "emptyCta": "첫 여행 만들기",
+    "demo": "샘플 여행 열어보기",
+    "demoTitle": "샘플 여행"
+  },
+  "saved": {
+    "title": "저장",
+    "emptyTitle": "마음에 드는 장소를 저장해 보세요",
+    "emptyDesc": "저장한 장소는 나중에 여행 일정에 바로 담을 수 있어요."
+  },
+  "me": {
+    "title": "마이",
+    "loginPrompt": "로그인하면 여러 기기에서 여행을 이어서 볼 수 있어요",
+    "login": "로그인",
+    "settings": "설정",
+    "backup": "백업·복원",
+    "help": "도움말",
+    "devUi": "컴포넌트 미리보기 (개발용)"
+  },
+  "plan": {
+    "emptyTitle": "아직 일정이 없어요",
+    "emptyDesc": "가고 싶은 곳부터 담아볼까요?"
+  },
+  "places": {
+    "emptyTitle": "장소 찾기",
+    "emptyDesc": "숙소·맛집·카페·관광지를 평점으로 골라볼 수 있어요."
+  },
+  "bookings": {
+    "emptyTitle": "예약을 모아두세요",
+    "emptyDesc": "항공권, 숙소 예약을 모아두면 여행 중에 바로 꺼내볼 수 있어요."
+  },
+  "checklist": {
+    "emptyTitle": "준비물을 챙겨볼까요?",
+    "emptyDesc": "템플릿으로 준비물과 할 일을 빠르게 만들 수 있어요."
+  },
+  "settings": {
+    "title": "설정"
+  },
+  "notFound": {
+    "title": "페이지를 찾을 수 없어요",
+    "desc": "주소가 바뀌었거나 삭제된 페이지예요."
+  },
+  "ui": {
+    "stepperDecrease": "{{label}} 줄이기",
+    "stepperIncrease": "{{label}} 늘리기",
+    "loading": "처리 중"
+  }
+}

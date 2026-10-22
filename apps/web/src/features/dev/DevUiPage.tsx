@@ -42,11 +42,7 @@ export function DevUiPage() {
   return (
     <div className="mx-auto min-h-dvh max-w-[560px] pb-24">
       <header className="sticky top-0 z-10 flex items-center gap-1 border-b border-line bg-bg/90 px-2 py-1 backdrop-blur pt-[env(safe-area-inset-top)]">
-        <Link
-          to="/"
-          aria-label="시작 화면으로"
-          className="grid size-11 place-items-center text-fg-sub"
-        >
+        <Link to="/me" aria-label="마이로" className="grid size-11 place-items-center text-fg-sub">
           <ArrowLeft aria-hidden="true" className="size-5" />
         </Link>
         <h1 className="flex-1 text-title-2">컴포넌트 미리보기</h1>

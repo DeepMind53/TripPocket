@@ -1,6 +1,7 @@
 export { BottomSheet } from './BottomSheet';
 export { Button } from './Button';
 export { Chip } from './Chip';
+export { EmptyState } from './EmptyState';
 export { IconButton } from './IconButton';
 export { RadioList } from './RadioList';
 export { SegmentedControl } from './SegmentedControl';
@@ -8,5 +9,7 @@ export { Slider } from './Slider';
 export { Spinner } from './Spinner';
 export { Stepper } from './Stepper';
 export { Switch } from './Switch';
+export { TabBar, type TabItem } from './TabBar';
 export { Toaster } from './Toaster';
 export { snackbar, toast } from './toastStore';
+export { TopBar } from './TopBar';
