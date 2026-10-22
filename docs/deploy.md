@@ -33,6 +33,14 @@
 4. **Save and Deploy** → 1~3분 뒤 주소가 나온다. 이후 `main`에 push할 때마다 자동 배포
 5. 보안 헤더·캐시는 `apps/web/public/_headers`가 자동 적용 (따로 설정 없음)
 
+## 2-1. 홈 서버 연결 (16단계 때, 사용자 작업)
+- Pages → Settings → Environment variables (Production)에 추가:
+  | 이름 | 값 |
+  |---|---|
+  | `TP_SERVER_URL` | 홈 서버 Funnel 주소 (예: `https://내컴퓨터.tailnet이름.ts.net`) |
+  | `TP_PROXY_SECRET` | `apps/server/.env`의 `PROXY_SECRET`과 같은 값 (Encrypt 체크) |
+- 웹앱의 `/api/*`, `/auth/*`가 이 서버로 전달된다 (`functions/`, ADR-0006). 값이 없으면 로컬 모드로만 동작
+
 ## 3. 휴대폰 실기기 확인 (12단계 확인 방법)
 1. 휴대폰 브라우저(아이폰 Safari / 안드로이드 Chrome)로 `https://trippocket.pages.dev` 접속
    - 카톡에서 링크를 누르면 앱 안 브라우저로 열린다 → 위쪽 안내 띠의 [다른 브라우저로 열기]

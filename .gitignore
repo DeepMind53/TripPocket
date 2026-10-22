@@ -12,3 +12,6 @@ Thumbs.db
 .vscode/*
 !.vscode/extensions.json
 .claude/settings.local.json
+
+# 홈 서버 데이터(SQLite) — 백업 대상, 저장소에 올리지 않음
+apps/server/data/
