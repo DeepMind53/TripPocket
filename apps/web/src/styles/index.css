@@ -1,0 +1,156 @@
+@import 'tailwindcss';
+@import 'pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css';
+@import './tokens.css';
+
+/* 토큰 → Tailwind 유틸리티 연결 (bg-primary, text-fg-sub, border-line …) */
+@theme inline {
+  --color-primary: var(--tp-primary);
+  --color-primary-pressed: var(--tp-primary-pressed);
+  --color-primary-weak: var(--tp-primary-weak);
+  --color-on-primary: var(--tp-on-primary);
+  --color-bg: var(--tp-bg);
+  --color-bg-subtle: var(--tp-bg-subtle);
+  --color-surface: var(--tp-surface);
+  --color-line: var(--tp-line);
+  --color-fg: var(--tp-fg);
+  --color-fg-sub: var(--tp-fg-sub);
+  --color-fg-muted: var(--tp-fg-muted);
+  --color-success: var(--tp-success);
+  --color-warning: var(--tp-warning);
+  --color-danger: var(--tp-danger);
+  --color-rating: var(--tp-rating);
+  --color-scrim: var(--tp-scrim);
+  --color-toast: var(--tp-toast-bg);
+  --color-on-toast: var(--tp-toast-fg);
+  --color-day-1: var(--tp-day-1);
+  --color-day-2: var(--tp-day-2);
+  --color-day-3: var(--tp-day-3);
+  --color-day-4: var(--tp-day-4);
+  --color-day-5: var(--tp-day-5);
+  --color-day-6: var(--tp-day-6);
+  --color-day-7: var(--tp-day-7);
+  --color-day-8: var(--tp-day-8);
+  --shadow-card: var(--tp-shadow);
+}
+
+@theme {
+  --font-sans:
+    'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo',
+    'Malgun Gothic', system-ui, sans-serif;
+
+  /* 타입 스케일 (docs/11 §4) */
+  --text-display: 1.75rem;
+  --text-display--line-height: 2.25rem;
+  --text-display--font-weight: 700;
+  --text-title-1: 1.375rem;
+  --text-title-1--line-height: 1.875rem;
+  --text-title-1--font-weight: 700;
+  --text-title-2: 1.125rem;
+  --text-title-2--line-height: 1.625rem;
+  --text-title-2--font-weight: 600;
+  --text-body-1: 1rem;
+  --text-body-1--line-height: 1.5rem;
+  --text-body-1--font-weight: 500;
+  --text-body-2: 0.9375rem;
+  --text-body-2--line-height: 1.375rem;
+  --text-caption: 0.8125rem;
+  --text-caption--line-height: 1.125rem;
+  --text-micro: 0.6875rem;
+  --text-micro--line-height: 0.875rem;
+  --text-micro--font-weight: 600;
+
+  /* 형태 (docs/11 §5) */
+  --radius-btn: 12px;
+  --radius-card: 16px;
+  --radius-sheet: 20px;
+
+  --ease-soft: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    @apply bg-bg text-fg font-sans text-body-2 antialiased;
+    margin: 0;
+    word-break: keep-all;
+    overflow-wrap: anywhere;
+  }
+  /* 숫자(시간·거리)는 자릿수 정렬 */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+  :focus-visible {
+    outline: 2px solid var(--tp-primary);
+    outline-offset: 2px;
+  }
+}
+
+/* 바텀시트 · 토스트 애니메이션 */
+@keyframes tp-sheet-in {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+@keyframes tp-sheet-out {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(100%);
+  }
+}
+@keyframes tp-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes tp-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+@keyframes tp-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.tp-sheet[data-state='open'] {
+  animation: tp-sheet-in 280ms var(--ease-soft);
+}
+.tp-sheet[data-state='closed'] {
+  animation: tp-sheet-out 200ms ease-in;
+}
+.tp-scrim[data-state='open'] {
+  animation: tp-fade-in 200ms ease-out;
+}
+.tp-scrim[data-state='closed'] {
+  animation: tp-fade-out 200ms ease-in;
+}
+.tp-toast {
+  animation: tp-toast-in 200ms var(--ease-soft);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tp-sheet[data-state],
+  .tp-scrim[data-state],
+  .tp-toast {
+    animation-duration: 1ms;
+  }
+}

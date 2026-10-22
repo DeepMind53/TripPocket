@@ -1,0 +1,89 @@
+/*
+ * 디자인 토큰 — docs/11-design-system.md §3 (A안 바다 블루)
+ * 모든 색은 여기서만 정의한다. 컴포넌트는 Tailwind 유틸리티(bg-surface, text-fg …)로만 사용.
+ * 테마: 기본은 시스템 설정을 따르고, <html data-theme="light|dark">로 직접 고를 수 있다.
+ */
+:root {
+  --tp-primary: #2f6bff;
+  --tp-primary-pressed: #1f56e0;
+  --tp-primary-weak: #eaf0ff;
+  --tp-on-primary: #ffffff;
+  --tp-bg: #ffffff;
+  --tp-bg-subtle: #f4f6f9;
+  --tp-surface: #ffffff;
+  --tp-line: #e5e8ee;
+  --tp-fg: #191f28;
+  --tp-fg-sub: #4e5968;
+  --tp-fg-muted: #8b95a1;
+  --tp-success: #16a34a;
+  --tp-warning: #f59e0b;
+  --tp-danger: #ef4444;
+  --tp-rating: #e9a800;
+  --tp-scrim: rgb(10 14 22 / 0.45);
+  --tp-toast-bg: #191f28;
+  --tp-toast-fg: #ffffff;
+  --tp-shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 2px 8px rgb(0 0 0 / 0.04);
+
+  /* 일차(Day) 색 8개 — 지도 핀·Day 칩 공통, 9일차부터 순환 */
+  --tp-day-1: #2f6bff;
+  --tp-day-2: #ff6b4a;
+  --tp-day-3: #12b5a5;
+  --tp-day-4: #9b5cff;
+  --tp-day-5: #f5a524;
+  --tp-day-6: #e5488a;
+  --tp-day-7: #3ba55c;
+  --tp-day-8: #5a6b85;
+
+  /* 화면 하단 고정 요소(탭바 등) 높이 — 토스트 위치 계산용. 3단계에서 탭바가 갱신 */
+  --tp-bottom-inset: 0px;
+
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --tp-primary: #5b8cff;
+    --tp-primary-pressed: #7aa2ff;
+    --tp-primary-weak: #1b2747;
+    --tp-on-primary: #ffffff;
+    --tp-bg: #0f1115;
+    --tp-bg-subtle: #171a21;
+    --tp-surface: #1d2129;
+    --tp-line: #2a2f3a;
+    --tp-fg: #f2f4f7;
+    --tp-fg-sub: #b0b8c4;
+    --tp-fg-muted: #7d8794;
+    --tp-success: #4ade80;
+    --tp-warning: #fbbf24;
+    --tp-danger: #f87171;
+    --tp-rating: #ffc933;
+    --tp-scrim: rgb(0 0 0 / 0.6);
+    --tp-toast-bg: #f2f4f7;
+    --tp-toast-fg: #191f28;
+    --tp-shadow: 0 1px 2px rgb(0 0 0 / 0.3);
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme='dark'] {
+  --tp-primary: #5b8cff;
+  --tp-primary-pressed: #7aa2ff;
+  --tp-primary-weak: #1b2747;
+  --tp-on-primary: #ffffff;
+  --tp-bg: #0f1115;
+  --tp-bg-subtle: #171a21;
+  --tp-surface: #1d2129;
+  --tp-line: #2a2f3a;
+  --tp-fg: #f2f4f7;
+  --tp-fg-sub: #b0b8c4;
+  --tp-fg-muted: #7d8794;
+  --tp-success: #4ade80;
+  --tp-warning: #fbbf24;
+  --tp-danger: #f87171;
+  --tp-rating: #ffc933;
+  --tp-scrim: rgb(0 0 0 / 0.6);
+  --tp-toast-bg: #f2f4f7;
+  --tp-toast-fg: #191f28;
+  --tp-shadow: 0 1px 2px rgb(0 0 0 / 0.3);
+  color-scheme: dark;
+}
