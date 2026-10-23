@@ -151,14 +151,16 @@ describe('로그인', () => {
     expect(res.headers.location).toBe(`${ORIGIN}/me`);
   });
 
-  it('초대제: 첫 계정은 가입, 그다음은 허용 목록에 있어야', async () => {
-    expect((await login('kakao')).sid).toBeTruthy();
+  it('초대제: 첫 계정은 가입(관리자), 그다음은 허용 목록에 있거나 승인 대기', async () => {
+    const owner = await login('kakao');
+    expect(owner.sid).toBeTruthy();
+    expect((await api('GET', '/api/me', owner.sid)).json()).toMatchObject({ isAdmin: true });
     const denied = await login('google');
     expect(denied.sid).toBeUndefined();
-    expect(denied.res.headers.location).toBe(
-      `${ORIGIN}/login?error=invite&account=${encodeURIComponent('google:G-3')}`,
-    );
-    expect((await login('naver')).sid).toBeTruthy(); // ALLOWED_ACCOUNTS=naver:N-2
+    expect(denied.res.headers.location).toBe(`${ORIGIN}/login?error=pending`);
+    const naver = await login('naver'); // ALLOWED_ACCOUNTS=naver:N-2
+    expect(naver.sid).toBeTruthy();
+    expect((await api('GET', '/api/me', naver.sid)).json()).not.toHaveProperty('isAdmin');
   });
 
   it('켜지지 않은 제공자는 로그인 화면으로', async () => {
@@ -166,6 +168,77 @@ describe('로그인', () => {
     expect(res.headers.location).toBe(`${ORIGIN}/login?error=provider`);
     const list = await app.inject({ method: 'GET', url: '/auth/providers', headers: base });
     expect(list.json()).toEqual({ providers: ['kakao', 'naver', 'google'] });
+  });
+});
+
+describe('사용자 관리 (관리자 승인)', () => {
+  type AdminList = {
+    requests: { id: string; nickname: string; status: string; provider: string }[];
+    users: { id: string; nickname: string; status: string; isAdmin: boolean }[];
+  };
+  const list = async (sid?: string) =>
+    (await api('GET', '/api/admin/users', sid)).json() as AdminList;
+
+  it('가입 요청 → 관리자 승인 → 그 사람이 다시 로그인하면 사용', async () => {
+    const owner = await login('kakao');
+    await login('google');
+    await login('google'); // 같은 사람이 여러 번 눌러도 요청은 하나
+    const { requests } = await list(owner.sid);
+    expect(requests).toEqual([
+      expect.objectContaining({ id: 'google:G-3', nickname: 'Google User', status: 'pending' }),
+    ]);
+    const ok = await api('POST', '/api/admin/requests/google%3AG-3/approve', owner.sid);
+    expect(ok.statusCode).toBe(200);
+    const after = await login('google');
+    expect(after.sid).toBeTruthy();
+    expect((await list(owner.sid)).requests).toEqual([]);
+  });
+
+  it('거절하면 다시 로그인해도 거절 안내, 나중에 승인할 수도 있다', async () => {
+    const owner = await login('kakao');
+    await login('google');
+    await api('POST', '/api/admin/requests/google%3AG-3/reject', owner.sid);
+    const again = await login('google');
+    expect(again.sid).toBeUndefined();
+    expect(again.res.headers.location).toBe(`${ORIGIN}/login?error=rejected`);
+    expect((await list(owner.sid)).requests[0]!.status).toBe('rejected');
+    await api('POST', '/api/admin/requests/google%3AG-3/approve', owner.sid);
+    expect((await login('google')).sid).toBeTruthy();
+  });
+
+  it('사용 중지: 바로 로그아웃되고 다시 로그인 불가, 다시 허용하면 사용', async () => {
+    const owner = await login('kakao');
+    const member = await login('naver');
+    const memberId = (await api('GET', '/api/me', member.sid)).json().id as string;
+    await api('POST', `/api/admin/users/${memberId}/disable`, owner.sid);
+    expect((await api('GET', '/api/me', member.sid)).statusCode).toBe(401);
+    const blocked = await login('naver');
+    expect(blocked.sid).toBeUndefined();
+    expect(blocked.res.headers.location).toBe(`${ORIGIN}/login?error=disabled`);
+    await api('POST', `/api/admin/users/${memberId}/enable`, owner.sid);
+    expect((await login('naver')).sid).toBeTruthy();
+  });
+
+  it('관리자가 아니면 403, 로그인 안 했으면 401, 관리자 자신은 중지 불가', async () => {
+    const owner = await login('kakao');
+    const member = await login('naver');
+    expect((await api('GET', '/api/admin/users')).statusCode).toBe(401);
+    expect((await api('GET', '/api/admin/users', member.sid)).statusCode).toBe(403);
+    const ownerId = (await api('GET', '/api/me', owner.sid)).json().id as string;
+    expect((await api('POST', `/api/admin/users/${ownerId}/disable`, member.sid)).statusCode).toBe(
+      403,
+    );
+    expect((await api('POST', `/api/admin/users/${ownerId}/disable`, owner.sid)).statusCode).toBe(
+      400,
+    );
+    expect((await api('POST', '/api/admin/requests/nope/approve', owner.sid)).statusCode).toBe(404);
+  });
+
+  it('관리자가 탈퇴하면 다음으로 오래된 계정이 관리자를 이어받는다', async () => {
+    const owner = await login('kakao');
+    const member = await login('naver');
+    await api('DELETE', '/api/me', owner.sid);
+    expect((await api('GET', '/api/me', member.sid)).json()).toMatchObject({ isAdmin: true });
   });
 });
 

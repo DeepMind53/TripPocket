@@ -8,6 +8,8 @@ export interface Me {
   nickname: string;
   createdAt: string;
   providers: string[];
+  /** 첫 계정 = 관리자 (사용자 관리 메뉴) */
+  isAdmin?: boolean;
 }
 
 export interface DeviceSession {

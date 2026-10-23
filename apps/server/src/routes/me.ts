@@ -9,17 +9,24 @@ export function meRoutes(app: FastifyInstance, db: Db): void {
   app.get('/api/me', auth, async (req) => {
     const userId = req.user!.userId;
     const user = db
-      .prepare('SELECT id, nickname, created_at FROM users WHERE id = ?')
+      .prepare('SELECT id, nickname, created_at, is_admin FROM users WHERE id = ?')
       .get(userId) as {
       id: string;
       nickname: string;
       created_at: string;
+      is_admin: number;
     };
     const providers = db
       .prepare('SELECT provider FROM oauth_accounts WHERE user_id = ?')
       .all(userId)
       .map((r) => String(r.provider));
-    return { id: user.id, nickname: user.nickname, createdAt: user.created_at, providers };
+    return {
+      id: user.id,
+      nickname: user.nickname,
+      createdAt: user.created_at,
+      providers,
+      ...(user.is_admin ? { isAdmin: true } : {}),
+    };
   });
 
   // 기기 목록: 세션 해시 앞 12자를 기기 id로 (해시 전체·토큰은 내보내지 않음)
@@ -63,6 +70,9 @@ export function meRoutes(app: FastifyInstance, db: Db): void {
     try {
       db.prepare('DELETE FROM records WHERE owner_user_id = ?').run(userId);
       db.prepare('DELETE FROM users WHERE id = ?').run(userId);
+      // 관리자가 탈퇴하면 가장 먼저 가입한 사람이 관리자를 이어받는다 (관리자가 없어지지 않게)
+      db.exec(`UPDATE users SET is_admin = 1 WHERE NOT EXISTS (SELECT 1 FROM users WHERE is_admin = 1)
+        AND id = (SELECT id FROM users WHERE status = 'active' ORDER BY created_at, id LIMIT 1)`);
       db.prepare('INSERT INTO audit_log (user_id, action, created_at) VALUES (?, ?, ?)').run(
         userId,
         'delete_account',

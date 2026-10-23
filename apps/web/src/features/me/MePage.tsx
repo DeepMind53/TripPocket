@@ -10,7 +10,9 @@ import {
   FileText,
   Smartphone,
   Sparkles,
+  Users,
 } from 'lucide-react';
+import { useAuth } from '../../data/authStore';
 import { useInstall } from '../../app/pwa';
 import { useRouteSheet } from '../../shared/hooks/useRouteSheet';
 import { AccountCard } from './AccountCard';
@@ -25,6 +27,7 @@ import { TopBar, toast } from '../../shared/ui';
 export function MePage() {
   const { t } = useTranslation();
   const installed = useInstall((s) => s.installed);
+  const isAdmin = useAuth((s) => s.status === 'user' && s.me?.isAdmin === true);
   const [installOpen, setInstallOpen] = useRouteSheet('install');
   return (
     <>
@@ -32,6 +35,7 @@ export function MePage() {
       <div className="flex flex-col gap-4 px-5 pt-2">
         <AccountCard />
         <ul className="flex flex-col divide-y divide-line overflow-hidden rounded-card border border-line">
+          {isAdmin && <MenuRow to="/admin/users" icon={<Users />} label={t('admin.title')} />}
           <MenuRow to="/settings" icon={<Settings />} label={t('me.settings')} />
           <MenuRow to="/backup" icon={<DatabaseBackup />} label={t('me.backup')} />
           {!installed && (

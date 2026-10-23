@@ -5,6 +5,7 @@ import Fastify, { type FastifyInstance } from 'fastify';
 import { timingSafeEqual } from 'node:crypto';
 import type { Config } from './config';
 import type { Db } from './db/database';
+import { adminRoutes } from './routes/admin';
 import { authRoutes } from './routes/auth';
 import { aiRoutes } from './routes/ai';
 import { meRoutes } from './routes/me';
@@ -77,6 +78,7 @@ export async function buildApp(config: Config, db: Db): Promise<FastifyInstance>
 
   authRoutes(app, config, db);
   meRoutes(app, db);
+  adminRoutes(app, db);
   syncRoutes(app, db);
   aiRoutes(app, config, db);
   shareRoutes(app, db);

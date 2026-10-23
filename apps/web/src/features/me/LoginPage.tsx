@@ -11,6 +11,8 @@ const STYLE: Record<string, { bg: string; fg: string; border?: string }> = {
   google: { bg: '#FFFFFF', fg: '#1F1F1F', border: '#DADCE0' },
 };
 
+const KNOWN_ERRORS = ['invite', 'cancelled', 'provider', 'pending', 'rejected', 'disabled'];
+
 /**
  * S-20 로그인 — 소셜 로그인만 (비밀번호 없음, docs/09 §4.1).
  * 로그인은 동기화용 — 안 해도 앱은 전부 동작한다
@@ -38,7 +40,7 @@ export function LoginPage() {
             className="flex flex-col gap-2 rounded-card bg-warning/15 p-3 text-body-2"
           >
             {t(
-              `login.error.${error === 'invite' || error === 'cancelled' || error === 'provider' ? error : 'state'}`,
+              `login.error.${KNOWN_ERRORS.includes(error) ? error : 'state'}` as 'login.error.state',
             )}
             {error === 'invite' && account && (
               <button

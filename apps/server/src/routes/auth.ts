@@ -32,7 +32,7 @@ function safeReturn(v: unknown): string {
 
 const isProvider = (p: string): p is ProviderId => (PROVIDERS as readonly string[]).includes(p);
 
-/** 가입 정책 (docs/08 G1, 기본 초대제): 첫 계정은 허용, 그다음은 허용 목록(ALLOWED_ACCOUNTS)에 있어야 */
+/** 가입 정책 (docs/08 G1, 기본 초대제): 첫 계정은 허용, 그다음은 허용 목록(ALLOWED_ACCOUNTS)에 있거나 관리자가 승인해야 */
 function mayJoin(db: Db, config: Config, provider: ProviderId, profile: Profile): boolean {
   if (config.SIGNUP === 'open') return true;
   const users = (db.prepare('SELECT COUNT(*) AS n FROM users').get() as { n: number }).n;
@@ -41,7 +41,31 @@ function mayJoin(db: Db, config: Config, provider: ProviderId, profile: Profile)
   return allowed.includes(`${provider}:${profile.providerUserId}`);
 }
 
-function audit(db: Db, userId: string | null, action: string, target?: string) {
+/** 가입 요청 남기기 → 로그인 화면에 보여 줄 상태. 거절된 계정은 다시 쌓이지 않는다 */
+const MAX_PENDING = 50;
+function requestJoin(db: Db, provider: string, providerUserId: string, nickname: string) {
+  const row = db
+    .prepare('SELECT status FROM join_requests WHERE provider = ? AND provider_user_id = ?')
+    .get(provider, providerUserId) as { status: string } | undefined;
+  if (row?.status === 'rejected') return 'rejected';
+  if (row) {
+    db.prepare(
+      'UPDATE join_requests SET nickname = ? WHERE provider = ? AND provider_user_id = ?',
+    ).run(nickname, provider, providerUserId);
+    return 'pending';
+  }
+  // 아무나 로그인 버튼을 눌러 목록을 채우지 못하게 대기 수 상한
+  const pending = db
+    .prepare("SELECT COUNT(*) AS n FROM join_requests WHERE status = 'pending'")
+    .get() as { n: number };
+  if (pending.n >= MAX_PENDING) return 'invite';
+  db.prepare(
+    'INSERT INTO join_requests (provider, provider_user_id, nickname, requested_at) VALUES (?, ?, ?, ?)',
+  ).run(provider, providerUserId, nickname, new Date().toISOString());
+  return 'pending';
+}
+
+export function audit(db: Db, userId: string | null, action: string, target?: string) {
   db.prepare('INSERT INTO audit_log (user_id, action, target, created_at) VALUES (?, ?, ?, ?)').run(
     userId,
     action,
@@ -141,21 +165,25 @@ export function authRoutes(app: FastifyInstance, config: Config, db: Db): void {
         .prepare('SELECT user_id FROM oauth_accounts WHERE provider = ? AND provider_user_id = ?')
         .get(p, profile.providerUserId) as { user_id: string } | undefined;
       let userId = linked?.user_id;
-      if (!userId) {
+      if (userId) {
+        const status = db.prepare('SELECT status FROM users WHERE id = ?').get(userId) as {
+          status: string;
+        };
+        // 관리자가 사용을 중지한 계정
+        if (status.status !== 'active') return reply.redirect(fail('disabled'));
+      } else {
+        const nickname = (profile.nickname || '여행자').slice(0, 40);
         if (!mayJoin(db, config, p, profile)) {
           audit(db, null, 'signup_denied', `${p}:${profile.providerUserId}`);
-          // 관리자에게 알려 줄 계정 표시 (허용 목록에 넣을 값)
-          return reply.redirect(
-            fail('invite', `&account=${encodeURIComponent(`${p}:${profile.providerUserId}`)}`),
-          );
+          return reply.redirect(fail(requestJoin(db, p, profile.providerUserId, nickname)));
         }
+        const first =
+          (db.prepare('SELECT COUNT(*) AS n FROM users').get() as { n: number }).n === 0;
         userId = uuidv7();
         const now = new Date().toISOString();
-        db.prepare('INSERT INTO users (id, nickname, created_at) VALUES (?, ?, ?)').run(
-          userId,
-          (profile.nickname || '여행자').slice(0, 40),
-          now,
-        );
+        db.prepare(
+          'INSERT INTO users (id, nickname, created_at, is_admin) VALUES (?, ?, ?, ?)',
+        ).run(userId, nickname, now, first ? 1 : 0);
         db.prepare(
           'INSERT INTO oauth_accounts (provider, provider_user_id, user_id) VALUES (?, ?, ?)',
         ).run(p, profile.providerUserId, userId);

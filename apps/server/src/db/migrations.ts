@@ -133,4 +133,17 @@ export const MIGRATIONS: readonly string[] = [
     PRIMARY KEY (user_id, date, kind)
   );
   `,
+  // 7: 관리자(첫 계정) + 가입 요청 — 관리자가 앱에서 승인·거절, 사용 중지는 users.status='disabled'
+  `
+  ALTER TABLE users ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0;
+  UPDATE users SET is_admin = 1 WHERE id = (SELECT id FROM users ORDER BY created_at, id LIMIT 1);
+  CREATE TABLE join_requests (
+    provider TEXT NOT NULL,
+    provider_user_id TEXT NOT NULL,
+    nickname TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'rejected')),
+    requested_at TEXT NOT NULL,
+    PRIMARY KEY (provider, provider_user_id)
+  );
+  `,
 ];
