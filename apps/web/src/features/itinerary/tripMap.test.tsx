@@ -95,3 +95,25 @@ describe('일정 지도', () => {
     expect(screen.queryByText(/키를 아직/)).not.toBeInTheDocument();
   });
 });
+
+describe('일정 지도 — 사용량 관리', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('관리자가 Google 지도를 멈추면 지도를 열지 않고 안내, 열리면 로드 1회 기록', async () => {
+    const posts: string[] = [];
+    let maps = false;
+    vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
+      if (init?.method === 'POST') posts.push(url);
+      return Response.json(url === '/api/usage/flags' ? { maps } : { ok: true });
+    });
+    const { unmount } = render(
+      <TripMap trip={trip} items={[]} dayIndexOf={() => 0} onSelect={() => {}} />,
+    );
+    expect(await screen.findByText(/지도를 잠시 멈췄어요/)).toBeInTheDocument();
+    expect(posts).toEqual([]);
+    unmount();
+    maps = true;
+    render(<TripMap trip={trip} items={[]} dayIndexOf={() => 0} onSelect={() => {}} />);
+    await waitFor(() => expect(posts).toEqual(['/api/usage/map-load']));
+  });
+});

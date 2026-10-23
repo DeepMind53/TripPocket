@@ -28,3 +28,29 @@ export const adminApi = {
   disable: (userId: string) => post(`/api/admin/users/${enc(userId)}/disable`),
   enable: (userId: string) => post(`/api/admin/users/${enc(userId)}/enable`),
 };
+
+/** API 사용량 (서버 services/apiUsage.ts) */
+export interface ApiUsage {
+  id: string;
+  group: 'paid' | 'free';
+  freeMonthly: number | null;
+  autoLimit: number | null;
+  used: number;
+  today: number;
+  daily: { date: string; count: number }[];
+  paused: boolean;
+  autoStopped: boolean;
+}
+export interface ApiUsageReport {
+  month: string;
+  apis: ApiUsage[];
+}
+
+export const apiUsageApi = {
+  report: () => api<ApiUsageReport>('/api/admin/api-usage'),
+  update: (id: string, body: { paused?: boolean; limit?: number | null }) =>
+    api<ApiUsageReport>(`/api/admin/api-usage/${enc(id)}`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+};

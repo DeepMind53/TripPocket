@@ -1,5 +1,6 @@
 import type { PlaceDetails, PlaceSummary } from '@trippocket/shared';
 import { naverSearchRequest, type NaverKeys } from './naverBlog';
+import { guardApi, trackApi } from './apiUsage';
 
 /**
  * 장소 검색 제공자 (docs/10, 결정 L6: 네이버·카카오 무료 + Google 무료 한도).
@@ -25,6 +26,7 @@ export async function searchKakao(
     url.searchParams.set('x', String(near.lng));
     url.searchParams.set('y', String(near.lat));
   }
+  trackApi('kakao_local');
   const res = await fetch(url, { headers: { authorization: `KakaoAK ${key}` }, signal: timeout() });
   if (!res.ok) throw new Error(`kakao ${res.status}`);
   const body = (await res.json()) as { documents?: Record<string, string>[] };
@@ -45,6 +47,8 @@ export async function searchNaver(q: string, keys: NaverKeys): Promise<PlaceSumm
     'local',
     new URLSearchParams({ query: q, display: '5' }),
   );
+  guardApi('naver_search');
+  trackApi('naver_search');
   const res = await fetch(url, {
     headers,
     signal: timeout(),
@@ -73,6 +77,8 @@ export async function searchGoogle(
   key: string,
   near?: { lat: number; lng: number },
 ): Promise<PlaceSummary[]> {
+  guardApi('google_places_search');
+  trackApi('google_places_search');
   const res = await fetch('https://places.googleapis.com/v1/places:searchText', {
     method: 'POST',
     headers: {
@@ -119,6 +125,8 @@ const hm = (t?: { hour?: number; minute?: number }) =>
   `${String(t?.hour ?? 0).padStart(2, '0')}:${String(t?.minute ?? 0).padStart(2, '0')}`;
 
 export async function googleDetails(placeId: string, key: string): Promise<PlaceDetails> {
+  guardApi('google_places_details');
+  trackApi('google_places_details');
   const res = await fetch(
     `https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}?languageCode=ko`,
     {

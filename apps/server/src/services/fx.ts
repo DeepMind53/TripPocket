@@ -1,5 +1,6 @@
 import { parseEximRow, type FxSnapshot } from '@trippocket/shared';
 import type { Db } from '../db/database';
+import { guardApi, trackApi } from './apiUsage';
 
 /**
  * 한국수출입은행 현재환율 API (docs/12 §2, 무료·인증키는 서버 .env에만).
@@ -30,6 +31,8 @@ function seoulNow(now = new Date()) {
 export async function fetchExim(db: Db, key: string, now = new Date()): Promise<number> {
   const { date } = seoulNow(now);
   const url = `${EXIM_URL}?authkey=${encodeURIComponent(key)}&searchdate=${date.replace(/-/g, '')}&data=AP01`;
+  guardApi('exim');
+  trackApi('exim');
   const res = await fetch(url, { signal: AbortSignal.timeout(15_000) });
   if (!res.ok) throw new Error(`exim ${res.status}`);
   const rows = (await res.json()) as unknown;

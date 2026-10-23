@@ -1,6 +1,7 @@
 import type { AiCategory, ExtractedPlace, SourcePost } from '@trippocket/shared';
 import * as z from 'zod/mini';
 import type { Config } from '../config';
+import { apiAllowed, ApiPaused, guardApi, trackApi } from './apiUsage';
 
 /**
  * 무료 AI로 블로그 제목·요약에서 장소 이름 뽑기 (docs/14 §5, 결정 L9).
@@ -117,6 +118,8 @@ function parseJson(text: string): unknown {
 }
 
 async function call(p: Provider, user: string): Promise<unknown> {
+  guardApi(p.engine);
+  trackApi(p.engine);
   const res = await fetch(p.url, {
     method: 'POST',
     headers: { authorization: `Bearer ${p.key}`, 'content-type': 'application/json' },
@@ -178,7 +181,7 @@ async function tryProvider(
         cooldownUntil.set(p.engine, Date.now() + Math.max(60, e.retryAfter) * 1000);
         throw e;
       }
-      if (attempt === 1) throw e;
+      if (attempt === 1 || e instanceof ApiPaused) throw e;
     }
   }
   throw new Error(`${p.engine}_invalid_output`);
@@ -196,7 +199,8 @@ export async function extractPlaces(
   onError: (engine: LlmEngine, err: unknown) => void = () => {},
 ): Promise<{ engine: LlmEngine; places: ExtractedPlace[] } | null> {
   for (const p of providers) {
-    if ((cooldownUntil.get(p.engine) ?? 0) > Date.now()) continue;
+    // 한도로 잠시 쉬는 중이거나 관리자가 멈춘 AI는 건너뜀
+    if ((cooldownUntil.get(p.engine) ?? 0) > Date.now() || !apiAllowed(p.engine)) continue;
     try {
       return { engine: p.engine, places: await tryProvider(p, anchor, category, posts) };
     } catch (e) {

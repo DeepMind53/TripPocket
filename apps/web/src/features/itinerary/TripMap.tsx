@@ -11,6 +11,7 @@ import {
   type MapMarker,
 } from '../../shared/maps';
 import { compareKeys } from '@trippocket/shared';
+import { googleMapsAllowed, reportMapLoad } from '../../data/api/usage';
 
 /** 날짜 색 토큰 → 실제 색 (지도 핀 SVG는 CSS 변수를 못 쓴다) */
 const dayHex = (index: number) =>
@@ -37,7 +38,7 @@ export function TripMap({
   const { t } = useTranslation();
   const el = useRef<HTMLDivElement>(null);
   const handle = useRef<MapHandle | null>(null);
-  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
+  const [status, setStatus] = useState<'loading' | 'ready' | 'error' | 'paused'>('loading');
   const pref = useSettings((s) => s.inAppMap);
   const provider = chooseProvider(trip.mapProvider ?? pref, isDomesticTrip(trip));
   const online = typeof navigator === 'undefined' || navigator.onLine;
@@ -59,14 +60,21 @@ export function TripMap({
       lat: 37.5665,
       lng: 126.978,
     };
-    mountMap(provider, el.current, { center, zoom: 12 }).then(
-      (h) => {
-        if (!alive) return h.destroy();
-        handle.current = h;
-        setStatus('ready');
-      },
-      () => alive && setStatus('error'),
-    );
+    const target = el.current;
+    // Google 지도는 유료 가능 API — 관리자가 멈췄거나 이번 달 상한이면 열지 않는다 (API 사용량)
+    void (provider === 'google' ? googleMapsAllowed() : Promise.resolve(true)).then((ok) => {
+      if (!alive) return;
+      if (!ok) return setStatus('paused');
+      mountMap(provider, target, { center, zoom: 12 }).then(
+        (h) => {
+          if (!alive) return h.destroy();
+          handle.current = h;
+          setStatus('ready');
+          if (provider === 'google') reportMapLoad();
+        },
+        () => alive && setStatus('error'),
+      );
+    });
     return () => {
       alive = false;
       handle.current?.destroy();
@@ -121,9 +129,11 @@ export function TripMap({
       ? t('map.noKey')
       : status === 'error'
         ? t('map.error')
-        : status === 'ready' && visible.length === 0
-          ? t('map.noPlaces')
-          : null;
+        : status === 'paused'
+          ? t('map.paused')
+          : status === 'ready' && visible.length === 0
+            ? t('map.noPlaces')
+            : null;
 
   return (
     <div className="relative h-60 overflow-hidden rounded-2xl border border-line bg-bg-subtle">

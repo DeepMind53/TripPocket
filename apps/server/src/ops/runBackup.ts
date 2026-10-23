@@ -9,7 +9,7 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { backupName, decryptBackup, encryptBackup, pruneList } from './backup';
 
@@ -64,7 +64,10 @@ export function runRestore(
   key: string,
 ): { users: number; records: number } {
   if (existsSync(target)) throw new Error(`이미 있는 파일이에요: ${target} (덮어쓰지 않음)`);
-  writeFileSync(target, decryptBackup(readFileSync(file), key));
+  // 암호부터 확인한 뒤 폴더를 만든다 (복구 리허설 폴더가 없어도 되게)
+  const plain = decryptBackup(readFileSync(file), key);
+  mkdirSync(dirname(target), { recursive: true });
+  writeFileSync(target, plain);
   const db = new DatabaseSync(target, { readOnly: true });
   try {
     const check = db.prepare('PRAGMA integrity_check').get() as { integrity_check: string };

@@ -7,6 +7,8 @@ import { webOrigins, type Config } from './config';
 import type { Db } from './db/database';
 import { adminRoutes } from './routes/admin';
 import { authRoutes } from './routes/auth';
+import { usageRoutes } from './routes/usage';
+import { ApiPaused, initApiUsage } from './services/apiUsage';
 import { aiRoutes } from './routes/ai';
 import { meRoutes } from './routes/me';
 import { placesRoutes } from './routes/places';
@@ -21,6 +23,7 @@ export const PROXY_HEADER = 'x-tp-proxy';
  * 보안 기본값: docs/09 §7.2 — 본문 1MB, 보안 헤더, 요청 제한, 프록시 비밀 헤더, Origin 검사, 에러 내용 숨김
  */
 export async function buildApp(config: Config, db: Db): Promise<FastifyInstance> {
+  initApiUsage(db);
   const app = Fastify({
     bodyLimit: 1024 * 1024,
     // Cloudflare 프록시 뒤 — 실제 접속 IP는 프록시가 알려 준다
@@ -66,6 +69,8 @@ export async function buildApp(config: Config, db: Db): Promise<FastifyInstance>
   });
 
   app.setErrorHandler((error, req, reply) => {
+    // 관리자가 멈췄거나 이번 달 자동 상한에 닿은 외부 API (API 사용량 화면)
+    if (error instanceof ApiPaused) return reply.code(503).send({ error: 'api_paused' });
     const err = error as { statusCode?: number; code?: string };
     const status = err.statusCode && err.statusCode < 500 ? err.statusCode : 500;
     if (status >= 500) req.log.error(error);
@@ -79,6 +84,7 @@ export async function buildApp(config: Config, db: Db): Promise<FastifyInstance>
   authRoutes(app, config, db);
   meRoutes(app, db);
   adminRoutes(app, db);
+  usageRoutes(app);
   syncRoutes(app, db);
   aiRoutes(app, config, db);
   shareRoutes(app, db);

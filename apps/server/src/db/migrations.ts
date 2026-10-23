@@ -146,4 +146,22 @@ export const MIGRATIONS: readonly string[] = [
     PRIMARY KEY (provider, provider_user_id)
   );
   `,
+  // 8: 외부 API 사용량(날짜별)·관리자 제어(수동 중지·자동 상한) — services/apiUsage.ts
+  `
+  CREATE TABLE api_usage (
+    api TEXT NOT NULL,
+    date TEXT NOT NULL,
+    count INTEGER NOT NULL,
+    PRIMARY KEY (api, date)
+  );
+  CREATE TABLE api_controls (
+    api TEXT PRIMARY KEY,
+    paused INTEGER NOT NULL DEFAULT 0,
+    auto_limit INTEGER
+  );
+  INSERT INTO api_usage (api, date, count)
+    SELECT 'google_places_search', date, count FROM places_usage WHERE user_id = '*' AND kind = 'all-google';
+  INSERT INTO api_usage (api, date, count)
+    SELECT 'google_places_details', date, count FROM places_usage WHERE user_id = '*' AND kind = 'all-details';
+  `,
 ];

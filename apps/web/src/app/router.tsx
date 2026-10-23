@@ -113,6 +113,12 @@ export const routes: RouteObject[] = [
     }),
   },
   {
+    path: 'admin/api-usage',
+    lazy: async () => ({
+      Component: (await import('../features/me/ApiUsagePage')).ApiUsagePage,
+    }),
+  },
+  {
     path: 'admin/users',
     lazy: async () => ({
       Component: (await import('../features/me/AdminUsersPage')).AdminUsersPage,

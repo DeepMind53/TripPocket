@@ -6,6 +6,7 @@ import type { Db } from '../db/database';
 import { requireUser } from '../auth/session';
 import { googleDetails, searchGoogle, searchKakao, searchNaver } from '../services/places';
 import { naverSearchKeys } from '../services/naverBlog';
+import { apiAllowed } from '../services/apiUsage';
 
 /** 하루 한도 — 사람마다, 그리고 서버 전체 (Google 월 무료 사용량 안에 머물게) */
 const PER_USER = { search: 200, google: 50, details: 20 } as const;
@@ -82,7 +83,8 @@ export function placesRoutes(app: FastifyInstance, config: Config, db: Db): void
     if (
       (scope === 'overseas' || found.length === 0) &&
       config.GOOGLE_PLACES_KEY &&
-      allowed(userId, 'google')
+      allowed(userId, 'google') &&
+      apiAllowed('google_places_search')
     ) {
       try {
         found.push(...(await searchGoogle(q, config.GOOGLE_PLACES_KEY, near)));

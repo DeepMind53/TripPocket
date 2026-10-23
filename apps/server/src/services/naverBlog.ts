@@ -3,6 +3,7 @@
  * 저장하는 것: 제목·요약·링크·작성일만, 캐시 6시간 (본문 복제 안 함, docs/14 §8)
  */
 import type { Config } from '../config';
+import { guardApi, trackApi } from './apiUsage';
 
 export interface BlogPost {
   title: string;
@@ -69,6 +70,8 @@ export async function searchBlog(
       'blog',
       new URLSearchParams({ query, display: '100', start: String(start), sort: 'date' }),
     );
+    guardApi('naver_search');
+    trackApi('naver_search');
     const res = await fetch(url, {
       headers,
       signal: AbortSignal.timeout(8000),

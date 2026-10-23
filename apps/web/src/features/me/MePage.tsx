@@ -11,6 +11,7 @@ import {
   Smartphone,
   Sparkles,
   Users,
+  Gauge,
 } from 'lucide-react';
 import { useAuth } from '../../data/authStore';
 import { useInstall } from '../../app/pwa';
@@ -35,7 +36,12 @@ export function MePage() {
       <div className="flex flex-col gap-4 px-5 pt-2">
         <AccountCard />
         <ul className="flex flex-col divide-y divide-line overflow-hidden rounded-card border border-line">
-          {isAdmin && <MenuRow to="/admin/users" icon={<Users />} label={t('admin.title')} />}
+          {isAdmin && (
+            <>
+              <MenuRow to="/admin/users" icon={<Users />} label={t('admin.title')} />
+              <MenuRow to="/admin/api-usage" icon={<Gauge />} label={t('apiUsage.title')} />
+            </>
+          )}
           <MenuRow to="/settings" icon={<Settings />} label={t('me.settings')} />
           <MenuRow to="/backup" icon={<DatabaseBackup />} label={t('me.backup')} />
           {!installed && (

@@ -1,3 +1,5 @@
+import { trackApi } from './apiUsage';
+
 /**
  * AI 추천 기준점 (docs/14 §3-2): 좌표 → 가장 가까운 역 이름.
  * - 국내: 카카오 로컬 '지하철역' 카테고리 (무료, 카카오 REST 키 = 로그인 앱과 같은 키)
@@ -14,6 +16,7 @@ const inKorea = (lat: number, lng: number) => lat > 33 && lat < 38.7 && lng > 12
 
 async function nearestKakao(lat: number, lng: number, kakaoKey: string): Promise<string | null> {
   const url = `https://dapi.kakao.com/v2/local/search/category.json?category_group_code=SW8&x=${lng}&y=${lat}&radius=3000&sort=distance&size=1`;
+  trackApi('kakao_local');
   const res = await fetch(url, {
     headers: { authorization: `KakaoAK ${kakaoKey}` },
     signal: AbortSignal.timeout(8000),

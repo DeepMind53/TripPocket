@@ -3,6 +3,7 @@ import { uuidv7 } from '@trippocket/shared';
 import type { Db } from '../db/database';
 import { requireUser } from '../auth/session';
 import { audit } from './auth';
+import { isApiId, setApiLimit, setApiPaused, usageReport } from '../services/apiUsage';
 
 /** 관리자만: 로그인 + users.is_admin (아니면 403) */
 function requireAdmin(db: Db) {
@@ -153,4 +154,32 @@ export function adminRoutes(app: FastifyInstance, db: Db): void {
     audit(db, req.user!.userId, 'user_enabled', req.params.id);
     return { ok: true };
   });
+
+  // API 사용량: 이번 달(1일부터) 누적·하루별, 수동 중지·다시 켜기, 자동 중지 상한
+  app.get('/api/admin/api-usage', admin, async (_req, reply) => {
+    reply.header('cache-control', 'no-store');
+    return usageReport();
+  });
+
+  app.post<{ Params: { id: string }; Body: { paused?: unknown; limit?: unknown } }>(
+    '/api/admin/api-usage/:id',
+    admin,
+    async (req, reply) => {
+      const id = req.params.id;
+      if (!isApiId(id)) return reply.code(404).send({ error: 'not_found' });
+      const { paused, limit } = req.body ?? {};
+      if (paused !== undefined) {
+        if (typeof paused !== 'boolean') return reply.code(400).send({ error: 'bad_request' });
+        setApiPaused(id, paused);
+        audit(db, req.user!.userId, paused ? 'api_paused' : 'api_resumed', id);
+      }
+      if (limit !== undefined) {
+        const ok = limit === null || (Number.isInteger(limit) && (limit as number) >= 0);
+        if (!ok) return reply.code(400).send({ error: 'bad_request' });
+        setApiLimit(id, limit as number | null);
+        audit(db, req.user!.userId, 'api_limit', `${id}:${String(limit)}`);
+      }
+      return usageReport();
+    },
+  );
 }

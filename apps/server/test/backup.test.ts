@@ -57,7 +57,8 @@ describe('복구 리허설', () => {
       expect(failed).toEqual([blocked]);
       expect(readdirSync(join(work, 'disk')).every((f) => f.endsWith('.tpbk'))).toBe(true);
 
-      const restored = join(work, 'restored.sqlite');
+      // 아직 없는 폴더에도 풀 수 있다 (복구 리허설)
+      const restored = join(work, 'rehearsal', 'restored.sqlite');
       expect(runRestore(saved[0]!, restored, 'k'.repeat(20))).toEqual({ users: 1, records: 1 });
       expect(() => runRestore(saved[0]!, restored, 'k'.repeat(20))).toThrow(/덮어쓰지 않음/);
       expect(() => runRestore(saved[1]!, join(work, 'x.sqlite'), 'wrong-key-wrong-key')).toThrow();
