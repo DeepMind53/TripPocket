@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest';
 import { distanceKm, formatDistance, walkMinutes } from './distance';
 
 describe('다음 장소까지 거리 (실험실)', () => {
