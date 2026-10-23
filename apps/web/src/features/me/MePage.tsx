@@ -12,6 +12,7 @@ import {
   Sparkles,
   Users,
   Gauge,
+  FlaskConical,
 } from 'lucide-react';
 import { useAuth } from '../../data/authStore';
 import { useInstall } from '../../app/pwa';
@@ -51,6 +52,7 @@ export function MePage() {
               onClick={() => setInstallOpen(true)}
             />
           )}
+          <MenuRow to="/labs" icon={<FlaskConical />} label={t('me.labs')} />
           <MenuRow to="/legal/help" icon={<CircleHelp />} label={t('me.help')} />
         </ul>
         <ul className="flex flex-col divide-y divide-line overflow-hidden rounded-card border border-line">

@@ -20,6 +20,9 @@ import { useBottomInset } from '../../shared/hooks/useBottomInset';
 import { formatPeriod, formatTripBadge } from '../../shared/lib/dateFormat';
 import { BottomSheet, Button, EmptyState, IconButton, TabBar, TopBar } from '../../shared/ui';
 import { TAB_BAR_HEIGHT } from './AppShell';
+import { useLab } from '../../data/labsStore';
+import { useWakeLock } from '../../shared/hooks/useWakeLock';
+import { localTimeLabel, useMinuteClock } from '../../shared/hooks/useMinuteClock';
 
 // 공유는 누를 때만 불러온다
 const ShareSheet = lazy(async () => ({
@@ -38,6 +41,9 @@ export function TripLayout() {
   const [menuOpen, setMenuOpen, switchMenuTo] = useRouteSheet('trip-menu');
   const [shareOpen, setShareOpen] = useRouteSheet('trip-share');
   useBottomInset(trip ? TAB_BAR_HEIGHT : 0);
+  useWakeLock(useLab('wakeLock'));
+  const clockOn = useLab('localClock');
+  const now = useMinuteClock(clockOn);
 
   if (trip === null) {
     return (
@@ -62,6 +68,7 @@ export function TripLayout() {
   }
 
   const base = `/trips/${encodeURIComponent(tripId)}`;
+  const localClock = clockOn && trip ? localTimeLabel(trip.timezone, now, t) : null;
 
   return (
     <div className="mx-auto min-h-dvh max-w-[560px]">
@@ -69,7 +76,7 @@ export function TripLayout() {
         title={trip ? `${trip.cover.emoji ?? ''} ${trip.title}`.trim() : ''}
         {...(trip
           ? {
-              subtitle: `${formatPeriod(trip.startDate, trip.endDate)} · ${formatTripBadge(trip.startDate, trip.endDate, todayIn(trip.timezone))}`,
+              subtitle: `${formatPeriod(trip.startDate, trip.endDate)} · ${formatTripBadge(trip.startDate, trip.endDate, todayIn(trip.timezone))}${localClock ? ` · ${localClock}` : ''}`,
             }
           : {})}
         backTo="/trips"

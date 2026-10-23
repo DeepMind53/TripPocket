@@ -18,8 +18,9 @@ import {
   Ellipsis,
   Map as MapIcon,
   Plus,
+  Footprints,
 } from 'lucide-react';
-import { lazy, Suspense, useCallback, useState } from 'react';
+import { lazy, Suspense, useCallback, useState, Fragment } from 'react';
 import { useTranslation } from '../../i18n';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { useTrip, useTripBookings, useTripItems } from '../../data/hooks';
@@ -44,6 +45,8 @@ import { dayColor, KIND_ICON } from './itemKinds';
 import { MoveDaySheet } from './MoveDaySheet';
 import { BOOKING_ICON } from '../common/bookingKinds';
 import { isDomesticTrip } from '../../domain/tripPlace';
+import { distanceKm, formatDistance, walkMinutes } from '../../domain/legs';
+import { useLab } from '../../data/labsStore';
 
 // 드래그 편집은 편집 모드에 들어갈 때만 불러온다 (dnd-kit 포함)
 const EditModeList = lazy(() => import('./EditModeList'));
@@ -393,6 +396,7 @@ function DaySection({
   hideWhenEmpty: boolean;
 }) {
   const { t } = useTranslation();
+  const legs = useLab('legDistance');
   if (hideWhenEmpty && items.length === 0) return null;
   const color = date ? dayColor(index) : 'var(--tp-fg-muted)';
   const title = date
@@ -454,7 +458,10 @@ function DaySection({
       )}
       <ol className="flex flex-col divide-y divide-line/70 px-4">
         {items.map((item, i) => (
-          <ItemRow key={item.id} item={item} n={i + 1} color={color} onOpen={() => onOpen(item)} />
+          <Fragment key={item.id}>
+            <ItemRow item={item} n={i + 1} color={color} onOpen={() => onOpen(item)} />
+            {legs && <LegLine from={item} to={items[i + 1]} />}
+          </Fragment>
         ))}
       </ol>
       <button
@@ -531,6 +538,21 @@ function BookingLine({ row, onOpen }: { row: BookingRow; onOpen: () => void }) {
           {t(`bookingKind.${b.kind}`)}
         </span>
       </button>
+    </li>
+  );
+}
+
+/** 실험실 "다음 장소까지 거리": 두 일정 모두 좌표가 있을 때만 직선거리·도보 어림 */
+function LegLine({ from, to }: { from: ItineraryItem; to: ItineraryItem | undefined }) {
+  const { t } = useTranslation();
+  const a = from.place?.coords;
+  const b = to?.place?.coords;
+  if (!a || !b) return null;
+  const km = distanceKm(a, b);
+  return (
+    <li className="flex items-center gap-1.5 py-1 pl-9 text-micro text-fg-muted">
+      <Footprints aria-hidden="true" className="size-3" />
+      {t('labs.leg', { distance: formatDistance(km), min: walkMinutes(km) })}
     </li>
   );
 }
