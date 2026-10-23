@@ -58,7 +58,8 @@ export function llmProviders(config: Config): Provider[] {
       key: config.GEMINI_API_KEY,
       model: config.GEMINI_MODEL,
       maxPosts: 80,
-      extra: { max_tokens: 4000 },
+      // 생각(thinking)은 짧게 — 장소 이름 뽑기에는 충분하고 빠르다
+      extra: { max_tokens: 4000, reasoning_effort: 'low' },
     });
   if (config.CF_ACCOUNT_ID && config.CF_AI_TOKEN)
     out.push({
@@ -67,7 +68,11 @@ export function llmProviders(config: Config): Provider[] {
       key: config.CF_AI_TOKEN,
       model: config.CF_AI_MODEL,
       maxPosts: 80,
-      extra: { max_tokens: 3000 },
+      // gpt-oss는 기본으로 오래 생각해서 출력 상한을 다 써 버린다 → 짧게
+      extra: {
+        max_tokens: 3000,
+        ...(config.CF_AI_MODEL.includes('gpt-oss') ? { reasoning_effort: 'low' } : {}),
+      },
     });
   if (config.GROQ_API_KEY)
     out.push({
@@ -88,8 +93,11 @@ export function llmProviders(config: Config): Provider[] {
 
 /** 분당·하루 한도 초과 — retry-after(초) */
 class RateLimited extends Error {
-  constructor(readonly retryAfter: number) {
-    super('429');
+  constructor(
+    readonly retryAfter: number,
+    message = '429',
+  ) {
+    super(message);
   }
 }
 
@@ -119,6 +127,9 @@ async function call(p: Provider, user: string): Promise<unknown> {
     signal: AbortSignal.timeout(60_000),
   });
   if (res.status === 429) throw new RateLimited(Number(res.headers.get('retry-after') ?? 60));
+  // 결제·권한 문제(402 선불 소진, 401·403 키 오류)는 금방 안 풀리므로 1시간 건너뜀
+  if ([401, 402, 403].includes(res.status))
+    throw new RateLimited(3600, `${p.engine} ${res.status}`);
   if (!res.ok) throw new Error(`${p.engine} ${res.status}`);
   const body = (await res.json()) as { choices?: { message?: { content?: string | null } }[] };
   return parseJson(body.choices?.[0]?.message?.content ?? '');
