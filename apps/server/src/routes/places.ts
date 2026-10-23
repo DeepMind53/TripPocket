@@ -5,6 +5,7 @@ import type { Config } from '../config';
 import type { Db } from '../db/database';
 import { requireUser } from '../auth/session';
 import { googleDetails, searchGoogle, searchKakao, searchNaver } from '../services/places';
+import { naverSearchKeys } from '../services/naverBlog';
 
 /** 하루 한도 — 사람마다, 그리고 서버 전체 (Google 월 무료 사용량 안에 머물게) */
 const PER_USER = { search: 200, google: 50, details: 20 } as const;
@@ -19,14 +20,7 @@ const cache = new Map<string, { exp: number; value: PlaceSummary[] }>();
  */
 export function placesRoutes(app: FastifyInstance, config: Config, db: Db): void {
   const auth = { preHandler: requireUser(db) };
-  const naverKeys =
-    (config.NAVER_SEARCH_ID ?? config.NAVER_CLIENT_ID) &&
-    (config.NAVER_SEARCH_SECRET ?? config.NAVER_CLIENT_SECRET)
-      ? {
-          id: (config.NAVER_SEARCH_ID ?? config.NAVER_CLIENT_ID)!,
-          secret: (config.NAVER_SEARCH_SECRET ?? config.NAVER_CLIENT_SECRET)!,
-        }
-      : null;
+  const naverKeys = naverSearchKeys(config);
   const today = () => new Date().toISOString().slice(0, 10);
   const used = (userId: string, kind: Kind | `all-${Kind}`) =>
     (

@@ -1,4 +1,5 @@
 import type { PlaceDetails, PlaceSummary } from '@trippocket/shared';
+import { naverSearchRequest, type NaverKeys } from './naverBlog';
 
 /**
  * 장소 검색 제공자 (docs/10, 결정 L6: 네이버·카카오 무료 + Google 무료 한도).
@@ -38,13 +39,14 @@ export async function searchKakao(
   }));
 }
 
-export async function searchNaver(
-  q: string,
-  keys: { id: string; secret: string },
-): Promise<PlaceSummary[]> {
-  const url = `https://openapi.naver.com/v1/search/local.json?query=${encodeURIComponent(q)}&display=5`;
+export async function searchNaver(q: string, keys: NaverKeys): Promise<PlaceSummary[]> {
+  const [url, headers] = naverSearchRequest(
+    keys,
+    'local',
+    new URLSearchParams({ query: q, display: '5' }),
+  );
   const res = await fetch(url, {
-    headers: { 'X-Naver-Client-Id': keys.id, 'X-Naver-Client-Secret': keys.secret },
+    headers,
     signal: timeout(),
   });
   if (!res.ok) throw new Error(`naver ${res.status}`);

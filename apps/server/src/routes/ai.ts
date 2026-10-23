@@ -13,7 +13,7 @@ import type { Db } from '../db/database';
 import { requireUser } from '../auth/session';
 import { resolveAnchor } from '../services/anchor';
 import { extractPlaces } from '../services/groq';
-import { searchBlog, type BlogPost } from '../services/naverBlog';
+import { naverSearchKeys, searchBlog, type BlogPost } from '../services/naverBlog';
 import { searchKakao } from '../services/places';
 
 /** 카테고리별 검색어 (docs/14 §3-4) */
@@ -59,14 +59,7 @@ export interface RecommendResult {
  * 로그인 필요, 하루 20회, 같은 기준점·카테고리 6시간 캐시. 좌표는 본문으로만 받고 역 이름으로 바꾼 뒤 버린다
  */
 export function aiRoutes(app: FastifyInstance, config: Config, db: Db): void {
-  const naver =
-    (config.NAVER_SEARCH_ID ?? config.NAVER_CLIENT_ID) &&
-    (config.NAVER_SEARCH_SECRET ?? config.NAVER_CLIENT_SECRET)
-      ? {
-          id: (config.NAVER_SEARCH_ID ?? config.NAVER_CLIENT_ID)!,
-          secret: (config.NAVER_SEARCH_SECRET ?? config.NAVER_CLIENT_SECRET)!,
-        }
-      : null;
+  const naver = naverSearchKeys(config);
   const today = () => new Date().toISOString().slice(0, 10);
   const usedToday = (userId: string) =>
     (

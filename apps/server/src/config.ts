@@ -25,7 +25,10 @@ const Env = z.object({
   NAVER_CLIENT_SECRET: z.optional(z.string()),
   GOOGLE_CLIENT_ID: z.optional(z.string()),
   GOOGLE_CLIENT_SECRET: z.optional(z.string()),
-  /** 네이버 검색 API (블로그). 비우면 로그인 앱 아이디·시크릿 사용 (같은 앱에 '검색' API 추가) */
+  /**
+   * 네이버 검색 API (블로그·지역) = NAVER API HUB(네이버 클라우드) 앱의 Client ID·Secret.
+   * 2026-07-31부터 개발자센터에는 검색 API를 새로 추가할 수 없다. 비우면 예전 방식(로그인 앱 키로 openapi.naver.com)
+   */
   NAVER_SEARCH_ID: z.optional(z.string()),
   NAVER_SEARCH_SECRET: z.optional(z.string()),
   /** Google Places API (New) 서버 키 — 브라우저에 절대 넣지 않음, API 제한 = Places API (New) */
