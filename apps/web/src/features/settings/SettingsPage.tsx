@@ -83,7 +83,7 @@ export function SettingsPage() {
 
         <Group
           title={t('settings.maps')}
-          onReset={() => resetSettings(['directionsApp', 'travelMode'])}
+          onReset={() => resetSettings(['directionsApp', 'travelMode', 'inAppMap'])}
         >
           <Field label={t('settings.directionsApp')}>
             <RadioList
@@ -95,6 +95,18 @@ export function SettingsPage() {
                 { value: 'google', label: t('dir.google'), icon: <MapAppMark app="google" /> },
                 { value: 'kakao', label: t('dir.kakao'), icon: <MapAppMark app="kakao" /> },
                 { value: 'ask', label: t('settings.askEveryTime') },
+              ]}
+            />
+          </Field>
+          <Field label={t('settings.inAppMap')}>
+            <SegmentedControl
+              label={t('settings.inAppMap')}
+              value={s.inAppMap}
+              onChange={set('inAppMap')}
+              options={[
+                { value: 'auto', label: t('settings.mapAuto') },
+                { value: 'naver', label: t('quickMenu.appNaver') },
+                { value: 'google', label: t('quickMenu.appGoogle') },
               ]}
             />
           </Field>

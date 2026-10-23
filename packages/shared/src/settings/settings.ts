@@ -9,6 +9,8 @@ export interface Settings {
   haptics: boolean;
   directionsApp: 'naver' | 'google' | 'kakao' | 'ask';
   travelMode: 'transit' | 'walk' | 'car';
+  /** 앱 안 지도: 자동(국내=네이버, 해외=구글) */
+  inAppMap: 'auto' | 'naver' | 'google';
   timeStepMin: 5 | 10 | 15 | 30;
   dimPastItems: boolean;
   /** 0 = 끄기 */
@@ -27,6 +29,7 @@ export const SETTINGS_DEFAULTS: Settings = {
   haptics: true,
   directionsApp: 'ask',
   travelMode: 'transit',
+  inAppMap: 'auto',
   timeStepMin: 15,
   dimPastItems: true,
   backupReminderDays: 14,
@@ -48,6 +51,7 @@ const VALID: { [K in keyof Settings]: (v: unknown) => v is Settings[K] } = {
   haptics: (v): v is boolean => typeof v === 'boolean',
   directionsApp: oneOf('naver', 'google', 'kakao', 'ask'),
   travelMode: oneOf('transit', 'walk', 'car'),
+  inAppMap: oneOf('auto', 'naver', 'google'),
   timeStepMin: oneOf(5, 10, 15, 30),
   dimPastItems: (v): v is boolean => typeof v === 'boolean',
   backupReminderDays: (v): v is number =>

@@ -95,3 +95,25 @@
 - 네이버: 5절에서 만든 애플리케이션 → API 설정 → 사용 API에 **검색** 추가 (같은 Client ID·Secret 사용). 따로 만들면 `.env`의 `NAVER_SEARCH_ID`·`NAVER_SEARCH_SECRET`
 - 카카오: 5절 앱의 REST API 키를 그대로 사용 (가까운 역 찾기, 국내). 해외는 OpenStreetMap(키 없음)
 - 확인: 로그인 → 마이 → AI 추천 수집(개발용) (개발 빌드에서만 메뉴 표시, 주소 `/dev/ai`)
+
+## 8. 지도 키 (17단계, 사용자 작업 — 무료 한도 안에서)
+결정: Google 지도(무료 한도) + 국내는 네이버 지도 (docs/08 L5). 키는 **브라우저용**이라 웹앱에 들어가므로 **반드시 도메인 제한**.
+
+### Google Maps JavaScript API
+1. https://console.cloud.google.com → 18단계와 같은 프로젝트 → 결제 계정 연결 (카드 등록 필요, 무료 한도 안에서는 0원)
+2. API 및 서비스 → 라이브러리 → **Maps JavaScript API** 사용 설정
+3. 사용자 인증 정보 → API 키 만들기 → 키 제한:
+   - 애플리케이션 제한: **웹사이트** → `https://trippocket.pages.dev/*` (개발 중이면 `http://localhost:5173/*`도)
+   - API 제한: **Maps JavaScript API만**
+4. **과금 차단**: API 및 서비스 → Maps JavaScript API → 할당량 → "Map loads per day"를 **300** 정도로 (월 무료 1만 회 ≈ 하루 330회)
+5. 결제 → 예산 및 알림 → 월 1,000원 예산 + 50% 알림
+6. Cloudflare Pages → 환경 변수(빌드) `VITE_GOOGLE_MAPS_KEY` = 키 → 다시 배포
+
+### 네이버 지도 (국내 여행, 선택)
+1. https://console.ncloud.com → Services → **Maps** → Application 등록 → Web Dynamic Map 선택
+2. Web 서비스 URL: `https://trippocket.pages.dev` (개발: `http://localhost:5173`)
+3. **요금 확인**: Maps 요금 안내에서 Web Dynamic Map 무료 이용량 확인 (2025년 정책 변경 — 무료 범위를 넘으면 과금되니 사용량 알림 설정)
+4. Client ID → Pages 환경 변수 `VITE_NAVER_MAP_CLIENT_ID` → 다시 배포
+- 네이버 키가 없으면 국내 여행도 Google 지도로 보여 준다. 설정 → 지도·길찾기 → 앱 안 지도에서 바꿀 수 있다
+
+- 지도는 일정 화면의 [지도] 버튼을 눌렀을 때만 불러온다 (무료 사용량 아끼기). 오프라인이면 안내만 보인다

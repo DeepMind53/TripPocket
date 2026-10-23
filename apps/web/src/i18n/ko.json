@@ -292,7 +292,9 @@
     "fx": "환율",
     "fxFee": "환전 수수료 반영",
     "fxFeePercent": "수수료율",
-    "fxFeeDesc": "현찰 살 때 추정 = 매매기준율 × (1 + 수수료)"
+    "fxFeeDesc": "현찰 살 때 추정 = 매매기준율 × (1 + 수수료)",
+    "inAppMap": "앱 안 지도",
+    "mapAuto": "자동"
   },
   "notFound": {
     "title": "페이지를 찾을 수 없어요",
@@ -631,5 +633,13 @@
     "dataSources": "데이터·글꼴 출처",
     "software": "오픈소스 소프트웨어 {{n}}개",
     "updated": "최종 수정 {{date}}"
+  },
+  "map": {
+    "toggle": "지도",
+    "label": "일정 지도",
+    "offline": "지도는 인터넷에 연결되면 보여요. 일정과 길찾기는 그대로 쓸 수 있어요",
+    "noKey": "지도 키를 아직 설정하지 않았어요 (docs/deploy.md 8절)",
+    "error": "지도를 불러오지 못했어요",
+    "noPlaces": "장소를 검색해 고른 일정만 지도에 표시돼요"
   }
 }

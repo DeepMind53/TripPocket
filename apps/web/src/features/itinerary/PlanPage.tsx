@@ -10,8 +10,16 @@ import {
   type LocalDate,
   type Trip,
 } from '@trippocket/shared';
-import { ArrowDownWideNarrow, BedDouble, Check, ChevronRight, Ellipsis, Plus } from 'lucide-react';
-import { lazy, Suspense, useState } from 'react';
+import {
+  ArrowDownWideNarrow,
+  BedDouble,
+  Check,
+  ChevronRight,
+  Ellipsis,
+  Map as MapIcon,
+  Plus,
+} from 'lucide-react';
+import { lazy, Suspense, useCallback, useState } from 'react';
 import { useTranslation } from '../../i18n';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { useTrip, useTripBookings, useTripItems } from '../../data/hooks';
@@ -39,6 +47,8 @@ import { isDomesticTrip } from '../../domain/tripPlace';
 
 // 드래그 편집은 편집 모드에 들어갈 때만 불러온다 (dnd-kit 포함)
 const EditModeList = lazy(() => import('./EditModeList'));
+// 지도도 열 때만
+const TripMap = lazy(async () => ({ default: (await import('./TripMap')).TripMap }));
 
 /** 화면에 보여줄 날: 'all' | 'wish' | 일차 번호(1부터) */
 type DayFilter = 'all' | 'wish' | number;
@@ -71,6 +81,9 @@ function PlanView({
   const days = getTripDays(trip.startDate, trip.endDate);
   const today = todayIn(trip.timezone);
   const dimPast = useSettings((st) => st.dimPastItems);
+  // 지도는 누를 때만 (지도 불러오기도 무료 사용량에 포함)
+  const [mapOpen, setMapOpen] = useState(false);
+  const dayIndexOf = useCallback((d: LocalDate) => days.indexOf(d), [days]);
   const ongoing = getTripStatus(trip.startDate, trip.endDate, today) === 'ongoing';
   const isDomestic = isDomesticTrip(trip);
 
@@ -203,7 +216,13 @@ function PlanView({
         {editing ? (
           <p className="flex-1 text-caption text-fg-muted">{t('plan.editHint')}</p>
         ) : (
-          <span />
+          <Chip
+            selected={mapOpen}
+            leading={<MapIcon aria-hidden="true" className="size-4" />}
+            onClick={() => setMapOpen(!mapOpen)}
+          >
+            {t('map.toggle')}
+          </Chip>
         )}
         <Button
           size="sm"
@@ -214,6 +233,19 @@ function PlanView({
           {editing ? t('plan.editDone') : t('plan.edit')}
         </Button>
       </div>
+
+      {mapOpen && !editing && (
+        <div className="px-5 pt-2">
+          <Suspense fallback={<div className="h-60 rounded-2xl bg-bg-subtle" />}>
+            <TripMap
+              trip={trip}
+              items={sections.flatMap((s) => items.filter((i) => i.date === s.date))}
+              dayIndexOf={dayIndexOf}
+              onSelect={openDetail}
+            />
+          </Suspense>
+        </div>
+      )}
 
       <div className={cn('flex flex-col px-5 pt-2', editing ? 'gap-6' : 'gap-4 pb-4')}>
         {editing ? (

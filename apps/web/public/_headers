@@ -1,7 +1,8 @@
 # Cloudflare Pages 응답 헤더 (docs/09 §7 보안 체크리스트). vite preview도 같은 값을 쓴다 (vite.config.ts)
-# connect-src: 공휴일(Nager.Date·jsDelivr)·날씨(Open-Meteo). 홈 서버 주소는 13단계에서 추가
+# connect-src: 공휴일(Nager.Date·jsDelivr)·날씨(Open-Meteo)·환율 보조(jsDelivr). 홈 서버는 같은 주소(/api, ADR-0006)
+# 지도(17단계): Google Maps JS·네이버 지도 v3가 공식 문서에서 요구하는 주소만 (지도 화면에서만 불러옴)
 /*
-  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://date.nager.at https://api.open-meteo.com https://cdn.jsdelivr.net; manifest-src 'self'; worker-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://maps.googleapis.com https://maps.gstatic.com https://oapi.map.naver.com https://*.pstatic.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https://*.googleapis.com https://*.gstatic.com https://*.google.com https://*.googleusercontent.com https://*.pstatic.net https://*.naver.net https://*.map.naver.com https://*.navercorp.com; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://date.nager.at https://api.open-meteo.com https://cdn.jsdelivr.net https://*.googleapis.com https://*.google.com https://*.gstatic.com https://*.naver.com https://*.pstatic.net https://*.navercorp.com; manifest-src 'self'; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), payment=(), usb=(), geolocation=(self)
