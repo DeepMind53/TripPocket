@@ -3,7 +3,7 @@ import { create } from 'zustand';
 /**
  * 실험실 (마이 → 실험실): 정식으로 넣기 전에 시험해 보는 기능의 켜기/끄기.
  * 이 기기에만 저장 (동기화·백업 대상 아님). 새 실험은 LABS에 id를 더하고 i18n `labs.item.<id>`를 쓴다.
- * 정식 기능이 되면 LABS에서 빼고 useLab 호출을 지운다 (docs/architecture.md "실험실")
+ * 정식 기능이 되면 LABS에서 빼고 useLab 호출을 지운다 (docs/code-map.md §3)
  */
 export const LABS = ['legDistance', 'wakeLock', 'localClock'] as const;
 export type LabId = (typeof LABS)[number];
