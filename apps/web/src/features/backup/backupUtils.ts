@@ -4,8 +4,13 @@ import i18n from '../../i18n';
  * 파일 저장: 휴대폰은 공유 시트(카톡·드라이브·파일 앱), 안 되면 다운로드.
  * 사용자가 공유를 취소하면 false
  */
-export async function saveFile(name: string, text: string, title: string): Promise<boolean> {
-  const file = new File([text], name, { type: 'application/json' });
+export async function saveFile(
+  name: string,
+  data: string | Blob,
+  title: string,
+  type = 'application/json',
+): Promise<boolean> {
+  const file = new File([data], name, { type });
   if (navigator.canShare?.({ files: [file] })) {
     try {
       await navigator.share({ files: [file], title });

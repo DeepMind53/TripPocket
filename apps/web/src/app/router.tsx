@@ -1,10 +1,6 @@
 import { createBrowserRouter, Navigate, type RouteObject } from 'react-router';
 import { HomePage } from '../features/home/HomePage';
-import { MePage } from '../features/me/MePage';
-import { SavedPage } from '../features/saved/SavedPage';
-import { TripsPage } from '../features/trips/TripsPage';
 import { AppShell } from './layouts/AppShell';
-import { TripLayout } from './layouts/TripLayout';
 import { NotFoundPage } from './NotFoundPage';
 
 // 라우트 표: docs/03-architecture.md §6
@@ -13,9 +9,19 @@ export const routes: RouteObject[] = [
     element: <AppShell />,
     children: [
       { index: true, element: <HomePage /> },
-      { path: 'trips', element: <TripsPage /> },
-      { path: 'saved', element: <SavedPage /> },
-      { path: 'me', element: <MePage /> },
+      // 첫 화면(홈) 밖의 탭은 누를 때 불러온다 (첫 화면 크기 예산, 설치 후에는 기기에 저장돼 바로 열림)
+      {
+        path: 'trips',
+        lazy: async () => ({ Component: (await import('../features/trips/TripsPage')).TripsPage }),
+      },
+      {
+        path: 'saved',
+        lazy: async () => ({ Component: (await import('../features/saved/SavedPage')).SavedPage }),
+      },
+      {
+        path: 'me',
+        lazy: async () => ({ Component: (await import('../features/me/MePage')).MePage }),
+      },
     ],
   },
   {
@@ -34,7 +40,7 @@ export const routes: RouteObject[] = [
   },
   {
     path: 'trips/:tripId',
-    element: <TripLayout />,
+    lazy: async () => ({ Component: (await import('./layouts/TripLayout')).TripLayout }),
     children: [
       { index: true, element: <Navigate to="plan" replace /> },
       // 여행 탭 화면은 열 때 불러온다 (첫 화면 크기 줄이기)
@@ -68,6 +74,18 @@ export const routes: RouteObject[] = [
     path: 'settings',
     lazy: async () => ({
       Component: (await import('../features/settings/SettingsPage')).SettingsPage,
+    }),
+  },
+  {
+    path: 's/:shareId',
+    lazy: async () => ({
+      Component: (await import('../features/share/PublicTripPage')).PublicTripPage,
+    }),
+  },
+  {
+    path: 'invite/:token',
+    lazy: async () => ({
+      Component: (await import('../features/share/InvitePage')).InvitePage,
     }),
   },
   {

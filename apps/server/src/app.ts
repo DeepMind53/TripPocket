@@ -8,6 +8,7 @@ import type { Db } from './db/database';
 import { authRoutes } from './routes/auth';
 import { aiRoutes } from './routes/ai';
 import { meRoutes } from './routes/me';
+import { shareRoutes } from './routes/share';
 import { syncRoutes } from './routes/sync';
 import { latestFx } from './services/fx';
 
@@ -77,6 +78,7 @@ export async function buildApp(config: Config, db: Db): Promise<FastifyInstance>
   meRoutes(app, db);
   syncRoutes(app, db);
   aiRoutes(app, config, db);
+  shareRoutes(app, db);
 
   // 환율: 로그인 불필요(공개 데이터), IP당 제한, 1시간 캐시 (docs/12 §2.2)
   app.get(

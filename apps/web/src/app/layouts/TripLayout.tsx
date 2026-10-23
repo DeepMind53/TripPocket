@@ -1,5 +1,15 @@
 import { todayIn } from '@trippocket/shared';
-import { CalendarDays, Ellipsis, ListChecks, Search, Settings, Ticket, Trash2 } from 'lucide-react';
+import {
+  CalendarDays,
+  Ellipsis,
+  ListChecks,
+  Search,
+  Settings,
+  Share2,
+  Ticket,
+  Trash2,
+} from 'lucide-react';
+import { lazy, Suspense } from 'react';
 import { useTranslation } from '../../i18n';
 import { Link, Outlet, useNavigate, useParams } from 'react-router';
 import { useTrip } from '../../data/hooks';
@@ -11,6 +21,11 @@ import { formatPeriod, formatTripBadge } from '../../shared/lib/dateFormat';
 import { BottomSheet, Button, EmptyState, IconButton, TabBar, TopBar } from '../../shared/ui';
 import { TAB_BAR_HEIGHT } from './AppShell';
 
+// 공유는 누를 때만 불러온다
+const ShareSheet = lazy(async () => ({
+  default: (await import('../../features/share/ShareSheet')).ShareSheet,
+}));
+
 /**
  * 여행 상세: 앱 탭 대신 여행 전용 탭 4개 (docs/11 §6)
  * 헤더: ← · 여행 제목 · 동기화 상태 · ⚡ · ⋯
@@ -20,7 +35,8 @@ export function TripLayout() {
   const { tripId = '' } = useParams();
   const trip = useTrip(tripId);
   const navigate = useNavigate();
-  const [menuOpen, setMenuOpen] = useRouteSheet('trip-menu');
+  const [menuOpen, setMenuOpen, switchMenuTo] = useRouteSheet('trip-menu');
+  const [shareOpen, setShareOpen] = useRouteSheet('trip-share');
   useBottomInset(trip ? TAB_BAR_HEIGHT : 0);
 
   if (trip === null) {
@@ -77,6 +93,15 @@ export function TripLayout() {
               variant="secondary"
               fullWidth
               className="justify-start"
+              leading={<Share2 aria-hidden="true" className="size-[18px]" />}
+              onClick={() => switchMenuTo('trip-share')}
+            >
+              {t('share.title')}
+            </Button>
+            <Button
+              variant="secondary"
+              fullWidth
+              className="justify-start"
               leading={<Settings aria-hidden="true" className="size-[18px]" />}
               // 메뉴 시트 기록을 설정 화면으로 바꿔서, 설정에서 뒤로 가면 여행 화면
               onClick={() => void navigate(`${base}/settings`, { replace: true })}
@@ -98,6 +123,11 @@ export function TripLayout() {
           </div>
         )}
       </BottomSheet>
+      {trip && shareOpen && (
+        <Suspense fallback={null}>
+          <ShareSheet trip={trip} open={shareOpen} onOpenChange={setShareOpen} />
+        </Suspense>
+      )}
       <TabBar
         label={t('tripNav.label')}
         items={[

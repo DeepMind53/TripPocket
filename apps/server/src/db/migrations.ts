@@ -101,4 +101,26 @@ export const MIGRATIONS: readonly string[] = [
     expires_at TEXT NOT NULL
   );
   `,
+  // 5: 보기 전용 공유 링크·초대 (S-24/25/40/41)
+  `
+  CREATE TABLE shares (
+    id TEXT PRIMARY KEY,
+    trip_id TEXT NOT NULL,
+    created_by TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    include_sensitive INTEGER NOT NULL DEFAULT 0,
+    revoked_at TEXT,
+    created_at TEXT NOT NULL
+  );
+  CREATE INDEX shares_trip ON shares(trip_id);
+  CREATE TABLE invites (
+    token_hash TEXT PRIMARY KEY,
+    trip_id TEXT NOT NULL,
+    role TEXT NOT NULL CHECK (role IN ('editor', 'viewer')),
+    expires_at TEXT NOT NULL,
+    max_uses INTEGER NOT NULL,
+    used_count INTEGER NOT NULL DEFAULT 0,
+    created_by TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at TEXT NOT NULL
+  );
+  `,
 ];

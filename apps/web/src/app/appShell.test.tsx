@@ -40,8 +40,9 @@ describe('앱 셸', () => {
     const user = userEvent.setup();
     const router = renderAt('/');
     await user.click(screen.getByRole('link', { name: '내 여행' }));
+    // 홈 밖의 탭은 지연 로딩 — 화면을 불러온 뒤 이동이 끝난다
+    expect(await screen.findByRole('heading', { name: '내 여행' })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/trips');
-    expect(screen.getByRole('heading', { name: '내 여행' })).toBeInTheDocument();
   });
 
   it('여행 상세는 여행 탭 4개를 보여주고 기본은 일정 탭이다', async () => {

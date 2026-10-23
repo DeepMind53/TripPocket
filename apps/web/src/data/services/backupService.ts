@@ -33,6 +33,20 @@ export async function createBackup(): Promise<BackupFile> {
   };
 }
 
+/** 여행 1건만 (S-25 파일로 내보내기) — 받은 사람은 백업·복원의 "합치기"로 가져온다 */
+export async function createTripBackup(tripId: string): Promise<BackupFile> {
+  const file = await createBackup();
+  const own = (rows: unknown[] | undefined) =>
+    (rows ?? []).filter((r) => (r as { tripId?: string }).tripId === tripId);
+  file.data = {
+    trips: (file.data.trips ?? []).filter((t) => (t as { id: string }).id === tripId),
+    items: own(file.data.items),
+    bookings: own(file.data.bookings),
+    checklistItems: own(file.data.checklistItems),
+  };
+  return file;
+}
+
 /** 파일 이름: trippocket-backup-2026-10-23.json */
 export function backupFileName(file: BackupFile): string {
   return `trippocket-backup-${file.exportedAt.slice(0, 10)}.json`;

@@ -81,3 +81,4 @@ export {
   type PeriodMonths,
   type PeriodRule,
 } from './ai/periods';
+export { toPublicTrip, type PublicTrip } from './share/share';

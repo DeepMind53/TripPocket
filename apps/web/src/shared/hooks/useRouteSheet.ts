@@ -29,5 +29,15 @@ export function useRouteSheet(key: string) {
     [open, key, navigate, location.pathname, location.search, location.hash],
   );
 
-  return [open, setOpen] as const;
+  /** 이 시트를 닫고 다른 시트를 같은 히스토리 자리에 연다 (닫기·열기를 따로 하면 뒤로 가기가 새 시트를 지워 버림) */
+  const switchTo = useCallback(
+    (other: string) =>
+      void navigate(
+        { pathname: location.pathname, search: location.search, hash: location.hash },
+        { state: { sheet: other } satisfies SheetState, replace: true },
+      ),
+    [navigate, location.pathname, location.search, location.hash],
+  );
+
+  return [open, setOpen, switchTo] as const;
 }

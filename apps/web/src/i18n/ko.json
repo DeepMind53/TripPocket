@@ -584,5 +584,43 @@
     "delete": "지우기 (길게 누르면 전부)",
     "pick": "통화 고르기",
     "search": "통화 이름·코드 검색"
+  },
+  "share": {
+    "title": "공유·내보내기",
+    "text": "텍스트 복사",
+    "textCopied": "일정을 복사했어요. 카톡에 붙여넣어 보세요",
+    "image": "이미지 저장",
+    "file": "파일 내보내기",
+    "failed": "만들지 못했어요. 다시 시도해 주세요",
+    "link": "보기 전용 링크",
+    "needLogin": "로그인하면 링크만으로 일정을 보여 줄 수 있어요 (받는 사람은 로그인 없이 봐요)",
+    "linkSafe": "링크가 켜져 있어요 · 예약번호·연락처·메모는 보이지 않아요",
+    "linkWithSensitive": "링크가 켜져 있어요 · 예약번호·연락처·메모도 보여요",
+    "copyLink": "링크 복사",
+    "linkCopied": "링크를 복사했어요",
+    "turnOff": "끄기",
+    "linkOff": "링크를 껐어요. 이제 열리지 않아요",
+    "includeSensitive": "예약번호·연락처·메모도 보여 주기",
+    "makeLink": "링크 만들고 복사",
+    "invite": "함께 편집할 사람 초대",
+    "inviteRole": "권한",
+    "role": {
+      "owner": "소유자",
+      "editor": "편집",
+      "viewer": "보기"
+    },
+    "makeInvite": "초대 링크 만들고 복사",
+    "inviteCopied": "초대 링크를 복사했어요 (7일 동안, 5명까지)",
+    "inviteNote": "받는 사람은 로그인 후 이 여행을 함께 보고 고칠 수 있어요",
+    "members": "멤버 {{n}}명",
+    "me": "나",
+    "removeMember": "내보내기",
+    "publicBadge": "트립포켓 공유 일정 · 보기 전용",
+    "publicGone": "링크가 꺼졌거나 없는 일정이에요",
+    "publicGoneDesc": "공유한 사람에게 새 링크를 받아 주세요",
+    "openApp": "트립포켓 열기",
+    "madeWith": "트립포켓으로 만든 일정",
+    "inviteInvalid": "사용할 수 없는 초대예요",
+    "inviteInvalidDesc": "기간(7일)이 지났거나 이미 다 쓴 링크예요. 새 초대를 받아 주세요"
   }
 }
