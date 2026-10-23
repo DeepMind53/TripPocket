@@ -47,11 +47,15 @@ Register-ScheduledTask -TaskName 'TripPocket Backup' -Action $backupAction `
   -Principal $principal -Force | Out-Null
 
 Start-ScheduledTask -TaskName 'TripPocket Server'
-Start-Sleep -Seconds 3
-try {
-  $health = Invoke-RestMethod 'http://127.0.0.1:8787/healthz'
+# 첫 시작은 느릴 수 있어 최대 30초 기다린다
+$health = $null
+for ($i = 0; $i -lt 30 -and -not $health; $i++) {
+  Start-Sleep -Seconds 1
+  try { $health = Invoke-RestMethod 'http://127.0.0.1:8787/healthz' } catch {}
+}
+if ($health) {
   Write-Host "서버 동작 확인: $($health | ConvertTo-Json -Compress)"
-} catch {
+} else {
   Write-Warning '서버 응답이 없어요. 작업 스케줄러 → TripPocket Server → 기록을 확인하세요.'
 }
 Write-Host '완료. 다음: ops\funnel.ps1 로 외부 주소 열기 (ops\README.md 2절)'
