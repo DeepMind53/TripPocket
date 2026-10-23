@@ -82,3 +82,11 @@ export {
   type PeriodRule,
 } from './ai/periods';
 export { toPublicTrip, type PublicTrip } from './share/share';
+export {
+  isOutsideHours,
+  rankPlaces,
+  similarity,
+  type PlaceDetails,
+  type PlaceSource,
+  type PlaceSummary,
+} from './places/placeSearch';

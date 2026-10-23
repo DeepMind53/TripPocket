@@ -123,4 +123,14 @@ export const MIGRATIONS: readonly string[] = [
     created_at TEXT NOT NULL
   );
   `,
+  // 6: 장소 검색 하루 사용량 (사람별 + 서버 전체 '*') — Google 무료 한도 지키기
+  `
+  CREATE TABLE places_usage (
+    user_id TEXT NOT NULL,
+    date TEXT NOT NULL,
+    kind TEXT NOT NULL,
+    count INTEGER NOT NULL,
+    PRIMARY KEY (user_id, date, kind)
+  );
+  `,
 ];

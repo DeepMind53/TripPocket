@@ -76,7 +76,7 @@ export const PlaceRefSchema = z.object({
   name: z.optional(z.string().check(z.maxLength(100))),
   address: z.optional(z.string().check(z.maxLength(200))),
   coords: z.optional(CoordsSchema),
-  coordsSource: z.optional(z.enum(['user', 'google', 'naver'])),
+  coordsSource: z.optional(z.enum(['user', 'google', 'naver', 'kakao'])),
   /** google 좌표는 30일이 지나면 다시 받는다 (Google 약관, docs/10 §2.1) */
   coordsFetchedAt: z.optional(IsoDateTimeSchema),
   googlePlaceId: z.optional(z.string()),
@@ -163,7 +163,7 @@ export const SavedPlaceSchema = z.object({
   kind: z.enum(ITEM_KINDS),
   address: z.optional(z.string().check(z.maxLength(200))),
   coords: z.optional(CoordsSchema),
-  coordsSource: z.optional(z.enum(['user', 'google', 'naver'])),
+  coordsSource: z.optional(z.enum(['user', 'google', 'naver', 'kakao'])),
   coordsFetchedAt: z.optional(IsoDateTimeSchema),
   googlePlaceId: z.optional(z.string()),
   naverPlaceUrl: z.optional(z.url()),

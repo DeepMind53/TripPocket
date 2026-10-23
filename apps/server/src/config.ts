@@ -28,6 +28,11 @@ const Env = z.object({
   /** 네이버 검색 API (블로그). 비우면 로그인 앱 아이디·시크릿 사용 (같은 앱에 '검색' API 추가) */
   NAVER_SEARCH_ID: z.optional(z.string()),
   NAVER_SEARCH_SECRET: z.optional(z.string()),
+  /** Google Places API (New) 서버 키 — 브라우저에 절대 넣지 않음, API 제한 = Places API (New) */
+  GOOGLE_PLACES_KEY: z.optional(z.string()),
+  /** 서버 전체 하루 Google 호출 상한 (월 무료: 검색 5천·상세 1천 → 하루 150·30이면 안전) */
+  GOOGLE_SEARCH_DAILY: z._default(z.coerce.number().check(z.int(), z.minimum(0)), 150),
+  GOOGLE_DETAILS_DAILY: z._default(z.coerce.number().check(z.int(), z.minimum(0)), 30),
   /** 한국수출입은행 환율 API 인증키 (무료, 없으면 환율은 웹앱의 무료 보조 출처만) */
   EXIM_API_KEY: z.optional(z.string()),
   /** 가입 정책 (docs/08 G1): invite = 첫 계정 + 허용 목록만, open = 누구나 */

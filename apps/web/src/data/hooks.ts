@@ -1,3 +1,4 @@
+import type { SavedPlace } from '@trippocket/shared';
 import { useLiveQuery } from 'dexie-react-hooks';
 import type {
   Booking,
@@ -12,6 +13,7 @@ import { templateRepo } from './repositories/templateRepo';
 import { itemRepo } from './repositories/itemRepo';
 import { settingsRepo } from './repositories/settingsRepo';
 import { tripRepo } from './repositories/tripRepo';
+import { savedPlaceRepo } from './repositories/savedPlaceRepo';
 
 // 저장소가 바뀌면 화면이 자동으로 다시 그려진다. 불러오는 중에는 undefined.
 
@@ -46,4 +48,8 @@ export function useChecklist(
 
 export function useTemplates(list: ListKind): ChecklistTemplate[] | undefined {
   return useLiveQuery(() => templateRepo.list(list), [list]);
+}
+
+export function useSavedPlaces(): SavedPlace[] | undefined {
+  return useLiveQuery(() => savedPlaceRepo.listActive(), []);
 }

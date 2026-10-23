@@ -117,3 +117,13 @@
 - 네이버 키가 없으면 국내 여행도 Google 지도로 보여 준다. 설정 → 지도·길찾기 → 앱 안 지도에서 바꿀 수 있다
 
 - 지도는 일정 화면의 [지도] 버튼을 눌렀을 때만 불러온다 (무료 사용량 아끼기). 오프라인이면 안내만 보인다
+
+## 9. 장소 검색 키 (18단계, 사용자 작업)
+- **카카오·네이버(국내, 무료)**: 5절 앱 그대로 — 카카오 REST 키(로컬 API 자동 포함), 네이버 앱에 '검색' API 추가(7절과 같음)
+- **Google Places (해외·평점·영업시간, 무료 한도 안)**:
+  1. 8절 프로젝트에서 **Places API (New)** 사용 설정
+  2. API 키를 **새로** 만들기(서버용): 애플리케이션 제한 없음 또는 IP, **API 제한 = Places API (New)만**
+  3. 할당량: "Text Search requests per day" 150, "Place Details requests per day" 30 (월 무료 5천·1천 안)
+  4. `apps/server/.env`의 `GOOGLE_PLACES_KEY` (브라우저용 지도 키와 다른 키 — 웹앱에 넣지 않음)
+- 서버도 하루 상한(`GOOGLE_SEARCH_DAILY`, `GOOGLE_DETAILS_DAILY`)과 사람별 한도를 지켜 무료 범위를 넘지 않게 한다
+- 평점·리뷰 수·영업시간은 저장하지 않고 볼 때마다 받는다 (Google 약관)

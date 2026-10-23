@@ -1,3 +1,7 @@
+import { useTrip } from '../../data/hooks';
+import { isDomesticTrip } from '../../domain/tripPlace';
+import { PlaceAutocomplete } from './PlaceAutocomplete';
+import { PlaceHours } from './PlaceHours';
 import { useSettings } from '../../data/settingsStore';
 import { ITEM_KINDS, type ItemKind, type ItineraryItem, type LocalDate } from '@trippocket/shared';
 import { useState, type ReactNode } from 'react';
@@ -61,6 +65,10 @@ function ItemForm({
   const timeStep = useSettings((st) => st.timeStepMin) * 60;
   const [endTime, setEndTime] = useState(item?.endTime ?? '');
   const [address, setAddress] = useState(item?.place?.address ?? '');
+  // 검색에서 고른 장소 (좌표·제공자 id). 직접 고치면 이름·주소만 바뀐다
+  const [picked, setPicked] = useState<PlaceRef | undefined>(item?.place);
+  const trip = useTrip(tripId);
+  const near = trip?.destinations.find((d) => d.coords)?.coords;
   const [memo, setMemo] = useState(item?.memo ?? '');
   const [url, setUrl] = useState(item?.url ?? '');
   const [saving, setSaving] = useState(false);
@@ -82,7 +90,7 @@ function ItemForm({
       ...(memo.trim() ? { memo: memo.trim() } : {}),
       ...(link ? { url: link } : {}),
     };
-    const place = withAddress(item?.place, address.trim());
+    const place = withAddress(picked, address.trim());
     setSaving(true);
     try {
       if (item) {
@@ -152,6 +160,27 @@ function ItemForm({
           className={inputClass}
         />
       </Field>
+      <PlaceAutocomplete
+        query={title}
+        domestic={trip ? isDomesticTrip(trip) : true}
+        near={near}
+        onPick={(p) => {
+          setTitle(p.name);
+          setAddress(p.address);
+          setPicked({
+            name: p.name,
+            ...(p.address ? { address: p.address } : {}),
+            ...(p.coords ? { coords: p.coords, coordsSource: p.source } : {}),
+            ...(p.source === 'google'
+              ? { googlePlaceId: p.id, coordsFetchedAt: new Date().toISOString() }
+              : {}),
+            ...(p.url && p.source !== 'google' ? { externalUrl: p.url } : {}),
+          });
+        }}
+      />
+      {picked?.googlePlaceId && (
+        <PlaceHours googlePlaceId={picked.googlePlaceId} date={date} time={startTime} />
+      )}
 
       <div className="grid grid-cols-2 gap-3">
         <Field label={t('form.start')}>
