@@ -3,6 +3,7 @@ import { RouterProvider } from 'react-router';
 import { Toaster } from '../shared/ui';
 import { createAppRouter } from './router';
 import { InAppBanner } from '../features/common/InAppBanner';
+import { MovedBanner } from '../features/common/MovedBanner';
 import { useSync } from '../data/sync/syncStore';
 
 // 첫 로그인 때만 필요 → 그때 불러온다
@@ -15,6 +16,7 @@ export function App() {
   const needChoice = useSync((st) => st.choiceFor !== null);
   return (
     <>
+      <MovedBanner />
       <InAppBanner />
       <RouterProvider router={router} />
       {needChoice && (
