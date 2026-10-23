@@ -12,7 +12,8 @@ import type { Config } from '../config';
 import type { Db } from '../db/database';
 import { requireUser } from '../auth/session';
 import { resolveAnchor } from '../services/anchor';
-import { extractPlaces } from '../services/groq';
+import { basicExtract } from '../services/basicRecommend';
+import { extractPlaces, llmProviders, type LlmEngine } from '../services/llm';
 import { naverSearchKeys, searchBlog, type BlogPost } from '../services/naverBlog';
 import { searchKakao } from '../services/places';
 
@@ -43,17 +44,21 @@ const Body = z.object({
 
 const DAILY_LIMIT = 20;
 const CACHE_HOURS = 6;
-/**
- * AI에 보내는 글 수 (카테고리마다, 최신순). Groq 무료 등급은 분당 8,000토큰이라
- * 카테고리 3개를 연달아 보내도 넘지 않게 (글 1개 ≈ 45토큰, groq.ts에서 제목·요약을 줄인다)
- */
-const AI_POSTS = 40;
+/** 점수 계산에 쓰는 글 수 (카테고리마다, 최신순). AI에는 이 중 각 AI가 받을 수 있는 만큼만 (llm.ts) */
+const AI_POSTS = 200;
 
 export interface RecommendResult {
   anchor: string;
   createdAt: string;
   categories: Partial<
-    Record<AiCategory, CategoryResult & { places: (Recommendation & { place?: PlaceSummary })[] }>
+    Record<
+      AiCategory,
+      CategoryResult & {
+        places: (Recommendation & { place?: PlaceSummary })[];
+        /** 어느 AI가 정리했는지. basic = 모든 무료 AI가 한도 → AI 없이 언급 수로 집계 */
+        engine: LlmEngine | 'basic';
+      }
+    >
   >;
 }
 
@@ -63,6 +68,7 @@ export interface RecommendResult {
  */
 export function aiRoutes(app: FastifyInstance, config: Config, db: Db): void {
   const naver = naverSearchKeys(config);
+  const providers = llmProviders(config);
   const today = () => new Date().toISOString().slice(0, 10);
   const usedToday = (userId: string) =>
     (
@@ -148,7 +154,6 @@ export function aiRoutes(app: FastifyInstance, config: Config, db: Db): void {
 
   // ② 추천: 수집 → Groq 장소 추출 → 근거 검증·기간·점수 → (국내) 카카오로 위치 확인
   app.post('/api/v1/ai/recommend', { preHandler: requireUser(db) }, async (req, reply) => {
-    if (!config.GROQ_API_KEY) return reply.code(503).send({ error: 'ai_not_configured' });
     const p = await prepare(req, reply);
     if (!p) return;
     const key = `rec|${p.anchor}|${p.categories.join(',')}|${p.domestic}|${today()}`;
@@ -165,18 +170,13 @@ export function aiRoutes(app: FastifyInstance, config: Config, db: Db): void {
       const posts = (await collect(p.anchor, c))
         .slice(0, AI_POSTS)
         .map((x, i) => ({ ...x, id: `p${i}` }));
-      let extracted;
-      try {
-        extracted = await extractPlaces(
-          { key: config.GROQ_API_KEY, model: config.GROQ_MODEL },
-          p.anchor,
-          c,
-          posts,
-        );
-      } catch (e) {
-        req.log.warn({ err: String(e) }, 'groq failed');
-        return reply.code(502).send({ error: 'ai_failed' });
-      }
+      const ai = await extractPlaces(providers, p.anchor, c, posts, (engine, err) =>
+        req.log.warn({ engine, err: String(err) }, 'ai engine failed'),
+      );
+      const engine = ai?.engine ?? 'basic';
+      const extracted =
+        ai?.places ??
+        (await basicExtract(p.anchor, c, posts, { kakao: config.KAKAO_CLIENT_ID, naver }));
       const built = buildRecommendations(extracted, posts, now)[c];
       const places: (Recommendation & { place?: PlaceSummary })[] = [];
       for (const r of built.places) {
@@ -190,7 +190,7 @@ export function aiRoutes(app: FastifyInstance, config: Config, db: Db): void {
         }
         places.push(place ? { ...r, place } : r);
       }
-      result.categories[c] = { ...built, places };
+      result.categories[c] = { ...built, places, engine };
     }
     countUse(req.user!.userId);
     putCache(key, result);

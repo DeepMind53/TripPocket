@@ -30,6 +30,7 @@ it('AI 추천: 직접 입력 → 근거(언급 수·원문 링크·기간)와 �
           food: {
             months: 3,
             enough: true,
+            engine: 'basic',
             places: [
               {
                 name: '이치란 신주쿠',
@@ -75,6 +76,7 @@ it('AI 추천: 직접 입력 → 근거(언급 수·원문 링크·기간)와 �
 
   const results = await screen.findByRole('region', { name: '추천 결과' });
   expect(within(results).getByText('정보가 적어 최근 3개월로 넓혔어요')).toBeInTheDocument();
+  expect(within(results).getByText(/AI 요약 없이/)).toBeInTheDocument(); // 무료 AI 한도 → 기본 집계
   expect(within(results).getByText(/블로그 7회 언급 · 최근 10.20/)).toBeInTheDocument();
   await user.click(within(results).getByRole('button', { name: /근거 글 1개/ }));
   expect(within(results).getByRole('link', { name: '신주쿠 라멘 후기' })).toHaveAttribute(

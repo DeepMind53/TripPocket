@@ -136,7 +136,13 @@
 - 서버도 하루 상한(`GOOGLE_SEARCH_DAILY`, `GOOGLE_DETAILS_DAILY`)과 사람별 한도를 지켜 무료 범위를 넘지 않게 한다
 - 평점·리뷰 수·영업시간은 저장하지 않고 볼 때마다 받는다 (Google 약관)
 
-## 10. AI 추천 키 (21단계, 사용자 작업)
-- https://console.groq.com/keys → API 키 만들기 → `apps/server/.env`의 `GROQ_API_KEY`
-- 모델 기본값 `openai/gpt-oss-120b` (바꾸려면 `GROQ_MODEL`). 무료 등급도 하루 약 1,000회 — 앱은 사람마다 하루 20회로 제한
-- AI에는 기준점 이름과 네이버 블로그 공개 글의 제목·요약만 보낸다 (좌표·이름·일정 없음)
+## 10. AI 추천 키 (21단계, 사용자 작업 — 모두 무료)
+서버는 아래 순서로 시도하고, 한도에 걸린 곳은 잠시 건너뛴다. 셋 다 막히면 **AI 없이** 지도 검색(카카오·네이버) 후보를 블로그 언급 수로 골라 준다 (앱에 "AI 요약 없이" 안내).
+1. **Google Gemini** — https://aistudio.google.com/apikey → Create API key (카드 불필요) → `GEMINI_API_KEY`
+   - 무료 등급은 보낸 내용(기준점 이름 + 블로그 공개 글 제목·요약 앞부분)을 Google이 서비스 개선에 쓸 수 있다. 개인정보는 보내지 않는다
+2. **Cloudflare Workers AI** — Cloudflare 대시보드 오른쪽 위 계정 메뉴 → Account ID 복사 → `CF_ACCOUNT_ID`
+   - 내 프로필 → API 토큰 → 토큰 생성 → "Workers AI" 템플릿(권한: Workers AI 읽기·편집) → `CF_AI_TOKEN`
+   - 무료 플랜: 하루 10,000 Neurons(이 앱 기준 하루 약 40~60회 분석). 넘으면 그날은 멈출 뿐 과금되지 않음 (Workers 유료 플랜이 아닐 때)
+3. **Groq** — https://console.groq.com/keys → `GROQ_API_KEY` (무료 등급: 분당 8,000토큰, 하루 1,000회)
+- 사람마다 하루 20회, 같은 기준점·카테고리는 6시간 저장본 사용
+- AI에는 기준점 이름과 네이버 블로그 공개 글의 제목·요약 앞부분만 보낸다 (좌표·이름·일정 없음)

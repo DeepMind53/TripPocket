@@ -32,7 +32,8 @@ type Rec = Recommendation & { place?: PlaceSummary };
 interface Result {
   anchor: string;
   createdAt: string;
-  categories: Partial<Record<AiCategory, CategoryResult & { places: Rec[] }>>;
+  /** engine: 정리한 AI. basic = 무료 AI가 모두 한도라 AI 없이 언급 수로 */
+  categories: Partial<Record<AiCategory, CategoryResult & { places: Rec[]; engine?: string }>>;
 }
 const LAST_KEY = 'aiLast';
 const CATS: AiCategory[] = ['food', 'cafe', 'play'];
@@ -188,6 +189,9 @@ export function AiPage() {
                       {r.months === 1 ? t('ai.period1') : t('ai.periodWider', { n: r.months })}
                     </span>
                   </h2>
+                  {r.engine === 'basic' && (
+                    <p className="text-caption text-fg-muted">{t('ai.basicNote')}</p>
+                  )}
                   {!r.enough && <p className="text-caption text-fg-muted">{t('ai.sparse')}</p>}
                   {r.places.length === 0 ? (
                     <p className="text-body-2 text-fg-sub">{t('ai.none')}</p>

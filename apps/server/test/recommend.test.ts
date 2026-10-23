@@ -3,10 +3,11 @@ import { buildApp, PROXY_HEADER } from '../src/app';
 import { createSession } from '../src/auth/session';
 import { loadConfig } from '../src/config';
 import { openDb, type Db } from '../src/db/database';
+import { resetLlmCooldown } from '../src/services/llm';
 
 const SECRET = 's'.repeat(40);
 const ORIGIN = 'https://a.dev';
-const config = loadConfig({
+const env = {
   NODE_ENV: 'test',
   WEB_ORIGIN: ORIGIN,
   PROXY_SECRET: SECRET,
@@ -14,7 +15,8 @@ const config = loadConfig({
   NAVER_CLIENT_ID: 'nid',
   NAVER_CLIENT_SECRET: 'nsec',
   GROQ_API_KEY: 'groq-key',
-});
+};
+const config = loadConfig(env);
 const ymd = (daysAgo: number) =>
   new Date(Date.now() - daysAgo * 86_400_000).toISOString().slice(0, 10).replace(/-/g, '');
 
@@ -25,6 +27,7 @@ let groqBodies: string[];
 let groqReply: () => Response;
 
 beforeEach(async () => {
+  resetLlmCooldown();
   db = openDb(':memory:');
   app = await buildApp(config, db);
   db.prepare("INSERT INTO users (id, nickname, created_at) VALUES ('u1', '홍길동', 'x')").run();
@@ -165,10 +168,47 @@ describe('AI 추천 ② (Groq)', () => {
     expect(JSON.parse(groqBodies[1]!)).toMatchObject({ max_completion_tokens: 1500 });
   });
 
-  it('AI 출력 형식이 틀리면 한 번 더 시도하고, 그래도 틀리면 502', async () => {
+  it('AI 출력 형식이 틀리면 한 번 더, 그래도 틀리면 AI 없이 지도 검색 + 언급 수로', async () => {
     groqReply = () => Response.json({ choices: [{ message: { content: '{"oops":true}' } }] });
     const res = await recommend({ anchor: { type: 'text', name: '성수역' }, categories: ['cafe'] });
-    expect(res.statusCode).toBe(502);
+    expect(res.statusCode).toBe(200);
     expect(groqBodies).toHaveLength(2);
+    const cafe = res.json().categories.cafe;
+    expect(cafe.engine).toBe('basic');
+    // 카카오 후보 "어니언 성수" → 글 제목의 "어니언"으로 근거 2개
+    expect(cafe.places[0]).toMatchObject({ name: '어니언 성수', mentions: 2, summary: '' });
+  });
+
+  it('무료 AI 순서: Gemini 하루 한도 → Workers AI → (성공), 한도 걸린 곳은 다음 요청에서 건너뜀', async () => {
+    await app.close();
+    app = await buildApp(
+      loadConfig({
+        ...env,
+        GEMINI_API_KEY: 'gem',
+        CF_ACCOUNT_ID: 'acc',
+        CF_AI_TOKEN: 'cft',
+      }),
+      db,
+    );
+    const hits: string[] = [];
+    const base = globalThis.fetch;
+    vi.stubGlobal('fetch', async (input: string | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.includes('generativelanguage')) {
+        hits.push('gemini');
+        return new Response('{}', { status: 429, headers: { 'retry-after': '3600' } });
+      }
+      if (url.includes('api.cloudflare.com/client/v4/accounts/acc/ai/v1/chat/completions')) {
+        hits.push('workers-ai');
+        expect(init?.headers).toMatchObject({ authorization: 'Bearer cft' });
+        return groqReply();
+      }
+      return base(input, init);
+    });
+    const res = await recommend({ anchor: { type: 'text', name: '성수역' }, categories: ['cafe'] });
+    expect(res.json().categories.cafe.engine).toBe('workers-ai');
+    await recommend({ anchor: { type: 'text', name: '건대입구역' }, categories: ['cafe'] });
+    expect(hits).toEqual(['gemini', 'workers-ai', 'workers-ai']);
+    expect(groqBodies).toHaveLength(0);
   });
 });
