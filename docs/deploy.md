@@ -143,6 +143,8 @@
 ## 10. AI 추천 키 (21단계, 사용자 작업 — 모두 무료)
 서버는 아래 순서로 시도하고, 한도에 걸린 곳은 잠시 건너뛴다. 셋 다 막히면 **AI 없이** 지도 검색(카카오·네이버) 후보를 블로그 언급 수로 골라 준다 (앱에 "AI 요약 없이" 안내).
 1. **Google Gemini** — https://aistudio.google.com/apikey → Create API key (카드 불필요) → `GEMINI_API_KEY`
+   - **결제가 연결되지 않은 새 프로젝트**에서 만들 것 (지도용 결제 프로젝트에서 만들면 유료 등급 → 선불 크레딧 0원이라 402 거절). AI Studio 프로젝트 목록에서 "Free tier" 확인
+   - 기본 모델 `gemini-flash-lite-latest` (무료 등급에서 일반 Flash는 응답이 매우 느릴 때가 있음)
    - 무료 등급은 보낸 내용(기준점 이름 + 블로그 공개 글 제목·요약 앞부분)을 Google이 서비스 개선에 쓸 수 있다. 개인정보는 보내지 않는다
 2. **Cloudflare Workers AI** — Cloudflare 대시보드 오른쪽 위 계정 메뉴 → Account ID 복사 → `CF_ACCOUNT_ID`
    - 내 프로필 → API 토큰 → 토큰 생성 → "Workers AI" 템플릿(권한: Workers AI 읽기·편집) → `CF_AI_TOKEN`

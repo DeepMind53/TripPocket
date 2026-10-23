@@ -45,6 +45,8 @@ interface Provider {
   model: string;
   /** 한 번에 보낼 글 수 — Groq 무료는 분당 8,000토큰이라 적게 */
   maxPosts: number;
+  /** 응답 대기 (초) — 막히면 빨리 다음 AI로 */
+  timeout: number;
   extra: Record<string, unknown>;
 }
 
@@ -58,6 +60,7 @@ export function llmProviders(config: Config): Provider[] {
       key: config.GEMINI_API_KEY,
       model: config.GEMINI_MODEL,
       maxPosts: 80,
+      timeout: 30,
       // 생각(thinking)은 짧게 — 장소 이름 뽑기에는 충분하고 빠르다
       extra: { max_tokens: 4000, reasoning_effort: 'low' },
     });
@@ -68,6 +71,7 @@ export function llmProviders(config: Config): Provider[] {
       key: config.CF_AI_TOKEN,
       model: config.CF_AI_MODEL,
       maxPosts: 80,
+      timeout: 60,
       // gpt-oss는 기본으로 오래 생각해서 출력 상한을 다 써 버린다 → 짧게
       extra: {
         max_tokens: 3000,
@@ -81,6 +85,7 @@ export function llmProviders(config: Config): Provider[] {
       key: config.GROQ_API_KEY,
       model: config.GROQ_MODEL,
       maxPosts: 40,
+      timeout: 30,
       extra: {
         // 분당 토큰 한도 안에 머물게 출력 상한 + (gpt-oss) 생각은 짧게
         max_completion_tokens: 1500,
@@ -124,7 +129,7 @@ async function call(p: Provider, user: string): Promise<unknown> {
         { role: 'user', content: user },
       ],
     }),
-    signal: AbortSignal.timeout(60_000),
+    signal: AbortSignal.timeout(p.timeout * 1000),
   });
   if (res.status === 429) throw new RateLimited(Number(res.headers.get('retry-after') ?? 60));
   // 결제·권한 문제(402 선불 소진, 401·403 키 오류)는 금방 안 풀리므로 1시간 건너뜀

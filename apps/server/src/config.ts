@@ -54,7 +54,7 @@ const Env = z.object({
    * 모두 없거나 한도에 걸리면 AI 없이 언급 수로 집계한다. 키는 서버에만
    */
   GEMINI_API_KEY: z.optional(z.string()),
-  GEMINI_MODEL: z._default(z.string(), 'gemini-flash-latest'),
+  GEMINI_MODEL: z._default(z.string(), 'gemini-flash-lite-latest'),
   CF_ACCOUNT_ID: z.optional(z.string()),
   CF_AI_TOKEN: z.optional(z.string()),
   CF_AI_MODEL: z._default(z.string(), '@cf/openai/gpt-oss-120b'),
