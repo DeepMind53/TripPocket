@@ -8,8 +8,8 @@ import {
   Sparkles,
   Ticket,
   Wallet,
-  Zap,
 } from 'lucide-react';
+import { FloatingQuickButton } from './FloatingQuickButton';
 import { dayNumberOf, todayIn } from '@trippocket/shared';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from '../../i18n';
@@ -20,26 +20,21 @@ import { copyText } from '../../shared/lib/clipboard';
 import type { Destination } from '../../shared/lib/directions';
 import { useRouteSheet } from '../../shared/hooks/useRouteSheet';
 import { updateSettings, useSettings } from '../../data/settingsStore';
-import { BottomSheet, IconButton, SegmentedControl, toast } from '../../shared/ui';
+import { BottomSheet, SegmentedControl, toast } from '../../shared/ui';
 import { DirectionsSheet } from './DirectionsSheet';
 import { openDirectionsDirect } from './openDirections';
 import { isDomesticTrip } from '../../domain/tripPlace';
 
 const SHEET_KEY = 'quick-menu';
 
-/** 헤더의 ⚡ 버튼 + 빠른 메뉴 시트 (docs/12 §1). 앱 홈·여행 상세 헤더 같은 위치에 둔다. */
+/** ⚡ 플로팅 버튼(끌어서 옮김) + 빠른 메뉴 시트 (docs/12 §1). 화면마다 같은 자리에 뜬다 */
 export function QuickMenuButton({ inTrip = false }: { inTrip?: boolean }) {
   const { t } = useTranslation();
   const [open, setOpen] = useRouteSheet(SHEET_KEY);
   if (inTrip) return <TripQuickMenu open={open} setOpen={setOpen} />;
   return (
     <>
-      <IconButton
-        label={t('quickMenu.title')}
-        icon={<Zap />}
-        tone="tint"
-        onClick={() => setOpen(true)}
-      />
+      <FloatingQuickButton label={t('quickMenu.title')} onOpen={() => setOpen(true)} />
       <BottomSheet open={open} onOpenChange={setOpen} title={t('quickMenu.title')}>
         <QuickMenuContent />
       </BottomSheet>
@@ -91,12 +86,7 @@ function TripQuickMenu({ open, setOpen }: { open: boolean; setOpen: (open: boole
 
   return (
     <>
-      <IconButton
-        label={t('quickMenu.title')}
-        icon={<Zap />}
-        tone="tint"
-        onClick={() => setOpen(true)}
-      />
+      <FloatingQuickButton label={t('quickMenu.title')} onOpen={() => setOpen(true)} />
       <BottomSheet open={open} onOpenChange={setOpen} title={t('quickMenu.title')}>
         <QuickMenuContent shortcuts={shortcuts} />
       </BottomSheet>
