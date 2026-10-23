@@ -33,6 +33,13 @@ const SYSTEM = `너는 여행 블로그 글 목록에서 장소 이름을 뽑는
 - category는 food(식당)·cafe(카페·디저트·바·핫플)·play(관광지·체험·쇼핑) 중 하나.
 - 출력은 JSON 하나: {"places":[{"name":"","category":"food","sourceIds":["p1"],"adSuspect":false,"summary":""}]}`;
 
+/** 분당·하루 한도 초과 — retry-after(초) */
+class RateLimited extends Error {
+  constructor(readonly retryAfter: number) {
+    super('groq 429');
+  }
+}
+
 export interface GroqConfig {
   key: string;
   model: string;
@@ -45,6 +52,9 @@ async function callGroq(cfg: GroqConfig, user: string): Promise<unknown> {
     body: JSON.stringify({
       model: cfg.model,
       temperature: 0,
+      // 분당 토큰 한도 안에 머물게 출력 상한 + (gpt-oss) 생각은 짧게
+      max_completion_tokens: 1500,
+      ...(cfg.model.startsWith('openai/gpt-oss') ? { reasoning_effort: 'low' } : {}),
       response_format: { type: 'json_object' },
       messages: [
         { role: 'system', content: SYSTEM },
@@ -53,6 +63,7 @@ async function callGroq(cfg: GroqConfig, user: string): Promise<unknown> {
     }),
     signal: AbortSignal.timeout(60_000),
   });
+  if (res.status === 429) throw new RateLimited(Number(res.headers.get('retry-after') ?? 60));
   if (!res.ok) throw new Error(`groq ${res.status}`);
   const body = (await res.json()) as { choices?: { message?: { content?: string } }[] };
   return JSON.parse(body.choices?.[0]?.message?.content ?? '');
@@ -68,19 +79,25 @@ export async function extractPlaces(
   const user = JSON.stringify({
     anchor,
     category: LABEL[category],
+    // 토큰 절약: 가게 이름은 대개 제목·요약 앞쪽에 있다. 날짜는 서버가 따로 계산하므로 보내지 않음
     posts: posts.map((p) => ({
       id: p.id,
-      title: p.title.slice(0, 100),
-      snippet: ((p as { description?: string }).description ?? '').slice(0, 120),
-      date: p.postdate,
+      title: p.title.slice(0, 50),
+      snippet: ((p as { description?: string }).description ?? '').slice(0, 30),
     })),
   });
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
       const parsed = Output.safeParse(await callGroq(cfg, user));
-      if (parsed.success) return parsed.data.places.map((p) => ({ ...p, category }));
+      // 다른 카테고리로 분류한 곳은 뺀다 (맛집 글에 나온 카페가 맛집 목록에 섞이지 않게)
+      if (parsed.success) return parsed.data.places.filter((p) => p.category === category);
     } catch (e) {
-      if (attempt === 1) throw e;
+      // 분당 한도: 잠깐이면 기다렸다 한 번 더, 오래 걸리면(하루 한도 등) 바로 실패
+      if (e instanceof RateLimited && e.retryAfter <= 20 && attempt === 0) {
+        await new Promise((r) => setTimeout(r, e.retryAfter * 1000));
+        continue;
+      }
+      if (attempt === 1 || e instanceof RateLimited) throw e;
     }
   }
   throw new Error('groq_invalid_output');

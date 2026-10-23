@@ -153,6 +153,18 @@ describe('AI 추천 ② (Groq)', () => {
     expect(sent).toMatch(/신뢰할 수 없는/);
   });
 
+  it('다른 카테고리로 분류된 곳은 빼고, 분당 한도(429)면 잠깐 기다렸다 다시', async () => {
+    let calls = 0;
+    const ok = groqReply;
+    groqReply = () =>
+      ++calls === 1 ? new Response('{}', { status: 429, headers: { 'retry-after': '0' } }) : ok();
+    const res = await recommend({ anchor: { type: 'text', name: '성수역' }, categories: ['food'] });
+    expect(res.statusCode).toBe(200);
+    expect(res.json().categories.food.places).toEqual([]); // 응답은 모두 cafe
+    expect(groqBodies).toHaveLength(2);
+    expect(JSON.parse(groqBodies[1]!)).toMatchObject({ max_completion_tokens: 1500 });
+  });
+
   it('AI 출력 형식이 틀리면 한 번 더 시도하고, 그래도 틀리면 502', async () => {
     groqReply = () => Response.json({ choices: [{ message: { content: '{"oops":true}' } }] });
     const res = await recommend({ anchor: { type: 'text', name: '성수역' }, categories: ['cafe'] });

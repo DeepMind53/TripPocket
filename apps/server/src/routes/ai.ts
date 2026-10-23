@@ -43,8 +43,11 @@ const Body = z.object({
 
 const DAILY_LIMIT = 20;
 const CACHE_HOURS = 6;
-/** AI에 보내는 글 수 (카테고리마다, 최신순) — 토큰·시간 절약 */
-const AI_POSTS = 80;
+/**
+ * AI에 보내는 글 수 (카테고리마다, 최신순). Groq 무료 등급은 분당 8,000토큰이라
+ * 카테고리 3개를 연달아 보내도 넘지 않게 (글 1개 ≈ 45토큰, groq.ts에서 제목·요약을 줄인다)
+ */
+const AI_POSTS = 40;
 
 export interface RecommendResult {
   anchor: string;
