@@ -19,7 +19,7 @@
 3. 저장소 → Actions 탭에서 CI(검사·빌드·E2E)가 초록색인지 확인
 
 ## 2. Cloudflare Pages (한 번만, 사용자 작업)
-1. https://dash.cloudflare.com 가입/로그인 → **Workers & Pages** → **Create** → **Pages** → **Connect to Git**
+1. https://dash.cloudflare.com 가입/로그인 → **Workers & Pages** → **Create application** → **Pages** 탭(또는 아래 "Looking to deploy Pages? Get started") → **Import an existing Git repository** (Workers로 만들지 않기 — `functions/`는 Pages 전용)
 2. GitHub 연결 → `trippocket` 저장소 선택
 3. 빌드 설정
    | 항목 | 값 |
@@ -34,7 +34,7 @@
 5. 보안 헤더·캐시는 `apps/web/public/_headers`가 자동 적용 (따로 설정 없음)
 
 ## 2-1. 홈 서버 연결 (16단계 때, 사용자 작업)
-- Pages → Settings → Environment variables (Production)에 추가:
+- Pages 프로젝트 → Settings → **Variables and Secrets** (Production)에 추가 → 저장 후 **새 배포부터 적용** (`git commit --allow-empty` 후 push로 다시 배포):
   | 이름 | 값 |
   |---|---|
   | `TP_SERVER_URL` | 홈 서버 Funnel 주소 (예: `https://내컴퓨터.tailnet이름.ts.net`) |
