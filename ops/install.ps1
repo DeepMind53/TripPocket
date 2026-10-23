@@ -26,7 +26,8 @@ pnpm install --frozen-lockfile
 pnpm --filter @trippocket/server build
 Pop-Location
 
-$cred = Get-Credential -UserName $User -Message '서버를 실행할 Windows 계정 비밀번호 (작업 스케줄러가 로그인 없이 실행하려면 필요)'
+# S4U: 로그인하지 않아도 실행되고 비밀번호를 저장하지 않는다 (네트워크 공유 폴더는 못 씀 — 백업은 로컬·OneDrive 폴더로)
+$principal = New-ScheduledTaskPrincipal -UserId $User -LogonType S4U -RunLevel Limited
 $settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -RestartCount 999 `
   -RestartInterval (New-TimeSpan -Minutes 1) -ExecutionTimeLimit ([TimeSpan]::Zero) `
   -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
@@ -36,14 +37,14 @@ $serverAction = New-ScheduledTaskAction -Execute $node `
   -Argument '--env-file=.env dist\index.js' -WorkingDirectory $server
 Register-ScheduledTask -TaskName 'TripPocket Server' -Action $serverAction `
   -Trigger (New-ScheduledTaskTrigger -AtStartup) -Settings $settings `
-  -User $cred.UserName -Password $cred.GetNetworkCredential().Password -Force | Out-Null
+  -Principal $principal -Force | Out-Null
 
 Write-Host '3) 매일 03:00 백업 등록'
 $backupAction = New-ScheduledTaskAction -Execute $node `
   -Argument '--env-file=.env dist\backup.js' -WorkingDirectory $server
 Register-ScheduledTask -TaskName 'TripPocket Backup' -Action $backupAction `
   -Trigger (New-ScheduledTaskTrigger -Daily -At 3am) -Settings $settings `
-  -User $cred.UserName -Password $cred.GetNetworkCredential().Password -Force | Out-Null
+  -Principal $principal -Force | Out-Null
 
 Start-ScheduledTask -TaskName 'TripPocket Server'
 Start-Sleep -Seconds 3
