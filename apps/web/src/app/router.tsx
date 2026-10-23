@@ -89,6 +89,12 @@ export const routes: RouteObject[] = [
     }),
   },
   {
+    path: 'legal/:doc',
+    lazy: async () => ({
+      Component: (await import('../features/legal/LegalPage')).LegalPage,
+    }),
+  },
+  {
     path: 'fx',
     lazy: async () => ({
       Component: (await import('../features/fx/FxPage')).FxPage,

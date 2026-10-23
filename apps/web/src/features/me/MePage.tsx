@@ -5,6 +5,9 @@ import {
   DatabaseBackup,
   Palette,
   Settings,
+  Scale,
+  ShieldCheck,
+  FileText,
   Smartphone,
   Sparkles,
 } from 'lucide-react';
@@ -38,7 +41,12 @@ export function MePage() {
               onClick={() => setInstallOpen(true)}
             />
           )}
-          <MenuRow icon={<CircleHelp />} label={t('me.help')} step={23} />
+          <MenuRow to="/legal/help" icon={<CircleHelp />} label={t('me.help')} />
+        </ul>
+        <ul className="flex flex-col divide-y divide-line overflow-hidden rounded-card border border-line">
+          <MenuRow to="/legal/privacy" icon={<ShieldCheck />} label={t('legal.privacy')} />
+          <MenuRow to="/legal/terms" icon={<FileText />} label={t('legal.terms')} />
+          <MenuRow to="/legal/licenses" icon={<Scale />} label={t('legal.licenses')} />
           {import.meta.env.DEV && (
             <>
               <MenuRow to="/dev/ui" icon={<Palette />} label={t('me.devUi')} />

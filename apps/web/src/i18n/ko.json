@@ -448,7 +448,7 @@
   "calendarInfo": {
     "weather": "날씨",
     "holidays": "공휴일",
-    "weatherNote": "날씨: {{place}} 기준, 오늘부터 16일까지 예보",
+    "weatherNote": "날씨: {{place}} 기준, 오늘부터 16일 예보 (Open-Meteo)",
     "weatherNoPlace": "날씨: 도시를 고르면 보여요",
     "holidayUnsupported": "{{countries}} 공휴일은 무료 정보가 없어 빠져요",
     "otherTrip": "여행: {{title}}"
@@ -622,5 +622,14 @@
     "madeWith": "트립포켓으로 만든 일정",
     "inviteInvalid": "사용할 수 없는 초대예요",
     "inviteInvalidDesc": "기간(7일)이 지났거나 이미 다 쓴 링크예요. 새 초대를 받아 주세요"
+  },
+  "legal": {
+    "privacy": "개인정보처리방침",
+    "terms": "이용약관",
+    "licenses": "오픈소스·데이터 출처",
+    "help": "도움말",
+    "dataSources": "데이터·글꼴 출처",
+    "software": "오픈소스 소프트웨어 {{n}}개",
+    "updated": "최종 수정 {{date}}"
   }
 }
