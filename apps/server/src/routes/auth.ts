@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import type { FastifyInstance } from 'fastify';
 import { uuidv7 } from '@trippocket/shared';
-import type { Config } from '../config';
+import { requestOrigin, type Config } from '../config';
 import type { Db } from '../db/database';
 import {
   credentialsFor,
@@ -75,7 +75,8 @@ export function audit(db: Db, userId: string | null, action: string, target?: st
 }
 
 export function authRoutes(app: FastifyInstance, config: Config, db: Db): void {
-  const fail = (code: string, extra = '') => `${config.WEB_ORIGIN}/login?error=${code}${extra}`;
+  const fail = (origin: string, code: string, extra = '') =>
+    `${origin}/login?error=${code}${extra}`;
 
   // 1) 시작: state(+구글은 PKCE) 만들고 제공자 로그인 화면으로
   app.get<{ Params: { provider: string }; Querystring: { returnTo?: string } }>(
@@ -83,8 +84,9 @@ export function authRoutes(app: FastifyInstance, config: Config, db: Db): void {
     { config: { rateLimit: { max: 20, timeWindow: '1 minute' } } },
     async (req, reply) => {
       const p = req.params.provider;
+      const origin = requestOrigin(config, req.headers);
       const creds = isProvider(p) ? credentialsFor(config, p) : null;
-      if (!isProvider(p) || !creds) return reply.redirect(fail('provider'));
+      if (!isProvider(p) || !creds) return reply.redirect(fail(origin, 'provider'));
       const spec = SPECS[p];
       const state = randomToken(24);
       const verifier = spec.pkce ? randomToken(48) : null;
@@ -98,7 +100,7 @@ export function authRoutes(app: FastifyInstance, config: Config, db: Db): void {
       const url = new URL(spec.authorizeUrl);
       url.searchParams.set('response_type', 'code');
       url.searchParams.set('client_id', creds.clientId);
-      url.searchParams.set('redirect_uri', redirectUri(config, p));
+      url.searchParams.set('redirect_uri', redirectUri(origin, p));
       url.searchParams.set('state', state);
       if (spec.scope) url.searchParams.set('scope', spec.scope);
       if (verifier) {
@@ -124,10 +126,11 @@ export function authRoutes(app: FastifyInstance, config: Config, db: Db): void {
     async (req, reply) => {
       const p = req.params.provider;
       const { code, state, error } = req.query;
+      const origin = requestOrigin(config, req.headers);
       reply.clearCookie(STATE_COOKIE, { path: '/' });
-      if (error) return reply.redirect(fail('cancelled'));
+      if (error) return reply.redirect(fail(origin, 'cancelled'));
       const creds = isProvider(p) ? credentialsFor(config, p) : null;
-      if (!isProvider(p) || !creds || !code || !state) return reply.redirect(fail('state'));
+      if (!isProvider(p) || !creds || !code || !state) return reply.redirect(fail(origin, 'state'));
 
       // state는 어떤 결과든 한 번 쓰면 끝 (실패한 시도로 다시 쓸 수 없게)
       const row = db
@@ -144,21 +147,21 @@ export function authRoutes(app: FastifyInstance, config: Config, db: Db): void {
         Date.now() - Date.parse(row.created_at) > STATE_TTL ||
         req.cookies[STATE_COOKIE] !== state
       )
-        return reply.redirect(fail('state'));
+        return reply.redirect(fail(origin, 'state'));
 
       let profile: Profile;
       try {
         const token = await exchangeCode(SPECS[p], creds, {
           code,
           state,
-          redirectUri: redirectUri(config, p),
+          redirectUri: redirectUri(origin, p),
           codeVerifier: row.code_verifier,
         });
         profile = await SPECS[p].profile(token);
         if (!profile.providerUserId) throw new Error('no id');
       } catch (e) {
         req.log.warn({ provider: p, err: String(e) }, 'oauth failed');
-        return reply.redirect(fail('provider'));
+        return reply.redirect(fail(origin, 'provider'));
       }
 
       const linked = db
@@ -170,12 +173,12 @@ export function authRoutes(app: FastifyInstance, config: Config, db: Db): void {
           status: string;
         };
         // 관리자가 사용을 중지한 계정
-        if (status.status !== 'active') return reply.redirect(fail('disabled'));
+        if (status.status !== 'active') return reply.redirect(fail(origin, 'disabled'));
       } else {
         const nickname = (profile.nickname || '여행자').slice(0, 40);
         if (!mayJoin(db, config, p, profile)) {
           audit(db, null, 'signup_denied', `${p}:${profile.providerUserId}`);
-          return reply.redirect(fail(requestJoin(db, p, profile.providerUserId, nickname)));
+          return reply.redirect(fail(origin, requestJoin(db, p, profile.providerUserId, nickname)));
         }
         const first =
           (db.prepare('SELECT COUNT(*) AS n FROM users').get() as { n: number }).n === 0;
@@ -195,7 +198,7 @@ export function authRoutes(app: FastifyInstance, config: Config, db: Db): void {
       const token = createSession(db, userId, req.headers['user-agent']);
       audit(db, userId, 'login', p);
       reply.setCookie(SESSION_COOKIE, token, cookieOptions(SESSION_MAX));
-      return reply.redirect(`${config.WEB_ORIGIN}${row.return_to}`);
+      return reply.redirect(`${origin}${row.return_to}`);
     },
   );
 

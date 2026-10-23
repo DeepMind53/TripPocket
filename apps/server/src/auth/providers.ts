@@ -74,8 +74,9 @@ export function credentialsFor(config: Config, p: ProviderId): Credentials | nul
   return id && secret ? { clientId: id, clientSecret: secret } : null;
 }
 
-export function redirectUri(config: Config, p: ProviderId): string {
-  return `${config.WEB_ORIGIN}/auth/${p}/callback`;
+/** 콜백 주소 = 로그인을 시작한 웹앱 주소 기준 (쿠키가 그 주소에 있으므로) */
+export function redirectUri(origin: string, p: ProviderId): string {
+  return `${origin}/auth/${p}/callback`;
 }
 
 /** 인가 코드 → 액세스 토큰 (서버에서만, 시크릿 사용) */

@@ -5,7 +5,7 @@ import { openDb, type Db } from '../src/db/database';
 
 const ORIGIN = 'https://trippocket.pages.dev';
 const SECRET = 's'.repeat(40);
-const config = loadConfig({
+const env = {
   NODE_ENV: 'test',
   WEB_ORIGIN: ORIGIN,
   PROXY_SECRET: SECRET,
@@ -16,7 +16,8 @@ const config = loadConfig({
   GOOGLE_CLIENT_ID: 'gid',
   GOOGLE_CLIENT_SECRET: 'gsecret',
   ALLOWED_ACCOUNTS: 'naver:N-2',
-});
+};
+const config = loadConfig(env);
 
 let db: Db;
 let app: FastifyInstance;
@@ -285,5 +286,42 @@ describe('세션·내 정보 (인가)', () => {
     expect(db.prepare('SELECT COUNT(*) AS n FROM sessions').get()).toEqual({ n: 0 });
     expect(db.prepare('SELECT COUNT(*) AS n FROM records').get()).toEqual({ n: 0 });
     expect((await api('GET', '/api/me', sid)).statusCode).toBe(401);
+  });
+});
+
+describe('주소 옮기는 동안 (웹앱 주소 여러 개)', () => {
+  it('들어온 주소로 콜백·돌아가기, 목록에 없는 주소는 기본 주소, Origin 검사는 둘 다 허용', async () => {
+    await app.close();
+    app = await buildApp(
+      loadConfig({ ...env, WEB_ORIGIN: `https://trippocket.day,${ORIGIN}` }),
+      db,
+    );
+    const start = (origin?: string) =>
+      app.inject({
+        method: 'GET',
+        url: '/auth/kakao/start',
+        headers: { ...base, ...(origin ? { 'x-tp-origin': origin } : {}) },
+      });
+    const redirect = async (origin?: string) =>
+      new URL((await start(origin)).headers.location as string).searchParams.get('redirect_uri');
+    expect(await redirect(ORIGIN)).toBe(`${ORIGIN}/auth/kakao/callback`);
+    expect(await redirect('https://evil.example')).toBe(
+      'https://trippocket.day/auth/kakao/callback',
+    );
+    expect(await redirect()).toBe('https://trippocket.day/auth/kakao/callback');
+    for (const origin of ['https://trippocket.day', ORIGIN]) {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/auth/logout',
+        headers: { ...base, origin },
+      });
+      expect(res.statusCode).toBe(200);
+    }
+    const bad = await app.inject({
+      method: 'POST',
+      url: '/auth/logout',
+      headers: { ...base, origin: 'https://evil.example' },
+    });
+    expect(bad.statusCode).toBe(403);
   });
 });

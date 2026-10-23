@@ -3,7 +3,7 @@ import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
 import Fastify, { type FastifyInstance } from 'fastify';
 import { timingSafeEqual } from 'node:crypto';
-import type { Config } from './config';
+import { webOrigins, type Config } from './config';
 import type { Db } from './db/database';
 import { adminRoutes } from './routes/admin';
 import { authRoutes } from './routes/auth';
@@ -60,7 +60,7 @@ export async function buildApp(config: Config, db: Db): Promise<FastifyInstance>
   // CSRF: 상태를 바꾸는 요청은 웹앱 주소에서 온 것만 (docs/09 §7.2)
   app.addHook('onRequest', async (req, reply) => {
     if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return;
-    if (req.headers.origin !== config.WEB_ORIGIN) {
+    if (!webOrigins(config).includes(req.headers.origin ?? '')) {
       return reply.code(403).send({ error: 'bad_origin' });
     }
   });

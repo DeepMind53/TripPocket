@@ -11,7 +11,12 @@ describe('Cloudflare Pages 프록시 (ADR-0006)', () => {
     vi.stubGlobal('fetch', fetchMock);
     const res = await proxy(
       new Request('https://trippocket.pages.dev/auth/kakao/start?x=1', {
-        headers: { 'x-tp-proxy': 'fake', cookie: 'sid=1', 'cf-connecting-ip': '1.2.3.4' },
+        headers: {
+          'x-tp-proxy': 'fake',
+          'x-tp-origin': 'https://evil.example',
+          cookie: 'sid=1',
+          'cf-connecting-ip': '1.2.3.4',
+        },
       }),
       env,
     );
@@ -20,6 +25,8 @@ describe('Cloudflare Pages 프록시 (ADR-0006)', () => {
     const h = new Headers(init.headers);
     expect(h.get('x-tp-proxy')).toBe(env.TP_PROXY_SECRET);
     expect(h.get('cookie')).toBe('sid=1');
+    // 들어온 주소는 프록시가 정한다 (브라우저가 보낸 값은 버림)
+    expect(h.get('x-tp-origin')).toBe('https://trippocket.pages.dev');
     expect(h.get('x-forwarded-for')).toBe('1.2.3.4');
     expect(init.redirect).toBe('manual');
     // 리다이렉트·쿠키는 그대로 브라우저로

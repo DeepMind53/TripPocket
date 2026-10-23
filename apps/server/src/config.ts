@@ -11,8 +11,21 @@ const Env = z.object({
   PORT: z._default(z.coerce.number().check(z.int(), z.minimum(1), z.maximum(65535)), 8787),
   /** SQLite 파일 위치 (웹 루트 밖, 백업 대상) */
   DATA_DIR: z._default(z.string(), './data'),
-  /** 웹앱 주소 — 상태를 바꾸는 요청의 Origin 검사 (예: https://trippocket.pages.dev) */
-  WEB_ORIGIN: z.url(),
+  /**
+   * 웹앱 주소 — 상태를 바꾸는 요청의 Origin 검사, 로그인 콜백 주소.
+   * 쉼표로 여러 개 (주소를 옮기는 동안): 첫 번째가 기본. 예: https://trippocket.day,https://trippocket.pages.dev
+   */
+  WEB_ORIGIN: z.string().check(
+    z.refine((v) =>
+      v.split(',').every((s) => {
+        try {
+          return new URL(s.trim()).origin === s.trim();
+        } catch {
+          return false;
+        }
+      }),
+    ),
+  ),
   /**
    * Cloudflare Pages 프록시가 붙여 보내는 비밀 헤더 값 (32자 이상).
    * 터널 주소로 직접 들어온 요청은 이 값이 없어 거부된다 (ADR-0006)
@@ -65,4 +78,21 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     throw new Error(`서버 설정이 잘못됐어요: ${keys} (.env 확인, .env.example 참고)`);
   }
   return parsed.data;
+}
+
+/** 허용하는 웹앱 주소들 (첫 번째 = 기본) */
+export const webOrigins = (config: Config): string[] =>
+  config.WEB_ORIGIN.split(',').map((s) => s.trim());
+
+/**
+ * 이 요청이 들어온 웹앱 주소 — Pages 프록시가 x-tp-origin 으로 알려 준다(브라우저가 보낸 값은 프록시가 지움).
+ * 허용 목록에 없으면 기본 주소
+ */
+export function requestOrigin(
+  config: Config,
+  headers: Record<string, string | string[] | undefined>,
+): string {
+  const all = webOrigins(config);
+  const got = headers['x-tp-origin'];
+  return typeof got === 'string' && all.includes(got) ? got : all[0]!;
 }

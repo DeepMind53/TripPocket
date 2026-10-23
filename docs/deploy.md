@@ -48,7 +48,11 @@
 3. 여행을 하나 만든 뒤 **비행기 모드** → 홈 화면 아이콘으로 열기 → 여행이 보이면 성공
 4. 마이 → 백업·복원 → 저장공간 "보호됨" 확인 (안 되면 [저장공간 보호 요청])
 
-## 4. 나중에 내 도메인으로 바꾸려면
+## 4. 내 도메인 (trippocket.day, 2026-10-24)
+- 하위 주소로 다른 앱도 붙일 수 있다: 예) `study.trippocket.day` (Cloudflare Tunnel)
+- 연결: Pages → trippocket → **Custom domains** → `trippocket.day` (같은 Cloudflare 계정이라 DNS 자동)
+- 로그인 콜백(카카오·네이버·Google)과 Google 지도 키 웹사이트 제한에 새 주소를 **추가** (옛 주소는 옮긴 뒤 삭제)
+- 서버 `.env`: `WEB_ORIGIN=https://trippocket.day,https://trippocket.pages.dev` — 옮기는 동안 두 주소 모두 로그인·동기화. Pages 프록시가 들어온 주소를 `x-tp-origin`으로 알려 준다
 - Cloudflare Pages → Custom domains에서 연결만 하면 되지만, **주소가 바뀌면 기기 데이터가 따로**다.
   바꾸기 전에 모든 기기에서 백업 파일을 만들고, 새 주소에서 복원한다 (로그인·동기화(15단계) 이후라면 서버에서 자동으로 받음).
 
