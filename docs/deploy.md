@@ -127,3 +127,8 @@
   4. `apps/server/.env`의 `GOOGLE_PLACES_KEY` (브라우저용 지도 키와 다른 키 — 웹앱에 넣지 않음)
 - 서버도 하루 상한(`GOOGLE_SEARCH_DAILY`, `GOOGLE_DETAILS_DAILY`)과 사람별 한도를 지켜 무료 범위를 넘지 않게 한다
 - 평점·리뷰 수·영업시간은 저장하지 않고 볼 때마다 받는다 (Google 약관)
+
+## 10. AI 추천 키 (21단계, 사용자 작업)
+- https://console.groq.com/keys → API 키 만들기 → `apps/server/.env`의 `GROQ_API_KEY`
+- 모델 기본값 `openai/gpt-oss-120b` (바꾸려면 `GROQ_MODEL`). 무료 등급도 하루 약 1,000회 — 앱은 사람마다 하루 20회로 제한
+- AI에는 기준점 이름과 네이버 블로그 공개 글의 제목·요약만 보낸다 (좌표·이름·일정 없음)

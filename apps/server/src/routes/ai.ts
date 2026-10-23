@@ -1,19 +1,27 @@
-import { countByPeriod } from '@trippocket/shared';
-import type { FastifyInstance } from 'fastify';
+import {
+  buildRecommendations,
+  countByPeriod,
+  type AiCategory,
+  type CategoryResult,
+  type PlaceSummary,
+  type Recommendation,
+} from '@trippocket/shared';
+import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import * as z from 'zod/mini';
 import type { Config } from '../config';
 import type { Db } from '../db/database';
 import { requireUser } from '../auth/session';
 import { resolveAnchor } from '../services/anchor';
+import { extractPlaces } from '../services/groq';
 import { searchBlog, type BlogPost } from '../services/naverBlog';
+import { searchKakao } from '../services/places';
 
 /** 카테고리별 검색어 (docs/14 §3-4) */
-const QUERIES = {
+const QUERIES: Record<AiCategory, readonly string[]> = {
   food: ['맛집'],
   cafe: ['카페', '핫플'],
   play: ['가볼만한곳', '놀거리'],
-} as const;
-type Category = keyof typeof QUERIES;
+};
 
 const Body = z.object({
   anchor: z.union([
@@ -29,14 +37,26 @@ const Body = z.object({
     }),
   ]),
   categories: z.array(z.enum(['food', 'cafe', 'play'])).check(z.minLength(1), z.maxLength(3)),
+  /** 국내 여행이면 결과 장소를 카카오로 확인(좌표, 무료) */
+  domestic: z._default(z.boolean(), false),
 });
 
 const DAILY_LIMIT = 20;
 const CACHE_HOURS = 6;
+/** AI에 보내는 글 수 (카테고리마다, 최신순) — 토큰·시간 절약 */
+const AI_POSTS = 80;
+
+export interface RecommendResult {
+  anchor: string;
+  createdAt: string;
+  categories: Partial<
+    Record<AiCategory, CategoryResult & { places: (Recommendation & { place?: PlaceSummary })[] }>
+  >;
+}
 
 /**
- * AI 추천 ① 수집 (20단계): 기준점 → 네이버 블로그 최신 글 → 기간별 개수. AI 정리·점수는 21단계.
- * 로그인 필요, 하루 횟수 제한, 같은 기준점·카테고리는 6시간 캐시. 좌표는 요청 본문으로만 (URL·로그에 남지 않게)
+ * AI 추천 (docs/14): ① 수집(20단계, 개발 화면) ② Groq 정리 + 점수(21단계).
+ * 로그인 필요, 하루 20회, 같은 기준점·카테고리 6시간 캐시. 좌표는 본문으로만 받고 역 이름으로 바꾼 뒤 버린다
  */
 export function aiRoutes(app: FastifyInstance, config: Config, db: Db): void {
   const naver =
@@ -47,82 +67,142 @@ export function aiRoutes(app: FastifyInstance, config: Config, db: Db): void {
           secret: (config.NAVER_SEARCH_SECRET ?? config.NAVER_CLIENT_SECRET)!,
         }
       : null;
-
-  app.post('/api/v1/ai/collect', { preHandler: requireUser(db) }, async (req, reply) => {
-    const parsed = Body.safeParse(req.body);
-    if (!parsed.success) return reply.code(400).send({ error: 'bad_request' });
-    if (!naver) return reply.code(503).send({ error: 'not_configured' });
-    const userId = req.user!.userId;
-    const today = new Date().toISOString().slice(0, 10);
-    const used =
-      (
-        db
-          .prepare('SELECT count FROM ai_usage WHERE user_id = ? AND date = ?')
-          .get(userId, today) as { count: number } | undefined
-      )?.count ?? 0;
-    if (used >= DAILY_LIMIT)
-      return reply.code(429).send({ error: 'daily_limit', limit: DAILY_LIMIT });
-
-    const anchorName = await resolveAnchor(parsed.data.anchor, config.KAKAO_CLIENT_ID);
-    if (!anchorName) return reply.code(422).send({ error: 'anchor_not_found' });
-
-    const categories = [...new Set(parsed.data.categories)].sort() as Category[];
-    const cacheKey = `${anchorName}|${categories.join(',')}|${today}`;
-    const hit = db
-      .prepare('SELECT result_json FROM ai_cache WHERE key = ? AND expires_at > ?')
-      .get(cacheKey, new Date().toISOString()) as { result_json: string } | undefined;
-    if (hit) return JSON.parse(hit.result_json);
-
-    const now = new Date();
-    const since = new Date(now);
-    since.setMonth(since.getMonth() - 12);
-    const sinceYmd = since.toISOString().slice(0, 10).replace(/-/g, '');
-    const result: {
-      anchor: string;
-      collectedAt: string;
-      categories: Record<
-        string,
-        { queries: string[]; byPeriod: Record<number, number>; posts: BlogPost[] }
-      >;
-    } = { anchor: anchorName, collectedAt: now.toISOString(), categories: {} };
-    for (const c of categories) {
-      const posts: BlogPost[] = [];
-      for (const q of QUERIES[c])
-        posts.push(...(await searchBlog(`${anchorName} ${q}`, naver, { max: 300, sinceYmd })));
-      const unique = [...new Map(posts.map((p) => [p.link, p])).values()];
-      result.categories[c] = {
-        queries: QUERIES[c].map((q) => `${anchorName} ${q}`),
-        byPeriod: countByPeriod(
-          unique.map((p) => p.postdate),
-          now,
-        ),
-        posts: unique.slice(0, 300),
-      };
-    }
-
-    db.prepare(
-      `INSERT INTO ai_usage (user_id, date, count) VALUES (?, ?, 1)
-       ON CONFLICT (user_id, date) DO UPDATE SET count = count + 1`,
-    ).run(userId, today);
-    db.prepare('DELETE FROM ai_cache WHERE expires_at < ?').run(now.toISOString());
+  const today = () => new Date().toISOString().slice(0, 10);
+  const usedToday = (userId: string) =>
+    (
+      db
+        .prepare('SELECT count FROM ai_usage WHERE user_id = ? AND date = ?')
+        .get(userId, today()) as { count: number } | undefined
+    )?.count ?? 0;
+  const getCache = (key: string) =>
+    (
+      db
+        .prepare('SELECT result_json FROM ai_cache WHERE key = ? AND expires_at > ?')
+        .get(key, new Date().toISOString()) as { result_json: string } | undefined
+    )?.result_json;
+  const putCache = (key: string, value: unknown) => {
+    const now = Date.now();
+    db.prepare('DELETE FROM ai_cache WHERE expires_at < ?').run(new Date(now).toISOString());
     db.prepare(
       'INSERT OR REPLACE INTO ai_cache (key, result_json, expires_at) VALUES (?, ?, ?)',
-    ).run(
-      cacheKey,
-      JSON.stringify(result),
-      new Date(now.getTime() + CACHE_HOURS * 3_600_000).toISOString(),
+    ).run(key, JSON.stringify(value), new Date(now + CACHE_HOURS * 3_600_000).toISOString());
+  };
+  const countUse = (userId: string) =>
+    db
+      .prepare(
+        `INSERT INTO ai_usage (user_id, date, count) VALUES (?, ?, 1)
+         ON CONFLICT (user_id, date) DO UPDATE SET count = count + 1`,
+      )
+      .run(userId, today());
+
+  /** 공통: 요청 확인 → 한도 → 기준점 이름. 문제가 있으면 응답을 보내고 null */
+  async function prepare(req: FastifyRequest, reply: FastifyReply) {
+    const parsed = Body.safeParse(req.body);
+    if (!parsed.success) return (void reply.code(400).send({ error: 'bad_request' }), null);
+    if (!naver) return (void reply.code(503).send({ error: 'not_configured' }), null);
+    if (usedToday(req.user!.userId) >= DAILY_LIMIT)
+      return (void reply.code(429).send({ error: 'daily_limit', limit: DAILY_LIMIT }), null);
+    const anchor = await resolveAnchor(parsed.data.anchor, config.KAKAO_CLIENT_ID);
+    if (!anchor) return (void reply.code(422).send({ error: 'anchor_not_found' }), null);
+    const categories = [...new Set(parsed.data.categories)].sort() as AiCategory[];
+    return { anchor, categories, domestic: parsed.data.domestic };
+  }
+
+  /** 네이버 블로그 최신 글 (12개월 안, 링크로 중복 제거) */
+  async function collect(anchor: string, category: AiCategory): Promise<BlogPost[]> {
+    const since = new Date();
+    since.setMonth(since.getMonth() - 12);
+    const sinceYmd = since.toISOString().slice(0, 10).replace(/-/g, '');
+    const posts: BlogPost[] = [];
+    for (const q of QUERIES[category])
+      posts.push(...(await searchBlog(`${anchor} ${q}`, naver!, { max: 300, sinceYmd })));
+    return [...new Map(posts.map((p) => [p.link, p])).values()].sort((a, b) =>
+      b.postdate.localeCompare(a.postdate),
     );
+  }
+
+  // ① 수집 원자료 (개발 확인용)
+  app.post('/api/v1/ai/collect', { preHandler: requireUser(db) }, async (req, reply) => {
+    const p = await prepare(req, reply);
+    if (!p) return;
+    const key = `collect|${p.anchor}|${p.categories.join(',')}|${today()}`;
+    const hit = getCache(key);
+    if (hit) return JSON.parse(hit);
+    const now = new Date();
+    const result: { anchor: string; collectedAt: string; categories: Record<string, unknown> } = {
+      anchor: p.anchor,
+      collectedAt: now.toISOString(),
+      categories: {},
+    };
+    for (const c of p.categories) {
+      const posts = await collect(p.anchor, c);
+      result.categories[c] = {
+        queries: QUERIES[c].map((q) => `${p.anchor} ${q}`),
+        byPeriod: countByPeriod(
+          posts.map((x) => x.postdate),
+          now,
+        ),
+        posts: posts.slice(0, 300),
+      };
+    }
+    countUse(req.user!.userId);
+    putCache(key, result);
+    return result;
+  });
+
+  // ② 추천: 수집 → Groq 장소 추출 → 근거 검증·기간·점수 → (국내) 카카오로 위치 확인
+  app.post('/api/v1/ai/recommend', { preHandler: requireUser(db) }, async (req, reply) => {
+    if (!config.GROQ_API_KEY) return reply.code(503).send({ error: 'ai_not_configured' });
+    const p = await prepare(req, reply);
+    if (!p) return;
+    const key = `rec|${p.anchor}|${p.categories.join(',')}|${p.domestic}|${today()}`;
+    const hit = getCache(key);
+    if (hit) return JSON.parse(hit);
+
+    const now = new Date();
+    const result: RecommendResult = {
+      anchor: p.anchor,
+      createdAt: now.toISOString(),
+      categories: {},
+    };
+    for (const c of p.categories) {
+      const posts = (await collect(p.anchor, c))
+        .slice(0, AI_POSTS)
+        .map((x, i) => ({ ...x, id: `p${i}` }));
+      let extracted;
+      try {
+        extracted = await extractPlaces(
+          { key: config.GROQ_API_KEY, model: config.GROQ_MODEL },
+          p.anchor,
+          c,
+          posts,
+        );
+      } catch (e) {
+        req.log.warn({ err: String(e) }, 'groq failed');
+        return reply.code(502).send({ error: 'ai_failed' });
+      }
+      const built = buildRecommendations(extracted, posts, now)[c];
+      const places: (Recommendation & { place?: PlaceSummary })[] = [];
+      for (const r of built.places) {
+        let place: PlaceSummary | undefined;
+        if (p.domestic && config.KAKAO_CLIENT_ID) {
+          try {
+            place = (await searchKakao(`${p.anchor} ${r.name}`, config.KAKAO_CLIENT_ID))[0];
+          } catch {
+            // 위치 확인 실패 → 이름만 ("정보 확인 필요")
+          }
+        }
+        places.push(place ? { ...r, place } : r);
+      }
+      result.categories[c] = { ...built, places };
+    }
+    countUse(req.user!.userId);
+    putCache(key, result);
     return result;
   });
 
   app.get('/api/v1/ai/recommend/usage', { preHandler: requireUser(db) }, async (req) => {
-    const today = new Date().toISOString().slice(0, 10);
-    const used =
-      (
-        db
-          .prepare('SELECT count FROM ai_usage WHERE user_id = ? AND date = ?')
-          .get(req.user!.userId, today) as { count: number } | undefined
-      )?.count ?? 0;
+    const used = usedToday(req.user!.userId);
     return { used, limit: DAILY_LIMIT, remaining: Math.max(0, DAILY_LIMIT - used) };
   });
 }

@@ -678,5 +678,39 @@
     "hoursError": "영업시간을 불러오지 못했어요",
     "outsideHours": "{{time}}은 영업시간이 아닐 수 있어요",
     "fromGoogle": "Google 정보 · 볼 때마다 새로 불러와요"
+  },
+  "ai": {
+    "title": "AI 추천",
+    "needLogin": "로그인하면 지금 있는 곳 근처에서 최근 블로그에 많이 나온 맛집·카페·놀거리를 찾아 드려요",
+    "anchor": "기준 위치",
+    "nearStation": "가까운 역",
+    "lodging": "숙소",
+    "typeIn": "직접 입력",
+    "anchorName": "역·지역 이름",
+    "anchorPlaceholder": "예: 신주쿠역, 성수동",
+    "noLodging": "이 여행에 등록한 숙소가 없어요",
+    "cat": {
+      "food": "맛집",
+      "cafe": "카페·핫플",
+      "play": "놀거리"
+    },
+    "run": "추천 받기",
+    "disclaimer": "네이버 블로그 최근 글에서 많이 언급된 곳을 AI가 정리해요. AI 요약은 틀릴 수 있어요",
+    "results": "추천 결과",
+    "resultFor": "{{anchor}} 근처",
+    "period1": "최근 1개월 기준",
+    "periodWider": "정보가 적어 최근 {{n}}개월로 넓혔어요",
+    "sparse": "정보가 적은 지역이에요. 있는 만큼 보여 드려요",
+    "none": "찾은 곳이 없어요",
+    "adSuspect": "광고 의심",
+    "mentions": "블로그 {{n}}회 언급 · 최근 {{date}}",
+    "unverified": "위치 확인 필요",
+    "sources": "근거 글 {{n}}개",
+    "sourceNote": "출처: 네이버 블로그 (제목·링크만 표시)",
+    "limit": "오늘 추천 한도(20회)를 다 썼어요",
+    "noAnchor": "기준 위치를 찾지 못했어요. 역·지역 이름을 직접 입력해 보세요",
+    "unavailable": "지금은 AI 추천을 쓸 수 없어요 (서버 연결·설정 확인)",
+    "failed": "추천을 만들지 못했어요. 잠시 뒤 다시 시도해 주세요",
+    "noLocation": "위치를 가져오지 못했어요. 직접 입력을 써 주세요"
   }
 }

@@ -165,13 +165,19 @@ function QuickMenuContent({ shortcuts }: { shortcuts?: Shortcuts }) {
           </span>
           <ChevronRight aria-hidden="true" className="size-5 text-fg-muted" />
         </Link>
-        <ToolCard
-          icon={<Sparkles />}
-          title={t('quickMenu.ai')}
-          desc={t('quickMenu.aiDesc')}
-          step={20}
-          accent
-        />
+        <Link
+          to={tripId ? `/ai?trip=${tripId}` : '/ai'}
+          className="flex items-center gap-3 rounded-card bg-primary-weak px-4 py-3 text-left"
+        >
+          <span aria-hidden="true" className="text-primary [&>svg]:size-5">
+            <Sparkles />
+          </span>
+          <span className="flex min-w-0 flex-1 flex-col">
+            <span className="text-body-1">{t('quickMenu.ai')}</span>
+            <span className="text-caption text-fg-muted">{t('quickMenu.aiDesc')}</span>
+          </span>
+          <ChevronRight aria-hidden="true" className="size-5 text-fg-muted" />
+        </Link>
       </div>
 
       {inTrip && shortcuts && (
@@ -255,40 +261,6 @@ function QuickMenuContent({ shortcuts }: { shortcuts?: Shortcuts }) {
         <ChevronRight aria-hidden="true" className="size-5 text-fg-muted" />
       </Link>
     </div>
-  );
-}
-
-function ToolCard({
-  icon,
-  title,
-  desc,
-  step,
-  accent = false,
-}: {
-  icon: ReactNode;
-  title: string;
-  desc: string;
-  step: number;
-  accent?: boolean;
-}) {
-  const { t } = useTranslation();
-  return (
-    <button
-      type="button"
-      onClick={() => toast(t('common.comingInStep', { step }))}
-      className={`flex items-center gap-3 rounded-card px-4 py-3 text-left ${accent ? 'bg-primary-weak' : 'bg-bg-subtle'}`}
-    >
-      <span aria-hidden="true" className="text-primary [&>svg]:size-5">
-        {icon}
-      </span>
-      <span className="flex min-w-0 flex-1 flex-col">
-        <span className="text-body-1">{title}</span>
-        <span className="text-caption text-fg-muted">{desc}</span>
-      </span>
-      <span className="shrink-0 rounded-full bg-surface px-2 py-0.5 text-micro text-fg-muted">
-        {t('quickMenu.soon')}
-      </span>
-    </button>
   );
 }
 

@@ -90,3 +90,11 @@ export {
   type PlaceSource,
   type PlaceSummary,
 } from './places/placeSearch';
+export {
+  buildRecommendations,
+  type AiCategory,
+  type CategoryResult,
+  type ExtractedPlace,
+  type Recommendation,
+  type SourcePost,
+} from './ai/recommend';

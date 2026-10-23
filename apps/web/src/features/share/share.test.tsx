@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { routes } from '../../app/router';
@@ -43,7 +43,8 @@ describe('공유', () => {
     useAuth.setState({ status: 'anon', me: null });
     const { user, sheet } = await openShare();
     await user.click(within(sheet).getByRole('button', { name: '텍스트 복사' }));
-    expect(copied[0]).toMatch(/^🗼 도쿄 가을여행\n/);
+    // 복사는 기기 DB를 읽은 뒤라 비동기 — 끝날 때까지 기다린다
+    await waitFor(() => expect(copied[0]).toMatch(/^🗼 도쿄 가을여행\n/));
     expect(copied[0]).toContain('[1일차');
     expect(within(sheet).getByText(/로그인하면 링크만으로/)).toBeInTheDocument();
   });
