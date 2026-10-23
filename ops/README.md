@@ -12,7 +12,7 @@ PC가 꺼져 있어도 앱은 기기 안에서 그대로 동작하고, 다시 �
    - `BACKUP_KEY` — 백업 암호 문장(16자 이상). **잃어버리면 백업을 풀 수 없다 → 종이·비밀번호 관리자에 따로 보관**
    - `BACKUP_DIRS=E:\TripPocketBackup;C:\Users\<나>\OneDrive\TripPocket` (외장 디스크 + 클라우드, `;`로 구분)
 2. `powershell -ExecutionPolicy Bypass -File D:\Travel_Planner\ops\install.ps1`
-   - 서버 자동 시작(부팅 시, 멈추면 1분 뒤 재시작) + 매일 03:00 백업이 작업 스케줄러에 등록된다
+   - 서버 자동 시작(부팅 시, 멈추면 1분 뒤 재시작) + 매일 03:00 백업이 작업 스케줄러에 등록된다 (S4U: 비밀번호를 묻거나 저장하지 않고, 로그인하지 않아도 실행)
 
 ## 2. 외부 주소 (Tailscale Funnel, 무료)
 
@@ -65,4 +65,7 @@ pnpm install --frozen-lockfile
 pnpm --filter @trippocket/server build
 ```
 
-→ 작업 스케줄러에서 TripPocket Server "끝내기" 후 "실행" (DB 마이그레이션은 시작할 때 자동)
+→ 작업 스케줄러에서 TripPocket Server "끝내기" → **3초 기다린 뒤** "실행" (바로 켜면 포트가 아직 안 풀려 실패할 수 있음, DB 마이그레이션은 시작할 때 자동)
+
+- 작업은 S4U(비밀번호 저장 없이, 로그인 안 해도 실행)로 등록된다. 이전 실행이 멈춰 "실행 중"인데 응답이 없으면 관리자 PowerShell:
+  가장 간단한 방법은 **PC 재시작**. 재시작 없이: `Stop-ScheduledTask 'TripPocket Server'` → 작업 관리자 "세부 정보"에서 사용자 이름이 내 계정인 `node.exe` 중 응답 없는 것(세션 0) 끝내기 → `Start-ScheduledTask 'TripPocket Server'`

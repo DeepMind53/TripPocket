@@ -1,6 +1,7 @@
 # 03. 아키텍처
 
-- 문서 상태: 초안 v0.1 — ⚠️ 표시는 `08-open-decisions.md`에서 확정 필요
+- 문서 상태: **설계 초안** (구현 전). 실제로 만든 구조·호스팅은 [`code-map.md`](code-map.md)가 기준이다
+  (예: Cloudflare Tunnel → Pages 프록시 + Tailscale Funnel(ADR-0006), vite-plugin-pwa → 직접 만든 서비스 워커, i18next → 자체 경량 i18n)
 
 ## 1. 전체 구조
 > v0.2 변경: 홈 PC 동기화 서버(ADR-0003), 구글·네이버 지도(ADR-0004) 반영. 서버 상세는 `09-server-auth-security.md`.

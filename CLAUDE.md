@@ -5,9 +5,9 @@
 
 ## 1. 프로젝트 한 줄 요약
 
-오프라인 우선 PWA 여행 일정 앱. 데이터의 1차 저장소는 기기 IndexedDB이고, 로그인하면 홈 PC 서버(Node.js + SQLite, Cloudflare Tunnel)와 동기화한다.
+오프라인 우선 PWA 여행 일정 앱(https://trippocket.day). 데이터의 1차 저장소는 기기 IndexedDB이고, 로그인하면 홈 PC 서버(Node.js + SQLite, Cloudflare Pages 프록시 → Tailscale Funnel)와 동기화한다.
 지도는 구글/네이버 병행, 평점·리뷰는 Google Places(서버 프록시), 길찾기는 지도 앱 딥링크.
-상세: `README.md`, `docs/` 참조.
+상세: `README.md`, `docs/` 참조. **코드를 고칠 때는 `docs/code-map.md`(실제 구조·수정 위치)부터.**
 
 ## 2. 작업 시작 전 반드시 확인
 
@@ -37,6 +37,8 @@
 - **MUST** 모든 기능은 **무료로 만드는 방법을 먼저 찾는다**. 무료 방법이 없거나 무료 사용량을 넘으면 과금되는 경우, 구현 전에 비용·대안을 사용자에게 알리고 결정을 받는다. 기능을 바꾸거나 빼는 결정은 사용자가 한다 (2026-10-22 사용자 요청, `docs/08-open-decisions.md` L 그룹).
 - **MUST** 코드·번들은 최대한 작게 (2026-10-22 사용자 요청). 라이브러리는 꼭 필요할 때만, 가벼운 대안 우선(예: `zod/mini`), 무거운 화면·기능은 라우트 단위 지연 로딩. 단계 완료 보고에 `pnpm size`의 **첫 화면 합계**(gzip, 진입 파일 + 함께 불러오는 파일)를 적는다. 예산 200KB.
 - **MUST NOT** 가계부(지출 기록·예산·정산) 기능은 범위에서 제외됨 (2026-10-22 사용자 결정). 환율은 **조회·계산 도구로만** 제공하고 금액을 저장하지 않는다 (`docs/12-quick-menu-settings-fx.md`).
+- **MUST** 서버의 외부 API 호출은 `services/apiUsage.ts`의 `guardApi`·`trackApi`를 거친다 (관리자 API 사용량·자동 중지). 새 API는 `APIS`에 과금 가능 여부·무료 사용량과 함께 등록 (`docs/code-map.md` §3).
+- **MUST** 새 실험 기능은 먼저 실험실(`data/labsStore.ts`)에 넣어 켜고 끌 수 있게 한다 (사용자 요청 2026-10-24).
 - **MUST** AI 추천은 근거(원문 id)가 있는 장소만 보여준다. AI 입력에 좌표·사용자 정보를 넣지 않는다 (`docs/14-ai-recommendations.md` §5, §8).
 - **MUST** 설정 UI는 `docs/12-quick-menu-settings-fx.md` §3.1 컨트롤 선택 원칙을 따른다 (즉시 적용, 저장 버튼 없음).
 
