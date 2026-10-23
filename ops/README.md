@@ -67,5 +67,5 @@ pnpm --filter @trippocket/server build
 
 → 작업 스케줄러에서 TripPocket Server "끝내기" → **3초 기다린 뒤** "실행" (바로 켜면 포트가 아직 안 풀려 실패할 수 있음, DB 마이그레이션은 시작할 때 자동)
 
-- 작업은 S4U(비밀번호 저장 없이, 로그인 안 해도 실행)로 등록된다. 이전 실행이 멈춰 "실행 중"인데 응답이 없으면 관리자 PowerShell:
+- 작업은 S4U(비밀번호 저장 없이, 로그인 안 해도 실행)로 등록된다. 이전 실행이 멈춰 "실행 중"인데 응답이 없으면:
   가장 간단한 방법은 **PC 재시작**. 재시작 없이: `Stop-ScheduledTask 'TripPocket Server'` → 작업 관리자 "세부 정보"에서 사용자 이름이 내 계정인 `node.exe` 중 응답 없는 것(세션 0) 끝내기 → `Start-ScheduledTask 'TripPocket Server'`
