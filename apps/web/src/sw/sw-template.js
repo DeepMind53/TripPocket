@@ -9,10 +9,30 @@ const SHELL = `tp-shell-${VERSION}`;
 const RUNTIME = 'tp-runtime';
 // 서버가 Vary: Origin 을 붙이면 모듈 스크립트 요청(Origin 헤더 있음)이 저장본과 안 맞는다 → Vary 무시
 const MATCH = { ignoreVary: true };
+// 앱 화면 저장 키: Cloudflare Pages는 /index.html 을 / 로 308 이동시키므로 / 를 저장한다
+const SHELL_HTML = '/';
+// 서버로 가야 하는 경로 — 로그인(OAuth 이동·콜백)과 API는 저장본으로 가로채지 않는다
+const PASS_THROUGH = /^\/(auth|api)\//;
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(SHELL).then((c) => c.addAll(PRECACHE)));
+  event.waitUntil(
+    caches
+      .open(SHELL)
+      .then((c) => c.addAll(PRECACHE))
+      .then(brokenOldShell)
+      .then((broken) => broken && self.skipWaiting()),
+  );
 });
+
+/** 예전 버전이 이동(redirect)된 응답을 저장해 화면이 안 열리면 [업데이트]를 누를 수도 없다 → 바로 교체 */
+async function brokenOldShell() {
+  for (const key of await caches.keys()) {
+    if (key === SHELL || !key.startsWith('tp-shell-')) continue;
+    const old = await (await caches.open(key)).match('/index.html', MATCH);
+    if (old && old.redirected) return true;
+  }
+  return false;
+}
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
@@ -39,8 +59,14 @@ self.addEventListener('fetch', (event) => {
   if (url.origin !== self.location.origin) return;
 
   // 화면 이동: 저장된 앱 화면 (주소가 달라도 같은 index.html — 앱 안 라우터가 처리)
+  if (PASS_THROUGH.test(url.pathname)) return;
   if (req.mode === 'navigate') {
-    event.respondWith(caches.match('/index.html', MATCH).then((hit) => hit || fetch(req)));
+    event.respondWith(
+      caches
+        .match(SHELL_HTML, MATCH)
+        // 이동된 응답은 화면 이동에 쓸 수 없다 (브라우저가 "연결할 수 없음") → 네트워크로
+        .then((hit) => (hit && !hit.redirected ? hit : fetch(req))),
+    );
     return;
   }
   // 파일: 저장본 먼저, 없으면 받아서 저장 (이름에 해시가 있어 바뀌지 않음)

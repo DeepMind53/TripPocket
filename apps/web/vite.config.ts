@@ -21,7 +21,7 @@ function serviceWorker(): Plugin {
         .filter((f) => !f.endsWith('.map') && !f.endsWith('.woff2') && f !== 'sw.js')
         .map((f) => `/${f}`)
         .filter((f) => f !== '/index.html')
-        .concat('/index.html', '/boot.js', '/manifest.webmanifest', ...icons)
+        .concat('/', '/boot.js', '/manifest.webmanifest', ...icons)
         .sort();
       const version = createHash('sha256').update(files.join(' ')).digest('hex').slice(0, 12);
       const source = readFileSync('src/sw/sw-template.js', 'utf8')

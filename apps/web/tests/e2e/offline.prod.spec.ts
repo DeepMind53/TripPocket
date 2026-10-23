@@ -28,3 +28,19 @@ test('설치 후에는 인터넷 없이도 앱이 열리고 만든 여행이 보
   await page.goto('/settings');
   await expect(page.getByRole('region', { name: '화면' })).toBeVisible();
 });
+
+test('로그인(/auth)·API 주소는 서비스 워커가 가로채지 않고 서버로 보낸다', async ({ page }) => {
+  await page.goto('/');
+  await page.evaluate(async () => {
+    await navigator.serviceWorker.ready;
+  });
+  await page.reload();
+  await expect
+    .poll(() => page.evaluate(() => navigator.serviceWorker.controller !== null))
+    .toBe(true);
+  // 일반 화면 이동은 저장본, /auth 는 네트워크 (OAuth 이동·콜백이 서버에 닿아야 함)
+  const app = await page.goto('/trips');
+  expect(app?.fromServiceWorker()).toBe(true);
+  const auth = await page.goto('/auth/kakao/start');
+  expect(auth?.fromServiceWorker()).toBe(false);
+});
