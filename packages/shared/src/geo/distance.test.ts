@@ -1,4 +1,4 @@
-import { distanceKm, formatDistance, walkMinutes } from './legs';
+import { distanceKm, formatDistance, walkMinutes } from './distance';
 
 describe('다음 장소까지 거리 (실험실)', () => {
   it('서울역 → 시청역 약 1km, 도쿄역 → 신주쿠역 약 6km', () => {

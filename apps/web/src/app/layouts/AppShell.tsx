@@ -3,10 +3,11 @@ import { useTranslation } from '../../i18n';
 import { Outlet } from 'react-router';
 import { useBottomInset } from '../../shared/hooks/useBottomInset';
 import { TabBar } from '../../shared/ui';
+import { QuickMenuButton } from '../../features/common/QuickMenu';
 
 export const TAB_BAR_HEIGHT = 56;
 
-/** 앱 하단 탭 4개 (docs/11 §6): 홈 · 내 여행 · 저장 · 마이 */
+/** 앱 하단 탭 4개 (docs/11 §6): 홈 · 내 여행 · 저장 · 마이 + ⚡ 플로팅 빠른 메뉴 */
 export function AppShell() {
   const { t } = useTranslation();
   useBottomInset(TAB_BAR_HEIGHT);
@@ -15,6 +16,7 @@ export function AppShell() {
       <main className="pb-[calc(56px+env(safe-area-inset-bottom)+16px)]">
         <Outlet />
       </main>
+      <QuickMenuButton />
       <TabBar
         label={t('nav.label')}
         items={[

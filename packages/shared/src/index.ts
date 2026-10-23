@@ -98,3 +98,4 @@ export {
   type Recommendation,
   type SourcePost,
 } from './ai/recommend';
+export { distanceKm, formatDistance, walkMinutes, type LatLng } from './geo/distance';

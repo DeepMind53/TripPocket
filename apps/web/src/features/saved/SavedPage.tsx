@@ -4,7 +4,6 @@ import { savedPlaceRepo } from '../../data/repositories/savedPlaceRepo';
 import { useTranslation } from '../../i18n';
 import { openMapLink, placeLink } from '../../shared/lib/directions';
 import { EmptyState, IconButton, snackbar, TopBar } from '../../shared/ui';
-import { QuickMenuButton } from '../common/QuickMenu';
 
 /** S-04 저장한 장소 — 장소 찾기에서 ♡ 누른 곳 (도시별) */
 export function SavedPage() {
@@ -17,7 +16,7 @@ export function SavedPage() {
 
   return (
     <>
-      <TopBar title={t('saved.title')} actions={<QuickMenuButton />} />
+      <TopBar title={t('saved.title')} />
       {places && places.length === 0 ? (
         <EmptyState emoji="❤️" title={t('saved.emptyTitle')} description={t('saved.emptyDesc')} />
       ) : (

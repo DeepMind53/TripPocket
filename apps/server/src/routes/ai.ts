@@ -1,6 +1,7 @@
 import {
   buildRecommendations,
   countByPeriod,
+  distanceKm,
   type AiCategory,
   type CategoryResult,
   type PlaceSummary,
@@ -46,6 +47,10 @@ const DAILY_LIMIT = 20;
 const CACHE_HOURS = 6;
 /** 점수 계산에 쓰는 글 수 (카테고리마다, 최신순). AI에는 이 중 각 AI가 받을 수 있는 만큼만 (llm.ts) */
 const AI_POSTS = 200;
+/** 보여 줄 장소 수, 거르기 전 후보 수, "근처" 기준 (국내, 기준점에서 직선 km) */
+const TOP = 5;
+const CANDIDATES = 10;
+const NEAR_KM = 5;
 
 export interface RecommendResult {
   anchor: string;
@@ -115,9 +120,11 @@ export function aiRoutes(app: FastifyInstance, config: Config, db: Db): void {
     const since = new Date();
     since.setMonth(since.getMonth() - 12);
     const sinceYmd = since.toISOString().slice(0, 10).replace(/-/g, '');
-    const posts: BlogPost[] = [];
-    for (const q of QUERIES[category])
-      posts.push(...(await searchBlog(`${anchor} ${q}`, naver!, { max: 300, sinceYmd })));
+    const posts = (
+      await Promise.all(
+        QUERIES[category].map((q) => searchBlog(`${anchor} ${q}`, naver!, { max: 300, sinceYmd })),
+      )
+    ).flat();
     return [...new Map(posts.map((p) => [p.link, p])).values()].sort((a, b) =>
       b.postdate.localeCompare(a.postdate),
     );
@@ -166,32 +173,48 @@ export function aiRoutes(app: FastifyInstance, config: Config, db: Db): void {
       createdAt: now.toISOString(),
       categories: {},
     };
-    for (const c of p.categories) {
-      const posts = (await collect(p.anchor, c))
-        .slice(0, AI_POSTS)
-        .map((x, i) => ({ ...x, id: `p${i}` }));
-      const ai = await extractPlaces(providers, p.anchor, c, posts, (engine, err) =>
-        req.log.warn({ engine, err: String(err) }, 'ai engine failed'),
-      );
-      const engine = ai?.engine ?? 'basic';
-      const extracted =
-        ai?.places ??
-        (await basicExtract(p.anchor, c, posts, { kakao: config.KAKAO_CLIENT_ID, naver }));
-      const built = buildRecommendations(extracted, posts, now)[c];
-      const places: (Recommendation & { place?: PlaceSummary })[] = [];
-      for (const r of built.places) {
-        let place: PlaceSummary | undefined;
-        if (p.domestic && config.KAKAO_CLIENT_ID) {
-          try {
-            place = (await searchKakao(`${p.anchor} ${r.name}`, config.KAKAO_CLIENT_ID))[0];
-          } catch {
-            // 위치 확인 실패 → 이름만 ("정보 확인 필요")
-          }
-        }
-        places.push(place ? { ...r, place } : r);
-      }
-      result.categories[c] = { ...built, places, engine };
-    }
+    // 카테고리끼리 동시에: 블로그 수집·AI 정리·위치 확인 (Gemini 무료는 동시 요청 여유가 있다.
+    // Groq로 넘어가 분당 한도에 걸리면 llm.ts가 잠깐 기다렸다 다시 시도)
+    // 국내: 기준점 위치를 한 번 찾아 두고, 너무 먼 곳(블로그가 함께 소개한 다른 동네)은 뺀다
+    const kakao = p.domestic ? config.KAKAO_CLIENT_ID : undefined;
+    const anchorAt = kakao
+      ? ((await searchKakao(p.anchor, kakao).catch(() => []))[0]?.coords ?? undefined)
+      : undefined;
+    const done = await Promise.all(
+      p.categories.map(async (c) => {
+        const posts = (await collect(p.anchor, c))
+          .slice(0, AI_POSTS)
+          .map((x, i) => ({ ...x, id: `p${i}` }));
+        const ai = await extractPlaces(providers, p.anchor, c, posts, (engine, err) =>
+          req.log.warn({ engine, err: String(err) }, 'ai engine failed'),
+        );
+        const engine = ai?.engine ?? 'basic';
+        const extracted =
+          ai?.places ??
+          (await basicExtract(p.anchor, c, posts, { kakao: config.KAKAO_CLIENT_ID, naver }));
+        // 먼 곳을 빼도 5곳이 남게 후보를 넉넉히 뽑는다
+        const built = buildRecommendations(extracted, posts, now, CANDIDATES)[c];
+        // 국내면 카카오로 위치 확인 — 동시에. 실패하면 이름만 ("정보 확인 필요")
+        const located: (Recommendation & { place?: PlaceSummary })[] = await Promise.all(
+          built.places.map(async (r) => {
+            // "기준점 + 이름"으로 못 찾으면 이름만으로 (기준점 근처 우선) — 먼 곳 거르기에 필요
+            const find = (q: string, near?: { lat: number; lng: number }) =>
+              searchKakao(q, kakao!, near).catch(() => []);
+            const place = kakao
+              ? ((await find(`${p.anchor} ${r.name}`))[0] ?? (await find(r.name, anchorAt))[0])
+              : undefined;
+            return place ? { ...r, place } : r;
+          }),
+        );
+        const places = located
+          .filter(
+            (r) => !anchorAt || !r.place?.coords || distanceKm(anchorAt, r.place.coords) <= NEAR_KM,
+          )
+          .slice(0, TOP);
+        return [c, { ...built, places, engine }] as const;
+      }),
+    );
+    for (const [c, value] of done) result.categories[c] = value;
     countUse(req.user!.userId);
     putCache(key, result);
     return result;

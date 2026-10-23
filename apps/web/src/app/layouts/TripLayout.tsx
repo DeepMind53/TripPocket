@@ -31,7 +31,7 @@ const ShareSheet = lazy(async () => ({
 
 /**
  * 여행 상세: 앱 탭 대신 여행 전용 탭 4개 (docs/11 §6)
- * 헤더: ← · 여행 제목 · 동기화 상태 · ⚡ · ⋯
+ * 헤더: ← · 여행 제목 · ⋯ (⚡ 빠른 메뉴는 플로팅 버튼)
  */
 export function TripLayout() {
   const { t } = useTranslation();
@@ -83,7 +83,6 @@ export function TripLayout() {
         actions={
           <>
             {/* 동기화 상태 아이콘은 15단계(동기화)에서 추가 — 그전엔 제목 자리를 넓히려고 비워 둔다 */}
-            <QuickMenuButton inTrip />
             <IconButton
               label={t('header.more')}
               icon={<Ellipsis />}
@@ -93,6 +92,7 @@ export function TripLayout() {
         }
       />
       <main className="pb-[calc(56px+env(safe-area-inset-bottom)+16px)]">{trip && <Outlet />}</main>
+      {trip && <QuickMenuButton inTrip />}
       <BottomSheet open={menuOpen} onOpenChange={setMenuOpen} title={trip?.title ?? ''}>
         {trip && (
           <div className="flex flex-col gap-2">

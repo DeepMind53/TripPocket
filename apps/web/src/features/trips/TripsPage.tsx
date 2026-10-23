@@ -7,7 +7,6 @@ import { useTrips } from '../../data/hooks';
 import { useRouteSheet } from '../../shared/hooks/useRouteSheet';
 import { formatPeriod, formatTripBadge, formatTripLength } from '../../shared/lib/dateFormat';
 import { BottomSheet, Button, EmptyState, IconButton, TopBar } from '../../shared/ui';
-import { QuickMenuButton } from '../common/QuickMenu';
 import { deleteTripWithUndo } from './tripActions';
 
 /** S-02 내 여행: 여행 중 · 다가오는 여행 · 다녀온 여행(접힘) */
@@ -46,7 +45,6 @@ export function TripsPage() {
               icon={<Plus />}
               onClick={() => void navigate('/trips/new')}
             />
-            <QuickMenuButton />
           </>
         }
       />

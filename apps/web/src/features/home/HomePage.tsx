@@ -23,7 +23,6 @@ import { Button, EmptyState } from '../../shared/ui';
 import { Wordmark } from './Wordmark';
 import { DirectionsSheet } from '../common/DirectionsSheet';
 import { openDirectionsDirect } from '../common/openDirections';
-import { QuickMenuButton } from '../common/QuickMenu';
 import { isDomesticTrip } from '../../domain/tripPlace';
 
 /** 1분마다 다시 그려 "35분 후"를 갱신한다 */
@@ -55,11 +54,11 @@ export function HomePage() {
 
   return (
     <>
-      {/* 홈만 가운데 로고. 빠른 메뉴 버튼은 다른 화면과 같은 오른쪽 위치 */}
+      {/* 홈만 가운데 로고 (빠른 메뉴는 AppShell의 플로팅 버튼) */}
       <header className="sticky top-[env(safe-area-inset-top)] z-20 grid min-h-14 grid-cols-[44px_1fr_44px] items-center bg-bg/95 px-1 backdrop-blur">
         <span />
         <Wordmark label={t('app.name')} />
-        <QuickMenuButton />
+        <span />
       </header>
       {trips && !featured && (
         <EmptyState

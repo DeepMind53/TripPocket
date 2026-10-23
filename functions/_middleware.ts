@@ -4,6 +4,7 @@
  * - sw.js·앱 파일은 그대로 → 이미 설치된 앱도 새 버전을 받아 "주소가 바뀌었어요" 안내를 띄울 수 있다
  * - /api·/auth 는 그대로 → 진행 중인 로그인·동기화가 끊기지 않는다 (서버는 두 주소 모두 허용)
  * 미리보기 배포(<해시>.trippocket.pages.dev)는 옮기지 않는다
+ * 비용: 앱 파일(assets·icons·sw.js 등)은 apps/web/public/_routes.json 에서 빼 함수 호출(무료 하루 10만 회)을 아낀다
  */
 export const OLD_HOST = 'trippocket.pages.dev';
 export const NEW_ORIGIN = 'https://trippocket.day';

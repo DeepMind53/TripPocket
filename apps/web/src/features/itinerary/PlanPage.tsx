@@ -45,7 +45,7 @@ import { dayColor, KIND_ICON } from './itemKinds';
 import { MoveDaySheet } from './MoveDaySheet';
 import { BOOKING_ICON } from '../common/bookingKinds';
 import { isDomesticTrip } from '../../domain/tripPlace';
-import { distanceKm, formatDistance, walkMinutes } from '../../domain/legs';
+import { distanceKm, formatDistance, walkMinutes } from '@trippocket/shared';
 import { useLab } from '../../data/labsStore';
 
 // 드래그 편집은 편집 모드에 들어갈 때만 불러온다 (dnd-kit 포함)

@@ -60,8 +60,8 @@ export function llmProviders(config: Config): Provider[] {
       url: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
       key: config.GEMINI_API_KEY,
       model: config.GEMINI_MODEL,
-      maxPosts: 80,
-      timeout: 30,
+      maxPosts: 60,
+      timeout: 45,
       // 생각(thinking)은 짧게 — 장소 이름 뽑기에는 충분하고 빠르다
       extra: { max_tokens: 4000, reasoning_effort: 'low' },
     });
