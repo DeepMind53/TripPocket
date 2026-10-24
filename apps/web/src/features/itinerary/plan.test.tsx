@@ -366,3 +366,22 @@ describe('실험실 손동작 (docs/16 C4·C5)', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 });
+
+it('일정 상세 오른쪽 위에서 방문 시간을 바로 적는다 (열 때 키보드는 안 뜸)', async () => {
+  const user = userEvent.setup();
+  const item = await itemRepo.create({
+    tripId,
+    date: '2026-10-24',
+    kind: 'food',
+    title: '이치란 라멘',
+  });
+  await renderPlan('?day=1');
+  await user.click(await screen.findByRole('button', { name: /이치란 라멘/ }));
+  const sheet = await screen.findByRole('dialog', { name: '이치란 라멘' });
+  const input = within(sheet).getByRole('textbox', { name: '방문 시간' });
+  expect(input).not.toHaveFocus();
+  await user.type(input, '1130');
+  await waitFor(async () => expect((await itemRepo.get(item.id))?.startTime).toBe('11:30'));
+  await user.clear(input);
+  await waitFor(async () => expect((await itemRepo.get(item.id))?.startTime).toBeUndefined());
+});

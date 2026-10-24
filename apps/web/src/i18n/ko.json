@@ -480,7 +480,8 @@
     "openBooking": "예약 보기",
     "departTerminal": "출발 {{t}}",
     "arriveTerminal": "도착 {{t}}",
-    "confirmationNo": "예약번호 {{no}}"
+    "confirmationNo": "예약번호 {{no}}",
+    "visitTime": "방문 시간"
   },
   "dir": {
     "title": "{{name}}까지",

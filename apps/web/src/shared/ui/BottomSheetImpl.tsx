@@ -11,6 +11,8 @@ export interface BottomSheetProps {
   description?: string;
   /** 하단 고정 영역 (예: [일정에 추가] 버튼) */
   footer?: ReactNode;
+  /** 제목 오른쪽 작은 자리 (예: 방문 시간 빠른 입력) */
+  headerAside?: ReactNode;
   children: ReactNode;
   className?: string;
 }
@@ -25,6 +27,7 @@ export function BottomSheetImpl({
   title,
   description,
   footer,
+  headerAside,
   children,
   className,
 }: BottomSheetProps) {
@@ -57,6 +60,12 @@ export function BottomSheetImpl({
         <Dialog.Overlay className="tp-scrim fixed inset-0 z-40 bg-scrim" />
         <Dialog.Content
           {...(description ? {} : { 'aria-describedby': undefined })}
+          // 머리글 옆 입력칸이 있으면 열자마자 키보드가 뜨지 않게 시트 자체에 포커스
+          onOpenAutoFocus={(e) => {
+            if (!headerAside) return;
+            e.preventDefault();
+            (e.currentTarget as HTMLElement).focus();
+          }}
           // 하단 알림(실행 취소 등)을 눌러도 시트가 닫히지 않게
           onPointerDownOutside={(e) => {
             if ((e.target as Element | null)?.closest('[data-toaster]')) e.preventDefault();
@@ -75,13 +84,16 @@ export function BottomSheetImpl({
           >
             <div className="mx-auto h-1 w-9 rounded-full bg-line" />
           </div>
-          <header className="px-5 pt-2 pb-3">
-            <Dialog.Title className="text-title-2">{title}</Dialog.Title>
-            {description && (
-              <Dialog.Description className="mt-1 text-caption text-fg-muted">
-                {description}
-              </Dialog.Description>
-            )}
+          <header className="flex items-start gap-3 px-5 pt-2 pb-3">
+            <div className="min-w-0 flex-1">
+              <Dialog.Title className="text-title-2">{title}</Dialog.Title>
+              {description && (
+                <Dialog.Description className="mt-1 text-caption text-fg-muted">
+                  {description}
+                </Dialog.Description>
+              )}
+            </div>
+            {headerAside && <div className="shrink-0">{headerAside}</div>}
           </header>
           <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-4">{children}</div>
           {footer ? (

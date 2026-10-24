@@ -14,7 +14,13 @@ export function TimeInput({
   onChange,
   step,
   className,
+  size = 'md',
+  label,
 }: {
+  /** sm = 시트 머리글 등 좁은 자리 (높이 40) */
+  size?: 'sm' | 'md';
+  /** 보이는 라벨이 없을 때 읽어 줄 이름 */
+  label?: string;
   id: string;
   value: string;
   onChange: (value: string) => void;
@@ -41,6 +47,7 @@ export function TimeInput({
         autoComplete="off"
         placeholder="09:30"
         maxLength={8}
+        aria-label={label}
         value={draft}
         onChange={(e) => {
           const s = e.currentTarget.value;
@@ -60,7 +67,10 @@ export function TimeInput({
             if (parsed !== value) onChange(parsed);
           }
         }}
-        className="tabular h-12 w-full rounded-btn bg-bg-subtle pr-11 pl-3 text-body-1"
+        className={cn(
+          'tabular w-full rounded-btn bg-bg-subtle pl-3',
+          size === 'sm' ? 'h-10 pr-9 text-body-2' : 'h-12 pr-11 text-body-1',
+        )}
       />
       <button
         type="button"
@@ -74,7 +84,10 @@ export function TimeInput({
             el.focus();
           }
         }}
-        className="absolute inset-y-0 right-0 grid w-11 place-items-center text-fg-muted"
+        className={cn(
+          'absolute inset-y-0 right-0 grid place-items-center text-fg-muted',
+          size === 'sm' ? 'w-9' : 'w-11',
+        )}
       >
         <Clock aria-hidden="true" className="size-5" />
       </button>

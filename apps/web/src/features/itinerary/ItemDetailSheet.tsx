@@ -14,7 +14,7 @@ import {
 import type { ReactNode } from 'react';
 import { useTranslation } from '../../i18n';
 import { placeLink, openMapLink, type MapApp } from '../../shared/lib/directions';
-import { BottomSheet, Button, Switch, toast } from '../../shared/ui';
+import { BottomSheet, Button, Switch, TimeInput, toast } from '../../shared/ui';
 import { copyText } from '../../shared/lib/clipboard';
 import { FlightTicket } from '../bookings/BookingCard';
 import { KIND_ICON } from './itemKinds';
@@ -44,6 +44,8 @@ export interface ItemDetailSheetProps {
   /** 이 일정과 연결된 예약 (항공·숙소·음식점 등, domain/lodging bookingForItem) */
   booking?: Booking | undefined;
   onOpenBooking?: () => void;
+  /** 방문 시간 빠른 입력 ("" = 지움) */
+  onVisitTime?: (time: string) => void;
 }
 
 /** S-12 일정 상세 */
@@ -66,6 +68,7 @@ export function ItemDetailSheet({
   readOnly = false,
   booking,
   onOpenBooking,
+  onVisitTime,
 }: ItemDetailSheetProps) {
   const { t } = useTranslation();
   const address = item?.place?.address;
@@ -98,6 +101,21 @@ export function ItemDetailSheet({
       onOpenChange={onOpenChange}
       title={item?.title ?? ''}
       description={dayLabel}
+      headerAside={
+        item && onVisitTime && !readOnly ? (
+          <span className="flex flex-col items-end gap-0.5">
+            <span className="text-micro text-fg-muted">{t('detail.visitTime')}</span>
+            <TimeInput
+              id="detail-visit-time"
+              size="sm"
+              label={t('detail.visitTime')}
+              value={item.startTime ?? ''}
+              onChange={onVisitTime}
+              className="w-[104px]"
+            />
+          </span>
+        ) : undefined
+      }
     >
       {item && Icon && dest && (
         <div className="flex flex-col gap-5">

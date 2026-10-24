@@ -544,6 +544,9 @@ function PlanView({
         onMoveDay={() => setMoveOpen(true)}
         onDelete={() => selected && void remove(selected)}
         onToggleDone={(done) => selected && void itemRepo.update(selected.id, { done })}
+        onVisitTime={(time) =>
+          selected && void itemRepo.update(selected.id, { startTime: time || undefined })
+        }
         position={position}
         total={sameDay.length}
         // 같은 날 안에서 한 칸씩 (시트는 열어 둔 채 바로 반영)
@@ -828,7 +831,7 @@ function ItemRow({
             wide ? 'w-16' : 'w-11',
           )}
         >
-          {time(item.startTime) ?? '—'}
+          {time(item.startTime) ?? <span className="text-fg-muted/60">--:--</span>}
         </span>
         <span className={cn('flex min-w-0 flex-1 flex-col', item.done && 'opacity-50')}>
           <span className={cn('text-body-1', item.done && 'line-through')}>{item.title}</span>
