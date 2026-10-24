@@ -10,6 +10,8 @@ export interface Me {
   providers: string[];
   /** 첫 계정 = 관리자 (사용자 관리 메뉴) */
   isAdmin?: boolean;
+  /** false = 아직 닉네임을 직접 정하지 않음 (로그인 서비스 이름) → 정하기 시트 */
+  nicknameSet?: boolean;
 }
 
 export interface DeviceSession {
@@ -65,6 +67,19 @@ export async function deleteAccount(): Promise<boolean> {
   const res = await api('/api/me', { method: 'DELETE' });
   if (res.ok) useAuth.setState({ status: 'anon', me: null });
   return res.ok;
+}
+
+/** 닉네임 바꾸기 (서버가 다시 검사) */
+export async function updateNickname(nickname: string): Promise<boolean> {
+  const res = await api<{ nickname: string }>('/api/me/nickname', {
+    method: 'PATCH',
+    body: JSON.stringify({ nickname }),
+  });
+  if (!res.ok) return false;
+  useAuth.setState((s) =>
+    s.me ? { me: { ...s.me, nickname: res.data.nickname, nicknameSet: true } } : s,
+  );
+  return true;
 }
 
 export async function listSessions(): Promise<DeviceSession[] | null> {

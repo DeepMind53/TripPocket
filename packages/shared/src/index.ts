@@ -100,3 +100,4 @@ export {
   type SourcePost,
 } from './ai/recommend';
 export { distanceKm, formatDistance, walkMinutes, type LatLng } from './geo/distance';
+export { NICKNAME_MAX, normalizeNickname } from './user/nickname';

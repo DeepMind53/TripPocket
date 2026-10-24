@@ -20,6 +20,8 @@ function mockServer(loggedIn: boolean) {
     if (url === '/auth/providers')
       return Response.json({ providers: ['kakao', 'naver', 'google'] });
     if (url === '/auth/logout') return Response.json({ ok: true });
+    if (url === '/api/me/nickname')
+      return Response.json({ nickname: JSON.parse(String(init?.body)).nickname });
     return Response.json({ error: 'not_found' }, { status: 404 });
   });
   return calls;
@@ -81,5 +83,21 @@ describe('계정', () => {
     // 로그인한 사람만 앱을 쓰므로 로그아웃하면 로그인 화면으로
     expect(await screen.findByText(/로그인한 뒤 쓸 수 있어요/)).toBeInTheDocument();
     expect(localStorage.getItem('tp-signed-in')).toBeNull();
+  });
+
+  it('닉네임 바꾸기: 계정 카드 연필 → 저장하면 서버에 보내고 바로 반영', async () => {
+    const calls = mockServer(true);
+    const user = userEvent.setup();
+    renderAt('/me');
+    await user.click(await screen.findByRole('button', { name: '닉네임 바꾸기' }));
+    const sheet = await screen.findByRole('dialog', { name: '닉네임 바꾸기' });
+    const input = within(sheet).getByLabelText('닉네임');
+    await user.clear(input);
+    expect(within(sheet).getByRole('button', { name: '저장' })).toBeDisabled();
+    await user.type(input, '  진하  ');
+    await user.click(within(sheet).getByRole('button', { name: '저장' }));
+    expect(await screen.findByText('닉네임을 바꿨어요')).toBeInTheDocument();
+    expect(calls).toContain('PATCH /api/me/nickname');
+    expect(await screen.findByText('진하')).toBeInTheDocument();
   });
 });

@@ -62,11 +62,17 @@ async function login(
   return { res, sid: cookieOf(res, '__Host-sid')?.value };
 }
 
-const api = (method: 'GET' | 'DELETE' | 'POST', url: string, sid?: string) =>
+const api = (
+  method: 'GET' | 'DELETE' | 'POST' | 'PATCH',
+  url: string,
+  sid?: string,
+  payload?: object,
+) =>
   app.inject({
     method,
     url,
     headers: { ...base, origin: ORIGIN, ...(sid ? { cookie: `__Host-sid=${sid}` } : {}) },
+    ...(payload ? { payload } : {}),
   });
 
 beforeEach(async () => {
@@ -103,10 +109,31 @@ describe('로그인', () => {
     expect(tokenCalls[0]!.body.get('client_secret')).toBe('ksecret');
     expect(cookieOf(res, '__Host-sid')).toMatchObject({ httpOnly: true, secure: true, path: '/' });
     const me = await api('GET', '/api/me', sid);
-    expect(me.json()).toMatchObject({ nickname: '카카오님', providers: ['kakao'] });
+    expect(me.json()).toMatchObject({
+      nickname: '카카오님',
+      providers: ['kakao'],
+      nicknameSet: false,
+    });
     // DB에는 세션 토큰이 아니라 해시만
     const row = db.prepare('SELECT id_hash FROM sessions').get() as { id_hash: string };
     expect(row.id_hash).not.toBe(sid);
+  });
+
+  it('닉네임 바꾸기: 다듬어 저장하고 "정함"으로 표시, 잘못된 값은 400, 로그인 필요', async () => {
+    const { sid } = await login('kakao');
+    const res = await api('PATCH', '/api/me/nickname', sid, { nickname: '  진하  ' });
+    expect(res.json()).toEqual({ nickname: '진하' });
+    expect((await api('GET', '/api/me', sid)).json()).toMatchObject({
+      nickname: '진하',
+      nicknameSet: true,
+    });
+    expect((await api('PATCH', '/api/me/nickname', sid, { nickname: ' ' })).statusCode).toBe(400);
+    expect(
+      (await api('PATCH', '/api/me/nickname', sid, { nickname: '가'.repeat(21) })).statusCode,
+    ).toBe(400);
+    expect((await api('PATCH', '/api/me/nickname', undefined, { nickname: 'x' })).statusCode).toBe(
+      401,
+    );
   });
 
   it('구글은 PKCE (code_challenge → code_verifier)', async () => {

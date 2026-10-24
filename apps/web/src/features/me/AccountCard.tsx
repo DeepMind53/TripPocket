@@ -1,4 +1,4 @@
-import { LogOut, MonitorSmartphone, UserX } from 'lucide-react';
+import { LogOut, MonitorSmartphone, Pencil, UserX } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import {
@@ -14,7 +14,8 @@ import { useSync } from '../../data/sync/syncStore';
 import { useTranslation } from '../../i18n';
 import { cn } from '../../shared/lib/cn';
 import { useRouteSheet } from '../../shared/hooks/useRouteSheet';
-import { BottomSheet, Button, RadioList, toast } from '../../shared/ui';
+import { BottomSheet, Button, IconButton, RadioList, toast } from '../../shared/ui';
+import { NicknameSheet } from './NicknameSheet';
 
 /** 마이 위쪽 계정 칸: 로그인 전 = 안내·로그인 버튼, 로그인 후 = 닉네임·기기·로그아웃·탈퇴 */
 export function AccountCard() {
@@ -22,6 +23,7 @@ export function AccountCard() {
   const navigate = useNavigate();
   const { status, me } = useAuth();
   const [sheet, setSheet] = useRouteSheet('account');
+  const [nicknameOpen, setNicknameOpen] = useRouteSheet('nickname');
   const [kind, setKind] = useState<'devices' | 'logout' | 'delete'>('devices');
   const [sessions, setSessions] = useState<DeviceSession[] | null>(null);
   const [wipe, setWipe] = useState<'keep' | 'wipe'>('keep');
@@ -53,7 +55,14 @@ export function AccountCard() {
   return (
     <section className="flex flex-col gap-3 rounded-card bg-bg-subtle p-4">
       <div className="flex flex-col">
-        <span className="text-title-2">{me.nickname}</span>
+        <span className="flex items-center gap-1">
+          <span className="text-title-2">{me.nickname}</span>
+          <IconButton
+            label={t('nickname.change')}
+            icon={<Pencil />}
+            onClick={() => setNicknameOpen(true)}
+          />
+        </span>
         <span className="text-caption text-fg-muted">
           {me.providers.map((p) => t(`login.name.${p}` as 'login.name.kakao')).join(' · ')}
         </span>
@@ -158,6 +167,7 @@ export function AccountCard() {
         )}
         {kind === 'delete' && <p className="text-body-2 text-fg-sub">{t('account.deleteDesc')}</p>}
       </BottomSheet>
+      {nicknameOpen && <NicknameSheet open onOpenChange={setNicknameOpen} />}
     </section>
   );
 }

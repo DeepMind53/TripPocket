@@ -1,4 +1,5 @@
 import type { FastifyInstance } from 'fastify';
+import { normalizeNickname } from '@trippocket/shared';
 import type { Db } from '../db/database';
 import { requireUser, SESSION_COOKIE } from '../auth/session';
 
@@ -9,12 +10,13 @@ export function meRoutes(app: FastifyInstance, db: Db): void {
   app.get('/api/me', auth, async (req) => {
     const userId = req.user!.userId;
     const user = db
-      .prepare('SELECT id, nickname, created_at, is_admin FROM users WHERE id = ?')
+      .prepare('SELECT id, nickname, created_at, is_admin, nickname_set FROM users WHERE id = ?')
       .get(userId) as {
       id: string;
       nickname: string;
       created_at: string;
       is_admin: number;
+      nickname_set: number;
     };
     const providers = db
       .prepare('SELECT provider FROM oauth_accounts WHERE user_id = ?')
@@ -25,9 +27,26 @@ export function meRoutes(app: FastifyInstance, db: Db): void {
       nickname: user.nickname,
       createdAt: user.created_at,
       providers,
+      // false = 로그인 서비스 이름 그대로 → 앱이 닉네임 정하기를 띄운다
+      nicknameSet: !!user.nickname_set,
       ...(user.is_admin ? { isAdmin: true } : {}),
     };
   });
+
+  // 닉네임 바꾸기: 공유한 여행의 멤버 목록·관리자 화면에 보이는 이름 (1~20자, shared normalizeNickname)
+  app.patch<{ Body: { nickname?: unknown } }>(
+    '/api/me/nickname',
+    { ...auth, config: { rateLimit: { max: 20, timeWindow: '1 minute' } } },
+    async (req, reply) => {
+      const nickname = normalizeNickname(req.body?.nickname);
+      if (!nickname) return reply.code(400).send({ error: 'bad_nickname' });
+      db.prepare('UPDATE users SET nickname = ?, nickname_set = 1 WHERE id = ?').run(
+        nickname,
+        req.user!.userId,
+      );
+      return { nickname };
+    },
+  );
 
   // 기기 목록: 세션 해시 앞 12자를 기기 id로 (해시 전체·토큰은 내보내지 않음)
   app.get('/api/me/sessions', auth, async (req) => {

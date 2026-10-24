@@ -174,4 +174,8 @@ export const MIGRATIONS: readonly string[] = [
   UPDATE api_usage SET api = 'kakao_keyword' WHERE api = 'kakao_local';
   UPDATE api_controls SET api = 'kakao_keyword' WHERE api = 'kakao_local';
   `,
+  // 11: 닉네임을 직접 정했는지 (처음 로그인하면 앱이 닉네임 정하기를 띄운다) — routes/me.ts
+  `
+  ALTER TABLE users ADD COLUMN nickname_set INTEGER NOT NULL DEFAULT 0;
+  `,
 ];
