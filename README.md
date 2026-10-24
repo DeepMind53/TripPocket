@@ -41,6 +41,7 @@
 | [docs/12-quick-menu-settings-fx.md](docs/12-quick-menu-settings-fx.md) | 빠른 메뉴, 환율 계산기, 설정 항목·컨트롤 명세                      |
 | [docs/14-ai-recommendations.md](docs/14-ai-recommendations.md)         | AI 추천: 내 근처 맛집·핫플·놀거리 (기간 단계 확장)                 |
 | [docs/15-implementation-steps.md](docs/15-implementation-steps.md)     | 단계별 구현 계획 (23단계)                                          |
+| [docs/16-ux-ui-improvements.md](docs/16-ux-ui-improvements.md)         | UX·UI 개선 설계 (점검 결과·상세 설계·구현 순서)                    |
 | [PROGRESS.md](PROGRESS.md)                                             | 진행 상황                                                          |
 | [docs/13-design-review.md](docs/13-design-review.md)                   | 설계 점검: 빠진 부분·리스크·추가 결정 사항                         |
 | [docs/design/mockups.html](docs/design/mockups.html)                   | 주요 화면 시각 시안 (브라우저로 열기)                              |
