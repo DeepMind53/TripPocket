@@ -79,7 +79,7 @@ describe('일정 입력 장소 검색', () => {
       </>,
     );
     const day1 = await screen.findByRole('region', { name: '1일차 · 10.26 (월)' });
-    await user.click(within(day1).getByRole('button', { name: '일정 추가' }));
+    await user.click(within(day1).getByRole('button', { name: /일정 추가/ }));
     const sheet = await screen.findByRole('dialog', { name: '일정 추가' });
     await user.type(within(sheet).getByLabelText('이름'), '이치란');
 

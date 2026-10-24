@@ -145,7 +145,12 @@
     "bookingsLabel": "이날 예약",
     "arrive": "도착",
     "openBooking": "{{title}} 예약 보기",
-    "dayN": "{{n}}일차"
+    "dayN": "{{n}}일차",
+    "noItems": "일정 없음",
+    "addShort": "추가",
+    "addItemTo": "{{day}}에 일정 추가",
+    "emptyRun": "{{from}}~{{to}}일차 · {{range}} · 일정 없음",
+    "showDays": "펼치기"
   },
   "places": {
     "emptyTitle": "장소 찾기",

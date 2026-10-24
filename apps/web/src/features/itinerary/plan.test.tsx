@@ -51,9 +51,9 @@ describe('일정 화면', () => {
     const user = userEvent.setup();
     await renderPlan();
     const day1 = day('1일차 · 10.24 (토)');
-    expect(within(day1).getByText('아직 일정이 없어요')).toBeInTheDocument();
+    expect(within(day1).getByText(/일정 없음/)).toBeInTheDocument();
 
-    await user.click(within(day1).getByRole('button', { name: '일정 추가' }));
+    await user.click(within(day1).getByRole('button', { name: /일정 추가/ }));
     const sheet = screen.getByRole('dialog', { name: '일정 추가' });
     await user.click(within(sheet).getByRole('button', { name: '맛집' }));
     await user.type(within(sheet).getByLabelText('이름'), '이치란 라멘');
@@ -78,7 +78,7 @@ describe('일정 화면', () => {
   it('이름이 비어 있으면 저장하지 않는다', async () => {
     const user = userEvent.setup();
     await renderPlan();
-    await user.click(within(day('1일차 · 10.24 (토)')).getByRole('button', { name: '일정 추가' }));
+    await user.click(within(day('1일차 · 10.24 (토)')).getByRole('button', { name: /일정 추가/ }));
     await user.click(screen.getByRole('button', { name: '일정에 추가' }));
     expect(await screen.findByText('이름을 입력해 주세요')).toBeInTheDocument();
     expect(await itemRepo.listByTrip(tripId)).toHaveLength(0);
@@ -244,7 +244,7 @@ describe('보기 전용으로 공유받은 여행', () => {
     const user = userEvent.setup();
     await renderPlan();
     expect(screen.getByText(/보기만 가능한 여행이에요/)).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: '일정 추가' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /일정 추가/ })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: '편집' })).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /센소지/ }));
     const sheet = await screen.findByRole('dialog', { name: '센소지' });
@@ -264,5 +264,21 @@ describe('보기 전용으로 공유받은 여행', () => {
     await expect(
       itemRepo.create({ tripId, date: null, kind: 'place', title: '수정 권한' }),
     ).resolves.toMatchObject({ title: '수정 권한' });
+  });
+});
+
+describe('빈 날 접기 (docs/16 C1)', () => {
+  it('빈 날은 한 줄, 3일 이상 이어지면 한 묶음 → 누르면 펼침', async () => {
+    await tripRepo.update(tripId, { endDate: '2026-10-28' }); // 5일
+    await itemRepo.create({ tripId, date: '2026-10-24', kind: 'place', title: '센소지' });
+    const user = userEvent.setup();
+    await renderPlan('?day=all');
+    expect(within(day('1일차 · 10.24 (토)')).getByText('센소지')).toBeInTheDocument();
+    const run = screen.getByRole('button', { name: /2~5일차 .* 일정 없음/ });
+    expect(screen.queryByRole('region', { name: '3일차 · 10.26 (월)' })).not.toBeInTheDocument();
+    await user.click(run);
+    const d3 = await screen.findByRole('region', { name: '3일차 · 10.26 (월)' });
+    expect(within(d3).getByText(/일정 없음/)).toBeInTheDocument();
+    expect(within(d3).getByRole('button', { name: /일정 추가/ })).toBeInTheDocument();
   });
 });

@@ -94,6 +94,8 @@ function PlanView({
   const [mapLarge, setMapLarge] = useState(false);
   const [mapFull, setMapFull] = useRouteSheet('map-full');
   const [pagerId, setPagerId] = useState<string | null>(null);
+  // 펼친 "빈 날 묶음" (전체 보기에서 3일 이상 이어진 빈 날)
+  const [openRuns, setOpenRuns] = useState<ReadonlySet<string>>(new Set());
   const dayIndexOf = useCallback((d: LocalDate) => days.indexOf(d), [days]);
   const ongoing = getTripStatus(trip.startDate, trip.endDate, today) === 'ongoing';
   const isDomestic = isDomesticTrip(trip);
@@ -154,6 +156,12 @@ function PlanView({
       : [],
   );
   const pagerItem = pagerList.find((p) => p.item.id === pagerId)?.item ?? pagerList[0]?.item;
+
+  /** 일정·예약·숙소가 하나도 없는 날 */
+  const isEmptyDay = (d: LocalDate) =>
+    !items.some((i) => i.date === d) &&
+    bookingRowsForDay(bookings, d).length === 0 &&
+    !lodgingForNight(bookings, d);
 
   function setFilter(next: DayFilter) {
     setParams({ day: String(next) }, { replace: true });
@@ -309,33 +317,57 @@ function PlanView({
             />
           </Suspense>
         ) : (
-          sections.map(({ date, index }) => (
-            <DaySection
-              key={date ?? 'wish'}
-              date={date}
-              index={index}
-              items={items.filter((i) => i.date === date)}
-              isToday={date === today}
-              isPast={dimPast && date !== null && date < today}
-              lodging={date ? lodgingForNight(bookings, date) : null}
-              bookingRows={date ? bookingRowsForDay(bookings, date) : []}
-              onBooking={() => void navigate(`/trips/${trip.id}/bookings`)}
-              onLodging={(b) => {
-                const d = { name: b.title, address: b.details?.address };
-                if (openDirectionsDirect(d)) return;
-                setDirDest(d);
-                setDirOpen(true);
-              }}
-              canEdit={canEdit}
-              onAdd={() => openAdd(date)}
-              onOpen={openDetail}
-              onMenu={() => {
-                setMenuDate(date);
-                setDayMenuOpen(true);
-              }}
-              hideWhenEmpty={filter === 'all' && date === null}
-            />
-          ))
+          // 막 만든 여행(일정이 하나도 없음)은 날마다 한 줄씩 — 묶으면 날짜 구조가 안 보임
+          groupEmptyDays(sections, (d) => isEmptyDay(d), filter === 'all' && items.length > 0).map(
+            (g) =>
+              g.kind === 'empty-run' && !openRuns.has(g.key) ? (
+                <EmptyRun
+                  key={g.key}
+                  from={g.days[0]!}
+                  to={g.days[g.days.length - 1]!}
+                  onOpen={() => setOpenRuns((s) => new Set(s).add(g.key))}
+                />
+              ) : (
+                g.days.map(({ date, index }) =>
+                  filter === 'all' && date && isEmptyDay(date) ? (
+                    <EmptyDayRow
+                      key={date}
+                      date={date}
+                      index={index}
+                      isToday={date === today}
+                      canEdit={canEdit}
+                      onAdd={() => openAdd(date)}
+                    />
+                  ) : (
+                    <DaySection
+                      key={date ?? 'wish'}
+                      date={date}
+                      index={index}
+                      items={items.filter((i) => i.date === date)}
+                      isToday={date === today}
+                      isPast={dimPast && date !== null && date < today}
+                      lodging={date ? lodgingForNight(bookings, date) : null}
+                      bookingRows={date ? bookingRowsForDay(bookings, date) : []}
+                      onBooking={() => void navigate(`/trips/${trip.id}/bookings`)}
+                      onLodging={(b) => {
+                        const d = { name: b.title, address: b.details?.address };
+                        if (openDirectionsDirect(d)) return;
+                        setDirDest(d);
+                        setDirOpen(true);
+                      }}
+                      canEdit={canEdit}
+                      onAdd={() => openAdd(date)}
+                      onOpen={openDetail}
+                      onMenu={() => {
+                        setMenuDate(date);
+                        setDayMenuOpen(true);
+                      }}
+                      hideWhenEmpty={filter === 'all' && date === null}
+                    />
+                  ),
+                )
+              ),
+          )
         )}
       </div>
 
@@ -721,5 +753,106 @@ function MapPager({
         />
       </ol>
     </section>
+  );
+}
+
+type Section = { date: LocalDate | null; index: number };
+type Group = { kind: 'days' | 'empty-run'; key: string; days: Section[] };
+
+/** 전체 보기: 이어진 빈 날이 3일 이상이면 한 묶음으로 (하루 보기·가고 싶은 곳은 그대로) */
+function groupEmptyDays(
+  sections: readonly Section[],
+  isEmpty: (d: LocalDate) => boolean,
+  allView: boolean,
+): Group[] {
+  const out: Group[] = [];
+  let run: Section[] = [];
+  const flush = () => {
+    if (run.length >= 3) out.push({ kind: 'empty-run', key: run[0]!.date!, days: run });
+    else if (run.length) out.push({ kind: 'days', key: run[0]!.date!, days: run });
+    run = [];
+  };
+  for (const s of sections) {
+    if (allView && s.date && isEmpty(s.date)) {
+      run.push(s);
+      continue;
+    }
+    flush();
+    out.push({ kind: 'days', key: s.date ?? 'wish', days: [s] });
+  }
+  flush();
+  return out;
+}
+
+/** 빈 날 한 줄: "3일차 10.29 (목) · 일정 없음  [+ 추가]" (docs/16 C1) */
+function EmptyDayRow({
+  date,
+  index,
+  isToday,
+  canEdit,
+  onAdd,
+}: {
+  date: LocalDate;
+  index: number;
+  isToday: boolean;
+  canEdit: boolean;
+  onAdd: () => void;
+}) {
+  const { t } = useTranslation();
+  const color = dayColor(index);
+  const title = t('plan.dayHeader', { n: index + 1, date: formatMonthDay(date) });
+  return (
+    <section
+      aria-label={title}
+      className="flex min-h-12 items-center gap-2 rounded-2xl border border-dashed border-line pr-1 pl-4"
+    >
+      <h2 aria-label={title} className="tabular flex flex-1 items-center gap-2">
+        <span
+          className="rounded-full px-2.5 py-0.5 text-caption font-bold text-white"
+          style={{ background: color }}
+        >
+          {t('plan.dayN', { n: index + 1 })}
+        </span>
+        <span className="text-body-2 font-semibold">{formatMonthDay(date)}</span>
+        {isToday && (
+          <span className="rounded-full bg-primary-weak px-2 py-0.5 text-micro text-primary">
+            {t('date.today')}
+          </span>
+        )}
+        <span className="text-caption text-fg-muted">· {t('plan.noItems')}</span>
+      </h2>
+      {canEdit && (
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={onAdd}
+          aria-label={t('plan.addItemTo', { day: title })}
+        >
+          <Plus aria-hidden="true" className="size-4" />
+          {t('plan.addShort')}
+        </Button>
+      )}
+    </section>
+  );
+}
+
+/** 이어진 빈 날 묶음: "3~5일차 일정 없음" — 누르면 펼침 */
+function EmptyRun({ from, to, onOpen }: { from: Section; to: Section; onOpen: () => void }) {
+  const { t } = useTranslation();
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className="flex min-h-12 items-center justify-between gap-2 rounded-2xl border border-dashed border-line px-4 text-left"
+    >
+      <span className="tabular text-body-2 font-semibold">
+        {t('plan.emptyRun', {
+          from: from.index + 1,
+          to: to.index + 1,
+          range: `${formatMonthDay(from.date!)} – ${formatMonthDay(to.date!)}`,
+        })}
+      </span>
+      <span className="text-caption text-primary">{t('plan.showDays')}</span>
+    </button>
   );
 }
