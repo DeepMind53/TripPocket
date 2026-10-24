@@ -7,8 +7,8 @@ test('홈이 열리고 탭으로 이동한다', async ({ page }) => {
   await expect(page.getByRole('heading', { name: '트립포켓' })).toBeVisible();
 
   const nav = page.getByRole('navigation', { name: '주요 메뉴' });
-  await nav.getByRole('link', { name: '내 여행' }).click();
-  await expect(page).toHaveURL(/\/trips$/);
+  await nav.getByRole('link', { name: '기록' }).click();
+  await expect(page).toHaveURL(/\/records$/);
   await nav.getByRole('link', { name: '마이' }).click();
   await expect(page.getByRole('heading', { name: '마이' })).toBeVisible();
 });
@@ -17,11 +17,11 @@ test('여행을 만들면 목록에 남고, 뒤로가기는 만들기 화면을 
   await createTrip(page, '도쿄 가을여행');
   await expect(page.getByText(/D-3/)).toBeVisible();
 
+  // 여행 목록은 홈에 (2026-10-24) — 뒤로 가면 홈, 새로고침해도 남아 있다
   await page.getByRole('button', { name: '뒤로' }).click();
-  await expect(page).toHaveURL(/\/trips$/);
+  await expect(page).toHaveURL(/\/$/);
   await page.reload();
   await expect(page.getByText('도쿄 가을여행')).toBeVisible();
-  await expect(page.getByText('다가오는 여행')).toBeVisible();
 });
 
 test('여행 상세: 탭 이동, 빠른 메뉴는 브라우저 뒤로가기로 닫힌다', async ({ page }) => {

@@ -8,7 +8,8 @@
     "home": "홈",
     "trips": "내 여행",
     "saved": "저장",
-    "me": "마이"
+    "me": "마이",
+    "records": "기록"
   },
   "tripNav": {
     "label": "여행 메뉴",
@@ -82,7 +83,9 @@
     "upcomingDesc": "{{period}} · {{length}}",
     "bookingCount": "예약 {{n}}개",
     "itemCount": "일정 {{n}}개",
-    "checklistProgress": "준비물 {{done}}/{{total}}"
+    "checklistProgress": "준비물 {{done}}/{{total}}",
+    "myTrips": "내 여행",
+    "newTrip": "새 여행"
   },
   "trips": {
     "title": "내 여행",
@@ -927,5 +930,19 @@
     "search": "오늘 장소 검색 한도를 다 썼어요.\n내일 다시 쓸 수 있어요. 이름은 직접 입력할 수 있어요.",
     "details": "오늘 장소 상세(평점·영업시간) 한도를 다 썼어요.\n내일 다시 볼 수 있어요.",
     "ok": "알겠어요"
+  },
+  "records": {
+    "title": "기록",
+    "stats": "나의 여행",
+    "trips": "다녀온 여행",
+    "tripsN": "{{n}}번",
+    "days": "여행한 날",
+    "daysN": "{{n}}일",
+    "countries": "가 본 나라",
+    "countriesN": "{{n}}곳",
+    "pastTitle": "다녀온 여행",
+    "empty": "아직 다녀온 여행이 없어요",
+    "emptyDesc": "여행이 끝나면 여기에 모여요.",
+    "allTrips": "모든 여행 보기"
   }
 }

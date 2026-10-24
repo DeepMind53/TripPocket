@@ -83,7 +83,7 @@ export function TripLayout() {
               subtitle: `${formatPeriod(trip.startDate, trip.endDate)} · ${formatTripBadge(trip.startDate, trip.endDate, todayIn(trip.timezone))}${localClock ? ` · ${localClock}` : ''}`,
             }
           : {})}
-        backTo="/trips"
+        backTo="/"
         actions={
           <>
             {/* 함께 쓰는 여행이면 멤버 수 — 누르면 공유·멤버 시트 (사용자 요청 2026-10-24) */}

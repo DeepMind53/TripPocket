@@ -16,6 +16,12 @@ const allRoutes: RouteObject[] = [
         lazy: async () => ({ Component: (await import('../features/trips/TripsPage')).TripsPage }),
       },
       {
+        path: 'records',
+        lazy: async () => ({
+          Component: (await import('../features/records/RecordsPage')).RecordsPage,
+        }),
+      },
+      {
         path: 'saved',
         lazy: async () => ({ Component: (await import('../features/saved/SavedPage')).SavedPage }),
       },

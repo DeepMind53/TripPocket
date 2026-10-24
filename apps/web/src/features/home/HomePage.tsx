@@ -7,7 +7,7 @@ import {
   type ItineraryItem,
   type Trip,
 } from '@trippocket/shared';
-import { BedDouble, Check, ChevronRight, Copy, Navigation } from 'lucide-react';
+import { BedDouble, Check, Copy, Navigation, Plus } from 'lucide-react';
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { useTranslation } from '../../i18n';
 import { Link, useNavigate } from 'react-router';
@@ -21,6 +21,7 @@ import { formatPeriod, formatTripBadge, formatTripLength } from '../../shared/li
 import type { Destination } from '../../shared/lib/directions';
 import { Button, EmptyState } from '../../shared/ui';
 import { Wordmark } from './Wordmark';
+import { TripList } from '../trips/TripsPage';
 import { openDirectionsDirect } from '../common/openDirections';
 import { isDomesticTrip } from '../../domain/tripPlace';
 
@@ -54,7 +55,6 @@ export function HomePage() {
   const ongoing = withStatus.find((x) => x.status === 'ongoing')?.trip;
   const upcoming = withStatus.find((x) => x.status === 'upcoming')?.trip;
   const featured = ongoing ?? upcoming;
-  const others = withStatus.filter((x) => x.status !== 'past').length - (featured ? 1 : 0);
 
   return (
     <>
@@ -85,16 +85,24 @@ export function HomePage() {
         />
         {ongoing && <OngoingTrip trip={ongoing} />}
         {!ongoing && upcoming && <UpcomingTrip trip={upcoming} />}
-        {others > 0 && (
-          <Link
-            to="/trips"
-            className="flex items-center justify-center gap-1 py-2 text-body-2 font-semibold text-fg-sub"
-          >
-            {t('home.otherTrips', { n: others })}
-            <ChevronRight aria-hidden="true" className="size-4" />
-          </Link>
-        )}
       </div>
+      {/* 내 여행 (여행 중·다가오는) — 예전 "내 여행" 탭을 홈으로 (사용자 요청 2026-10-24) */}
+      {featured && (
+        <section aria-label={t('home.myTrips')} className="flex flex-col gap-2 pt-6">
+          <div className="flex items-center justify-between px-5">
+            <h2 className="text-body-1 font-bold">{t('home.myTrips')}</h2>
+            <Button
+              size="sm"
+              variant="ghost"
+              leading={<Plus aria-hidden="true" className="size-4" />}
+              onClick={() => void navigate('/trips/new')}
+            >
+              {t('home.newTrip')}
+            </Button>
+          </div>
+          <TripList only="active" exclude={featured?.id} />
+        </section>
+      )}
     </>
   );
 }

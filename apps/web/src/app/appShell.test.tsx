@@ -30,7 +30,7 @@ describe('앱 셸', () => {
   it('앱 하단 탭 4개가 있고 현재 탭을 표시한다', () => {
     renderAt('/');
     const nav = screen.getByRole('navigation', { name: '주요 메뉴' });
-    for (const name of ['홈', '내 여행', '저장', '마이']) {
+    for (const name of ['홈', '기록', '저장', '마이']) {
       expect(nav).toContainElement(screen.getByRole('link', { name }));
     }
     expect(screen.getByRole('link', { name: '홈' })).toHaveAttribute('aria-current', 'page');
@@ -39,10 +39,10 @@ describe('앱 셸', () => {
   it('탭을 누르면 화면이 바뀐다', async () => {
     const user = userEvent.setup();
     const router = renderAt('/');
-    await user.click(screen.getByRole('link', { name: '내 여행' }));
+    await user.click(screen.getByRole('link', { name: '기록' }));
     // 홈 밖의 탭은 지연 로딩 — 화면을 불러온 뒤 이동이 끝난다
-    expect(await screen.findByRole('heading', { name: '내 여행' })).toBeInTheDocument();
-    expect(router.state.location.pathname).toBe('/trips');
+    expect(await screen.findByRole('heading', { name: '기록' })).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/records');
   });
 
   it('여행 상세는 여행 탭 4개를 보여주고 기본은 일정 탭이다', async () => {

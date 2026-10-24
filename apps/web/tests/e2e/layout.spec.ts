@@ -64,7 +64,7 @@ for (const width of [320, 360, 412]) {
 test('⚡ 버튼과 하단 탭은 탭을 바꿔도 같은 자리에 있다', async ({ page }) => {
   const trip = await seedTrip(page);
 
-  const appTabs = ['/', '/trips', '/saved', '/me'];
+  const appTabs = ['/', '/records', '/saved', '/me'];
   const quick = page.getByRole('button', { name: '빠른 메뉴' });
   const nav = page.getByRole('navigation', { name: '주요 메뉴' });
   await page.goto(appTabs[0] as string);

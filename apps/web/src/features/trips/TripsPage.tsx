@@ -9,8 +9,40 @@ import { formatPeriod, formatTripBadge, formatTripLength } from '../../shared/li
 import { BottomSheet, Button, EmptyState, IconButton, TopBar } from '../../shared/ui';
 import { deleteTripWithUndo } from './tripActions';
 
-/** S-02 내 여행: 여행 중 · 다가오는 여행 · 다녀온 여행(접힘) */
+/** S-02 내 여행 (전체 목록 — 홈·기록 탭이 나눠 보여 주고, 이 화면은 "모든 여행"으로 남김) */
 export function TripsPage() {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  return (
+    <>
+      <TopBar
+        title={t('trips.title')}
+        backTo="/"
+        actions={
+          <IconButton
+            label={t('trips.new')}
+            icon={<Plus />}
+            onClick={() => void navigate('/trips/new')}
+          />
+        }
+      />
+      <TripList only="all" />
+    </>
+  );
+}
+
+/**
+ * 여행 목록: only = active(여행 중·다가오는 — 홈) / past(다녀온 — 기록 탭) / all.
+ * 카드 ⋯ → 삭제(실행 취소)
+ */
+export function TripList({
+  only,
+  exclude,
+}: {
+  only: 'active' | 'past' | 'all';
+  /** 홈 위쪽 큰 카드로 이미 보여 준 여행 */
+  exclude?: string | undefined;
+}) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const trips = useTrips();
@@ -18,7 +50,7 @@ export function TripsPage() {
   const [menuTrip, setMenuTrip] = useState<Trip | null>(null);
 
   const groups: Record<TripStatus, Trip[]> = { ongoing: [], upcoming: [], past: [] };
-  for (const trip of trips ?? []) {
+  for (const trip of (trips ?? []).filter((x) => x.id !== exclude)) {
     groups[getTripStatus(trip.startDate, trip.endDate, todayIn(trip.timezone))].push(trip);
   }
   // 다녀온 여행은 최근 것이 위로
@@ -34,22 +66,11 @@ export function TripsPage() {
     setMenuOpen(true);
   };
 
+  const showActive = only !== 'past';
+  const showPast = only !== 'active';
   return (
     <>
-      <TopBar
-        title={t('trips.title')}
-        actions={
-          <>
-            <IconButton
-              label={t('trips.new')}
-              icon={<Plus />}
-              onClick={() => void navigate('/trips/new')}
-            />
-          </>
-        }
-      />
-
-      {trips?.length === 0 && (
+      {showActive && trips?.length === 0 && (
         <EmptyState
           emoji="🗺️"
           title={t('trips.emptyTitle')}
@@ -63,9 +84,28 @@ export function TripsPage() {
       )}
 
       <div className="flex flex-col gap-6 px-5 pt-2">
-        <TripSection title={t('trips.sectionOngoing')} trips={groups.ongoing} onMenu={openMenu} />
-        <TripSection title={t('trips.sectionUpcoming')} trips={groups.upcoming} onMenu={openMenu} />
-        {groups.past.length > 0 && (
+        {showActive && (
+          <>
+            <TripSection
+              title={t('trips.sectionOngoing')}
+              trips={groups.ongoing}
+              onMenu={openMenu}
+            />
+            <TripSection
+              title={t('trips.sectionUpcoming')}
+              trips={groups.upcoming}
+              onMenu={openMenu}
+            />
+          </>
+        )}
+        {only === 'past' && (
+          <ul className="flex flex-col gap-2">
+            {groups.past.map((trip) => (
+              <TripCard key={trip.id} trip={trip} onMenu={openMenu} />
+            ))}
+          </ul>
+        )}
+        {only === 'all' && showPast && groups.past.length > 0 && (
           <details className="group">
             <summary className="flex cursor-pointer list-none items-center gap-1 py-1 text-caption font-bold text-fg-muted">
               {t('trips.sectionPast')} {groups.past.length}
