@@ -3,6 +3,7 @@ import { buildApp, PROXY_HEADER } from '../src/app';
 import { createSession } from '../src/auth/session';
 import { loadConfig } from '../src/config';
 import { openDb, type Db } from '../src/db/database';
+import { dailyQuota } from '../src/routes/usage';
 
 const SECRET = 's'.repeat(40);
 const ORIGIN = 'https://a.dev';
@@ -126,5 +127,15 @@ describe('API 사용량 (관리자)', () => {
     expect((await req('POST', '/api/admin/api-usage/groq', admin, { limit: -1 })).statusCode).toBe(
       400,
     );
+  });
+});
+
+describe('dailyQuota (지도 로드 부풀리기 방지)', () => {
+  it('키마다 하루 한도까지만, 날짜가 바뀌면 다시', () => {
+    let now = new Date('2026-10-24T10:00:00Z');
+    const allow = dailyQuota(2, () => now);
+    expect([allow('a'), allow('a'), allow('a'), allow('b')]).toEqual([true, true, false, true]);
+    now = new Date('2026-10-25T00:00:01Z');
+    expect(allow('a')).toBe(true);
   });
 });
