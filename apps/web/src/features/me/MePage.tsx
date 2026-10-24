@@ -15,7 +15,6 @@ import {
   FlaskConical,
 } from 'lucide-react';
 import { useAuth } from '../../data/authStore';
-import { useInstall } from '../../app/pwa';
 import { useRouteSheet } from '../../shared/hooks/useRouteSheet';
 import { AccountCard } from './AccountCard';
 import { InstallSheet } from './InstallSheet';
@@ -27,7 +26,6 @@ import { TopBar, toast } from '../../shared/ui';
 /** S-05 마이 — 계정(로그인), 설정, 백업, 앱 설치 */
 export function MePage() {
   const { t } = useTranslation();
-  const installed = useInstall((s) => s.installed);
   const isAdmin = useAuth((s) => s.status === 'user' && s.me?.isAdmin === true);
   const [installOpen, setInstallOpen] = useRouteSheet('install');
   return (
@@ -45,13 +43,12 @@ export function MePage() {
           )}
           <MenuRow to="/settings" icon={<Settings />} label={t('me.settings')} />
           <MenuRow to="/backup" icon={<DatabaseBackup />} label={t('me.backup')} />
-          {!installed && (
-            <MenuRow
-              icon={<Smartphone />}
-              label={t('pwa.installTitle')}
-              onClick={() => setInstallOpen(true)}
-            />
-          )}
+          {/* 설치한 뒤에도 늘 보인다 (다른 기기에 추가·아이콘을 지운 경우, 사용자 요청 2026-10-24) */}
+          <MenuRow
+            icon={<Smartphone />}
+            label={t('pwa.installTitle')}
+            onClick={() => setInstallOpen(true)}
+          />
           <MenuRow to="/labs" icon={<FlaskConical />} label={t('me.labs')} />
           <MenuRow to="/legal/help" icon={<CircleHelp />} label={t('me.help')} />
         </ul>

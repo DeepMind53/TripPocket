@@ -5,6 +5,7 @@ import Fastify, { type FastifyInstance } from 'fastify';
 import { timingSafeEqual } from 'node:crypto';
 import { webOrigins, type Config } from './config';
 import { requireUser } from './auth/session';
+import { syncAdmins } from './auth/admins';
 import type { Db } from './db/database';
 import { adminRoutes } from './routes/admin';
 import { authRoutes } from './routes/auth';
@@ -25,6 +26,7 @@ export const PROXY_HEADER = 'x-tp-proxy';
  */
 export async function buildApp(config: Config, db: Db): Promise<FastifyInstance> {
   initApiUsage(db);
+  syncAdmins(db, config);
   const app = Fastify({
     bodyLimit: 1024 * 1024,
     // Cloudflare 프록시 뒤 — 실제 접속 IP는 프록시가 알려 준다
@@ -85,7 +87,7 @@ export async function buildApp(config: Config, db: Db): Promise<FastifyInstance>
   app.setNotFoundHandler((_req, reply) => reply.code(404).send({ error: 'not_found' }));
 
   authRoutes(app, config, db);
-  meRoutes(app, db);
+  meRoutes(app, db, config);
   adminRoutes(app, db);
   usageRoutes(app, db);
   syncRoutes(app, db);

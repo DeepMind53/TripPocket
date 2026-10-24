@@ -1,10 +1,12 @@
 import type { FastifyInstance } from 'fastify';
 import { normalizeNickname } from '@trippocket/shared';
 import type { Db } from '../db/database';
+import type { Config } from '../config';
+import { fixedAdmins } from '../auth/admins';
 import { requireUser, SESSION_COOKIE } from '../auth/session';
 
 /** 내 정보·로그인한 기기·탈퇴 (docs/09 §8). 모두 로그인 필요, 자기 것만 */
-export function meRoutes(app: FastifyInstance, db: Db): void {
+export function meRoutes(app: FastifyInstance, db: Db, config: Config): void {
   const auth = { preHandler: requireUser(db) };
 
   app.get('/api/me', auth, async (req) => {
@@ -90,7 +92,9 @@ export function meRoutes(app: FastifyInstance, db: Db): void {
       db.prepare('DELETE FROM records WHERE owner_user_id = ?').run(userId);
       db.prepare('DELETE FROM users WHERE id = ?').run(userId);
       // 관리자가 탈퇴하면 가장 먼저 가입한 사람이 관리자를 이어받는다 (관리자가 없어지지 않게)
-      db.exec(`UPDATE users SET is_admin = 1 WHERE NOT EXISTS (SELECT 1 FROM users WHERE is_admin = 1)
+      // (관리자 고정 목록이 있으면 넘기지 않는다 — 목록 밖 사람은 관리자가 될 수 없음)
+      if (fixedAdmins(config).length === 0)
+        db.exec(`UPDATE users SET is_admin = 1 WHERE NOT EXISTS (SELECT 1 FROM users WHERE is_admin = 1)
         AND id = (SELECT id FROM users WHERE status = 'active' ORDER BY created_at, id LIMIT 1)`);
       db.prepare('INSERT INTO audit_log (user_id, action, created_at) VALUES (?, ?, ?)').run(
         userId,

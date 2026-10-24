@@ -42,6 +42,29 @@ function renderAt(entries: string[]) {
 }
 
 describe('예약', () => {
+  it('공항은 도시·공항 이름으로 찾아 고르고, 출발·도착 터미널을 따로 넣는다 · 시간은 숫자로 친다', async () => {
+    const user = userEvent.setup();
+    renderAt([`/trips/${tripId}/bookings`]);
+    await user.click(await screen.findByRole('button', { name: '예약 추가' }));
+    const sheet = screen.getByRole('dialog', { name: '예약 추가' });
+    await user.type(within(sheet).getByLabelText('편명'), 'KE723');
+    await user.type(within(sheet).getByLabelText('출발 공항'), '인천');
+    await user.click(await within(sheet).findByRole('option', { name: /ICN.*인천국제공항/ }));
+    await user.type(within(sheet).getByLabelText('도착 공항'), '간사이');
+    await user.click(await within(sheet).findByRole('option', { name: /KIX/ }));
+    await user.type(within(sheet).getByLabelText('출발 터미널'), 'T2');
+    await user.type(within(sheet).getByLabelText('도착 터미널'), 'T1');
+    await user.type(within(sheet).getByLabelText('출발 시간'), '0905');
+    await user.click(within(sheet).getByRole('button', { name: '예약 추가' }));
+    expect(await screen.findByText('예약을 추가했어요')).toBeInTheDocument();
+    const [saved] = await bookingRepo.listByTrip(tripId);
+    expect(saved).toMatchObject({
+      start: { place: 'ICN', time: '09:05' },
+      end: { place: 'KIX' },
+      details: { terminal: 'T2', arrivalTerminal: 'T1' },
+    });
+  });
+
   it('항공권을 추가하면 탑승권 카드로 보이고 예약번호를 복사한다', async () => {
     const user = userEvent.setup();
     renderAt([`/trips/${tripId}/bookings`]);

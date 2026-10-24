@@ -132,7 +132,10 @@ export const BookingSchema = z.object({
     z.object({
       flightNo: z.optional(z.string().check(z.maxLength(20))),
       seat: z.optional(z.string().check(z.maxLength(20))),
+      /** 항공: 출발 터미널 */
       terminal: z.optional(z.string().check(z.maxLength(20))),
+      /** 항공: 도착 터미널 (2026-10-24 추가, 없어도 됨) */
+      arrivalTerminal: z.optional(z.string().check(z.maxLength(20))),
       address: z.optional(z.string().check(z.maxLength(200))),
       phone: z.optional(z.string().check(z.maxLength(40))),
       roomType: z.optional(z.string().check(z.maxLength(60))),

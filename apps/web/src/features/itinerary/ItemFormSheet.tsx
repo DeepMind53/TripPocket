@@ -7,7 +7,7 @@ import { ITEM_KINDS, type ItemKind, type ItineraryItem, type LocalDate } from '@
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from '../../i18n';
 import { itemRepo } from '../../data/repositories/itemRepo';
-import { BottomSheet, Button, Chip, toast } from '../../shared/ui';
+import { BottomSheet, Button, Chip, TimeInput, toast } from '../../shared/ui';
 import { KIND_ICON } from './itemKinds';
 
 export interface ItemFormSheetProps {
@@ -184,24 +184,10 @@ function ItemForm({
 
       <div className="grid grid-cols-2 gap-3">
         <Field label={t('form.start')}>
-          <input
-            id="item-start"
-            type="time"
-            step={timeStep}
-            value={startTime}
-            onChange={(e) => setStartTime(e.target.value)}
-            className={`${inputClass} tabular`}
-          />
+          <TimeInput id="item-start" step={timeStep} value={startTime} onChange={setStartTime} />
         </Field>
         <Field label={t('form.end')}>
-          <input
-            id="item-end"
-            type="time"
-            step={timeStep}
-            value={endTime}
-            onChange={(e) => setEndTime(e.target.value)}
-            className={`${inputClass} tabular`}
-          />
+          <TimeInput id="item-end" step={timeStep} value={endTime} onChange={setEndTime} />
         </Field>
       </div>
 

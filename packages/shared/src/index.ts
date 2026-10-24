@@ -5,6 +5,7 @@ export {
   diffDays,
   fromEpochDay,
   isLocalDate,
+  parseTypedTime,
   todayIn,
   toEpochDay,
   weekday,
@@ -106,3 +107,4 @@ export {
 } from './ai/recommend';
 export { distanceKm, formatDistance, walkMinutes, type LatLng } from './geo/distance';
 export { NICKNAME_MAX, normalizeNickname } from './user/nickname';
+export { findAirport, searchAirports, type Airport } from './data/airports';

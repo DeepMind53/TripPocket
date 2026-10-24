@@ -226,7 +226,11 @@
     "groupRestaurant": "음식점",
     "partySize": "인원",
     "partySizeValue": "{{n}}명",
-    "restaurantName": "음식점 이름"
+    "restaurantName": "음식점 이름",
+    "departTerminal": "출발 터미널",
+    "arriveTerminal": "도착 터미널",
+    "airportPlaceholder": "공항·도시 또는 코드 ({{example}})",
+    "airportResults": "공항 검색 결과"
   },
   "checklist": {
     "emptyTitle": "준비물을 챙겨볼까요?",
@@ -524,7 +528,7 @@
     "update": "업데이트",
     "installTitle": "홈 화면에 앱 설치",
     "installWhy": "홈 화면에 추가하면\n앱처럼 바로 열리고, 인터넷 없이도 써요.",
-    "installed": "이미 설치했어요 ✓",
+    "installed": "이 기기에는 이미 설치했어요 ✓\n다른 기기에 추가하거나 아이콘을 지웠다면 아래 방법으로 다시 추가하세요.",
     "install": "설치하기",
     "installMenu": "브라우저 메뉴(⋮)에서 \"앱 설치\" 또는 \"홈 화면에 추가\"를 눌러 주세요.",
     "iosStep1": "Safari 아래쪽 공유 버튼 누르기",
@@ -884,5 +888,8 @@
     "desc": "일정·예약·준비물은 그대로 볼 수 있어요.\n연결되면 다시 쓸 수 있어요.",
     "inline": "서버에 연결할 수 없어 장소를 찾지 못해요. 이름은 그대로 입력돼요.",
     "retry": "다시 시도"
+  },
+  "time": {
+    "pick": "시계로 고르기"
   }
 }

@@ -1,10 +1,11 @@
 import { useSettings } from '../../data/settingsStore';
+import { AirportField } from './AirportField';
 import { addDays, diffDays, type Booking, type Trip } from '@trippocket/shared';
 import { Trash2 } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from '../../i18n';
 import { bookingRepo, type NewBooking } from '../../data/repositories/bookingRepo';
-import { BottomSheet, Button, Chip, snackbar, toast } from '../../shared/ui';
+import { BottomSheet, Button, Chip, snackbar, TimeInput, toast } from '../../shared/ui';
 import { BOOKING_ICON } from '../common/bookingKinds';
 
 const KINDS: Booking['kind'][] = [
@@ -76,6 +77,7 @@ function BookingForm({
     endTime: b?.end?.time ?? '',
     seat: b?.details?.seat ?? '',
     terminal: b?.details?.terminal ?? '',
+    arrivalTerminal: b?.details?.arrivalTerminal ?? '',
     confirmationNo: b?.confirmationNo ?? '',
     address: b?.details?.address ?? '',
     phone: b?.details?.phone ?? '',
@@ -123,6 +125,7 @@ function BookingForm({
           flightNo: v(f.flightNo)?.toUpperCase(),
           seat: v(f.seat),
           terminal: v(f.terminal),
+          arrivalTerminal: v(f.arrivalTerminal),
         }),
       });
     }
@@ -260,23 +263,19 @@ function BookingForm({
           </Row>
           <Row>
             <Field label={t('bookings.from')}>
-              <input
+              <AirportField
                 id="bk-from"
                 value={f.from}
-                maxLength={20}
-                placeholder="ICN"
-                onChange={set('from')}
-                className={`${inputClass} uppercase`}
+                placeholder={t('bookings.airportPlaceholder', { example: 'ICN' })}
+                onChange={(value) => set('from')({ target: { value } })}
               />
             </Field>
             <Field label={t('bookings.to')}>
-              <input
+              <AirportField
                 id="bk-to"
                 value={f.to}
-                maxLength={20}
-                placeholder="NRT"
-                onChange={set('to')}
-                className={`${inputClass} uppercase`}
+                placeholder={t('bookings.airportPlaceholder', { example: 'NRT' })}
+                onChange={(value) => set('to')({ target: { value } })}
               />
             </Field>
           </Row>
@@ -299,25 +298,36 @@ function BookingForm({
             idPrefix="bk-arrive"
           />
           <Row>
-            <Field label={t('bookings.seat')}>
-              <input
-                id="bk-seat"
-                value={f.seat}
-                maxLength={20}
-                onChange={set('seat')}
-                className={inputClass}
-              />
-            </Field>
-            <Field label={t('bookings.terminal')}>
+            <Field label={t('bookings.departTerminal')}>
               <input
                 id="bk-terminal"
                 value={f.terminal}
                 maxLength={20}
+                placeholder="T1"
                 onChange={set('terminal')}
                 className={inputClass}
               />
             </Field>
+            <Field label={t('bookings.arriveTerminal')}>
+              <input
+                id="bk-arrival-terminal"
+                value={f.arrivalTerminal}
+                maxLength={20}
+                placeholder="T2"
+                onChange={set('arrivalTerminal')}
+                className={inputClass}
+              />
+            </Field>
           </Row>
+          <Field label={t('bookings.seat')}>
+            <input
+              id="bk-seat"
+              value={f.seat}
+              maxLength={20}
+              onChange={set('seat')}
+              className={inputClass}
+            />
+          </Field>
         </>
       ) : (
         <>
@@ -552,13 +562,11 @@ function DateTimeRow(props: {
         />
       </Field>
       <Field label={props.timeLabel}>
-        <input
+        <TimeInput
           id={`${props.idPrefix}-time`}
-          type="time"
           step={timeStep}
           value={props.time}
-          onChange={props.onTime}
-          className={`${inputClass} tabular`}
+          onChange={(value) => props.onTime({ target: { value } })}
         />
       </Field>
     </Row>

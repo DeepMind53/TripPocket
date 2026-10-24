@@ -21,9 +21,11 @@ export function InstallSheet({
     <BottomSheet open={open} onOpenChange={onOpenChange} title={t('pwa.installTitle')}>
       <div className="flex flex-col gap-4">
         <p className="text-body-2 text-fg-sub">{t('pwa.installWhy')}</p>
-        {installed ? (
+        {installed && (
           <p className="text-body-2 font-semibold text-success">{t('pwa.installed')}</p>
-        ) : inApp ? (
+        )}
+        {/* 설치돼 있어도 방법은 보여 준다 — 다른 기기에 추가하거나 아이콘을 지웠을 때 */}
+        {inApp ? (
           <OpenInBrowser />
         ) : where === 'ios' ? (
           <ol className="flex flex-col gap-3 text-body-2">

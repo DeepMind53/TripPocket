@@ -191,6 +191,23 @@ describe('로그인', () => {
     expect((await api('GET', '/api/me', naver.sid)).json()).not.toHaveProperty('isAdmin');
   });
 
+  it('관리자 고정 목록: 목록의 계정만 관리자, 첫 계정 규칙·탈퇴 시 넘김 없음', async () => {
+    await app.close();
+    app = await buildApp(loadConfig({ ...env, ADMIN_ACCOUNTS: 'naver:N-2, google:G-3' }), db);
+    const kakao = await login('kakao'); // 첫 계정이지만 목록에 없음
+    expect((await api('GET', '/api/me', kakao.sid)).json()).not.toHaveProperty('isAdmin');
+    const naver = await login('naver');
+    expect((await api('GET', '/api/me', naver.sid)).json()).toMatchObject({ isAdmin: true });
+    // 원래 관리자였던 사람도 서버가 다시 켜지면 목록대로
+    db.prepare('UPDATE users SET is_admin = 1').run();
+    await app.close();
+    app = await buildApp(loadConfig({ ...env, ADMIN_ACCOUNTS: 'naver:N-2' }), db);
+    expect((await api('GET', '/api/me', kakao.sid)).json()).not.toHaveProperty('isAdmin');
+    // 관리자가 탈퇴해도 다른 사람이 이어받지 않는다
+    await api('DELETE', '/api/me', naver.sid);
+    expect((await api('GET', '/api/me', kakao.sid)).json()).not.toHaveProperty('isAdmin');
+  });
+
   it('켜지지 않은 제공자는 로그인 화면으로', async () => {
     const res = await app.inject({ method: 'GET', url: '/auth/facebook/start', headers: base });
     expect(res.headers.location).toBe(`${ORIGIN}/login?error=provider`);

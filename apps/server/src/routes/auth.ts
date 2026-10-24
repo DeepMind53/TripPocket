@@ -3,6 +3,7 @@ import type { FastifyInstance } from 'fastify';
 import { uuidv7 } from '@trippocket/shared';
 import { requestOrigin, type Config } from '../config';
 import type { Db } from '../db/database';
+import { fixedAdmins, syncAdmins } from '../auth/admins';
 import { trackApi } from '../services/apiUsage';
 import {
   credentialsFor,
@@ -183,7 +184,9 @@ export function authRoutes(app: FastifyInstance, config: Config, db: Db): void {
           audit(db, null, 'signup_denied', `${p}:${profile.providerUserId}`);
           return reply.redirect(fail(origin, requestJoin(db, p, profile.providerUserId, nickname)));
         }
+        // 첫 계정 = 관리자 (관리자 고정 목록이 있으면 그 목록만 — 아래 syncAdmins)
         const first =
+          fixedAdmins(config).length === 0 &&
           (db.prepare('SELECT COUNT(*) AS n FROM users').get() as { n: number }).n === 0;
         userId = uuidv7();
         const now = new Date().toISOString();
@@ -195,6 +198,7 @@ export function authRoutes(app: FastifyInstance, config: Config, db: Db): void {
         ).run(p, profile.providerUserId, userId);
         audit(db, userId, 'signup', p);
       }
+      syncAdmins(db, config);
       // 로그인할 때마다 새 세션 ID (세션 고정 방지)
       const old = req.cookies[SESSION_COOKIE];
       if (old) db.prepare('DELETE FROM sessions WHERE id_hash = ?').run(sha256(old));

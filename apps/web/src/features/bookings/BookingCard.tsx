@@ -62,7 +62,12 @@ function FlightBody({ booking: b }: { booking: Booking }) {
         <span aria-hidden="true" className="h-px flex-1 border-t border-dashed border-fg-muted" />
         <Plane aria-hidden="true" className="size-4 text-fg-muted" />
         <span aria-hidden="true" className="h-px flex-1 border-t border-dashed border-fg-muted" />
-        <Point code={b.end?.place} time={b.end?.time} align="end" />
+        <Point
+          code={b.end?.place}
+          time={b.end?.time}
+          terminal={b.details?.arrivalTerminal}
+          align="end"
+        />
       </div>
       {b.details?.seat && (
         <p className="text-caption text-fg-sub">
