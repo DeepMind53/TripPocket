@@ -3,6 +3,7 @@ import { useTimeText } from '../../shared/hooks/useTimeText';
 import {
   dayNumberOf,
   getTripStatus,
+  daysUntil,
   todayIn,
   type ItineraryItem,
   type Trip,
@@ -22,6 +23,8 @@ import type { Destination } from '../../shared/lib/directions';
 import { Button, EmptyState } from '../../shared/ui';
 import { Wordmark } from './Wordmark';
 import { TripList } from '../trips/TripsPage';
+
+const PrepCards = lazy(async () => ({ default: (await import('./PrepCards')).PrepCards }));
 import { openDirectionsDirect } from '../common/openDirections';
 import { isDomesticTrip } from '../../domain/tripPlace';
 
@@ -85,6 +88,14 @@ export function HomePage() {
         />
         {ongoing && <OngoingTrip trip={ongoing} />}
         {!ongoing && upcoming && <UpcomingTrip trip={upcoming} />}
+        {/* 출발 30일 전부터 준비 현황 (docs/16 B1) — 필요할 때 불러온다 */}
+        {!ongoing &&
+          upcoming &&
+          daysUntil(upcoming.startDate, todayIn(upcoming.timezone)) <= 30 && (
+            <Suspense fallback={null}>
+              <PrepCards trip={upcoming} />
+            </Suspense>
+          )}
       </div>
       {/* 내 여행 (여행 중·다가오는) — 예전 "내 여행" 탭을 홈으로 (사용자 요청 2026-10-24) */}
       {featured && (

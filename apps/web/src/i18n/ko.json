@@ -976,5 +976,21 @@
       "title": "함께 계획하고 AI로 찾기",
       "desc": "초대한 사람과 같이 고치고,\n근처 맛집·핫플은 AI가 정리해요."
     }
+  },
+  "prep": {
+    "title": "준비 현황",
+    "packing": "준비물",
+    "packingEmpty": "아직 준비물이 없어요",
+    "bookings": "예약",
+    "bookingCounts": "항공 {{flights}} · 숙소 {{lodgings}}",
+    "noLodging": "숙소 예약이 없어요",
+    "weather": "첫날 날씨",
+    "weatherLater": "{{n}}일 뒤부터 보여요",
+    "weatherNone": "날씨 정보 없음",
+    "fx": "환율",
+    "fxValue": "{{unit}} {{code}} = {{won}}원",
+    "fxOpen": "환율 계산기 열기",
+    "ai": "{{place}}에서 뭐 하지? AI 추천 받기",
+    "needsAttention": "확인이 필요해요"
   }
 }
