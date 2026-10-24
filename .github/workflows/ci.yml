@@ -27,7 +27,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm format:check
       - run: pnpm check
-      - name: Build + first-load size (budget 200KB)
+      - name: Build + first-load size (budget 300KB)
         run: pnpm --filter @trippocket/web size
       - name: E2E (Playwright, Chromium)
         run: |

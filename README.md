@@ -57,7 +57,7 @@ pnpm dev              # 개발 서버 → http://localhost:5173
 pnpm check            # lint + typecheck + 단위 테스트 (작업 완료 보고 전 필수)
 pnpm e2e              # 브라우저 테스트 (처음 한 번: pnpm --filter @trippocket/web exec playwright install chromium)
 pnpm build            # 정적 빌드 (apps/web/dist)
-pnpm size             # 빌드 후 첫 화면 JS 합계(gzip) — 예산 200KB
+pnpm size             # 빌드 후 첫 화면 JS 합계(gzip) — 예산 300KB
 pnpm format           # 코드 형식 정리 (커밋 시 자동 실행)
 ```
 

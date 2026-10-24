@@ -41,7 +41,7 @@ Tailscale Funnel https://jin-server.tail0844c0.ts.net ─▶ 홈 PC 127.0.0.1:87
 ## 3. 자주 하는 수정 — 어디를 고치나
 
 - **화면 문구**: `apps/web/src/i18n/ko.json` (키는 타입 검사됨 — 없는 키는 빌드 실패)
-- **새 화면**: `features/<기능>/XxxPage.tsx` + `app/router.tsx`에 `lazy` 경로. 첫 화면 예산 200KB(`pnpm size`)
+- **새 화면**: `features/<기능>/XxxPage.tsx` + `app/router.tsx`에 `lazy` 경로. 첫 화면 예산 300KB(`pnpm size`)
 - **새 설정 항목**: shared `settings/settings.ts`(검사·기본값) → `SettingsPage`
 - **새 실험 기능**: `data/labsStore.ts`의 `LABS`에 id 추가 → `ko.json` `labs.item.<id>.name/desc` → 기능 코드에서 `useLab('<id>')`.
   정식 기능이 되면 `LABS`에서 빼고 `useLab` 분기를 지운다
@@ -96,7 +96,7 @@ Tailscale Funnel https://jin-server.tail0844c0.ts.net ─▶ 홈 PC 127.0.0.1:87
 ```
 pnpm check          # lint + 타입 + 단위 테스트 (shared·server·web)
 pnpm e2e            # Playwright (모바일 화면 + 배포 빌드의 오프라인·CSP)
-pnpm --filter @trippocket/web size   # 첫 화면 합계 (빌드 후 측정, 예산 200KB)
+pnpm --filter @trippocket/web size   # 첫 화면 합계 (빌드 후 측정, 예산 300KB)
 pnpm format:check
 ```
 

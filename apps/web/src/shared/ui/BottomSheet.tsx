@@ -1,70 +1,33 @@
-import * as Dialog from '@radix-ui/react-dialog';
-import type { ReactNode } from 'react';
-import { cn } from '../lib/cn';
+import { lazy, Suspense, useEffect, useState, type ComponentType } from 'react';
+import type { BottomSheetProps } from './BottomSheetImpl';
 
-export interface BottomSheetProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  title: string;
-  /** 제목 아래 보조 설명 (스크린리더에도 읽힘) */
-  description?: string;
-  /** 하단 고정 영역 (예: [일정에 추가] 버튼) */
-  footer?: ReactNode;
-  children: ReactNode;
-  className?: string;
-}
+export type { BottomSheetProps } from './BottomSheetImpl';
 
-/**
- * 모바일 편집 폼용 바텀시트 (docs/11 §7).
- * 바깥 탭·ESC로 닫힌다 (뒤로가기 연동은 3단계). 포커스는 시트 안에 갇히고 닫히면 트리거로 돌아간다.
- */
-export function BottomSheet({
-  open,
-  onOpenChange,
-  title,
-  description,
-  footer,
-  children,
-  className,
-}: BottomSheetProps) {
+// 시트(Radix Dialog·스크롤 잠금 등 약 10KB)는 첫 화면에 넣지 않는다:
+// 화면이 한가해지면 미리 받아 두고(첫 열기도 바로 뜸), 그 전에 열면 그때 받는다
+let Loaded: ComponentType<BottomSheetProps> | null = null;
+// eslint-disable-next-line react-refresh/only-export-components -- 미리 받기 함수(시험 준비에서도 씀), 개발 중 새로고침 방식에만 영향
+export const preloadBottomSheet = () =>
+  import('./BottomSheetImpl').then((m) => (Loaded = m.BottomSheetImpl));
+const Lazy = lazy(async () => ({ default: await preloadBottomSheet() }));
+let preloading = false;
+
+/** 모바일 편집 폼용 바텀시트 (docs/11 §7) — 실제 구현은 BottomSheetImpl.tsx */
+export function BottomSheet(props: BottomSheetProps) {
+  const [used, setUsed] = useState(props.open);
+  if (props.open && !used) setUsed(true);
+  useEffect(() => {
+    if (preloading || Loaded) return;
+    preloading = true;
+    const idle = window.requestIdleCallback ?? ((cb: () => void) => window.setTimeout(cb, 1500));
+    idle(() => void preloadBottomSheet());
+  }, []);
+  // 한 번 연 뒤에는 계속 그려 둔다 (닫히는 애니메이션·포커스 되돌리기)
+  if (!used) return null;
+  if (Loaded) return <Loaded {...props} />;
   return (
-    <Dialog.Root open={open} onOpenChange={onOpenChange}>
-      <Dialog.Portal>
-        <Dialog.Overlay className="tp-scrim fixed inset-0 z-40 bg-scrim" />
-        <Dialog.Content
-          {...(description ? {} : { 'aria-describedby': undefined })}
-          // 하단 알림(실행 취소 등)을 눌러도 시트가 닫히지 않게
-          onPointerDownOutside={(e) => {
-            if ((e.target as Element | null)?.closest('[data-toaster]')) e.preventDefault();
-          }}
-          className={cn(
-            'tp-sheet fixed inset-x-0 bottom-0 z-50 mx-auto flex max-h-[90dvh] w-full max-w-[560px] flex-col',
-            'rounded-t-sheet bg-surface text-fg shadow-card outline-none',
-            className,
-          )}
-        >
-          <div
-            aria-hidden="true"
-            className="mx-auto mt-2 mb-1 h-1 w-9 shrink-0 rounded-full bg-line"
-          />
-          <header className="px-5 pt-2 pb-3">
-            <Dialog.Title className="text-title-2">{title}</Dialog.Title>
-            {description && (
-              <Dialog.Description className="mt-1 text-caption text-fg-muted">
-                {description}
-              </Dialog.Description>
-            )}
-          </header>
-          <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-4">{children}</div>
-          {footer ? (
-            <footer className="border-t border-line px-5 pt-3 pb-[max(12px,env(safe-area-inset-bottom))]">
-              {footer}
-            </footer>
-          ) : (
-            <div className="pb-[env(safe-area-inset-bottom)]" />
-          )}
-        </Dialog.Content>
-      </Dialog.Portal>
-    </Dialog.Root>
+    <Suspense fallback={null}>
+      <Lazy {...props} />
+    </Suspense>
   );
 }

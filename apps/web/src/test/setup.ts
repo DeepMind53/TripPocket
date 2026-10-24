@@ -24,3 +24,10 @@ globalThis.fetch = (() =>
 beforeEach(() => {
   localStorage.setItem('tp-signed-in', '1');
 });
+
+// 시트·라디오 목록은 앱에서 나중에 불러오는 부품 — 시험에서는 미리 받아 둬서 누르자마자 보이게
+await Promise.all([
+  import('../shared/ui/BottomSheet').then((m) => m.preloadBottomSheet()),
+  import('../shared/ui/RadioList').then((m) => m.preloadRadioList()),
+  import('../features/common/QuickMenu').then((m) => m.preloadQuickMenu()),
+]);

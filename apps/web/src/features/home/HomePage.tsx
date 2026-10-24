@@ -8,7 +8,7 @@ import {
   type Trip,
 } from '@trippocket/shared';
 import { BedDouble, Check, ChevronRight, Copy, Navigation } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { useTranslation } from '../../i18n';
 import { Link, useNavigate } from 'react-router';
 import { useChecklist, useTripBookings, useTripItems, useTrips } from '../../data/hooks';
@@ -21,9 +21,13 @@ import { formatPeriod, formatTripBadge, formatTripLength } from '../../shared/li
 import type { Destination } from '../../shared/lib/directions';
 import { Button, EmptyState } from '../../shared/ui';
 import { Wordmark } from './Wordmark';
-import { DirectionsSheet } from '../common/DirectionsSheet';
 import { openDirectionsDirect } from '../common/openDirections';
 import { isDomesticTrip } from '../../domain/tripPlace';
+
+// 길찾기 시트(이동수단 고르기)는 누를 때 불러온다 — 첫 화면 크기
+const DirectionsSheet = lazy(async () => ({
+  default: (await import('../common/DirectionsSheet')).DirectionsSheet,
+}));
 
 /** 1분마다 다시 그려 "35분 후"를 갱신한다 */
 function useMinuteTick() {
@@ -315,12 +319,16 @@ function OngoingTrip({ trip }: { trip: Trip }) {
         </section>
       )}
 
-      <DirectionsSheet
-        open={dirOpen}
-        onOpenChange={setDirOpen}
-        destination={dest}
-        isDomestic={isDomesticTrip(trip)}
-      />
+      {dirOpen && (
+        <Suspense fallback={null}>
+          <DirectionsSheet
+            open={dirOpen}
+            onOpenChange={setDirOpen}
+            destination={dest}
+            isDomestic={isDomesticTrip(trip)}
+          />
+        </Suspense>
+      )}
     </>
   );
 }
