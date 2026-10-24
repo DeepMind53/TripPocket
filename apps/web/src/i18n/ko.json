@@ -116,7 +116,18 @@
     "emptyDesc": "저장한 장소는 나중에 여행 일정에 바로 담을 수 있어요.",
     "other": "기타",
     "remove": "{{name}} 지우기",
-    "removed": "저장을 지웠어요"
+    "removed": "저장을 지웠어요",
+    "map": "지도",
+    "addToTrip": "여행에 담기",
+    "mapOf": "{{city}} 저장 장소 지도",
+    "addOf": "{{city}} 저장 장소를 여행에 담기",
+    "mapTitle": "{{city}} 지도",
+    "mapNoCoords": "위치가 있는 장소가 없어요",
+    "openInMapApp": "지도 앱에서 열기",
+    "addTitle": "{{n}}곳을 담을 여행",
+    "noTrips": "담을 수 있는 여행이 없어요.\n먼저 여행을 만들어 주세요.",
+    "addHint": "날짜 없는 \"가고 싶은 곳\"으로 담겨요.",
+    "added": "{{trip}}에 {{n}}곳을 담았어요"
   },
   "me": {
     "title": "마이",
