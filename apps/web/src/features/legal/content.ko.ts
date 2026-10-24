@@ -1,8 +1,9 @@
 /**
  * 법적 고지·도움말 본문 (한국어). 긴 글이라 i18n 키 대신 언어별 파일로 둔다 — 영어는 content.en.ts를 추가.
- * 운영자 연락처는 OPERATOR_CONTACT 한 곳만 바꾸면 된다 (배포 전 사용자가 채움).
+ * 운영자 연락처는 OPERATOR_CONTACT 한 곳만 바꾸면 된다. 비어 있으면 '문의' 절을 보여 주지 않는다
+ * (2026-10-24 사용자 요청: 공개할 연락처를 정할 때까지 비활성화).
  */
-export const OPERATOR_CONTACT = '운영자 이메일을 여기에 적어 주세요';
+export const OPERATOR_CONTACT: string = '';
 export const UPDATED = '2026-10-23';
 
 export interface Section {
@@ -52,7 +53,9 @@ export const PRIVACY: Section[] = [
       '여행 데이터는 여행 멤버만 볼 수 있도록 서버에서 요청마다 확인합니다.',
     ],
   },
-  { title: '6. 문의', body: [`개인정보 관련 문의: ${OPERATOR_CONTACT}`] },
+  ...(OPERATOR_CONTACT
+    ? [{ title: '6. 문의', body: [`개인정보 관련 문의: ${OPERATOR_CONTACT}`] }]
+    : []),
 ];
 
 export const TERMS: Section[] = [
@@ -76,7 +79,7 @@ export const TERMS: Section[] = [
       '중요한 일정은 백업 파일로도 보관해 주세요.',
     ],
   },
-  { title: '4. 문의', body: [OPERATOR_CONTACT] },
+  ...(OPERATOR_CONTACT ? [{ title: '4. 문의', body: [OPERATOR_CONTACT] }] : []),
 ];
 
 /** 데이터·글꼴·이미지 출처 (라이선스상 표기가 필요한 것) */
