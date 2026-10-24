@@ -186,3 +186,60 @@ export function getForecast(
     {},
   );
 }
+
+/** 1년 전 같은 날 (2월 29일 → 2월 28일) */
+export function lastYearDate(date: LocalDate): LocalDate {
+  const y = Number(date.slice(0, 4)) - 1;
+  const md = date.slice(5) === '02-29' ? '02-28' : date.slice(5);
+  return `${y}-${md}`;
+}
+
+/**
+ * 예보(16일)보다 먼 날: 작년 같은 날의 실제 날씨 (Open-Meteo 과거 기록, 비상업 무료·키 없음).
+ * 결과 키는 올해 날짜. 지난 기록은 바뀌지 않으니 30일 저장
+ */
+export function getLastYearWeather(
+  lat: number,
+  lng: number,
+  timezone: string,
+  dates: readonly LocalDate[],
+): Promise<Record<LocalDate, DayWeather>> {
+  if (dates.length === 0) return Promise.resolve({});
+  const sorted = [...dates].sort();
+  const from = lastYearDate(sorted[0]!);
+  const to = lastYearDate(sorted[sorted.length - 1]!);
+  const key = `weather-ly:${lat.toFixed(2)},${lng.toFixed(2)}:${from}:${to}`;
+  return cached(
+    key,
+    HOLIDAY_TTL,
+    async () => {
+      const url =
+        `https://archive-api.open-meteo.com/v1/archive?latitude=${lat.toFixed(2)}&longitude=${lng.toFixed(2)}` +
+        `&start_date=${from}&end_date=${to}` +
+        `&daily=weather_code,temperature_2m_max,temperature_2m_min` +
+        `&timezone=${encodeURIComponent(timezone)}`;
+      const res = await fetchCounted('open_meteo', url);
+      if (!res.ok) throw new Error(`weather archive ${res.status}`);
+      const body: unknown = await res.json();
+      const daily = isObj(body) && isObj(body.daily) ? body.daily : {};
+      const codes = arr(daily.weather_code);
+      const maxs = arr(daily.temperature_2m_max);
+      const mins = arr(daily.temperature_2m_min);
+      const byPast = new Map<string, DayWeather>();
+      arr(daily.time).forEach((d, i) => {
+        const code = num(codes[i]);
+        const max = num(maxs[i]);
+        const min = num(mins[i]);
+        if (typeof d === 'string' && code !== null && max !== null && min !== null)
+          byPast.set(d, { code, min, max });
+      });
+      const out: Record<LocalDate, DayWeather> = {};
+      for (const d of dates) {
+        const w = byPast.get(lastYearDate(d));
+        if (w) out[d] = w;
+      }
+      return out;
+    },
+    {},
+  );
+}

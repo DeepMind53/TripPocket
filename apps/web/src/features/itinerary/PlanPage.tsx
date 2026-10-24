@@ -50,6 +50,8 @@ import { BOOKING_ICON } from '../common/bookingKinds';
 import { isDomesticTrip } from '../../domain/tripPlace';
 import { distanceKm, formatDistance, walkMinutes } from '@trippocket/shared';
 import { useLab } from '../../data/labsStore';
+import { DayWeatherBadge } from '../common/DayWeatherBadge';
+import { useTripWeather, type TripDayWeather } from '../common/useTripWeather';
 
 // 드래그 편집은 편집 모드에 들어갈 때만 불러온다 (dnd-kit 포함)
 const EditModeList = lazy(() => import('./EditModeList'));
@@ -101,6 +103,7 @@ function PlanView({
   const dayIndexOf = useCallback((d: LocalDate) => days.indexOf(d), [days]);
   const ongoing = getTripStatus(trip.startDate, trip.endDate, today) === 'ongoing';
   const isDomestic = isDomesticTrip(trip);
+  const weather = useTripWeather(trip);
 
   // 기본: 여행 중이면 오늘, 아니면 전체
   const dayParam = params.get('day');
@@ -444,6 +447,7 @@ function PlanView({
                       isToday={date === today}
                       canEdit={canEdit}
                       onAdd={() => openAdd(date)}
+                      weather={weather[date]}
                     />
                   ) : (
                     <DaySection
@@ -452,6 +456,7 @@ function PlanView({
                       index={index}
                       items={items.filter((i) => i.date === date)}
                       isToday={date === today}
+                      weather={date ? weather[date] : undefined}
                       isPast={dimPast && date !== null && date < today}
                       lodging={date ? lodgingForNight(bookings, date) : null}
                       bookingRows={date ? bookingRowsForDay(bookings, date) : []}
@@ -570,7 +575,9 @@ function DaySection({
   bookingRows,
   onBooking,
   hideWhenEmpty,
+  weather,
 }: {
+  weather?: TripDayWeather | undefined;
   date: LocalDate | null;
   index: number;
   items: ItineraryItem[];
@@ -629,6 +636,7 @@ function DaySection({
             </span>
           )}
         </h2>
+        <DayWeatherBadge weather={weather} />
         {canEdit && items.length > 1 && (
           <IconButton
             label={t('plan.dayMenu', { day: title })}
@@ -902,12 +910,14 @@ function EmptyDayRow({
   isToday,
   canEdit,
   onAdd,
+  weather,
 }: {
   date: LocalDate;
   index: number;
   isToday: boolean;
   canEdit: boolean;
   onAdd: () => void;
+  weather?: TripDayWeather | undefined;
 }) {
   const { t } = useTranslation();
   const color = dayColor(index);
@@ -933,6 +943,7 @@ function EmptyDayRow({
         )}
         <span className="text-caption text-fg-muted">· {t('plan.noItems')}</span>
       </h2>
+      <DayWeatherBadge weather={weather} />
       {canEdit && (
         <Button
           size="sm"

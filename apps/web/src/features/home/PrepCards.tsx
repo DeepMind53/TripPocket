@@ -11,8 +11,8 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { Link } from 'react-router';
 import { useChecklist, useTripBookings } from '../../data/hooks';
 import { cachedFx } from '../../data/services/fxService';
-import { getForecast } from '../../data/services/travelInfo';
-import { formatTemps, weatherLook, type DayWeather } from '../../domain/weather';
+import { formatTemps, weatherLook } from '../../domain/weather';
+import { useTripWeather } from '../common/useTripWeather';
 import { useTranslation } from '../../i18n';
 import { WeatherIcon } from '../../shared/ui';
 
@@ -25,25 +25,13 @@ export function PrepCards({ trip }: { trip: Trip }) {
   const { t } = useTranslation();
   const bookings = useTripBookings(trip.id) ?? [];
   const packing = useChecklist(trip.id, 'packing');
-  const [weather, setWeather] = useState<DayWeather | null>(null);
+  // 달력과 같은 예보(2주 안), 그보다 먼 날은 작년 같은 날 기록
+  const weather = useTripWeather(trip)[trip.startDate];
   const [fx, setFx] = useState<FxSnapshot | null>(null);
   const daysLeft = daysUntil(trip.startDate, todayIn(trip.timezone));
-  const coords = trip.destinations.find((d) => d.coords)?.coords;
   const currency = trip.destinations
     .map((d) => (d.countryCode ? COUNTRY_CURRENCY[d.countryCode] : undefined))
     .find((c) => c && c !== 'KRW');
-
-  useEffect(() => {
-    // 예보는 16일까지 — 그 안에 출발할 때만
-    if (!coords || daysLeft > 15) return;
-    let alive = true;
-    getForecast(coords.lat, coords.lng, trip.timezone)
-      .then((f) => alive && setWeather(f[trip.startDate] ?? null))
-      .catch(() => {});
-    return () => {
-      alive = false;
-    };
-  }, [coords?.lat, coords?.lng, trip.timezone, trip.startDate, daysLeft]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     void cachedFx().then(setFx);
@@ -92,14 +80,22 @@ export function PrepCards({ trip }: { trip: Trip }) {
         </Card>
         <Card to={`${base}/plan`} emoji="☀️" label={t('prep.weather')}>
           {weather ? (
-            <span className="flex items-center gap-1.5">
-              <WeatherIcon kind={weatherLook(weather.code).kind} className="size-6" />
-              <span className="text-caption text-fg-sub">{weatherLook(weather.code).label}</span>
-              <span className="tabular text-body-2">{formatTemps(weather)}</span>
-            </span>
+            <>
+              <span className="flex items-center gap-1.5">
+                <WeatherIcon kind={weatherLook(weather.code).kind} className="size-6" />
+                <span className="text-caption text-fg-sub">{weatherLook(weather.code).label}</span>
+                <span className="tabular text-body-2">{formatTemps(weather)}</span>
+              </span>
+              {weather.year && (
+                <span className="text-micro text-fg-muted">
+                  {t('weather.yearShort', { yy: String(weather.year).slice(2) })} ·{' '}
+                  {t('prep.weatherLater')}
+                </span>
+              )}
+            </>
           ) : (
             <span className="text-caption text-fg-muted">
-              {daysLeft > 15 ? t('prep.weatherLater', { n: daysLeft - 15 }) : t('prep.weatherNone')}
+              {daysLeft >= 14 ? t('prep.weatherLater') : t('prep.weatherNone')}
             </span>
           )}
         </Card>
@@ -109,7 +105,7 @@ export function PrepCards({ trip }: { trip: Trip }) {
               {t('prep.fxValue', {
                 unit,
                 code: currency,
-                won: Math.round(rate * unit).toLocaleString(),
+                won: (rate * unit).toLocaleString('ko-KR', { maximumFractionDigits: 2 }),
               })}
             </span>
           ) : (

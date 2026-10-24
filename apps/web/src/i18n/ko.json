@@ -1039,12 +1039,17 @@
     "bookingCounts": "항공 {{flights}} · 숙소 {{lodgings}}",
     "noLodging": "숙소 예약이 없어요",
     "weather": "첫날 날씨",
-    "weatherLater": "{{n}}일 뒤부터 보여요",
+    "weatherLater": "예보는 출발 2주 전부터 보여요",
     "weatherNone": "날씨 정보 없음",
     "fx": "환율",
     "fxValue": "{{unit}} {{code}} = {{won}}원",
     "fxOpen": "환율 계산기 열기",
     "ai": "{{place}}에서 뭐 하지? AI 추천 받기",
     "needsAttention": "확인이 필요해요"
+  },
+  "weather": {
+    "yearShort": "{{yy}}년 정보",
+    "lastYearLabel": "작년({{year}}년) 같은 날 날씨: {{look}} {{temps}}",
+    "forecastLabel": "날씨 예보: {{look}} {{temps}}"
   }
 }

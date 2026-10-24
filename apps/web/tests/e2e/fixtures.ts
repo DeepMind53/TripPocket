@@ -15,7 +15,8 @@ export const test = base.extend<{ offlineApis: void }>({
         localStorage.setItem('tp-quick-hint', '1'); // ⚡ 첫 안내 말풍선은 따로 시험
       });
       await page.route('https://date.nager.at/**', (r) => r.fulfill({ json: [] }));
-      await page.route('https://api.open-meteo.com/**', (r) =>
+      // 예보·작년 기록 둘 다
+      await page.route(/^https:\/\/(api|archive-api)\.open-meteo\.com\//, (r) =>
         r.fulfill({ json: { daily: { time: [] } } }),
       );
       // jsDelivr: 환율 보조 출처는 고정 값, 대만 공휴일은 정보 없음
