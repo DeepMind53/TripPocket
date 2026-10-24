@@ -1,5 +1,5 @@
 import { useTimeText } from '../../shared/hooks/useTimeText';
-import type { ItineraryItem } from '@trippocket/shared';
+import type { Booking, ItineraryItem } from '@trippocket/shared';
 import {
   ArrowDown,
   ArrowUp,
@@ -15,6 +15,7 @@ import type { ReactNode } from 'react';
 import { useTranslation } from '../../i18n';
 import { placeLink, openMapLink, type MapApp } from '../../shared/lib/directions';
 import { BottomSheet, Button, Switch, toast } from '../../shared/ui';
+import { copyText } from '../../shared/lib/clipboard';
 import { KIND_ICON } from './itemKinds';
 
 export interface ItemDetailSheetProps {
@@ -39,6 +40,9 @@ export interface ItemDetailSheetProps {
   onMoveDown: () => void;
   /** 보기 전용 여행: 편집·순서·다녀왔어요·옮기기·삭제를 숨김 */
   readOnly?: boolean;
+  /** 이 일정과 연결된 예약 (항공·숙소·음식점 등, domain/lodging bookingForItem) */
+  booking?: Booking | undefined;
+  onOpenBooking?: () => void;
 }
 
 /** S-12 일정 상세 */
@@ -59,9 +63,16 @@ export function ItemDetailSheet({
   onMoveUp,
   onMoveDown,
   readOnly = false,
+  booking,
+  onOpenBooking,
 }: ItemDetailSheetProps) {
   const { t } = useTranslation();
   const address = item?.place?.address;
+  // 종류별 맞춤 (docs/16 D1): 이동·메모는 주소가 없으면 주소·지도 관련을 숨긴다
+  const isMove = item?.kind === 'transport';
+  const isNote = item?.kind === 'note';
+  const placeLike = !isNote && !(isMove && !address && !item?.place?.coords);
+  const hasPlace = !!address || !!item?.place?.coords;
 
   async function copyAddress() {
     if (!address) return;
@@ -95,31 +106,41 @@ export function ItemDetailSheet({
             {time && ` · ${time}`}
           </p>
 
+          {booking && <BookingSummary booking={booking} onOpen={onOpenBooking} />}
+
+          {/* 누를 수 없는 버튼은 보이지 않게 — 종류·정보에 맞는 것만 (docs/16 D1) */}
           <div className="grid grid-cols-4 gap-2">
-            <Action
-              icon={<Navigation />}
-              label={t('detail.directions')}
-              onClick={onDirections}
-              primary
-            />
-            <Action
-              icon={<Copy />}
-              label={t('detail.copyAddress')}
-              onClick={() => void copyAddress()}
-              disabled={!address}
-            />
-            <Action
-              icon={<MapPinned />}
-              label={t('detail.viewOnMap')}
-              onClick={() => openMapLink(placeLink(mapApp, dest, window.location.hostname))}
-            />
+            {placeLike && (
+              <Action
+                icon={<Navigation />}
+                label={t('detail.directions')}
+                onClick={onDirections}
+                primary
+              />
+            )}
+            {address && (
+              <Action
+                icon={<Copy />}
+                label={t('detail.copyAddress')}
+                onClick={() => void copyAddress()}
+              />
+            )}
+            {placeLike && hasPlace && (
+              <Action
+                icon={<MapPinned />}
+                label={t('detail.viewOnMap')}
+                onClick={() => openMapLink(placeLink(mapApp, dest, window.location.hostname))}
+              />
+            )}
             {!readOnly && <Action icon={<Pencil />} label={t('detail.edit')} onClick={onEdit} />}
           </div>
 
           <dl className="flex flex-col gap-3 text-body-2">
-            <Info label={t('form.address')}>
-              {address ?? <span className="text-fg-muted">{t('detail.noAddress')}</span>}
-            </Info>
+            {placeLike && (
+              <Info label={t('form.address')}>
+                {address ?? <span className="text-fg-muted">{t('detail.noAddress')}</span>}
+              </Info>
+            )}
             {item.memo && <Info label={t('form.memo')}>{item.memo}</Info>}
             {item.url && (
               <Info label={t('form.url')}>
@@ -236,5 +257,63 @@ function Info({ label, children }: { label: string; children: ReactNode }) {
       <dt className="text-caption font-semibold text-fg-muted">{label}</dt>
       <dd className="m-0 whitespace-pre-wrap">{children}</dd>
     </div>
+  );
+}
+
+/** 연결된 예약 요약: 시간·장소·터미널·좌석, 예약번호 복사, 예약 보기 (docs/16 D2) */
+function BookingSummary({
+  booking: b,
+  onOpen,
+}: {
+  booking: Booking;
+  onOpen?: (() => void) | undefined;
+}) {
+  const { t } = useTranslation();
+  const { time } = useTimeText();
+  const route =
+    b.kind === 'flight' || b.kind === 'train'
+      ? [b.start.place, b.end?.place].filter(Boolean).join(' → ')
+      : undefined;
+  const when = [time(b.start.time), b.end?.time ? time(b.end.time) : undefined]
+    .filter(Boolean)
+    .join(' – ');
+  const extra = [
+    b.details?.terminal && t('detail.departTerminal', { t: b.details.terminal }),
+    b.details?.arrivalTerminal && t('detail.arriveTerminal', { t: b.details.arrivalTerminal }),
+    b.details?.seat && t('bookings.seatValue', { seat: b.details.seat }),
+  ].filter(Boolean);
+  return (
+    <section
+      aria-label={t('detail.booking')}
+      className="flex flex-col gap-1.5 rounded-card border border-line bg-bg-subtle/60 p-3"
+    >
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-caption font-bold text-fg-muted">{t(`bookingKind.${b.kind}`)}</span>
+        {onOpen && (
+          <button
+            type="button"
+            onClick={onOpen}
+            className="text-caption font-semibold text-primary"
+          >
+            {t('detail.openBooking')}
+          </button>
+        )}
+      </div>
+      <p className="text-body-2 font-semibold">
+        {route ?? b.title}
+        {when && <span className="tabular ml-2 font-normal text-fg-sub">{when}</span>}
+      </p>
+      {extra.length > 0 && <p className="text-caption text-fg-sub">{extra.join(' · ')}</p>}
+      {b.confirmationNo && (
+        <button
+          type="button"
+          onClick={() => void copyText(b.confirmationNo!, t('bookings.copied'))}
+          aria-label={t('bookings.copyNo', { no: b.confirmationNo })}
+          className="self-start rounded-btn bg-surface px-2 py-1 font-mono text-caption"
+        >
+          {t('detail.confirmationNo', { no: b.confirmationNo })} ⧉
+        </button>
+      )}
+    </section>
   );
 }

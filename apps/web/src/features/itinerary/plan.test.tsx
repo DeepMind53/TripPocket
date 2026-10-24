@@ -294,3 +294,38 @@ describe('빈 날 접기 (docs/16 C1)', () => {
     expect(within(d3).getByRole('button', { name: /일정 추가/ })).toBeInTheDocument();
   });
 });
+
+describe('일정 상세 — 종류별 맞춤·예약 연결 (docs/16 D1·D2)', () => {
+  it('항공 이동 일정: 주소·지도 대신 연결된 예약(구간·시간·터미널·예약번호)', async () => {
+    const { bookingRepo } = await import('../../data/repositories/bookingRepo');
+    await itemRepo.create({
+      tripId,
+      date: '2026-10-24',
+      kind: 'transport',
+      title: '인천 → 나리타 KE703',
+      startTime: '09:10',
+    });
+    await bookingRepo.create({
+      tripId,
+      kind: 'flight',
+      title: 'KE703 ICN→NRT',
+      confirmationNo: 'AB12CD',
+      start: { date: '2026-10-24', time: '09:10', place: 'ICN' },
+      end: { date: '2026-10-24', time: '11:30', place: 'NRT' },
+      details: { terminal: 'T2', arrivalTerminal: 'T1' },
+    });
+    const user = userEvent.setup();
+    await renderPlan();
+    await user.click(await screen.findByRole('button', { name: /인천 → 나리타 KE703/ }));
+    const sheet = await screen.findByRole('dialog', { name: '인천 → 나리타 KE703' });
+    const linked = within(sheet).getByRole('region', { name: '연결된 예약' });
+    expect(linked).toHaveTextContent('ICN → NRT');
+    expect(linked).toHaveTextContent('출발 T2 · 도착 T1');
+    expect(
+      within(linked).getByRole('button', { name: '예약번호 AB12CD 복사' }),
+    ).toBeInTheDocument();
+    expect(within(sheet).queryByText(/주소가 없어요/)).not.toBeInTheDocument();
+    expect(within(sheet).queryByRole('button', { name: '주소 복사' })).not.toBeInTheDocument();
+    expect(within(sheet).queryByRole('button', { name: '길찾기' })).not.toBeInTheDocument();
+  });
+});

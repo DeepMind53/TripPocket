@@ -83,3 +83,32 @@ export function bookingRowsForDay(bookings: readonly Booking[], date: LocalDate)
   }
   return rows.sort((a, b) => (a.time ?? '').localeCompare(b.time ?? ''));
 }
+
+/**
+ * 일정에 연결된 예약 (docs/16 D2): bookingId가 있으면 그것, 없으면 같은 날·같은 종류·같은 시각의 예약.
+ * 이동 일정 ↔ 항공·기차·렌터카, 숙소 ↔ 숙소(체크인 날), 맛집 ↔ 음식점
+ */
+export function bookingForItem(
+  item: {
+    date: LocalDate | null;
+    kind: string;
+    startTime?: string | undefined;
+    bookingId?: string | undefined;
+  },
+  bookings: readonly Booking[],
+): Booking | undefined {
+  const live = bookings.filter((b) => !b.deletedAt);
+  if (item.bookingId) return live.find((b) => b.id === item.bookingId);
+  if (!item.date) return undefined;
+  const kinds: Partial<Record<string, readonly Booking['kind'][]>> = {
+    transport: ['flight', 'train', 'car'],
+    lodging: ['lodging'],
+    food: ['restaurant'],
+    activity: ['tour', 'ticket'],
+  };
+  const want = kinds[item.kind];
+  if (!want) return undefined;
+  const same = live.filter((b) => want.includes(b.kind) && b.start.date === item.date);
+  if (item.kind === 'lodging') return same[0];
+  return same.find((b) => b.start.time && b.start.time === item.startTime);
+}

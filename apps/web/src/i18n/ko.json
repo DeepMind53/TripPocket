@@ -452,7 +452,12 @@
     "order": "순서",
     "moveUp": "위로",
     "moveDown": "아래로",
-    "position": "{{n}}번째 / {{total}}개"
+    "position": "{{n}}번째 / {{total}}개",
+    "booking": "연결된 예약",
+    "openBooking": "예약 보기",
+    "departTerminal": "출발 {{t}}",
+    "arriveTerminal": "도착 {{t}}",
+    "confirmationNo": "예약번호 {{no}}"
   },
   "dir": {
     "title": "{{name}}까지",

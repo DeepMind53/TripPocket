@@ -31,6 +31,7 @@ import {
   lodgingForNight,
   type BookingRow,
   type LodgingNight,
+  bookingForItem,
 } from '../../domain/lodging';
 import type { Destination } from '../../shared/lib/directions';
 import { itemRepo } from '../../data/repositories/itemRepo';
@@ -428,6 +429,8 @@ function PlanView({
         onMoveUp={() => selected && void itemRepo.move(selected.id, selected.date, position - 2)}
         onMoveDown={() => selected && void itemRepo.move(selected.id, selected.date, position)}
         readOnly={!canEdit}
+        booking={selected ? bookingForItem(selected, bookings) : undefined}
+        onOpenBooking={() => void navigate(`/trips/${trip.id}/bookings`)}
       />
       <DirectionsSheet
         open={dirOpen}
