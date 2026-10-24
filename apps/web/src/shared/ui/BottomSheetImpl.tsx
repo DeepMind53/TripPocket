@@ -11,8 +11,10 @@ export interface BottomSheetProps {
   description?: string;
   /** 하단 고정 영역 (예: [일정에 추가] 버튼) */
   footer?: ReactNode;
-  /** 제목 오른쪽 작은 자리 (예: 방문 시간 빠른 입력) */
+  /** 제목 오른쪽 작은 자리 (예: 후기 버튼) */
   headerAside?: ReactNode;
+  /** false = 열 때 입력칸에 포커스를 주지 않음 (휴대폰 키보드가 바로 뜨지 않게) */
+  autoFocusInput?: boolean;
   children: ReactNode;
   className?: string;
 }
@@ -28,6 +30,7 @@ export function BottomSheetImpl({
   description,
   footer,
   headerAside,
+  autoFocusInput = true,
   children,
   className,
 }: BottomSheetProps) {
@@ -60,9 +63,9 @@ export function BottomSheetImpl({
         <Dialog.Overlay className="tp-scrim fixed inset-0 z-40 bg-scrim" />
         <Dialog.Content
           {...(description ? {} : { 'aria-describedby': undefined })}
-          // 머리글 옆 입력칸이 있으면 열자마자 키보드가 뜨지 않게 시트 자체에 포커스
+          // 보기용 시트는 열자마자 키보드가 뜨지 않게 시트 자체에 포커스
           onOpenAutoFocus={(e) => {
-            if (!headerAside) return;
+            if (autoFocusInput) return;
             e.preventDefault();
             (e.currentTarget as HTMLElement).focus();
           }}

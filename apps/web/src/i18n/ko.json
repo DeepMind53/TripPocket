@@ -90,7 +90,11 @@
     "myTrips": "내 여행",
     "newTrip": "새 여행",
     "sampleCta": "샘플 여행으로 둘러보기",
-    "sampleCreated": "샘플 여행을 만들었어요\n둘러본 뒤 지워도 돼요"
+    "sampleCreated": "샘플 여행을 만들었어요\n둘러본 뒤 지워도 돼요",
+    "currentItem": "지금",
+    "markDone": "다녀왔어요",
+    "directionsTo": "{{name}} 길찾기",
+    "tomorrowFirst": "내일 첫 일정 · {{time}} {{title}} ›"
   },
   "trips": {
     "title": "내 여행",

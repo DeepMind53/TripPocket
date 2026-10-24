@@ -46,6 +46,17 @@ export function nextItem(dayItems: readonly ItineraryItem[], now: LocalTime): It
   );
 }
 
+/** 지금 하고 있을 일정: 시작 시각이 지난 것 중 가장 늦은 것 (안 다녀온 것, 3시간 안) — docs/20 U2 */
+export function currentItem(
+  dayItems: readonly ItineraryItem[],
+  now: LocalTime,
+): ItineraryItem | null {
+  const started = dayItems.filter(
+    (i) => !i.done && i.startTime && i.startTime < now && minutesUntil(i.startTime, now) <= 180,
+  );
+  return started.at(-1) ?? null;
+}
+
 /** 여행지 시간대의 지금 시각 "HH:mm" */
 export function nowTimeIn(timezone: string, now: Date = new Date()): LocalTime {
   return new Intl.DateTimeFormat('en-GB', {

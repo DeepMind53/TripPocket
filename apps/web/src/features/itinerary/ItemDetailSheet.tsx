@@ -130,41 +130,48 @@ export function ItemDetailSheet({
       onOpenChange={onOpenChange}
       title={item?.title ?? ''}
       description={dayLabel}
+      autoFocusInput={false}
       headerAside={
-        item && (canReview || (onVisitTime && !readOnly)) ? (
-          <span className="flex flex-col items-end gap-1.5">
-            {/* 이름 오른쪽: 후기 입력 (사용자 요청 2026-10-25) */}
-            {canReview && (
-              <Button
-                size="sm"
-                variant={mine ? 'ghost' : 'secondary'}
-                leading={<SquarePen aria-hidden="true" className="size-4" />}
-                onClick={() => (visited ? setReviewOpen(true) : toast(t('review.notVisited')))}
-              >
-                {mine ? t('review.mine') : t('review.write')}
-              </Button>
-            )}
-            {onVisitTime && !readOnly && (
-              <TimeInput
-                id="detail-visit-time"
-                size="sm"
-                label={t('detail.visitTime')}
-                value={item.startTime ?? ''}
-                onChange={onVisitTime}
-                className="w-[104px]"
-              />
-            )}
-          </span>
+        item && canReview ? (
+          /* 이름 오른쪽: 후기 입력만 (docs/20 U1) */
+          <Button
+            size="sm"
+            variant={mine ? 'ghost' : 'secondary'}
+            leading={<SquarePen aria-hidden="true" className="size-4" />}
+            onClick={() => (visited ? setReviewOpen(true) : toast(t('review.notVisited')))}
+          >
+            {mine ? t('review.mine') : t('review.write')}
+          </Button>
         ) : undefined
       }
     >
       {item && Icon && dest && (
         <div className="flex flex-col gap-5">
-          <p className="tabular flex items-center gap-2 text-body-2 text-fg-sub">
-            <Icon aria-hidden="true" className="size-4" />
-            {t(`kind.${item.kind}`)}
-            {time && ` · ${time}`}
-          </p>
+          {/* 첫 줄: 종류 · 방문 시간 (바로 고치기) */}
+          <div className="tabular flex flex-wrap items-center gap-x-3 gap-y-2 text-body-2 text-fg-sub">
+            <span className="flex items-center gap-1.5">
+              <Icon aria-hidden="true" className="size-4" />
+              {t(`kind.${item.kind}`)}
+            </span>
+            {onVisitTime && !readOnly ? (
+              <label className="flex items-center gap-2">
+                <span className="text-caption text-fg-muted">{t('detail.visitTime')}</span>
+                <TimeInput
+                  id="detail-visit-time"
+                  size="sm"
+                  label={t('detail.visitTime')}
+                  value={item.startTime ?? ''}
+                  onChange={onVisitTime}
+                  className="w-[104px]"
+                />
+                {item.endTime && (
+                  <span className="text-caption text-fg-muted">~ {fmt(item.endTime)}</span>
+                )}
+              </label>
+            ) : (
+              time && <span>{time}</span>
+            )}
+          </div>
 
           {booking && <BookingSummary booking={booking} onOpen={onOpenBooking} />}
 

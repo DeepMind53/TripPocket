@@ -1,6 +1,7 @@
 import { BackupReminder } from '../backup/BackupReminder';
 import { useTimeText } from '../../shared/hooks/useTimeText';
 import {
+  addDays,
   dayNumberOf,
   getTripStatus,
   daysUntil,
@@ -14,7 +15,13 @@ import { useTranslation } from '../../i18n';
 import { Link, useNavigate } from 'react-router';
 import { useChecklist, useTripBookings, useTripItems, useTrips } from '../../data/hooks';
 import { itemRepo } from '../../data/repositories/itemRepo';
-import { lodgingForNight, minutesUntil, nextItem, nowTimeIn } from '../../domain/lodging';
+import {
+  currentItem,
+  lodgingForNight,
+  minutesUntil,
+  nextItem,
+  nowTimeIn,
+} from '../../domain/lodging';
 import { useRouteSheet } from '../../shared/hooks/useRouteSheet';
 import { copyText } from '../../shared/lib/clipboard';
 import { cn } from '../../shared/lib/cn';
@@ -187,6 +194,14 @@ function OngoingTrip({ trip }: { trip: Trip }) {
   const todayItems = (items ?? []).filter((i) => i.date === today);
   const now = nowTimeIn(trip.timezone);
   const next = nextItem(todayItems, now);
+  // 지금 하고 있을 일정 (시작은 지났고 아직 안 다녀옴) — docs/20 U2
+  const current = currentItem(todayItems, now);
+  // 오늘 다 끝나면 내일 첫 일정
+  const tomorrow = addDays(today, 1);
+  const tomorrowFirst =
+    !next && tomorrow <= trip.endDate
+      ? ((items ?? []).find((i) => i.date === tomorrow && !i.done) ?? null)
+      : null;
   const lodging = lodgingForNight(bookings, today);
   const planUrl = `/trips/${trip.id}/plan?day=${day}`;
 
@@ -215,6 +230,42 @@ function OngoingTrip({ trip }: { trip: Trip }) {
           {formatTripBadge(trip.startDate, trip.endDate, today)}
         </span>
       </Link>
+
+      {current && current.id !== next?.id && (
+        <section
+          aria-label={t('home.currentItem')}
+          className="flex items-center gap-3 rounded-card border border-primary/40 bg-primary-weak px-4 py-3"
+        >
+          <span className="flex min-w-0 flex-1 flex-col">
+            <span className="tabular text-caption font-semibold text-primary">
+              {t('home.currentItem')} · {time(current.startTime)}
+            </span>
+            <span className="truncate text-body-1 font-semibold">{current.title}</span>
+          </span>
+          <button
+            type="button"
+            onClick={() => void itemRepo.update(current.id, { done: true })}
+            className="flex h-10 shrink-0 items-center gap-1 rounded-btn bg-surface px-3 text-caption font-semibold text-primary"
+          >
+            <Check aria-hidden="true" className="size-4" />
+            {t('home.markDone')}
+          </button>
+          <button
+            type="button"
+            aria-label={t('home.directionsTo', { name: current.title })}
+            onClick={() =>
+              directions({
+                name: current.title,
+                address: current.place?.address,
+                coords: current.place?.coords,
+              })
+            }
+            className="grid size-10 shrink-0 place-items-center rounded-btn bg-surface text-primary"
+          >
+            <Navigation aria-hidden="true" className="size-4" />
+          </button>
+        </section>
+      )}
 
       {next ? (
         <section
@@ -256,9 +307,20 @@ function OngoingTrip({ trip }: { trip: Trip }) {
         </section>
       ) : (
         items && (
-          <p className="rounded-card bg-bg-subtle p-4 text-body-2 text-fg-sub">
-            {todayItems.length === 0 ? t('home.noItemsToday') : t('home.allDone')}
-          </p>
+          <div className="flex flex-col gap-1 rounded-card bg-bg-subtle p-4 text-body-2 text-fg-sub">
+            <p>{todayItems.length === 0 ? t('home.noItemsToday') : t('home.allDone')}</p>
+            {tomorrowFirst && (
+              <Link
+                to={`/trips/${trip.id}/plan?day=${day + 1}`}
+                className="tabular font-semibold text-primary"
+              >
+                {t('home.tomorrowFirst', {
+                  time: time(tomorrowFirst.startTime) ?? '',
+                  title: tomorrowFirst.title,
+                })}
+              </Link>
+            )}
+          </div>
         )
       )}
 

@@ -1,5 +1,12 @@
 import type { Booking, ItineraryItem } from '@trippocket/shared';
-import { bookingRowsForDay, lodgingForNight, minutesUntil, nextItem, nowTimeIn } from './lodging';
+import {
+  bookingRowsForDay,
+  currentItem,
+  lodgingForNight,
+  minutesUntil,
+  nextItem,
+  nowTimeIn,
+} from './lodging';
 
 const base = {
   tripId: 't',
@@ -53,6 +60,14 @@ describe('다음 일정', () => {
     expect(nextItem(list, '10:00')?.title).toBe('저녁');
     expect(nextItem(list, '19:00')?.title).toBe('메모');
     expect(nextItem([item('끝', '09:00', true)], '08:00')).toBeNull();
+  });
+
+  it('지금 하고 있을 일정: 시작이 지난 것 중 마지막, 3시간 넘으면 없음 (docs/20 U2)', () => {
+    const list = [item('아침', '09:00'), item('점심', '11:30'), item('저녁', '18:00')];
+    expect(currentItem(list, '12:00')?.title).toBe('점심');
+    expect(currentItem(list, '08:00')).toBeNull();
+    expect(currentItem(list, '15:00')).toBeNull();
+    expect(currentItem([item('점심', '11:30', true)], '12:00')).toBeNull();
   });
 
   it('여행지 시각과 남은 분', () => {
