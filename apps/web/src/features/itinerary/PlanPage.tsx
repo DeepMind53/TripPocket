@@ -22,7 +22,7 @@ import {
   Plus,
   Footprints,
 } from 'lucide-react';
-import { lazy, Suspense, useCallback, useState, Fragment, useRef } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useState, Fragment, useRef } from 'react';
 import { useTranslation } from '../../i18n';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { useTrip, useTripBookings, useTripItems } from '../../data/hooks';
@@ -165,6 +165,36 @@ function PlanView({
     bookingRowsForDay(bookings, d).length === 0 &&
     !lodgingForNight(bookings, d);
 
+  // 전체 보기: 지금 화면 위쪽에 있는 날의 칩을 테두리로 표시하고 칩 줄을 그 칩으로 (docs/16 C2)
+  const chipsRef = useRef<HTMLDivElement>(null);
+  const [seenDay, setInView] = useState<string | null>(null);
+  const inView = filter === 'all' ? seenDay : null;
+  useEffect(() => {
+    if (filter !== 'all' || typeof IntersectionObserver === 'undefined') return;
+    const visible = new Map<string, boolean>();
+    const els = [...document.querySelectorAll<HTMLElement>('main [data-day]')];
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries)
+          visible.set((e.target as HTMLElement).dataset.day!, e.isIntersecting);
+        setInView(els.find((el) => visible.get(el.dataset.day!))?.dataset.day ?? null);
+      },
+      // 위쪽 고정 머리(제목·칩 줄) 아래부터 화면 절반까지
+      { rootMargin: '-120px 0px -50% 0px' },
+    );
+    els.forEach((el) => io.observe(el));
+    return () => io.disconnect();
+  }, [filter, items, bookings, openRuns]);
+  useEffect(() => {
+    const bar = chipsRef.current;
+    const chip = inView ? bar?.querySelector<HTMLElement>(`[data-chip="${inView}"]`) : null;
+    if (!bar || !chip) return;
+    bar.scrollTo?.({
+      left: chip.offsetLeft - (bar.clientWidth - chip.clientWidth) / 2,
+      behavior: 'smooth',
+    });
+  }, [inView]);
+
   function setFilter(next: DayFilter) {
     setParams({ day: String(next) }, { replace: true });
   }
@@ -218,6 +248,7 @@ function PlanView({
   return (
     <div className="flex flex-col">
       <div
+        ref={chipsRef}
         role="toolbar"
         aria-label={t('plan.dayChipsLabel')}
         className="sticky top-[calc(env(safe-area-inset-top)+56px)] z-10 flex gap-2 overflow-x-auto bg-bg px-5 py-2"
@@ -228,6 +259,9 @@ function PlanView({
         {days.map((d, i) => (
           <Chip
             key={d}
+            data-chip={d}
+            aria-current={inView === d ? 'location' : undefined}
+            className={inView === d ? 'border-primary text-primary' : undefined}
             selected={filter === i + 1}
             onClick={() => setFilter(i + 1)}
             leading={
@@ -244,7 +278,13 @@ function PlanView({
             {d === today && <span className="sr-only"> · {t('date.today')}</span>}
           </Chip>
         ))}
-        <Chip selected={filter === 'wish'} onClick={() => setFilter('wish')}>
+        <Chip
+          data-chip="wish"
+          aria-current={inView === 'wish' ? 'location' : undefined}
+          className={inView === 'wish' ? 'border-primary text-primary' : undefined}
+          selected={filter === 'wish'}
+          onClick={() => setFilter('wish')}
+        >
           {t('plan.wishlist')}
         </Chip>
       </div>
@@ -493,6 +533,7 @@ function DaySection({
   return (
     <section
       aria-label={title}
+      data-day={date ?? 'wish'}
       className={cn(
         'flex flex-col overflow-hidden rounded-2xl border border-line bg-surface',
         isPast && 'opacity-60',
@@ -808,6 +849,7 @@ function EmptyDayRow({
   return (
     <section
       aria-label={title}
+      data-day={date}
       className="flex min-h-12 items-center gap-2 rounded-2xl border border-dashed border-line pr-1 pl-4"
     >
       <h2 aria-label={title} className="tabular flex flex-1 items-center gap-2">
@@ -847,6 +889,7 @@ function EmptyRun({ from, to, onOpen }: { from: Section; to: Section; onOpen: ()
     <button
       type="button"
       onClick={onOpen}
+      data-day={from.date!}
       className="flex min-h-12 items-center justify-between gap-2 rounded-2xl border border-dashed border-line px-4 text-left"
     >
       <span className="tabular text-body-2 font-semibold">

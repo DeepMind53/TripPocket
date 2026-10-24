@@ -154,3 +154,17 @@ test('⚡ 버튼은 하단 탭 위에 있고, 화면 끝에서 누를 것을 가
     expect(hidden.under, `${path}: 버튼 밑에 깔린 요소`).toEqual([]);
   }
 });
+
+// 전체 보기에서 아래로 내리면 지금 보는 날의 칩이 표시된다 (docs/16 C2)
+test('전체 보기: 스크롤하면 보고 있는 날의 칩이 따라온다', async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 740 });
+  const base = await seedTrip(page);
+  await page.goto(`${base}/plan?day=all`);
+  const chips = page.getByRole('toolbar', { name: '날짜 선택' });
+  await expect(chips.locator('[aria-current="location"]')).toHaveCount(1);
+  const first = await chips.locator('[aria-current="location"]').getAttribute('data-chip');
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  await expect
+    .poll(() => chips.locator('[aria-current="location"]').getAttribute('data-chip'))
+    .not.toBe(first);
+});
