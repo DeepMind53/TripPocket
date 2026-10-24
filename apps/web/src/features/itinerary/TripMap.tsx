@@ -13,6 +13,17 @@ import {
 import { compareKeys } from '@trippocket/shared';
 import { mapAllowed, reportMapLoad } from '../../data/api/usage';
 
+/** "장소를 검색해 고른 일정만 표시" 안내는 이 기기에서 처음 한 번만 (사용자 요청 2026-10-24) */
+const HINT_KEY = 'tp-map-hint-seen';
+const HINT_MS = 5000;
+const hintSeen = () => {
+  try {
+    return localStorage.getItem(HINT_KEY) === '1';
+  } catch {
+    return false;
+  }
+};
+
 /** 날짜 색 토큰 → 실제 색 (지도 핀 SVG는 CSS 변수를 못 쓴다) */
 const dayHex = (index: number) =>
   getComputedStyle(document.documentElement)
@@ -42,6 +53,7 @@ export function TripMap({
   const pref = useSettings((s) => s.inAppMap);
   const provider = chooseProvider(trip.mapProvider ?? pref, isDomesticTrip(trip));
   const online = typeof navigator === 'undefined' || navigator.onLine;
+  const [hintDone, setHintDone] = useState(hintSeen);
 
   const visible = useMemo(
     () =>
@@ -123,6 +135,19 @@ export function TripMap({
     });
   }, [signature, status]);
 
+  const showHint = status === 'ready' && visible.length === 0 && !hintDone;
+  // 처음 보여 준 순간 "봤음"으로 남기고, 잠시 뒤 사라진다
+  useEffect(() => {
+    if (!showHint) return;
+    try {
+      localStorage.setItem(HINT_KEY, '1');
+    } catch {
+      // 저장 못 해도 이번에는 잠시 뒤 사라진다
+    }
+    const timer = setTimeout(() => setHintDone(true), HINT_MS);
+    return () => clearTimeout(timer);
+  }, [showHint]);
+
   const message = !online
     ? t('map.offline')
     : !provider
@@ -131,7 +156,7 @@ export function TripMap({
         ? t('map.error')
         : status === 'paused'
           ? t('map.paused')
-          : status === 'ready' && visible.length === 0
+          : showHint
             ? t('map.noPlaces')
             : null;
 

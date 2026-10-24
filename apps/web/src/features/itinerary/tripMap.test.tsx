@@ -97,6 +97,25 @@ describe('일정 지도', () => {
   });
 });
 
+describe('일정 지도 — 안내 문구', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('"장소를 검색해 고른 일정만" 안내는 이 기기에서 처음 한 번만', async () => {
+    localStorage.removeItem('tp-map-hint-seen');
+    resetUsageFlags();
+    vi.stubGlobal('fetch', async () => Response.json({ maps: true }));
+    const first = render(
+      <TripMap trip={trip} items={[]} dayIndexOf={() => 0} onSelect={() => {}} />,
+    );
+    expect(await screen.findByText(/장소를 검색해 고른 일정만/)).toBeInTheDocument();
+    first.unmount();
+    render(<TripMap trip={trip} items={[]} dayIndexOf={() => 0} onSelect={() => {}} />);
+    await waitFor(() => expect(calls.markers).toEqual([]));
+    await new Promise((r) => setTimeout(r, 50));
+    expect(screen.queryByText(/장소를 검색해 고른 일정만/)).not.toBeInTheDocument();
+  });
+});
+
 describe('일정 지도 — 사용량 관리', () => {
   afterEach(() => vi.unstubAllGlobals());
 
