@@ -58,8 +58,11 @@ Tailscale Funnel https://jin-server.tail0844c0.ts.net ─▶ 홈 PC 127.0.0.1:87
 - **로그인**: `/auth/<제공자>/start` → 제공자 → `/auth/<제공자>/callback`. state는 서버 저장 + `__Host-oauth` 쿠키로 대조, 구글은 PKCE.
   콜백 주소는 사용자가 들어온 주소 기준(`requestOrigin`). 처음 보는 계정 → 첫 계정이면 관리자로 가입, 아니면 가입 요청(`join_requests`)
 - **동기화**: 기기에서 고친 행에 `dirty` → `syncEngine` push(행마다 멤버십 인가) → pull(서버 rev 이후). 충돌은 나중 도착 채택 + `conflicts` 보관
-- **AI 추천** (`routes/ai.ts`): 기준점 → 카테고리끼리 동시에 { 블로그 수집(NAVER API HUB) → AI 장소 추출(Gemini → Workers AI → Groq → 없으면 지도 검색 + 언급 수) →
-  근거 id 검증·점수(shared `buildRecommendations`) → 카카오로 위치 확인, 기준점 5km 넘는 곳 제외 } → 6시간 캐시
+- **AI 추천** (`routes/ai.ts`): 기준점(가까운 역·숙소·직접 입력 — 드롭다운에서 고르면 그 장소 좌표) → 카테고리(맛집·카페·놀거리 + 직접 키워드 `custom`)끼리 동시에 {
+  블로그 수집(NAVER API HUB) → AI 장소 추출(Gemini → Workers AI → Groq → 없으면 지도 검색 + 언급 수) → 근거 id 검증·점수(shared `buildRecommendations`) →
+  **국내**: 카카오로 위치 확인, 가까운 곳이 모자라면 Google 장소로 채움 / **해외**: Google 장소 검색이 먼저, 블로그 언급·요약을 이름으로 붙임(블로그에만 있는 곳은 뒤) →
+  거리 단계 5 → 10 → 50km(shared `pickRadius`, 3곳 이상이면 그 반경) } → 6시간 캐시.
+  Google 장소 정보는 AI에 보내지 않는다(목록에만 표시). Google 장소 검색은 API 사용량 자동 중지 안에서만 — 멈추면 블로그만으로
 - **API 사용량**: `api_usage`(날짜별 호출 수, 날짜는 API마다 무료량 초기화 시간대) + `api_controls`(수동 중지·월/하루 자동 상한).
   무료 월·하루 사용량을 아는 API는 그 90%에서 자동 중지. 서버 호출은 `guardApi`/`trackApi`, 브라우저 호출은
   `data/api/usage.ts`의 `externalAllowed`/`reportExternal`(→ `/api/usage/flags`·`/api/usage/map-load`, IP당 하루 100회까지만 셈)

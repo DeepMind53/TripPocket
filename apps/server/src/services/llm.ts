@@ -14,7 +14,7 @@ const Output = z.object({
   places: z.array(
     z.object({
       name: z.string().check(z.minLength(1), z.maxLength(60)),
-      category: z.enum(['food', 'cafe', 'play']),
+      category: z.enum(['food', 'cafe', 'play', 'custom']),
       sourceIds: z.array(z.string()).check(z.maxLength(50)),
       adSuspect: z._default(z.boolean(), false),
       summary: z._default(z.string().check(z.maxLength(120)), ''),
@@ -26,6 +26,7 @@ const LABEL: Record<AiCategory, string> = {
   food: '맛집(식당)',
   cafe: '카페·핫플',
   play: '놀거리·관광지',
+  custom: '사용자 키워드',
 };
 
 const SYSTEM = `너는 여행 블로그 글 목록에서 장소 이름을 뽑는 도구다.
@@ -35,6 +36,7 @@ const SYSTEM = `너는 여행 블로그 글 목록에서 장소 이름을 뽑는
 - 협찬·광고·체험단으로 보이는 글만 근거라면 adSuspect=true.
 - summary: 글들에서 공통으로 말하는 특징을 한국어 40자 이내로.
 - category는 food(식당)·cafe(카페·디저트·바·핫플)·play(관광지·체험·쇼핑) 중 하나.
+- 사용자 메시지에 keyword가 있으면 그 키워드에 맞는 곳만 뽑고 category는 모두 "custom".
 - 출력은 JSON 하나: {"places":[{"name":"","category":"food","sourceIds":["p1"],"adSuspect":false,"summary":""}]}`;
 
 export type LlmEngine = 'gemini' | 'workers-ai' | 'groq';
@@ -147,10 +149,13 @@ const userMessage = (
   anchor: string,
   category: AiCategory,
   posts: readonly (SourcePost & { description?: string })[],
+  keyword?: string,
 ) =>
   JSON.stringify({
     anchor,
     category: LABEL[category],
+    // 키워드는 사용자가 입력한 값 — posts처럼 데이터로만 다룬다 (SYSTEM)
+    ...(category === 'custom' && keyword ? { keyword } : {}),
     // 토큰 절약: 가게 이름은 대개 제목·요약 앞쪽에 있다. 날짜는 서버가 따로 계산하므로 보내지 않음
     posts: posts.map((p) => ({
       id: p.id,
@@ -165,13 +170,18 @@ async function tryProvider(
   anchor: string,
   category: AiCategory,
   posts: readonly (SourcePost & { description?: string })[],
+  keyword?: string,
 ): Promise<ExtractedPlace[]> {
-  const user = userMessage(anchor, category, posts.slice(0, p.maxPosts));
+  const user = userMessage(anchor, category, posts.slice(0, p.maxPosts), keyword);
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
       const parsed = Output.safeParse(await call(p, user));
       // 다른 카테고리로 분류한 곳은 뺀다 (맛집 글에 나온 카페가 맛집 목록에 섞이지 않게)
-      if (parsed.success) return parsed.data.places.filter((x) => x.category === category);
+      // 키워드 추천은 종류를 가리지 않는다
+      if (parsed.success)
+        return category === 'custom'
+          ? parsed.data.places.map((x) => ({ ...x, category: 'custom' as const }))
+          : parsed.data.places.filter((x) => x.category === category);
     } catch (e) {
       if (e instanceof RateLimited) {
         if (e.retryAfter <= 20 && attempt === 0) {
@@ -197,12 +207,14 @@ export async function extractPlaces(
   category: AiCategory,
   posts: readonly (SourcePost & { description?: string })[],
   onError: (engine: LlmEngine, err: unknown) => void = () => {},
+  /** category = custom일 때 사용자 키워드 */
+  keyword?: string,
 ): Promise<{ engine: LlmEngine; places: ExtractedPlace[] } | null> {
   for (const p of providers) {
     // 한도로 잠시 쉬는 중이거나 관리자가 멈춘 AI는 건너뜀
     if ((cooldownUntil.get(p.engine) ?? 0) > Date.now() || !apiAllowed(p.engine)) continue;
     try {
-      return { engine: p.engine, places: await tryProvider(p, anchor, category, posts) };
+      return { engine: p.engine, places: await tryProvider(p, anchor, category, posts, keyword) };
     } catch (e) {
       onError(p.engine, e);
     }

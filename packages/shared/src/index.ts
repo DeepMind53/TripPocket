@@ -100,6 +100,9 @@ export {
   type ExtractedPlace,
   type Recommendation,
   type SourcePost,
+  AI_CATEGORIES,
+  pickRadius,
+  RADIUS_TIERS_KM,
 } from './ai/recommend';
 export { distanceKm, formatDistance, walkMinutes, type LatLng } from './geo/distance';
 export { NICKNAME_MAX, normalizeNickname } from './user/nickname';

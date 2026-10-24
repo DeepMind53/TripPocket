@@ -168,13 +168,13 @@ describe('AI 추천 ② (Groq)', () => {
     expect(JSON.parse(groqBodies[1]!)).toMatchObject({ max_completion_tokens: 1500 });
   });
 
-  it('국내: 기준점에서 5km 넘게 떨어진 곳(블로그가 함께 소개한 다른 동네)은 뺀다', async () => {
+  it('국내: 가까운 곳이 없으면 넓혀서(5 → 10 → 50km) — 약 35km면 50km 안으로 보여 준다', async () => {
     const base = globalThis.fetch;
     vi.stubGlobal('fetch', async (input: string | URL, init?: RequestInit) => {
       const url = String(input);
       if (url.includes('dapi.kakao.com/v2/local/search/keyword')) {
         const q = new URL(url).searchParams.get('query') ?? '';
-        // 기준점 "성수역"은 성수, 장소 "어니언 성수"는 일부러 수원(약 35km)에 있다고 답한다
+        // 기준점 "성수역"은 성수, 장소 "어니언 성수"는 일부러 멀리 있다고 답한다
         const far = q.includes('어니언');
         return Response.json({
           documents: [
@@ -184,6 +184,38 @@ describe('AI 추천 ② (Groq)', () => {
               road_address_name: '',
               x: far ? '127.0286' : '127.0560',
               y: far ? '37.2636' : '37.5446',
+            },
+          ],
+        });
+      }
+      return base(input, init);
+    });
+    const res = await recommend({
+      anchor: { type: 'text', name: '성수역' },
+      categories: ['cafe'],
+      domestic: true,
+    });
+    const cafe = res.json().categories.cafe;
+    expect(cafe.radiusKm).toBe(50);
+    expect(cafe.places.map((x: { name: string }) => x.name)).toEqual(['어니언 성수']);
+  });
+
+  it('국내: 50km 넘게 떨어진 곳(블로그가 함께 소개한 다른 지역)은 뺀다', async () => {
+    const base = globalThis.fetch;
+    vi.stubGlobal('fetch', async (input: string | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.includes('dapi.kakao.com/v2/local/search/keyword')) {
+        const q = new URL(url).searchParams.get('query') ?? '';
+        // 기준점 "성수역"은 성수, 장소 "어니언 성수"는 일부러 멀리 있다고 답한다
+        const far = q.includes('어니언');
+        return Response.json({
+          documents: [
+            {
+              id: far ? '9' : 'st',
+              place_name: far ? '어니언 성수' : '성수역',
+              road_address_name: '',
+              x: far ? '127.0286' : '127.0560',
+              y: far ? '36.80' : '37.5446',
             },
           ],
         });

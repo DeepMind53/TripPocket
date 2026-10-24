@@ -711,7 +711,8 @@
     "cat": {
       "food": "맛집",
       "cafe": "카페·핫플",
-      "play": "놀거리"
+      "play": "놀거리",
+      "custom": "키워드"
     },
     "run": "추천 받기",
     "disclaimer": "네이버 블로그 최근 글에서 많이 언급된 곳을 AI가 정리해요. AI 요약은 틀릴 수 있어요",
@@ -731,7 +732,15 @@
     "unavailable": "지금은 AI 추천을 쓸 수 없어요 (서버 연결·설정 확인)",
     "failed": "추천을 만들지 못했어요. 잠시 뒤 다시 시도해 주세요",
     "noLocation": "위치를 가져오지 못했어요. 직접 입력을 써 주세요",
-    "basicNote": "오늘은 무료 AI 사용량이 다 차서, AI 요약 없이 지도 검색 결과를 블로그 언급 수로만 골랐어요"
+    "basicNote": "오늘은 무료 AI 사용량이 다 차서, AI 요약 없이 지도 검색 결과를 블로그 언급 수로만 골랐어요",
+    "keyword": "키워드",
+    "keywordLabel": "추천받을 키워드",
+    "keywordPlaceholder": "예: 라멘, 야경, 온천",
+    "keywordClear": "키워드 지우기",
+    "keywordTitle": "\"{{keyword}}\" 추천",
+    "radius": "{{km}}km 안",
+    "fromGoogle": "Google 장소 검색",
+    "alsoGoogle": "Google에서도 찾음"
   },
   "admin": {
     "title": "사용자 관리",

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildRecommendations, type SourcePost } from './recommend';
+import { buildRecommendations, type SourcePost, pickRadius } from './recommend';
 
 const now = new Date('2026-10-23T00:00:00Z');
 const ago = (n: number) =>
@@ -45,5 +45,26 @@ describe('AI 추천 정리', () => {
     expect(r.cafe.enough).toBe(true);
     expect(r.cafe.places.at(-1)!.name).toBe('A');
     expect(r.play).toEqual({ months: 12, enough: false, places: [] });
+  });
+});
+
+describe('가까운 곳부터 (5 → 10 → 50km)', () => {
+  const at = (name: string, km: number | null) => ({ name, km });
+  const km = (x: { km: number | null }) => x.km;
+  it('5km 안에 3곳 이상이면 5km, 아니면 10km, 그래도 모자라면 50km (밖은 버림)', () => {
+    expect(pickRadius([at('a', 1), at('b', 2), at('c', 4), at('d', 8)], km)).toEqual({
+      radiusKm: 5,
+      items: [at('a', 1), at('b', 2), at('c', 4)],
+    });
+    expect(pickRadius([at('a', 1), at('d', 8), at('e', 9)], km).radiusKm).toBe(10);
+    expect(pickRadius([at('a', 30), at('b', 70)], km)).toEqual({
+      radiusKm: 50,
+      items: [at('a', 30)],
+    });
+  });
+  it('위치를 모르는 곳은 뒤에 붙인다', () => {
+    expect(
+      pickRadius([at('x', null), at('a', 1), at('b', 2), at('c', 3)], km).items.map((x) => x.name),
+    ).toEqual(['a', 'b', 'c', 'x']);
   });
 });

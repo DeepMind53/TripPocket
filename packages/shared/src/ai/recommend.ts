@@ -3,7 +3,35 @@ import { choosePeriod, withinMonths, type PeriodMonths } from './periods';
 /**
  * AI 추천 ② 점수·정리 (docs/14 §5~6) — AI가 뽑은 장소를 근거 글과 묶어 점수를 매긴다. 순수 함수
  */
-export type AiCategory = 'food' | 'cafe' | 'play';
+/** custom = 사용자가 입력한 키워드 (예: 라멘, 야경) */
+export type AiCategory = 'food' | 'cafe' | 'play' | 'custom';
+export const AI_CATEGORIES: readonly AiCategory[] = ['food', 'cafe', 'play', 'custom'];
+
+/** 가까운 곳부터: 5km 안에 충분하면 5km, 아니면 10km, 그래도 없으면 50km (사용자 요청 2026-10-24) */
+export const RADIUS_TIERS_KM = [5, 10, 50] as const;
+
+/**
+ * 거리 단계 고르기: 가장 작은 반경에 min곳 이상이면 그 반경, 아니면 다음 반경. 마지막 반경 밖은 버린다.
+ * km = 기준점까지 거리 (모르면 null — 위치를 모르는 곳은 맨 뒤에 붙인다)
+ */
+export function pickRadius<T>(
+  list: readonly T[],
+  km: (item: T) => number | null,
+  min = 3,
+  tiers: readonly number[] = RADIUS_TIERS_KM,
+): { radiusKm: number; items: T[] } {
+  const known = list.filter((x) => km(x) !== null);
+  const unknown = list.filter((x) => km(x) === null);
+  const last = tiers[tiers.length - 1]!;
+  for (const r of tiers) {
+    const inside = known.filter((x) => km(x)! <= r);
+    if (inside.length >= min || r === last) {
+      // 가까운 단계에 모자라면 위치 모르는 곳으로 채운다 (순서는 원래 점수순 유지)
+      return { radiusKm: r, items: [...inside, ...unknown] };
+    }
+  }
+  return { radiusKm: last, items: [...unknown] };
+}
 
 export interface SourcePost {
   id: string;
@@ -60,7 +88,7 @@ export function buildRecommendations(
 ): Record<AiCategory, CategoryResult> {
   const byId = new Map(posts.map((p) => [p.id, p]));
   const out = {} as Record<AiCategory, CategoryResult>;
-  for (const category of ['food', 'cafe', 'play'] as const) {
+  for (const category of AI_CATEGORIES) {
     // 같은 이름은 합친다
     const merged = new Map<string, ExtractedPlace>();
     for (const e of extracted.filter((x) => x.category === category && x.name.trim())) {

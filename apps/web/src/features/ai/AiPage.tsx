@@ -5,7 +5,7 @@ import {
   type PlaceSummary,
   type Recommendation,
 } from '@trippocket/shared';
-import { ChevronDown, Heart, MapPin, Plus, Sparkles } from 'lucide-react';
+import { ChevronDown, Heart, MapPin, Plus, Sparkles, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 import { api } from '../../data/api/client';
@@ -16,6 +16,7 @@ import { savedPlaceRepo } from '../../data/repositories/savedPlaceRepo';
 import { settingsRepo } from '../../data/repositories/settingsRepo';
 import { lodgingForNight } from '../../domain/lodging';
 import { isDomesticTrip } from '../../domain/tripPlace';
+import { PlaceAutocomplete } from '../common/PlaceAutocomplete';
 import { useTranslation } from '../../i18n';
 import { openMapLink, placeLink } from '../../shared/lib/directions';
 import {
@@ -28,15 +29,25 @@ import {
   toast,
 } from '../../shared/ui';
 
-type Rec = Recommendation & { place?: PlaceSummary };
+/** origin: blog = 네이버 블로그(AI 정리), google = Google 장소 검색, both = 둘 다 */
+type Rec = Recommendation & { place?: PlaceSummary; origin?: 'blog' | 'google' | 'both' };
 interface Result {
   anchor: string;
   createdAt: string;
-  /** engine: 정리한 AI. basic = 무료 AI가 모두 한도라 AI 없이 언급 수로 */
-  categories: Partial<Record<AiCategory, CategoryResult & { places: Rec[]; engine?: string }>>;
+  /** engine: 정리한 AI. basic = 무료 AI가 모두 한도라 AI 없이 언급 수로. radiusKm: 이 반경 안에서 골랐다 */
+  categories: Partial<
+    Record<AiCategory, CategoryResult & { places: Rec[]; engine?: string; radiusKm?: number }>
+  >;
+  /** 직접 입력한 키워드 (custom) */
+  keyword?: string;
 }
 const LAST_KEY = 'aiLast';
 const CATS: AiCategory[] = ['food', 'cafe', 'play'];
+const SHOWN: AiCategory[] = ['custom', 'food', 'cafe', 'play'];
+const KEYWORD_MAX = 20;
+/** 여행 화면 밖에서 열면 휴대폰 시간대로 국내/해외를 정한다 (해외에 가면 시간대가 바뀜) */
+const deviceInKorea = () => Intl.DateTimeFormat().resolvedOptions().timeZone === 'Asia/Seoul';
+const inKorea = (lat: number, lng: number) => lat > 33 && lat < 38.7 && lng > 124.5 && lng < 131.9;
 
 /**
  * S-52 AI 추천 (docs/14 §7): 기준 위치(가까운 역·숙소·직접 입력) + 카테고리 → 블로그 최근 언급 많은 곳.
@@ -56,10 +67,16 @@ export function AiPage() {
     : undefined;
   const [mode, setMode] = useState<'coords' | 'lodging' | 'text'>('text');
   const [text, setText] = useState('');
+  // 드롭다운에서 고른 장소 (이름을 고치면 다시 직접 입력으로)
+  const [picked, setPicked] = useState<PlaceSummary | null>(null);
   const [cats, setCats] = useState<AiCategory[]>(['food', 'cafe']);
+  const [keywordOpen, setKeywordOpen] = useState(false);
+  const [keyword, setKeyword] = useState('');
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
-  const domestic = trip ? isDomesticTrip(trip) : true;
+  // 지역 검색·추천 기준: 여행 화면에서 열면 그 여행 나라, 아니면 지금 있는 곳(휴대폰 시간대)
+  // 국내 = 네이버·카카오, 해외 = Google
+  const domestic = trip ? isDomesticTrip(trip) : deviceInKorea();
 
   useEffect(() => {
     void settingsRepo
@@ -67,25 +84,39 @@ export function AiPage() {
       .then((r) => r && setResult((cur) => cur ?? r));
   }, []);
 
-  async function anchor() {
-    if (mode === 'lodging' && lodging) return { type: 'lodging', name: lodging.title };
+  /** 기준점 + 국내 여부 (현재 위치면 그 위치가 국내인지로) */
+  async function anchor(): Promise<{ anchor: object; domestic: boolean }> {
+    if (mode === 'lodging' && lodging)
+      return { anchor: { type: 'lodging', name: lodging.title }, domestic };
     if (mode === 'coords') {
       const pos = await new Promise<GeolocationPosition>((ok, fail) =>
         navigator.geolocation.getCurrentPosition(ok, fail, { timeout: 10_000 }),
       );
-      // 기기에서 약 100m 단위로 줄여 보낸다 — 서버는 역 이름으로 바꾼 뒤 버린다
+      // 기기에서 약 100m 단위로 줄여 보낸다 — 서버는 역 이름·거리 계산에만 쓰고 버린다
       const r = (n: number) => Math.round(n * 1000) / 1000;
-      return { type: 'coords', lat: r(pos.coords.latitude), lng: r(pos.coords.longitude) };
+      const lat = r(pos.coords.latitude);
+      const lng = r(pos.coords.longitude);
+      return { anchor: { type: 'coords', lat, lng }, domestic: inKorea(lat, lng) };
     }
-    return { type: 'text', name: text.trim() };
+    if (picked?.coords && picked.name === text.trim())
+      return {
+        anchor: { type: 'place', name: picked.name, ...picked.coords },
+        domestic: picked.source === 'google' ? false : domestic,
+      };
+    return { anchor: { type: 'text', name: text.trim() }, domestic };
   }
 
   async function run() {
     setBusy(true);
     try {
+      const where = await anchor();
       const res = await api<Result>('/api/v1/ai/recommend', {
         method: 'POST',
-        body: JSON.stringify({ anchor: await anchor(), categories: cats, domestic }),
+        body: JSON.stringify({
+          ...where,
+          categories: cats,
+          ...(keywordOpen && keyword.trim() ? { keyword: keyword.trim() } : {}),
+        }),
       });
       if (res.ok) {
         setResult(res.data);
@@ -130,8 +161,11 @@ export function AiPage() {
       </div>
     );
 
+  const hasKeyword = keywordOpen && keyword.trim().length > 0;
   const canRun =
-    cats.length > 0 && (mode !== 'text' || text.trim()) && (mode !== 'lodging' || !!lodging);
+    (cats.length > 0 || hasKeyword) &&
+    (mode !== 'text' || text.trim()) &&
+    (mode !== 'lodging' || !!lodging);
   return (
     <div className="mx-auto min-h-dvh max-w-[560px] pb-10">
       <TopBar title={t('ai.title')} backTo={tripId ? `/trips/${tripId}/plan` : '/'} />
@@ -147,19 +181,31 @@ export function AiPage() {
           ]}
         />
         {mode === 'text' && (
-          <input
-            aria-label={t('ai.anchorName')}
-            placeholder={t('ai.anchorPlaceholder')}
-            value={text}
-            maxLength={40}
-            onChange={(e) => setText(e.target.value)}
-            className="h-12 rounded-btn bg-bg-subtle px-3 text-body-1"
-          />
+          <>
+            <input
+              aria-label={t('ai.anchorName')}
+              placeholder={t('ai.anchorPlaceholder')}
+              value={text}
+              maxLength={40}
+              onChange={(e) => setText(e.target.value)}
+              className="h-12 rounded-btn bg-bg-subtle px-3 text-body-1"
+            />
+            {/* 장소 검색처럼 비슷한 곳을 아래에 (국내 = 네이버·카카오, 해외 = Google) */}
+            <PlaceAutocomplete
+              query={text}
+              domestic={domestic}
+              near={undefined}
+              onPick={(p) => {
+                setText(p.name);
+                setPicked(p);
+              }}
+            />
+          </>
         )}
         {mode === 'lodging' && (
           <p className="text-caption text-fg-sub">{lodging ? lodging.title : t('ai.noLodging')}</p>
         )}
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {CATS.map((c) => (
             <Chip
               key={c}
@@ -169,7 +215,34 @@ export function AiPage() {
               {t(`ai.cat.${c}`)}
             </Chip>
           ))}
+          <Chip
+            selected={keywordOpen}
+            leading={<Plus aria-hidden="true" className="size-4" />}
+            onClick={() => setKeywordOpen(!keywordOpen)}
+          >
+            {t('ai.keyword')}
+          </Chip>
         </div>
+        {keywordOpen && (
+          <div className="flex items-center gap-2">
+            <input
+              aria-label={t('ai.keywordLabel')}
+              placeholder={t('ai.keywordPlaceholder')}
+              value={keyword}
+              maxLength={KEYWORD_MAX}
+              onChange={(e) => setKeyword(e.target.value)}
+              className="h-12 min-w-0 flex-1 rounded-btn bg-bg-subtle px-3 text-body-1"
+            />
+            <IconButton
+              label={t('ai.keywordClear')}
+              icon={<X />}
+              onClick={() => {
+                setKeyword('');
+                setKeywordOpen(false);
+              }}
+            />
+          </div>
+        )}
         <Button size="lg" fullWidth loading={busy} disabled={!canRun} onClick={() => void run()}>
           <Sparkles aria-hidden="true" className="size-5" />
           {t('ai.run')}
@@ -179,13 +252,18 @@ export function AiPage() {
         {result && (
           <section aria-label={t('ai.results')} className="flex flex-col gap-5 pt-2">
             <p className="text-body-1 font-bold">{t('ai.resultFor', { anchor: result.anchor })}</p>
-            {CATS.filter((c) => result.categories[c]).map((c) => {
+            {SHOWN.filter((c) => result.categories[c]).map((c) => {
               const r = result.categories[c]!;
               return (
                 <div key={c} className="flex flex-col gap-2">
-                  <h2 className="flex items-baseline justify-between">
-                    <span className="text-body-1 font-bold">{t(`ai.cat.${c}`)}</span>
+                  <h2 className="flex items-baseline justify-between gap-2">
+                    <span className="text-body-1 font-bold">
+                      {c === 'custom'
+                        ? t('ai.keywordTitle', { keyword: result.keyword ?? '' })
+                        : t(`ai.cat.${c}`)}
+                    </span>
                     <span className="text-caption text-fg-muted">
+                      {r.radiusKm !== undefined && `${t('ai.radius', { km: r.radiusKm })} · `}
                       {r.months === 1 ? t('ai.period1') : t('ai.periodWider', { n: r.months })}
                     </span>
                   </h2>
@@ -233,6 +311,8 @@ function RecCard({
   const [open, setOpen] = useState(false);
   const kind = rec.category === 'food' ? 'food' : rec.category === 'cafe' ? 'cafe' : 'place';
   const place = rec.place;
+  // Google에서 찾은 곳은 Google 지도로, 아니면 국내 = 네이버·해외 = Google
+  const mapApp = place?.source === 'google' ? 'google' : domestic ? 'naver' : 'google';
   const dest = {
     name: place?.name ?? rec.name,
     ...(place?.address ? { address: place.address } : {}),
@@ -254,33 +334,46 @@ function RecCard({
             )}
           </span>
           <span className="text-caption text-fg-sub">
-            {t('ai.mentions', {
-              n: rec.mentions,
-              date: `${rec.lastMentioned.slice(4, 6)}.${rec.lastMentioned.slice(6, 8)}`,
-            })}
-            {!place && domestic && ` · ${t('ai.unverified')}`}
+            {rec.mentions > 0
+              ? t('ai.mentions', {
+                  n: rec.mentions,
+                  date: `${rec.lastMentioned.slice(4, 6)}.${rec.lastMentioned.slice(6, 8)}`,
+                })
+              : t('ai.fromGoogle')}
+            {rec.origin === 'both' && ` · ${t('ai.alsoGoogle')}`}
+            {!place && ` · ${t('ai.unverified')}`}
           </span>
           {rec.summary && <span className="text-body-2 text-fg-sub">{rec.summary}</span>}
         </div>
       </div>
       <div className="flex items-center gap-1">
-        <button
-          type="button"
-          aria-expanded={open}
-          onClick={() => setOpen(!open)}
-          className="flex flex-1 items-center gap-1 text-caption font-semibold text-primary"
-        >
-          {t('ai.sources', { n: rec.sources.length })}
-          <ChevronDown
-            aria-hidden="true"
-            className={`size-4 transition-transform ${open ? 'rotate-180' : ''}`}
-          />
-        </button>
+        {rec.sources.length > 0 ? (
+          <button
+            type="button"
+            aria-expanded={open}
+            onClick={() => setOpen(!open)}
+            className="flex flex-1 items-center gap-1 text-caption font-semibold text-primary"
+          >
+            {t('ai.sources', { n: rec.sources.length })}
+            <ChevronDown
+              aria-hidden="true"
+              className={`size-4 transition-transform ${open ? 'rotate-180' : ''}`}
+            />
+          </button>
+        ) : (
+          <span className="flex-1" />
+        )}
         <IconButton
           label={t('placeSearch.openMap', { name: rec.name })}
           icon={<MapPin />}
           onClick={() =>
-            openMapLink(placeLink(domestic ? 'naver' : 'google', dest, window.location.hostname))
+            openMapLink(
+              placeLink(
+                mapApp,
+                { ...dest, ...(place?.source === 'google' ? { googlePlaceId: place.id } : {}) },
+                window.location.hostname,
+              ),
+            )
           }
         />
         <IconButton

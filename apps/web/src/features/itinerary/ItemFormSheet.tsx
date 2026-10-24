@@ -1,6 +1,6 @@
 import { useTrip } from '../../data/hooks';
 import { isDomesticTrip } from '../../domain/tripPlace';
-import { PlaceAutocomplete } from './PlaceAutocomplete';
+import { PlaceAutocomplete } from '../common/PlaceAutocomplete';
 import { PlaceHours } from './PlaceHours';
 import { useSettings } from '../../data/settingsStore';
 import { ITEM_KINDS, type ItemKind, type ItineraryItem, type LocalDate } from '@trippocket/shared';
