@@ -14,7 +14,7 @@ const GROUPS = [
   { key: 'groupFlight', kinds: ['flight'] },
   { key: 'groupLodging', kinds: ['lodging'] },
   { key: 'groupRestaurant', kinds: ['restaurant'] },
-  { key: 'groupTransport', kinds: ['train', 'car'] },
+  { key: 'groupTransport', kinds: ['transfer', 'train', 'car'] },
   { key: 'groupTicket', kinds: ['tour', 'ticket'] },
   { key: 'groupOther', kinds: ['other'] },
 ] as const satisfies ReadonlyArray<{ key: string; kinds: ReadonlyArray<Booking['kind']> }>;

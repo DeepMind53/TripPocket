@@ -84,6 +84,7 @@ const ICON: Record<Booking['kind'], string> = {
   restaurant: '🍽',
   train: '🚆',
   car: '🚗',
+  transfer: '🚐',
   tour: '🎫',
   ticket: '🎟',
   other: '📌',

@@ -724,7 +724,7 @@ function BookingLine({ row, onOpen }: { row: BookingRow; onOpen: () => void }) {
   const b = row.booking;
   const Icon = BOOKING_ICON[b.kind];
   const route =
-    b.kind === 'flight' && (b.start.place || b.end?.place)
+    (b.kind === 'flight' || b.kind === 'transfer') && (b.start.place || b.end?.place)
       ? `${b.start.place ?? ''} → ${b.end?.place ?? ''}`
       : null;
   // 출발하는 날의 항공편은 예약 탭과 같은 탑승권으로 (편명·공항·시각·터미널·좌석·예약번호)

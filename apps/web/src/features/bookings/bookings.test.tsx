@@ -308,3 +308,31 @@ describe('편명으로 불러오기', () => {
     useAuth.setState({ status: 'unknown', me: null });
   });
 });
+
+describe('픽업·드랍 예약 (사용자 요청 2026-10-25)', () => {
+  it('예약 사이트·날짜·시간·인원·타는 곳·내리는 곳·편명 → 이름을 비우면 "공항 픽업"', async () => {
+    const user = userEvent.setup();
+    renderAt([`/trips/${tripId}/bookings`]);
+    await user.click(await screen.findByRole('button', { name: '예약 추가' }));
+    const sheet = screen.getByRole('dialog', { name: '예약 추가' });
+    await user.click(within(sheet).getByRole('button', { name: '픽업·드랍' }));
+    await user.click(within(sheet).getByRole('button', { name: 'KKday' }));
+    expect(within(sheet).getByLabelText('예약 사이트')).toHaveValue('KKday');
+    await user.type(within(sheet).getByLabelText('시간'), '1030');
+    await user.type(within(sheet).getByLabelText('타는 곳'), '김해공항');
+    await user.type(within(sheet).getByLabelText('내리는 곳'), '해운대 호텔');
+    await user.type(within(sheet).getByLabelText('인원'), '3');
+    await user.type(within(sheet).getByLabelText('편명 (선택)'), 'ke123');
+    await user.click(within(sheet).getByRole('button', { name: '예약 추가' }));
+    await waitFor(async () => expect(await bookingRepo.listByTrip(tripId)).toHaveLength(1));
+    const [b] = await bookingRepo.listByTrip(tripId);
+    expect(b).toMatchObject({
+      kind: 'transfer',
+      title: '공항 픽업',
+      provider: 'KKday',
+      start: { date: '2026-10-24', time: '10:30', place: '김해공항' },
+      end: { place: '해운대 호텔' },
+      details: { direction: 'pickup', partySize: 3, flightNo: 'KE123' },
+    });
+  });
+});

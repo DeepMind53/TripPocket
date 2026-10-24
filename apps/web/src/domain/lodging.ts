@@ -101,7 +101,7 @@ export function bookingForItem(
   if (item.bookingId) return live.find((b) => b.id === item.bookingId);
   if (!item.date) return undefined;
   const kinds: Partial<Record<string, readonly Booking['kind'][]>> = {
-    transport: ['flight', 'train', 'car'],
+    transport: ['flight', 'transfer', 'train', 'car'],
     lodging: ['lodging'],
     food: ['restaurant'],
     activity: ['tour', 'ticket'],

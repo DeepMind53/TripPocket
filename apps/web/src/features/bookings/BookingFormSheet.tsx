@@ -13,12 +13,16 @@ import { bookingRepo, type NewBooking } from '../../data/repositories/bookingRep
 import { BottomSheet, Button, Chip, snackbar, TimeInput, toast } from '../../shared/ui';
 import { BOOKING_ICON } from '../common/bookingKinds';
 
+/** 픽업·드랍을 많이 예약하는 곳 (고르면 예약 사이트 칸에 들어감, 직접 입력도 됨) */
+const TRANSFER_SITES = ['KKday', 'Klook', '아고다', '마이리얼트립', '네이버'] as const;
+
 const KINDS: Booking['kind'][] = [
   'flight',
   'lodging',
   'restaurant',
   'train',
   'car',
+  'transfer',
   'tour',
   'ticket',
   'other',
@@ -88,6 +92,7 @@ function BookingForm({
     phone: b?.details?.phone ?? '',
     priceNote: b?.priceNote ?? '',
     partySize: b?.details?.partySize ? String(b.details.partySize) : '',
+    direction: (b?.details?.direction ?? 'pickup') as 'pickup' | 'drop',
     memo: b?.memo ?? '',
   });
   const [saving, setSaving] = useState(false);
@@ -162,6 +167,24 @@ function BookingForm({
           terminal: v(f.terminal),
           arrivalTerminal: v(f.arrivalTerminal),
         }),
+      });
+    }
+    if (kind === 'transfer') {
+      const party = Number(f.partySize);
+      return clean({
+        ...common,
+        // 이름을 비우면 "공항 픽업" / "공항 드랍"
+        title: v(f.title) ?? t(`bookings.transferTitle.${f.direction}`),
+        provider: v(f.provider),
+        start: clean({ date: f.startDate, time: v(f.startTime), place: v(f.from) }),
+        end: v(f.to) ? clean({ date: f.startDate, place: v(f.to) }) : undefined,
+        details: cleanOrUndefined({
+          direction: f.direction,
+          flightNo: v(f.flightNo)?.toUpperCase(),
+          phone: v(f.phone),
+          partySize: Number.isInteger(party) && party >= 1 && party <= 99 ? party : undefined,
+        }),
+        priceNote: v(f.priceNote),
       });
     }
     if (!v(f.title)) return t('bookings.needName');
@@ -390,7 +413,9 @@ function BookingForm({
                 ? t('bookings.lodgingName')
                 : kind === 'restaurant'
                   ? t('bookings.restaurantName')
-                  : t('bookings.name')
+                  : kind === 'transfer'
+                    ? t('bookings.transferName')
+                    : t('bookings.name')
             }
           >
             <input
@@ -447,6 +472,119 @@ function BookingForm({
                 />
               </Field>
               <Field label={t('bookings.phone')}>
+                <input
+                  id="bk-phone"
+                  type="tel"
+                  value={f.phone}
+                  maxLength={40}
+                  onChange={set('phone')}
+                  className={inputClass}
+                />
+              </Field>
+            </>
+          ) : kind === 'transfer' ? (
+            <>
+              <fieldset className="flex flex-col gap-1.5">
+                <legend className="mb-1.5 text-caption font-semibold text-fg-sub">
+                  {t('bookings.direction')}
+                </legend>
+                <div className="flex gap-2">
+                  {(['pickup', 'drop'] as const).map((d) => (
+                    <Chip
+                      key={d}
+                      selected={f.direction === d}
+                      onClick={() => setF((cur) => ({ ...cur, direction: d }))}
+                    >
+                      {t(`bookings.directionValue.${d}`)}
+                    </Chip>
+                  ))}
+                </div>
+              </fieldset>
+              <Field label={t('bookings.site')}>
+                <input
+                  id="bk-site"
+                  value={f.provider}
+                  maxLength={60}
+                  placeholder="KKday, Klook, 아고다…"
+                  onChange={set('provider')}
+                  className={inputClass}
+                />
+              </Field>
+              <div className="-mt-3 flex flex-wrap gap-1.5">
+                {TRANSFER_SITES.map((s) => (
+                  <Chip
+                    key={s}
+                    selected={f.provider === s}
+                    onClick={() => setF((cur) => ({ ...cur, provider: s }))}
+                  >
+                    {s}
+                  </Chip>
+                ))}
+              </div>
+              <DateTimeRow
+                dateLabel={t('bookings.date')}
+                timeLabel={t('bookings.time')}
+                date={f.startDate}
+                time={f.startTime}
+                onDate={set('startDate')}
+                onTime={set('startTime')}
+                idPrefix="bk-transfer"
+              />
+              <Row>
+                <Field label={t('bookings.transferFrom')}>
+                  <input
+                    id="bk-from"
+                    value={f.from}
+                    maxLength={100}
+                    placeholder={
+                      f.direction === 'pickup'
+                        ? t('bookings.airportHint')
+                        : t('bookings.lodgingHint')
+                    }
+                    onChange={set('from')}
+                    className={inputClass}
+                  />
+                </Field>
+                <Field label={t('bookings.transferTo')}>
+                  <input
+                    id="bk-to"
+                    value={f.to}
+                    maxLength={100}
+                    placeholder={
+                      f.direction === 'pickup'
+                        ? t('bookings.lodgingHint')
+                        : t('bookings.airportHint')
+                    }
+                    onChange={set('to')}
+                    className={inputClass}
+                  />
+                </Field>
+              </Row>
+              <Row>
+                <Field label={t('bookings.partySize')}>
+                  <input
+                    id="bk-party"
+                    type="number"
+                    inputMode="numeric"
+                    min={1}
+                    max={99}
+                    value={f.partySize}
+                    onChange={set('partySize')}
+                    className={`${inputClass} tabular`}
+                  />
+                </Field>
+                <Field label={t('bookings.flightNoOptional')}>
+                  <input
+                    id="bk-transfer-flight"
+                    value={f.flightNo}
+                    maxLength={20}
+                    placeholder="KE703"
+                    onChange={set('flightNo')}
+                    className={`${inputClass} uppercase`}
+                  />
+                </Field>
+              </Row>
+              <Field label={t('bookings.driverPhone')}>
                 <input
                   id="bk-phone"
                   type="tel"
@@ -524,15 +662,17 @@ function BookingForm({
               </Field>
             </>
           )}
-          <Field label={t('bookings.reseller')}>
-            <input
-              id="bk-provider"
-              value={f.provider}
-              maxLength={60}
-              onChange={set('provider')}
-              className={inputClass}
-            />
-          </Field>
+          {kind !== 'transfer' && (
+            <Field label={t('bookings.reseller')}>
+              <input
+                id="bk-provider"
+                value={f.provider}
+                maxLength={60}
+                onChange={set('provider')}
+                className={inputClass}
+              />
+            </Field>
+          )}
           <Field label={t('bookings.priceNote')}>
             <input
               id="bk-price"

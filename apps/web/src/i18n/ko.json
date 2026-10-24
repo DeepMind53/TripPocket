@@ -260,7 +260,24 @@
     "lookupNote": "최근 운항 기준으로 공항·터미널·시간을 채웠어요.\n실제 날짜의 시간은 다를 수 있으니 확인해 주세요.",
     "lookupNone": "이 편명의 최근 운항 정보를 찾지 못했어요. 직접 입력해 주세요.",
     "lookupFailed": "지금은 항공편 정보를 불러올 수 없어요. 직접 입력해 주세요.",
-    "lookupHint": "편명만 넣고 불러오면 공항·터미널·시간을 채워요"
+    "lookupHint": "편명만 넣고 불러오면 공항·터미널·시간을 채워요",
+    "direction": "구분",
+    "directionValue": {
+      "pickup": "픽업 (공항 → 숙소)",
+      "drop": "드랍 (숙소 → 공항)"
+    },
+    "transferTitle": {
+      "pickup": "공항 픽업",
+      "drop": "공항 드랍"
+    },
+    "transferName": "이름 (비우면 \"공항 픽업\"·\"공항 드랍\")",
+    "site": "예약 사이트",
+    "transferFrom": "타는 곳",
+    "transferTo": "내리는 곳",
+    "airportHint": "예: 나리타공항 T1",
+    "lodgingHint": "예: 숙소 이름·주소",
+    "flightNoOptional": "편명 (선택)",
+    "driverPhone": "기사·업체 연락처"
   },
   "checklist": {
     "emptyTitle": "준비물을 챙겨볼까요?",
@@ -530,6 +547,7 @@
     "restaurant": "음식점",
     "train": "기차·버스",
     "car": "렌터카",
+    "transfer": "픽업·드랍",
     "tour": "투어",
     "ticket": "티켓",
     "other": "기타"

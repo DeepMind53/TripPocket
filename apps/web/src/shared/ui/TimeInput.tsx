@@ -38,7 +38,8 @@ export function TimeInput({
     setDraft(value);
   }
 
-  const complete = (s: string) => /^\d{3,4}$/.test(s.trim()) || /\d[:.시h]\d{2}/.test(s);
+  // 4자리("1030")·"시:분"은 바로, 3자리("930")는 칸을 벗어날 때 — "103"을 01:03으로 먼저 바꾸지 않게
+  const complete = (s: string) => /^\d{4}$/.test(s.trim()) || /\d[:.시h]\d{2}/.test(s);
   return (
     <div className={cn('relative', className)}>
       <input

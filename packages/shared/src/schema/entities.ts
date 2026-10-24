@@ -122,7 +122,18 @@ const BookingPointSchema = z.object({
 export const BookingSchema = z.object({
   ...baseFields,
   tripId: IdSchema,
-  kind: z.enum(['flight', 'lodging', 'restaurant', 'train', 'car', 'tour', 'ticket', 'other']),
+  // transfer = 공항 픽업·드랍 (2026-10-25 추가)
+  kind: z.enum([
+    'flight',
+    'lodging',
+    'restaurant',
+    'train',
+    'car',
+    'transfer',
+    'tour',
+    'ticket',
+    'other',
+  ]),
   title: nonEmpty(100),
   confirmationNo: z.optional(z.string().check(z.maxLength(60))),
   provider: z.optional(z.string().check(z.maxLength(60))),
@@ -139,8 +150,10 @@ export const BookingSchema = z.object({
       address: z.optional(z.string().check(z.maxLength(200))),
       phone: z.optional(z.string().check(z.maxLength(40))),
       roomType: z.optional(z.string().check(z.maxLength(60))),
-      /** 음식점 예약 인원 */
+      /** 음식점·픽업 예약 인원 */
       partySize: z.optional(z.number().check(z.gte(1), z.lte(99))),
+      /** 픽업(공항 → 숙소) / 드랍(숙소 → 공항) */
+      direction: z.optional(z.enum(['pickup', 'drop'])),
     }),
   ),
   /** "결제 완료 ₩320,000" 같은 자유 메모 (금액 계산 없음) */
