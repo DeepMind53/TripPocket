@@ -47,11 +47,16 @@ export async function textToImage(lines: readonly string[]): Promise<Blob> {
       );
   });
   const HEADER = 220;
-  canvas.width = W;
-  canvas.height = HEADER + PAD + rows.reduce((s, r) => s + r.h, 0) + PAD;
+  const fullHeight = HEADER + PAD + rows.reduce((s, r) => s + r.h, 0) + PAD;
+  // 휴대폰 브라우저 캔버스 최대 높이(약 16,384px)를 넘으면 잘리거나 저장이 안 된다 → 전체를 줄여서 그린다
+  const MAX_H = 14_000;
+  const scale = fullHeight > MAX_H ? MAX_H / fullHeight : 1;
+  canvas.width = Math.round(W * scale);
+  canvas.height = Math.round(fullHeight * scale);
+  ctx.scale(scale, scale);
 
   ctx.fillStyle = '#FFFFFF';
-  ctx.fillRect(0, 0, W, canvas.height);
+  ctx.fillRect(0, 0, W, fullHeight);
   ctx.fillStyle = '#2F6BFF';
   ctx.fillRect(0, 0, W, HEADER);
   ctx.fillStyle = '#FFFFFF';
@@ -72,11 +77,7 @@ export async function textToImage(lines: readonly string[]): Promise<Blob> {
   }
   ctx.font = `500 26px ${FONT}`;
   ctx.fillStyle = '#8B95A1';
-  ctx.fillText(
-    'TripPocket',
-    W - PAD - ctx.measureText('TripPocket').width,
-    canvas.height - PAD + 10,
-  );
+  ctx.fillText('TripPocket', W - PAD - ctx.measureText('TripPocket').width, fullHeight - PAD + 10);
 
   return new Promise((ok, fail) =>
     canvas.toBlob((b) => (b ? ok(b) : fail(new Error('image'))), 'image/png'),

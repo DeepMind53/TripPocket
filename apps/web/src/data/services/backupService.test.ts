@@ -73,3 +73,39 @@ describe('백업·복원', () => {
     ).toEqual({ ok: false, reason: 'invalid' });
   });
 });
+
+describe('여행 파일 내보내기 (공유 → 파일)', () => {
+  it('그 여행의 일정·예약·준비물이 하나도 빠지지 않고, 다른 기기에서 합치기로 그대로 돌아온다', async () => {
+    const { seedSampleTrip } = await import('../dev');
+    const { createTripBackup } = await import('./backupService');
+    const tripId = await seedSampleTrip();
+    const other = await tripRepo.create({ ...tokyo, title: '다른 여행' });
+    const { itemRepo } = await import('../repositories/itemRepo');
+    const { bookingRepo } = await import('../repositories/bookingRepo');
+    await itemRepo.create({ tripId: other.id, date: null, kind: 'place', title: '다른 여행 일정' });
+    await bookingRepo.create({
+      tripId,
+      kind: 'flight',
+      title: 'KE703',
+      start: { date: '2026-10-27', time: '09:10' },
+    });
+    const count = async () => ({
+      items: await db.items.where('tripId').equals(tripId).count(),
+      bookings: await db.bookings.where('tripId').equals(tripId).count(),
+      checklist: await db.checklistItems.where('tripId').equals(tripId).count(),
+    });
+    const before = await count();
+    expect(before.items).toBeGreaterThan(0);
+
+    const file = await createTripBackup(tripId);
+    expect(file.data.trips).toHaveLength(1);
+    expect(file.data.items).toHaveLength(before.items);
+    expect(file.data.bookings).toHaveLength(before.bookings);
+    expect(file.data.checklistItems).toHaveLength(before.checklist);
+
+    await resetLocalDb(); // 받는 사람 기기
+    await restoreBackup(ok(JSON.stringify(file)), 'merge');
+    expect(await count()).toEqual(before);
+    expect(await db.items.where('tripId').equals(other.id).count()).toBe(0);
+  });
+});

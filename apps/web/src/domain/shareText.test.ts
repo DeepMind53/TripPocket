@@ -67,3 +67,42 @@ describe('일정 텍스트', () => {
     expect(text).not.toMatch(/ABC123|비밀/);
   });
 });
+
+describe('일정 텍스트 — 예약·기간 밖 일정도 빠짐없이', () => {
+  it('항공·식당 예약은 그날 일정 사이에 시간 맞춰, 기간 밖 일정도 따로', () => {
+    const text = tripToText(
+      trip,
+      [
+        item('센소지', '2026-10-24', 'a', '13:00'),
+        item('라멘', '2026-10-24', 'b'),
+        item('취소된 날 일정', '2026-10-30', 'a', '10:00'),
+      ],
+      [
+        {
+          id: 'f',
+          tripId: 't',
+          kind: 'flight',
+          title: 'KE703 ICN→NRT',
+          start: { date: '2026-10-24', time: '09:10' },
+          end: { date: '2026-10-24', time: '11:30' },
+          createdAt: T,
+          updatedAt: T,
+        } as Booking,
+        {
+          id: 'r',
+          tripId: 't',
+          kind: 'restaurant',
+          title: '스시 오마카세',
+          start: { date: '2026-10-25', time: '19:00' },
+          createdAt: T,
+          updatedAt: T,
+        } as Booking,
+      ],
+    );
+    expect(text).toContain(
+      ['[1일차 10.24 (토)]', '09:10 ✈ KE703 ICN→NRT', '13:00 센소지', '라멘'].join('\n'),
+    );
+    expect(text).toContain(['[2일차 10.25 (일)]', '19:00 🍽 스시 오마카세'].join('\n'));
+    expect(text).toContain(['[여행 기간 밖 일정]', '10.30 (금) 10:00 취소된 날 일정'].join('\n'));
+  });
+});

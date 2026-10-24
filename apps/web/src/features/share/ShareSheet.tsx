@@ -106,6 +106,7 @@ export function ShareSheet({
             }
           />
         </div>
+        <p className="-mt-2 text-caption text-fg-muted">{t('share.exportHint')}</p>
 
         <section className="flex flex-col gap-3 rounded-card border border-line p-4">
           <h3 className="flex items-center gap-2 text-body-1 font-bold">
