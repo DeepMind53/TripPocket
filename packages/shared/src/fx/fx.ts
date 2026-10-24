@@ -8,6 +8,49 @@ export interface FxSnapshot {
   date: string;
   fetchedAt: string;
   rates: Record<string, number>;
+  /**
+   * 수출입은행이 고시하지 않아(대만달러·베트남 동 등) 보조 출처(국제 시세)로 채운 통화와 그 날짜.
+   * source가 koreaexim일 때만 있음
+   */
+  fallback?: { codes: string[]; date: string };
+}
+
+/** 수출입은행 값에 없는 통화만 보조 출처로 채운다 (수출입은행 값이 먼저) */
+export function mergeFallbackRates(primary: FxSnapshot, extra: FxSnapshot | null): FxSnapshot {
+  if (!extra || primary.source !== 'koreaexim') return primary;
+  const codes = Object.keys(extra.rates).filter((c) => !(c in primary.rates) && c !== 'KRW');
+  if (codes.length === 0) return primary;
+  return {
+    ...primary,
+    rates: { ...primary.rates, ...Object.fromEntries(codes.map((c) => [c, extra.rates[c]!])) },
+    fallback: { codes, date: extra.date },
+  };
+}
+
+/**
+ * 환율 화면의 처음 통화: 진행 중이거나 다가오는 여행(가까운 순)의 나라 통화. 원화·모르는 나라는 빼고 중복 없이.
+ * today = 오늘 날짜 YYYY-MM-DD (끝난 여행 제외)
+ */
+export function upcomingTripCurrencies(
+  trips: readonly {
+    startDate: string;
+    endDate: string;
+    deletedAt?: string | null | undefined;
+    destinations: readonly { countryCode?: string | undefined }[];
+  }[],
+  today: string,
+): string[] {
+  return [
+    ...new Set(
+      [...trips]
+        .filter((t) => !t.deletedAt && t.endDate >= today)
+        .sort((a, b) => a.startDate.localeCompare(b.startDate))
+        .flatMap((t) =>
+          t.destinations.map((d) => (d.countryCode ? COUNTRY_CURRENCY[d.countryCode] : undefined)),
+        )
+        .filter((c): c is string => !!c && c !== 'KRW'),
+    ),
+  ];
 }
 
 /** 나라 → 통화 (여행지 데이터에 있는 나라들). 없으면 USD로 보여 주지 않고 선택하게 한다 */

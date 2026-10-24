@@ -1,5 +1,6 @@
 import {
-  COUNTRY_CURRENCY,
+  todayIn,
+  upcomingTripCurrencies,
   fromKrw,
   HUNDRED_UNIT,
   POPULAR_CURRENCIES,
@@ -8,7 +9,7 @@ import {
 import { ArrowUpDown, ChevronDown, Delete, ExternalLink } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router';
-import { useTrip } from '../../data/hooks';
+import { useTrip, useTrips } from '../../data/hooks';
 import { cachedFx, getFx, type FxResult } from '../../data/services/fxService';
 import { useSettings } from '../../data/settingsStore';
 import { useTranslation } from '../../i18n';
@@ -43,15 +44,17 @@ export function FxPage() {
   const { t } = useTranslation();
   const [params] = useSearchParams();
   const trip = useTrip(params.get('trip') ?? '');
+  const trips = useTrips();
+  // 여행 화면에서 열면 그 여행 나라, 아니면 진행 중·다가오는 여행 나라(가까운 순)
   const tripCurrencies = useMemo(
-    () => [
-      ...new Set(
-        (trip?.destinations ?? [])
-          .map((d) => (d.countryCode ? COUNTRY_CURRENCY[d.countryCode] : undefined))
-          .filter((c): c is string => !!c && c !== 'KRW'),
-      ),
-    ],
-    [trip],
+    () =>
+      trip
+        ? upcomingTripCurrencies([{ ...trip, endDate: '9999-12-31' }], '')
+        : upcomingTripCurrencies(
+            trips ?? [],
+            todayIn(Intl.DateTimeFormat().resolvedOptions().timeZone),
+          ),
+    [trip, trips],
   );
   // 고른 통화 > 주소의 통화 > 여행 나라 통화 > 엔화
   const [picked, setCurrency] = useState<string | null>(params.get('currency'));
@@ -161,7 +164,9 @@ export function FxPage() {
           )}
           {fx && (
             <span className={cn(fx.stale && 'text-fg-muted')}>
-              {t(fx.source === 'koreaexim' ? 'fx.sourceExim' : 'fx.sourceFallback')} · {fx.date}
+              {fx.source === 'koreaexim' && fx.fallback?.codes.includes(currency)
+                ? `${t('fx.sourceFallback')} · ${fx.fallback.date}`
+                : `${t(fx.source === 'koreaexim' ? 'fx.sourceExim' : 'fx.sourceFallback')} · ${fx.date}`}
               {fx.stale && ` · ${t('fx.stale')}`}
             </span>
           )}

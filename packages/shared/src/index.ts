@@ -72,6 +72,8 @@ export {
   POPULAR_CURRENCIES,
   toKrw,
   type FxSnapshot,
+  mergeFallbackRates,
+  upcomingTripCurrencies,
 } from './fx/fx';
 export {
   choosePeriod,
