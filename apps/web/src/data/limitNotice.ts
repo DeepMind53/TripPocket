@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import type { FallbackLink } from '../shared/lib/fallbackLinks';
 
 /**
  * 사용량 한도로 서버가 거절했을 때 안내 팝업 (사용자 요청 2026-10-24).
@@ -9,7 +10,15 @@ import { create } from 'zustand';
 export type LimitNotice =
   { kind: 'api_paused'; api: string } | { kind: 'daily_limit'; feature: string; limit?: number };
 
-export const useLimitNotice = create<{ notice: LimitNotice | null }>(() => ({ notice: null }));
+export const useLimitNotice = create<{ notice: LimitNotice | null; links: FallbackLink[] }>(() => ({
+  notice: null,
+  links: [],
+}));
+
+/** 지금 뜬 한도 안내에 "직접 보기" 페이지를 붙인다 (부른 쪽이 검색어 등을 알 때) */
+export function attachFallback(links: FallbackLink[]): void {
+  if (useLimitNotice.getState().notice) useLimitNotice.setState({ links });
+}
 const shown = new Set<string>();
 
 export function reportLimit(body: unknown): boolean {
@@ -27,7 +36,7 @@ export function reportLimit(body: unknown): boolean {
   const key = notice.kind === 'api_paused' ? `p:${notice.api}` : `d:${notice.feature}`;
   if (!shown.has(key)) {
     shown.add(key);
-    useLimitNotice.setState({ notice });
+    useLimitNotice.setState({ notice, links: [] });
   }
   return true;
 }
@@ -35,5 +44,5 @@ export function reportLimit(body: unknown): boolean {
 /** 시험용 */
 export const resetLimitNotices = () => {
   shown.clear();
-  useLimitNotice.setState({ notice: null });
+  useLimitNotice.setState({ notice: null, links: [] });
 };

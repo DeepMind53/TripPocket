@@ -1,4 +1,7 @@
 import type { PlaceSummary } from '@trippocket/shared';
+import { attachFallback } from '../../data/limitNotice';
+import { placeSearchLinks } from '../../shared/lib/fallbackLinks';
+import { FallbackLinks } from './FallbackLinks';
 import { MapPin, Plus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { placesApi } from '../../data/api/places';
@@ -55,7 +58,9 @@ export function PlaceAutocomplete({
           setState(r.data.places.length ? 'idle' : 'empty');
         } else {
           setResults([]);
-          setState(r.status === 429 ? 'limit' : 'idle');
+          const limited = r.status === 429 || r.reason === 'limit';
+          setState(limited ? 'limit' : 'idle');
+          if (limited) attachFallback(placeSearchLinks(q, domestic));
         }
       });
     }, 400);
@@ -74,7 +79,12 @@ export function PlaceAutocomplete({
   if (state === 'empty')
     return <p className="text-caption text-fg-muted">{t('placeSearch.none')}</p>;
   if (state === 'limit')
-    return <p className="text-caption text-fg-muted">{t('placeSearch.limit')}</p>;
+    return (
+      <div className="flex flex-col gap-1.5">
+        <p className="text-caption text-fg-muted">{t('placeSearch.limit')}</p>
+        <FallbackLinks links={placeSearchLinks(q, domestic)} />
+      </div>
+    );
   if (results.length === 0) return null;
 
   const pick = (p: PlaceSummary) => {

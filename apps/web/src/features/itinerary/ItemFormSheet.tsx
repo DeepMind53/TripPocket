@@ -179,7 +179,12 @@ function ItemForm({
         }}
       />
       {picked?.googlePlaceId && (
-        <PlaceHours googlePlaceId={picked.googlePlaceId} date={date} time={startTime} />
+        <PlaceHours
+          googlePlaceId={picked.googlePlaceId}
+          name={picked.name}
+          date={date}
+          time={startTime}
+        />
       )}
 
       <div className="grid grid-cols-2 gap-3">

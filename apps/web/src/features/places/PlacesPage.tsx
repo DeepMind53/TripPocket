@@ -1,4 +1,7 @@
 import type { ItemKind, PlaceSummary } from '@trippocket/shared';
+import { attachFallback } from '../../data/limitNotice';
+import { placeSearchLinks, type FallbackLink } from '../../shared/lib/fallbackLinks';
+import { FallbackLinks } from '../common/FallbackLinks';
 import { Heart, MapPin, Plus, Search } from 'lucide-react';
 import { useState } from 'react';
 import { useParams } from 'react-router';
@@ -38,6 +41,8 @@ export function PlacesPage() {
   const [results, setResults] = useState<PlaceSummary[] | null>(null);
   const [busy, setBusy] = useState(false);
 
+  // 한도로 검색이 막히면 지도 서비스에서 직접 (사용자 요청 2026-10-25)
+  const [limitLinks, setLimitLinks] = useState<FallbackLink[]>([]);
   if (!trip) return null;
   const city = trip.destinations[0]?.name ?? '';
   const near = trip.destinations.find((d) => d.coords)?.coords;
@@ -50,8 +55,11 @@ export function PlacesPage() {
     setBusy(true);
     const r = await placesApi.search(query, isDomesticTrip(trip!) ? 'domestic' : 'overseas', near);
     setBusy(false);
+    const limited = !r.ok && (r.status === 429 || r.reason === 'limit');
+    setLimitLinks(limited ? placeSearchLinks(query, isDomesticTrip(trip!)) : []);
     if (r.ok) setResults(r.data.places);
-    else toast(r.status === 429 ? t('placeSearch.limit') : t('places.failed'));
+    else if (limited) attachFallback(placeSearchLinks(query, isDomesticTrip(trip!)));
+    else toast(t('places.failed'));
   }
 
   const toPlaceRef = (p: PlaceSummary) => ({
@@ -104,6 +112,12 @@ export function PlacesPage() {
         ))}
       </ScrollRow>
 
+      {limitLinks.length > 0 && (
+        <div className="flex flex-col gap-1.5">
+          <p className="text-caption text-fg-muted">{t('placeSearch.limit')}</p>
+          <FallbackLinks links={limitLinks} />
+        </div>
+      )}
       {results === null ? (
         <p className="text-caption text-fg-muted">{t('places.hint', { city })}</p>
       ) : results.length === 0 ? (

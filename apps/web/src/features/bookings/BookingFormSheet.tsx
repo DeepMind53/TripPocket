@@ -1,4 +1,6 @@
 import { useSettings } from '../../data/settingsStore';
+import { attachFallback } from '../../data/limitNotice';
+import { flightLink } from '../../shared/lib/fallbackLinks';
 import { flightsApi } from '../../data/api/flights';
 import { AirportField } from './AirportField';
 import { isDomesticTrip } from '../../domain/tripPlace';
@@ -97,9 +99,9 @@ function BookingForm({
     const res = await flightsApi.lookup(f.flightNo);
     setLooking(false);
     if (!res.ok) {
-      // 한도는 안내 팝업이 따로 뜬다
-      if (res.reason !== 'limit')
-        toast(t(res.status === 404 ? 'bookings.lookupNone' : 'bookings.lookupFailed'));
+      // 한도는 안내 팝업이 따로 뜬다 — 항공편 정보 사이트를 대신 연다
+      if (res.reason === 'limit') attachFallback([flightLink(f.flightNo)]);
+      else toast(t(res.status === 404 ? 'bookings.lookupNone' : 'bookings.lookupFailed'));
       return;
     }
     const x = res.data;

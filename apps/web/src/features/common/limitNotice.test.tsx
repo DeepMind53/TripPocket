@@ -37,3 +37,25 @@ it('한도가 아닌 503(서버 없음)은 지금처럼 오프라인', async () 
   expect(await api('/api/me')).toMatchObject({ reason: 'offline' });
   expect(useLimitNotice.getState().notice).toBeNull();
 });
+
+it('한도로 막히면 대신 볼 페이지: 국내 장소 검색 → 네이버 지도·카카오맵 (검색어 그대로)', async () => {
+  const { attachFallback } = await import('../../data/limitNotice');
+  const { placeSearchLinks } = await import('../../shared/lib/fallbackLinks');
+  const open = vi.fn();
+  vi.stubGlobal('open', open);
+  reply(429, { error: 'daily_limit', feature: 'places_search' });
+  await api('/api/places/search', { method: 'POST', body: '{}' });
+  attachFallback(placeSearchLinks('성수 카페', true));
+  render(<LimitNoticeSheet />);
+  const sheet = await screen.findByRole('dialog');
+  (await import('@testing-library/react')).fireEvent.click(
+    screen.getByRole('button', { name: /네이버 지도에서 보기/ }),
+  );
+  expect(open).toHaveBeenCalledWith(
+    'https://map.naver.com/p/search/%EC%84%B1%EC%88%98%20%EC%B9%B4%ED%8E%98',
+    '_blank',
+    'noopener',
+  );
+  expect(sheet).toHaveTextContent('카카오맵에서 보기');
+  expect(placeSearchLinks('Shibuya', false).map((l) => l.id)).toEqual(['googleMap']);
+});

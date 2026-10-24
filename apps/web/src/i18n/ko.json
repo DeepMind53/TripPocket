@@ -1129,5 +1129,15 @@
       "review_deleted": "{{name}} 후기 지움",
       "admin_hidden": "{{name}} 후기 숨김(운영자)"
     }
+  },
+  "fallback": {
+    "instead": "대신 이 서비스에서 직접 볼 수 있어요",
+    "naverMap": "네이버 지도에서 보기",
+    "kakaoMap": "카카오맵에서 보기",
+    "googleMap": "Google 지도에서 보기",
+    "naverBlog": "네이버 블로그 검색",
+    "flight": "항공편 정보 사이트에서 보기",
+    "fx": "네이버 환율 보기",
+    "weather": "날씨 직접 보기"
   }
 }

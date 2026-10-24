@@ -5,6 +5,9 @@ import {
   type PlaceSummary,
   type Recommendation,
 } from '@trippocket/shared';
+import { attachFallback } from '../../data/limitNotice';
+import { recommendLinks, type FallbackLink } from '../../shared/lib/fallbackLinks';
+import { FallbackLinks } from '../common/FallbackLinks';
 import { ChevronDown, Heart, MapPin, Plus, Sparkles, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router';
@@ -69,6 +72,8 @@ export function AiPage() {
   const [keywordOpen, setKeywordOpen] = useState(false);
   const [keyword, setKeyword] = useState('');
   const [busy, setBusy] = useState(false);
+  // 한도로 막히면 직접 볼 곳 (네이버 블로그·지도)
+  const [limitLinks, setLimitLinks] = useState<FallbackLink[]>([]);
   const [result, setResult] = useState<Result | null>(null);
   // 지역 검색·추천 기준: 여행 화면에서 열면 그 여행 나라, 아니면 지금 있는 곳(휴대폰 시간대)
   // 국내 = 네이버·카카오, 해외 = Google
@@ -115,9 +120,21 @@ export function AiPage() {
         }),
       });
       if (res.ok) {
+        setLimitLinks([]);
         setResult(res.data);
         await settingsRepo.set(LAST_KEY, res.data);
-      } else if (res.reason !== 'limit')
+      } else if (res.reason === 'limit') {
+        // 한도 → 네이버 블로그·지도에서 직접 (사용자 요청 2026-10-25)
+        const name = (where.anchor as { name?: string }).name;
+        const q = [
+          name,
+          ...cats.map((c) => (c === 'custom' ? keyword.trim() : t(`ai.cat.${c}` as 'ai.cat.food'))),
+        ]
+          .filter(Boolean)
+          .join(' ');
+        setLimitLinks(recommendLinks(q, where.domestic));
+        attachFallback(recommendLinks(q, where.domestic));
+      } else
         // 한도는 안내 팝업이 따로 뜬다 (LimitNoticeSheet)
         toast(
           t(
@@ -233,6 +250,12 @@ export function AiPage() {
         </Button>
         <p className="text-caption text-fg-muted">{t('ai.disclaimer')}</p>
 
+        {limitLinks.length > 0 && (
+          <div className="flex flex-col gap-1.5 rounded-card bg-bg-subtle p-3">
+            <p className="text-caption text-fg-sub">{t('fallback.instead')}</p>
+            <FallbackLinks links={limitLinks} />
+          </div>
+        )}
         {result && (
           <section aria-label={t('ai.results')} className="flex flex-col gap-5 pt-2">
             <p className="text-body-1 font-bold">{t('ai.resultFor', { anchor: result.anchor })}</p>

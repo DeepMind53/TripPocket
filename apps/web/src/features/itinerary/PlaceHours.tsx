@@ -1,4 +1,7 @@
 import { isOutsideHours, weekday, type LocalDate, type PlaceDetails } from '@trippocket/shared';
+import { attachFallback } from '../../data/limitNotice';
+import { placeDetailLinks } from '../../shared/lib/fallbackLinks';
+import { FallbackLinks } from '../common/FallbackLinks';
 import { Clock, Star, TriangleAlert } from 'lucide-react';
 import { useState } from 'react';
 import { placesApi } from '../../data/api/places';
@@ -13,7 +16,10 @@ export function PlaceHours({
   googlePlaceId,
   date,
   time,
+  name,
 }: {
+  /** 한도일 때 Google 지도에서 직접 볼 이름 */
+  name?: string | undefined;
   googlePlaceId: string;
   date: LocalDate | null;
   time: string;
@@ -33,7 +39,11 @@ export function PlaceHours({
           setBusy(true);
           void placesApi
             .googleDetails(googlePlaceId)
-            .then((r) => setD(r.ok ? r.data : 'error'))
+            .then((r) => {
+              setD(r.ok ? r.data : 'error');
+              if (!r.ok && r.reason === 'limit')
+                attachFallback(placeDetailLinks(name ?? '', googlePlaceId));
+            })
             .finally(() => setBusy(false));
         }}
       >
@@ -42,7 +52,12 @@ export function PlaceHours({
       </Button>
     );
   if (d === 'error')
-    return <p className="text-caption text-fg-muted">{t('placeSearch.hoursError')}</p>;
+    return (
+      <div className="flex flex-col gap-1.5">
+        <p className="text-caption text-fg-muted">{t('placeSearch.hoursError')}</p>
+        <FallbackLinks links={placeDetailLinks(name ?? '', googlePlaceId)} />
+      </div>
+    );
 
   const wd = date ? weekday(date) : new Date().getDay();
   // Google 요일 문장은 월요일부터 → 일요일(0)은 마지막

@@ -1,4 +1,5 @@
 import { useLimitNotice } from '../../data/limitNotice';
+import { FallbackLinks } from './FallbackLinks';
 import { useTranslation } from '../../i18n';
 import { BottomSheet, Button } from '../../shared/ui';
 
@@ -9,7 +10,8 @@ import { BottomSheet, Button } from '../../shared/ui';
 export function LimitNoticeSheet() {
   const { t } = useTranslation();
   const notice = useLimitNotice((s) => s.notice);
-  const close = () => useLimitNotice.setState({ notice: null });
+  const links = useLimitNotice((s) => s.links);
+  const close = () => useLimitNotice.setState({ notice: null, links: [] });
   if (!notice) return null;
 
   const title = t('limit.title');
@@ -35,6 +37,12 @@ export function LimitNoticeSheet() {
       }
     >
       <p className="text-body-1 text-fg-sub">{body}</p>
+      {links.length > 0 && (
+        <div className="mt-4 flex flex-col gap-2">
+          <p className="text-caption text-fg-muted">{t('fallback.instead')}</p>
+          <FallbackLinks links={links} />
+        </div>
+      )}
     </BottomSheet>
   );
 }
