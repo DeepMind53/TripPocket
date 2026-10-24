@@ -12,14 +12,21 @@ export function meRoutes(app: FastifyInstance, db: Db, config: Config): void {
   app.get('/api/me', auth, async (req) => {
     const userId = req.user!.userId;
     const user = db
-      .prepare('SELECT id, nickname, created_at, is_admin, nickname_set FROM users WHERE id = ?')
+      .prepare(
+        'SELECT id, nickname, created_at, is_admin, nickname_set, public_no, hide_nickname FROM users WHERE id = ?',
+      )
       .get(userId) as {
       id: string;
       nickname: string;
       created_at: string;
       is_admin: number;
       nickname_set: number;
+      public_no: number;
+      hide_nickname: number;
     };
+    const points = db
+      .prepare('SELECT COALESCE(SUM(delta), 0) AS n FROM point_ledger WHERE user_id = ?')
+      .get(userId) as { n: number };
     const providers = db
       .prepare('SELECT provider FROM oauth_accounts WHERE user_id = ?')
       .all(userId)
@@ -31,6 +38,10 @@ export function meRoutes(app: FastifyInstance, db: Db, config: Config): void {
       providers,
       // false = 로그인 서비스 이름 그대로 → 앱이 닉네임 정하기를 띄운다
       nicknameSet: !!user.nickname_set,
+      // 후기 (docs/17): 가린 이름 번호·가리기 여부·포인트
+      publicNo: user.public_no,
+      hideNickname: !!user.hide_nickname,
+      points: Number(points.n),
       ...(user.is_admin ? { isAdmin: true } : {}),
     };
   });
@@ -89,6 +100,21 @@ export function meRoutes(app: FastifyInstance, db: Db, config: Config): void {
     },
   );
 
+  // 후기에서 닉네임 가리기 (docs/17 §2.5) — 이미 쓴 후기에도 바로 적용 (보여 줄 때 바꿈)
+  app.patch<{ Body: { hideNickname?: unknown } }>(
+    '/api/me/privacy',
+    { ...auth, config: { rateLimit: { max: 20, timeWindow: '1 minute' } } },
+    async (req, reply) => {
+      const hide = req.body?.hideNickname;
+      if (typeof hide !== 'boolean') return reply.code(400).send({ error: 'bad_request' });
+      db.prepare('UPDATE users SET hide_nickname = ? WHERE id = ?').run(
+        hide ? 1 : 0,
+        req.user!.userId,
+      );
+      return { hideNickname: hide };
+    },
+  );
+
   // 기기 목록: 세션 해시 앞 12자를 기기 id로 (해시 전체·토큰은 내보내지 않음)
   app.get('/api/me/sessions', auth, async (req) => {
     const rows = db
@@ -124,6 +150,7 @@ export function meRoutes(app: FastifyInstance, db: Db, config: Config): void {
   });
 
   // 탈퇴: 서버 데이터 즉시 삭제 (docs/09 §7.6). 기기 데이터는 그대로 — 앱이 선택하게 한다
+  // 후기는 남기고 작성자만 User#N으로 (reviews.user_id ON DELETE SET NULL, 사용자 결정 2026-10-25)
   app.delete('/api/me', auth, async (req, reply) => {
     const userId = req.user!.userId;
     db.exec('BEGIN');

@@ -11,6 +11,7 @@ import { adminRoutes } from './routes/admin';
 import { authRoutes } from './routes/auth';
 import { usageRoutes } from './routes/usage';
 import { flightRoutes } from './routes/flights';
+import { reviewRoutes } from './routes/reviews';
 import { ApiPaused, initApiUsage, trackApi } from './services/apiUsage';
 import { aiRoutes } from './routes/ai';
 import { meRoutes } from './routes/me';
@@ -98,6 +99,7 @@ export async function buildApp(config: Config, db: Db): Promise<FastifyInstance>
   shareRoutes(app, db);
   placesRoutes(app, config, db);
   flightRoutes(app, config, db);
+  reviewRoutes(app, db);
 
   // 환율: 로그인한 사람만 (2026-10-24), 사람당 제한, 1시간 캐시 (docs/12 §2.2)
   app.get(

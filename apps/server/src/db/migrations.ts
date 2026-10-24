@@ -196,4 +196,49 @@ export const MIGRATIONS: readonly string[] = [
     updated_at TEXT NOT NULL
   );
   `,
+  // 14: 후기·포인트 (docs/17). User#N = 가입 순 고정 번호(새 사용자는 트리거로), 닉네임 가리기.
+  // 탈퇴해도 후기는 남고 작성자는 User#N (user_id = NULL, author_no 보관). 포인트 기록은 함께 삭제
+  `
+  ALTER TABLE users ADD COLUMN public_no INTEGER;
+  ALTER TABLE users ADD COLUMN hide_nickname INTEGER NOT NULL DEFAULT 0;
+  UPDATE users SET public_no = (
+    SELECT COUNT(*) FROM users u2
+    WHERE u2.created_at < users.created_at OR (u2.created_at = users.created_at AND u2.id <= users.id)
+  );
+  CREATE UNIQUE INDEX users_public_no ON users(public_no);
+  CREATE TRIGGER users_public_no_assign AFTER INSERT ON users WHEN NEW.public_no IS NULL
+  BEGIN
+    UPDATE users SET public_no = (SELECT COALESCE(MAX(public_no), 0) + 1 FROM users) WHERE id = NEW.id;
+  END;
+  CREATE TABLE reviews (
+    id TEXT PRIMARY KEY,
+    user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+    author_no INTEGER NOT NULL,
+    trip_id TEXT NOT NULL,
+    item_id TEXT NOT NULL,
+    place_key TEXT,
+    place_name TEXT NOT NULL,
+    kind TEXT NOT NULL,
+    ratings_json TEXT NOT NULL,
+    note TEXT,
+    visited_on TEXT,
+    hidden INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  );
+  CREATE UNIQUE INDEX reviews_user_item ON reviews(user_id, item_id);
+  CREATE INDEX reviews_place ON reviews(place_key, hidden, created_at);
+  CREATE INDEX reviews_item ON reviews(trip_id, item_id);
+  CREATE TABLE point_ledger (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    delta INTEGER NOT NULL,
+    reason TEXT NOT NULL,
+    review_id TEXT,
+    place_key TEXT,
+    place_name TEXT,
+    created_at TEXT NOT NULL
+  );
+  CREATE INDEX point_ledger_user ON point_ledger(user_id, created_at);
+  `,
 ];

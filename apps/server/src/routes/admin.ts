@@ -3,6 +3,7 @@ import { uuidv7 } from '@trippocket/shared';
 import type { Db } from '../db/database';
 import { requireUser } from '../auth/session';
 import { audit } from './auth';
+import { revoke } from './reviews';
 import { isApiId, isPausable, setApiLimit, setApiPaused, usageReport } from '../services/apiUsage';
 
 /** 관리자만: 로그인 + users.is_admin (아니면 403) */
@@ -154,6 +155,39 @@ export function adminRoutes(app: FastifyInstance, db: Db): void {
     audit(db, req.user!.userId, 'user_enabled', req.params.id);
     return { ok: true };
   });
+
+  // 후기 관리 (docs/17 §4): 최근 후기 보기, 부적절한 후기 숨기기(포인트 회수)·되돌리기
+  app.get('/api/admin/reviews', admin, async () => ({
+    reviews: db
+      .prepare(
+        `SELECT r.id, r.place_name, r.kind, r.ratings_json, r.note, r.hidden, r.created_at, r.author_no,
+           u.nickname FROM reviews r LEFT JOIN users u ON u.id = r.user_id ORDER BY r.created_at DESC LIMIT 200`,
+      )
+      .all(),
+  }));
+  app.post<{ Params: { id: string }; Body: { hidden?: unknown } }>(
+    '/api/admin/reviews/:id/hidden',
+    admin,
+    async (req, reply) => {
+      const hidden = req.body?.hidden === true;
+      const r = db
+        .prepare('SELECT id, user_id, place_key, place_name, hidden FROM reviews WHERE id = ?')
+        .get(req.params.id) as
+        | {
+            id: string;
+            user_id: string | null;
+            place_key: string | null;
+            place_name: string;
+            hidden: number;
+          }
+        | undefined;
+      if (!r) return reply.code(404).send({ error: 'not_found' });
+      if (hidden && !r.hidden && r.user_id) revoke(db, r.user_id, r, 'admin_hidden');
+      db.prepare('UPDATE reviews SET hidden = ? WHERE id = ?').run(hidden ? 1 : 0, r.id);
+      audit(db, req.user!.userId, hidden ? 'review_hide' : 'review_unhide', r.id);
+      return { ok: true };
+    },
+  );
 
   // API 사용량: 이번 달(1일부터) 누적·하루별, 수동 중지·다시 켜기, 자동 중지 상한
   app.get('/api/admin/api-usage', admin, async (_req, reply) => {
