@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify';
-import { normalizeNickname } from '@trippocket/shared';
+import { normalizeNickname, parseSettings, pickSynced } from '@trippocket/shared';
 import type { Db } from '../db/database';
 import type { Config } from '../config';
 import { fixedAdmins } from '../auth/admins';
@@ -34,6 +34,45 @@ export function meRoutes(app: FastifyInstance, db: Db, config: Config): void {
       ...(user.is_admin ? { isAdmin: true } : {}),
     };
   });
+
+  // 내 설정 (계정에 저장 — 기기를 바꿔도 같게). 기기별 설정(테마·글자 크기·진동)은 받지도 주지도 않는다
+  app.get('/api/me/settings', auth, async (req, reply) => {
+    reply.header('cache-control', 'no-store');
+    const row = db
+      .prepare('SELECT data_json, updated_at FROM user_settings WHERE user_id = ?')
+      .get(req.user!.userId) as { data_json: string; updated_at: string } | undefined;
+    return row
+      ? { data: pickSynced(parseSettings(JSON.parse(row.data_json))), updatedAt: row.updated_at }
+      : { data: null, updatedAt: null };
+  });
+
+  // 올리기: 기기가 바꾼 시각(updatedAt)이 서버 것보다 나중일 때만 덮어쓴다 (오프라인에서 바꾼 것도 시각으로 비교)
+  app.put<{ Body: { data?: unknown; updatedAt?: unknown } }>(
+    '/api/me/settings',
+    { ...auth, config: { rateLimit: { max: 60, timeWindow: '1 minute' } } },
+    async (req, reply) => {
+      const at = req.body?.updatedAt;
+      if (
+        typeof at !== 'string' ||
+        Number.isNaN(Date.parse(at)) ||
+        Date.parse(at) > Date.now() + 60_000
+      )
+        return reply.code(400).send({ error: 'bad_request' });
+      const data = pickSynced(parseSettings(req.body?.data));
+      const cur = db
+        .prepare('SELECT updated_at FROM user_settings WHERE user_id = ?')
+        .get(req.user!.userId) as { updated_at: string } | undefined;
+      if (!cur || cur.updated_at < at)
+        db.prepare(
+          `INSERT INTO user_settings (user_id, data_json, updated_at) VALUES (?, ?, ?)
+           ON CONFLICT (user_id) DO UPDATE SET data_json = excluded.data_json, updated_at = excluded.updated_at`,
+        ).run(req.user!.userId, JSON.stringify(data), at);
+      const row = db
+        .prepare('SELECT data_json, updated_at FROM user_settings WHERE user_id = ?')
+        .get(req.user!.userId) as { data_json: string; updated_at: string };
+      return { data: JSON.parse(row.data_json) as unknown, updatedAt: row.updated_at };
+    },
+  );
 
   // 닉네임 바꾸기: 공유한 여행의 멤버 목록·관리자 화면에 보이는 이름 (1~20자, shared normalizeNickname)
   app.patch<{ Body: { nickname?: unknown } }>(

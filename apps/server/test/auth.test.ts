@@ -63,7 +63,7 @@ async function login(
 }
 
 const api = (
-  method: 'GET' | 'DELETE' | 'POST' | 'PATCH',
+  method: 'GET' | 'DELETE' | 'POST' | 'PATCH' | 'PUT',
   url: string,
   sid?: string,
   payload?: object,
@@ -134,6 +134,30 @@ describe('로그인', () => {
     expect((await api('PATCH', '/api/me/nickname', undefined, { nickname: 'x' })).statusCode).toBe(
       401,
     );
+  });
+
+  it('내 설정: 계정에 저장, 나중에 바꾼 것이 이김, 기기별 설정(테마)은 저장 안 함', async () => {
+    const { sid } = await login('kakao');
+    expect((await api('GET', '/api/me/settings', sid)).json()).toEqual({
+      data: null,
+      updatedAt: null,
+    });
+    const t1 = '2026-10-24T10:00:00.000Z';
+    const put = await api('PUT', '/api/me/settings', sid, {
+      data: { dateFormat: 'korean', theme: 'dark', aiCats: ['play'], bogus: 1 },
+      updatedAt: t1,
+    });
+    expect(put.json().data).toMatchObject({ dateFormat: 'korean', aiCats: ['play'] });
+    expect(put.json().data).not.toHaveProperty('theme');
+    expect(put.json().data).not.toHaveProperty('bogus');
+    // 더 예전 시각에 바꾼 기기(오프라인이었던)는 덮어쓰지 못한다
+    const old = await api('PUT', '/api/me/settings', sid, {
+      data: { dateFormat: 'dot' },
+      updatedAt: '2026-10-24T09:00:00.000Z',
+    });
+    expect(old.json()).toMatchObject({ data: { dateFormat: 'korean' }, updatedAt: t1 });
+    expect((await api('GET', '/api/me/settings', sid)).json().data.dateFormat).toBe('korean');
+    expect((await api('GET', '/api/me/settings')).statusCode).toBe(401);
   });
 
   it('구글은 PKCE (code_challenge → code_verifier)', async () => {

@@ -89,7 +89,8 @@ function PlanView({
   const today = todayIn(trip.timezone);
   const dimPast = useSettings((st) => st.dimPastItems);
   // 지도는 누를 때만 (지도 불러오기도 무료 사용량에 포함)
-  const [mapOpen, setMapOpen] = useState(false);
+  // 설정 "일정 화면 지도 기본 펼침"
+  const [mapOpen, setMapOpen] = useState(() => useSettings.getState().planMapOpen);
   // 지도를 누르면 크게(아래 일정은 하나씩), 꾹 누르면 지도만 전체 화면(뒤로 가기·X로 닫음)
   const [mapLarge, setMapLarge] = useState(false);
   const [mapFull, setMapFull] = useRouteSheet('map-full');

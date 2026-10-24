@@ -2,7 +2,17 @@ import type { Settings } from '@trippocket/shared';
 import type { ReactNode } from 'react';
 import { resetSettings, updateSettings, useSettings } from '../../data/settingsStore';
 import { useTranslation } from '../../i18n';
-import { RadioList, SegmentedControl, Slider, Stepper, Switch, TopBar } from '../../shared/ui';
+import {
+  Chip,
+  RadioList,
+  SegmentedControl,
+  Slider,
+  Stepper,
+  Switch,
+  toast,
+  TopBar,
+} from '../../shared/ui';
+import { resetQuickButtonPosition } from '../common/FloatingQuickButton';
 import { MapAppMark } from '../common/MapAppMark';
 
 const FONT_SCALES = [0.9, 1, 1.15, 1.3] as const;
@@ -24,6 +34,51 @@ export function SettingsPage() {
     <div className="mx-auto min-h-dvh max-w-[560px] pb-10">
       <TopBar title={t('settings.title')} backTo="/me" />
       <div className="flex flex-col gap-6 px-5 pt-2">
+        <p className="px-1 text-caption text-fg-muted">{t('settings.synced')}</p>
+        <Group
+          title={t('settings.start')}
+          onReset={() => resetSettings(['startScreen', 'dateFormat', 'quickButton'])}
+        >
+          <Field label={t('settings.startScreen')}>
+            <SegmentedControl
+              label={t('settings.startScreen')}
+              value={s.startScreen}
+              onChange={set('startScreen')}
+              options={[
+                { value: 'home', label: t('settings.startHome') },
+                { value: 'ongoing', label: t('settings.startOngoing') },
+                { value: 'last', label: t('settings.startLast') },
+              ]}
+            />
+          </Field>
+          <Field label={t('settings.dateFormat')}>
+            <SegmentedControl
+              label={t('settings.dateFormat')}
+              value={s.dateFormat}
+              onChange={set('dateFormat')}
+              options={[
+                { value: 'dot', label: t('settings.dateDot') },
+                { value: 'korean', label: t('settings.dateKorean') },
+              ]}
+            />
+          </Field>
+          <SwitchRow
+            label={t('settings.quickButton')}
+            checked={s.quickButton}
+            onChange={set('quickButton')}
+          />
+          <button
+            type="button"
+            onClick={() => {
+              resetQuickButtonPosition();
+              toast(t('settings.quickButtonResetDone'));
+            }}
+            className="self-start text-body-2 font-semibold text-primary"
+          >
+            {t('settings.quickButtonReset')}
+          </button>
+        </Group>
+
         <Group
           title={t('settings.display')}
           onReset={() => resetSettings(['theme', 'fontScale', 'timeFormat', 'haptics'])}
@@ -126,7 +181,7 @@ export function SettingsPage() {
 
         <Group
           title={t('settings.plan')}
-          onReset={() => resetSettings(['timeStepMin', 'dimPastItems'])}
+          onReset={() => resetSettings(['timeStepMin', 'dimPastItems', 'planMapOpen'])}
         >
           <Field label={t('settings.timeStep')}>
             <SegmentedControl
@@ -146,6 +201,45 @@ export function SettingsPage() {
             checked={s.dimPastItems}
             onChange={set('dimPastItems')}
           />
+          <SwitchRow
+            label={t('settings.planMapOpen')}
+            checked={s.planMapOpen}
+            onChange={set('planMapOpen')}
+          />
+        </Group>
+
+        <Group title={t('settings.ai')} onReset={() => resetSettings(['aiCats', 'aiAnchor'])}>
+          <Field label={t('settings.aiAnchor')}>
+            <SegmentedControl
+              label={t('settings.aiAnchor')}
+              value={s.aiAnchor}
+              onChange={set('aiAnchor')}
+              options={[
+                { value: 'coords', label: t('ai.nearStation') },
+                { value: 'lodging', label: t('ai.lodging') },
+                { value: 'text', label: t('ai.typeIn') },
+              ]}
+            />
+          </Field>
+          <Field label={t('settings.aiCats')}>
+            <div className="flex flex-wrap gap-2">
+              {(['food', 'cafe', 'play'] as const).map((c) => (
+                <Chip
+                  key={c}
+                  selected={s.aiCats.includes(c)}
+                  onClick={() =>
+                    updateSettings({
+                      aiCats: s.aiCats.includes(c)
+                        ? s.aiCats.filter((x) => x !== c)
+                        : [...s.aiCats, c],
+                    })
+                  }
+                >
+                  {t(`ai.cat.${c}`)}
+                </Chip>
+              ))}
+            </div>
+          </Field>
         </Group>
 
         <Group

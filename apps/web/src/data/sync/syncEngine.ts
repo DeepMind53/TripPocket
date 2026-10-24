@@ -69,6 +69,8 @@ async function run(): Promise<void> {
   if (useAuth.getState().status !== 'user' || useSync.getState().choiceFor) return;
   useSync.setState({ state: 'syncing' });
   const ok = (await push()) && (await pull());
+  // 설정도 계정과 맞춘다 (일정 동기화와 따로 — 실패해도 다음에 다시)
+  if (ok === true) await (await import('../settingsSync')).syncSettings();
   useSync.setState(
     ok === true
       ? { state: 'idle', lastSyncedAt: new Date().toISOString() }

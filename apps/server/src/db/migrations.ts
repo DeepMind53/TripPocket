@@ -188,4 +188,12 @@ export const MIGRATIONS: readonly string[] = [
     PRIMARY KEY (trip_id, user_id)
   );
   `,
+  // 13: 사용자별 설정 (기기별 설정 — 테마·글자 크기·진동 — 은 빼고). 나중에 바꾼 쪽이 이긴다 — routes/me.ts
+  `
+  CREATE TABLE user_settings (
+    user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    data_json TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  );
+  `,
 ];

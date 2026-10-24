@@ -50,6 +50,12 @@ const clampTop = (top: number, h: number) =>
   Math.min(Math.max(top, TOP_RESERVED), Math.max(TOP_RESERVED, h - BOTTOM_RESERVED - SIZE));
 
 /** 스크롤 중이면 true (아래로 스크롤할 때만 — 위로 올리면 바로 원래대로) */
+/** 설정의 "⚡ 버튼 위치 처음으로" */
+// eslint-disable-next-line react-refresh/only-export-components -- 설정 화면에서 부르는 함수, 개발 중 새로고침 방식에만 영향
+export function resetQuickButtonPosition(): void {
+  save(DEFAULT);
+}
+
 function useScrollingDown(): boolean {
   const [on, setOn] = useState(false);
   useEffect(() => {

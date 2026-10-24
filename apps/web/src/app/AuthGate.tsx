@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import { Outlet, useLocation } from 'react-router';
 import { useAuth, wasSignedIn } from '../data/authStore';
 import { Spinner } from '../shared/ui';
+import { useStartScreen } from './useStartScreen';
 
 const LoginPage = lazy(async () => ({
   default: (await import('../features/me/LoginPage')).LoginPage,
@@ -24,6 +25,8 @@ const Loading = () => (
 export function AuthGate() {
   const status = useAuth((s) => s.status);
   const loc = useLocation();
+  // 설정 "앱을 열면" (홈·진행 중인 여행·마지막 화면)
+  useStartScreen();
   if (status === 'user' || (status !== 'anon' && wasSignedIn())) return <Outlet />;
   if (status === 'unknown') return <Loading />;
   return (

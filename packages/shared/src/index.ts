@@ -41,6 +41,8 @@ export {
   parseSettings,
   SETTINGS_DEFAULTS,
   type Settings,
+  pickSynced,
+  SYNCED_SETTINGS,
 } from './settings/settings';
 export {
   BACKUP_FORMAT,

@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useState, type ComponentType } from 'react';
 import { useTranslation } from '../../i18n';
 import { useRouteSheet } from '../../shared/hooks/useRouteSheet';
 import { FloatingQuickButton } from './FloatingQuickButton';
+import { useSettings } from '../../data/settingsStore';
 import type { QuickMenuSheets as Sheets } from './QuickMenuSheets';
 
 const SHEET_KEY = 'quick-menu';
@@ -27,9 +28,11 @@ export function QuickMenuButton({ inTrip = false }: { inTrip?: boolean }) {
     idle(() => void preloadQuickMenu());
   }, []);
   const props = { inTrip, open, setOpen };
+  // 설정에서 ⚡ 버튼을 끌 수 있다 (빠른 메뉴는 설정 화면의 "빠른 메뉴 열기"로)
+  const visible = useSettings((s) => s.quickButton);
   return (
     <>
-      <FloatingQuickButton label={t('quickMenu.title')} onOpen={() => setOpen(true)} />
+      {visible && <FloatingQuickButton label={t('quickMenu.title')} onOpen={() => setOpen(true)} />}
       {used &&
         (Loaded ? (
           <Loaded {...props} />

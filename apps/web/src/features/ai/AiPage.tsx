@@ -10,6 +10,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { api } from '../../data/api/client';
 import { useAuth } from '../../data/authStore';
+import { useSettings } from '../../data/settingsStore';
 import { useTrip, useTripBookings } from '../../data/hooks';
 import { itemRepo } from '../../data/repositories/itemRepo';
 import { savedPlaceRepo } from '../../data/repositories/savedPlaceRepo';
@@ -57,11 +58,14 @@ export function AiPage() {
     ? (lodgingForNight(bookings, todayIn(trip.timezone))?.booking ??
       bookings.find((b) => b.kind === 'lodging'))
     : undefined;
-  const [mode, setMode] = useState<'coords' | 'lodging' | 'text'>('text');
+  // 설정 "AI 추천 기본값": 기준 위치·카테고리
+  const [mode, setMode] = useState<'coords' | 'lodging' | 'text'>(
+    () => useSettings.getState().aiAnchor,
+  );
   const [text, setText] = useState('');
   // 드롭다운에서 고른 장소 (이름을 고치면 다시 직접 입력으로)
   const [picked, setPicked] = useState<PlaceSummary | null>(null);
-  const [cats, setCats] = useState<AiCategory[]>(['food', 'cafe']);
+  const [cats, setCats] = useState<AiCategory[]>(() => [...useSettings.getState().aiCats]);
   const [keywordOpen, setKeywordOpen] = useState(false);
   const [keyword, setKeyword] = useState('');
   const [busy, setBusy] = useState(false);
