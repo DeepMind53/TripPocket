@@ -320,8 +320,8 @@ describe('일정 상세 — 종류별 맞춤·예약 연결 (docs/16 D1·D2)', (
     await user.click(await screen.findByRole('button', { name: /인천 → 나리타 KE703/ }));
     const sheet = await screen.findByRole('dialog', { name: '인천 → 나리타 KE703' });
     const linked = within(sheet).getByRole('region', { name: '연결된 예약' });
-    expect(linked).toHaveTextContent('ICN → NRT');
-    expect(linked).toHaveTextContent('출발 T2 · 도착 T1');
+    // 예약 탭과 같은 탑승권: 공항·시각·터미널
+    expect(linked).toHaveTextContent(/ICNs*09:10s*T2.*NRTs*11:30s*T1/);
     expect(
       within(linked).getByRole('button', { name: '예약번호 AB12CD 복사' }),
     ).toBeInTheDocument();

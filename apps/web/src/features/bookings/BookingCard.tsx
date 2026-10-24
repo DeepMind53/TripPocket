@@ -19,7 +19,7 @@ export function BookingCard({ booking, onOpen }: { booking: Booking; onOpen: () 
         className="block w-full p-4 text-left"
       >
         {b.kind === 'flight' ? (
-          <FlightBody booking={b} />
+          <FlightTicket booking={b} />
         ) : b.kind === 'lodging' ? (
           <LodgingBody booking={b} />
         ) : (
@@ -46,7 +46,8 @@ export function BookingCard({ booking, onOpen }: { booking: Booking; onOpen: () 
   );
 }
 
-function FlightBody({ booking: b }: { booking: Booking }) {
+/** 탑승권 모양 항공편 (예약 탭·일정 화면·일정 상세가 함께 씀) */
+export function FlightTicket({ booking: b }: { booking: Booking }) {
   const { t } = useTranslation();
   return (
     <div className="flex flex-col gap-2">

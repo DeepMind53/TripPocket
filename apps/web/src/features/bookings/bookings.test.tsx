@@ -132,8 +132,9 @@ describe('예약', () => {
     });
     renderAt([`/trips/${tripId}/plan?day=all`]);
     const day1 = await screen.findByRole('region', { name: '1일차 · 10.24 (토)' });
+    // 출발일은 예약 탭과 같은 탑승권
     expect(within(day1).getByRole('button', { name: 'KE123 PUS→BKK 예약 보기' })).toHaveTextContent(
-      'PUS → BKK',
+      /PUSs*22:30.*BKKs*02:10/,
     );
     const day2 = screen.getByRole('region', { name: '2일차 · 10.25 (일)' });
     expect(within(day2).getByRole('button', { name: 'KE123 PUS→BKK 예약 보기' })).toHaveTextContent(

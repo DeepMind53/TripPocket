@@ -47,6 +47,7 @@ import { ItemFormSheet } from './ItemFormSheet';
 import { dayColor, KIND_ICON } from './itemKinds';
 import { MoveDaySheet } from './MoveDaySheet';
 import { BOOKING_ICON } from '../common/bookingKinds';
+import { FlightTicket } from '../bookings/BookingCard';
 import { isDomesticTrip } from '../../domain/tripPlace';
 import { distanceKm, formatDistance, walkMinutes } from '@trippocket/shared';
 import { useLab } from '../../data/labsStore';
@@ -709,6 +710,26 @@ function BookingLine({ row, onOpen }: { row: BookingRow; onOpen: () => void }) {
     b.kind === 'flight' && (b.start.place || b.end?.place)
       ? `${b.start.place ?? ''} → ${b.end?.place ?? ''}`
       : null;
+  // 출발하는 날의 항공편은 예약 탭과 같은 탑승권으로 (편명·공항·시각·터미널·좌석·예약번호)
+  if (b.kind === 'flight' && row.part === 'start')
+    return (
+      <li>
+        <button
+          type="button"
+          onClick={onOpen}
+          aria-label={t('plan.openBooking', { title: b.title })}
+          className="flex w-full flex-col gap-2 rounded-btn border border-dashed border-line px-3 py-3 text-left"
+        >
+          <FlightTicket booking={b} />
+          {b.confirmationNo && (
+            <span className="tabular border-t border-dashed border-line pt-1.5 text-caption text-fg-sub">
+              {t('bookings.confirmationNo')}{' '}
+              <strong className="font-bold text-fg">{b.confirmationNo}</strong>
+            </span>
+          )}
+        </button>
+      </li>
+    );
   return (
     <li>
       <button

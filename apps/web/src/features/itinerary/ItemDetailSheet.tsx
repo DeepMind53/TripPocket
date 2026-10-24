@@ -16,6 +16,7 @@ import { useTranslation } from '../../i18n';
 import { placeLink, openMapLink, type MapApp } from '../../shared/lib/directions';
 import { BottomSheet, Button, Switch, toast } from '../../shared/ui';
 import { copyText } from '../../shared/lib/clipboard';
+import { FlightTicket } from '../bookings/BookingCard';
 import { KIND_ICON } from './itemKinds';
 
 export interface ItemDetailSheetProps {
@@ -299,11 +300,17 @@ function BookingSummary({
           </button>
         )}
       </div>
-      <p className="text-body-2 font-semibold">
-        {route ?? b.title}
-        {when && <span className="tabular ml-2 font-normal text-fg-sub">{when}</span>}
-      </p>
-      {extra.length > 0 && <p className="text-caption text-fg-sub">{extra.join(' · ')}</p>}
+      {b.kind === 'flight' ? (
+        <FlightTicket booking={b} />
+      ) : (
+        <>
+          <p className="text-body-2 font-semibold">
+            {route ?? b.title}
+            {when && <span className="tabular ml-2 font-normal text-fg-sub">{when}</span>}
+          </p>
+          {extra.length > 0 && <p className="text-caption text-fg-sub">{extra.join(' · ')}</p>}
+        </>
+      )}
       {b.confirmationNo && (
         <button
           type="button"
