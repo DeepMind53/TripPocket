@@ -14,6 +14,12 @@ PC가 꺼져 있어도 앱은 기기 안에서 그대로 동작하고, 다시 �
 2. `powershell -ExecutionPolicy Bypass -File D:\Travel_Planner\ops\install.ps1`
    - 서버 자동 시작(부팅 시, 멈추면 1분 뒤 재시작) + 매일 03:00 백업이 작업 스케줄러에 등록된다 (S4U: 비밀번호를 묻거나 저장하지 않고, 로그인하지 않아도 실행)
 
+### 수동 시작·재시작
+
+- 바탕화면 **"TripPocket 서버 재시작.bat"** (= `ops
+estart-server.ps1`): 돌고 있으면 끄고 다시 켜고, 꺼져 있으면 바로 켠다
+- PC를 다시 켜면 작업 스케줄러가 자동으로 켠다 (로그인 안 해도). Tailscale도 서비스로 자동 시작, Funnel은 `--bg`라 유지
+
 ## 2. 외부 주소 (Tailscale Funnel, 무료)
 
 1. https://tailscale.com/download → 설치 → 로그인 (Google 계정 등)
