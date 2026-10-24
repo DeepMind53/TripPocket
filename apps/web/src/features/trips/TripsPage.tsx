@@ -1,9 +1,10 @@
-import { getTripStatus, todayIn, type Trip, type TripStatus } from '@trippocket/shared';
+import { getTripStatus, todayIn, type Trip, type TripStatus, flagEmoji } from '@trippocket/shared';
 import { ChevronDown, Ellipsis, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from '../../i18n';
 import { Link, useNavigate } from 'react-router';
-import { useTrips } from '../../data/hooks';
+import { useTripItems, useTrips } from '../../data/hooks';
+import { useMemberCount, useTripRole } from '../../data/tripRoles';
 import { useRouteSheet } from '../../shared/hooks/useRouteSheet';
 import { formatPeriod, formatTripBadge, formatTripLength } from '../../shared/lib/dateFormat';
 import { BottomSheet, Button, EmptyState, IconButton, TopBar } from '../../shared/ui';
@@ -170,6 +171,15 @@ function TripCard({ trip, onMenu }: { trip: Trip; onMenu: (trip: Trip) => void }
   const { t } = useTranslation();
   const today = todayIn(trip.timezone);
   const isPast = getTripStatus(trip.startDate, trip.endDate, today) === 'past';
+  const items = useTripItems(trip.id);
+  const members = useMemberCount(trip.id);
+  const role = useTripRole(trip.id);
+  // 나라 국기 (중복 없이)
+  const flags = [
+    ...new Set(trip.destinations.flatMap((d) => (d.countryCode ? [d.countryCode] : []))),
+  ]
+    .map(flagEmoji)
+    .join('');
   return (
     <li className="flex items-center gap-1 rounded-card border border-line bg-surface pr-1 shadow-card">
       <Link to={`/trips/${trip.id}/plan`} className="flex min-w-0 flex-1 items-center gap-3 p-3">
@@ -183,13 +193,28 @@ function TripCard({ trip, onMenu }: { trip: Trip; onMenu: (trip: Trip) => void }
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
           <span className="truncate text-body-1">{trip.title}</span>
           <span className="tabular truncate text-caption text-fg-muted">
+            {flags && `${flags} `}
             {formatPeriod(trip.startDate, trip.endDate)} ·{' '}
             {formatTripLength(trip.startDate, trip.endDate)}
           </span>
-          <span
-            className={`tabular mt-1 self-start rounded-full px-2 py-0.5 text-micro ${isPast ? 'bg-bg-subtle text-fg-muted' : 'bg-primary-weak text-primary'}`}
-          >
-            {formatTripBadge(trip.startDate, trip.endDate, today)}
+          <span className="mt-1 flex flex-wrap items-center gap-1.5">
+            <span
+              className={`tabular rounded-full px-2 py-0.5 text-micro ${isPast ? 'bg-bg-subtle text-fg-muted' : 'bg-primary-weak text-primary'}`}
+            >
+              {formatTripBadge(trip.startDate, trip.endDate, today)}
+            </span>
+            {/* 일정 수 · 함께 쓰는 사람 (docs/16 E1) */}
+            {items !== undefined && (
+              <span className="tabular text-micro text-fg-muted">
+                {t('trips.itemCount', { n: items.length })}
+              </span>
+            )}
+            {members > 1 && (
+              <span className="tabular text-micro text-fg-muted">
+                👥 {members}
+                {role === 'viewer' && ` · ${t('share.role.viewer')}`}
+              </span>
+            )}
           </span>
         </span>
       </Link>

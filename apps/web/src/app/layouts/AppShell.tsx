@@ -13,7 +13,7 @@ export function AppShell() {
   useBottomInset(TAB_BAR_HEIGHT);
   return (
     <div className="mx-auto min-h-dvh max-w-[560px]">
-      <main className="pb-[calc(56px+env(safe-area-inset-bottom)+80px)]">
+      <main className="pb-[calc(56px+env(safe-area-inset-bottom)+96px)]">
         <Outlet />
       </main>
       <QuickMenuButton />

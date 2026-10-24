@@ -88,7 +88,40 @@ function useViewport() {
   return vp;
 }
 
-export function FloatingQuickButton({ label, onOpen }: { label: string; onOpen: () => void }) {
+/** 처음 한 번 "자주 쓰는 기능은 여기" 말풍선 (docs/16 G1) — 이 기기에 기록 */
+const HINT_KEY = 'tp-quick-hint';
+const hintSeen = () => {
+  try {
+    return localStorage.getItem(HINT_KEY) === '1';
+  } catch {
+    return true;
+  }
+};
+
+export function FloatingQuickButton({
+  label,
+  onOpen,
+  hintText,
+}: {
+  label: string;
+  onOpen: () => void;
+  /** 처음 한 번 보여 줄 안내 */
+  hintText?: string;
+}) {
+  const [hint, setHint] = useState(() => !!hintText && !hintSeen());
+  const closeHint = () => {
+    setHint(false);
+    try {
+      localStorage.setItem(HINT_KEY, '1');
+    } catch {
+      // 기록 못 하면 다음에 한 번 더 보일 뿐
+    }
+  };
+  useEffect(() => {
+    if (!hint) return;
+    const id = window.setTimeout(closeHint, 8000);
+    return () => window.clearTimeout(id);
+  }, [hint]);
   const pos = usePos();
   const vp = useViewport();
   const compact = useScrollingDown();
@@ -126,30 +159,49 @@ export function FloatingQuickButton({ label, onOpen }: { label: string; onOpen: 
       : { right: `max(${EDGE}px, env(safe-area-inset-right, 0px))` };
 
   return createPortal(
-    <button
-      type="button"
-      aria-label={label}
-      data-dragging={drag ? '' : undefined}
-      data-compact={compact && !drag ? '' : undefined}
-      onPointerDown={onPointerDown}
-      onPointerMove={onPointerMove}
-      onPointerUp={onPointerUp}
-      onPointerCancel={() => {
-        start.current = null;
-        setDrag(null);
-      }}
-      onClick={() => {
-        if (swallowClick.current) {
-          swallowClick.current = false;
-          return;
-        }
-        onOpen();
-      }}
-      style={{ top, width: SIZE, height: SIZE, ...sideStyle }}
-      className="fixed z-40 grid touch-none place-items-center rounded-full bg-primary text-on-primary shadow-lg transition-[left,right,top,scale,opacity] duration-200 select-none data-[compact]:scale-75 data-[compact]:opacity-60 data-[dragging]:scale-110 data-[dragging]:transition-none [&>svg]:size-6"
-    >
-      <Zap aria-hidden="true" />
-    </button>,
+    <>
+      {hint && !drag && (
+        <button
+          type="button"
+          onClick={closeHint}
+          style={{
+            top: top - 52,
+            ...(pos.side === 'left'
+              ? { left: `max(${EDGE}px, env(safe-area-inset-left, 0px))` }
+              : { right: `max(${EDGE}px, env(safe-area-inset-right, 0px))` }),
+          }}
+          className="fixed z-40 max-w-[220px] rounded-btn bg-fg px-3 py-2 text-left text-caption text-bg shadow-lg"
+        >
+          {hintText} ✕
+        </button>
+      )}
+      <button
+        type="button"
+        aria-label={label}
+        data-dragging={drag ? '' : undefined}
+        data-compact={compact && !drag ? '' : undefined}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={() => {
+          start.current = null;
+          setDrag(null);
+        }}
+        onClick={() => {
+          if (hint) closeHint();
+          if (swallowClick.current) {
+            swallowClick.current = false;
+            return;
+          }
+          onOpen();
+        }}
+        style={{ top, width: SIZE, height: SIZE, ...sideStyle }}
+        className="fixed z-40 grid touch-none place-items-center rounded-full bg-primary text-on-primary shadow-lg transition-[left,right,top,scale,opacity] duration-200 select-none data-[compact]:scale-75 data-[compact]:opacity-60 data-[dragging]:scale-110 data-[dragging]:transition-none [&>svg]:size-6"
+      >
+        <Zap aria-hidden="true" />
+      </button>
+      ,
+    </>,
     document.body,
   );
 }

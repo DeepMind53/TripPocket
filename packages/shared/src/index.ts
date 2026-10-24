@@ -28,7 +28,6 @@ export {
   choseong,
   findCityByName,
   findCountry,
-  flagEmoji,
   normalize,
   popularCities,
   searchPlaces,
@@ -110,3 +109,4 @@ export {
 export { distanceKm, formatDistance, walkMinutes, type LatLng } from './geo/distance';
 export { NICKNAME_MAX, normalizeNickname } from './user/nickname';
 export { findAirport, searchAirports, type Airport } from './data/airports';
+export { flagEmoji } from './data/flag';

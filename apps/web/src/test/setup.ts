@@ -23,6 +23,7 @@ globalThis.fetch = (() =>
 // 서버가 401이면(로그인 안 됨) 로그인 화면으로 가는 것은 따로 시험한다 (app/authGate.test.tsx)
 beforeEach(() => {
   localStorage.setItem('tp-signed-in', '1');
+  localStorage.setItem('tp-quick-hint', '1'); // ⚡ 첫 안내 말풍선은 따로 시험
 });
 
 // 시트·라디오 목록은 앱에서 나중에 불러오는 부품 — 시험에서는 미리 받아 둬서 누르자마자 보이게

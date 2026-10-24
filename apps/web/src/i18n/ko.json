@@ -63,7 +63,8 @@
     "appNaver": "네이버",
     "appGoogle": "구글",
     "appKakao": "카카오",
-    "appAsk": "묻기"
+    "appAsk": "묻기",
+    "hint": "환율·AI 추천·길찾기 같은\n자주 쓰는 기능은 여기에 있어요"
   },
   "home": {
     "emptyTitle": "어디로 떠나볼까요?",
@@ -86,7 +87,9 @@
     "itemCount": "일정 {{n}}개",
     "checklistProgress": "준비물 {{done}}/{{total}}",
     "myTrips": "내 여행",
-    "newTrip": "새 여행"
+    "newTrip": "새 여행",
+    "sampleCta": "샘플 여행으로 둘러보기",
+    "sampleCreated": "샘플 여행을 만들었어요. 둘러본 뒤 지워도 돼요"
   },
   "trips": {
     "title": "내 여행",
@@ -104,7 +107,8 @@
     "notFound": "여행을 찾을 수 없어요",
     "notFoundDesc": "삭제됐거나 다른 기기에서 만든 여행일 수 있어요.",
     "backToList": "내 여행으로",
-    "settings": "여행 설정"
+    "settings": "여행 설정",
+    "itemCount": "일정 {{n}}"
   },
   "saved": {
     "title": "저장",
@@ -123,7 +127,10 @@
     "devUi": "컴포넌트 미리보기 (개발용)",
     "devDb": "저장소 확인 (개발용)",
     "devAi": "AI 추천 수집 (개발용)",
-    "labs": "실험실"
+    "labs": "실험실",
+    "groupTools": "여행 도구",
+    "groupAdmin": "관리자",
+    "groupInfo": "앱 정보"
   },
   "plan": {
     "dayChipsLabel": "날짜 선택",

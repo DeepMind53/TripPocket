@@ -33,14 +33,8 @@ export function MePage() {
       <TopBar title={t('me.title')} />
       <div className="flex flex-col gap-4 px-5 pt-2">
         <AccountCard />
-        <ul className="flex flex-col divide-y divide-line overflow-hidden rounded-card border border-line">
-          {isAdmin && (
-            <>
-              <MenuRow to="/admin/users" icon={<Users />} label={t('admin.title')} />
-              <MenuRow to="/admin/api-usage" icon={<Gauge />} label={t('apiUsage.title')} />
-              <MenuRow to="/admin/ai" icon={<Sparkles />} label={t('me.devAi')} />
-            </>
-          )}
+        {/* 묶음: 여행 도구 · 관리자(관리자만) · 앱 정보 (docs/16 H1) */}
+        <MenuGroup title={t('me.groupTools')}>
           <MenuRow to="/settings" icon={<Settings />} label={t('me.settings')} />
           <MenuRow to="/backup" icon={<DatabaseBackup />} label={t('me.backup')} />
           {/* 설치한 뒤에도 늘 보인다 (다른 기기에 추가·아이콘을 지운 경우, 사용자 요청 2026-10-24) */}
@@ -50,9 +44,16 @@ export function MePage() {
             onClick={() => setInstallOpen(true)}
           />
           <MenuRow to="/labs" icon={<FlaskConical />} label={t('me.labs')} />
+        </MenuGroup>
+        {isAdmin && (
+          <MenuGroup title={t('me.groupAdmin')}>
+            <MenuRow to="/admin/users" icon={<Users />} label={t('admin.title')} />
+            <MenuRow to="/admin/api-usage" icon={<Gauge />} label={t('apiUsage.title')} />
+            <MenuRow to="/admin/ai" icon={<Sparkles />} label={t('me.devAi')} />
+          </MenuGroup>
+        )}
+        <MenuGroup title={t('me.groupInfo')}>
           <MenuRow to="/legal/help" icon={<CircleHelp />} label={t('me.help')} />
-        </ul>
-        <ul className="flex flex-col divide-y divide-line overflow-hidden rounded-card border border-line">
           <MenuRow to="/legal/privacy" icon={<ShieldCheck />} label={t('legal.privacy')} />
           <MenuRow to="/legal/terms" icon={<FileText />} label={t('legal.terms')} />
           <MenuRow to="/legal/licenses" icon={<Scale />} label={t('legal.licenses')} />
@@ -62,10 +63,21 @@ export function MePage() {
               <MenuRow to="/dev/db" icon={<Database />} label={t('me.devDb')} />
             </>
           )}
-        </ul>
+        </MenuGroup>
       </div>
       <InstallSheet open={installOpen} onOpenChange={setInstallOpen} />
     </>
+  );
+}
+
+function MenuGroup({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <section aria-label={title} className="flex flex-col gap-1.5">
+      <h2 className="px-1 text-caption font-bold text-fg-muted">{title}</h2>
+      <ul className="flex flex-col divide-y divide-line overflow-hidden rounded-card border border-line">
+        {children}
+      </ul>
+    </section>
   );
 }
 

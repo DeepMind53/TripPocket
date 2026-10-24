@@ -20,7 +20,7 @@ import { copyText } from '../../shared/lib/clipboard';
 import { cn } from '../../shared/lib/cn';
 import { formatPeriod, formatTripBadge, formatTripLength } from '../../shared/lib/dateFormat';
 import type { Destination } from '../../shared/lib/directions';
-import { Button, EmptyState } from '../../shared/ui';
+import { Button, EmptyState, toast } from '../../shared/ui';
 import { Wordmark } from './Wordmark';
 import { TripList } from '../trips/TripsPage';
 
@@ -73,9 +73,25 @@ export function HomePage() {
           title={t('home.emptyTitle')}
           description={t('home.emptyDesc')}
           action={
-            <Button size="lg" onClick={() => void navigate('/trips/new')}>
-              {t('home.emptyCta')}
-            </Button>
+            <div className="flex flex-col items-center gap-2">
+              <Button size="lg" onClick={() => void navigate('/trips/new')}>
+                {t('home.emptyCta')}
+              </Button>
+              {/* 처음 쓰는 사람: 샘플로 둘러보기 (docs/16 G1, 사용자 결정 2026-10-24) — 지우면 그만 */}
+              <Button
+                variant="ghost"
+                onClick={() =>
+                  void import('../../data/dev')
+                    .then((m) => m.seedSampleTrip())
+                    .then((id) => {
+                      toast(t('home.sampleCreated'));
+                      void navigate(`/trips/${id}/plan`);
+                    })
+                }
+              >
+                {t('home.sampleCta')}
+              </Button>
+            </div>
           }
         />
       )}

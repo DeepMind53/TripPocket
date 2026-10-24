@@ -32,7 +32,13 @@ export function QuickMenuButton({ inTrip = false }: { inTrip?: boolean }) {
   const visible = useSettings((s) => s.quickButton);
   return (
     <>
-      {visible && <FloatingQuickButton label={t('quickMenu.title')} onOpen={() => setOpen(true)} />}
+      {visible && (
+        <FloatingQuickButton
+          label={t('quickMenu.title')}
+          hintText={t('quickMenu.hint')}
+          onOpen={() => setOpen(true)}
+        />
+      )}
       {used &&
         (Loaded ? (
           <Loaded {...props} />

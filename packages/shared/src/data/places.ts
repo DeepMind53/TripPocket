@@ -427,12 +427,7 @@ export function findCityByName(name: string): CityInfo | undefined {
   return load().cities.find((c) => normalize(c.ko) === n || normalize(c.en) === n);
 }
 
-/** 국기 이모지 (국가 코드 → 지역 표시 문자) */
-export function flagEmoji(countryCode: string): string {
-  return String.fromCodePoint(
-    ...[...countryCode.toUpperCase()].map((ch) => 0x1f1a5 + ch.charCodeAt(0)),
-  );
-}
+export { flagEmoji } from './flag';
 
 /** 검색용 정규화: 소문자, 공백·기호 제거, 라틴 악센트 제거 (é → e). 한글은 그대로 */
 export function normalize(s: string): string {

@@ -57,6 +57,9 @@ export function setTripRoles(roles: Record<string, TripRole>): void {
 export const tripRole = (tripId: string): TripRole | undefined => useRoles.getState()[tripId];
 export const canEditTrip = (tripId: string | undefined): boolean =>
   !tripId || tripRole(tripId) !== 'viewer';
+/** 내 역할 (공유받은 여행이 아니면 없음) */
+export const useTripRole = (tripId: string | undefined): TripRole | undefined =>
+  useRoles((s) => (tripId ? s[tripId] : undefined));
 export const useCanEdit = (tripId: string | undefined): boolean =>
   useRoles((s) => !tripId || s[tripId] !== 'viewer');
 
