@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import { api } from './api/client';
 import { db } from './db';
-import { resetLocalDb } from './dev';
 
 export interface Me {
   id: string;
@@ -61,7 +60,11 @@ export async function refreshMe(): Promise<void> {
 /** 로그아웃. wipe = 이 기기의 여행 데이터도 지움 (공용 기기, docs/09 §6.3) */
 export async function logout(wipe: boolean): Promise<void> {
   await api('/auth/logout', { method: 'POST', body: '{}' });
-  if (wipe) await resetLocalDb();
+  // 기기 저장소 비우기 (data/dev의 resetLocalDb와 같음 — 샘플 여행 코드를 첫 화면에 싣지 않으려고 직접)
+  if (wipe) {
+    await db.delete();
+    await db.open();
+  }
   // 다음 로그인 때 "이 기기 데이터를 올릴까요?"를 다시 묻도록
   else await db.syncState.clear();
   useAuth.setState({ status: 'anon', me: null });

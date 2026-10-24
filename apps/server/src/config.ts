@@ -6,6 +6,8 @@ import * as z from 'zod/mini';
  */
 const Env = z.object({
   NODE_ENV: z._default(z.enum(['development', 'production', 'test']), 'development'),
+  /** 로그 단계 — 기본 warn (요청마다 남기지 않아 CPU·디스크 절약, 2026-10-25). 문제 볼 때 info */
+  LOG_LEVEL: z._default(z.enum(['error', 'warn', 'info', 'debug']), 'warn'),
   /** 127.0.0.1에만 열어 둔다 — 밖에서는 터널(Tailscale Funnel)로만 들어온다 (docs/09 §7.1) */
   HOST: z._default(z.string(), '127.0.0.1'),
   PORT: z._default(z.coerce.number().check(z.int(), z.minimum(1), z.maximum(65535)), 8787),

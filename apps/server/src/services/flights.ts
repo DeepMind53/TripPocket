@@ -78,6 +78,8 @@ export async function lookupFlight(key: string, flightNo: string): Promise<Fligh
       }
     : null;
   cache.set(code, { exp: Date.now() + TTL, value });
+  // 메모리가 계속 늘지 않게 (월 100회라 거의 닿지 않음)
+  if (cache.size > 300) cache.delete(cache.keys().next().value!);
   return value;
 }
 

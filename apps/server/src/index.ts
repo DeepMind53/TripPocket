@@ -2,6 +2,7 @@ import { buildApp } from './app';
 import { loadConfig } from './config';
 import { openDb } from './db/database';
 import { scheduleFx } from './services/fx';
+import { scheduleMaintenance } from './services/maintenance';
 
 /** 서버 시작: 설정 확인 → DB(마이그레이션) → 127.0.0.1에서 대기 */
 const config = loadConfig();
@@ -18,5 +19,8 @@ process.on('SIGTERM', () => void close());
 
 await app.listen({ host: config.HOST, port: config.PORT });
 
+// 오래된 세션·사용량 기록 정리 + SQLite 가볍게 (6시간마다)
+scheduleMaintenance(db, (m) => app.log.warn(m));
+
 // 환율 받기 (키가 있을 때만)
-if (config.EXIM_API_KEY) scheduleFx(db, config.EXIM_API_KEY, (m) => app.log.info(m));
+if (config.EXIM_API_KEY) scheduleFx(db, config.EXIM_API_KEY, (m) => app.log.warn(m));

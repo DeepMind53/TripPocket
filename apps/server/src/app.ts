@@ -37,7 +37,7 @@ export async function buildApp(config: Config, db: Db): Promise<FastifyInstance>
       config.NODE_ENV === 'test'
         ? false
         : {
-            level: 'info',
+            level: config.LOG_LEVEL,
             // 토큰·쿠키·이메일이 로그에 남지 않게 (docs/09 §7.2)
             redact: [
               'req.headers.cookie',

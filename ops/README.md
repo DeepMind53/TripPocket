@@ -83,3 +83,10 @@ pnpm --filter @trippocket/server build
 
 - 작업은 S4U(비밀번호 저장 없이, 로그인 안 해도 실행)로 등록된다. 이전 실행이 멈춰 "실행 중"인데 응답이 없으면:
   가장 간단한 방법은 **PC 재시작**. 재시작 없이: `Stop-ScheduledTask 'TripPocket Server'` → 작업 관리자 "세부 정보"에서 사용자 이름이 내 계정인 `node.exe` 중 응답 없는 것(세션 0) 끝내기 → `Start-ScheduledTask 'TripPocket Server'`
+
+## 5. 리소스 (2026-10-25 점검)
+
+- 서버(node) 평소: CPU 0%, 메모리 약 78MB(전용 약 40MB). DB 약 250KB
+- 줄인 것: 로그 단계 기본 `warn`(요청마다 기록 안 함, `.env`의 `LOG_LEVEL=info`로 다시 켬),
+  6시간마다 DB 정리(만료 세션·로그인 state·AI 저장본, 13개월 넘은 사용량) + WAL 비우기, 항공편 메모리 저장본 상한
+- 서버가 아닌 것: 개발용 화면 서버(vite, `pnpm dev`)는 400MB 가까이 쓴다 — 개발할 때만 켜 두기
