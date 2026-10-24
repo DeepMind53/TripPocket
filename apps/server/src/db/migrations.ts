@@ -168,4 +168,10 @@ export const MIGRATIONS: readonly string[] = [
   `
   ALTER TABLE api_controls ADD COLUMN auto_daily_limit INTEGER;
   `,
+  // 10: 카카오 로컬을 API별(키워드·카테고리)로 나누고 월 합산 묶음(kakao_map) — 지금까지 기록은 키워드로, 합산에도 넣는다
+  `
+  INSERT INTO api_usage (api, date, count) SELECT 'kakao_map', date, count FROM api_usage WHERE api = 'kakao_local';
+  UPDATE api_usage SET api = 'kakao_keyword' WHERE api = 'kakao_local';
+  UPDATE api_controls SET api = 'kakao_keyword' WHERE api = 'kakao_local';
+  `,
 ];

@@ -21,6 +21,8 @@ const row = (id: string, group: 'paid' | 'free', over: object = {}) => ({
   paused: false,
   pausable: true,
   browser: false,
+  pool: null,
+  poolOnly: false,
   autoStopped: false,
   autoStoppedBy: null,
   ...over,
@@ -58,7 +60,7 @@ it('관리자: 마이 → API 사용량, 과금 가능 API는 % 게이지·상�
             autoStopped: true,
             autoStoppedBy: 'month',
           }),
-          row('kakao_local', 'paid', {
+          row('kakao_keyword', 'paid', {
             freeMonthly: null,
             freeDaily: 100000,
             dailyLimit: 90000,
@@ -89,7 +91,7 @@ it('관리자: 마이 → API 사용량, 과금 가능 API는 % 게이지·상�
   expect(screen.getByText('자동 중지')).toBeInTheDocument(); // 지도: 상한 도달
   expect(screen.getByText('오늘 자동 중지')).toBeInTheDocument(); // 카카오: 하루 상한 도달
   expect(
-    screen.getByRole('meter', { name: '카카오 로컬 (장소·역 찾기) 오늘 무료 사용량 대비' }),
+    screen.getByRole('meter', { name: '카카오 키워드 장소 검색 오늘 무료 사용량 대비' }),
   ).toHaveAttribute('aria-valuenow', '90');
   expect(screen.getByText('이번 달 30회 · 오늘 3회')).toBeInTheDocument(); // 한도 없는 무료 API
   // 로그인은 멈출 수 없고 기록만

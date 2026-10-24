@@ -158,15 +158,30 @@ describe('dailyQuota (지도 로드 부풀리기 방지)', () => {
 
 describe('API 사용량 — 모든 외부 API·하루 한도·중지 불가 항목', () => {
   it('하루 무료량이 있는 API는 오늘 90%에서 자동 중지, 관리자가 하루 상한을 바꿀 수 있다', async () => {
-    trackApi('kakao_local', 89_999);
-    expect(apiAllowed('kakao_local')).toBe(true);
-    trackApi('kakao_local');
-    expect(apiAllowed('kakao_local')).toBe(false);
-    expect(() => guardApi('kakao_local')).toThrow('api_paused');
-    const k = api(await report(), 'kakao_local') as unknown as { autoStoppedBy: string };
+    trackApi('kakao_keyword', 89_999);
+    expect(apiAllowed('kakao_keyword')).toBe(true);
+    trackApi('kakao_keyword');
+    expect(apiAllowed('kakao_keyword')).toBe(false);
+    expect(() => guardApi('kakao_keyword')).toThrow('api_paused');
+    const k = api(await report(), 'kakao_keyword') as unknown as { autoStoppedBy: string };
     expect(k.autoStoppedBy).toBe('day');
-    await req('POST', '/api/admin/api-usage/kakao_local', admin, { dailyLimit: 95_000 });
-    expect(apiAllowed('kakao_local')).toBe(true);
+    await req('POST', '/api/admin/api-usage/kakao_keyword', admin, { dailyLimit: 95_000 });
+    expect(apiAllowed('kakao_keyword')).toBe(true);
+  });
+
+  it('카카오: API별 하루 쿼터 + 카카오맵 전체 월 합산(300만) — 합산을 멈추면 둘 다 멈춘다', async () => {
+    trackApi('kakao_keyword', 3);
+    trackApi('kakao_category', 2);
+    const r = await report();
+    expect(api(r, 'kakao_map').used).toBe(5);
+    expect(api(r, 'kakao_map').freeMonthly).toBe(3_000_000);
+    expect(api(r, 'kakao_category').used).toBe(2);
+    await req('POST', '/api/admin/api-usage/kakao_map', admin, { limit: 5 });
+    expect(apiAllowed('kakao_keyword')).toBe(false);
+    expect(apiAllowed('kakao_category')).toBe(false);
+    await req('POST', '/api/admin/api-usage/kakao_map', admin, { limit: null });
+    await req('POST', '/api/admin/api-usage/kakao_map', admin, { paused: true });
+    expect(apiAllowed('kakao_category')).toBe(false);
   });
 
   it('브라우저 API(날씨 등)도 기록·중지, 모르는 id는 무시', async () => {

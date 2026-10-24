@@ -46,6 +46,9 @@ export interface ApiUsage {
   /** false = 수동 중지 불가 (로그인·프록시) */
   pausable: boolean;
   browser: boolean;
+  /** 월 무료량을 함께 쓰는 묶음 id (예: kakao_map) */
+  pool: string | null;
+  poolOnly: boolean;
   autoStopped: boolean;
   autoStoppedBy: 'month' | 'day' | null;
 }

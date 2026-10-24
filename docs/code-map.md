@@ -72,7 +72,9 @@ Tailscale Funnel https://jin-server.tail0844c0.ts.net ─▶ 홈 PC 127.0.0.1:87
 | google_places_details | 과금 가능 | 월 1,000 | Place Details **Enterprise** (평점·영업시간·전화·웹사이트). FieldMask를 바꾸면 등급이 바뀌니 주의 |
 | google_maps_js | 과금 가능 | 월 10,000 | Dynamic Maps (지도 1회 로드). 브라우저 |
 | naver_maps_js | 과금 가능 | 월 10,000 (보수적) | NCP Maps Web Dynamic Map, **대표 계정만** 무료 이용량. 콘솔 수치 확인 후 조정. 브라우저 |
-| kakao_local | 과금 가능 | 하루 100,000 | 넘으면 건당 2원(비즈월렛 연결 시). **2026년부터 무료량은 개발자 계정의 첫 카카오맵 API 앱만** |
+| kakao_map | 과금 가능 | 월 3,000,000 (합산) | 카카오맵 REST API 전체 월 합산 묶음(`pool`). 멈추면 아래 카카오 API 모두 멈춤. 무료 쿼터는 개발자 계정의 첫 카카오맵 앱만(이 앱은 받음, 2026-10-24 사용자 확인) |
+| kakao_keyword | 과금 가능 | 하루 100,000 | 키워드로 장소 검색, 넘으면 2원/건 |
+| kakao_category | 과금 가능 | 하루 100,000 | 카테고리로 장소 검색(가까운 역), 넘으면 2원/건 |
 | naver_search | 과금 가능 | 월 775,000 · 하루 25,000 | NAVER API HUB 한시적 무료, 유료 전환은 사전 공지 예정. 하루 값은 옛 개발자센터 기준 |
 | gemini | 무료 | 하루 500 | 결제 없는 프로젝트 → 넘으면 거절. Flash-Lite 하루 500~1,000 (태평양 자정) |
 | workers-ai | 무료 | 하루 50 | 무료 플랜 1만 Neurons/일 ≈ 분석 50회. Workers 유료 플랜이면 과금되므로 유지 |

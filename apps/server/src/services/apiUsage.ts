@@ -14,7 +14,9 @@ export type ApiId =
   | 'google_places_details'
   | 'google_maps_js'
   | 'naver_maps_js'
-  | 'kakao_local'
+  | 'kakao_map'
+  | 'kakao_keyword'
+  | 'kakao_category'
   | 'naver_search'
   | 'gemini'
   | 'workers-ai'
@@ -45,6 +47,10 @@ export interface ApiDef {
   pausable?: false;
   /** 브라우저에서 바로 부름 */
   browser?: true;
+  /** 월 무료량을 함께 쓰는 묶음 (예: 카카오맵 API 전체 합산). 부를 때 묶음도 세고, 묶음이 멈추면 같이 멈춘다 */
+  pool?: ApiId;
+  /** 묶음 전용 항목 (직접 부르지 않음 — 관리자 화면에서 합산·중지) */
+  poolOnly?: true;
 }
 
 export const APIS: readonly ApiDef[] = [
@@ -62,8 +68,13 @@ export const APIS: readonly ApiDef[] = [
   },
   // 네이버 지도 (NCP Maps Web Dynamic Map): 대표 계정만 무료 이용량, 넘으면 과금. 콘솔 수치 확인 전이라 보수적으로
   { id: 'naver_maps_js', group: 'paid', freeMonthly: 10000, tz: 'Asia/Seoul', browser: true },
-  // 카카오 로컬: 하루 10만 건 무료(키워드·주소·카테고리 각각), 넘으면 건당 2원 — 2026년부터 무료량은 계정의 첫 앱만
-  { id: 'kakao_local', group: 'paid', freeDaily: 100000, tz: 'Asia/Seoul' },
+  // 카카오맵 REST API (developers.kakao.com 쿼터 문서, 2026-10-24 확인): API마다 하루 무료 쿼터, 넘으면 건당 요금.
+  // 모든 카카오맵 API 합산 월 300만 건 무료. 무료 쿼터는 개발자 계정에서 처음 활성화한 앱에만 (이 앱 = 제공받음)
+  { id: 'kakao_map', group: 'paid', freeMonthly: 3_000_000, tz: 'Asia/Seoul', poolOnly: true },
+  // 키워드로 장소 검색 (장소 검색·AI 추천): 하루 10만, 넘으면 2원/건
+  { id: 'kakao_keyword', group: 'paid', freeDaily: 100000, tz: 'Asia/Seoul', pool: 'kakao_map' },
+  // 카테고리로 장소 검색 (가까운 지하철역): 하루 10만, 넘으면 2원/건
+  { id: 'kakao_category', group: 'paid', freeDaily: 100000, tz: 'Asia/Seoul', pool: 'kakao_map' },
   // NAVER API HUB 검색: 지금은 한시적 무료(월 77.5만 회, 넘으면 차단), 유료 전환은 사전 공지 예정 → 미리 관리.
   // 하루 한도는 옛 개발자센터 기준(2.5만)으로 보수적으로
   { id: 'naver_search', group: 'paid', freeMonthly: 775000, freeDaily: 25000, tz: 'Asia/Seoul' },
@@ -167,7 +178,9 @@ function autoStop(id: ApiId, c: Control): 'month' | 'day' | null {
 export function apiAllowed(id: ApiId): boolean {
   if (!db) return true;
   const c = control(id);
-  return !c.paused && autoStop(id, c) === null;
+  if (c.paused || autoStop(id, c) !== null) return false;
+  const pool = def(id).pool;
+  return pool ? apiAllowed(pool) : true;
 }
 
 /** 부르기 전에: 막혀 있으면 ApiPaused */
@@ -181,6 +194,8 @@ export function trackApi(id: ApiId, n = 1): void {
     `INSERT INTO api_usage (api, date, count) VALUES (?, ?, ?)
      ON CONFLICT (api, date) DO UPDATE SET count = count + excluded.count`,
   ).run(id, day(id), n);
+  const pool = def(id).pool;
+  if (pool) trackApi(pool, n);
 }
 
 export function setApiPaused(id: ApiId, paused: boolean): void {
@@ -235,6 +250,8 @@ export function usageReport() {
         paused: c.paused,
         pausable: a.pausable !== false,
         browser: a.browser === true,
+        pool: a.pool ?? null,
+        poolOnly: a.poolOnly === true,
         autoStopped: stop !== null,
         autoStoppedBy: stop,
       };

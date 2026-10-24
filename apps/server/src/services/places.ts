@@ -26,8 +26,8 @@ export async function searchKakao(
     url.searchParams.set('x', String(near.lng));
     url.searchParams.set('y', String(near.lat));
   }
-  guardApi('kakao_local');
-  trackApi('kakao_local');
+  guardApi('kakao_keyword');
+  trackApi('kakao_keyword');
   const res = await fetch(url, { headers: { authorization: `KakaoAK ${key}` }, signal: timeout() });
   if (!res.ok) throw new Error(`kakao ${res.status}`);
   const body = (await res.json()) as { documents?: Record<string, string>[] };

@@ -16,8 +16,8 @@ const inKorea = (lat: number, lng: number) => lat > 33 && lat < 38.7 && lng > 12
 
 async function nearestKakao(lat: number, lng: number, kakaoKey: string): Promise<string | null> {
   const url = `https://dapi.kakao.com/v2/local/search/category.json?category_group_code=SW8&x=${lng}&y=${lat}&radius=3000&sort=distance&size=1`;
-  guardApi('kakao_local');
-  trackApi('kakao_local');
+  guardApi('kakao_category');
+  trackApi('kakao_category');
   const res = await fetch(url, {
     headers: { authorization: `KakaoAK ${kakaoKey}` },
     signal: AbortSignal.timeout(8000),
