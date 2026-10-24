@@ -92,6 +92,8 @@
     margin: 0;
     word-break: keep-all;
     overflow-wrap: anywhere;
+    /* 문구의 줄바꿈을 화면 어디서나 그대로 — 한 줄 = 한 문장 규칙 (docs/20 §1). 한 줄로 자를 곳은 truncate가 덮어씀 */
+    white-space: pre-line;
   }
   /* 숫자(시간·거리)는 자릿수 정렬 */
   .tabular {

@@ -162,7 +162,7 @@ describe('내 여행 목록', () => {
   it('없는 여행 주소는 안내를 보여준다', async () => {
     renderAt('/trips/0190f2a4-0000-7000-8000-000000000000/plan');
     expect(
-      await screen.findByText('삭제됐거나 다른 기기에서 만든 여행일 수 있어요.'),
+      await screen.findByText('삭제됐거나 다른 기기에서 만든 여행일 수 있어요'),
     ).toBeInTheDocument();
   });
 });

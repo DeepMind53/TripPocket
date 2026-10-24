@@ -56,7 +56,7 @@ describe('여행 설정', () => {
     const user = userEvent.setup();
     const router = renderAt(settingsEntries());
     await pickPeriod(user, '10.25 (일)', '10.27 (화)');
-    expect(await screen.findByText('일정 2개의 날짜가 함께 옮겨져요.')).toBeInTheDocument();
+    expect(await screen.findByText('일정 2개의 날짜가 함께 옮겨져요')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: '저장' }));
     expect(await screen.findByText('저장했어요')).toBeInTheDocument();

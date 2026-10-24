@@ -128,9 +128,7 @@ describe('템플릿 관리', () => {
     let sheet = await screen.findByRole('dialog', { name: '템플릿' });
     await user.click(await within(sheet).findByRole('button', { name: '해외 기본 불러오기' }));
     const n = TEMPLATES[0]?.packing.length ?? 0;
-    expect(
-      await screen.findByText(`${n}개를 넣었어요. 저장을 눌러야 반영돼요`),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(`${n}개를 넣었어요 [저장]을 눌러 주세요`)).toBeInTheDocument();
     await user.click(within(saveBar() as HTMLElement).getByRole('button', { name: '저장' }));
     await waitFor(async () => expect(await checklistRepo.list(tripId, 'packing')).toHaveLength(n));
 
