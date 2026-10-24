@@ -169,3 +169,19 @@
     animation-duration: 1ms;
   }
 }
+
+/* 실험실 I4 화면 전환: 짧은 페이드만, 하단 탭은 그대로 (움직임 줄이기 설정이면 없음) */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 160ms;
+}
+.tp-tabbar {
+  view-transition-name: tabbar;
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none;
+  }
+}

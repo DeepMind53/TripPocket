@@ -1,5 +1,6 @@
 import * as Dialog from '@radix-ui/react-dialog';
-import type { ReactNode } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
+import { useLab } from '../../data/labsStore';
 import { cn } from '../lib/cn';
 
 export interface BottomSheetProps {
@@ -27,6 +28,29 @@ export function BottomSheetImpl({
   children,
   className,
 }: BottomSheetProps) {
+  // 실험실 I2: 손잡이를 위로 끌면 화면 가득, 아래로 끌면 원래 높이 → 닫기
+  const resizable = useLab('sheetResize');
+  const [full, setFull] = useState(false);
+  if (!open && full) setFull(false);
+  const dragY = useRef<number | null>(null);
+  const handleDrag = resizable
+    ? {
+        onPointerDown: (e: React.PointerEvent) => {
+          dragY.current = e.clientY;
+          (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
+        },
+        onPointerUp: (e: React.PointerEvent) => {
+          if (dragY.current === null) return;
+          const dy = e.clientY - dragY.current;
+          dragY.current = null;
+          if (dy < -40) setFull(true);
+          else if (dy > 40) {
+            if (full) setFull(false);
+            else onOpenChange(false);
+          }
+        },
+      }
+    : {};
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
@@ -40,13 +64,17 @@ export function BottomSheetImpl({
           className={cn(
             'tp-sheet fixed inset-x-0 bottom-0 z-50 mx-auto flex max-h-[90dvh] w-full max-w-[560px] flex-col',
             'rounded-t-sheet bg-surface text-fg shadow-card outline-none',
+            full && 'h-[90dvh]',
             className,
           )}
         >
           <div
             aria-hidden="true"
-            className="mx-auto mt-2 mb-1 h-1 w-9 shrink-0 rounded-full bg-line"
-          />
+            {...handleDrag}
+            className={cn('shrink-0 pt-2 pb-1', resizable && 'cursor-grab touch-none py-3')}
+          >
+            <div className="mx-auto h-1 w-9 rounded-full bg-line" />
+          </div>
           <header className="px-5 pt-2 pb-3">
             <Dialog.Title className="text-title-2">{title}</Dialog.Title>
             {description && (

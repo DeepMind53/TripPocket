@@ -11,11 +11,20 @@ export interface TabItem {
 }
 
 /** 하단 탭바. 높이 56 + 안전영역 (docs/11 §5) */
-export function TabBar({ items, label }: { items: readonly TabItem[]; label: string }) {
+export function TabBar({
+  items,
+  label,
+  viewTransition = false,
+}: {
+  items: readonly TabItem[];
+  label: string;
+  /** 실험실 I4: 탭을 바꿀 때 짧은 페이드 (View Transitions, 지원 브라우저만) */
+  viewTransition?: boolean;
+}) {
   return (
     <nav
       aria-label={label}
-      className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)]"
+      className="tp-tabbar fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)]"
     >
       <ul
         className="mx-auto grid h-14 max-w-[560px]"
@@ -26,6 +35,7 @@ export function TabBar({ items, label }: { items: readonly TabItem[]; label: str
             <NavLink
               to={to}
               end={end ?? false}
+              viewTransition={viewTransition}
               className={({ isActive }) =>
                 cn(
                   'flex flex-col items-center justify-center gap-0.5 text-micro',

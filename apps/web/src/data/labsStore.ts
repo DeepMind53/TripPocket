@@ -5,7 +5,17 @@ import { create } from 'zustand';
  * 이 기기에만 저장 (동기화·백업 대상 아님). 새 실험은 LABS에 id를 더하고 i18n `labs.item.<id>`를 쓴다.
  * 정식 기능이 되면 LABS에서 빼고 useLab 호출을 지운다 (docs/code-map.md §3)
  */
-export const LABS = ['legDistance', 'wakeLock', 'localClock'] as const;
+export const LABS = [
+  'legDistance',
+  'wakeLock',
+  'localClock',
+  // docs/16 C4·C5·I2·I3·I4 (2026-10-25)
+  'longPressEdit',
+  'swipeDays',
+  'sheetResize',
+  'pullToSync',
+  'viewTransitions',
+] as const;
 export type LabId = (typeof LABS)[number];
 
 const KEY = 'tp-labs';

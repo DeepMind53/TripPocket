@@ -48,6 +48,7 @@ export function TripLayout() {
   useBottomInset(trip ? TAB_BAR_HEIGHT : 0);
   useWakeLock(useLab('wakeLock'));
   const clockOn = useLab('localClock');
+  const vt = useLab('viewTransitions');
   const now = useMinuteClock(clockOn);
 
   if (trip === null) {
@@ -165,6 +166,7 @@ export function TripLayout() {
         </Suspense>
       )}
       <TabBar
+        viewTransition={vt}
         label={t('tripNav.label')}
         items={[
           { to: `${base}/plan`, label: t('tripNav.plan'), icon: CalendarDays },

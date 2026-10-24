@@ -1,4 +1,5 @@
-import { act, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { setLab } from '../../data/labsStore';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { routes } from '../../app/router';
@@ -327,5 +328,41 @@ describe('일정 상세 — 종류별 맞춤·예약 연결 (docs/16 D1·D2)', (
     expect(within(sheet).queryByText(/주소가 없어요/)).not.toBeInTheDocument();
     expect(within(sheet).queryByRole('button', { name: '주소 복사' })).not.toBeInTheDocument();
     expect(within(sheet).queryByRole('button', { name: '길찾기' })).not.toBeInTheDocument();
+  });
+});
+
+describe('실험실 손동작 (docs/16 C4·C5)', () => {
+  afterEach(() => {
+    setLab('swipeDays', false);
+    setLab('longPressEdit', false);
+  });
+
+  it('C5: 하루 보기에서 왼쪽으로 밀면 다음 날, 오른쪽이면 이전 날 (첫날에서 더 뒤로는 안 감)', async () => {
+    setLab('swipeDays', true);
+    const router = await renderPlan('?day=1');
+    const list = (await screen.findByRole('region', { name: '1일차 · 10.24 (토)' })).parentElement!;
+    const swipe = (dx: number) => {
+      fireEvent.touchStart(list, { touches: [{ clientX: 200, clientY: 300 }] });
+      fireEvent.touchEnd(list, { changedTouches: [{ clientX: 200 + dx, clientY: 305 }] });
+    };
+    swipe(80);
+    expect(router.state.location.search).toBe('?day=1');
+    swipe(-80);
+    await waitFor(() => expect(router.state.location.search).toBe('?day=2'));
+  });
+
+  it('C4: 일정 줄을 꾹 누르면 편집 모드 (상세는 열리지 않음)', async () => {
+    setLab('longPressEdit', true);
+    await itemRepo.create({ tripId, date: '2026-10-24', kind: 'food', title: '이치란 라멘' });
+    await renderPlan('?day=1');
+    const row = await screen.findByRole('button', { name: /이치란 라멘/ });
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] });
+    fireEvent.pointerDown(row, { clientX: 10, clientY: 10 });
+    act(() => vi.advanceTimersByTime(600));
+    vi.useFakeTimers({ toFake: ['Date'] });
+    fireEvent.pointerUp(row);
+    fireEvent.click(row);
+    expect(await screen.findByRole('button', { name: '완료' })).toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 });

@@ -195,6 +195,68 @@ function PlanView({
     });
   }, [inView]);
 
+  // 실험실 C5: 하루 보기에서 목록을 옆으로 밀면 이전·다음 날 / C4: 일정을 꾹 누르면 편집 모드
+  const swipeDays = useLab('swipeDays');
+  const longPressEdit = useLab('longPressEdit');
+  const touch = useRef<{ x: number; y: number } | null>(null);
+  const press = useRef<{ x: number; y: number; timer: number } | null>(null);
+  const swallowClick = useRef(false);
+  const cancelPress = () => {
+    if (press.current) window.clearTimeout(press.current.timer);
+    press.current = null;
+  };
+  const gestures = {
+    ...(swipeDays && typeof filter === 'number' && !editing && !(mapOpen && mapLarge)
+      ? {
+          onTouchStart: (e: React.TouchEvent) => {
+            const p = e.touches[0]!;
+            touch.current = { x: p.clientX, y: p.clientY };
+          },
+          onTouchEnd: (e: React.TouchEvent) => {
+            const s = touch.current;
+            touch.current = null;
+            const p = e.changedTouches[0];
+            if (!s || !p) return;
+            const dx = p.clientX - s.x;
+            const dy = p.clientY - s.y;
+            if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 2) return;
+            const next = filter + (dx < 0 ? 1 : -1);
+            if (next >= 1 && next <= days.length) setFilter(next);
+          },
+        }
+      : {}),
+    ...(longPressEdit && canEdit && !editing
+      ? {
+          onPointerDown: (e: React.PointerEvent) => {
+            if (!(e.target as Element).closest('[data-item-row]')) return;
+            cancelPress();
+            const timer = window.setTimeout(() => {
+              press.current = null;
+              swallowClick.current = true;
+              navigator.vibrate?.(15);
+              setEditing(true);
+            }, 500);
+            press.current = { x: e.clientX, y: e.clientY, timer };
+          },
+          onPointerMove: (e: React.PointerEvent) => {
+            const p = press.current;
+            if (p && Math.hypot(e.clientX - p.x, e.clientY - p.y) > 10) cancelPress();
+          },
+          onPointerUp: cancelPress,
+          onPointerCancel: cancelPress,
+          onContextMenu: (e: React.MouseEvent) => {
+            if ((e.target as Element).closest('[data-item-row]')) e.preventDefault();
+          },
+          onClickCapture: (e: React.MouseEvent) => {
+            if (!swallowClick.current) return;
+            swallowClick.current = false;
+            e.stopPropagation();
+            e.preventDefault();
+          },
+        }
+      : {}),
+  };
+
   function setFilter(next: DayFilter) {
     setParams({ day: String(next) }, { replace: true });
   }
@@ -337,7 +399,10 @@ function PlanView({
         </div>
       )}
 
-      <div className={cn('flex flex-col px-5 pt-2', editing ? 'gap-6' : 'gap-4 pb-4')}>
+      <div
+        {...gestures}
+        className={cn('flex flex-col px-5 pt-2', editing ? 'gap-6' : 'gap-4 pb-4')}
+      >
         {mapOpen && mapLarge && !editing ? (
           <MapPager
             list={pagerList}
@@ -705,6 +770,7 @@ function ItemRow({
     <li>
       <button
         type="button"
+        data-item-row=""
         onClick={onOpen}
         aria-label={t('plan.itemLabel', { n, title: item.title })}
         className="flex w-full items-start gap-3 py-3 text-left active:bg-bg-subtle"
