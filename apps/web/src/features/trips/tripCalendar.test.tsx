@@ -54,6 +54,8 @@ let calls: string[] = [];
 function mockFetch() {
   calls = [];
   vi.stubGlobal('fetch', (url: string) => {
+    // 홈 서버의 사용량 확인·기록(/api/usage/*)은 세지 않는다 — 외부 API 호출만
+    if (url.startsWith('/api/')) return Promise.resolve(Response.json({}));
     calls.push(url);
     if (url.includes('TaiwanCalendar/data/2026'))
       return Promise.resolve(

@@ -12,12 +12,17 @@ const row = (id: string, group: 'paid' | 'free', over: object = {}) => ({
   id,
   group,
   freeMonthly: group === 'paid' ? 5000 : null,
+  freeDaily: null,
   autoLimit: group === 'paid' ? 4500 : null,
+  dailyLimit: null,
   used: 0,
   today: 0,
   daily: [],
   paused: false,
+  pausable: true,
+  browser: false,
   autoStopped: false,
+  autoStoppedBy: null,
   ...over,
 });
 
@@ -51,8 +56,18 @@ it('관리자: 마이 → API 사용량, 과금 가능 API는 % 게이지·상�
             freeMonthly: 10000,
             autoLimit: 9000,
             autoStopped: true,
+            autoStoppedBy: 'month',
           }),
-          row('gemini', 'free', { used: 30, today: 3 }),
+          row('kakao_local', 'paid', {
+            freeMonthly: null,
+            freeDaily: 100000,
+            dailyLimit: 90000,
+            today: 90000,
+            autoStopped: true,
+            autoStoppedBy: 'day',
+          }),
+          row('nager_date', 'free', { used: 30, today: 3 }),
+          row('oauth_kakao', 'free', { used: 4, today: 2, pausable: false }),
         ],
       });
     }
@@ -66,11 +81,20 @@ it('관리자: 마이 → API 사용량, 과금 가능 API는 % 게이지·상�
     </>,
   );
   await user.click(await screen.findByRole('link', { name: 'API 사용량' }));
-  const meter = await screen.findByRole('meter', { name: 'Google 장소 검색 무료 사용량 대비' });
+  const meter = await screen.findByRole('meter', {
+    name: 'Google 장소 검색 이번 달 무료 사용량 대비',
+  });
   expect(meter).toHaveAttribute('aria-valuenow', '50');
   expect(screen.getByText('2,500 / 5,000 (50.0%)')).toBeInTheDocument();
   expect(screen.getByText('자동 중지')).toBeInTheDocument(); // 지도: 상한 도달
-  expect(screen.getByText('이번 달 30회 · 오늘 3회')).toBeInTheDocument(); // 무료 API
+  expect(screen.getByText('오늘 자동 중지')).toBeInTheDocument(); // 카카오: 하루 상한 도달
+  expect(
+    screen.getByRole('meter', { name: '카카오 로컬 (장소·역 찾기) 오늘 무료 사용량 대비' }),
+  ).toHaveAttribute('aria-valuenow', '90');
+  expect(screen.getByText('이번 달 30회 · 오늘 3회')).toBeInTheDocument(); // 한도 없는 무료 API
+  // 로그인은 멈출 수 없고 기록만
+  expect(screen.getByText(/기록만/)).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: '카카오 로그인 중지' })).not.toBeInTheDocument();
 
   await user.click(screen.getByRole('button', { name: 'Google 장소 검색 중지' }));
   await waitFor(() =>

@@ -11,7 +11,7 @@ import {
   type MapMarker,
 } from '../../shared/maps';
 import { compareKeys } from '@trippocket/shared';
-import { googleMapsAllowed, reportMapLoad } from '../../data/api/usage';
+import { mapAllowed, reportMapLoad } from '../../data/api/usage';
 
 /** 날짜 색 토큰 → 실제 색 (지도 핀 SVG는 CSS 변수를 못 쓴다) */
 const dayHex = (index: number) =>
@@ -62,7 +62,7 @@ export function TripMap({
     };
     const target = el.current;
     // Google 지도는 유료 가능 API — 관리자가 멈췄거나 이번 달 상한이면 열지 않는다 (API 사용량)
-    void (provider === 'google' ? googleMapsAllowed() : Promise.resolve(true)).then((ok) => {
+    void mapAllowed(provider).then((ok) => {
       if (!alive) return;
       if (!ok) return setStatus('paused');
       mountMap(provider, target, { center, zoom: 12 }).then(
@@ -70,7 +70,7 @@ export function TripMap({
           if (!alive) return h.destroy();
           handle.current = h;
           setStatus('ready');
-          if (provider === 'google') reportMapLoad();
+          reportMapLoad(provider);
         },
         () => alive && setStatus('error'),
       );

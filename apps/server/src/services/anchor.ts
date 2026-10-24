@@ -1,4 +1,4 @@
-import { trackApi } from './apiUsage';
+import { guardApi, trackApi } from './apiUsage';
 
 /**
  * AI 추천 기준점 (docs/14 §3-2): 좌표 → 가장 가까운 역 이름.
@@ -16,6 +16,7 @@ const inKorea = (lat: number, lng: number) => lat > 33 && lat < 38.7 && lng > 12
 
 async function nearestKakao(lat: number, lng: number, kakaoKey: string): Promise<string | null> {
   const url = `https://dapi.kakao.com/v2/local/search/category.json?category_group_code=SW8&x=${lng}&y=${lat}&radius=3000&sort=distance&size=1`;
+  guardApi('kakao_local');
   trackApi('kakao_local');
   const res = await fetch(url, {
     headers: { authorization: `KakaoAK ${kakaoKey}` },
@@ -29,11 +30,14 @@ async function nearestKakao(lat: number, lng: number, kakaoKey: string): Promise
 
 async function nearestOverpass(lat: number, lng: number): Promise<string | null> {
   const query = `[out:json][timeout:10];(node(around:2000,${lat},${lng})[railway=station];node(around:2000,${lat},${lng})[station=subway];);out 10;`;
+  guardApi('overpass');
+  trackApi('overpass');
   const res = await fetch('https://overpass-api.de/api/interpreter', {
     method: 'POST',
     headers: {
       'content-type': 'application/x-www-form-urlencoded',
-      'user-agent': 'TripPocket/0.1',
+      // 공용 서버 정책: 누가 부르는지 알 수 있게
+      'user-agent': 'TripPocket/1.0 (+https://trippocket.day)',
     },
     body: new URLSearchParams({ data: query }),
     signal: AbortSignal.timeout(12_000),

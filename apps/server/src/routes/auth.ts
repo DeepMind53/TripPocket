@@ -3,6 +3,7 @@ import type { FastifyInstance } from 'fastify';
 import { uuidv7 } from '@trippocket/shared';
 import { requestOrigin, type Config } from '../config';
 import type { Db } from '../db/database';
+import { trackApi } from '../services/apiUsage';
 import {
   credentialsFor,
   exchangeCode,
@@ -151,6 +152,8 @@ export function authRoutes(app: FastifyInstance, config: Config, db: Db): void {
 
       let profile: Profile;
       try {
+        // 토큰 교환 + 프로필 = 외부 호출 2번 (API 사용량에 기록만, 멈출 수 없음)
+        trackApi(`oauth_${p}`, 2);
         const token = await exchangeCode(SPECS[p], creds, {
           code,
           state,

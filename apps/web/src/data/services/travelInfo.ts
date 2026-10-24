@@ -1,6 +1,7 @@
 import type { LocalDate } from '@trippocket/shared';
 import type { Holiday } from '../../domain/holidays';
 import type { DayWeather } from '../../domain/weather';
+import { externalAllowed, reportExternal, type BrowserApi } from '../api/usage';
 import { settingsRepo } from '../repositories/settingsRepo';
 
 /**
@@ -10,6 +11,13 @@ import { settingsRepo } from '../repositories/settingsRepo';
  * 받은 값은 기기에 저장해 오프라인에서도 보여준다. 실패해도 앱은 그대로 동작(빈 값).
  * 보내는 정보: 나라 코드·연도, 목적지 도시 좌표뿐 (사용자 위치·개인정보 없음)
  */
+
+/** 관리자가 멈춘 외부 API는 부르지 않는다 (실패로 처리 → 저장해 둔 값). 부르면 사용 기록 (API 사용량) */
+async function fetchCounted(id: BrowserApi, url: string): Promise<Response> {
+  if (!(await externalAllowed(id))) throw new Error(`${id} paused`);
+  reportExternal(id);
+  return fetch(url);
+}
 
 const DAY = 86_400_000;
 const HOLIDAY_TTL = 30 * DAY;
@@ -69,7 +77,10 @@ export function getHolidays(countryCode: string, year: number): Promise<Holiday[
     HOLIDAY_TTL,
     async () => {
       if (countryCode === 'TW') return loadTaiwan(year);
-      const res = await fetch(`https://date.nager.at/api/v3/PublicHolidays/${year}/${countryCode}`);
+      const res = await fetchCounted(
+        'nager_date',
+        `https://date.nager.at/api/v3/PublicHolidays/${year}/${countryCode}`,
+      );
       if (res.status === 404 || res.status === 204) return null;
       if (!res.ok) throw new Error(`holidays ${res.status}`);
       // 외부 응답은 믿지 않고 필요한 칸만 확인해서 쓴다. 전국 공휴일만 (지역 공휴일 제외)
@@ -93,7 +104,10 @@ export function getHolidays(countryCode: string, year: number): Promise<Holiday[
  * 정부 발표 후 해마다 추가된다. 쉬는 날 중 이름이 있는 날만 (그냥 주말 제외)
  */
 async function loadTaiwan(year: number): Promise<Holiday[] | null> {
-  const res = await fetch(`https://cdn.jsdelivr.net/gh/ruyut/TaiwanCalendar/data/${year}.json`);
+  const res = await fetchCounted(
+    'jsdelivr',
+    `https://cdn.jsdelivr.net/gh/ruyut/TaiwanCalendar/data/${year}.json`,
+  );
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`holidays ${res.status}`);
   return arr(await res.json()).flatMap((d): Holiday[] => {
@@ -146,7 +160,7 @@ export function getForecast(
         `https://api.open-meteo.com/v1/forecast?latitude=${lat.toFixed(2)}&longitude=${lng.toFixed(2)}` +
         `&daily=weather_code,temperature_2m_max,temperature_2m_min&forecast_days=16` +
         `&timezone=${encodeURIComponent(timezone)}`;
-      const res = await fetch(url);
+      const res = await fetchCounted('open_meteo', url);
       if (!res.ok) throw new Error(`weather ${res.status}`);
       const body: unknown = await res.json();
       const daily = isObj(body) && isObj(body.daily) ? body.daily : {};

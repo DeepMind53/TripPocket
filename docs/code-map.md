@@ -60,7 +60,31 @@ Tailscale Funnel https://jin-server.tail0844c0.ts.net ─▶ 홈 PC 127.0.0.1:87
 - **동기화**: 기기에서 고친 행에 `dirty` → `syncEngine` push(행마다 멤버십 인가) → pull(서버 rev 이후). 충돌은 나중 도착 채택 + `conflicts` 보관
 - **AI 추천** (`routes/ai.ts`): 기준점 → 카테고리끼리 동시에 { 블로그 수집(NAVER API HUB) → AI 장소 추출(Gemini → Workers AI → Groq → 없으면 지도 검색 + 언급 수) →
   근거 id 검증·점수(shared `buildRecommendations`) → 카카오로 위치 확인, 기준점 5km 넘는 곳 제외 } → 6시간 캐시
-- **API 사용량**: `api_usage`(날짜별 호출 수) + `api_controls`(수동 중지·자동 상한). 과금 가능 API는 무료 월 사용량의 90%에서 자동 중지
+- **API 사용량**: `api_usage`(날짜별 호출 수, 날짜는 API마다 무료량 초기화 시간대) + `api_controls`(수동 중지·월/하루 자동 상한).
+  무료 월·하루 사용량을 아는 API는 그 90%에서 자동 중지. 서버 호출은 `guardApi`/`trackApi`, 브라우저 호출은
+  `data/api/usage.ts`의 `externalAllowed`/`reportExternal`(→ `/api/usage/flags`·`/api/usage/map-load`, IP당 하루 100회까지만 셈)
+
+### API 사용량 — 등록된 외부 API와 무료 사용량 (2026-10-24 최신 자료로 확인)
+
+| id | 분류 | 무료 사용량 (자동 중지 = 90%) | 근거·메모 |
+|---|---|---|---|
+| google_places_search | 과금 가능 | 월 5,000 | Text Search **Pro** (FieldMask: id·이름·주소·좌표·지도 링크). 2025-03 SKU별 무료: Essentials 1만·Pro 5천·Enterprise 1천 |
+| google_places_details | 과금 가능 | 월 1,000 | Place Details **Enterprise** (평점·영업시간·전화·웹사이트). FieldMask를 바꾸면 등급이 바뀌니 주의 |
+| google_maps_js | 과금 가능 | 월 10,000 | Dynamic Maps (지도 1회 로드). 브라우저 |
+| naver_maps_js | 과금 가능 | 월 10,000 (보수적) | NCP Maps Web Dynamic Map, **대표 계정만** 무료 이용량. 콘솔 수치 확인 후 조정. 브라우저 |
+| kakao_local | 과금 가능 | 하루 100,000 | 넘으면 건당 2원(비즈월렛 연결 시). **2026년부터 무료량은 개발자 계정의 첫 카카오맵 API 앱만** |
+| naver_search | 과금 가능 | 월 775,000 · 하루 25,000 | NAVER API HUB 한시적 무료, 유료 전환은 사전 공지 예정. 하루 값은 옛 개발자센터 기준 |
+| gemini | 무료 | 하루 500 | 결제 없는 프로젝트 → 넘으면 거절. Flash-Lite 하루 500~1,000 (태평양 자정) |
+| workers-ai | 무료 | 하루 50 | 무료 플랜 1만 Neurons/일 ≈ 분석 50회. Workers 유료 플랜이면 과금되므로 유지 |
+| groq | 무료 | 하루 1,000 | 카드 없음 |
+| exim | 무료 | 하루 1,000 | |
+| overpass | 무료 | 하루 100 | 공용 서버 정책(1만 미만, 꾸준한 사용은 1/100). User-Agent 필수 |
+| open_meteo | 무료 | 하루 10,000 | 비상업, IP당. 브라우저 |
+| nager_date · jsdelivr | 무료 | 없음 | 브라우저 |
+| oauth_kakao/naver/google | 무료 | 없음 | 기록만 (멈추면 로그인 불가) |
+| cf_functions | 무료 | 하루 100,000 | Pages Functions 무료 플랜(넘으면 오류). 홈 서버까지 온 요청만 셈. 기록만 |
+
+새 외부 API를 넣으면 이 표와 `APIS`를 함께 고친다 (`test/apiUsage.test.ts`가 등록 누락을 잡는다)
 
 ## 5. 확인 명령
 

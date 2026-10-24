@@ -4,6 +4,7 @@ import { createSession } from '../src/auth/session';
 import { loadConfig } from '../src/config';
 import { openDb, type Db } from '../src/db/database';
 import { dailyQuota } from '../src/routes/usage';
+import { apiAllowed, APIS, guardApi, trackApi } from '../src/services/apiUsage';
 
 const SECRET = 's'.repeat(40);
 const ORIGIN = 'https://a.dev';
@@ -115,7 +116,22 @@ describe('API 사용량 (관리자)', () => {
     expect((await req('POST', '/api/usage/map-load')).statusCode).toBe(200);
     expect(api(await report(), 'google_maps_js').used).toBe(1);
     await req('POST', '/api/admin/api-usage/google_maps_js', admin, { paused: true });
-    expect((await req('GET', '/api/usage/flags')).json()).toEqual({ maps: false });
+    expect((await req('GET', '/api/usage/flags')).json()).toMatchObject({
+      maps: false,
+      naverMaps: true,
+    });
+  });
+
+  it('네이버 지도 로드는 따로 기록·중지', async () => {
+    await req('POST', '/api/usage/map-load', undefined, { provider: 'naver' });
+    const r = await report();
+    expect(api(r, 'naver_maps_js').used).toBe(1);
+    expect(api(r, 'google_maps_js').used).toBe(0);
+    await req('POST', '/api/admin/api-usage/naver_maps_js', admin, { paused: true });
+    expect((await req('GET', '/api/usage/flags')).json()).toMatchObject({
+      maps: true,
+      naverMaps: false,
+    });
   });
 
   it('관리자만: 멤버 403, 로그인 안 하면 401, 없는 API 404, 잘못된 값 400', async () => {
@@ -137,5 +153,55 @@ describe('dailyQuota (지도 로드 부풀리기 방지)', () => {
     expect([allow('a'), allow('a'), allow('a'), allow('b')]).toEqual([true, true, false, true]);
     now = new Date('2026-10-25T00:00:01Z');
     expect(allow('a')).toBe(true);
+  });
+});
+
+describe('API 사용량 — 모든 외부 API·하루 한도·중지 불가 항목', () => {
+  it('하루 무료량이 있는 API는 오늘 90%에서 자동 중지, 관리자가 하루 상한을 바꿀 수 있다', async () => {
+    trackApi('kakao_local', 89_999);
+    expect(apiAllowed('kakao_local')).toBe(true);
+    trackApi('kakao_local');
+    expect(apiAllowed('kakao_local')).toBe(false);
+    expect(() => guardApi('kakao_local')).toThrow('api_paused');
+    const k = api(await report(), 'kakao_local') as unknown as { autoStoppedBy: string };
+    expect(k.autoStoppedBy).toBe('day');
+    await req('POST', '/api/admin/api-usage/kakao_local', admin, { dailyLimit: 95_000 });
+    expect(apiAllowed('kakao_local')).toBe(true);
+  });
+
+  it('브라우저 API(날씨 등)도 기록·중지, 모르는 id는 무시', async () => {
+    await req('POST', '/api/usage/map-load', undefined, { api: 'open_meteo' });
+    await req('POST', '/api/usage/map-load', undefined, { api: 'gemini' });
+    const r = await report();
+    expect(api(r, 'open_meteo').used).toBe(1);
+    expect(api(r, 'gemini').used).toBe(0);
+    await req('POST', '/api/admin/api-usage/open_meteo', admin, { paused: true });
+    const flags = (await req('GET', '/api/usage/flags')).json() as {
+      apis: Record<string, boolean>;
+    };
+    expect(flags.apis).toMatchObject({ open_meteo: false, nager_date: true, google_maps_js: true });
+    // 서버 전용 API는 브라우저에 알려 주지 않는다
+    expect(flags.apis).not.toHaveProperty('gemini');
+  });
+
+  it('로그인·프록시는 기록만 (수동 중지 400), 프록시를 거친 요청은 Pages 함수 사용량으로 센다', async () => {
+    expect(
+      (await req('POST', '/api/admin/api-usage/oauth_kakao', admin, { paused: true })).statusCode,
+    ).toBe(400);
+    await req('GET', '/api/usage/flags');
+    expect(api(await report(), 'cf_functions').used).toBeGreaterThan(0);
+  });
+
+  it('외부 호출 코드가 쓰는 id는 모두 APIS에 등록돼 있다', async () => {
+    const { readdirSync, readFileSync } = await import('node:fs');
+    const ids = new Set(APIS.map((a) => a.id));
+    const used = new Set<string>();
+    for (const dir of ['src/services', 'src/routes']) {
+      for (const f of readdirSync(dir)) {
+        const src = readFileSync(`${dir}/${f}`, 'utf8');
+        for (const m of src.matchAll(/(?:guardApi|trackApi)\('([\w-]+)'/g)) used.add(m[1]!);
+      }
+    }
+    expect([...used].filter((id) => !ids.has(id as never))).toEqual([]);
   });
 });

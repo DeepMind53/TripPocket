@@ -1,15 +1,51 @@
+import type { MapProviderId } from '../../shared/maps';
 import { api } from './client';
 
 /**
- * 브라우저에서 직접 부르는 유료 가능 API(Google 지도) 사용량 — 서버 routes/usage.ts.
- * 서버에 닿지 않으면(오프라인·홈 PC 꺼짐) 허용: Google 콘솔의 하루 할당량이 마지막 안전장치
+ * 브라우저에서 바로 부르는 외부 API(지도 SDK·날씨·공휴일·jsDelivr) 사용량 — 서버 routes/usage.ts.
+ * 부르기 전에 externalAllowed, 부른 뒤 reportExternal. id는 서버 services/apiUsage.ts의 browser: true 항목.
+ * 서버에 닿지 않으면(오프라인·홈 PC 꺼짐) 허용: 각 서비스 콘솔의 할당량이 마지막 안전장치
  */
-export async function googleMapsAllowed(): Promise<boolean> {
-  const res = await api<{ maps: boolean }>('/api/usage/flags');
-  return res.ok ? res.data.maps : true;
+export type BrowserApi =
+  'google_maps_js' | 'naver_maps_js' | 'open_meteo' | 'nager_date' | 'jsdelivr';
+
+const FLAGS_TTL = 5 * 60_000;
+let flags: { at: number; apis: Partial<Record<BrowserApi, boolean>> | null } | null = null;
+let pending: Promise<Partial<Record<BrowserApi, boolean>> | null> | null = null;
+
+async function loadFlags(): Promise<Partial<Record<BrowserApi, boolean>> | null> {
+  if (flags && Date.now() - flags.at < FLAGS_TTL) return flags.apis;
+  pending ??= api<{ maps: boolean; apis?: Partial<Record<BrowserApi, boolean>> }>(
+    '/api/usage/flags',
+  ).then((res) => {
+    // 예전 서버(apis 없음)는 Google 지도만 알려 준다
+    const apis = res.ok ? (res.data.apis ?? { google_maps_js: res.data.maps }) : null;
+    flags = { at: Date.now(), apis };
+    pending = null;
+    return apis;
+  });
+  return pending;
 }
 
-/** 지도 1회 로드 기록 (실패해도 지도는 그대로) */
-export function reportMapLoad(): void {
-  void api('/api/usage/map-load', { method: 'POST' });
+/** 지금 불러도 되나 (관리자가 멈췄거나 자동 상한이면 false) */
+export async function externalAllowed(id: BrowserApi): Promise<boolean> {
+  return (await loadFlags())?.[id] !== false;
 }
+
+/** 1회 사용 기록 (실패해도 기능은 그대로) */
+export function reportExternal(id: BrowserApi): void {
+  void api('/api/usage/map-load', { method: 'POST', body: JSON.stringify({ api: id }) });
+}
+
+const MAP_API: Record<MapProviderId, BrowserApi> = {
+  google: 'google_maps_js',
+  naver: 'naver_maps_js',
+};
+export const mapAllowed = (provider: MapProviderId) => externalAllowed(MAP_API[provider]);
+export const reportMapLoad = (provider: MapProviderId) => reportExternal(MAP_API[provider]);
+
+/** 시험용 */
+export const resetUsageFlags = () => {
+  flags = null;
+  pending = null;
+};

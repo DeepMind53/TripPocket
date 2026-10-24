@@ -34,12 +34,20 @@ export interface ApiUsage {
   id: string;
   group: 'paid' | 'free';
   freeMonthly: number | null;
+  freeDaily: number | null;
+  /** 이번 달 자동 중지 상한 */
   autoLimit: number | null;
+  /** 오늘 자동 중지 상한 */
+  dailyLimit: number | null;
   used: number;
   today: number;
   daily: { date: string; count: number }[];
   paused: boolean;
+  /** false = 수동 중지 불가 (로그인·프록시) */
+  pausable: boolean;
+  browser: boolean;
   autoStopped: boolean;
+  autoStoppedBy: 'month' | 'day' | null;
 }
 export interface ApiUsageReport {
   month: string;
@@ -48,7 +56,10 @@ export interface ApiUsageReport {
 
 export const apiUsageApi = {
   report: () => api<ApiUsageReport>('/api/admin/api-usage'),
-  update: (id: string, body: { paused?: boolean; limit?: number | null }) =>
+  update: (
+    id: string,
+    body: { paused?: boolean; limit?: number | null; dailyLimit?: number | null },
+  ) =>
     api<ApiUsageReport>(`/api/admin/api-usage/${enc(id)}`, {
       method: 'POST',
       body: JSON.stringify(body),

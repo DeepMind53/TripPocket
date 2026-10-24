@@ -8,7 +8,7 @@ import type { Db } from './db/database';
 import { adminRoutes } from './routes/admin';
 import { authRoutes } from './routes/auth';
 import { usageRoutes } from './routes/usage';
-import { ApiPaused, initApiUsage } from './services/apiUsage';
+import { ApiPaused, initApiUsage, trackApi } from './services/apiUsage';
 import { aiRoutes } from './routes/ai';
 import { meRoutes } from './routes/me';
 import { placesRoutes } from './routes/places';
@@ -58,6 +58,8 @@ export async function buildApp(config: Config, db: Db): Promise<FastifyInstance>
     if (got.length !== secret.length || !timingSafeEqual(got, secret)) {
       return reply.code(404).send({ error: 'not_found' });
     }
+    // Cloudflare Pages Functions 무료 하루 10만 요청 — 프록시를 거쳐 온 요청 수 (API 사용량 화면)
+    trackApi('cf_functions');
   });
 
   // CSRF: 상태를 바꾸는 요청은 웹앱 주소에서 온 것만 (docs/09 §7.2)

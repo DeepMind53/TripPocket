@@ -1,5 +1,6 @@
 import type { FxSnapshot } from '@trippocket/shared';
 import { api } from '../api/client';
+import { externalAllowed, reportExternal } from '../api/usage';
 import { settingsRepo } from '../repositories/settingsRepo';
 
 /**
@@ -17,6 +18,8 @@ export interface FxResult extends FxSnapshot {
 
 async function fromFallback(): Promise<FxSnapshot | null> {
   try {
+    if (!(await externalAllowed('jsdelivr'))) return null;
+    reportExternal('jsdelivr');
     const res = await fetch(FALLBACK);
     if (!res.ok) return null;
     const body = (await res.json()) as { date?: unknown; krw?: Record<string, unknown> };

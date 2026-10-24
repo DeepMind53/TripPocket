@@ -48,7 +48,15 @@ PC가 꺼져 있어도 앱은 기기 안에서 그대로 동작하고, 다시 �
 
 - [ ] 공유기 포트포워딩 없음, Windows 방화벽 인바운드 규칙 추가 안 함 (서버는 127.0.0.1만)
 - [ ] 서버 실행 계정은 관리자가 아닌 전용 계정 (install.ps1 `-User`)
-- [ ] `DATA_DIR`·`apps\server\.env` 폴더 권한: 서비스 계정 + 관리자만 (속성 → 보안)
+- [x] `DATA_DIR`·백업 폴더·`apps\server\.env` 권한: 서버 실행 계정 + SYSTEM + 관리자만 (2026-10-24 적용). PowerShell:
+  ```
+  $me = "$env:COMPUTERNAME\$env:USERNAME"
+  icacls 'D:\Travel_Planner\apps\server\.env' /inheritance:r /grant:r "${me}:F" "SYSTEM:F" "Administrators:F"
+  icacls 'D:\TravelPlannerData' /inheritance:r /grant:r "${me}:(OI)(CI)F" "SYSTEM:(OI)(CI)F" "Administrators:(OI)(CI)F"
+  icacls 'D:\TravelPlannerData\*' /reset /T   # 안의 파일은 폴더 권한을 물려받게
+  ```
+  - ⚠️ 폴더 명령에 `/T`를 붙이면 파일 권한이 비어 서버가 DB를 못 연다 (2026-10-24 겪은 일) → 폴더만 바꾸고 파일은 `/reset`
+  - 관리자 권한으로 만들어진 오래된 백업 파일 1개는 관리자 권한이 있어야 바뀐다 (백업은 AES 암호화라 급하지 않음)
 - [ ] 설정 → 개인 정보 및 보안 → 장치 암호화 켜짐 (Windows 11 Home 지원 여부 확인, 안 되면 백업 암호화로 보완 — 이미 적용)
 - [ ] Windows 업데이트 자동, 절전 안 함(설정 → 전원 → 화면·절전 "안 함"), BIOS "전원 복구 시 켜짐"(선택)
 - [ ] `PROXY_SECRET`·`BACKUP_KEY`·OAuth 시크릿은 `.env`와 Pages 환경 변수에만 (저장소·채팅에 붙여넣지 않기)

@@ -164,4 +164,8 @@ export const MIGRATIONS: readonly string[] = [
   INSERT INTO api_usage (api, date, count)
     SELECT 'google_places_details', date, count FROM places_usage WHERE user_id = '*' AND kind = 'all-details';
   `,
+  // 9: 하루 자동 중지 상한 (카카오·AI 등 하루 무료량이 있는 API) — services/apiUsage.ts
+  `
+  ALTER TABLE api_controls ADD COLUMN auto_daily_limit INTEGER;
+  `,
 ];

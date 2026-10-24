@@ -3,7 +3,7 @@ import { uuidv7 } from '@trippocket/shared';
 import type { Db } from '../db/database';
 import { requireUser } from '../auth/session';
 import { audit } from './auth';
-import { isApiId, setApiLimit, setApiPaused, usageReport } from '../services/apiUsage';
+import { isApiId, isPausable, setApiLimit, setApiPaused, usageReport } from '../services/apiUsage';
 
 /** 관리자만: 로그인 + users.is_admin (아니면 403) */
 function requireAdmin(db: Db) {
@@ -161,25 +161,32 @@ export function adminRoutes(app: FastifyInstance, db: Db): void {
     return usageReport();
   });
 
-  app.post<{ Params: { id: string }; Body: { paused?: unknown; limit?: unknown } }>(
-    '/api/admin/api-usage/:id',
-    admin,
-    async (req, reply) => {
-      const id = req.params.id;
-      if (!isApiId(id)) return reply.code(404).send({ error: 'not_found' });
-      const { paused, limit } = req.body ?? {};
-      if (paused !== undefined) {
-        if (typeof paused !== 'boolean') return reply.code(400).send({ error: 'bad_request' });
-        setApiPaused(id, paused);
-        audit(db, req.user!.userId, paused ? 'api_paused' : 'api_resumed', id);
-      }
-      if (limit !== undefined) {
-        const ok = limit === null || (Number.isInteger(limit) && (limit as number) >= 0);
-        if (!ok) return reply.code(400).send({ error: 'bad_request' });
-        setApiLimit(id, limit as number | null);
-        audit(db, req.user!.userId, 'api_limit', `${id}:${String(limit)}`);
-      }
-      return usageReport();
-    },
-  );
+  app.post<{
+    Params: { id: string };
+    Body: { paused?: unknown; limit?: unknown; dailyLimit?: unknown };
+  }>('/api/admin/api-usage/:id', admin, async (req, reply) => {
+    const id = req.params.id;
+    if (!isApiId(id)) return reply.code(404).send({ error: 'not_found' });
+    const { paused, limit, dailyLimit } = req.body ?? {};
+    const okLimit = (v: unknown) => v === null || (Number.isInteger(v) && (v as number) >= 0);
+    if (
+      (paused !== undefined && (typeof paused !== 'boolean' || !isPausable(id))) ||
+      (limit !== undefined && !okLimit(limit)) ||
+      (dailyLimit !== undefined && !okLimit(dailyLimit))
+    )
+      return reply.code(400).send({ error: 'bad_request' });
+    if (paused !== undefined) {
+      setApiPaused(id, paused);
+      audit(db, req.user!.userId, paused ? 'api_paused' : 'api_resumed', id);
+    }
+    if (limit !== undefined) {
+      setApiLimit(id, limit as number | null, 'month');
+      audit(db, req.user!.userId, 'api_limit', `${id}:${String(limit)}`);
+    }
+    if (dailyLimit !== undefined) {
+      setApiLimit(id, dailyLimit as number | null, 'day');
+      audit(db, req.user!.userId, 'api_daily_limit', `${id}:${String(dailyLimit)}`);
+    }
+    return usageReport();
+  });
 }

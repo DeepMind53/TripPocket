@@ -1,4 +1,5 @@
 import type { ItineraryItem, Trip } from '@trippocket/shared';
+import { resetUsageFlags } from '../../data/api/usage';
 import { render, screen, waitFor } from '@testing-library/react';
 import type * as Maps from '../../shared/maps';
 import type { MapHandle, MapMarker } from '../../shared/maps';
@@ -100,6 +101,7 @@ describe('일정 지도 — 사용량 관리', () => {
   afterEach(() => vi.unstubAllGlobals());
 
   it('관리자가 Google 지도를 멈추면 지도를 열지 않고 안내, 열리면 로드 1회 기록', async () => {
+    resetUsageFlags();
     const posts: string[] = [];
     let maps = false;
     vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
@@ -113,6 +115,7 @@ describe('일정 지도 — 사용량 관리', () => {
     expect(posts).toEqual([]);
     unmount();
     maps = true;
+    resetUsageFlags(); // 허용 여부는 5분 동안 저장해 두므로 시험에서는 비운다
     render(<TripMap trip={trip} items={[]} dayIndexOf={() => 0} onSelect={() => {}} />);
     await waitFor(() => expect(posts).toEqual(['/api/usage/map-load']));
   });

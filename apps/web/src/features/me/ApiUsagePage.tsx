@@ -5,11 +5,12 @@ import { useTranslation } from '../../i18n';
 import { cn } from '../../shared/lib/cn';
 import { Button, EmptyState, Spinner, TopBar, toast } from '../../shared/ui';
 
-type Update = { paused?: boolean; limit?: number | null };
+type Update = { paused?: boolean; limit?: number | null; dailyLimit?: number | null };
 
 /**
- * API 사용량 (관리자만): 과금될 수 있는 API는 무료 월 사용량 대비 %·자동 중지 상한·하루별 막대,
- * 무료 API는 이번 달·오늘 호출 수. 모두 수동 중지/다시 켜기
+ * API 사용량 (관리자만): 앱이 부르는 외부 API 전부.
+ * 무료 사용량을 아는 API는 월·하루 사용량 대비 %·자동 중지 상한·하루별 막대, 나머지는 호출 수.
+ * 과금 가능 / 무료(나중에 유료로 바뀔 수 있음)로 나누고, 로그인·프록시 외에는 모두 수동 중지/다시 켜기
  */
 export function ApiUsagePage() {
   const { t } = useTranslation();
@@ -39,51 +40,59 @@ export function ApiUsagePage() {
   if (data === undefined) return shell(<Spinner />);
   if (data === null) return shell(<p className="text-body-2 text-fg-sub">{t('admin.offline')}</p>);
 
-  const paid = data.apis.filter((a) => a.group === 'paid');
-  const free = data.apis.filter((a) => a.group === 'free');
-  return shell(
-    <>
-      <p className="text-caption text-fg-muted">{t('apiUsage.desc', { month: data.month })}</p>
+  const hasLimit = (a: ApiUsage) => a.freeMonthly !== null || a.freeDaily !== null;
+  const section = (group: ApiUsage['group']) => {
+    const apis = data.apis.filter((a) => a.group === group);
+    const rows = apis.filter((a) => !hasLimit(a));
+    return (
       <section className="flex flex-col gap-3">
-        <h2 className="text-caption font-bold text-fg-muted">{t('apiUsage.paid')}</h2>
-        {paid.map((a) => (
-          <PaidCard
+        <h2 className="text-caption font-bold text-fg-muted">{t(`apiUsage.${group}`)}</h2>
+        {group === 'free' && <p className="text-caption text-fg-muted">{t('apiUsage.freeDesc')}</p>}
+        {apis.filter(hasLimit).map((a) => (
+          <LimitCard
             key={a.id}
             api={a}
             busy={busy === a.id}
             onUpdate={(b) => void update(a.id, b)}
           />
         ))}
-      </section>
-      <section className="flex flex-col gap-2">
-        <h2 className="text-caption font-bold text-fg-muted">{t('apiUsage.free')}</h2>
-        <p className="text-caption text-fg-muted">{t('apiUsage.freeDesc')}</p>
-        <ul className="flex flex-col divide-y divide-line overflow-hidden rounded-card border border-line">
-          {free.map((a) => (
-            <li key={a.id} className="flex min-h-14 items-center gap-2 bg-surface px-4 py-2">
-              <span className="flex min-w-0 flex-1 flex-col">
-                <span className="text-body-2 font-medium">{apiName(t, a.id)}</span>
-                <span className="tabular text-caption text-fg-muted">
-                  {t('apiUsage.counts', {
-                    month: a.used.toLocaleString(),
-                    today: a.today.toLocaleString(),
-                  })}
-                  {a.paused && ` · ${t('apiUsage.paused')}`}
+        {rows.length > 0 && (
+          <ul className="flex flex-col divide-y divide-line overflow-hidden rounded-card border border-line">
+            {rows.map((a) => (
+              <li key={a.id} className="flex min-h-14 items-center gap-2 bg-surface px-4 py-2">
+                <span className="flex min-w-0 flex-1 flex-col">
+                  <span className="text-body-2 font-medium">{apiName(t, a.id)}</span>
+                  <span className="text-caption text-fg-muted">{apiNote(t, a.id)}</span>
+                  <span className="tabular text-caption text-fg-muted">
+                    {t('apiUsage.counts', {
+                      month: a.used.toLocaleString(),
+                      today: a.today.toLocaleString(),
+                    })}
+                    {a.paused && ` · ${t('apiUsage.paused')}`}
+                  </span>
                 </span>
-              </span>
-              <ToggleButton api={a} busy={busy === a.id} onUpdate={(b) => void update(a.id, b)} />
-            </li>
-          ))}
-        </ul>
+                <ToggleButton api={a} busy={busy === a.id} onUpdate={(b) => void update(a.id, b)} />
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
+    );
+  };
+  return shell(
+    <>
+      <p className="text-caption text-fg-muted">{t('apiUsage.desc', { month: data.month })}</p>
+      {section('paid')}
+      {section('free')}
     </>,
   );
 }
 
 type T = ReturnType<typeof useTranslation>['t'];
 const apiName = (t: T, id: string) => t(`apiUsage.name.${id}` as 'apiUsage.name.groq');
+const apiNote = (t: T, id: string) => t(`apiUsage.note.${id}` as 'apiUsage.note.groq');
 
-function PaidCard({
+function LimitCard({
   api: a,
   busy,
   onUpdate,
@@ -93,18 +102,19 @@ function PaidCard({
   onUpdate: (b: Update) => void;
 }) {
   const { t } = useTranslation();
-  const free = a.freeMonthly ?? 0;
-  const pct = free ? (a.used / free) * 100 : 0;
-  const limitPct = free && a.autoLimit !== null ? Math.min(100, (a.autoLimit / free) * 100) : null;
-  const state = a.paused ? 'paused' : a.autoStopped ? 'autoStopped' : 'running';
+  const state = a.paused
+    ? 'paused'
+    : a.autoStoppedBy === 'day'
+      ? 'autoStoppedDay'
+      : a.autoStopped
+        ? 'autoStopped'
+        : 'running';
   return (
     <article className="flex flex-col gap-2 rounded-card border border-line p-4">
       <div className="flex items-start gap-2">
         <div className="flex min-w-0 flex-1 flex-col">
           <h3 className="text-body-1 font-semibold">{apiName(t, a.id)}</h3>
-          <p className="text-caption text-fg-muted">
-            {t(`apiUsage.note.${a.id}` as 'apiUsage.note.naver_search')}
-          </p>
+          <p className="text-caption text-fg-muted">{apiNote(t, a.id)}</p>
         </div>
         <span
           className={cn(
@@ -115,10 +125,70 @@ function PaidCard({
           {t(`apiUsage.${state}`)}
         </span>
       </div>
-      {/* 무료 월 사용량 대비 % — 세로선 = 자동 중지 상한 */}
+      {a.freeMonthly !== null && (
+        <Meter
+          label={t('apiUsage.monthMeter')}
+          name={apiName(t, a.id)}
+          used={a.used}
+          free={a.freeMonthly}
+          limit={a.autoLimit}
+        />
+      )}
+      {a.freeDaily !== null && (
+        <Meter
+          label={t('apiUsage.dayMeter')}
+          name={apiName(t, a.id)}
+          used={a.today}
+          free={a.freeDaily}
+          limit={a.dailyLimit}
+        />
+      )}
+      <DailyBars daily={a.daily} />
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+        {a.freeMonthly !== null && (
+          <LimitInput
+            label={t('apiUsage.autoLimit')}
+            value={a.autoLimit}
+            onChange={(limit) => onUpdate({ limit })}
+          />
+        )}
+        {a.freeDaily !== null && (
+          <LimitInput
+            label={t('apiUsage.dailyLimit')}
+            value={a.dailyLimit}
+            onChange={(dailyLimit) => onUpdate({ dailyLimit })}
+          />
+        )}
+        <span className="ml-auto">
+          <ToggleButton api={a} busy={busy} onUpdate={onUpdate} />
+        </span>
+      </div>
+    </article>
+  );
+}
+
+/** 무료 사용량 대비 % — 세로선 = 자동 중지 상한 */
+function Meter({
+  label,
+  name,
+  used,
+  free,
+  limit,
+}: {
+  label: string;
+  name: string;
+  used: number;
+  free: number;
+  limit: number | null;
+}) {
+  const { t } = useTranslation();
+  const pct = free ? (used / free) * 100 : 0;
+  const limitPct = free && limit !== null ? Math.min(100, (limit / free) * 100) : null;
+  return (
+    <div className="flex flex-col gap-1">
       <div
         role="meter"
-        aria-label={t('apiUsage.meterOf', { name: apiName(t, a.id) })}
+        aria-label={t('apiUsage.meterOf', { name: `${name} ${label}` })}
         aria-valuemin={0}
         aria-valuemax={100}
         aria-valuenow={Math.round(pct)}
@@ -136,34 +206,40 @@ function PaidCard({
         )}
       </div>
       <p className="tabular flex justify-between text-caption">
+        <span className="text-fg-muted">{label}</span>
         <span className="font-semibold">
-          {a.used.toLocaleString()} / {free.toLocaleString()} ({formatPct(pct)})
-        </span>
-        <span className="text-fg-muted">
-          {t('apiUsage.today', { n: a.today.toLocaleString() })}
+          {used.toLocaleString()} / {free.toLocaleString()} ({formatPct(pct)})
         </span>
       </p>
-      <DailyBars daily={a.daily} />
-      <div className="flex items-center gap-2">
-        <label className="flex flex-1 items-center gap-2 text-caption text-fg-sub">
-          {t('apiUsage.autoLimit')}
-          <input
-            type="number"
-            inputMode="numeric"
-            min={0}
-            defaultValue={a.autoLimit ?? ''}
-            onBlur={(e) => {
-              const v = e.currentTarget.value.trim();
-              const next = v === '' ? null : Math.max(0, Math.floor(Number(v)));
-              if (next !== a.autoLimit && (next === null || Number.isFinite(next)))
-                onUpdate({ limit: next });
-            }}
-            className="tabular h-9 w-24 rounded-btn bg-bg-subtle px-2 text-right text-caption"
-          />
-        </label>
-        <ToggleButton api={a} busy={busy} onUpdate={onUpdate} />
-      </div>
-    </article>
+    </div>
+  );
+}
+
+function LimitInput({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: number | null;
+  onChange: (v: number | null) => void;
+}) {
+  return (
+    <label className="flex items-center gap-2 text-caption text-fg-sub">
+      {label}
+      <input
+        type="number"
+        inputMode="numeric"
+        min={0}
+        defaultValue={value ?? ''}
+        onBlur={(e) => {
+          const v = e.currentTarget.value.trim();
+          const next = v === '' ? null : Math.max(0, Math.floor(Number(v)));
+          if (next !== value && (next === null || Number.isFinite(next))) onChange(next);
+        }}
+        className="tabular h-9 w-24 rounded-btn bg-bg-subtle px-2 text-right text-caption"
+      />
+    </label>
   );
 }
 
@@ -209,6 +285,9 @@ function ToggleButton({
   onUpdate: (b: Update) => void;
 }) {
   const { t } = useTranslation();
+  // 로그인·프록시는 멈추면 앱이 안 되므로 기록만
+  if (!a.pausable)
+    return <span className="shrink-0 text-caption text-fg-muted">{t('apiUsage.recordOnly')}</span>;
   return (
     <Button
       size="sm"
