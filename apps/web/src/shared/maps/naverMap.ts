@@ -13,6 +13,8 @@ interface NMapsNs {
     fitBounds(b: unknown, margin?: object): void;
     setCenter(p: NLatLng): void;
     setZoom(z: number): void;
+    panTo(p: NLatLng): void;
+    setSize(s: unknown): void;
   };
   LatLng: new (lat: number, lng: number) => NLatLng;
   LatLngBounds: new (sw: NLatLng, ne: NLatLng) => { extend(p: NLatLng): void };
@@ -91,6 +93,13 @@ export async function mountNaver(
       const b = new n.LatLngBounds(ll(points[0]!), ll(points[0]!));
       points.forEach((p) => b.extend(ll(p)));
       map.fitBounds(b, { top: 40, right: 40, bottom: 40, left: 40 });
+    },
+    panTo(p) {
+      map.panTo(ll(p));
+    },
+    resize() {
+      // 네이버 지도는 상자 크기를 직접 알려 줘야 빈 곳 없이 다시 그린다
+      map.setSize(new n.Size(el.clientWidth, el.clientHeight));
     },
     onMarkerClick(cb) {
       onClick = cb;

@@ -1,11 +1,16 @@
 import type { ItineraryItem, Trip } from '@trippocket/shared';
 import { resetUsageFlags } from '../../data/api/usage';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type * as Maps from '../../shared/maps';
 import type { MapHandle, MapMarker } from '../../shared/maps';
 
 // 실제 지도 SDK 대신 흉내 낸 지도
-const calls: { markers: MapMarker[]; paths: number; click?: (id: string) => void } = {
+const calls: {
+  markers: MapMarker[];
+  paths: number;
+  click?: (id: string) => void;
+  panned?: { lat: number; lng: number };
+} = {
   markers: [],
   paths: 0,
 };
@@ -20,6 +25,8 @@ vi.mock('../../shared/maps', async (orig) => {
       setMarkers: (m) => void (calls.markers = [...m]),
       drawPaths: (p) => void (calls.paths = p.filter((x) => x.points.length > 1).length),
       fitBounds: () => {},
+      panTo: (p) => void (calls.panned = p),
+      resize: () => {},
       onMarkerClick: (cb) => void (calls.click = cb),
       destroy: () => {},
     }),
@@ -94,6 +101,87 @@ describe('일정 지도', () => {
     calls.click?.('B');
     expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({ id: 'B' }));
     expect(screen.queryByText(/키를 아직/)).not.toBeInTheDocument();
+  });
+});
+
+describe('일정 지도 — 크게·전체 화면', () => {
+  beforeEach(() => {
+    resetUsageFlags();
+    vi.stubGlobal('fetch', async () => Response.json({ maps: true }));
+  });
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('작은 지도를 누르면 크게, 크게 볼 때는 [작게]와 고른 일정 핀으로 이동', async () => {
+    const onSizeChange = vi.fn();
+    const { rerender } = render(
+      <TripMap
+        trip={trip}
+        items={[]}
+        dayIndexOf={() => 0}
+        onSelect={() => {}}
+        onSizeChange={onSizeChange}
+      />,
+    );
+    fireEvent.click(await screen.findByRole('button', { name: '지도 크게 보기' }));
+    expect(onSizeChange).toHaveBeenLastCalledWith('large');
+    const focus = item('A', '2026-11-01', 'a', { lat: 35.7, lng: 139.7 });
+    rerender(
+      <TripMap
+        trip={trip}
+        items={[focus]}
+        dayIndexOf={() => 0}
+        onSelect={() => {}}
+        size="large"
+        focus={focus}
+        onSizeChange={onSizeChange}
+      />,
+    );
+    await waitFor(() => expect(calls.panned).toEqual({ lat: 35.7, lng: 139.7 }));
+    fireEvent.click(screen.getByRole('button', { name: '작게' }));
+    expect(onSizeChange).toHaveBeenLastCalledWith('small');
+  });
+
+  it('꾹 누르면 전체 화면(그 뒤 click은 무시), 끌면 취소, 전체 화면은 X로 닫는다', async () => {
+    const onSizeChange = vi.fn();
+    const { rerender } = render(
+      <TripMap
+        trip={trip}
+        items={[]}
+        dayIndexOf={() => 0}
+        onSelect={() => {}}
+        onSizeChange={onSizeChange}
+      />,
+    );
+    const area = await screen.findByRole('button', { name: '지도 크게 보기' });
+    vi.useFakeTimers();
+    // 끌면(10px 넘게 움직이면) 취소
+    fireEvent.pointerDown(area, { clientX: 10, clientY: 10 });
+    fireEvent.pointerMove(area, { clientX: 40, clientY: 10 });
+    vi.advanceTimersByTime(600);
+    expect(onSizeChange).not.toHaveBeenCalled();
+    fireEvent.pointerUp(area);
+    // 꾹 누르기
+    fireEvent.pointerDown(area, { clientX: 10, clientY: 10 });
+    vi.advanceTimersByTime(600);
+    vi.useRealTimers();
+    expect(onSizeChange).toHaveBeenLastCalledWith('full');
+    fireEvent.pointerUp(area);
+    fireEvent.click(area);
+    expect(onSizeChange).toHaveBeenCalledTimes(1);
+
+    rerender(
+      <TripMap
+        trip={trip}
+        items={[]}
+        dayIndexOf={() => 0}
+        onSelect={() => {}}
+        size="full"
+        onSizeChange={onSizeChange}
+      />,
+    );
+    expect(screen.getByRole('dialog', { name: '전체 화면 지도' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '전체 화면 지도 닫기' }));
+    expect(onSizeChange).toHaveBeenLastCalledWith('large');
   });
 });
 

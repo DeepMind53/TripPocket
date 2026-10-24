@@ -15,13 +15,14 @@ import {
   ArrowDownWideNarrow,
   BedDouble,
   Check,
+  ChevronLeft,
   ChevronRight,
   Ellipsis,
   Map as MapIcon,
   Plus,
   Footprints,
 } from 'lucide-react';
-import { lazy, Suspense, useCallback, useState, Fragment } from 'react';
+import { lazy, Suspense, useCallback, useState, Fragment, useRef } from 'react';
 import { useTranslation } from '../../i18n';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { useTrip, useTripBookings, useTripItems } from '../../data/hooks';
@@ -89,6 +90,10 @@ function PlanView({
   const dimPast = useSettings((st) => st.dimPastItems);
   // 지도는 누를 때만 (지도 불러오기도 무료 사용량에 포함)
   const [mapOpen, setMapOpen] = useState(false);
+  // 지도를 누르면 크게(아래 일정은 하나씩), 꾹 누르면 지도만 전체 화면(뒤로 가기·X로 닫음)
+  const [mapLarge, setMapLarge] = useState(false);
+  const [mapFull, setMapFull] = useRouteSheet('map-full');
+  const [pagerId, setPagerId] = useState<string | null>(null);
   const dayIndexOf = useCallback((d: LocalDate) => days.indexOf(d), [days]);
   const ongoing = getTripStatus(trip.startDate, trip.endDate, today) === 'ongoing';
   const isDomestic = isDomesticTrip(trip);
@@ -133,6 +138,22 @@ function PlanView({
       : filter === 'wish'
         ? [{ date: null, index: -1 }]
         : [{ date: days[filter - 1] as LocalDate, index: filter - 1 }];
+
+  // 지도에 넘기는 일정(날짜 순) · 크게 보기 카드 목록 (날짜 있는 일정만, 그날 안 번호와 색)
+  const mapItems = sections.flatMap((s) => items.filter((i) => i.date === s.date));
+  const pagerList = sections.flatMap((s) =>
+    s.date
+      ? items
+          .filter((i) => i.date === s.date)
+          .map((item, n) => ({
+            item,
+            n: n + 1,
+            color: dayColor(s.index),
+            day: t('plan.dayHeader', { n: s.index + 1, date: formatMonthDay(s.date!) }),
+          }))
+      : [],
+  );
+  const pagerItem = pagerList.find((p) => p.item.id === pagerId)?.item ?? pagerList[0]?.item;
 
   function setFilter(next: DayFilter) {
     setParams({ day: String(next) }, { replace: true });
@@ -225,7 +246,10 @@ function PlanView({
           <Chip
             selected={mapOpen}
             leading={<MapIcon aria-hidden="true" className="size-4" />}
-            onClick={() => setMapOpen(!mapOpen)}
+            onClick={() => {
+              setMapOpen(!mapOpen);
+              setMapLarge(false);
+            }}
           >
             {t('map.toggle')}
           </Chip>
@@ -247,16 +271,34 @@ function PlanView({
           <Suspense fallback={<div className="h-60 rounded-2xl bg-bg-subtle" />}>
             <TripMap
               trip={trip}
-              items={sections.flatMap((s) => items.filter((i) => i.date === s.date))}
+              items={mapItems}
               dayIndexOf={dayIndexOf}
-              onSelect={openDetail}
+              // 크게 볼 때 핀을 누르면 아래 카드를 그 일정으로, 작게 볼 때는 바로 상세
+              onSelect={(i) => (mapLarge || mapFull ? setPagerId(i.id) : openDetail(i))}
+              size={mapFull ? 'full' : mapLarge ? 'large' : 'small'}
+              focus={mapLarge || mapFull ? pagerItem : undefined}
+              onSizeChange={(next) => {
+                if (next === 'full') setMapFull(true);
+                else if (mapFull) setMapFull(false);
+                else setMapLarge(next === 'large');
+              }}
             />
           </Suspense>
         </div>
       )}
 
       <div className={cn('flex flex-col px-5 pt-2', editing ? 'gap-6' : 'gap-4 pb-4')}>
-        {editing ? (
+        {mapOpen && mapLarge && !editing ? (
+          <MapPager
+            list={pagerList}
+            current={Math.max(
+              0,
+              pagerList.findIndex((p) => p.item.id === pagerItem?.id),
+            )}
+            onChange={(i) => setPagerId(pagerList[i]?.item.id ?? null)}
+            onOpen={openDetail}
+          />
+        ) : editing ? (
           <Suspense fallback={null}>
             <EditModeList
               sections={sections.map((s) => ({
@@ -618,5 +660,66 @@ function ItemRow({
         </span>
       </button>
     </li>
+  );
+}
+
+/** 지도를 크게 볼 때 아래 일정은 한 개씩: 좌우로 넘기거나 ‹ › (넘기면 지도가 그 핀으로) */
+function MapPager({
+  list,
+  current,
+  onChange,
+  onOpen,
+}: {
+  list: { item: ItineraryItem; n: number; color: string; day: string }[];
+  current: number;
+  onChange: (index: number) => void;
+  onOpen: (item: ItineraryItem) => void;
+}) {
+  const { t } = useTranslation();
+  const startX = useRef<number | null>(null);
+  const entry = list[current];
+  if (!entry)
+    return <p className="py-6 text-center text-body-2 text-fg-muted">{t('map.pagerEmpty')}</p>;
+  const go = (d: number) => onChange(Math.min(list.length - 1, Math.max(0, current + d)));
+  return (
+    <section
+      aria-label={t('map.pagerLabel')}
+      className="flex flex-col gap-2 rounded-card border border-line bg-surface p-3"
+      onPointerDown={(e) => (startX.current = e.clientX)}
+      onPointerUp={(e) => {
+        const dx = startX.current === null ? 0 : e.clientX - startX.current;
+        startX.current = null;
+        if (Math.abs(dx) > 48) go(dx < 0 ? 1 : -1);
+      }}
+    >
+      <div className="flex items-center gap-1">
+        <IconButton
+          label={t('map.prev')}
+          icon={<ChevronLeft />}
+          disabled={current === 0}
+          onClick={() => go(-1)}
+        />
+        <p className="flex-1 text-center text-caption font-semibold text-fg-sub" aria-live="polite">
+          {entry.day} ·{' '}
+          <span className="tabular">
+            {t('map.pagerPos', { n: current + 1, total: list.length })}
+          </span>
+        </p>
+        <IconButton
+          label={t('map.next')}
+          icon={<ChevronRight />}
+          disabled={current >= list.length - 1}
+          onClick={() => go(1)}
+        />
+      </div>
+      <ol>
+        <ItemRow
+          item={entry.item}
+          n={entry.n}
+          color={entry.color}
+          onOpen={() => onOpen(entry.item)}
+        />
+      </ol>
+    </section>
   );
 }

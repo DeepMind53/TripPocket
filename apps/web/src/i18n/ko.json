@@ -669,7 +669,17 @@
     "noKey": "지도 키를 아직 설정하지 않았어요 (docs/deploy.md 8절)",
     "error": "지도를 불러오지 못했어요",
     "noPlaces": "장소를 검색해 고른 일정만 지도에 표시돼요",
-    "paused": "이번 달 무료 지도 사용량을 아끼려고 지도를 잠시 멈췄어요. 일정과 길찾기는 그대로 쓸 수 있어요"
+    "paused": "이번 달 무료 지도 사용량을 아끼려고 지도를 잠시 멈췄어요. 일정과 길찾기는 그대로 쓸 수 있어요",
+    "expand": "지도 크게 보기",
+    "shrink": "작게",
+    "closeFull": "전체 화면 지도 닫기",
+    "fullTitle": "전체 화면 지도",
+    "longPressHint": "꾹 누르면 전체 화면",
+    "pagerLabel": "지도에서 보는 일정",
+    "pagerPos": "{{n}} / {{total}}",
+    "prev": "이전 일정",
+    "next": "다음 일정",
+    "pagerEmpty": "날짜가 정해진 일정이 없어요"
   },
   "placeSearch": {
     "label": "장소 검색 결과",

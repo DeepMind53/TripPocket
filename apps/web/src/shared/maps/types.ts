@@ -20,6 +20,10 @@ export interface MapHandle {
   /** 일차별 순서선 */
   drawPaths(paths: readonly { color: string; points: readonly LatLng[] }[]): void;
   fitBounds(points: readonly LatLng[]): void;
+  /** 한 곳으로 부드럽게 옮기기 (지도 크게 보기에서 일정을 넘길 때) */
+  panTo(point: LatLng): void;
+  /** 지도 상자 크기가 바뀐 뒤 (크게·전체 화면) */
+  resize(): void;
   onMarkerClick(cb: (id: string) => void): void;
   destroy(): void;
 }

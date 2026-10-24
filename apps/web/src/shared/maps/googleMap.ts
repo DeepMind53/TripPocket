@@ -13,6 +13,7 @@ interface GMapsNs {
     fitBounds(b: GLatLngBounds, pad?: number): void;
     setCenter(p: LatLng): void;
     setZoom(z: number): void;
+    panTo(p: LatLng): void;
   };
   Marker: new (opts: object) => {
     setMap(m: unknown): void;
@@ -92,6 +93,12 @@ export async function mountGoogle(
       const b = new g.LatLngBounds();
       points.forEach((p) => b.extend(p));
       map.fitBounds(b, 40);
+    },
+    panTo(p) {
+      map.panTo(p);
+    },
+    resize() {
+      // Google 지도는 상자 크기 변화를 스스로 따라간다
     },
     onMarkerClick(cb) {
       onClick = cb;
