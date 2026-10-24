@@ -5,7 +5,7 @@ import { apiAllowed, ApiPaused, guardApi, trackApi } from './apiUsage';
 
 /**
  * 무료 AI로 블로그 제목·요약에서 장소 이름 뽑기 (docs/14 §5, 결정 L9).
- * 순서: Gemini(무료 등급) → Mistral(무료 Experiment) → Cloudflare Workers AI(하루 무료량) → Groq(무료 등급). 모두 OpenAI 호환 API.
+ * 순서: Gemini(무료 등급) → Cloudflare Workers AI(하루 무료량) → Groq(무료 등급). 모두 OpenAI 호환 API.
  * 한도에 걸린 곳은 잠시 건너뛰고 다음으로, 모두 막히면 호출한 쪽이 AI 없는 집계(basicRecommend)로 바꾼다.
  * 입력: 기준점 이름 + 공개 글의 제목·요약·날짜뿐 — 좌표·사용자 정보는 넣지 않는다 (CLAUDE.md).
  * 글 내용은 "데이터"로만 다룬다(프롬프트 주입 방지) + 구조화 출력 검증 + 없는 근거 id는 버림(recommend.ts)
@@ -37,7 +37,7 @@ const SYSTEM = `너는 여행 블로그 글 목록에서 장소 이름을 뽑는
 - category는 food(식당)·cafe(카페·디저트·바·핫플)·play(관광지·체험·쇼핑) 중 하나.
 - 출력은 JSON 하나: {"places":[{"name":"","category":"food","sourceIds":["p1"],"adSuspect":false,"summary":""}]}`;
 
-export type LlmEngine = 'gemini' | 'mistral' | 'workers-ai' | 'groq';
+export type LlmEngine = 'gemini' | 'workers-ai' | 'groq';
 
 interface Provider {
   engine: LlmEngine;
@@ -48,8 +48,6 @@ interface Provider {
   maxPosts: number;
   /** 응답 대기 (초) — 막히면 빨리 다음 AI로 */
   timeout: number;
-  /** 요청 사이 최소 간격 (ms) — Mistral 무료는 초당 1회라 카테고리 동시 처리 때 줄 세운다 */
-  minGapMs?: number;
   extra: Record<string, unknown>;
 }
 
@@ -66,17 +64,6 @@ export function llmProviders(config: Config): Provider[] {
       timeout: 45,
       // 생각(thinking)은 짧게 — 장소 이름 뽑기에는 충분하고 빠르다
       extra: { max_tokens: 4000, reasoning_effort: 'low' },
-    });
-  if (config.MISTRAL_API_KEY)
-    out.push({
-      engine: 'mistral',
-      url: 'https://api.mistral.ai/v1/chat/completions',
-      key: config.MISTRAL_API_KEY,
-      model: config.MISTRAL_MODEL,
-      maxPosts: 80,
-      timeout: 45,
-      minGapMs: 1100,
-      extra: { max_tokens: 3000, response_format: { type: 'json_object' } },
     });
   if (config.CF_ACCOUNT_ID && config.CF_AI_TOKEN)
     out.push({
@@ -130,20 +117,8 @@ function parseJson(text: string): unknown {
   return JSON.parse(start >= 0 && end > start ? text.slice(start, end + 1) : text);
 }
 
-/** 엔진별 다음 요청 가능 시각 (minGapMs가 있는 엔진만) */
-const nextSlot = new Map<LlmEngine, number>();
-
-async function waitTurn(p: Provider): Promise<void> {
-  if (!p.minGapMs) return;
-  const now = Date.now();
-  const at = Math.max(now, nextSlot.get(p.engine) ?? 0);
-  nextSlot.set(p.engine, at + p.minGapMs);
-  if (at > now) await new Promise((r) => setTimeout(r, at - now));
-}
-
 async function call(p: Provider, user: string): Promise<unknown> {
   guardApi(p.engine);
-  await waitTurn(p);
   trackApi(p.engine);
   const res = await fetch(p.url, {
     method: 'POST',
@@ -236,7 +211,4 @@ export async function extractPlaces(
 }
 
 /** 시험용: 건너뛰기 기록 지우기 */
-export const resetLlmCooldown = () => {
-  cooldownUntil.clear();
-  nextSlot.clear();
-};
+export const resetLlmCooldown = () => cooldownUntil.clear();

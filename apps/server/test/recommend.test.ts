@@ -241,30 +241,4 @@ describe('AI 추천 ② (Groq)', () => {
     expect(hits).toEqual(['gemini', 'workers-ai', 'workers-ai']);
     expect(groqBodies).toHaveLength(0);
   });
-  it('Gemini가 막히면 Mistral, 카테고리를 동시에 처리해도 Mistral은 1초에 한 번씩', async () => {
-    await app.close();
-    app = await buildApp(loadConfig({ ...env, GEMINI_API_KEY: 'gem', MISTRAL_API_KEY: 'mis' }), db);
-    const times: number[] = [];
-    const base = globalThis.fetch;
-    vi.stubGlobal('fetch', async (input: string | URL, init?: RequestInit) => {
-      const url = String(input);
-      if (url.includes('generativelanguage')) {
-        return new Response('{}', { status: 429, headers: { 'retry-after': '3600' } });
-      }
-      if (url === 'https://api.mistral.ai/v1/chat/completions') {
-        expect(init?.headers).toMatchObject({ authorization: 'Bearer mis' });
-        times.push(Date.now());
-        return groqReply();
-      }
-      return base(input, init);
-    });
-    const res = await recommend({
-      anchor: { type: 'text', name: '성수역' },
-      categories: ['food', 'cafe', 'play'],
-    });
-    expect(res.json().categories.cafe.engine).toBe('mistral');
-    expect(times).toHaveLength(3);
-    for (let i = 1; i < times.length; i++)
-      expect(times[i]! - times[i - 1]!).toBeGreaterThanOrEqual(1000);
-  }, 10_000);
 });
