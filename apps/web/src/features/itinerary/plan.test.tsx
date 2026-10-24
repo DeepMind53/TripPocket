@@ -6,7 +6,7 @@ import { resetLocalDb } from '../../data/dev';
 import { itemRepo } from '../../data/repositories/itemRepo';
 import { tripRepo } from '../../data/repositories/tripRepo';
 import { Toaster } from '../../shared/ui';
-import { ReadOnlyTripError, setTripRoles } from '../../data/tripRoles';
+import { ReadOnlyTripError, setMemberCounts, setTripRoles } from '../../data/tripRoles';
 
 let tripId = '';
 
@@ -264,6 +264,18 @@ describe('보기 전용으로 공유받은 여행', () => {
     await expect(
       itemRepo.create({ tripId, date: null, kind: 'place', title: '수정 권한' }),
     ).resolves.toMatchObject({ title: '수정 권한' });
+  });
+});
+
+describe('함께 쓰는 여행', () => {
+  it('제목 옆에 멤버 수, 혼자면 없음', async () => {
+    await renderPlan();
+    expect(screen.queryByRole('button', { name: /함께 쓰는 사람/ })).not.toBeInTheDocument();
+    act(() => setMemberCounts({ [tripId]: 3 }));
+    expect(
+      await screen.findByRole('button', { name: '함께 쓰는 사람 3명 — 멤버 보기' }),
+    ).toHaveTextContent('3');
+    act(() => setMemberCounts({}));
   });
 });
 

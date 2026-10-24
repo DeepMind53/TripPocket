@@ -72,4 +72,6 @@ export interface PullResult {
   hasMore: boolean;
   /** 내가 멤버인 여행마다 내 역할 (보기 전용이면 앱이 수정을 막는다). 예전 서버는 없음 */
   roles?: Record<string, TripRole>;
+  /** 그 여행의 멤버 수 (나 포함) — 여행 제목 옆 "👥 3" */
+  memberCounts?: Record<string, number>;
 }

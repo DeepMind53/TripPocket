@@ -75,7 +75,9 @@ export async function buildApp(config: Config, db: Db): Promise<FastifyInstance>
 
   app.setErrorHandler((error, req, reply) => {
     // 관리자가 멈췄거나 이번 달 자동 상한에 닿은 외부 API (API 사용량 화면)
-    if (error instanceof ApiPaused) return reply.code(503).send({ error: 'api_paused' });
+    // 앱은 api(어느 외부 API인지)로 안내 팝업 문구를 고른다
+    if (error instanceof ApiPaused)
+      return reply.code(503).send({ error: 'api_paused', api: error.api });
     const err = error as { statusCode?: number; code?: string };
     const status = err.statusCode && err.statusCode < 500 ? err.statusCode : 500;
     if (status >= 500) req.log.error(error);

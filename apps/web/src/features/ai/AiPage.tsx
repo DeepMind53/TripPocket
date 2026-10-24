@@ -113,7 +113,8 @@ export function AiPage() {
       if (res.ok) {
         setResult(res.data);
         await settingsRepo.set(LAST_KEY, res.data);
-      } else
+      } else if (res.reason !== 'limit')
+        // 한도는 안내 팝업이 따로 뜬다 (LimitNoticeSheet)
         toast(
           t(
             res.status === 429

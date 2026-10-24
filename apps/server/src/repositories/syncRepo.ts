@@ -154,6 +154,13 @@ export function syncRepo(db: Db) {
       rev: number;
     }[];
     const page = rows.slice(0, limit);
+    // 내가 멤버인 여행: 내 역할 + 멤버 수
+    const mine = db
+      .prepare(
+        `SELECT m.trip_id, m.role, (SELECT COUNT(*) FROM trip_members x WHERE x.trip_id = m.trip_id) AS n
+         FROM trip_members m WHERE m.user_id = ?`,
+      )
+      .all(userId) as { trip_id: string; role: Role; n: number }[];
     return {
       changes: page.map((r) => ({
         table: r.table_name,
@@ -162,14 +169,8 @@ export function syncRepo(db: Db) {
       })),
       nextRev: page.at(-1)?.rev ?? since,
       hasMore: rows.length > limit,
-      roles: Object.fromEntries(
-        (
-          db.prepare('SELECT trip_id, role FROM trip_members WHERE user_id = ?').all(userId) as {
-            trip_id: string;
-            role: Role;
-          }[]
-        ).map((m) => [m.trip_id, m.role]),
-      ),
+      roles: Object.fromEntries(mine.map((m) => [m.trip_id, m.role])),
+      memberCounts: Object.fromEntries(mine.map((m) => [m.trip_id, m.n])),
     };
   }
 

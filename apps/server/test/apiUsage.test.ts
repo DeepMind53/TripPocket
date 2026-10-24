@@ -108,7 +108,7 @@ describe('API 사용량 (관리자)', () => {
     );
     const blocked = await req('GET', '/api/places/google/ChIJ1111111111', member);
     expect(blocked.statusCode).toBe(503);
-    expect(blocked.json()).toEqual({ error: 'api_paused' });
+    expect(blocked.json()).toEqual({ error: 'api_paused', api: 'google_places_details' });
     expect(api(await report(), 'google_places_details').autoStopped).toBe(true);
   });
 

@@ -1,4 +1,4 @@
-import { setTripRoles } from '../tripRoles';
+import { setMemberCounts, setTripRoles } from '../tripRoles';
 import {
   SYNC_BATCH,
   SYNC_TABLES,
@@ -129,6 +129,7 @@ async function pull(): Promise<Step> {
     const res = await api<PullResult>(`/api/sync/pull?since=${since}&limit=${SYNC_BATCH}`);
     if (!res.ok) return fail(res.reason);
     if (res.data.roles) setTripRoles(res.data.roles);
+    if (res.data.memberCounts) setMemberCounts(res.data.memberCounts);
     await db.transaction('rw', [...SYNC_TABLES.map((t) => db[t]), db.syncState], async () => {
       for (const c of res.data.changes) {
         const local = await table(c.table).get(c.record.id);
@@ -158,7 +159,7 @@ async function dropPristineTwin(incoming: Row): Promise<void> {
   for (const t of twins) await table('checklistTemplates').delete(t.id);
 }
 
-function fail(reason: 'unauthorized' | 'offline' | 'error'): Step {
+function fail(reason: 'unauthorized' | 'offline' | 'error' | 'limit'): Step {
   if (reason === 'unauthorized') useAuth.setState({ status: 'anon', me: null });
   return reason === 'offline' ? 'offline' : 'error';
 }

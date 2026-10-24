@@ -142,7 +142,10 @@ export function aiRoutes(app: FastifyInstance, config: Config, db: Db): void {
     ] as AiCategory[];
     if (categories.length === 0) return (void reply.code(400).send({ error: 'bad_request' }), null);
     if (usedToday(req.user!.userId) >= DAILY_LIMIT)
-      return (void reply.code(429).send({ error: 'daily_limit', limit: DAILY_LIMIT }), null);
+      return (
+        void reply.code(429).send({ error: 'daily_limit', feature: 'ai', limit: DAILY_LIMIT }),
+        null
+      );
     const a = parsed.data.anchor;
     const anchor =
       a.type === 'place'

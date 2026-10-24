@@ -144,6 +144,7 @@ describe('초대·멤버', () => {
     const pulled = (await call('B', 'GET', '/api/sync/pull?since=0')).json();
     // 내 역할도 함께 (앱이 보기 전용 여행의 수정을 막는 데 씀)
     expect(pulled.roles).toEqual({ [TRIP]: 'editor' });
+    expect(pulled.memberCounts).toEqual({ [TRIP]: 2 });
     expect(pulled.changes.map((c: { table: string }) => c.table).sort()).toEqual([
       'bookings',
       'items',

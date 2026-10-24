@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { ReadOnlyTripError } from '../data/tripRoles';
 import { useAuth } from '../data/authStore';
+import { useLimitNotice } from '../data/limitNotice';
 import { useTranslation } from '../i18n';
 import { RouterProvider } from 'react-router';
 import { Toaster, toast } from '../shared/ui';
@@ -10,6 +11,10 @@ import { MovedBanner } from '../features/common/MovedBanner';
 import { useSync } from '../data/sync/syncStore';
 
 // 첫 로그인 때만 필요 → 그때 불러온다
+// 사용량 한도 안내 — 한도에 걸렸을 때만
+const LimitNoticeSheet = lazy(async () => ({
+  default: (await import('../features/common/LimitNoticeSheet')).LimitNoticeSheet,
+}));
 const NicknameSheet = lazy(async () => ({
   default: (await import('../features/me/NicknameSheet')).NicknameSheet,
 }));
@@ -20,6 +25,7 @@ const AccountChoiceSheet = lazy(async () => ({
 export function App() {
   const [router] = useState(createAppRouter);
   const needChoice = useSync((st) => st.choiceFor !== null);
+  const limited = useLimitNotice((s) => s.notice !== null);
   // 처음 로그인하면 닉네임부터 (멤버 목록에서 누가 누구인지 알아보게). 닫으면 이번에는 다시 묻지 않음
   const needNickname = useAuth((s) => s.status === 'user' && s.me?.nicknameSet === false);
   const [nicknameDismissed, setNicknameDismissed] = useState(false);
@@ -42,6 +48,11 @@ export function App() {
       {needNickname && !needChoice && !nicknameDismissed && (
         <Suspense fallback={null}>
           <NicknameSheet open first onOpenChange={(o) => !o && setNicknameDismissed(true)} />
+        </Suspense>
+      )}
+      {limited && (
+        <Suspense fallback={null}>
+          <LimitNoticeSheet />
         </Suspense>
       )}
       {needChoice && (

@@ -101,7 +101,9 @@ describe('일정 입력 장소 검색', () => {
     await user.type(within(sheet).getByLabelText('시작'), '0930');
     await user.click(within(sheet).getByRole('button', { name: /영업시간·평점 보기/ }));
     expect(await within(sheet).findByText('월요일: 오전 10:00~오후 10:00')).toBeInTheDocument();
-    expect(within(sheet).getByRole('alert')).toHaveTextContent('09:30은 영업시간이 아닐 수 있어요');
+    expect(await within(sheet).findByRole('alert')).toHaveTextContent(
+      '09:30은 영업시간이 아닐 수 있어요',
+    );
 
     await user.click(within(sheet).getByRole('button', { name: '일정에 추가' }));
     await waitFor(async () => expect(await itemRepo.listByTrip(tripId)).toHaveLength(1));

@@ -8,12 +8,13 @@ import {
   Share2,
   Ticket,
   Trash2,
+  Users,
 } from 'lucide-react';
 import { lazy, Suspense } from 'react';
 import { useTranslation } from '../../i18n';
 import { Link, Outlet, useNavigate, useParams } from 'react-router';
 import { useTrip } from '../../data/hooks';
-import { useCanEdit } from '../../data/tripRoles';
+import { useCanEdit, useMemberCount } from '../../data/tripRoles';
 import { QuickMenuButton } from '../../features/common/QuickMenu';
 import { deleteTripWithUndo } from '../../features/trips/tripActions';
 import { useRouteSheet } from '../../shared/hooks/useRouteSheet';
@@ -39,6 +40,7 @@ export function TripLayout() {
   const { tripId = '' } = useParams();
   const trip = useTrip(tripId);
   const canEdit = useCanEdit(tripId);
+  const members = useMemberCount(tripId);
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen, switchMenuTo] = useRouteSheet('trip-menu');
   const [shareOpen, setShareOpen] = useRouteSheet('trip-share');
@@ -84,7 +86,18 @@ export function TripLayout() {
         backTo="/trips"
         actions={
           <>
-            {/* 동기화 상태 아이콘은 15단계(동기화)에서 추가 — 그전엔 제목 자리를 넓히려고 비워 둔다 */}
+            {/* 함께 쓰는 여행이면 멤버 수 — 누르면 공유·멤버 시트 (사용자 요청 2026-10-24) */}
+            {members > 1 && (
+              <button
+                type="button"
+                onClick={() => setShareOpen(true)}
+                aria-label={t('share.membersCount', { n: members })}
+                className="tabular flex h-9 shrink-0 items-center gap-1 rounded-full bg-primary-weak px-2.5 text-caption font-semibold text-primary"
+              >
+                <Users aria-hidden="true" className="size-4" />
+                {members}
+              </button>
+            )}
             <IconButton
               label={t('header.more')}
               icon={<Ellipsis />}

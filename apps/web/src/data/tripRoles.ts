@@ -21,6 +21,29 @@ function load(): Record<string, TripRole> {
 
 const useRoles = create<Record<string, TripRole>>(load);
 
+/** 여행별 멤버 수 (나 포함). 이 기기에 저장 */
+const COUNT_KEY = 'tp-trip-members';
+function loadCounts(): Record<string, number> {
+  try {
+    const v = JSON.parse(localStorage.getItem(COUNT_KEY) ?? '{}') as unknown;
+    return typeof v === 'object' && v !== null ? (v as Record<string, number>) : {};
+  } catch {
+    return {};
+  }
+}
+const useCounts = create<Record<string, number>>(loadCounts);
+export function setMemberCounts(counts: Record<string, number>): void {
+  useCounts.setState(counts, true);
+  try {
+    localStorage.setItem(COUNT_KEY, JSON.stringify(counts));
+  } catch {
+    // 저장 못 해도 이번 실행에서는 적용
+  }
+}
+/** 멤버 수 (나 포함). 공유하지 않은 여행이면 1 */
+export const useMemberCount = (tripId: string | undefined): number =>
+  useCounts((s) => (tripId ? (s[tripId] ?? 1) : 1));
+
 /** pull 때마다 서버의 지금 멤버십으로 바꾼다 */
 export function setTripRoles(roles: Record<string, TripRole>): void {
   useRoles.setState(roles, true);

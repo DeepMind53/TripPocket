@@ -54,7 +54,8 @@ export function placesRoutes(app: FastifyInstance, config: Config, db: Db): void
     if (!body.success) return reply.code(400).send({ error: 'bad_request' });
     const { q, scope, near } = body.data;
     const userId = req.user!.userId;
-    if (!allowed(userId, 'search')) return reply.code(429).send({ error: 'daily_limit' });
+    if (!allowed(userId, 'search'))
+      return reply.code(429).send({ error: 'daily_limit', feature: 'places_search' });
     const key = `${scope}|${q.trim().toLowerCase()}|${near ? `${near.lat.toFixed(1)},${near.lng.toFixed(1)}` : ''}`;
     const hit = cache.get(key);
     if (hit && hit.exp > Date.now()) return { places: hit.value, google: false };
@@ -108,7 +109,8 @@ export function placesRoutes(app: FastifyInstance, config: Config, db: Db): void
     if (!/^[\w-]{10,300}$/.test(req.params.id))
       return reply.code(400).send({ error: 'bad_request' });
     const userId = req.user!.userId;
-    if (!allowed(userId, 'details')) return reply.code(429).send({ error: 'daily_limit' });
+    if (!allowed(userId, 'details'))
+      return reply.code(429).send({ error: 'daily_limit', feature: 'places_details' });
     const details = await googleDetails(req.params.id, config.GOOGLE_PLACES_KEY);
     bump(userId, 'details');
     bump('*', 'all-details');
