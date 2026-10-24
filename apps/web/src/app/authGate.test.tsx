@@ -14,7 +14,7 @@ describe('로그인한 사람만 앱을 쓴다', () => {
     localStorage.removeItem('tp-signed-in');
     useAuth.setState({ status: 'anon', me: null });
     renderAt('/trips');
-    expect(await screen.findByText(/로그인한 뒤 쓸 수 있어요/)).toBeInTheDocument();
+    expect(await screen.findByText(/로그인 후 쓸 수 있어요/)).toBeInTheDocument();
     expect(await screen.findByRole('link', { name: '카카오로 시작하기' })).toHaveAttribute(
       'href',
       '/auth/kakao/start?returnTo=%2Ftrips',
@@ -27,7 +27,7 @@ describe('로그인한 사람만 앱을 쓴다', () => {
     localStorage.removeItem('tp-signed-in');
     useAuth.setState({ status: 'offline', me: null });
     renderAt('/');
-    expect(await screen.findByText(/로그인한 뒤 쓸 수 있어요/)).toBeInTheDocument();
+    expect(await screen.findByText(/로그인 후 쓸 수 있어요/)).toBeInTheDocument();
   });
 
   it('로그인했던 기기는 오프라인에서도 앱이 열린다', async () => {

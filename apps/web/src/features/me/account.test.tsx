@@ -79,7 +79,7 @@ describe('계정', () => {
     expect(calls).toContain('POST /auth/logout');
     expect(await db.trips.count()).toBe(0);
     // 로그인한 사람만 앱을 쓰므로 로그아웃하면 로그인 화면으로
-    expect(await screen.findByText(/로그인한 뒤 쓸 수 있어요/)).toBeInTheDocument();
+    expect(await screen.findByText(/로그인 후 쓸 수 있어요/)).toBeInTheDocument();
     expect(localStorage.getItem('tp-signed-in')).toBeNull();
   });
 
@@ -111,9 +111,9 @@ it('네이버 로그인을 누르면 먼저 "관리자에게 네이버 아이디
     '/auth/kakao/start?returnTo=%2Fme',
   );
   await user.click(screen.getByRole('link', { name: '네이버로 시작하기' }));
-  const sheet = await screen.findByRole('dialog', { name: '네이버 로그인 전에 확인해 주세요' });
-  expect(within(sheet).getByText(/관리자에게 로그인에 쓸 네이버 아이디/)).toBeInTheDocument();
+  const sheet = await screen.findByRole('dialog', { name: '네이버 아이디 등록이 필요해요' });
+  expect(within(sheet).getByText(/관리자에게 네이버 아이디를 알려/)).toBeInTheDocument();
   expect(
-    within(sheet).getByRole('button', { name: '등록했어요, 네이버로 계속하기' }),
+    within(sheet).getByRole('button', { name: '등록됐어요, 네이버로 계속' }),
   ).toBeInTheDocument();
 });

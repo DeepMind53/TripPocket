@@ -69,6 +69,11 @@
 }
 
 @layer base {
+  /* 설명 문구의 줄바꿈을 그대로 보여 준다 (i18n 문구, 2026-10-24) — 줄바꿈이 없는 글에는 영향 없음 */
+  p,
+  li {
+    white-space: pre-line;
+  }
   html {
     -webkit-text-size-adjust: 100%;
     -webkit-tap-highlight-color: transparent;
