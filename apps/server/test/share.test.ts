@@ -132,7 +132,7 @@ describe('보기 전용 링크', () => {
 });
 
 describe('초대·멤버', () => {
-  it('초대 수락 → 멤버가 되고 동기화로 여행을 받는다, 소유자만 초대', async () => {
+  it('초대 수락 → 참여 요청 → 소유자가 허용해야 멤버, 그때 동기화로 여행을 받는다', async () => {
     expect(
       (await call('B', 'POST', `/api/trips/${TRIP}/invites`, { role: 'editor' })).statusCode,
     ).toBe(404);
@@ -140,8 +140,32 @@ describe('초대·멤버', () => {
       await call('A', 'POST', `/api/trips/${TRIP}/invites`, { role: 'editor' })
     ).json();
     const accept = await call('B', 'POST', `/api/invites/${token}/accept`);
-    expect(accept.json()).toEqual({ tripId: TRIP, role: 'editor' });
-    const pulled = (await call('B', 'GET', '/api/sync/pull?since=0')).json();
+    expect(accept.json()).toEqual({ tripId: TRIP, status: 'pending', role: 'editor' });
+    // 아직 멤버 아님: 여행을 받지 못하고, 멤버 목록도 못 본다
+    const early = (await call('B', 'GET', '/api/sync/pull?since=0')).json();
+    expect(early.changes).toEqual([]);
+    const before = (
+      db.prepare("SELECT value FROM counters WHERE name = 'rev'").get() as { value: number }
+    ).value;
+    expect((await call('B', 'GET', `/api/trips/${TRIP}/members`)).statusCode).toBe(404);
+    expect((await call('B', 'GET', `/api/trips/${TRIP}/my-request`)).json()).toEqual({
+      pending: true,
+      member: false,
+    });
+    // 소유자만 요청을 보고 허용한다
+    const owner = (await call('A', 'GET', `/api/trips/${TRIP}/members`)).json();
+    expect(
+      owner.requests.map((r: { nickname: string; role: string }) => [r.nickname, r.role]),
+    ).toEqual([['B', 'editor']]);
+    expect((await call('B', 'POST', `/api/trips/${TRIP}/requests/u-B/approve`)).statusCode).toBe(
+      404,
+    );
+    expect((await call('A', 'POST', `/api/trips/${TRIP}/requests/u-B/approve`)).json()).toEqual({
+      ok: true,
+      role: 'editor',
+    });
+    // 요청 전에 이미 동기화한 기기도(받은 rev가 높아도) 허용되면 여행을 받는다
+    const pulled = (await call('B', 'GET', `/api/sync/pull?since=${before}`)).json();
     // 내 역할도 함께 (앱이 보기 전용 여행의 수정을 막는 데 씀)
     expect(pulled.roles).toEqual({ [TRIP]: 'editor' });
     expect(pulled.memberCounts).toEqual({ [TRIP]: 2 });
@@ -172,6 +196,9 @@ describe('초대·멤버', () => {
     ).json();
     await call('B', 'POST', `/api/invites/${token}/accept`);
     await call('C', 'POST', `/api/invites/${token}/accept`);
+    await call('A', 'POST', `/api/trips/${TRIP}/requests/u-B/approve`);
+    // 소유자가 권한을 바꿔서 허용할 수도 있다
+    await call('A', 'POST', `/api/trips/${TRIP}/requests/u-C/approve`, { role: 'viewer' });
     expect(
       (await call('B', 'PATCH', `/api/trips/${TRIP}/members/u-C`, { role: 'editor' })).statusCode,
     ).toBe(404);
@@ -183,5 +210,18 @@ describe('초대·멤버', () => {
     expect((await call('A', 'DELETE', `/api/trips/${TRIP}/members/u-A`)).statusCode).toBe(404);
     expect((await call('A', 'DELETE', `/api/trips/${TRIP}/members/u-B`)).statusCode).toBe(200);
     expect((await call('B', 'GET', '/api/sync/pull?since=0')).json().changes).toEqual([]);
+  });
+
+  it('소유자가 요청을 거절하면 멤버가 되지 않는다', async () => {
+    const { token } = (
+      await call('A', 'POST', `/api/trips/${TRIP}/invites`, { role: 'editor' })
+    ).json();
+    await call('B', 'POST', `/api/invites/${token}/accept`);
+    expect((await call('C', 'DELETE', `/api/trips/${TRIP}/requests/u-B`)).statusCode).toBe(404);
+    expect((await call('A', 'DELETE', `/api/trips/${TRIP}/requests/u-B`)).statusCode).toBe(200);
+    expect((await call('B', 'GET', `/api/trips/${TRIP}/my-request`)).json()).toEqual({
+      pending: false,
+      member: false,
+    });
   });
 });

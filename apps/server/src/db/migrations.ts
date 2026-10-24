@@ -178,4 +178,14 @@ export const MIGRATIONS: readonly string[] = [
   `
   ALTER TABLE users ADD COLUMN nickname_set INTEGER NOT NULL DEFAULT 0;
   `,
+  // 12: 초대 링크로 들어오면 바로 멤버가 아니라 '참여 요청' → 여행 소유자가 허용해야 멤버 (routes/share.ts)
+  `
+  CREATE TABLE trip_join_requests (
+    trip_id TEXT NOT NULL,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    role TEXT NOT NULL CHECK (role IN ('editor', 'viewer')),
+    requested_at TEXT NOT NULL,
+    PRIMARY KEY (trip_id, user_id)
+  );
+  `,
 ];

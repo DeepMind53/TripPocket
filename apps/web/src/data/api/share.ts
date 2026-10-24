@@ -12,6 +12,13 @@ export interface Member {
   role: 'owner' | 'editor' | 'viewer';
   me: boolean;
 }
+/** 초대 링크로 들어와 소유자의 허용을 기다리는 사람 (소유자에게만 보임) */
+export interface JoinRequest {
+  userId: string;
+  nickname: string;
+  role: 'editor' | 'viewer';
+  requestedAt: string;
+}
 
 const json = (body: unknown) => ({ body: JSON.stringify(body) });
 const enc = encodeURIComponent;
@@ -30,12 +37,21 @@ export const shareApi = {
       method: 'POST',
       ...json({ role }),
     }),
+  /** 이미 그만한 권한이 있으면 role만, 아니면 status: 'pending' (소유자가 허용해야 멤버) */
   accept: (token: string) =>
-    api<{ tripId: string; role: string }>(`/api/invites/${enc(token)}/accept`, {
+    api<{ tripId: string; role: string; status?: 'pending' }>(`/api/invites/${enc(token)}/accept`, {
       method: 'POST',
       body: '{}',
     }),
-  members: (tripId: string) => api<{ members: Member[] }>(`/api/trips/${enc(tripId)}/members`),
+  members: (tripId: string) =>
+    api<{ members: Member[]; requests?: JoinRequest[] }>(`/api/trips/${enc(tripId)}/members`),
+  approve: (tripId: string, userId: string, role: 'editor' | 'viewer') =>
+    api<{ ok: true; role: string }>(`/api/trips/${enc(tripId)}/requests/${enc(userId)}/approve`, {
+      method: 'POST',
+      ...json({ role }),
+    }),
+  reject: (tripId: string, userId: string) =>
+    api(`/api/trips/${enc(tripId)}/requests/${enc(userId)}`, { method: 'DELETE' }),
   setRole: (tripId: string, userId: string, role: 'editor' | 'viewer') =>
     api(`/api/trips/${enc(tripId)}/members/${enc(userId)}`, { method: 'PATCH', ...json({ role }) }),
   remove: (tripId: string, userId: string) =>

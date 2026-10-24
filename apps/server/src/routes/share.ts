@@ -129,26 +129,20 @@ export function shareRoutes(app: FastifyInstance, db: Db): void {
         return reply.code(410).send({ error: 'invite_invalid' });
       const userId = req.user!.userId;
       const current = roleOf(userId, inv.trip_id);
-      if (!current)
-        db.prepare(
-          'INSERT INTO trip_members (trip_id, user_id, role, created_at) VALUES (?, ?, ?, ?)',
-        ).run(inv.trip_id, userId, inv.role, now());
-      else if (RANK[inv.role] > RANK[current])
-        db.prepare('UPDATE trip_members SET role = ? WHERE trip_id = ? AND user_id = ?').run(
-          inv.role,
-          inv.trip_id,
-          userId,
-        );
+      // 이미 그만한 권한이 있으면 그대로
+      if (current && RANK[current] >= RANK[inv.role]) return { tripId: inv.trip_id, role: current };
+      // 링크만으로는 권한이 생기지 않는다 — 소유자가 허용해야 (사용자 요청 2026-10-24, 링크 유출 대비)
+      db.prepare(
+        `INSERT INTO trip_join_requests (trip_id, user_id, role, requested_at) VALUES (?, ?, ?, ?)
+         ON CONFLICT (trip_id, user_id) DO UPDATE SET role = excluded.role, requested_at = excluded.requested_at`,
+      ).run(inv.trip_id, userId, inv.role, now());
       db.prepare('UPDATE invites SET used_count = used_count + 1 WHERE token_hash = ?').run(
         sha256(req.params.token),
       );
       db.prepare(
         'INSERT INTO audit_log (user_id, action, target, created_at) VALUES (?, ?, ?, ?)',
-      ).run(userId, 'invite_accept', inv.trip_id, now());
-      return {
-        tripId: inv.trip_id,
-        role: current && RANK[current] >= RANK[inv.role] ? current : inv.role,
-      };
+      ).run(userId, 'invite_request', inv.trip_id, now());
+      return { tripId: inv.trip_id, status: 'pending', role: inv.role };
     },
   );
 
@@ -161,6 +155,21 @@ export function shareRoutes(app: FastifyInstance, db: Db): void {
          WHERE m.trip_id = ? ORDER BY CASE m.role WHEN 'owner' THEN 0 WHEN 'editor' THEN 1 ELSE 2 END, m.created_at`,
       )
       .all(req.params.id) as { user_id: string; role: Role; nickname: string }[];
+    // 참여 요청은 소유자에게만 보인다
+    const requests =
+      roleOf(req.user!.userId, req.params.id) === 'owner'
+        ? (db
+            .prepare(
+              `SELECT r.user_id, r.role, r.requested_at, u.nickname FROM trip_join_requests r
+               JOIN users u ON u.id = r.user_id WHERE r.trip_id = ? ORDER BY r.requested_at`,
+            )
+            .all(req.params.id) as {
+            user_id: string;
+            role: Role;
+            requested_at: string;
+            nickname: string;
+          }[])
+        : [];
     return {
       members: rows.map((r) => ({
         userId: r.user_id,
@@ -168,7 +177,82 @@ export function shareRoutes(app: FastifyInstance, db: Db): void {
         role: r.role,
         me: r.user_id === req.user!.userId,
       })),
+      requests: requests.map((r) => ({
+        userId: r.user_id,
+        nickname: r.nickname,
+        role: r.role,
+        requestedAt: r.requested_at,
+      })),
     };
+  });
+
+  // 참여 요청 허용 (소유자만): 요청한 권한으로, 바꿔서 허용할 수도 있다
+  app.post<{ Params: { id: string; userId: string }; Body: { role?: unknown } }>(
+    '/api/trips/:id/requests/:userId/approve',
+    auth,
+    async (req, reply) => {
+      if (roleOf(req.user!.userId, req.params.id) !== 'owner') return notFound(reply);
+      const r = db
+        .prepare('SELECT role FROM trip_join_requests WHERE trip_id = ? AND user_id = ?')
+        .get(req.params.id, req.params.userId) as { role: Role } | undefined;
+      if (!r) return notFound(reply);
+      const role =
+        req.body?.role === 'editor' || req.body?.role === 'viewer' ? req.body.role : r.role;
+      db.exec('BEGIN');
+      try {
+        db.prepare(
+          `INSERT INTO trip_members (trip_id, user_id, role, created_at) VALUES (?, ?, ?, ?)
+           ON CONFLICT (trip_id, user_id) DO UPDATE SET role = excluded.role`,
+        ).run(req.params.id, req.params.userId, role, now());
+        db.prepare('DELETE FROM trip_join_requests WHERE trip_id = ? AND user_id = ?').run(
+          req.params.id,
+          req.params.userId,
+        );
+        // 새 멤버의 기기는 이미 지난 rev까지 받았을 수 있다 → 이 여행의 행들에 새 rev를 매겨 다음 동기화에 내려가게
+        // (rev마다 하나씩 — 같은 rev가 여러 행이면 pull 페이지 경계에서 빠질 수 있음)
+        const ids = db
+          .prepare('SELECT table_name, id FROM records WHERE trip_id = ?')
+          .all(req.params.id) as { table_name: string; id: string }[];
+        const bump = db.prepare("UPDATE counters SET value = value + 1 WHERE name = 'rev'");
+        const setRev = db.prepare(
+          "UPDATE records SET rev = (SELECT value FROM counters WHERE name = 'rev') WHERE table_name = ? AND id = ?",
+        );
+        for (const r of ids) {
+          bump.run();
+          setRev.run(r.table_name, r.id);
+        }
+        db.prepare(
+          'INSERT INTO audit_log (user_id, action, target, created_at) VALUES (?, ?, ?, ?)',
+        ).run(req.user!.userId, 'invite_approve', `${req.params.id}:${req.params.userId}`, now());
+        db.exec('COMMIT');
+      } catch (e) {
+        db.exec('ROLLBACK');
+        throw e;
+      }
+      return { ok: true, role };
+    },
+  );
+
+  // 참여 요청 거절 (소유자만)
+  app.delete<{ Params: { id: string; userId: string } }>(
+    '/api/trips/:id/requests/:userId',
+    auth,
+    async (req, reply) => {
+      if (roleOf(req.user!.userId, req.params.id) !== 'owner') return notFound(reply);
+      const res = db
+        .prepare('DELETE FROM trip_join_requests WHERE trip_id = ? AND user_id = ?')
+        .run(req.params.id, req.params.userId);
+      if (res.changes === 0) return notFound(reply);
+      return { ok: true };
+    },
+  );
+
+  // 내 참여 요청이 기다리는 중인가 (초대 화면에서)
+  app.get<{ Params: { id: string } }>('/api/trips/:id/my-request', auth, async (req) => {
+    const r = db
+      .prepare('SELECT role FROM trip_join_requests WHERE trip_id = ? AND user_id = ?')
+      .get(req.params.id, req.user!.userId) as { role: Role } | undefined;
+    return { pending: !!r, member: !!roleOf(req.user!.userId, req.params.id) };
   });
 
   app.patch<{ Params: { id: string; userId: string } }>(

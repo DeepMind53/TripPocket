@@ -668,7 +668,14 @@
       "blocked": "보기만 가능한 여행이라 고칠 수 없어요"
     },
     "offline": "서버에 연결할 수 없어 링크는 지금 못 만들어요.\n텍스트·이미지 공유는 돼요.",
-    "membersCount": "함께 쓰는 사람 {{n}}명 — 멤버 보기"
+    "membersCount": "함께 쓰는 사람 {{n}}명 — 멤버 보기",
+    "requestSent": "참여를 요청했어요",
+    "requestSentDesc": "여행 주인이 허용하면 이 여행을 볼 수 있어요.\n허용되면 앱을 다시 열어 주세요.",
+    "requests": "참여 요청",
+    "requestsTitle": "참여 요청 {{n}}명 — 허용해야 볼 수 있어요",
+    "approve": "허용",
+    "reject": "거절",
+    "approved": "{{name}} 님을 허용했어요"
   },
   "legal": {
     "privacy": "개인정보처리방침",

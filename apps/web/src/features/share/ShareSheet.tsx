@@ -1,7 +1,14 @@
 import type { Trip } from '@trippocket/shared';
 import { Copy, FileDown, Image, Link2, Link2Off, UserPlus, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { inviteUrl, shareApi, shareUrl, type Member, type ShareLink } from '../../data/api/share';
+import {
+  inviteUrl,
+  shareApi,
+  shareUrl,
+  type JoinRequest,
+  type Member,
+  type ShareLink,
+} from '../../data/api/share';
 import { useAuth } from '../../data/authStore';
 import { bookingRepo } from '../../data/repositories/bookingRepo';
 import { itemRepo } from '../../data/repositories/itemRepo';
@@ -32,6 +39,7 @@ export function ShareSheet({
   const [link, setLink] = useState<ShareLink | null>(null);
   const [sensitive, setSensitive] = useState(false);
   const [members, setMembers] = useState<Member[] | null>(null);
+  const [requests, setRequests] = useState<JoinRequest[]>([]);
   const [inviteRole, setInviteRole] = useState<'editor' | 'viewer'>('editor');
   const [busy, setBusy] = useState(false);
   const myRole = members?.find((m) => m.me)?.role;
@@ -39,7 +47,10 @@ export function ShareSheet({
   useEffect(() => {
     if (!open || !loggedIn) return;
     void shareApi.get(trip.id).then((r) => setLink(r.ok ? r.data.share : null));
-    void shareApi.members(trip.id).then((r) => setMembers(r.ok ? r.data.members : null));
+    void shareApi.members(trip.id).then((r) => {
+      setMembers(r.ok ? r.data.members : null);
+      setRequests(r.ok ? (r.data.requests ?? []) : []);
+    });
   }, [open, loggedIn, trip.id]);
 
   // 누른 순간 기기 DB에서 읽는다 (화면이 아직 불러오는 중이어도 빈 일정이 복사되지 않게)
@@ -192,6 +203,57 @@ export function ShareSheet({
           </section>
         )}
 
+        {/* 초대 링크로 들어온 사람 — 소유자가 허용해야 멤버 (사용자 요청 2026-10-24) */}
+        {myRole === 'owner' && requests.length > 0 && (
+          <section
+            aria-label={t('share.requests')}
+            className="flex flex-col gap-2 rounded-card bg-primary-weak/50 p-3"
+          >
+            <h3 className="text-body-2 font-bold">
+              {t('share.requestsTitle', { n: requests.length })}
+            </h3>
+            <ul className="flex flex-col gap-2">
+              {requests.map((r) => (
+                <li key={r.userId} className="flex flex-wrap items-center gap-2">
+                  <span className="min-w-0 flex-1 text-body-2 font-medium">
+                    {r.nickname}
+                    <span className="ml-1 text-caption text-fg-muted">
+                      · {t(`share.role.${r.role}`)}
+                    </span>
+                  </span>
+                  <Button
+                    size="sm"
+                    onClick={() =>
+                      void shareApi.approve(trip.id, r.userId, r.role).then((res) => {
+                        if (!res.ok) return;
+                        setRequests((list) => list.filter((x) => x.userId !== r.userId));
+                        setMembers((list) => [
+                          ...(list ?? []),
+                          { userId: r.userId, nickname: r.nickname, role: r.role, me: false },
+                        ]);
+                        toast(t('share.approved', { name: r.nickname }));
+                      })
+                    }
+                  >
+                    {t('share.approve')}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() =>
+                      void shareApi.reject(trip.id, r.userId).then((res) => {
+                        if (res.ok)
+                          setRequests((list) => list.filter((x) => x.userId !== r.userId));
+                      })
+                    }
+                  >
+                    {t('share.reject')}
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
         {loggedIn && members && members.length > 0 && (
           <section className="flex flex-col gap-2">
             <h3 className="flex items-center gap-2 text-body-2 font-bold text-fg-sub">

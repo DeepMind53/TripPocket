@@ -121,3 +121,48 @@ describe('공유', () => {
     expect(screen.getByText('오사카성')).toBeInTheDocument();
   });
 });
+
+describe('초대 승인제', () => {
+  const asUser = () =>
+    useAuth.setState({
+      status: 'user',
+      me: { id: 'u1', nickname: '나', createdAt: '', providers: [] },
+    });
+
+  it('초대 링크를 열면 바로 들어가지 않고 "참여를 요청했어요"', async () => {
+    asUser();
+    vi.stubGlobal('fetch', async (url: string) =>
+      url.includes('/accept')
+        ? Response.json({ tripId: 't1', status: 'pending', role: 'editor' })
+        : Response.json({}, { status: 404 }),
+    );
+    renderAt('/invite/TOKEN');
+    expect(await screen.findByRole('heading', { name: '참여를 요청했어요' })).toBeInTheDocument();
+  });
+
+  it('소유자는 공유 시트에서 요청을 보고 허용한다 → 멤버 목록에 추가', async () => {
+    asUser();
+    const calls: string[] = [];
+    vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
+      calls.push(`${init?.method ?? 'GET'} ${url} ${String(init?.body ?? '')}`);
+      if (url.endsWith('/share')) return Response.json({ share: null });
+      if (url.endsWith('/members'))
+        return Response.json({
+          members: [{ userId: 'u1', nickname: '나', role: 'owner', me: true }],
+          requests: [{ userId: 'u2', nickname: '친구', role: 'editor', requestedAt: '' }],
+        });
+      if (url.includes('/requests/u2/approve')) return Response.json({ ok: true, role: 'editor' });
+      return Response.json({}, { status: 404 });
+    });
+    const { user, sheet } = await openShare();
+    const box = await within(sheet).findByRole('region', { name: '참여 요청' });
+    expect(box).toHaveTextContent('친구');
+    await user.click(within(box).getByRole('button', { name: '허용' }));
+    expect(await screen.findByText('친구 님을 허용했어요')).toBeInTheDocument();
+    expect(calls.some((c) => c.startsWith('POST') && c.includes('/requests/u2/approve'))).toBe(
+      true,
+    );
+    expect(within(sheet).queryByRole('region', { name: '참여 요청' })).not.toBeInTheDocument();
+    expect(within(sheet).getByText('친구')).toBeInTheDocument();
+  });
+});
