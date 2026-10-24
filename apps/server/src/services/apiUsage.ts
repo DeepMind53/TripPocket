@@ -12,6 +12,7 @@ export type ApiId =
   | 'google_maps_js'
   | 'naver_search'
   | 'gemini'
+  | 'mistral'
   | 'workers-ai'
   | 'groq'
   | 'kakao_local'
@@ -34,6 +35,7 @@ export const APIS: readonly ApiDef[] = [
   { id: 'naver_search', group: 'paid', freeMonthly: 775000 },
   // 무료 등급 — 한도에 닿으면 거절될 뿐 결제 수단이 없어 과금되지 않음
   { id: 'gemini', group: 'free' },
+  { id: 'mistral', group: 'free' },
   { id: 'workers-ai', group: 'free' },
   { id: 'groq', group: 'free' },
   { id: 'kakao_local', group: 'free' },

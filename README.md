@@ -7,7 +7,7 @@
 ## 상태
 
 - 운영 중: **https://trippocket.day** (Cloudflare Pages) + 홈 PC 서버 (Tailscale Funnel)
-- 23단계 구현 완료 후 운영 기능 추가: 관리자 가입 승인, API 사용량·자동 중지, 무료 AI 순서(Gemini → Workers AI → Groq → AI 없음), 실험실
+- 23단계 구현 완료 후 운영 기능 추가: 관리자 가입 승인, API 사용량·자동 중지, 무료 AI 순서(Gemini → Mistral → Workers AI → Groq → AI 없음), 실험실
 - 지금 상태·남은 일: [`PROGRESS.md`](PROGRESS.md) / **코드 구조: [`docs/code-map.md`](docs/code-map.md)**
 
 ## 핵심 컨셉

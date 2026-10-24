@@ -11,7 +11,7 @@
    │  /api/*, /auth/* 만 ─▶ functions/_proxy.ts (비밀 헤더 x-tp-proxy + 들어온 주소 x-tp-origin)
    ▼
 Tailscale Funnel https://jin-server.tail0844c0.ts.net ─▶ 홈 PC 127.0.0.1:8787 (Fastify + node:sqlite)
-   └─▶ 외부 API: Google Places · NAVER API HUB · 카카오 로컬 · 수출입은행 · Gemini → Workers AI → Groq
+   └─▶ 외부 API: Google Places · NAVER API HUB · 카카오 로컬 · 수출입은행 · Gemini → Mistral → Workers AI → Groq
 ```
 
 - 옛 주소 `trippocket.pages.dev`의 화면 이동은 `functions/_middleware.ts`가 새 주소로 301. 앱 파일·API·로그인은 그대로 통과
@@ -58,7 +58,7 @@ Tailscale Funnel https://jin-server.tail0844c0.ts.net ─▶ 홈 PC 127.0.0.1:87
 - **로그인**: `/auth/<제공자>/start` → 제공자 → `/auth/<제공자>/callback`. state는 서버 저장 + `__Host-oauth` 쿠키로 대조, 구글은 PKCE.
   콜백 주소는 사용자가 들어온 주소 기준(`requestOrigin`). 처음 보는 계정 → 첫 계정이면 관리자로 가입, 아니면 가입 요청(`join_requests`)
 - **동기화**: 기기에서 고친 행에 `dirty` → `syncEngine` push(행마다 멤버십 인가) → pull(서버 rev 이후). 충돌은 나중 도착 채택 + `conflicts` 보관
-- **AI 추천** (`routes/ai.ts`): 기준점 → 카테고리끼리 동시에 { 블로그 수집(NAVER API HUB) → AI 장소 추출(Gemini → Workers AI → Groq → 없으면 지도 검색 + 언급 수) →
+- **AI 추천** (`routes/ai.ts`): 기준점 → 카테고리끼리 동시에 { 블로그 수집(NAVER API HUB) → AI 장소 추출(Gemini → Mistral → Workers AI → Groq → 없으면 지도 검색 + 언급 수) →
   근거 id 검증·점수(shared `buildRecommendations`) → 카카오로 위치 확인, 기준점 5km 넘는 곳 제외 } → 6시간 캐시
 - **API 사용량**: `api_usage`(날짜별 호출 수) + `api_controls`(수동 중지·자동 상한). 과금 가능 API는 무료 월 사용량의 90%에서 자동 중지
 

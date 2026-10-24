@@ -34,7 +34,7 @@ export const PRIVACY: Section[] = [
       '날씨: 여행지 도시의 좌표 (Open-Meteo) — 내 현재 위치가 아닙니다',
       '환율: 요청만 보냄, 개인정보 없음 (한국수출입은행은 서버가 받음, 보조로 currency-api)',
       'AI 추천 수집: 기준점 이름(예: "신주쿠역")을 네이버 검색 API로. 현재 위치를 쓰면 약 100m 단위로 줄인 좌표를 가까운 역 찾기(카카오 로컬·OpenStreetMap)에만 쓰고 바로 버립니다',
-      'AI 추천 정리: 기준점 이름과 블로그 공개 글의 제목·요약 앞부분만 무료 AI(Google Gemini → Cloudflare Workers AI → Groq 순서)로 보냅니다. 내 이름·계정·위치·일정은 보내지 않습니다. Gemini 무료 등급은 받은 내용을 Google 서비스 개선에 쓸 수 있습니다',
+      'AI 추천 정리: 기준점 이름과 블로그 공개 글의 제목·요약 앞부분만 무료 AI(Google Gemini → Mistral → Cloudflare Workers AI → Groq 순서)로 보냅니다. 내 이름·계정·위치·일정은 보내지 않습니다. Gemini·Mistral 무료 등급은 받은 내용을 서비스 개선·모델 학습에 쓸 수 있습니다',
       '길찾기·지도: 누르면 네이버 지도·Google 지도·카카오맵이 직접 열립니다 (트립포켓이 위치를 보내지 않음)',
     ],
   },
@@ -147,7 +147,7 @@ export const DATA_SOURCES: { name: string; use: string; license: string; url: st
     url: 'https://www.ncloud.com',
   },
   {
-    name: 'Google Gemini API · Cloudflare Workers AI · Groq',
+    name: 'Google Gemini API · Mistral AI · Cloudflare Workers AI · Groq',
     use: 'AI 추천 정리 (무료 등급, 이 순서로 시도)',
     license: '각 서비스 이용약관',
     url: 'https://ai.google.dev',

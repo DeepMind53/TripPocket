@@ -772,8 +772,9 @@
       "google_maps_js": "Google 지도 (지도 로드)",
       "naver_search": "네이버 검색 (NAVER API HUB)",
       "gemini": "Google Gemini (AI 추천 1순위)",
-      "workers-ai": "Cloudflare Workers AI (AI 추천 2순위)",
-      "groq": "Groq (AI 추천 3순위)",
+      "mistral": "Mistral (AI 추천 2순위)",
+      "workers-ai": "Cloudflare Workers AI (AI 추천 3순위)",
+      "groq": "Groq (AI 추천 4순위)",
       "kakao_local": "카카오 로컬 (장소·역 찾기)",
       "exim": "한국수출입은행 환율"
     },
