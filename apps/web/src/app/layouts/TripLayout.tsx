@@ -16,6 +16,7 @@ import { Link, Outlet, useNavigate, useParams } from 'react-router';
 import { useTrip } from '../../data/hooks';
 import { useCanEdit, useMemberCount } from '../../data/tripRoles';
 import { QuickMenuButton } from '../../features/common/QuickMenu';
+import { SyncStatusIcon } from '../../features/common/SyncStatusIcon';
 import { deleteTripWithUndo } from '../../features/trips/tripActions';
 import { useRouteSheet } from '../../shared/hooks/useRouteSheet';
 import { useBottomInset } from '../../shared/hooks/useBottomInset';
@@ -86,6 +87,7 @@ export function TripLayout() {
         backTo="/"
         actions={
           <>
+            <SyncStatusIcon />
             {/* 함께 쓰는 여행이면 멤버 수 — 누르면 공유·멤버 시트 (사용자 요청 2026-10-24) */}
             {members > 1 && (
               <button

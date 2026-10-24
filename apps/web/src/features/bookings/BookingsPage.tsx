@@ -6,7 +6,7 @@ import { useParams } from 'react-router';
 import { useCanEdit } from '../../data/tripRoles';
 import { useTrip, useTripBookings } from '../../data/hooks';
 import { useRouteSheet } from '../../shared/hooks/useRouteSheet';
-import { Button, EmptyState } from '../../shared/ui';
+import { Button, EmptyState, Skeleton } from '../../shared/ui';
 import { BookingCard } from './BookingCard';
 import { BookingFormSheet } from './BookingFormSheet';
 
@@ -30,7 +30,7 @@ export function BookingsPage() {
   const [formOpen, setFormOpen] = useRouteSheet('booking-form');
   const [editingId, setEditingId] = useState<string | null>(null);
 
-  if (!trip || !bookings) return null;
+  if (!trip || !bookings) return <Skeleton rows={2} />;
   const editing = bookings.find((b) => b.id === editingId);
 
   const openForm = (b?: Booking) => {

@@ -90,3 +90,17 @@ describe('편명으로 항공편 불러오기 (AviationStack 무료)', () => {
     expect((await get('hello')).statusCode).toBe(400);
   });
 });
+
+it('API 사용량: 하루 제한 없이 무료 월 100회 — 이번 달 90회에서 자동 중지 → 503 api_paused', async () => {
+  // 하루에 9회 써도 막히지 않는다
+  db.prepare("INSERT INTO api_usage (api, date, count) VALUES ('aviationstack', ?, 9)").run(
+    new Date().toISOString().slice(0, 10),
+  );
+  expect((await get('KE703')).statusCode).toBe(200);
+  // 이번 달 합계 90회면 멈춤
+  db.prepare("UPDATE api_usage SET count = 90 WHERE api = 'aviationstack'").run();
+  const res = await get('OZ101');
+  expect(res.statusCode).toBe(503);
+  expect(res.json()).toEqual({ error: 'api_paused', api: 'aviationstack' });
+  expect(urls).toHaveLength(2); // 앞의 KE703 조회만
+});

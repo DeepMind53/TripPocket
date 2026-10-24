@@ -16,3 +16,4 @@ export { Toaster } from './Toaster';
 export { snackbar, toast } from './toastStore';
 export { TopBar } from './TopBar';
 export { TimeInput } from './TimeInput';
+export { Skeleton } from './Skeleton';

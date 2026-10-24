@@ -97,6 +97,7 @@ export const APIS: readonly ApiDef[] = [
   // 한국수출입은행 환율: 하루 1,000회
   { id: 'exim', group: 'free', freeDaily: 1000, tz: 'Asia/Seoul' },
   // AviationStack 무료: 월 100회(넘으면 거절, 결제 수단 없음) — 편명으로 항공편 불러오기
+  // 하루 제한 없이 월 100회만 (사용자 결정 2026-10-25) — 90회에서 자동 중지
   { id: 'aviationstack', group: 'free', freeMonthly: 100, tz: 'UTC' },
   // OpenStreetMap Overpass: 공용 서버 정책 "하루 1만 회 미만, 꾸준히 쓰면 그 1/100" → 100
   { id: 'overpass', group: 'free', freeDaily: 100, tz: 'UTC' },

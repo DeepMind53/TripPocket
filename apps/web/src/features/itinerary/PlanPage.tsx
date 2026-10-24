@@ -39,7 +39,7 @@ import { useRouteSheet } from '../../shared/hooks/useRouteSheet';
 import { cn } from '../../shared/lib/cn';
 import { formatMonthDay } from '../../shared/lib/dateFormat';
 import { sortByTimeKeepingUntimed } from '../../domain/schedule';
-import { BottomSheet, Button, Chip, IconButton, snackbar, toast } from '../../shared/ui';
+import { BottomSheet, Button, Chip, IconButton, snackbar, toast, Skeleton } from '../../shared/ui';
 import { DirectionsSheet } from '../common/DirectionsSheet';
 import { openDirectionsDirect } from '../common/openDirections';
 import { ItemDetailSheet } from './ItemDetailSheet';
@@ -68,7 +68,7 @@ export function PlanPage() {
   const trip = useTrip(tripId);
   const items = useTripItems(tripId);
   const bookings = useTripBookings(tripId);
-  if (!trip || !items || !bookings) return null;
+  if (!trip || !items || !bookings) return <Skeleton />;
   return <PlanView trip={trip} items={items} bookings={bookings} />;
 }
 

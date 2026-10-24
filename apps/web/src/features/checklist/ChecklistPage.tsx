@@ -7,7 +7,15 @@ import type { ListKind } from '../../data/repositories/checklistRepo';
 import { useTranslation } from '../../i18n';
 import { useBottomInset } from '../../shared/hooks/useBottomInset';
 import { useRouteSheet } from '../../shared/hooks/useRouteSheet';
-import { BottomSheet, Button, Chip, IconButton, SegmentedControl, toast } from '../../shared/ui';
+import {
+  BottomSheet,
+  Button,
+  Chip,
+  IconButton,
+  SegmentedControl,
+  toast,
+  Skeleton,
+} from '../../shared/ui';
 import { ChecklistBoard } from './ChecklistBoard';
 import { TemplateSheet } from './TemplateSheet';
 import { useChecklistDraft, type Draft } from './useChecklistDraft';
@@ -35,7 +43,7 @@ export function ChecklistPage() {
     if (dirty) e.preventDefault();
   });
 
-  if (!draft) return null;
+  if (!draft) return <Skeleton rows={2} />;
   const items = draft[list];
   const done = items.filter((i) => i.checked).length;
   const total = items.length;
