@@ -336,3 +336,25 @@ describe('픽업·드랍 예약 (사용자 요청 2026-10-25)', () => {
     });
   });
 });
+
+it('숙소: 달력에서 체크인 → 체크아웃 순서로 눌러 한 번에, 여행 기간은 따로 표시', async () => {
+  const user = userEvent.setup();
+  renderAt([`/trips/${tripId}/bookings`]);
+  await user.click(await screen.findByRole('button', { name: '예약 추가' }));
+  const sheet = screen.getByRole('dialog', { name: '예약 추가' });
+  await user.click(within(sheet).getByRole('button', { name: '숙소' }));
+  await user.click(within(sheet).getByRole('button', { name: /달력에서 고르기/ }));
+  const cal = await screen.findByRole('dialog', { name: '체크인 · 체크아웃' });
+  expect(within(cal).getByText('여행', { selector: '*' })).toBeInTheDocument();
+  await user.click(within(cal).getByRole('button', { name: /^10\.25 \(일\)/ }));
+  expect(within(cal).getByRole('button', { name: '체크아웃 날을 눌러 주세요' })).toBeDisabled();
+  await user.click(within(cal).getByRole('button', { name: /^10\.27 \(화\)/ }));
+  await user.click(
+    within(cal).getByRole('button', { name: /10\.25 \(일\) → 10\.27 \(화\) · 2박으로 하기/ }),
+  );
+  await waitFor(() =>
+    expect(screen.queryByRole('dialog', { name: '체크인 · 체크아웃' })).not.toBeInTheDocument(),
+  );
+  expect(within(sheet).getByLabelText('체크인')).toHaveValue('2026-10-25');
+  expect(within(sheet).getByLabelText('체크아웃')).toHaveValue('2026-10-27');
+});

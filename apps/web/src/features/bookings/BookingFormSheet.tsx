@@ -5,8 +5,10 @@ import { flightsApi } from '../../data/api/flights';
 import { AirportField } from './AirportField';
 import { isDomesticTrip } from '../../domain/tripPlace';
 import { PlaceAutocomplete } from '../common/PlaceAutocomplete';
-import { addDays, diffDays, type Booking, type Trip } from '@trippocket/shared';
-import { Trash2 } from 'lucide-react';
+import { addDays, diffDays, nightsBetween, type Booking, type Trip } from '@trippocket/shared';
+import { CalendarRange, Trash2 } from 'lucide-react';
+import { StayRangeSheet } from './StayRangeSheet';
+import { formatMonthDay } from '../../shared/lib/dateFormat';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from '../../i18n';
 import { bookingRepo, type NewBooking } from '../../data/repositories/bookingRepo';
@@ -96,6 +98,7 @@ function BookingForm({
     memo: b?.memo ?? '',
   });
   const [saving, setSaving] = useState(false);
+  const [stayOpen, setStayOpen] = useState(false);
   // 편명으로 불러오기 (AviationStack 무료 — 최근 운항 기준이라 날짜는 그대로, 시간·공항·터미널만 채움)
   const [looking, setLooking] = useState(false);
   const [lookedUp, setLookedUp] = useState(false);
@@ -444,6 +447,32 @@ function BookingForm({
           )}
           {kind === 'lodging' ? (
             <>
+              {/* 달력 하나로 체크인~체크아웃 (사용자 요청 2026-10-25) — 아래 날짜 칸으로 직접 고쳐도 됨 */}
+              <button
+                type="button"
+                onClick={() => setStayOpen(true)}
+                className="tabular flex items-center justify-between gap-2 rounded-card border border-dashed border-primary/60 px-3 py-2.5 text-left"
+              >
+                <span className="flex flex-col">
+                  <span className="text-caption text-fg-muted">{t('stay.button')}</span>
+                  <span className="text-body-2 font-semibold">
+                    {formatMonthDay(f.startDate)} → {formatMonthDay(endDate)}
+                    {diffDays(f.startDate, endDate) > 0 &&
+                      ` · ${t('bookings.nights', { n: nightsBetween(f.startDate, endDate) })}`}
+                  </span>
+                </span>
+                <CalendarRange aria-hidden="true" className="size-5 text-primary" />
+              </button>
+              <StayRangeSheet
+                open={stayOpen}
+                onOpenChange={setStayOpen}
+                trip={trip}
+                checkIn={f.startDate}
+                checkOut={endDate}
+                onPick={(inDate, outDate) =>
+                  setF((cur) => ({ ...cur, startDate: inDate, endDate: outDate }))
+                }
+              />
               <DateTimeRow
                 dateLabel={t('bookings.checkIn')}
                 timeLabel={t('bookings.checkInTime')}
