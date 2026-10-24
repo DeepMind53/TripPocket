@@ -1,6 +1,8 @@
 import { useSettings } from '../../data/settingsStore';
 import { flightsApi } from '../../data/api/flights';
 import { AirportField } from './AirportField';
+import { isDomesticTrip } from '../../domain/tripPlace';
+import { PlaceAutocomplete } from '../common/PlaceAutocomplete';
 import { addDays, diffDays, type Booking, type Trip } from '@trippocket/shared';
 import { Trash2 } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
@@ -397,6 +399,22 @@ function BookingForm({
               className={inputClass}
             />
           </Field>
+          {/* 숙소·음식점: 이름을 치면 추천 3개 + 더보기, 고르면 주소·전화 채움 (사용자 요청 2026-10-25) */}
+          {(kind === 'lodging' || kind === 'restaurant') && (
+            <PlaceAutocomplete
+              query={f.title}
+              domestic={isDomesticTrip(trip)}
+              near={trip.destinations.find((d) => d.coords)?.coords}
+              onPick={(p) =>
+                setF((cur) => ({
+                  ...cur,
+                  title: p.name,
+                  address: p.address || cur.address,
+                  phone: p.phone || cur.phone,
+                }))
+              }
+            />
+          )}
           {kind === 'lodging' ? (
             <>
               <DateTimeRow

@@ -14,6 +14,8 @@ export interface PlaceSummary {
   category?: string | undefined;
   /** 제공자 지도에서 보기 */
   url?: string | undefined;
+  /** 전화 (카카오·네이버 검색 결과에 있을 때만 — Google은 상세 요금 등급이 올라가 받지 않음) */
+  phone?: string | undefined;
 }
 
 export interface PlaceDetails {

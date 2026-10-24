@@ -39,6 +39,7 @@ export async function searchKakao(
     coords: d.y && d.x ? { lat: Number(d.y), lng: Number(d.x) } : null,
     category: d.category_name?.split(' > ').at(-1),
     url: d.place_url,
+    ...(d.phone ? { phone: d.phone } : {}),
   }));
 }
 
@@ -69,6 +70,7 @@ export async function searchNaver(q: string, keys: NaverKeys): Promise<PlaceSumm
       coords: Number.isFinite(lat) && lat !== 0 ? { lat, lng } : null,
       category: it.category?.split('>').at(-1),
       url: `https://map.naver.com/p/search/${encodeURIComponent(name)}`,
+      ...(it.telephone ? { phone: it.telephone } : {}),
     };
   });
 }
