@@ -58,6 +58,7 @@ export {
   TRIP_SCOPED,
   USER_SCOPED,
   type PullResult,
+  type TripRole,
   type PushChange,
   type PushResult,
   type SyncRecord,

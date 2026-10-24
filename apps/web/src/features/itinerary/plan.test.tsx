@@ -6,6 +6,7 @@ import { resetLocalDb } from '../../data/dev';
 import { itemRepo } from '../../data/repositories/itemRepo';
 import { tripRepo } from '../../data/repositories/tripRepo';
 import { Toaster } from '../../shared/ui';
+import { ReadOnlyTripError, setTripRoles } from '../../data/tripRoles';
 
 let tripId = '';
 
@@ -26,6 +27,7 @@ beforeEach(async () => {
 
 afterEach(() => {
   vi.useRealTimers();
+  setTripRoles({});
 });
 
 async function renderPlan(search = '') {
@@ -232,5 +234,35 @@ describe('일정 화면', () => {
       await router.navigate(-1);
     });
     expect(screen.queryByRole('button', { name: '센소지 옮기기' })).not.toBeInTheDocument();
+  });
+});
+
+describe('보기 전용으로 공유받은 여행', () => {
+  it('추가·편집 버튼이 없고 안내가 보이며, 상세에서도 편집·삭제가 없다', async () => {
+    await itemRepo.create({ tripId, date: '2026-10-24', kind: 'place', title: '센소지' });
+    setTripRoles({ [tripId]: 'viewer' });
+    const user = userEvent.setup();
+    await renderPlan();
+    expect(screen.getByText(/보기만 가능한 여행이에요/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '일정 추가' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '편집' })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /센소지/ }));
+    const sheet = await screen.findByRole('dialog', { name: '센소지' });
+    expect(within(sheet).queryByRole('button', { name: '편집' })).not.toBeInTheDocument();
+    expect(within(sheet).queryByRole('button', { name: '삭제' })).not.toBeInTheDocument();
+  });
+
+  it('놓친 버튼이 있어도 저장소가 막는다 (동기화로 받는 것은 그대로)', async () => {
+    setTripRoles({ [tripId]: 'viewer' });
+    await expect(
+      itemRepo.create({ tripId, date: null, kind: 'place', title: '몰래 추가' }),
+    ).rejects.toBeInstanceOf(ReadOnlyTripError);
+    await expect(tripRepo.update(tripId, { title: '바꿈' })).rejects.toBeInstanceOf(
+      ReadOnlyTripError,
+    );
+    setTripRoles({ [tripId]: 'editor' });
+    await expect(
+      itemRepo.create({ tripId, date: null, kind: 'place', title: '수정 권한' }),
+    ).resolves.toMatchObject({ title: '수정 권한' });
   });
 });

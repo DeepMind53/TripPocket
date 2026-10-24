@@ -36,6 +36,8 @@ export interface ChecklistBoardProps {
   onRemoveGroup?: ((name: string) => void) | undefined;
   /** 드래그 결과 (카테고리가 바뀐 항목 포함) 전체 목록 */
   onReorder: (items: DraftItem[]) => void;
+  /** 보기 전용 여행: 체크·삭제·옮기기 없이 보기만 */
+  readOnly?: boolean;
 }
 
 /**
@@ -49,6 +51,7 @@ export function ChecklistBoard({
   onRemove,
   onRemoveGroup,
   onReorder,
+  readOnly = false,
 }: ChecklistBoardProps) {
   const { t } = useTranslation();
   const grouped = categories !== undefined;
@@ -131,6 +134,7 @@ export function ChecklistBoard({
                     item={i}
                     onToggle={() => onToggle(i.key)}
                     onRemove={() => onRemove(i.key)}
+                    readOnly={readOnly}
                   />
                 ))}
               </DropList>
@@ -194,10 +198,12 @@ function Row({
   item,
   onToggle,
   onRemove,
+  readOnly,
 }: {
   item: DraftItem;
   onToggle: () => void;
   onRemove: () => void;
+  readOnly: boolean;
 }) {
   const { t } = useTranslation();
   const {
@@ -218,21 +224,27 @@ function Row({
         isDragging && 'relative z-10 rounded-btn shadow-lg',
       )}
     >
-      <button
-        type="button"
-        ref={setActivatorNodeRef}
-        {...attributes}
-        {...listeners}
-        aria-label={t('checklist.dragHandle', { text: item.text })}
-        className="grid size-11 shrink-0 cursor-grab touch-none place-items-center text-fg-muted active:cursor-grabbing"
-      >
-        <GripVertical aria-hidden="true" className="size-4" />
-      </button>
+      {readOnly ? (
+        <span className="w-3 shrink-0" />
+      ) : (
+        <button
+          type="button"
+          ref={setActivatorNodeRef}
+          {...attributes}
+          {...listeners}
+          aria-label={t('checklist.dragHandle', { text: item.text })}
+          className="grid size-11 shrink-0 cursor-grab touch-none place-items-center text-fg-muted active:cursor-grabbing"
+        >
+          <GripVertical aria-hidden="true" className="size-4" />
+        </button>
+      )}
       <button
         type="button"
         role="checkbox"
         aria-checked={item.checked}
+        aria-disabled={readOnly || undefined}
         onClick={() => {
+          if (readOnly) return;
           haptic();
           onToggle();
         }}
@@ -256,14 +268,16 @@ function Row({
           {item.text}
         </span>
       </button>
-      <button
-        type="button"
-        aria-label={t('checklist.delete', { text: item.text })}
-        onClick={onRemove}
-        className="grid size-11 shrink-0 place-items-center text-fg-muted"
-      >
-        <X aria-hidden="true" className="size-4" />
-      </button>
+      {!readOnly && (
+        <button
+          type="button"
+          aria-label={t('checklist.delete', { text: item.text })}
+          onClick={onRemove}
+          className="grid size-11 shrink-0 place-items-center text-fg-muted"
+        >
+          <X aria-hidden="true" className="size-4" />
+        </button>
+      )}
     </li>
   );
 }

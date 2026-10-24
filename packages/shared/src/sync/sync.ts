@@ -64,8 +64,12 @@ export interface PushResult {
   rejected: { table: SyncTable; id: string; reason: 'invalid' | 'forbidden' }[];
 }
 
+export type TripRole = 'owner' | 'editor' | 'viewer';
+
 export interface PullResult {
   changes: { table: SyncTable; record: SyncRecord & Record<string, unknown>; rev: number }[];
   nextRev: number;
   hasMore: boolean;
+  /** 내가 멤버인 여행마다 내 역할 (보기 전용이면 앱이 수정을 막는다). 예전 서버는 없음 */
+  roles?: Record<string, TripRole>;
 }

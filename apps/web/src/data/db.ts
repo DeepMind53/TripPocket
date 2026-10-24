@@ -1,3 +1,4 @@
+import { assertEditable } from './tripRoles';
 import Dexie, { type EntityTable } from 'dexie';
 import { upgradeToV2 } from './migrations/v2';
 import type {
@@ -53,6 +54,30 @@ export class TripPocketDB extends Dexie {
 }
 
 export const db = new TripPocketDB();
+
+/**
+ * 보기 전용으로 공유받은 여행은 이 기기에서도 고치지 못한다 (data/tripRoles.ts).
+ * 기기에서 고친 행(dirty = 1)만 확인 — 동기화로 받은 행(dirty = 0)은 그대로 저장
+ */
+const tripScoped = {
+  trips: (key: unknown) => String(key),
+  items: (_: unknown, row?: { tripId?: string }) => row?.tripId,
+  bookings: (_: unknown, row?: { tripId?: string }) => row?.tripId,
+  checklistItems: (_: unknown, row?: { tripId?: string }) => row?.tripId,
+} as const;
+for (const [name, tripOf] of Object.entries(tripScoped)) {
+  const table = db.table(name);
+  table.hook('creating', (key, row: { id?: string; dirty?: number; tripId?: string }) => {
+    if (row.dirty === 1) assertEditable(tripOf(key ?? row.id, row));
+  });
+  table.hook(
+    'updating',
+    (mods: { dirty?: number }, key, row: { dirty?: number; tripId?: string }) => {
+      if ((mods.dirty ?? row.dirty) === 1) assertEditable(tripOf(key, row));
+      return undefined;
+    },
+  );
+}
 
 /** 저장 레코드에서 로컬 전용 필드를 떼어 도메인 객체로 */
 export function toDomain<T>(row: Stored<T>): T {

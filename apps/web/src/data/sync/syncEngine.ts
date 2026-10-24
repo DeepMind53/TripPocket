@@ -1,3 +1,4 @@
+import { setTripRoles } from '../tripRoles';
 import {
   SYNC_BATCH,
   SYNC_TABLES,
@@ -127,6 +128,7 @@ async function pull(): Promise<Step> {
   for (;;) {
     const res = await api<PullResult>(`/api/sync/pull?since=${since}&limit=${SYNC_BATCH}`);
     if (!res.ok) return fail(res.reason);
+    if (res.data.roles) setTripRoles(res.data.roles);
     await db.transaction('rw', [...SYNC_TABLES.map((t) => db[t]), db.syncState], async () => {
       for (const c of res.data.changes) {
         const local = await table(c.table).get(c.record.id);

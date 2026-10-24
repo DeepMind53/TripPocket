@@ -2,6 +2,7 @@ import type { ChecklistTemplate } from '@trippocket/shared';
 import { Check, ListPlus, Plus, X } from 'lucide-react';
 import { useState } from 'react';
 import { useBeforeUnload, useBlocker, useParams } from 'react-router';
+import { useCanEdit } from '../../data/tripRoles';
 import type { ListKind } from '../../data/repositories/checklistRepo';
 import { useTranslation } from '../../i18n';
 import { useBottomInset } from '../../shared/hooks/useBottomInset';
@@ -20,6 +21,8 @@ export function ChecklistPage() {
   const { tripId = '' } = useParams();
   const [list, setList] = useState<ListKind>('packing');
   const { draft, dirty, actions, save, cancel } = useChecklistDraft(tripId);
+  // 보기 전용으로 공유받은 여행: 보기만 (data/tripRoles.ts)
+  const canEdit = useCanEdit(tripId);
   const [templateOpen, setTemplateOpen] = useRouteSheet('checklist-template');
   const [saving, setSaving] = useState(false);
 
@@ -57,14 +60,16 @@ export function ChecklistPage() {
 
   return (
     <div className={`flex flex-col gap-4 px-5 pt-3 ${dirty ? 'pb-24' : ''}`}>
-      <Button
-        variant="secondary"
-        fullWidth
-        leading={<ListPlus aria-hidden="true" className="size-4" />}
-        onClick={() => setTemplateOpen(true)}
-      >
-        {t('checklist.template')}
-      </Button>
+      {canEdit && (
+        <Button
+          variant="secondary"
+          fullWidth
+          leading={<ListPlus aria-hidden="true" className="size-4" />}
+          onClick={() => setTemplateOpen(true)}
+        >
+          {t('checklist.template')}
+        </Button>
+      )}
 
       <SegmentedControl
         label={t('checklist.listLabel')}
@@ -78,7 +83,7 @@ export function ChecklistPage() {
 
       {total > 0 && <Progress done={done} total={total} list={list} />}
 
-      <AddRow key={list} list={list} draft={draft} actions={actions} />
+      {canEdit && <AddRow key={list} list={list} draft={draft} actions={actions} />}
 
       {total === 0 && list === 'todo' && (
         <p className="py-6 text-center text-body-2 text-fg-muted">{t('checklist.emptyTodo')}</p>
@@ -89,10 +94,15 @@ export function ChecklistPage() {
         categories={list === 'packing' ? draft.categories : undefined}
         onToggle={(key) => actions.toggle(list, key)}
         onRemove={(key) => actions.remove(list, key)}
-        onRemoveGroup={(name) => {
-          actions.removeCategory(name);
-          toast(t('checklist.groupDeleted', { name }));
-        }}
+        readOnly={!canEdit}
+        onRemoveGroup={
+          canEdit
+            ? (name) => {
+                actions.removeCategory(name);
+                toast(t('checklist.groupDeleted', { name }));
+              }
+            : undefined
+        }
         onReorder={(next) => actions.reorder(list, next)}
       />
 

@@ -2,6 +2,7 @@ import type { ItemKind, PlaceSummary } from '@trippocket/shared';
 import { Heart, MapPin, Plus, Search } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
+import { useCanEdit } from '../../data/tripRoles';
 import { placesApi } from '../../data/api/places';
 import { useAuth } from '../../data/authStore';
 import { useTrip } from '../../data/hooks';
@@ -28,6 +29,8 @@ export function PlacesPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { tripId = '' } = useParams();
+  // 보기 전용 여행이면 "일정에 추가"를 숨긴다 (저장한 장소는 내 것이라 그대로)
+  const canEdit = useCanEdit(tripId);
   const trip = useTrip(tripId);
   const loggedIn = useAuth((s) => s.status === 'user');
   const [q, setQ] = useState('');
@@ -157,22 +160,24 @@ export function PlacesPage() {
                     .then(() => toast(t('places.saved')))
                 }
               />
-              <IconButton
-                label={t('places.addToTrip', { name: p.name })}
-                icon={<Plus />}
-                tone="tint"
-                onClick={() =>
-                  void itemRepo
-                    .create({
-                      tripId,
-                      date: null,
-                      kind: cat?.kind ?? 'place',
-                      title: p.name,
-                      place: toPlaceRef(p),
-                    })
-                    .then(() => toast(t('places.added')))
-                }
-              />
+              {canEdit && (
+                <IconButton
+                  label={t('places.addToTrip', { name: p.name })}
+                  icon={<Plus />}
+                  tone="tint"
+                  onClick={() =>
+                    void itemRepo
+                      .create({
+                        tripId,
+                        date: null,
+                        kind: cat?.kind ?? 'place',
+                        title: p.name,
+                        place: toPlaceRef(p),
+                      })
+                      .then(() => toast(t('places.added')))
+                  }
+                />
+              )}
             </li>
           ))}
         </ul>

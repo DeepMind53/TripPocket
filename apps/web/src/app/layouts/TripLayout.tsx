@@ -13,6 +13,7 @@ import { lazy, Suspense } from 'react';
 import { useTranslation } from '../../i18n';
 import { Link, Outlet, useNavigate, useParams } from 'react-router';
 import { useTrip } from '../../data/hooks';
+import { useCanEdit } from '../../data/tripRoles';
 import { QuickMenuButton } from '../../features/common/QuickMenu';
 import { deleteTripWithUndo } from '../../features/trips/tripActions';
 import { useRouteSheet } from '../../shared/hooks/useRouteSheet';
@@ -37,6 +38,7 @@ export function TripLayout() {
   const { t } = useTranslation();
   const { tripId = '' } = useParams();
   const trip = useTrip(tripId);
+  const canEdit = useCanEdit(tripId);
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen, switchMenuTo] = useRouteSheet('trip-menu');
   const [shareOpen, setShareOpen] = useRouteSheet('trip-share');
@@ -91,6 +93,14 @@ export function TripLayout() {
           </>
         }
       />
+      {trip && !canEdit && (
+        <p
+          role="status"
+          className="mx-5 mb-2 rounded-btn bg-bg-subtle px-3 py-2 text-caption text-fg-sub"
+        >
+          {t('share.readOnly.banner')}
+        </p>
+      )}
       <main className="pb-[calc(56px+env(safe-area-inset-bottom)+16px)]">{trip && <Outlet />}</main>
       {trip && <QuickMenuButton inTrip />}
       <BottomSheet open={menuOpen} onOpenChange={setMenuOpen} title={trip?.title ?? ''}>
@@ -105,28 +115,32 @@ export function TripLayout() {
             >
               {t('share.title')}
             </Button>
-            <Button
-              variant="secondary"
-              fullWidth
-              className="justify-start"
-              leading={<Settings aria-hidden="true" className="size-[18px]" />}
-              // 메뉴 시트 기록을 설정 화면으로 바꿔서, 설정에서 뒤로 가면 여행 화면
-              onClick={() => void navigate(`${base}/settings`, { replace: true })}
-            >
-              {t('trips.settings')}
-            </Button>
-            <Button
-              variant="secondary"
-              fullWidth
-              className="justify-start text-danger"
-              leading={<Trash2 aria-hidden="true" className="size-[18px]" />}
-              onClick={() => {
-                void deleteTripWithUndo(trip);
-                void navigate('/trips', { replace: true });
-              }}
-            >
-              {t('trips.delete')}
-            </Button>
+            {canEdit && (
+              <>
+                <Button
+                  variant="secondary"
+                  fullWidth
+                  className="justify-start"
+                  leading={<Settings aria-hidden="true" className="size-[18px]" />}
+                  // 메뉴 시트 기록을 설정 화면으로 바꿔서, 설정에서 뒤로 가면 여행 화면
+                  onClick={() => void navigate(`${base}/settings`, { replace: true })}
+                >
+                  {t('trips.settings')}
+                </Button>
+                <Button
+                  variant="secondary"
+                  fullWidth
+                  className="justify-start text-danger"
+                  leading={<Trash2 aria-hidden="true" className="size-[18px]" />}
+                  onClick={() => {
+                    void deleteTripWithUndo(trip);
+                    void navigate('/trips', { replace: true });
+                  }}
+                >
+                  {t('trips.delete')}
+                </Button>
+              </>
+            )}
           </div>
         )}
       </BottomSheet>

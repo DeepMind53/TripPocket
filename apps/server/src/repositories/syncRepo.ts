@@ -162,6 +162,14 @@ export function syncRepo(db: Db) {
       })),
       nextRev: page.at(-1)?.rev ?? since,
       hasMore: rows.length > limit,
+      roles: Object.fromEntries(
+        (
+          db.prepare('SELECT trip_id, role FROM trip_members WHERE user_id = ?').all(userId) as {
+            trip_id: string;
+            role: Role;
+          }[]
+        ).map((m) => [m.trip_id, m.role]),
+      ),
     };
   }
 

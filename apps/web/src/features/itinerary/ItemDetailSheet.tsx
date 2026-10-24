@@ -37,6 +37,8 @@ export interface ItemDetailSheetProps {
   total: number;
   onMoveUp: () => void;
   onMoveDown: () => void;
+  /** 보기 전용 여행: 편집·순서·다녀왔어요·옮기기·삭제를 숨김 */
+  readOnly?: boolean;
 }
 
 /** S-12 일정 상세 */
@@ -56,6 +58,7 @@ export function ItemDetailSheet({
   total,
   onMoveUp,
   onMoveDown,
+  readOnly = false,
 }: ItemDetailSheetProps) {
   const { t } = useTranslation();
   const address = item?.place?.address;
@@ -110,7 +113,7 @@ export function ItemDetailSheet({
               label={t('detail.viewOnMap')}
               onClick={() => openMapLink(placeLink(mapApp, dest, window.location.hostname))}
             />
-            <Action icon={<Pencil />} label={t('detail.edit')} onClick={onEdit} />
+            {!readOnly && <Action icon={<Pencil />} label={t('detail.edit')} onClick={onEdit} />}
           </div>
 
           <dl className="flex flex-col gap-3 text-body-2">
@@ -133,7 +136,7 @@ export function ItemDetailSheet({
             )}
           </dl>
 
-          {total > 1 && (
+          {!readOnly && total > 1 && (
             <div className="flex items-center gap-2 rounded-card bg-bg-subtle py-1 pr-1 pl-4">
               <span className="flex-1 text-body-2 font-medium">
                 {t('detail.order')}
@@ -162,7 +165,7 @@ export function ItemDetailSheet({
             </div>
           )}
 
-          {showDone && (
+          {!readOnly && showDone && (
             <div className="flex items-center justify-between rounded-card bg-bg-subtle px-4 py-3">
               <label htmlFor="item-done" className="text-body-2 font-medium">
                 {t('detail.done')}
@@ -171,23 +174,25 @@ export function ItemDetailSheet({
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-2">
-            <Button
-              variant="secondary"
-              leading={<CalendarArrowUp aria-hidden="true" className="size-4" />}
-              onClick={onMoveDay}
-            >
-              {t('detail.moveDay')}
-            </Button>
-            <Button
-              variant="secondary"
-              className="text-danger"
-              leading={<Trash2 aria-hidden="true" className="size-4" />}
-              onClick={onDelete}
-            >
-              {t('detail.delete')}
-            </Button>
-          </div>
+          {!readOnly && (
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                variant="secondary"
+                leading={<CalendarArrowUp aria-hidden="true" className="size-4" />}
+                onClick={onMoveDay}
+              >
+                {t('detail.moveDay')}
+              </Button>
+              <Button
+                variant="secondary"
+                className="text-danger"
+                leading={<Trash2 aria-hidden="true" className="size-4" />}
+                onClick={onDelete}
+              >
+                {t('detail.delete')}
+              </Button>
+            </div>
+          )}
         </div>
       )}
     </BottomSheet>

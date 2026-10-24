@@ -1,4 +1,5 @@
 import { useSettings } from '../../data/settingsStore';
+import { useCanEdit } from '../../data/tripRoles';
 import { useTimeText } from '../../shared/hooks/useTimeText';
 import {
   dayNumberOf,
@@ -81,6 +82,8 @@ function PlanView({
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
+  // 보기 전용으로 공유받은 여행이면 추가·편집·삭제를 숨긴다 (data/tripRoles.ts)
+  const canEdit = useCanEdit(trip.id);
   const days = getTripDays(trip.startDate, trip.endDate);
   const today = todayIn(trip.timezone);
   const dimPast = useSettings((st) => st.dimPastItems);
@@ -227,14 +230,16 @@ function PlanView({
             {t('map.toggle')}
           </Chip>
         )}
-        <Button
-          size="sm"
-          variant={editing ? 'primary' : 'ghost'}
-          disabled={items.length === 0 && !editing}
-          onClick={() => setEditing(!editing)}
-        >
-          {editing ? t('plan.editDone') : t('plan.edit')}
-        </Button>
+        {canEdit && (
+          <Button
+            size="sm"
+            variant={editing ? 'primary' : 'ghost'}
+            disabled={items.length === 0 && !editing}
+            onClick={() => setEditing(!editing)}
+          >
+            {editing ? t('plan.editDone') : t('plan.edit')}
+          </Button>
+        )}
       </div>
 
       {mapOpen && !editing && (
@@ -279,6 +284,7 @@ function PlanView({
                 setDirDest(d);
                 setDirOpen(true);
               }}
+              canEdit={canEdit}
               onAdd={() => openAdd(date)}
               onOpen={openDetail}
               onMenu={() => {
@@ -346,6 +352,7 @@ function PlanView({
         // 같은 날 안에서 한 칸씩 (시트는 열어 둔 채 바로 반영)
         onMoveUp={() => selected && void itemRepo.move(selected.id, selected.date, position - 2)}
         onMoveDown={() => selected && void itemRepo.move(selected.id, selected.date, position)}
+        readOnly={!canEdit}
       />
       <DirectionsSheet
         open={dirOpen}
@@ -371,6 +378,7 @@ function DaySection({
   items,
   isToday,
   isPast,
+  canEdit,
   onAdd,
   onOpen,
   onMenu,
@@ -386,6 +394,7 @@ function DaySection({
   isToday: boolean;
   /** 지난 날 (설정에서 켜면 흐리게) */
   isPast: boolean;
+  canEdit: boolean;
   onAdd: () => void;
   onOpen: (item: ItineraryItem) => void;
   onMenu: () => void;
@@ -436,7 +445,7 @@ function DaySection({
             </span>
           )}
         </h2>
-        {items.length > 1 && (
+        {canEdit && items.length > 1 && (
           <IconButton
             label={t('plan.dayMenu', { day: title })}
             icon={<Ellipsis />}
@@ -464,14 +473,16 @@ function DaySection({
           </Fragment>
         ))}
       </ol>
-      <button
-        type="button"
-        onClick={onAdd}
-        className="mx-3 mb-3 flex h-11 items-center justify-center gap-1 rounded-btn border border-dashed border-line text-body-2 font-semibold text-fg-sub"
-      >
-        <Plus aria-hidden="true" className="size-4" />
-        {t('plan.addItem')}
-      </button>
+      {canEdit && (
+        <button
+          type="button"
+          onClick={onAdd}
+          className="mx-3 mb-3 flex h-11 items-center justify-center gap-1 rounded-btn border border-dashed border-line text-body-2 font-semibold text-fg-sub"
+        >
+          <Plus aria-hidden="true" className="size-4" />
+          {t('plan.addItem')}
+        </button>
+      )}
       {lodging && (
         <button
           type="button"
