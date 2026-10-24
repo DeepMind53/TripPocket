@@ -22,6 +22,7 @@ export type ApiId =
   | 'workers-ai'
   | 'groq'
   | 'exim'
+  | 'aviationstack'
   | 'overpass'
   | 'open_meteo'
   | 'nager_date'
@@ -95,6 +96,8 @@ export const APIS: readonly ApiDef[] = [
   { id: 'groq', group: 'free', freeDaily: 1000, tz: 'UTC' },
   // 한국수출입은행 환율: 하루 1,000회
   { id: 'exim', group: 'free', freeDaily: 1000, tz: 'Asia/Seoul' },
+  // AviationStack 무료: 월 100회(넘으면 거절, 결제 수단 없음) — 편명으로 항공편 불러오기
+  { id: 'aviationstack', group: 'free', freeMonthly: 100, tz: 'UTC' },
   // OpenStreetMap Overpass: 공용 서버 정책 "하루 1만 회 미만, 꾸준히 쓰면 그 1/100" → 100
   { id: 'overpass', group: 'free', freeDaily: 100, tz: 'UTC' },
   // 브라우저: Open-Meteo 날씨(비상업 무료, IP당 하루 1만), Nager.Date 공휴일(제한 없음), jsDelivr(대만 공휴일·환율 보조)

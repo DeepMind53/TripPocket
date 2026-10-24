@@ -265,3 +265,45 @@ describe('빠른 메뉴 바로가기', () => {
     expect(await screen.findByText('숙소 예약이 없어요')).toBeInTheDocument();
   });
 });
+
+describe('편명으로 불러오기', () => {
+  it('공항·터미널·시간을 채우고 "최근 운항 기준" 안내 (밤 비행이면 도착은 다음 날)', async () => {
+    const { useAuth } = await import('../../data/authStore');
+    useAuth.setState({
+      status: 'user',
+      me: { id: 'u', nickname: 'n', createdAt: '', providers: [] },
+    });
+    vi.stubGlobal('fetch', async (url: string) =>
+      url.startsWith('/api/flights/')
+        ? Response.json({
+            flightNo: 'KE001',
+            airline: 'Korean Air',
+            from: { iata: 'ICN', terminal: '2', time: '20:30' },
+            to: { iata: 'HNL', terminal: '1', time: '10:10' },
+          })
+        : Response.json({}, { status: 404 }),
+    );
+    const user = userEvent.setup();
+    renderAt([`/trips/${tripId}/bookings`]);
+    await user.click(await screen.findByRole('button', { name: '예약 추가' }));
+    const sheet = screen.getByRole('dialog', { name: '예약 추가' });
+    await user.type(within(sheet).getByLabelText('편명'), 'ke001');
+    await user.click(within(sheet).getByRole('button', { name: '불러오기' }));
+    expect(await within(sheet).findByRole('status')).toHaveTextContent('최근 운항 기준');
+    expect(within(sheet).getByLabelText('출발 공항')).toHaveValue('ICN');
+    expect(within(sheet).getByLabelText('도착 공항')).toHaveValue('HNL');
+    expect(within(sheet).getByLabelText('출발 터미널')).toHaveValue('T2');
+    expect(within(sheet).getByLabelText('출발 시간')).toHaveValue('20:30');
+    await user.click(within(sheet).getByRole('button', { name: '예약 추가' }));
+    expect(await screen.findByText('예약을 추가했어요')).toBeInTheDocument();
+    const [saved] = await bookingRepo.listByTrip(tripId);
+    expect(saved).toMatchObject({
+      provider: 'Korean Air',
+      start: { place: 'ICN', time: '20:30' },
+      end: { place: 'HNL', time: '10:10' },
+    });
+    expect(saved!.end!.date > saved!.start.date).toBe(true);
+    vi.unstubAllGlobals();
+    useAuth.setState({ status: 'unknown', me: null });
+  });
+});

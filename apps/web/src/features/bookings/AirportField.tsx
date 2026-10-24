@@ -8,11 +8,14 @@ import { useTranslation } from '../../i18n';
  */
 export function AirportField({
   id,
+  label,
   value,
   placeholder,
   onChange,
 }: {
   id: string;
+  /** 칸 이름 — 아래 공항 이름 안내는 이름에 섞이지 않게 label 밖에 둔다 */
+  label: string;
   value: string;
   placeholder: string;
   onChange: (code: string) => void;
@@ -20,6 +23,12 @@ export function AirportField({
   const { t } = useTranslation();
   const [query, setQuery] = useState(value);
   const [open, setOpen] = useState(false);
+  // 바깥에서 값이 바뀌면(편명으로 불러오기) 칸도 맞춘다 — 렌더 중 맞추기
+  const [seen, setSeen] = useState(value);
+  if (value !== seen) {
+    setSeen(value);
+    if (value !== query.trim().toUpperCase()) setQuery(value);
+  }
   const listId = useId();
   const picked = findAirport(value);
   const results = open && query.trim() ? searchAirports(query, 6) : [];
@@ -32,9 +41,13 @@ export function AirportField({
   };
 
   return (
-    <div className="relative flex flex-col gap-1">
+    <div className="relative flex min-w-0 flex-col gap-1.5">
+      <label htmlFor={id} className="text-caption font-semibold text-fg-sub">
+        {label}
+      </label>
       <input
         id={id}
+        aria-describedby={picked && !open ? `${id}-airport` : undefined}
         value={query}
         maxLength={30}
         placeholder={placeholder}
@@ -54,7 +67,7 @@ export function AirportField({
         className="h-12 w-full rounded-btn bg-bg-subtle px-3 text-body-1"
       />
       {picked && !open && (
-        <span className="truncate text-caption text-fg-muted">
+        <span id={`${id}-airport`} className="truncate text-caption text-fg-muted">
           {flagEmoji(picked.countryCode)} {picked.name} · {picked.city}
         </span>
       )}
@@ -63,7 +76,7 @@ export function AirportField({
           id={listId}
           role="listbox"
           aria-label={t('bookings.airportResults')}
-          className="absolute top-13 right-0 left-0 z-10 flex max-h-64 flex-col divide-y divide-line overflow-y-auto rounded-card border border-line bg-surface shadow-lg"
+          className="absolute top-[76px] right-0 left-0 z-10 flex max-h-64 flex-col divide-y divide-line overflow-y-auto rounded-card border border-line bg-surface shadow-lg"
         >
           {results.map((a) => (
             <li key={a.iata}>

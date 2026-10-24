@@ -233,7 +233,11 @@
     "departTerminal": "출발 터미널",
     "arriveTerminal": "도착 터미널",
     "airportPlaceholder": "공항·도시 또는 코드 ({{example}})",
-    "airportResults": "공항 검색 결과"
+    "airportResults": "공항 검색 결과",
+    "lookup": "불러오기",
+    "lookupNote": "최근 운항 기준으로 공항·터미널·시간을 채웠어요.\n실제 날짜의 시간은 다를 수 있으니 확인해 주세요.",
+    "lookupNone": "이 편명의 최근 운항 정보를 찾지 못했어요. 직접 입력해 주세요.",
+    "lookupFailed": "지금은 항공편 정보를 불러올 수 없어요. 직접 입력해 주세요."
   },
   "checklist": {
     "emptyTitle": "준비물을 챙겨볼까요?",
@@ -854,7 +858,8 @@
       "oauth_kakao": "카카오 로그인",
       "oauth_naver": "네이버 로그인",
       "oauth_google": "Google 로그인",
-      "cf_functions": "Cloudflare Pages 함수 (홈 서버 연결)"
+      "cf_functions": "Cloudflare Pages 함수 (홈 서버 연결)",
+      "aviationstack": "AviationStack 항공편"
     },
     "note": {
       "google_places_search": "해외 장소 검색 · 월 5,000회 무료",
@@ -876,7 +881,8 @@
       "oauth_kakao": "로그인할 때마다 2회 · 무료",
       "oauth_naver": "로그인할 때마다 2회 · 무료",
       "oauth_google": "로그인할 때마다 2회 · 무료",
-      "cf_functions": "하루 10만 요청 무료 (넘으면 오류, 요금 없음)"
+      "cf_functions": "하루 10만 요청 무료 (넘으면 오류, 요금 없음)",
+      "aviationstack": "편명으로 불러오기 · 월 100회 무료 (넘으면 거절, 요금 없음)"
     },
     "autoStoppedDay": "오늘 자동 중지",
     "monthMeter": "이번 달",

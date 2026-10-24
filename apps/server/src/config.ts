@@ -62,6 +62,8 @@ const Env = z.object({
   GROQ_MODEL: z._default(z.string(), 'openai/gpt-oss-120b'),
   /** 한국수출입은행 환율 API 인증키 (무료, 없으면 환율은 웹앱의 무료 보조 출처만) */
   EXIM_API_KEY: z.optional(z.string()),
+  /** AviationStack 무료 키 (편명으로 항공편 불러오기, 월 100회) — 없으면 그 기능만 꺼짐 */
+  AVIATIONSTACK_KEY: z.optional(z.string()),
   /** 가입 정책 (docs/08 G1): invite = 첫 계정 + 허용 목록만, open = 누구나 */
   SIGNUP: z._default(z.enum(['invite', 'open']), 'invite'),
   /** 허용 목록: "kakao:123,naver:abc" — 가입 거절 화면에 표시되는 값을 넣는다 */

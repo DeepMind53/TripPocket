@@ -1,4 +1,5 @@
 import { useSettings } from '../../data/settingsStore';
+import { flightsApi } from '../../data/api/flights';
 import { AirportField } from './AirportField';
 import { addDays, diffDays, type Booking, type Trip } from '@trippocket/shared';
 import { Trash2 } from 'lucide-react';
@@ -86,6 +87,36 @@ function BookingForm({
     memo: b?.memo ?? '',
   });
   const [saving, setSaving] = useState(false);
+  // 편명으로 불러오기 (AviationStack 무료 — 최근 운항 기준이라 날짜는 그대로, 시간·공항·터미널만 채움)
+  const [looking, setLooking] = useState(false);
+  const [lookedUp, setLookedUp] = useState(false);
+  async function lookupFlight() {
+    setLooking(true);
+    const res = await flightsApi.lookup(f.flightNo);
+    setLooking(false);
+    if (!res.ok) {
+      // 한도는 안내 팝업이 따로 뜬다
+      if (res.reason !== 'limit')
+        toast(t(res.status === 404 ? 'bookings.lookupNone' : 'bookings.lookupFailed'));
+      return;
+    }
+    const x = res.data;
+    // 도착 시각이 출발보다 이르면 다음 날 도착
+    const nextDay = !!x.from.time && !!x.to.time && x.to.time < x.from.time;
+    setF((prev) => ({
+      ...prev,
+      flightNo: x.flightNo,
+      provider: prev.provider || x.airline || '',
+      from: x.from.iata ?? prev.from,
+      to: x.to.iata ?? prev.to,
+      startTime: x.from.time ?? prev.startTime,
+      endTime: x.to.time ?? prev.endTime,
+      terminal: x.from.terminal ? `T${x.from.terminal}` : prev.terminal,
+      arrivalTerminal: x.to.terminal ? `T${x.to.terminal}` : prev.arrivalTerminal,
+      endDate: nextDay ? addDays(prev.startDate, 1) : prev.startDate,
+    }));
+    setLookedUp(true);
+  }
   const set = (key: keyof typeof f) => (e: { target: { value: string } }) =>
     setF((prev) => ({ ...prev, [key]: e.target.value }));
 
@@ -251,33 +282,48 @@ function BookingForm({
               />
             </Field>
             <Field label={t('bookings.flightNo')}>
-              <input
-                id="bk-flight"
-                value={f.flightNo}
-                maxLength={20}
-                placeholder="KE703"
-                onChange={set('flightNo')}
-                className={`${inputClass} uppercase`}
-              />
+              <div className="flex gap-1.5">
+                <input
+                  id="bk-flight"
+                  value={f.flightNo}
+                  maxLength={20}
+                  placeholder="KE703"
+                  onChange={set('flightNo')}
+                  className={`${inputClass} min-w-0 flex-1 uppercase`}
+                />
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="h-12 shrink-0"
+                  loading={looking}
+                  disabled={!/^[a-z0-9]{2}\s?\d{1,4}[a-z]?$/i.test(f.flightNo.trim())}
+                  onClick={() => void lookupFlight()}
+                >
+                  {t('bookings.lookup')}
+                </Button>
+              </div>
             </Field>
           </Row>
+          {lookedUp && (
+            <p role="status" className="text-caption text-fg-muted">
+              {t('bookings.lookupNote')}
+            </p>
+          )}
           <Row>
-            <Field label={t('bookings.from')}>
-              <AirportField
-                id="bk-from"
-                value={f.from}
-                placeholder={t('bookings.airportPlaceholder', { example: 'ICN' })}
-                onChange={(value) => set('from')({ target: { value } })}
-              />
-            </Field>
-            <Field label={t('bookings.to')}>
-              <AirportField
-                id="bk-to"
-                value={f.to}
-                placeholder={t('bookings.airportPlaceholder', { example: 'NRT' })}
-                onChange={(value) => set('to')({ target: { value } })}
-              />
-            </Field>
+            <AirportField
+              id="bk-from"
+              label={t('bookings.from')}
+              value={f.from}
+              placeholder={t('bookings.airportPlaceholder', { example: 'ICN' })}
+              onChange={(value) => set('from')({ target: { value } })}
+            />
+            <AirportField
+              id="bk-to"
+              label={t('bookings.to')}
+              value={f.to}
+              placeholder={t('bookings.airportPlaceholder', { example: 'NRT' })}
+              onChange={(value) => set('to')({ target: { value } })}
+            />
           </Row>
           <DateTimeRow
             dateLabel={t('bookings.departDate')}

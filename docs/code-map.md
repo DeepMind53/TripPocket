@@ -83,6 +83,7 @@ Tailscale Funnel https://jin-server.tail0844c0.ts.net ─▶ 홈 PC 127.0.0.1:87
 | workers-ai | 무료 | 하루 50 | 무료 플랜 1만 Neurons/일 ≈ 분석 50회. Workers 유료 플랜이면 과금되므로 유지 |
 | groq | 무료 | 하루 1,000 | 카드 없음 |
 | exim | 무료 | 하루 1,000 | |
+| aviationstack | 무료 | 월 100 | 편명으로 항공편 불러오기 — 최근 운항(실시간)만, 미래 시간표는 유료. 같은 편명 7일 저장. 무료는 HTTPS 막힘 → 서버에서 HTTP로 |
 | overpass | 무료 | 하루 100 | 공용 서버 정책(1만 미만, 꾸준한 사용은 1/100). User-Agent 필수 |
 | open_meteo | 무료 | 하루 10,000 | 비상업, IP당. 브라우저 |
 | nager_date · jsdelivr | 무료 | 없음 | 브라우저 |
