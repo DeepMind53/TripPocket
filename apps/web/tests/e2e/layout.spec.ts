@@ -121,7 +121,17 @@ test('⚡ 버튼은 하단 탭 위에 있고, 화면 끝에서 누를 것을 가
     await page.goto(path);
     const fab = page.getByRole('button', { name: '빠른 메뉴' });
     await expect(fab).toBeVisible();
-    await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+    // 내용이 다 불러와져 높이가 멈출 때까지 맨 아래로 (바쁠 때 늦게 그려지는 목록이 있음)
+    let height = -1;
+    for (let i = 0; i < 6; i++) {
+      const h = await page.evaluate(() => {
+        window.scrollTo(0, document.documentElement.scrollHeight);
+        return document.documentElement.scrollHeight;
+      });
+      if (h === height) break;
+      height = h;
+      await page.waitForTimeout(400);
+    }
     await page.waitForTimeout(1200); // 스크롤 뒤 원래 크기로
     const hidden = await page.evaluate(() => {
       const f = document.querySelector('button[aria-label="빠른 메뉴"]')!.getBoundingClientRect();
