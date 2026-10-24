@@ -358,3 +358,15 @@ it('숙소: 달력에서 체크인 → 체크아웃 순서로 눌러 한 번에,
   expect(within(sheet).getByLabelText('체크인')).toHaveValue('2026-10-25');
   expect(within(sheet).getByLabelText('체크아웃')).toHaveValue('2026-10-27');
 });
+
+it('덜 쓰는 칸(좌석·예약처·결제 메모·메모)은 [더 입력하기]로 펼친다 (docs/20 U4)', async () => {
+  const user = userEvent.setup();
+  renderAt([`/trips/${tripId}/bookings`]);
+  await user.click(await screen.findByRole('button', { name: '예약 추가' }));
+  const sheet = screen.getByRole('dialog', { name: '예약 추가' });
+  expect(within(sheet).queryByLabelText('좌석')).not.toBeInTheDocument();
+  expect(within(sheet).queryByLabelText('메모')).not.toBeInTheDocument();
+  await user.click(within(sheet).getByRole('button', { name: /더 입력하기/ }));
+  expect(within(sheet).getByLabelText('좌석')).toBeInTheDocument();
+  expect(within(sheet).getByLabelText('메모')).toBeInTheDocument();
+});

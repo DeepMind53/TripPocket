@@ -6,7 +6,10 @@ import {
   type FxSnapshot,
   type Trip,
 } from '@trippocket/shared';
-import { Sparkles } from 'lucide-react';
+import { ChevronDown, Sparkles } from 'lucide-react';
+
+/** 준비 현황 펼침 상태 (이 기기) */
+const OPEN_KEY = 'tp-prep-open';
 import { useEffect, useState, type ReactNode } from 'react';
 import { Link } from 'react-router';
 import { useChecklist, useTripBookings } from '../../data/hooks';
@@ -47,114 +50,167 @@ export function PrepCards({ trip }: { trip: Trip }) {
   const base = `/trips/${trip.id}`;
   const rate = currency ? fx?.rates[currency] : undefined;
   const unit = currency && HUNDRED_UNIT.has(currency) ? 100 : 1;
+  const [open, setOpen] = useState(() => {
+    try {
+      return localStorage.getItem(OPEN_KEY) === '1';
+    } catch {
+      return false;
+    }
+  });
+  const toggleOpen = (v: boolean) => {
+    setOpen(v);
+    try {
+      localStorage.setItem(OPEN_KEY, v ? '1' : '0');
+    } catch {
+      // 기억 못 해도 이번에는 적용
+    }
+  };
+  const anyAlert =
+    lodgings === 0 ||
+    (packing !== undefined && (total === 0 || (daysLeft <= 3 && packed < total))) ||
+    !!essentials?.alert;
 
   return (
     <section aria-label={t('prep.title')} className="flex flex-col gap-2">
-      <h2 className="text-caption font-bold text-fg-muted">{t('prep.title')}</h2>
-      <div className="grid grid-cols-2 gap-2">
-        <Card
-          to={`${base}/checklist`}
-          emoji="🧳"
-          label={t('prep.packing')}
-          alert={packing !== undefined && (total === 0 || (daysLeft <= 3 && packed < total))}
-        >
-          {total === 0 ? (
-            <span className="text-caption text-fg-muted">{t('prep.packingEmpty')}</span>
-          ) : (
-            <>
-              <span className="tabular text-body-1 font-bold">
-                {packed}/{total}
+      {/* 기본은 한 줄 요약, 누르면 펼침 (docs/20 U3) — 펼침 상태는 이 기기에 기억 */}
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={() => toggleOpen(!open)}
+        className="tabular flex items-center gap-2 rounded-card border border-line bg-surface px-3 py-2.5 text-left"
+      >
+        <span className="shrink-0 text-caption font-bold text-fg-muted">{t('prep.title')}</span>
+        <span className="min-w-0 flex-1 truncate text-caption text-fg-sub">
+          🧳 {packed}/{total} · 🎫 {t('prep.bookingCounts', { flights, lodgings })}
+          {essentials && essentials.total > 0 && ` · 🛂 ${essentials.done}/${essentials.total}`}
+        </span>
+        {anyAlert && (
+          <span
+            role="img"
+            aria-label={t('prep.needsAttention')}
+            className="size-2 shrink-0 rounded-full bg-warning"
+          />
+        )}
+        <ChevronDown
+          aria-hidden="true"
+          className={`size-4 shrink-0 text-fg-muted transition-transform ${open ? 'rotate-180' : ''}`}
+        />
+      </button>
+      {open && (
+        <>
+          <div className="grid grid-cols-2 gap-2">
+            <Card
+              to={`${base}/checklist`}
+              emoji="🧳"
+              label={t('prep.packing')}
+              alert={packing !== undefined && (total === 0 || (daysLeft <= 3 && packed < total))}
+            >
+              {total === 0 ? (
+                <span className="text-caption text-fg-muted">{t('prep.packingEmpty')}</span>
+              ) : (
+                <>
+                  <span className="tabular text-body-1 font-bold">
+                    {packed}/{total}
+                  </span>
+                  <span className="h-1.5 overflow-hidden rounded-full bg-bg-subtle">
+                    <span
+                      className="block h-full rounded-full bg-primary"
+                      style={{ width: `${Math.round((packed / total) * 100)}%` }}
+                    />
+                  </span>
+                </>
+              )}
+            </Card>
+            <Card
+              to={`${base}/bookings`}
+              emoji="🎫"
+              label={t('prep.bookings')}
+              alert={lodgings === 0}
+            >
+              <span className="text-body-2">{t('prep.bookingCounts', { flights, lodgings })}</span>
+              {lodgings === 0 && (
+                <span className="text-caption text-warning">{t('prep.noLodging')}</span>
+              )}
+            </Card>
+            <Card to={`${base}/plan`} emoji="☀️" label={t('prep.weather')}>
+              {weather ? (
+                <>
+                  <span className="flex items-center gap-1.5">
+                    <WeatherIcon kind={weatherLook(weather.code).kind} className="size-6" />
+                    <span className="text-caption text-fg-sub">
+                      {weatherLook(weather.code).label}
+                    </span>
+                    <span className="tabular text-body-2">{formatTemps(weather)}</span>
+                  </span>
+                  {weather.year && (
+                    <span className="text-micro text-fg-muted">
+                      {t('weather.yearShort', { yy: String(weather.year).slice(2) })} ·{' '}
+                      {t('prep.weatherLater')}
+                    </span>
+                  )}
+                </>
+              ) : (
+                <span className="text-caption text-fg-muted">
+                  {daysLeft >= 14 ? t('prep.weatherLater') : t('prep.weatherNone')}
+                </span>
+              )}
+            </Card>
+            <Card to={`/fx?trip=${trip.id}`} emoji="💱" label={t('prep.fx')}>
+              {currency && rate ? (
+                <span className="tabular text-body-2">
+                  {t('prep.fxValue', {
+                    unit,
+                    code: currency,
+                    won: (rate * unit).toLocaleString('ko-KR', { maximumFractionDigits: 2 }),
+                  })}
+                </span>
+              ) : (
+                <span className="text-caption text-fg-muted">{t('prep.fxOpen')}</span>
+              )}
+            </Card>
+          </div>
+          {/* 나라별 필수 항목 (docs/19) — 가로 전체 칸 */}
+          {essentials && essentials.total > 0 && (
+            <Link
+              to={`/trips/${trip.id}/essentials`}
+              className="relative flex flex-col gap-1 rounded-card border border-line bg-surface p-3"
+            >
+              <span className="flex items-center gap-1.5 text-caption font-semibold text-fg-sub">
+                <span aria-hidden="true">🛂</span>
+                {t('essentials.title')}
+                <span className="tabular ml-auto pr-4 text-body-2 font-bold text-fg">
+                  {essentials.done}/{essentials.total}
+                </span>
               </span>
               <span className="h-1.5 overflow-hidden rounded-full bg-bg-subtle">
                 <span
                   className="block h-full rounded-full bg-primary"
-                  style={{ width: `${Math.round((packed / total) * 100)}%` }}
+                  style={{ width: `${Math.round((essentials.done / essentials.total) * 100)}%` }}
                 />
               </span>
-            </>
-          )}
-        </Card>
-        <Card to={`${base}/bookings`} emoji="🎫" label={t('prep.bookings')} alert={lodgings === 0}>
-          <span className="text-body-2">{t('prep.bookingCounts', { flights, lodgings })}</span>
-          {lodgings === 0 && (
-            <span className="text-caption text-warning">{t('prep.noLodging')}</span>
-          )}
-        </Card>
-        <Card to={`${base}/plan`} emoji="☀️" label={t('prep.weather')}>
-          {weather ? (
-            <>
-              <span className="flex items-center gap-1.5">
-                <WeatherIcon kind={weatherLook(weather.code).kind} className="size-6" />
-                <span className="text-caption text-fg-sub">{weatherLook(weather.code).label}</span>
-                <span className="tabular text-body-2">{formatTemps(weather)}</span>
+              <span className="truncate text-caption text-fg-muted">
+                {essentials.next
+                  ? t('essentials.next', { title: essentials.next.item.title })
+                  : t('essentials.allDone')}
               </span>
-              {weather.year && (
-                <span className="text-micro text-fg-muted">
-                  {t('weather.yearShort', { yy: String(weather.year).slice(2) })} ·{' '}
-                  {t('prep.weatherLater')}
-                </span>
+              {essentials.alert && (
+                <span
+                  role="img"
+                  aria-label={t('prep.needsAttention')}
+                  className="absolute top-3 right-3 size-2 rounded-full bg-warning"
+                />
               )}
-            </>
-          ) : (
-            <span className="text-caption text-fg-muted">
-              {daysLeft >= 14 ? t('prep.weatherLater') : t('prep.weatherNone')}
-            </span>
+            </Link>
           )}
-        </Card>
-        <Card to={`/fx?trip=${trip.id}`} emoji="💱" label={t('prep.fx')}>
-          {currency && rate ? (
-            <span className="tabular text-body-2">
-              {t('prep.fxValue', {
-                unit,
-                code: currency,
-                won: (rate * unit).toLocaleString('ko-KR', { maximumFractionDigits: 2 }),
-              })}
-            </span>
-          ) : (
-            <span className="text-caption text-fg-muted">{t('prep.fxOpen')}</span>
-          )}
-        </Card>
-      </div>
-      {/* 나라별 필수 항목 (docs/19) — 가로 전체 칸 */}
-      {essentials && essentials.total > 0 && (
-        <Link
-          to={`/trips/${trip.id}/essentials`}
-          className="relative flex flex-col gap-1 rounded-card border border-line bg-surface p-3"
-        >
-          <span className="flex items-center gap-1.5 text-caption font-semibold text-fg-sub">
-            <span aria-hidden="true">🛂</span>
-            {t('essentials.title')}
-            <span className="tabular ml-auto pr-4 text-body-2 font-bold text-fg">
-              {essentials.done}/{essentials.total}
-            </span>
-          </span>
-          <span className="h-1.5 overflow-hidden rounded-full bg-bg-subtle">
-            <span
-              className="block h-full rounded-full bg-primary"
-              style={{ width: `${Math.round((essentials.done / essentials.total) * 100)}%` }}
-            />
-          </span>
-          <span className="truncate text-caption text-fg-muted">
-            {essentials.next
-              ? t('essentials.next', { title: essentials.next.item.title })
-              : t('essentials.allDone')}
-          </span>
-          {essentials.alert && (
-            <span
-              role="img"
-              aria-label={t('prep.needsAttention')}
-              className="absolute top-3 right-3 size-2 rounded-full bg-warning"
-            />
-          )}
-        </Link>
+          <Link
+            to={`/ai?trip=${trip.id}`}
+            className="flex h-12 items-center justify-center gap-2 rounded-card bg-primary-weak text-body-2 font-semibold text-primary"
+          >
+            <Sparkles aria-hidden="true" className="size-4" />
+            {t('prep.ai', { place: trip.destinations[0]?.name ?? trip.title })}
+          </Link>
+        </>
       )}
-      <Link
-        to={`/ai?trip=${trip.id}`}
-        className="flex h-12 items-center justify-center gap-2 rounded-card bg-primary-weak text-body-2 font-semibold text-primary"
-      >
-        <Sparkles aria-hidden="true" className="size-4" />
-        {t('prep.ai', { place: trip.destinations[0]?.name ?? trip.title })}
-      </Link>
     </section>
   );
 }

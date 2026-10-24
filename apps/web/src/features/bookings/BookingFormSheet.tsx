@@ -99,6 +99,8 @@ function BookingForm({
   });
   const [saving, setSaving] = useState(false);
   const [stayOpen, setStayOpen] = useState(false);
+  // 덜 쓰는 칸은 접어 둔다 (docs/20 U4) — 고칠 때 값이 있으면 펼쳐서
+  const [more, setMore] = useState(!!(b?.details?.seat || b?.provider || b?.priceNote || b?.memo));
   // 편명으로 불러오기 (AviationStack 무료 — 최근 운항 기준이라 날짜는 그대로, 시간·공항·터미널만 채움)
   const [looking, setLooking] = useState(false);
   const [lookedUp, setLookedUp] = useState(false);
@@ -398,15 +400,17 @@ function BookingForm({
               />
             </Field>
           </Row>
-          <Field label={t('bookings.seat')}>
-            <input
-              id="bk-seat"
-              value={f.seat}
-              maxLength={20}
-              onChange={set('seat')}
-              className={inputClass}
-            />
-          </Field>
+          {more && (
+            <Field label={t('bookings.seat')}>
+              <input
+                id="bk-seat"
+                value={f.seat}
+                maxLength={20}
+                onChange={set('seat')}
+                className={inputClass}
+              />
+            </Field>
+          )}
         </>
       ) : (
         <>
@@ -691,7 +695,7 @@ function BookingForm({
               </Field>
             </>
           )}
-          {kind !== 'transfer' && (
+          {more && kind !== 'transfer' && (
             <Field label={t('bookings.reseller')}>
               <input
                 id="bk-provider"
@@ -702,16 +706,18 @@ function BookingForm({
               />
             </Field>
           )}
-          <Field label={t('bookings.priceNote')}>
-            <input
-              id="bk-price"
-              value={f.priceNote}
-              maxLength={100}
-              placeholder={t('bookings.priceNotePlaceholder')}
-              onChange={set('priceNote')}
-              className={inputClass}
-            />
-          </Field>
+          {more && (
+            <Field label={t('bookings.priceNote')}>
+              <input
+                id="bk-price"
+                value={f.priceNote}
+                maxLength={100}
+                placeholder={t('bookings.priceNotePlaceholder')}
+                onChange={set('priceNote')}
+                className={inputClass}
+              />
+            </Field>
+          )}
         </>
       )}
 
@@ -724,20 +730,33 @@ function BookingForm({
           className={`${inputClass} tabular`}
         />
       </Field>
-      <Field label={t('bookings.memo')}>
-        <textarea
-          id="bk-memo"
-          value={f.memo}
-          maxLength={2000}
-          rows={2}
-          onChange={set('memo')}
-          className={`${inputClass} h-auto py-2`}
-        />
-      </Field>
+      {more ? (
+        <Field label={t('bookings.memo')}>
+          <textarea
+            id="bk-memo"
+            value={f.memo}
+            maxLength={2000}
+            rows={2}
+            onChange={set('memo')}
+            className={`${inputClass} h-auto py-2`}
+          />
+        </Field>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setMore(true)}
+          className="self-start text-caption font-semibold text-primary"
+        >
+          {t('bookings.more')}
+        </button>
+      )}
 
-      <Button type="submit" size="lg" fullWidth loading={saving}>
-        {t(b ? 'form.save' : 'bookings.add')}
-      </Button>
+      {/* [저장]은 아래에 붙어 있게 — 칸이 많아도 바로 누를 수 있게 */}
+      <div className="sticky bottom-0 -mx-5 bg-surface px-5 pt-2 pb-1">
+        <Button type="submit" size="lg" fullWidth loading={saving}>
+          {t(b ? 'form.save' : 'bookings.add')}
+        </Button>
+      </div>
       {b && (
         <Button
           variant="secondary"

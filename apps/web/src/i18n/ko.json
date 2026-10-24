@@ -281,7 +281,8 @@
     "airportHint": "예: 나리타공항 T1",
     "lodgingHint": "예: 숙소 이름·주소",
     "flightNoOptional": "편명 (선택)",
-    "driverPhone": "기사·업체 연락처"
+    "driverPhone": "기사·업체 연락처",
+    "more": "+ 더 입력하기 (좌석·예약처·결제 메모·메모)"
   },
   "checklist": {
     "emptyTitle": "준비물을 챙겨볼까요?",

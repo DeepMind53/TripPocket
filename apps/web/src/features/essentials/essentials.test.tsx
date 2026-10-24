@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { routes } from '../../app/router';
@@ -57,6 +57,11 @@ it('필수 항목: 태국 TDAC·비자(자동)·공식 링크, 체크하면 저�
 
 it('홈 준비 현황에 필수 항목 칸 (완료 수·다음 할 일)', async () => {
   renderAt('/');
+  const prep = await screen.findByRole('region', { name: '준비 현황' });
+  await waitFor(() =>
+    expect(within(prep).getByRole('button', { expanded: false })).toHaveTextContent(/🛂 \d+\/\d+/),
+  );
+  fireEvent.click(within(prep).getByRole('button', { expanded: false }));
   expect(await screen.findByRole('link', { name: /필수 항목 체크리스트/ })).toHaveTextContent(
     '다음: 디지털 입국카드 (TDAC)',
   );
