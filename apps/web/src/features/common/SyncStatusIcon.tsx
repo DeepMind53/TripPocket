@@ -27,7 +27,7 @@ export function SyncStatusIcon() {
       type="button"
       aria-label={label}
       onClick={() => toast(t(`sync.icon.${kind}Desc`))}
-      className="grid size-9 shrink-0 place-items-center rounded-full text-fg-muted"
+      className="grid size-11 shrink-0 place-items-center rounded-full text-fg-muted"
     >
       <Icon
         aria-hidden="true"

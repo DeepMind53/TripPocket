@@ -21,7 +21,7 @@ export function StarPicker({
       aria-label={t('review.starGroup', { aspect: label })}
       className="flex items-center gap-2"
     >
-      <span className="w-24 shrink-0 text-body-2">
+      <span className="w-20 shrink-0 text-body-2">
         {label}
         {required && <span className="ml-1 text-micro text-fg-muted">{t('review.required')}</span>}
       </span>
@@ -33,7 +33,7 @@ export function StarPicker({
             aria-label={t('review.star', { aspect: label, n })}
             aria-pressed={value === n}
             onClick={() => onChange(value === n && !required ? undefined : n)}
-            className="grid size-9 place-items-center"
+            className="grid size-11 place-items-center"
           >
             <Star
               aria-hidden="true"

@@ -148,12 +148,17 @@ function EssentialLine({
           aria-label={item.title}
           disabled={row.auto || !canEdit}
           onClick={() => void checklistRepo.setEssential(tripId, row.key, !row.checked)}
-          className={cn(
-            'mt-0.5 grid size-6 shrink-0 place-items-center rounded-md border-2',
-            row.checked ? 'border-primary bg-primary text-on-primary' : 'border-line bg-surface',
-          )}
+          // 보이는 칸은 24px, 누르는 영역은 44px (docs/20 U7)
+          className="-my-2.5 -ml-2.5 grid size-11 shrink-0 place-items-center"
         >
-          {row.checked && <Check aria-hidden="true" className="size-4" strokeWidth={3} />}
+          <span
+            className={cn(
+              'grid size-6 place-items-center rounded-md border-2',
+              row.checked ? 'border-primary bg-primary text-on-primary' : 'border-line bg-surface',
+            )}
+          >
+            {row.checked && <Check aria-hidden="true" className="size-4" strokeWidth={3} />}
+          </span>
         </button>
       ) : (
         <span
