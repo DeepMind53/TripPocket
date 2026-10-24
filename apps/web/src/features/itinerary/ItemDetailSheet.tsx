@@ -9,9 +9,17 @@ import {
   MapPinned,
   Navigation,
   Pencil,
+  SquarePen,
   Trash2,
 } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { lazy, Suspense, useState, type ReactNode } from 'react';
+import { isReviewKind } from '@trippocket/shared';
+import { ItemReviews } from '../reviews/ItemReviews';
+import { useItemReviews } from '../reviews/useItemReviews';
+
+const ReviewSheet = lazy(() =>
+  import('../reviews/ReviewSheet').then((m) => ({ default: m.ReviewSheet })),
+);
 import { useTranslation } from '../../i18n';
 import { placeLink, openMapLink, type MapApp } from '../../shared/lib/directions';
 import { BottomSheet, Button, Switch, TimeInput, toast } from '../../shared/ui';
@@ -46,6 +54,11 @@ export interface ItemDetailSheetProps {
   onOpenBooking?: () => void;
   /** 방문 시간 빠른 입력 ("" = 지움) */
   onVisitTime?: (time: string) => void;
+  /** 후기 (docs/17): 여행 id, 다녀온 날인지, 장소 연결 검색용 국내 여부·근처 */
+  tripId?: string;
+  visited?: boolean;
+  domestic?: boolean;
+  near?: { lat: number; lng: number } | undefined;
 }
 
 /** S-12 일정 상세 */
@@ -69,8 +82,24 @@ export function ItemDetailSheet({
   booking,
   onOpenBooking,
   onVisitTime,
+  tripId,
+  visited = false,
+  domestic = true,
+  near,
 }: ItemDetailSheetProps) {
   const { t } = useTranslation();
+  // 후기: 숙소·맛집·카페·쇼핑·관광·액티비티만, 보기 전용 공유는 못 씀 (사용자 결정 2026-10-25)
+  const reviewKind = item && isReviewKind(item.kind) ? item.kind : null;
+  const canReview = !!reviewKind && !!tripId && !readOnly;
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [reviewVersion, setReviewVersion] = useState(0);
+  const reviews = useItemReviews(
+    tripId ?? '',
+    item,
+    open && !!reviewKind && !!tripId,
+    reviewVersion,
+  );
+  const mine = reviews?.mine ?? null;
   const address = item?.place?.address;
   // 종류별 맞춤 (docs/16 D1): 이동·메모는 주소가 없으면 주소·지도 관련을 숨긴다
   const isMove = item?.kind === 'transport';
@@ -102,17 +131,29 @@ export function ItemDetailSheet({
       title={item?.title ?? ''}
       description={dayLabel}
       headerAside={
-        item && onVisitTime && !readOnly ? (
-          <span className="flex flex-col items-end gap-0.5">
-            <span className="text-micro text-fg-muted">{t('detail.visitTime')}</span>
-            <TimeInput
-              id="detail-visit-time"
-              size="sm"
-              label={t('detail.visitTime')}
-              value={item.startTime ?? ''}
-              onChange={onVisitTime}
-              className="w-[104px]"
-            />
+        item && (canReview || (onVisitTime && !readOnly)) ? (
+          <span className="flex flex-col items-end gap-1.5">
+            {/* 이름 오른쪽: 후기 입력 (사용자 요청 2026-10-25) */}
+            {canReview && (
+              <Button
+                size="sm"
+                variant={mine ? 'ghost' : 'secondary'}
+                leading={<SquarePen aria-hidden="true" className="size-4" />}
+                onClick={() => (visited ? setReviewOpen(true) : toast(t('review.notVisited')))}
+              >
+                {mine ? t('review.mine') : t('review.write')}
+              </Button>
+            )}
+            {onVisitTime && !readOnly && (
+              <TimeInput
+                id="detail-visit-time"
+                size="sm"
+                label={t('detail.visitTime')}
+                value={item.startTime ?? ''}
+                onChange={onVisitTime}
+                className="w-[104px]"
+              />
+            )}
           </span>
         ) : undefined
       }
@@ -176,6 +217,8 @@ export function ItemDetailSheet({
             )}
           </dl>
 
+          {reviewKind && <ItemReviews data={reviews} kind={reviewKind} />}
+
           {!readOnly && total > 1 && (
             <div className="flex items-center gap-2 rounded-card bg-bg-subtle py-1 pr-1 pl-4">
               <span className="flex-1 text-body-2 font-medium">
@@ -234,6 +277,21 @@ export function ItemDetailSheet({
             </div>
           )}
         </div>
+      )}
+      {item && reviewKind && tripId && reviewOpen && (
+        <Suspense fallback={null}>
+          <ReviewSheet
+            open={reviewOpen}
+            onOpenChange={setReviewOpen}
+            tripId={tripId}
+            item={item}
+            kind={reviewKind}
+            domestic={domestic}
+            near={near}
+            existing={mine}
+            onSaved={() => setReviewVersion((v) => v + 1)}
+          />
+        </Suspense>
       )}
     </BottomSheet>
   );

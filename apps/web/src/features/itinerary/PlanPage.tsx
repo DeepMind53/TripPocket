@@ -544,6 +544,10 @@ function PlanView({
         onMoveDay={() => setMoveOpen(true)}
         onDelete={() => selected && void remove(selected)}
         onToggleDone={(done) => selected && void itemRepo.update(selected.id, { done })}
+        tripId={trip.id}
+        visited={!!selected?.date && selected.date <= today}
+        domestic={isDomestic}
+        near={trip.destinations.find((d) => d.coords)?.coords}
         onVisitTime={(time) =>
           selected && void itemRepo.update(selected.id, { startTime: time || undefined })
         }

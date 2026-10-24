@@ -67,6 +67,11 @@ Tailscale Funnel https://jin-server.tail0844c0.ts.net ─▶ 홈 PC 127.0.0.1:87
   무료 월·하루 사용량을 아는 API는 그 90%에서 자동 중지. 서버 호출은 `guardApi`/`trackApi`, 브라우저 호출은
   `data/api/usage.ts`의 `externalAllowed`/`reportExternal`(→ `/api/usage/flags`·`/api/usage/map-load`, IP당 하루 100회까지만 셈)
 
+- **후기·포인트** (docs/17): 템플릿·장소 키·검사 = shared `reviews/reviews.ts` (`REVIEW_ASPECTS`·`placeKeyOf`·`ReviewInputSchema`) →
+  서버 `routes/reviews.ts`(쓰기는 소유자·편집자만, 동기화된 지난 일정만, 포인트는 서버만 `point_ledger`) →
+  웹 `features/reviews/`(상세 시트 [후기 입력]·목록, `ReviewSheet`, `/me/reviews`), 오프라인은 `data/reviewQueue.ts`(동기화 뒤 올림).
+  닉네임 가리기 = `users.hide_nickname` → 보여 줄 때 `User#public_no`, 탈퇴하면 후기의 user_id만 NULL
+
 ### API 사용량 — 등록된 외부 API와 무료 사용량 (2026-10-24 최신 자료로 확인)
 
 | id | 분류 | 무료 사용량 (자동 중지 = 90%) | 근거·메모 |

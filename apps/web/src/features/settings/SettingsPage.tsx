@@ -1,4 +1,7 @@
 import type { Settings } from '@trippocket/shared';
+import { useAuth } from '../../data/authStore';
+import { reviewsApi } from '../../data/api/reviews';
+import { maskedName } from '@trippocket/shared';
 import type { ReactNode } from 'react';
 import { resetSettings, updateSettings, useSettings } from '../../data/settingsStore';
 import { useTranslation } from '../../i18n';
@@ -283,6 +286,8 @@ export function SettingsPage() {
           )}
         </Group>
 
+        <PrivacyGroup />
+
         <Group title={t('settings.data')} onReset={() => resetSettings(['backupReminderDays'])}>
           <div className="flex items-center justify-between gap-3">
             <span className="flex flex-col">
@@ -319,6 +324,39 @@ export function SettingsPage() {
         </Group>
       </div>
     </div>
+  );
+}
+
+/** 후기에서 닉네임 가리기 (docs/17 §2.5) — 계정(서버)에 저장, 이미 쓴 후기에도 바로 적용 */
+function PrivacyGroup() {
+  const { t } = useTranslation();
+  const me = useAuth((s) => s.me);
+  const online = useAuth((s) => s.status === 'user');
+  if (!me) return null;
+  const masked = maskedName(me.publicNo ?? 0);
+  return (
+    <Group title={t('settings.privacy')}>
+      <div className="flex items-center justify-between gap-3">
+        <span className="flex flex-col">
+          <span className="text-body-2 font-medium">{t('settings.hideNickname')}</span>
+          <span className="text-caption whitespace-pre-line text-fg-muted">
+            {t('settings.hideNicknameDesc', { masked })}
+          </span>
+        </span>
+        <Switch
+          label={t('settings.hideNickname')}
+          checked={!!me.hideNickname}
+          disabled={!online}
+          onCheckedChange={(v) =>
+            void reviewsApi.setHideNickname(v).then((r) => {
+              if (!r.ok) return toast(t('settings.hideNicknameFailed'));
+              const cur = useAuth.getState().me;
+              if (cur) useAuth.setState({ me: { ...cur, hideNickname: r.data.hideNickname } });
+            })
+          }
+        />
+      </div>
+    </Group>
   );
 }
 

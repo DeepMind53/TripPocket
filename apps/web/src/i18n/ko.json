@@ -368,7 +368,11 @@
     "ai": "AI 추천",
     "aiCats": "처음 고를 카테고리",
     "aiAnchor": "처음 기준 위치",
-    "synced": "설정은 계정에 저장돼 다른 기기에서도 같아요.\n화면·글자 크기·진동은 기기마다 따로예요."
+    "synced": "설정은 계정에 저장돼 다른 기기에서도 같아요.\n화면·글자 크기·진동은 기기마다 따로예요.",
+    "privacy": "개인정보",
+    "hideNickname": "후기에서 닉네임 가리기",
+    "hideNicknameDesc": "다른 사람에게 \"{{masked}}\"처럼 보여요.\n이미 쓴 후기에도 바로 적용돼요.",
+    "hideNicknameFailed": "바꾸지 못했어요. 연결된 뒤 다시 해 주세요"
   },
   "notFound": {
     "title": "페이지를 찾을 수 없어요",
@@ -647,7 +651,8 @@
     "deleteConfirm": "탈퇴하기",
     "loggedOut": "로그아웃했어요",
     "deleted": "탈퇴했어요",
-    "failed": "처리하지 못했어요. 잠시 뒤 다시 시도해 주세요"
+    "failed": "처리하지 못했어요. 잠시 뒤 다시 시도해 주세요",
+    "pointsTitle": "포인트 적립 내역"
   },
   "syncChoice": {
     "title": "이 기기의 여행을 계정에 올릴까요?",
@@ -1058,5 +1063,71 @@
     "yearShort": "{{yy}}년 정보",
     "lastYearLabel": "작년({{year}}년) 같은 날 날씨: {{look}} {{temps}}",
     "forecastLabel": "날씨 예보: {{look}} {{temps}}"
+  },
+  "review": {
+    "write": "후기 입력",
+    "mine": "내 후기",
+    "title": "{{name}} 후기",
+    "required": "필수",
+    "starGroup": "{{aspect}} 별점",
+    "star": "{{aspect}} {{n}}점",
+    "note": "기타",
+    "notePlaceholder": "직접 적어 주세요 (선택)",
+    "needOverall": "종합 별점을 골라 주세요",
+    "submit": "후기 올리기",
+    "submitPoints": "후기 올리기 · +{{n}}P",
+    "saved": "후기를 올렸어요",
+    "savedPoints": "후기를 올렸어요 · +{{n}}P",
+    "queued": "오프라인이에요.\n연결되면 후기를 올려요.",
+    "notVisited": "다녀온 뒤에 후기를 쓸 수 있어요",
+    "viewerOnly": "보기 전용으로 공유받은 여행은 후기를 쓸 수 없어요",
+    "failed": "후기를 올리지 못했어요. 잠시 뒤 다시 해 주세요",
+    "publicAs": "\"{{name}}\"(으)로 다른 사람에게 보여요 · 설정에서 닉네임 가리기",
+    "membersOnly": "장소를 연결하기 전에는 이 여행 멤버만 봐요",
+    "link": {
+      "title": "장소 연결",
+      "desc": "구글·네이버에서 같은 장소를 찾아 연결해 주세요.\n연결하면 다른 사람도 보고, {{n}}P를 받아요.",
+      "search": "연결할 장소 검색",
+      "linked": "{{name}}에 연결됨 — 다른 사람도 볼 수 있어요",
+      "skip": "연결 없이 올리면 포인트는 없어요. 나중에 연결해도 돼요."
+    },
+    "sectionTitle": "후기",
+    "none": "아직 후기가 없어요",
+    "more": "후기 더 보기 ({{n}})",
+    "me": "나",
+    "aspect": {
+      "overall": "종합",
+      "location": "위치",
+      "cleanliness": "위생·청결",
+      "price": "가격",
+      "facility": "시설",
+      "service": "서비스",
+      "taste": "맛",
+      "mood": "분위기",
+      "comfort": "좌석·편안함",
+      "selection": "상품 구성",
+      "access": "접근성",
+      "sights": "볼거리",
+      "crowd": "덜 붐빔",
+      "fun": "재미",
+      "safety": "안전·진행"
+    },
+    "myTitle": "내 후기",
+    "myEmpty": "아직 쓴 후기가 없어요",
+    "myEmptyDesc": "다녀온 일정을 눌러 [후기 입력]으로 남겨 보세요.\n장소를 연결하면 100P를 받아요.",
+    "waiting": "올리기를 기다리는 후기 {{n}}개 — 연결되면 올려요",
+    "notLinked": "장소 연결 전",
+    "deleteOf": "{{name}} 후기 지우기",
+    "deleted": "후기를 지웠어요. 받은 포인트도 돌려놨어요"
+  },
+  "points": {
+    "label": "포인트 {{n}}P · 적립 내역 보기",
+    "desc": "장소를 연결한 후기 1곳마다 100P.\n같은 장소는 한 번, 하루 10곳까지 쌓여요.",
+    "empty": "아직 적립 내역이 없어요",
+    "reason": {
+      "review": "{{name}} 후기",
+      "review_deleted": "{{name}} 후기 지움",
+      "admin_hidden": "{{name}} 후기 숨김(운영자)"
+    }
   }
 }

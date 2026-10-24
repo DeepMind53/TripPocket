@@ -12,6 +12,10 @@ export interface Me {
   isAdmin?: boolean;
   /** false = 아직 닉네임을 직접 정하지 않음 (로그인 서비스 이름) → 정하기 시트 */
   nicknameSet?: boolean;
+  /** 후기 (docs/17): 가린 이름 번호(User#N)·닉네임 가리기·포인트 잔액 */
+  publicNo?: number;
+  hideNickname?: boolean;
+  points?: number;
 }
 
 export interface DeviceSession {

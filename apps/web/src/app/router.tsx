@@ -120,6 +120,12 @@ const allRoutes: RouteObject[] = [
     }),
   },
   {
+    path: 'me/reviews',
+    lazy: async () => ({
+      Component: (await import('../features/reviews/MyReviewsPage')).MyReviewsPage,
+    }),
+  },
+  {
     path: 'labs',
     lazy: async () => ({
       Component: (await import('../features/labs/LabsPage')).LabsPage,

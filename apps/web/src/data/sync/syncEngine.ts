@@ -71,6 +71,8 @@ async function run(): Promise<void> {
   const ok = (await push()) && (await pull());
   // 설정도 계정과 맞춘다 (일정 동기화와 따로 — 실패해도 다음에 다시)
   if (ok === true) await (await import('../settingsSync')).syncSettings();
+  // 오프라인에서 쓴 후기 — 일정이 서버에 올라간 뒤에 (docs/17 §6)
+  if (ok === true) await (await import('../reviewQueue')).flushReviewQueue();
   useSync.setState(
     ok === true
       ? { state: 'idle', lastSyncedAt: new Date().toISOString() }

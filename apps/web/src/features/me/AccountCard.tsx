@@ -16,6 +16,7 @@ import { cn } from '../../shared/lib/cn';
 import { useRouteSheet } from '../../shared/hooks/useRouteSheet';
 import { BottomSheet, Button, IconButton, RadioList, toast } from '../../shared/ui';
 import { NicknameSheet } from './NicknameSheet';
+import { reviewsApi, type PointHistory } from '../../data/api/reviews';
 
 /** 마이 위쪽 계정 칸: 로그인 전 = 안내·로그인 버튼, 로그인 후 = 닉네임·기기·로그아웃·탈퇴 */
 export function AccountCard() {
@@ -23,7 +24,8 @@ export function AccountCard() {
   const { status, me } = useAuth();
   const [sheet, setSheet] = useRouteSheet('account');
   const [nicknameOpen, setNicknameOpen] = useRouteSheet('nickname');
-  const [kind, setKind] = useState<'devices' | 'logout' | 'delete'>('devices');
+  const [kind, setKind] = useState<'devices' | 'logout' | 'delete' | 'points'>('devices');
+  const [points, setPoints] = useState<PointHistory | null>(null);
   const [sessions, setSessions] = useState<DeviceSession[] | null>(null);
   const [wipe, setWipe] = useState<'keep' | 'wipe'>('keep');
   const [busy, setBusy] = useState(false);
@@ -35,6 +37,13 @@ export function AccountCard() {
   const open = (k: typeof kind) => {
     setKind(k);
     if (k === 'devices') void listSessions().then(setSessions);
+    if (k === 'points')
+      void reviewsApi.points().then((r) => {
+        if (!r.ok) return;
+        setPoints(r.data);
+        const cur = useAuth.getState().me;
+        if (cur) useAuth.setState({ me: { ...cur, points: r.data.balance } });
+      });
     setSheet(true);
   };
 
@@ -62,6 +71,15 @@ export function AccountCard() {
             {me.providers.map((p) => t(`login.name.${p}` as 'login.name.kakao')).join(' · ')}
           </span>
           <SyncStatus />
+          {/* 후기 포인트 (docs/17 §2.4) — 누르면 적립 내역 */}
+          <button
+            type="button"
+            onClick={() => open('points')}
+            aria-label={t('points.label', { n: (me.points ?? 0).toLocaleString() })}
+            className="tabular mt-0.5 rounded-full bg-primary-weak px-2.5 py-0.5 text-caption font-bold text-primary"
+          >
+            🅟 {(me.points ?? 0).toLocaleString()}P
+          </button>
         </span>
       </div>
       <div className="grid grid-cols-3 gap-2">
@@ -84,7 +102,7 @@ export function AccountCard() {
         onOpenChange={setSheet}
         title={t(`account.${kind}Title` as 'account.devicesTitle')}
         footer={
-          kind === 'devices' ? undefined : (
+          kind === 'devices' || kind === 'points' ? undefined : (
             <Button
               size="lg"
               fullWidth
@@ -113,6 +131,39 @@ export function AccountCard() {
           )
         }
       >
+        {kind === 'points' && (
+          <div className="flex flex-col gap-2 pb-2">
+            <p className="text-caption whitespace-pre-line text-fg-muted">{t('points.desc')}</p>
+            {points && points.history.length === 0 && (
+              <p className="py-3 text-center text-body-2 text-fg-muted">{t('points.empty')}</p>
+            )}
+            <ul className="flex flex-col divide-y divide-line">
+              {(points?.history ?? []).map((h, i) => (
+                <li key={i} className="flex items-center gap-2 py-2.5">
+                  <span className="flex min-w-0 flex-1 flex-col">
+                    <span className="truncate text-body-2">
+                      {t(`points.reason.${h.reason}` as 'points.reason.review', {
+                        name: h.placeName ?? '',
+                      })}
+                    </span>
+                    <span className="tabular text-caption text-fg-muted">
+                      {h.createdAt.slice(0, 10).replaceAll('-', '.')}
+                    </span>
+                  </span>
+                  <span
+                    className={cn(
+                      'tabular shrink-0 text-body-2 font-bold',
+                      h.delta > 0 ? 'text-primary' : 'text-fg-muted',
+                    )}
+                  >
+                    {h.delta > 0 ? '+' : ''}
+                    {h.delta}P
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
         {kind === 'devices' && (
           <ul className="flex flex-col divide-y divide-line">
             {(sessions ?? []).map((s) => (

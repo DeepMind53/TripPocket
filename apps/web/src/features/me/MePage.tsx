@@ -13,6 +13,7 @@ import {
   Users,
   Gauge,
   FlaskConical,
+  SquarePen,
 } from 'lucide-react';
 import { useAuth } from '../../data/authStore';
 import { useRouteSheet } from '../../shared/hooks/useRouteSheet';
@@ -43,6 +44,7 @@ export function MePage() {
             label={t('pwa.installTitle')}
             onClick={() => setInstallOpen(true)}
           />
+          <MenuRow to="/me/reviews" icon={<SquarePen />} label={t('review.myTitle')} />
           <MenuRow to="/labs" icon={<FlaskConical />} label={t('me.labs')} />
         </MenuGroup>
         {isAdmin && (
