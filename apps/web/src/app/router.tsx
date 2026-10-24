@@ -1,10 +1,11 @@
 import { createBrowserRouter, Navigate, type RouteObject } from 'react-router';
 import { HomePage } from '../features/home/HomePage';
+import { AuthGate } from './AuthGate';
 import { AppShell } from './layouts/AppShell';
 import { NotFoundPage } from './NotFoundPage';
 
-// 라우트 표: docs/03-architecture.md §6
-export const routes: RouteObject[] = [
+// 라우트 표: docs/code-map.md
+const allRoutes: RouteObject[] = [
   {
     element: <AppShell />,
     children: [
@@ -157,6 +158,15 @@ export const routes: RouteObject[] = [
     },
   },
   { path: '*', element: <NotFoundPage /> },
+];
+
+/** 로그인 없이 여는 화면: 로그인, 법적 고지, 보기 전용 링크, 초대 수락(그 안에서 로그인 안내), 없는 주소 */
+const PUBLIC = new Set(['login', 'legal/:doc', 's/:shareId', 'invite/:token', '*']);
+const isPublic = (r: RouteObject) => r.path !== undefined && PUBLIC.has(r.path);
+
+export const routes: RouteObject[] = [
+  { element: <AuthGate />, children: allRoutes.filter((r) => !isPublic(r)) },
+  ...allRoutes.filter(isPublic),
 ];
 
 export function createAppRouter() {

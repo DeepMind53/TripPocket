@@ -1,4 +1,5 @@
 import { buildApp, PROXY_HEADER } from '../src/app';
+import { createSession } from '../src/auth/session';
 import { loadConfig } from '../src/config';
 import { openDb } from '../src/db/database';
 import { fetchExim, latestFx } from '../src/services/fx';
@@ -12,7 +13,7 @@ const config = loadConfig({
 describe('환율 (수출입은행)', () => {
   afterEach(() => vi.unstubAllGlobals());
 
-  it('고시를 받아 1단위 원화로 저장하고, 로그인 없이 최신 값을 준다', async () => {
+  it('고시를 받아 1단위 원화로 저장하고, 로그인한 사람에게만 최신 값을 준다', async () => {
     const db = openDb(':memory:');
     let asked = '';
     vi.stubGlobal('fetch', async (url: string) => {
@@ -29,13 +30,17 @@ describe('환율 (수출입은행)', () => {
     expect(latestFx(db)).toMatchObject({ date: '2026-10-23', rates: { JPY: 9.1234, USD: 1377.5 } });
 
     const app = await buildApp(config, db);
-    const res = await app.inject({
-      method: 'GET',
-      url: '/api/fx/latest',
-      headers: { [PROXY_HEADER]: 's'.repeat(40) },
-    });
+    const get = (cookie?: string) =>
+      app.inject({
+        method: 'GET',
+        url: '/api/fx/latest',
+        headers: { [PROXY_HEADER]: 's'.repeat(40), ...(cookie ? { cookie } : {}) },
+      });
+    expect((await get()).statusCode).toBe(401);
+    db.prepare("INSERT INTO users (id, nickname, created_at) VALUES ('u', 'u', '1')").run();
+    const res = await get(`__Host-sid=${createSession(db, 'u', 't')}`);
     expect(res.statusCode).toBe(200);
-    expect(res.headers['cache-control']).toBe('public, max-age=3600');
+    expect(res.headers['cache-control']).toBe('private, max-age=3600');
     expect(res.json().rates.JPY).toBe(9.1234);
     await app.close();
   });

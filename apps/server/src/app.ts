@@ -4,6 +4,7 @@ import rateLimit from '@fastify/rate-limit';
 import Fastify, { type FastifyInstance } from 'fastify';
 import { timingSafeEqual } from 'node:crypto';
 import { webOrigins, type Config } from './config';
+import { requireUser } from './auth/session';
 import type { Db } from './db/database';
 import { adminRoutes } from './routes/admin';
 import { authRoutes } from './routes/auth';
@@ -86,20 +87,20 @@ export async function buildApp(config: Config, db: Db): Promise<FastifyInstance>
   authRoutes(app, config, db);
   meRoutes(app, db);
   adminRoutes(app, db);
-  usageRoutes(app);
+  usageRoutes(app, db);
   syncRoutes(app, db);
   aiRoutes(app, config, db);
   shareRoutes(app, db);
   placesRoutes(app, config, db);
 
-  // 환율: 로그인 불필요(공개 데이터), IP당 제한, 1시간 캐시 (docs/12 §2.2)
+  // 환율: 로그인한 사람만 (2026-10-24), 사람당 제한, 1시간 캐시 (docs/12 §2.2)
   app.get(
     '/api/fx/latest',
-    { config: { rateLimit: { max: 60, timeWindow: '1 minute' } } },
+    { preHandler: requireUser(db), config: { rateLimit: { max: 60, timeWindow: '1 minute' } } },
     async (_req, reply) => {
       const fx = latestFx(db);
       if (!fx) return reply.code(404).send({ error: 'no_rates' });
-      reply.header('cache-control', 'public, max-age=3600');
+      reply.header('cache-control', 'private, max-age=3600');
       return fx;
     },
   );

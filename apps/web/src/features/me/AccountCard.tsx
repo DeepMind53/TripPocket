@@ -88,8 +88,11 @@ export function AccountCard() {
               onClick={async () => {
                 setBusy(true);
                 try {
-                  if (kind === 'logout') await logout(wipe === 'wipe');
-                  else if (!(await deleteAccount())) {
+                  if (kind === 'logout') {
+                    // 로그아웃하면 로그인 화면으로 바뀌므로(AuthGate) 시트를 먼저 닫는다
+                    setSheet(false);
+                    await logout(wipe === 'wipe');
+                  } else if (!(await deleteAccount())) {
                     toast(t('account.failed'));
                     return;
                   }

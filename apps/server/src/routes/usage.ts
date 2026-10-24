@@ -1,7 +1,9 @@
 import type { FastifyInstance, FastifyRequest } from 'fastify';
+import type { Db } from '../db/database';
+import { requireUser } from '../auth/session';
 import { APIS, apiAllowed, isBrowserApi, trackApi, type ApiId } from '../services/apiUsage';
 
-/** IP 하나가 API마다 하루에 기록할 수 있는 수 — 부풀려서 자동 중지시키는 것 방지 (실사용은 하루 수십 회) */
+/** 한 사람이 API마다 하루에 기록할 수 있는 수 — 부풀려서 자동 중지시키는 것 방지 (실사용은 하루 수십 회) */
 export const MAP_LOADS_PER_IP_DAY = 100;
 
 /** 키(IP)마다 하루 limit 번까지 true. 날짜가 바뀌면 비운다 (메모리에만, 저장·로그 안 함) */
@@ -25,13 +27,15 @@ const BROWSER_APIS = APIS.filter((a) => a.browser).map((a) => a.id);
 
 /**
  * 브라우저에서 바로 부르는 외부 API(지도 SDK·날씨·공휴일 등)의 허용 여부·사용 기록.
- * 로그인 없이도 쓰므로 공개, 대신 IP당 하루 제한 (부풀려서 자동 중지시키는 것 방지)
+ * 로그인한 사람만 (2026-10-24 — 외부인이 지도 키를 쓰지 못하게, 로그인 안 하면 401 → 앱은 지도를 열지 않음).
+ * 사람·API마다 하루 제한 (부풀려서 자동 중지시키는 것 방지)
  */
-export function usageRoutes(app: FastifyInstance): void {
+export function usageRoutes(app: FastifyInstance, db: Db): void {
   const allowHit = dailyQuota(MAP_LOADS_PER_IP_DAY);
+  const auth = requireUser(db);
 
   // 지금 불러도 되나 (관리자가 멈췄거나 자동 상한이면 false)
-  app.get('/api/usage/flags', async (_req, reply) => {
+  app.get('/api/usage/flags', { preHandler: auth }, async (_req, reply) => {
     reply.header('cache-control', 'no-store');
     const apis = Object.fromEntries(BROWSER_APIS.map((id) => [id, apiAllowed(id)]));
     // maps·naverMaps = 예전 앱 호환
@@ -41,7 +45,7 @@ export function usageRoutes(app: FastifyInstance): void {
   // 1회 사용 기록. body.api = API id (예전 앱: body.provider = google|naver, 없으면 google 지도)
   app.post(
     '/api/usage/map-load',
-    { config: { rateLimit: { max: 30, timeWindow: '1 minute' } } },
+    { preHandler: auth, config: { rateLimit: { max: 30, timeWindow: '1 minute' } } },
     async (req: FastifyRequest<{ Body: { provider?: unknown; api?: unknown } | undefined }>) => {
       const b = req.body ?? {};
       const id: ApiId | null = isBrowserApi(b.api)
@@ -52,7 +56,7 @@ export function usageRoutes(app: FastifyInstance): void {
             ? 'google_maps_js'
             : null;
       // 모르는 id·한도를 넘은 IP는 기록하지 않는다 (응답은 같게)
-      if (id && allowHit(`${id}:${req.ip}`)) trackApi(id);
+      if (id && allowHit(`${id}:${req.user!.userId}`)) trackApi(id);
       return { ok: true };
     },
   );

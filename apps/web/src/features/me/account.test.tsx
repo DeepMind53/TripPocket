@@ -78,6 +78,8 @@ describe('계정', () => {
     expect(await screen.findByText('로그아웃했어요')).toBeInTheDocument();
     expect(calls).toContain('POST /auth/logout');
     expect(await db.trips.count()).toBe(0);
-    expect(await screen.findByRole('button', { name: '로그인' })).toBeInTheDocument();
+    // 로그인한 사람만 앱을 쓰므로 로그아웃하면 로그인 화면으로
+    expect(await screen.findByText(/로그인한 뒤 쓸 수 있어요/)).toBeInTheDocument();
+    expect(localStorage.getItem('tp-signed-in')).toBeNull();
   });
 });

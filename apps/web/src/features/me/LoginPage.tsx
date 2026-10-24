@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router';
-import { loginProviders } from '../../data/authStore';
+import { loginProviders, useAuth } from '../../data/authStore';
 import { useTranslation } from '../../i18n';
 import { copyText } from '../../shared/lib/clipboard';
 import { Spinner, TopBar } from '../../shared/ui';
@@ -15,15 +15,17 @@ const KNOWN_ERRORS = ['invite', 'cancelled', 'provider', 'pending', 'rejected', 
 
 /**
  * S-20 로그인 — 소셜 로그인만 (비밀번호 없음, docs/09 §4.1).
- * 로그인은 동기화용 — 안 해도 앱은 전부 동작한다
+ * 로그인한 사람만 앱을 쓴다 (app/AuthGate.tsx) — 로그인 전에는 돌아갈 화면이 없으므로 뒤로·홈 버튼을 숨긴다
  */
-export function LoginPage() {
+export function LoginPage({ returnTo: gateReturn }: { returnTo?: string } = {}) {
   const { t } = useTranslation();
   const [params] = useSearchParams();
   const [providers, setProviders] = useState<string[] | null | undefined>(undefined);
   const error = params.get('error');
   const account = params.get('account');
-  const returnTo = params.get('returnTo') ?? '/me';
+  // 로그인 확인(AuthGate)이 대신 보여 줄 때는 지금 주소로 돌아온다
+  const returnTo = gateReturn ?? params.get('returnTo') ?? '/me';
+  const signedIn = useAuth((s) => s.status === 'user');
 
   useEffect(() => {
     void loginProviders().then(setProviders);
@@ -31,7 +33,7 @@ export function LoginPage() {
 
   return (
     <div className="mx-auto flex min-h-dvh max-w-[560px] flex-col">
-      <TopBar title={t('login.title')} backTo="/me" />
+      <TopBar title={t('login.title')} {...(signedIn ? { backTo: '/me' } : {})} />
       <div className="flex flex-1 flex-col gap-4 px-5 pt-4">
         <p className="text-body-2 text-fg-sub">{t('login.why')}</p>
         {error && (

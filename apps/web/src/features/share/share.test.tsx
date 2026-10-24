@@ -39,8 +39,8 @@ async function openShare() {
 }
 
 describe('공유', () => {
-  it('로그인 없이: 텍스트로 복사(예약번호 없이), 링크는 로그인 안내', async () => {
-    useAuth.setState({ status: 'anon', me: null });
+  it('서버에 닿지 않을 때(로그인했던 기기): 텍스트로 복사(예약번호 없이), 링크는 로그인 안내', async () => {
+    useAuth.setState({ status: 'offline', me: null });
     const { user, sheet } = await openShare();
     await user.click(within(sheet).getByRole('button', { name: '텍스트 복사' }));
     // 복사는 기기 DB를 읽은 뒤라 비동기 — 끝날 때까지 기다린다

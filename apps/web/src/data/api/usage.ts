@@ -10,6 +10,13 @@ export type BrowserApi =
   'google_maps_js' | 'naver_maps_js' | 'open_meteo' | 'nager_date' | 'jsdelivr';
 
 const FLAGS_TTL = 5 * 60_000;
+const DENY_ALL: Record<BrowserApi, boolean> = {
+  google_maps_js: false,
+  naver_maps_js: false,
+  open_meteo: false,
+  nager_date: false,
+  jsdelivr: false,
+};
 let flags: { at: number; apis: Partial<Record<BrowserApi, boolean>> | null } | null = null;
 let pending: Promise<Partial<Record<BrowserApi, boolean>> | null> | null = null;
 
@@ -19,7 +26,12 @@ async function loadFlags(): Promise<Partial<Record<BrowserApi, boolean>> | null>
     '/api/usage/flags',
   ).then((res) => {
     // 예전 서버(apis 없음)는 Google 지도만 알려 준다
-    const apis = res.ok ? (res.data.apis ?? { google_maps_js: res.data.maps }) : null;
+    // 로그인 안 됨(401) → 모두 막음. 서버에 닿지 않음 → null(허용, 로그인했던 기기의 오프라인)
+    const apis = res.ok
+      ? (res.data.apis ?? { google_maps_js: res.data.maps })
+      : res.reason === 'unauthorized'
+        ? DENY_ALL
+        : null;
     flags = { at: Date.now(), apis };
     pending = null;
     return apis;

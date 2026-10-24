@@ -112,23 +112,28 @@ describe('API 사용량 (관리자)', () => {
     expect(api(await report(), 'google_places_details').autoStopped).toBe(true);
   });
 
-  it('지도 로드는 공개 기록, 멈추면 flags.maps = false', async () => {
-    expect((await req('POST', '/api/usage/map-load')).statusCode).toBe(200);
+  it('로그인 안 하면 지도 허용·기록 모두 401 (외부인이 지도 키를 쓰지 못하게)', async () => {
+    expect((await req('GET', '/api/usage/flags')).statusCode).toBe(401);
+    expect((await req('POST', '/api/usage/map-load')).statusCode).toBe(401);
+  });
+
+  it('지도 로드 기록, 멈추면 flags.maps = false', async () => {
+    expect((await req('POST', '/api/usage/map-load', member)).statusCode).toBe(200);
     expect(api(await report(), 'google_maps_js').used).toBe(1);
     await req('POST', '/api/admin/api-usage/google_maps_js', admin, { paused: true });
-    expect((await req('GET', '/api/usage/flags')).json()).toMatchObject({
+    expect((await req('GET', '/api/usage/flags', member)).json()).toMatchObject({
       maps: false,
       naverMaps: true,
     });
   });
 
   it('네이버 지도 로드는 따로 기록·중지', async () => {
-    await req('POST', '/api/usage/map-load', undefined, { provider: 'naver' });
+    await req('POST', '/api/usage/map-load', member, { provider: 'naver' });
     const r = await report();
     expect(api(r, 'naver_maps_js').used).toBe(1);
     expect(api(r, 'google_maps_js').used).toBe(0);
     await req('POST', '/api/admin/api-usage/naver_maps_js', admin, { paused: true });
-    expect((await req('GET', '/api/usage/flags')).json()).toMatchObject({
+    expect((await req('GET', '/api/usage/flags', member)).json()).toMatchObject({
       maps: true,
       naverMaps: false,
     });
@@ -185,13 +190,13 @@ describe('API 사용량 — 모든 외부 API·하루 한도·중지 불가 항�
   });
 
   it('브라우저 API(날씨 등)도 기록·중지, 모르는 id는 무시', async () => {
-    await req('POST', '/api/usage/map-load', undefined, { api: 'open_meteo' });
-    await req('POST', '/api/usage/map-load', undefined, { api: 'gemini' });
+    await req('POST', '/api/usage/map-load', member, { api: 'open_meteo' });
+    await req('POST', '/api/usage/map-load', member, { api: 'gemini' });
     const r = await report();
     expect(api(r, 'open_meteo').used).toBe(1);
     expect(api(r, 'gemini').used).toBe(0);
     await req('POST', '/api/admin/api-usage/open_meteo', admin, { paused: true });
-    const flags = (await req('GET', '/api/usage/flags')).json() as {
+    const flags = (await req('GET', '/api/usage/flags', member)).json() as {
       apis: Record<string, boolean>;
     };
     expect(flags.apis).toMatchObject({ open_meteo: false, nager_date: true, google_maps_js: true });
@@ -203,7 +208,7 @@ describe('API 사용량 — 모든 외부 API·하루 한도·중지 불가 항�
     expect(
       (await req('POST', '/api/admin/api-usage/oauth_kakao', admin, { paused: true })).statusCode,
     ).toBe(400);
-    await req('GET', '/api/usage/flags');
+    await req('GET', '/api/usage/flags', member);
     expect(api(await report(), 'cf_functions').used).toBeGreaterThan(0);
   });
 

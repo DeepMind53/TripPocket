@@ -22,11 +22,29 @@ export interface DeviceSession {
 
 type Status = 'unknown' | 'anon' | 'user' | 'offline';
 
-/** 로그인 상태 (로그인 안 해도 앱은 전부 동작 — 서버는 동기화용) */
+/** 로그인 상태. 로그인한 사람만 앱을 쓴다 (app/AuthGate.tsx) */
 export const useAuth = create<{ status: Status; me: Me | null }>(() => ({
   status: 'unknown',
   me: null,
 }));
+
+/** 이 기기에서 로그인한 적 있음 (오프라인일 때도 앱을 열기 위해 — 비밀값 아님) */
+const SIGNED_IN_KEY = 'tp-signed-in';
+export function wasSignedIn(): boolean {
+  try {
+    return localStorage.getItem(SIGNED_IN_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+useAuth.subscribe((s) => {
+  try {
+    if (s.status === 'user') localStorage.setItem(SIGNED_IN_KEY, '1');
+    else if (s.status === 'anon') localStorage.removeItem(SIGNED_IN_KEY);
+  } catch {
+    // 저장 못 하면 오프라인일 때 로그인 화면이 보일 뿐
+  }
+});
 
 export async function refreshMe(): Promise<void> {
   const res = await api<Me>('/api/me');

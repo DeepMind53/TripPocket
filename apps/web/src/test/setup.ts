@@ -18,3 +18,9 @@ configure({ asyncUtilTimeout: 5000 });
 // 단위 테스트는 외부 서비스(공휴일·날씨)를 부르지 않는다. 필요한 테스트만 fetch를 따로 흉내 낸다
 globalThis.fetch = (() =>
   Promise.reject(new Error('테스트에서는 네트워크를 쓰지 않아요'))) as typeof fetch;
+
+// 앱은 로그인한 사람만 쓴다(app/AuthGate). 화면 테스트는 "이 기기에서 로그인한 적 있음"으로 시작한다.
+// 서버가 401이면(로그인 안 됨) 로그인 화면으로 가는 것은 따로 시험한다 (app/authGate.test.tsx)
+beforeEach(() => {
+  localStorage.setItem('tp-signed-in', '1');
+});

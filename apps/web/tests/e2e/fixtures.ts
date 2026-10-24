@@ -9,6 +9,8 @@ export { expect } from '@playwright/test';
 export const test = base.extend<{ offlineApis: void }>({
   offlineApis: [
     async ({ page }, use) => {
+      // 앱은 로그인한 사람만 쓴다(AuthGate). e2e는 서버 없이 돌므로 "이 기기에서 로그인한 적 있음"으로 시작
+      await page.addInitScript(() => localStorage.setItem('tp-signed-in', '1'));
       await page.route('https://date.nager.at/**', (r) => r.fulfill({ json: [] }));
       await page.route('https://api.open-meteo.com/**', (r) =>
         r.fulfill({ json: { daily: { time: [] } } }),
