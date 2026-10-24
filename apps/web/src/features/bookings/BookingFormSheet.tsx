@@ -271,39 +271,42 @@ function BookingForm({
 
       {kind === 'flight' ? (
         <>
-          <Row>
-            <Field label={t('bookings.provider')}>
+          {/* 편명만 넣고 불러오기 — 점선으로 한 묶음 (사용자 요청 2026-10-25) */}
+          <div className="flex flex-col gap-1.5 rounded-card border border-dashed border-primary/60 p-2.5">
+            <label htmlFor="bk-flight" className="text-caption font-semibold text-fg-sub">
+              {t('bookings.flightNo')}
+            </label>
+            <div className="flex gap-1.5">
               <input
-                id="bk-provider"
-                value={f.provider}
-                maxLength={60}
-                onChange={set('provider')}
-                className={inputClass}
+                id="bk-flight"
+                value={f.flightNo}
+                maxLength={20}
+                placeholder="KE703"
+                onChange={set('flightNo')}
+                className={`${inputClass} min-w-0 flex-1 uppercase`}
               />
-            </Field>
-            <Field label={t('bookings.flightNo')}>
-              <div className="flex gap-1.5">
-                <input
-                  id="bk-flight"
-                  value={f.flightNo}
-                  maxLength={20}
-                  placeholder="KE703"
-                  onChange={set('flightNo')}
-                  className={`${inputClass} min-w-0 flex-1 uppercase`}
-                />
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  className="h-12 shrink-0"
-                  loading={looking}
-                  disabled={!/^[a-z0-9]{2}\s?\d{1,4}[a-z]?$/i.test(f.flightNo.trim())}
-                  onClick={() => void lookupFlight()}
-                >
-                  {t('bookings.lookup')}
-                </Button>
-              </div>
-            </Field>
-          </Row>
+              <Button
+                size="sm"
+                variant="secondary"
+                className="h-12 shrink-0"
+                loading={looking}
+                disabled={!/^[a-z0-9]{2}\s?\d{1,4}[a-z]?$/i.test(f.flightNo.trim())}
+                onClick={() => void lookupFlight()}
+              >
+                {t('bookings.lookup')}
+              </Button>
+            </div>
+            <p className="text-micro text-fg-muted">{t('bookings.lookupHint')}</p>
+          </div>
+          <Field label={t('bookings.provider')}>
+            <input
+              id="bk-provider"
+              value={f.provider}
+              maxLength={60}
+              onChange={set('provider')}
+              className={inputClass}
+            />
+          </Field>
           {lookedUp && (
             <p role="status" className="text-caption text-fg-muted">
               {t('bookings.lookupNote')}

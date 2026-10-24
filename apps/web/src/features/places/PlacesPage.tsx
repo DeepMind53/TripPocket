@@ -12,7 +12,7 @@ import { isDomesticTrip } from '../../domain/tripPlace';
 import { ServerOfflineNotice } from '../common/ServerOfflineNotice';
 import { useTranslation } from '../../i18n';
 import { openMapLink, placeLink } from '../../shared/lib/directions';
-import { Button, Chip, IconButton, toast } from '../../shared/ui';
+import { Button, Chip, IconButton, toast, ScrollRow } from '../../shared/ui';
 
 const CATEGORIES: { kind: ItemKind; key: 'food' | 'cafe' | 'place' | 'shopping' | 'lodging' }[] = [
   { kind: 'food', key: 'food' },
@@ -88,7 +88,7 @@ export function PlacesPage() {
           {t('places.go')}
         </Button>
       </form>
-      <div className="flex gap-2 overflow-x-auto pb-1">
+      <ScrollRow className="flex gap-2 pt-1.5 pb-1">
         {CATEGORIES.map((c) => (
           <Chip
             key={c.key}
@@ -102,7 +102,7 @@ export function PlacesPage() {
             {t(`places.cat.${c.key}`)}
           </Chip>
         ))}
-      </div>
+      </ScrollRow>
 
       {results === null ? (
         <p className="text-caption text-fg-muted">{t('places.hint', { city })}</p>

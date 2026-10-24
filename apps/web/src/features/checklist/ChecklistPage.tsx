@@ -15,6 +15,7 @@ import {
   SegmentedControl,
   toast,
   Skeleton,
+  ScrollRow,
 } from '../../shared/ui';
 import { ChecklistBoard } from './ChecklistBoard';
 import { TemplateSheet } from './TemplateSheet';
@@ -267,10 +268,10 @@ function AddRow({
         </Button>
       </form>
       {list === 'packing' && (
-        <div
+        <ScrollRow
           role="radiogroup"
           aria-label={t('checklist.category')}
-          className="flex items-center gap-1.5 overflow-x-auto pb-1"
+          className="flex items-center gap-1.5 pt-1.5 pb-1"
         >
           {draft.categories.map((c) => (
             <Chip
@@ -322,7 +323,7 @@ function AddRow({
               <Plus aria-hidden="true" className="size-4" />
             </Chip>
           )}
-        </div>
+        </ScrollRow>
       )}
     </div>
   );

@@ -1,6 +1,7 @@
 export { BottomSheet } from './BottomSheet';
 export { Button } from './Button';
 export { Chip } from './Chip';
+export { ScrollRow } from './ScrollRow';
 export { DateRangePicker, type DayNote } from './DateRangePicker';
 export { WeatherIcon } from './WeatherIcon';
 export { EmptyState } from './EmptyState';

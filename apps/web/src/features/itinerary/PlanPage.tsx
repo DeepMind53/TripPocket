@@ -39,7 +39,16 @@ import { useRouteSheet } from '../../shared/hooks/useRouteSheet';
 import { cn } from '../../shared/lib/cn';
 import { formatMonthDay } from '../../shared/lib/dateFormat';
 import { sortByTimeKeepingUntimed } from '../../domain/schedule';
-import { BottomSheet, Button, Chip, IconButton, snackbar, toast, Skeleton } from '../../shared/ui';
+import {
+  BottomSheet,
+  Button,
+  Chip,
+  IconButton,
+  snackbar,
+  toast,
+  Skeleton,
+  ScrollRow,
+} from '../../shared/ui';
 import { DirectionsSheet } from '../common/DirectionsSheet';
 import { openDirectionsDirect } from '../common/openDirections';
 import { ItemDetailSheet } from './ItemDetailSheet';
@@ -313,11 +322,12 @@ function PlanView({
 
   return (
     <div className="flex flex-col">
-      <div
+      <ScrollRow
         ref={chipsRef}
         role="toolbar"
         aria-label={t('plan.dayChipsLabel')}
-        className="sticky top-[calc(env(safe-area-inset-top)+56px)] z-10 flex gap-2 overflow-x-auto bg-bg px-5 py-2"
+        outerClassName="sticky top-[calc(env(safe-area-inset-top)+56px)] z-10 bg-bg"
+        className="flex gap-2 px-5 py-2"
       >
         <Chip selected={filter === 'all'} onClick={() => setFilter('all')}>
           {t('plan.all')}
@@ -353,7 +363,7 @@ function PlanView({
         >
           {t('plan.wishlist')}
         </Chip>
-      </div>
+      </ScrollRow>
 
       <div className="flex items-center justify-between gap-2 px-5 pt-1">
         {editing ? (
