@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react';
 import { Outlet, useLocation } from 'react-router';
+import { useScrollMemory } from './useScrollMemory';
 import { useAuth, wasSignedIn } from '../data/authStore';
 import { Spinner } from '../shared/ui';
 import { useStartScreen } from './useStartScreen';
@@ -27,7 +28,14 @@ export function AuthGate() {
   const loc = useLocation();
   // 설정 "앱을 열면" (홈·진행 중인 여행·마지막 화면)
   useStartScreen();
-  if (status === 'user' || (status !== 'anon' && wasSignedIn())) return <Outlet />;
+  // 화면마다 보던 위치 기억 — 탭을 오가도 보던 날짜로 (docs/20 U6)
+  useScrollMemory();
+  if (status === 'user' || (status !== 'anon' && wasSignedIn()))
+    return (
+      <>
+        <Outlet />
+      </>
+    );
   if (status === 'unknown') return <Loading />;
   return (
     <Suspense fallback={<Loading />}>

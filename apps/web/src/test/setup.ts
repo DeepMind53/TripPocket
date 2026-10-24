@@ -32,3 +32,6 @@ await Promise.all([
   import('../shared/ui/RadioList').then((m) => m.preloadRadioList()),
   import('../features/common/QuickMenu').then((m) => m.preloadQuickMenu()),
 ]);
+
+// jsdom에는 스크롤이 없다 (화면별 보던 위치 기억 — app/AuthGate.tsx ScrollRestoration)
+window.scrollTo = (() => {}) as typeof window.scrollTo;

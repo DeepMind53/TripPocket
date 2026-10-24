@@ -168,3 +168,24 @@ test('전체 보기: 스크롤하면 보고 있는 날의 칩이 따라온다', 
     .poll(() => chips.locator('[aria-current="location"]').getAttribute('data-chip'))
     .not.toBe(first);
 });
+
+// 탭을 오가도 보던 위치로 (docs/20 U6)
+test('일정 → 예약 탭 → 일정으로 돌아오면 보던 위치 그대로', async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 640 });
+  const base = await seedTrip(page);
+  await page.goto(`${base}/plan?day=all`);
+  await expect(page.getByRole('region', { name: /1일차/ })).toBeVisible();
+  await page.evaluate(() => window.scrollTo(0, 400));
+  await page.waitForTimeout(200);
+  await page
+    .getByRole('navigation', { name: '여행 메뉴' })
+    .getByRole('link', { name: '예약' })
+    .click();
+  await expect(page).toHaveURL(/\/bookings$/);
+  await page
+    .getByRole('navigation', { name: '여행 메뉴' })
+    .getByRole('link', { name: '일정' })
+    .click();
+  await expect(page).toHaveURL(/\/plan/);
+  await expect.poll(() => page.evaluate(() => Math.round(window.scrollY))).toBeGreaterThan(300);
+});
