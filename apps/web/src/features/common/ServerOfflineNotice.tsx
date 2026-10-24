@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { refreshMe, useAuth } from '../../data/authStore';
 import { useTranslation } from '../../i18n';
 import { Button, EmptyState, Spinner } from '../../shared/ui';
+import { OfflineNote } from './OfflineNote';
 
 /**
  * 서버가 필요한 기능(장소 찾기·AI·공유 링크·계정)이 지금 서버에 닿지 않을 때 (docs/16 A2).
@@ -23,7 +24,7 @@ export function ServerOfflineNotice({ inline = false }: { inline?: boolean }) {
     await refreshMe();
     setBusy(false);
   };
-  if (inline) return <p className="text-caption text-fg-muted">{t('offline.inline')}</p>;
+  if (inline) return <OfflineNote text={t('offline.inline')} />;
   return (
     <EmptyState
       emoji="🔌"

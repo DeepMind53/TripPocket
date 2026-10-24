@@ -17,6 +17,7 @@ import { compareKeys } from '@trippocket/shared';
 import { mapAllowed, reportMapLoad } from '../../data/api/usage';
 import { placeSearchLinks } from '../../shared/lib/fallbackLinks';
 import { FallbackLinks } from '../common/FallbackLinks';
+import { OfflineNote } from '../common/OfflineNote';
 
 /** "장소를 검색해 고른 일정만 표시" 안내는 이 기기에서 처음 한 번만 (사용자 요청 2026-10-24) */
 const HINT_KEY = 'tp-map-hint-seen';
@@ -283,7 +284,7 @@ export function TripMap({
       )}
       {message && (
         <div className="absolute inset-x-3 bottom-3 z-[1] flex flex-col items-center gap-1.5 rounded-btn bg-surface/95 px-3 py-2 text-center text-caption whitespace-pre-line text-fg-sub shadow">
-          {message}
+          {!online ? <OfflineNote text={message} /> : message}
           {/* 무료 사용량으로 멈췄으면 지도 서비스에서 직접 (사용자 요청 2026-10-25) */}
           {status === 'paused' && (
             <FallbackLinks

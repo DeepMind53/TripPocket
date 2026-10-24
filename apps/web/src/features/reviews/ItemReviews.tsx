@@ -5,6 +5,7 @@ import type { ItemReviews as Data } from '../../data/api/reviews';
 import { useTranslation } from '../../i18n';
 import { reviewDate } from './reviewDate';
 import { Stars } from './StarRating';
+import { OfflineNote } from '../common/OfflineNote';
 
 /**
  * 일정 상세 아래 후기 (docs/17 §2.1): 평균·항목별 평균 + 최근 3개, [후기 더 보기]로 전부.
@@ -13,7 +14,10 @@ import { Stars } from './StarRating';
 export function ItemReviews({ data, kind }: { data: Data | null; kind: ReviewKind }) {
   const { t } = useTranslation();
   const [all, setAll] = useState(false);
-  if (!data) return null;
+  if (!data)
+    return typeof navigator !== 'undefined' && navigator.onLine === false ? (
+      <OfflineNote text={t('review.offline')} />
+    ) : null;
   const { reviews, summary } = data;
   const avg = summary.averages;
   const aspects = (REVIEW_ASPECTS[kind] as readonly ReviewAspect[]).filter(

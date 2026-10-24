@@ -4,6 +4,7 @@ import { mapAllowed, reportMapLoad } from '../../data/api/usage';
 import { useSettings } from '../../data/settingsStore';
 import { useTranslation } from '../../i18n';
 import { chooseProvider, mountMap, type LatLng } from '../../shared/maps';
+import { OfflineNote } from '../common/OfflineNote';
 
 /** 한국 안 좌표면 국내 (네이버 지도 우선) */
 const inKorea = (c: LatLng) => c.lat > 33 && c.lat < 39 && c.lng > 124 && c.lng < 132;
@@ -94,9 +95,9 @@ export function SavedMap({
     <div className="relative h-[55vh] overflow-hidden rounded-2xl bg-bg-subtle">
       <div ref={el} className="absolute inset-0" />
       {notice && (
-        <p className="absolute inset-0 flex items-center justify-center px-6 text-center text-body-2 whitespace-pre-line text-fg-muted">
-          {notice}
-        </p>
+        <div className="absolute inset-0 flex items-center justify-center px-6 text-center text-body-2 whitespace-pre-line text-fg-muted">
+          {!online ? <OfflineNote text={notice} /> : notice}
+        </div>
       )}
     </div>
   );
