@@ -39,14 +39,14 @@ async function openShare() {
 }
 
 describe('공유', () => {
-  it('서버에 닿지 않을 때(로그인했던 기기): 텍스트로 복사(예약번호 없이), 링크는 로그인 안내', async () => {
+  it('서버에 닿지 않을 때(로그인했던 기기): 텍스트로 복사(예약번호 없이), 링크는 연결 안 됨 안내', async () => {
     useAuth.setState({ status: 'offline', me: null });
     const { user, sheet } = await openShare();
     await user.click(within(sheet).getByRole('button', { name: '텍스트 복사' }));
     // 복사는 기기 DB를 읽은 뒤라 비동기 — 끝날 때까지 기다린다
     await waitFor(() => expect(copied[0]).toMatch(/^🗼 도쿄 가을여행\n/));
     expect(copied[0]).toContain('[1일차');
-    expect(within(sheet).getByText(/로그인하면 링크만으로/)).toBeInTheDocument();
+    expect(within(sheet).getByText(/서버에 연결할 수 없어 링크/)).toBeInTheDocument();
   });
 
   it('로그인: 보기 전용 링크를 만들면 주소가 복사되고, 소유자는 초대 링크를 만든다', async () => {

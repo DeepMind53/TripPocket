@@ -7,7 +7,7 @@ import {
 } from '@trippocket/shared';
 import { ChevronDown, Heart, MapPin, Plus, Sparkles, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router';
+import { useSearchParams } from 'react-router';
 import { api } from '../../data/api/client';
 import { useAuth } from '../../data/authStore';
 import { useTrip, useTripBookings } from '../../data/hooks';
@@ -17,17 +17,10 @@ import { settingsRepo } from '../../data/repositories/settingsRepo';
 import { lodgingForNight } from '../../domain/lodging';
 import { isDomesticTrip } from '../../domain/tripPlace';
 import { PlaceAutocomplete } from '../common/PlaceAutocomplete';
+import { ServerOfflineNotice } from '../common/ServerOfflineNotice';
 import { useTranslation } from '../../i18n';
 import { openMapLink, placeLink } from '../../shared/lib/directions';
-import {
-  Button,
-  Chip,
-  EmptyState,
-  IconButton,
-  SegmentedControl,
-  TopBar,
-  toast,
-} from '../../shared/ui';
+import { Button, Chip, IconButton, SegmentedControl, TopBar, toast } from '../../shared/ui';
 
 /** origin: blog = 네이버 블로그(AI 정리), google = Google 장소 검색, both = 둘 다 */
 type Rec = Recommendation & { place?: PlaceSummary; origin?: 'blog' | 'google' | 'both' };
@@ -55,7 +48,6 @@ const inKorea = (lat: number, lng: number) => lat > 33 && lat < 38.7 && lng > 12
  */
 export function AiPage() {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const [params] = useSearchParams();
   const tripId = params.get('trip') ?? '';
   const trip = useTrip(tripId);
@@ -144,20 +136,7 @@ export function AiPage() {
     return (
       <div className="mx-auto min-h-dvh max-w-[560px]">
         <TopBar title={t('ai.title')} backTo="/" />
-        <EmptyState
-          emoji="✨"
-          title={t('ai.title')}
-          description={t('ai.needLogin')}
-          action={
-            <Button
-              onClick={() =>
-                void navigate(`/login?returnTo=${encodeURIComponent(`/ai?trip=${tripId}`)}`)
-              }
-            >
-              {t('me.login')}
-            </Button>
-          }
-        />
+        <ServerOfflineNotice />
       </div>
     );
 

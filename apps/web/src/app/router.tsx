@@ -137,26 +137,32 @@ const allRoutes: RouteObject[] = [
       Component: (await import('../features/backup/BackupPage')).BackupPage,
     }),
   },
+  // AI 수집 원자료 점검 — 관리자만 (서버도 관리자만, docs/16 A3)
   {
-    path: 'dev/ui',
-    lazy: async () => {
-      const { DevUiPage } = await import('../features/dev/DevUiPage');
-      return { Component: DevUiPage };
-    },
-  },
-  {
-    path: 'dev/ai',
+    path: 'admin/ai',
     lazy: async () => ({
       Component: (await import('../features/dev/DevAiPage')).DevAiPage,
     }),
   },
-  {
-    path: 'dev/db',
-    lazy: async () => {
-      const { DevDbPage } = await import('../features/dev/DevDbPage');
-      return { Component: DevDbPage };
-    },
-  },
+  // 개발용 화면은 개발 서버에서만 (운영 빌드에는 경로 자체가 없음)
+  ...(import.meta.env.DEV
+    ? [
+        {
+          path: 'dev/ui',
+          lazy: async () => {
+            const { DevUiPage } = await import('../features/dev/DevUiPage');
+            return { Component: DevUiPage };
+          },
+        },
+        {
+          path: 'dev/db',
+          lazy: async () => {
+            const { DevDbPage } = await import('../features/dev/DevDbPage');
+            return { Component: DevDbPage };
+          },
+        },
+      ]
+    : []),
   { path: '*', element: <NotFoundPage /> },
 ];
 

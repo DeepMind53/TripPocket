@@ -6,7 +6,7 @@ import { audit } from './auth';
 import { isApiId, isPausable, setApiLimit, setApiPaused, usageReport } from '../services/apiUsage';
 
 /** 관리자만: 로그인 + users.is_admin (아니면 403) */
-function requireAdmin(db: Db) {
+export function requireAdmin(db: Db) {
   const user = requireUser(db);
   return async (req: FastifyRequest, reply: FastifyReply) => {
     await user(req, reply);

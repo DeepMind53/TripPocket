@@ -7,6 +7,7 @@ export function NotFoundPage() {
   return (
     <main className="mx-auto min-h-dvh max-w-[560px] pt-16">
       <EmptyState
+        asPageTitle
         emoji="🧭"
         title={t('notFound.title')}
         description={t('notFound.desc')}

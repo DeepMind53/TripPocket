@@ -9,16 +9,26 @@ export interface EmptyStateProps {
   action?: ReactNode;
   /** 개발 중 안내 (예: "5단계에서 만들어요") */
   note?: string;
+  /** 화면 전체가 이 안내뿐일 때 h1 (스크린리더가 화면 제목으로 읽음, docs/16 A4) */
+  asPageTitle?: boolean;
 }
 
 /** 빈 화면은 다음 행동으로 초대한다 (docs/11 §9) */
-export function EmptyState({ emoji, title, description, action, note }: EmptyStateProps) {
+export function EmptyState({
+  emoji,
+  title,
+  description,
+  action,
+  note,
+  asPageTitle = false,
+}: EmptyStateProps) {
+  const Title = asPageTitle ? 'h1' : 'p';
   return (
     <div className="flex flex-col items-center gap-2 px-6 py-14 text-center">
       <span aria-hidden="true" className="mb-1 text-[44px] leading-none">
         {emoji}
       </span>
-      <p className="text-title-2">{title}</p>
+      <Title className="text-title-2">{title}</Title>
       {description && <p className="max-w-[30ch] text-body-2 text-fg-sub">{description}</p>}
       {action && <div className="mt-3">{action}</div>}
       {note && (

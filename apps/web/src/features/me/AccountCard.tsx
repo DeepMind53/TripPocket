@@ -1,6 +1,5 @@
 import { LogOut, MonitorSmartphone, Pencil, UserX } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router';
 import {
   deleteAccount,
   listSessions,
@@ -11,6 +10,7 @@ import {
   type DeviceSession,
 } from '../../data/authStore';
 import { useSync } from '../../data/sync/syncStore';
+import { ServerOfflineNotice } from '../common/ServerOfflineNotice';
 import { useTranslation } from '../../i18n';
 import { cn } from '../../shared/lib/cn';
 import { useRouteSheet } from '../../shared/hooks/useRouteSheet';
@@ -20,7 +20,6 @@ import { NicknameSheet } from './NicknameSheet';
 /** 마이 위쪽 계정 칸: 로그인 전 = 안내·로그인 버튼, 로그인 후 = 닉네임·기기·로그아웃·탈퇴 */
 export function AccountCard() {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const { status, me } = useAuth();
   const [sheet, setSheet] = useRouteSheet('account');
   const [nicknameOpen, setNicknameOpen] = useRouteSheet('nickname');
@@ -41,14 +40,8 @@ export function AccountCard() {
 
   if (status !== 'user' || !me)
     return (
-      <section className="flex flex-col gap-3 rounded-card bg-bg-subtle p-4">
-        <p className="text-body-2 text-fg-sub">{t('me.loginPrompt')}</p>
-        {status === 'offline' && (
-          <p className="text-caption text-fg-muted">{t('login.serverOffline')}</p>
-        )}
-        <Button variant="secondary" onClick={() => void navigate('/login')}>
-          {t('me.login')}
-        </Button>
+      <section className="rounded-card bg-bg-subtle">
+        <ServerOfflineNotice />
       </section>
     );
 

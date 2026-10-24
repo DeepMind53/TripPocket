@@ -111,3 +111,36 @@ test('여행 만들기: 도시를 검색해도 검색창·[다음] 버튼이 움
   await page.getByRole('list', { name: '검색 결과' }).getByRole('button').first().click();
   expect(await box(next), '도시 선택 후 [다음]').toEqual(nextRef);
 });
+
+// ⚡ 플로팅 버튼이 내용을 가리지 않는다 (docs/16 A1): 처음 자리는 하단 탭 바로 위,
+// 화면 끝까지 스크롤했을 때 버튼 밑에 깔린 누를 수 있는 요소가 없다
+test('⚡ 버튼은 하단 탭 위에 있고, 화면 끝에서 누를 것을 가리지 않는다', async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 740 });
+  const base = await seedTrip(page);
+  for (const path of [`${base}/plan?day=all`, `${base}/checklist`, '/me', '/trips']) {
+    await page.goto(path);
+    const fab = page.getByRole('button', { name: '빠른 메뉴' });
+    await expect(fab).toBeVisible();
+    await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+    await page.waitForTimeout(1200); // 스크롤 뒤 원래 크기로
+    const hidden = await page.evaluate(() => {
+      const f = document.querySelector('button[aria-label="빠른 메뉴"]')!.getBoundingClientRect();
+      const tab = document.querySelector('nav')?.getBoundingClientRect();
+      const under = [...document.querySelectorAll('main a, main button, main [role="checkbox"]')]
+        .filter((el) => {
+          const r = el.getBoundingClientRect();
+          return (
+            r.width > 0 &&
+            r.left < f.right &&
+            r.right > f.left &&
+            r.top < f.bottom &&
+            r.bottom > f.top
+          );
+        })
+        .map((el) => el.getAttribute('aria-label') ?? el.textContent?.trim());
+      return { under, aboveTab: !tab || f.bottom <= tab.top };
+    });
+    expect(hidden.aboveTab, `${path}: 탭 위`).toBe(true);
+    expect(hidden.under, `${path}: 버튼 밑에 깔린 요소`).toEqual([]);
+  }
+});

@@ -1,7 +1,7 @@
 import type { ItemKind, PlaceSummary } from '@trippocket/shared';
 import { Heart, MapPin, Plus, Search } from 'lucide-react';
 import { useState } from 'react';
-import { useNavigate, useParams } from 'react-router';
+import { useParams } from 'react-router';
 import { useCanEdit } from '../../data/tripRoles';
 import { placesApi } from '../../data/api/places';
 import { useAuth } from '../../data/authStore';
@@ -9,9 +9,10 @@ import { useTrip } from '../../data/hooks';
 import { itemRepo } from '../../data/repositories/itemRepo';
 import { savedPlaceRepo } from '../../data/repositories/savedPlaceRepo';
 import { isDomesticTrip } from '../../domain/tripPlace';
+import { ServerOfflineNotice } from '../common/ServerOfflineNotice';
 import { useTranslation } from '../../i18n';
 import { openMapLink, placeLink } from '../../shared/lib/directions';
-import { Button, Chip, EmptyState, IconButton, toast } from '../../shared/ui';
+import { Button, Chip, IconButton, toast } from '../../shared/ui';
 
 const CATEGORIES: { kind: ItemKind; key: 'food' | 'cafe' | 'place' | 'shopping' | 'lodging' }[] = [
   { kind: 'food', key: 'food' },
@@ -27,7 +28,6 @@ const CATEGORIES: { kind: ItemKind; key: 'food' | 'cafe' | 'place' | 'shopping' 
  */
 export function PlacesPage() {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const { tripId = '' } = useParams();
   // 보기 전용 여행이면 "일정에 추가"를 숨긴다 (저장한 장소는 내 것이라 그대로)
   const canEdit = useCanEdit(tripId);
@@ -64,15 +64,7 @@ export function PlacesPage() {
     ...(p.url && p.source !== 'google' ? { externalUrl: p.url } : {}),
   });
 
-  if (!loggedIn)
-    return (
-      <EmptyState
-        emoji="🔍"
-        title={t('places.emptyTitle')}
-        description={t('places.needLogin')}
-        action={<Button onClick={() => void navigate('/login')}>{t('me.login')}</Button>}
-      />
-    );
+  if (!loggedIn) return <ServerOfflineNotice />;
 
   return (
     <div className="flex flex-col gap-3 px-5 pt-3">

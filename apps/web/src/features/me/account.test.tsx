@@ -42,11 +42,9 @@ beforeEach(async () => {
 afterEach(() => vi.unstubAllGlobals());
 
 describe('계정', () => {
-  it('로그인 전: 안내 + 로그인 화면에 켜진 제공자 버튼', async () => {
+  it('로그인 전: 마이를 열면 그 자리에서 로그인 화면, 켜진 제공자 버튼', async () => {
     mockServer(false);
-    const user = userEvent.setup();
     renderAt('/me');
-    await user.click(await screen.findByRole('button', { name: '로그인' }));
     const kakao = await screen.findByRole('link', { name: '카카오로 시작하기' });
     expect(kakao).toHaveAttribute('href', '/auth/kakao/start?returnTo=%2Fme');
     expect(screen.getByRole('link', { name: 'Google로 시작하기' })).toBeInTheDocument();
@@ -100,4 +98,22 @@ describe('계정', () => {
     expect(calls).toContain('PATCH /api/me/nickname');
     expect(await screen.findByText('진하')).toBeInTheDocument();
   });
+});
+
+it('네이버 로그인을 누르면 먼저 "관리자에게 네이버 아이디 등록" 안내', async () => {
+  mockServer(false);
+  const user = userEvent.setup();
+  renderAt('/login');
+  await screen.findByRole('link', { name: '네이버로 시작하기' });
+  // 카카오·구글은 안내 없이 바로
+  expect(screen.getByRole('link', { name: '카카오로 시작하기' })).toHaveAttribute(
+    'href',
+    '/auth/kakao/start?returnTo=%2Fme',
+  );
+  await user.click(screen.getByRole('link', { name: '네이버로 시작하기' }));
+  const sheet = await screen.findByRole('dialog', { name: '네이버 로그인 전에 확인해 주세요' });
+  expect(within(sheet).getByText(/관리자에게 로그인에 쓸 네이버 아이디/)).toBeInTheDocument();
+  expect(
+    within(sheet).getByRole('button', { name: '등록했어요, 네이버로 계속하기' }),
+  ).toBeInTheDocument();
 });

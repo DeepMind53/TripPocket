@@ -3,6 +3,7 @@ import { MapPin } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { placesApi } from '../../data/api/places';
 import { useAuth } from '../../data/authStore';
+import { ServerOfflineNotice } from './ServerOfflineNotice';
 import { useTranslation } from '../../i18n';
 import { openMapLink, placeLink } from '../../shared/lib/directions';
 
@@ -58,7 +59,8 @@ export function PlaceAutocomplete({
     };
   }, [query, loggedIn, domestic, near, picked]);
 
-  if (!loggedIn) return <p className="text-caption text-fg-muted">{t('placeSearch.needLogin')}</p>;
+  // 로그인했던 기기가 서버에 닿지 않을 때 — 직접 입력은 그대로
+  if (!loggedIn) return <ServerOfflineNotice inline />;
   const q = query.trim();
   if (q.length < 2 || q === picked) return null;
   if (state === 'loading' && results.length === 0)

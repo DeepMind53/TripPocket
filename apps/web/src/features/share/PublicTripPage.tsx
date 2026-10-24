@@ -29,6 +29,7 @@ export function PublicTripPage() {
   if (data === null)
     return (
       <EmptyState
+        asPageTitle
         emoji="🔗"
         title={t('share.publicGone')}
         description={t('share.publicGoneDesc')}

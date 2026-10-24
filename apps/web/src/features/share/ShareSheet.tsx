@@ -1,7 +1,6 @@
 import type { Trip } from '@trippocket/shared';
 import { Copy, FileDown, Image, Link2, Link2Off, UserPlus, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router';
 import { inviteUrl, shareApi, shareUrl, type Member, type ShareLink } from '../../data/api/share';
 import { useAuth } from '../../data/authStore';
 import { bookingRepo } from '../../data/repositories/bookingRepo';
@@ -28,7 +27,6 @@ export function ShareSheet({
   onOpenChange: (open: boolean) => void;
 }) {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const { time } = useTimeText();
   const loggedIn = useAuth((s) => s.status === 'user');
   const [link, setLink] = useState<ShareLink | null>(null);
@@ -104,17 +102,8 @@ export function ShareSheet({
             {t('share.link')}
           </h3>
           {!loggedIn ? (
-            <>
-              <p className="text-caption text-fg-muted">{t('share.needLogin')}</p>
-              <Button
-                variant="secondary"
-                onClick={() =>
-                  void navigate(`/login?returnTo=${encodeURIComponent(`/trips/${trip.id}/plan`)}`)
-                }
-              >
-                {t('me.login')}
-              </Button>
-            </>
+            // 로그인했던 기기가 서버에 닿지 않을 때 (앱은 로그인한 사람만 씀)
+            <p className="text-caption text-fg-muted">{t('share.offline')}</p>
           ) : link ? (
             <>
               <p className="text-caption text-fg-sub">

@@ -14,6 +14,7 @@ import * as z from 'zod/mini';
 import type { Config } from '../config';
 import type { Db } from '../db/database';
 import { requireUser } from '../auth/session';
+import { requireAdmin } from './admin';
 import { resolveAnchor } from '../services/anchor';
 import { basicExtract, namesOf, norm, WORD } from '../services/basicRecommend';
 import { extractPlaces, llmProviders, type LlmEngine } from '../services/llm';
@@ -183,8 +184,8 @@ export function aiRoutes(app: FastifyInstance, config: Config, db: Db): void {
     );
   }
 
-  // ① 수집 원자료 (개발 확인용)
-  app.post('/api/v1/ai/collect', { preHandler: requireUser(db) }, async (req, reply) => {
+  // ① 수집 원자료 (관리자 점검용 — 블로그 사용량·하루 한도를 쓰므로 관리자만)
+  app.post('/api/v1/ai/collect', { preHandler: requireAdmin(db) }, async (req, reply) => {
     const p = await prepare(req, reply);
     if (!p) return;
     const key = `collect|${p.anchor}|${p.categories.join(',')}|${p.keyword ?? ''}|${today()}`;

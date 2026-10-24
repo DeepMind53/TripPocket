@@ -40,6 +40,7 @@ export function MePage() {
             <>
               <MenuRow to="/admin/users" icon={<Users />} label={t('admin.title')} />
               <MenuRow to="/admin/api-usage" icon={<Gauge />} label={t('apiUsage.title')} />
+              <MenuRow to="/admin/ai" icon={<Sparkles />} label={t('me.devAi')} />
             </>
           )}
           <MenuRow to="/settings" icon={<Settings />} label={t('me.settings')} />
@@ -62,7 +63,6 @@ export function MePage() {
             <>
               <MenuRow to="/dev/ui" icon={<Palette />} label={t('me.devUi')} />
               <MenuRow to="/dev/db" icon={<Database />} label={t('me.devDb')} />
-              <MenuRow to="/dev/ai" icon={<Sparkles />} label={t('me.devAi')} />
             </>
           )}
         </ul>

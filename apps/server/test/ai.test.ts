@@ -92,7 +92,9 @@ describe('AI 추천 ① 수집 API', () => {
   let sid: string;
   beforeEach(() => {
     db = openDb(':memory:');
-    db.prepare("INSERT INTO users (id, nickname, created_at) VALUES ('u1', 'n', 'x')").run();
+    db.prepare(
+      "INSERT INTO users (id, nickname, created_at, is_admin) VALUES ('u1', 'n', 'x', 1)",
+    ).run();
     sid = createSession(db, 'u1', 't');
     mockApis();
   });
