@@ -3,6 +3,7 @@ import type { FastifyInstance, FastifyReply } from 'fastify';
 import * as z from 'zod/mini';
 import type { Db } from '../db/database';
 import { randomToken, requireUser, sha256 } from '../auth/session';
+import { sendPush, type PushMessage } from '../services/push';
 
 type Role = 'owner' | 'editor' | 'viewer';
 const RANK: Record<Role, number> = { viewer: 1, editor: 2, owner: 3 };
@@ -15,6 +16,14 @@ const INVITE_MAX_USES = 5;
  * - 초대 링크: 토큰은 해시만 저장, 7일·5회, 역할 지정, 소유자만
  * 권한이 없으면 404 (여행이 있는지 알려 주지 않음)
  */
+/** 여행 이름 (서버에 동기화된 것) */
+function tripTitleIn(db: Db, tripId: string): string {
+  const r = db
+    .prepare("SELECT data_json FROM records WHERE table_name = 'trips' AND id = ?")
+    .get(tripId) as { data_json: string } | undefined;
+  return r ? ((JSON.parse(r.data_json) as { title?: string }).title ?? '여행') : '여행';
+}
+
 export function shareRoutes(app: FastifyInstance, db: Db): void {
   const auth = { preHandler: requireUser(db) };
   const roleOf = (userId: string, tripId: string) =>
@@ -24,6 +33,20 @@ export function shareRoutes(app: FastifyInstance, db: Db): void {
         .get(tripId, userId) as { role: Role } | undefined
     )?.role ?? null;
   const notFound = (reply: FastifyReply) => reply.code(404).send({ error: 'not_found' });
+  const tripTitle = (tripId: string) => tripTitleIn(db, tripId);
+  const nicknameOf = (userId: string) =>
+    (
+      db.prepare('SELECT nickname FROM users WHERE id = ?').get(userId) as
+        { nickname: string } | undefined
+    )?.nickname ?? '누군가';
+  /** 그 여행의 소유자에게 알림 (공유 알림을 켠 기기만) */
+  const notifyTrip = (tripId: string, role: Role, msg: (title: string) => PushMessage) => {
+    const title = tripTitle(tripId);
+    for (const m of db
+      .prepare('SELECT user_id FROM trip_members WHERE trip_id = ? AND role = ?')
+      .all(tripId, role) as { user_id: string }[])
+      void sendPush(db, m.user_id, 'sharing', msg(title));
+  };
   const now = () => new Date().toISOString();
 
   // ── 보기 전용 링크
@@ -142,6 +165,12 @@ export function shareRoutes(app: FastifyInstance, db: Db): void {
       db.prepare(
         'INSERT INTO audit_log (user_id, action, target, created_at) VALUES (?, ?, ?, ?)',
       ).run(userId, 'invite_request', inv.trip_id, now());
+      // 소유자에게 알림 (docs/20 G1)
+      notifyTrip(inv.trip_id, 'owner', (title) => ({
+        title: '여행 참여 요청',
+        body: `${nicknameOf(userId)}님이 ${title} 참여를 요청했어요`,
+        url: `/trips/${inv.trip_id}/plan`,
+      }));
       return { tripId: inv.trip_id, status: 'pending', role: inv.role };
     },
   );
@@ -229,6 +258,13 @@ export function shareRoutes(app: FastifyInstance, db: Db): void {
         db.exec('ROLLBACK');
         throw e;
       }
+      // 요청한 사람에게 알림
+      const title = tripTitle(req.params.id);
+      void sendPush(db, req.params.userId, 'sharing', {
+        title: '참여가 허용됐어요',
+        body: `${title}을(를) 볼 수 있어요`,
+        url: `/trips/${req.params.id}/plan`,
+      });
       return { ok: true, role };
     },
   );

@@ -932,7 +932,8 @@
       "oauth_naver": "네이버 로그인",
       "oauth_google": "Google 로그인",
       "cf_functions": "Cloudflare Pages 함수 (홈 서버 연결)",
-      "aviationstack": "AviationStack 항공편"
+      "aviationstack": "AviationStack 항공편",
+      "web_push": "웹 푸시 알림"
     },
     "note": {
       "google_places_search": "해외 장소 검색 · 월 5,000회 무료",
@@ -955,7 +956,8 @@
       "oauth_naver": "로그인할 때마다 2회 · 무료",
       "oauth_google": "로그인할 때마다 2회 · 무료",
       "cf_functions": "하루 10만 요청 무료 (넘으면 오류, 요금 없음)",
-      "aviationstack": "편명으로 불러오기 · 월 100회 무료 (넘으면 거절, 요금 없음)"
+      "aviationstack": "편명으로 불러오기 · 월 100회 무료 (넘으면 거절, 요금 없음)",
+      "web_push": "브라우저 회사 푸시 서버 (무료·한도 없음)"
     },
     "autoStoppedDay": "오늘 자동 중지",
     "monthMeter": "이번 달",
@@ -1209,5 +1211,37 @@
     "passportPrivacy": "이 기기에만 저장돼요 (올리지 않음)",
     "next": "다음: {{title}}",
     "allDone": "모두 챙겼어요"
+  },
+  "push": {
+    "title": "알림",
+    "all": "알림 받기",
+    "allDesc": "이 기기로 알림을 받아요\n끄면 모든 알림이 멈춰요",
+    "support": {
+      "ios-install": "아이폰은 홈 화면에 추가한 앱에서만 알림이 와요",
+      "unsupported": "이 브라우저는 알림을 지원하지 않아요",
+      "denied": "알림이 차단돼 있어요\n브라우저·휴대폰 설정에서 허용해 주세요"
+    },
+    "denied": "알림 권한이 없어요\n휴대폰 설정에서 허용해 주세요",
+    "failed": "알림을 켜지 못했어요\n연결된 뒤 다시 해 주세요",
+    "on": "알림을 켰어요",
+    "off": "알림을 모두 껐어요",
+    "kind": {
+      "departure": {
+        "name": "출발 하루 전",
+        "desc": "내일 출발 · 필수 항목 확인"
+      },
+      "entry": {
+        "name": "입국신고 낼 때",
+        "desc": "태국 TDAC처럼 낼 수 있게 된 날"
+      },
+      "itemSoon": {
+        "name": "일정 30분 전",
+        "desc": "여행 중 시간 정한 일정"
+      },
+      "sharing": {
+        "name": "함께 쓰기",
+        "desc": "참여 요청·허용"
+      }
+    }
   }
 }

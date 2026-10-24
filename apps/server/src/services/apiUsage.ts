@@ -30,7 +30,8 @@ export type ApiId =
   | 'oauth_kakao'
   | 'oauth_naver'
   | 'oauth_google'
-  | 'cf_functions';
+  | 'cf_functions'
+  | 'web_push';
 
 type Tz = 'UTC' | 'America/Los_Angeles' | 'Asia/Seoul';
 
@@ -111,6 +112,8 @@ export const APIS: readonly ApiDef[] = [
   { id: 'oauth_google', group: 'free', tz: 'UTC', pausable: false },
   // Cloudflare Pages Functions (무료 플랜 하루 10만 요청, 넘으면 오류 — 과금 없음). 홈 서버까지 온 요청만 센다(화면 이동 제외)
   { id: 'cf_functions', group: 'free', freeDaily: 100000, tz: 'UTC', pausable: false },
+  // 웹 푸시 알림 (브라우저 회사 푸시 서버 — 무료·한도 없음). 기록만, 멈추면 알림만 안 감
+  { id: 'web_push', group: 'free', tz: 'UTC' },
 ];
 
 const AUTO_RATIO = 0.9;

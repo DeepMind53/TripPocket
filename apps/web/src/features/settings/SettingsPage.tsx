@@ -1,5 +1,6 @@
 import type { Settings } from '@trippocket/shared';
 import { useAuth } from '../../data/authStore';
+import { NotificationGroup } from './NotificationGroup';
 import { reviewsApi } from '../../data/api/reviews';
 import { maskedName } from '@trippocket/shared';
 import type { ReactNode } from 'react';
@@ -285,6 +286,8 @@ export function SettingsPage() {
             </label>
           )}
         </Group>
+
+        <NotificationGroup />
 
         <PrivacyGroup />
 

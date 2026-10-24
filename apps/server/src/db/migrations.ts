@@ -241,4 +241,23 @@ export const MIGRATIONS: readonly string[] = [
   );
   CREATE INDEX point_ledger_user ON point_ledger(user_id, created_at);
   `,
+  // 15: 웹 푸시 알림 (docs/20 G1) — 기기 구독 + 같은 알림 한 번만
+  `
+  CREATE TABLE push_subscriptions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    endpoint TEXT NOT NULL UNIQUE,
+    p256dh TEXT NOT NULL,
+    auth TEXT NOT NULL,
+    prefs_json TEXT NOT NULL,
+    created_at TEXT NOT NULL
+  );
+  CREATE INDEX push_subscriptions_user ON push_subscriptions(user_id);
+  CREATE TABLE push_sent (
+    user_id TEXT NOT NULL,
+    key TEXT NOT NULL,
+    sent_at TEXT NOT NULL,
+    PRIMARY KEY (user_id, key)
+  );
+  `,
 ];

@@ -84,3 +84,34 @@ self.addEventListener('fetch', (event) => {
     ),
   );
 });
+
+// 알림 (docs/20 G1): 서버가 보낸 웹 푸시 → 알림 표시, 누르면 그 화면
+self.addEventListener('push', (event) => {
+  let msg = { title: '트립포켓', body: '', url: '/' };
+  try {
+    msg = { ...msg, ...event.data.json() };
+  } catch {
+    // 형식이 틀리면 기본 문구
+  }
+  event.waitUntil(
+    self.registration.showNotification(msg.title, {
+      body: msg.body,
+      icon: '/icons/icon-192.png',
+      badge: '/icons/icon-192.png',
+      data: { url: msg.url },
+      tag: msg.url,
+    }),
+  );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const url = new URL(event.notification.data?.url || '/', self.location.origin).href;
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
+      const open = list.find((c) => c.url.startsWith(self.location.origin));
+      if (open) return open.navigate(url).then((c) => (c || open).focus());
+      return self.clients.openWindow(url);
+    }),
+  );
+});
