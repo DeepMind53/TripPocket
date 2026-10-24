@@ -3,6 +3,7 @@ import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { createHash } from 'node:crypto';
+import { execSync } from 'node:child_process';
 import { readdirSync, readFileSync } from 'node:fs';
 
 /**
@@ -54,7 +55,35 @@ function pagesHeaders(): Record<string, string> {
   );
 }
 
+/**
+ * 앱 버전 = git에 올린 마지막 커밋 시각 (한국 시간 "2026.10.25 05:33", 사용자 요청 2026-10-25).
+ * Cloudflare Pages도 git에서 빌드하므로 같은 값. git이 없으면 빌드한 시각
+ */
+function buildVersion(): string {
+  let when = new Date();
+  try {
+    when = new Date(execSync('git log -1 --format=%cI', { encoding: 'utf8' }).trim());
+  } catch {
+    // git 없음 → 지금
+  }
+  const p = Object.fromEntries(
+    new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Asia/Seoul',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hourCycle: 'h23',
+    })
+      .formatToParts(when)
+      .map((x) => [x.type, x.value]),
+  );
+  return `${p.year}.${p.month}.${p.day} ${p.hour}:${p.minute}`;
+}
+
 export default defineConfig({
+  define: { 'import.meta.env.VITE_APP_VERSION': JSON.stringify(buildVersion()) },
   plugins: [react(), tailwindcss(), serviceWorker()],
   // 개발 중에는 Cloudflare Pages 프록시 대신 Vite가 홈 서버(127.0.0.1:8787)로 전달 (ADR-0006)
   server: { port: 5173, strictPort: true, ...devApiProxy() },

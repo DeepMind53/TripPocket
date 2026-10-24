@@ -109,7 +109,8 @@
     "notFoundDesc": "삭제됐거나 다른 기기에서 만든 여행일 수 있어요.",
     "backToList": "내 여행으로",
     "settings": "여행 설정",
-    "itemCount": "일정 {{n}}"
+    "itemCount": "일정 {{n}}",
+    "localNow": "현지시간 {{time}}"
   },
   "saved": {
     "title": "저장",
@@ -142,7 +143,8 @@
     "labs": "실험실",
     "groupTools": "여행 도구",
     "groupAdmin": "관리자",
-    "groupInfo": "앱 정보"
+    "groupInfo": "앱 정보",
+    "version": "버전 {{v}}"
   },
   "plan": {
     "dayChipsLabel": "날짜 선택",

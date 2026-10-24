@@ -11,6 +11,20 @@ export function useMinuteClock(enabled: boolean): Date {
   return now;
 }
 
+/** 그 시간대의 지금 "HH:MM" (24시간). 알 수 없는 시간대면 null */
+export function timeIn(timezone: string, now: Date): string | null {
+  try {
+    return new Intl.DateTimeFormat('en-GB', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hourCycle: 'h23',
+      timeZone: timezone,
+    }).format(now);
+  } catch {
+    return null;
+  }
+}
+
 /** 여행지 시간대가 이 기기와 다를 때만 "현지 14:05" (같으면 null) */
 export function localTimeLabel(
   timezone: string,

@@ -5,6 +5,7 @@ import { useTranslation } from '../../i18n';
 import { Link, useNavigate } from 'react-router';
 import { useTripItems, useTrips } from '../../data/hooks';
 import { useMemberCount, useTripRole } from '../../data/tripRoles';
+import { timeIn, useMinuteClock } from '../../shared/hooks/useMinuteClock';
 import { useRouteSheet } from '../../shared/hooks/useRouteSheet';
 import { formatPeriod, formatTripBadge, formatTripLength } from '../../shared/lib/dateFormat';
 import { BottomSheet, Button, EmptyState, IconButton, TopBar } from '../../shared/ui';
@@ -171,6 +172,8 @@ function TripCard({ trip, onMenu }: { trip: Trip; onMenu: (trip: Trip) => void }
   const { t } = useTranslation();
   const today = todayIn(trip.timezone);
   const isPast = getTripStatus(trip.startDate, trip.endDate, today) === 'past';
+  const now = useMinuteClock(!isPast);
+  const localNow = isPast ? null : timeIn(trip.timezone, now);
   const items = useTripItems(trip.id);
   const members = useMemberCount(trip.id);
   const role = useTripRole(trip.id);
@@ -203,6 +206,12 @@ function TripCard({ trip, onMenu }: { trip: Trip; onMenu: (trip: Trip) => void }
             >
               {formatTripBadge(trip.startDate, trip.endDate, today)}
             </span>
+            {/* 여행지 지금 시각 (사용자 요청 2026-10-25) */}
+            {localNow && (
+              <span className="tabular text-micro text-fg-muted">
+                {t('trips.localNow', { time: localNow })}
+              </span>
+            )}
             {/* 일정 수 · 함께 쓰는 사람 (docs/16 E1) */}
             {items !== undefined && (
               <span className="tabular text-micro text-fg-muted">

@@ -64,6 +64,10 @@ export function MePage() {
             </>
           )}
         </MenuGroup>
+        {/* 마지막 업데이트 = git에 올린 시각 (vite.config.ts buildVersion) */}
+        <p className="tabular pt-2 pb-4 text-center text-caption text-fg-muted">
+          {t('me.version', { v: import.meta.env.VITE_APP_VERSION as string })}
+        </p>
       </div>
       <InstallSheet open={installOpen} onOpenChange={setInstallOpen} />
     </>

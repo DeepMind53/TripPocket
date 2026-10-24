@@ -47,19 +47,22 @@ export function AccountCard() {
 
   return (
     <section className="flex flex-col gap-3 rounded-card bg-bg-subtle p-4">
-      <div className="flex flex-col">
-        <span className="flex items-center gap-1">
-          <span className="text-title-2">{me.nickname}</span>
+      {/* 이름 왼쪽, 로그인 수단·동기화는 오른쪽 (사용자 요청 2026-10-25) */}
+      <div className="flex items-start justify-between gap-2">
+        <span className="flex min-w-0 items-center gap-1">
+          <span className="truncate text-title-2">{me.nickname}</span>
           <IconButton
             label={t('nickname.change')}
             icon={<Pencil />}
             onClick={() => setNicknameOpen(true)}
           />
         </span>
-        <span className="text-caption text-fg-muted">
-          {me.providers.map((p) => t(`login.name.${p}` as 'login.name.kakao')).join(' · ')}
+        <span className="flex shrink-0 flex-col items-end gap-0.5 pt-1">
+          <span className="text-caption text-fg-muted">
+            {me.providers.map((p) => t(`login.name.${p}` as 'login.name.kakao')).join(' · ')}
+          </span>
+          <SyncStatus />
         </span>
-        <SyncStatus />
       </div>
       <div className="grid grid-cols-3 gap-2">
         <Button size="sm" variant="ghost" onClick={() => open('devices')}>
@@ -205,7 +208,7 @@ function SyncStatus() {
             ? t('sync.pending', { n: pending })
             : t('sync.done');
   return (
-    <span role="status" className="mt-1 flex items-center gap-1 text-caption text-fg-sub">
+    <span role="status" className="flex items-center gap-1 text-caption text-fg-sub">
       <span
         aria-hidden="true"
         className={cn(
