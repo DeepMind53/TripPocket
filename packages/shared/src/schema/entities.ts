@@ -165,7 +165,8 @@ export type Booking = z.infer<typeof BookingSchema>;
 export const ChecklistItemSchema = z.object({
   ...baseFields,
   tripId: IdSchema,
-  list: z.enum(['packing', 'todo']),
+  // essentials = 나라별 필수 항목 체크 (docs/19, 2026-10-25 추가 — text에 "나라:항목" 키)
+  list: z.enum(['packing', 'todo', 'essentials']),
   category: z.optional(z.string().check(z.maxLength(30))),
   text: nonEmpty(100),
   checked: z.boolean(),

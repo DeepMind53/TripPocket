@@ -50,6 +50,8 @@ export class TripPocketDB extends Dexie {
     this.version(2).stores({}).upgrade(upgradeToV2);
     // v3 (9단계): 사용자가 고칠 수 있는 준비물·할 일 템플릿
     this.version(3).stores({ checklistTemplates: 'id, list, updatedAt, dirty' });
+    // v4 (2026-10-25): 준비 목록 종류에 essentials(나라별 필수 항목) 추가 — 인덱스·기존 행은 그대로
+    this.version(4).stores({});
   }
 }
 

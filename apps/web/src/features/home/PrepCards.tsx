@@ -13,6 +13,7 @@ import { useChecklist, useTripBookings } from '../../data/hooks';
 import { cachedFx } from '../../data/services/fxService';
 import { formatTemps, weatherLook } from '../../domain/weather';
 import { useTripWeather } from '../common/useTripWeather';
+import { useEssentials } from '../essentials/useEssentials';
 import { useTranslation } from '../../i18n';
 import { WeatherIcon } from '../../shared/ui';
 
@@ -27,6 +28,7 @@ export function PrepCards({ trip }: { trip: Trip }) {
   const packing = useChecklist(trip.id, 'packing');
   // 달력과 같은 예보(2주 안), 그보다 먼 날은 작년 같은 날 기록
   const weather = useTripWeather(trip)[trip.startDate];
+  const essentials = useEssentials(trip);
   const [fx, setFx] = useState<FxSnapshot | null>(null);
   const daysLeft = daysUntil(trip.startDate, todayIn(trip.timezone));
   const currency = trip.destinations
@@ -113,6 +115,39 @@ export function PrepCards({ trip }: { trip: Trip }) {
           )}
         </Card>
       </div>
+      {/* 나라별 필수 항목 (docs/19) — 가로 전체 칸 */}
+      {essentials && essentials.total > 0 && (
+        <Link
+          to={`/trips/${trip.id}/essentials`}
+          className="relative flex flex-col gap-1 rounded-card border border-line bg-surface p-3"
+        >
+          <span className="flex items-center gap-1.5 text-caption font-semibold text-fg-sub">
+            <span aria-hidden="true">🛂</span>
+            {t('essentials.title')}
+            <span className="tabular ml-auto pr-4 text-body-2 font-bold text-fg">
+              {essentials.done}/{essentials.total}
+            </span>
+          </span>
+          <span className="h-1.5 overflow-hidden rounded-full bg-bg-subtle">
+            <span
+              className="block h-full rounded-full bg-primary"
+              style={{ width: `${Math.round((essentials.done / essentials.total) * 100)}%` }}
+            />
+          </span>
+          <span className="truncate text-caption text-fg-muted">
+            {essentials.next
+              ? t('essentials.next', { title: essentials.next.item.title })
+              : t('essentials.allDone')}
+          </span>
+          {essentials.alert && (
+            <span
+              role="img"
+              aria-label={t('prep.needsAttention')}
+              className="absolute top-3 right-3 size-2 rounded-full bg-warning"
+            />
+          )}
+        </Link>
+      )}
       <Link
         to={`/ai?trip=${trip.id}`}
         className="flex h-12 items-center justify-center gap-2 rounded-card bg-primary-weak text-body-2 font-semibold text-primary"

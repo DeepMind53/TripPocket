@@ -1,7 +1,10 @@
 import type { ChecklistItem } from '@trippocket/shared';
 import { useCallback, useMemo, useState } from 'react';
 import { useChecklist, useSetting } from '../../data/hooks';
-import type { ListKind, NewChecklistEntry } from '../../data/repositories/checklistRepo';
+import type {
+  PrepList as ListKind,
+  NewChecklistEntry,
+} from '../../data/repositories/checklistRepo';
 import { categoriesKey, saveChecklistDraft } from '../../data/services/checklistService';
 import { CATEGORIES } from './templates';
 

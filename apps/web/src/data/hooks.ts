@@ -8,7 +8,7 @@ import type {
   Trip,
 } from '@trippocket/shared';
 import { bookingRepo } from './repositories/bookingRepo';
-import { checklistRepo, type ListKind } from './repositories/checklistRepo';
+import { checklistRepo, type ListKind, type PrepList } from './repositories/checklistRepo';
 import { templateRepo } from './repositories/templateRepo';
 import { itemRepo } from './repositories/itemRepo';
 import { settingsRepo } from './repositories/settingsRepo';
@@ -46,7 +46,7 @@ export function useChecklist(
   return useLiveQuery(async () => (tripId ? checklistRepo.list(tripId, list) : []), [tripId, list]);
 }
 
-export function useTemplates(list: ListKind): ChecklistTemplate[] | undefined {
+export function useTemplates(list: PrepList): ChecklistTemplate[] | undefined {
   return useLiveQuery(() => templateRepo.list(list), [list]);
 }
 

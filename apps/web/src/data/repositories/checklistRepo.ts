@@ -10,6 +10,8 @@ import { nowIso } from '../clock';
 import { db, toDomain } from '../db';
 
 export type ListKind = ChecklistItem['list'];
+/** 준비 탭 목록 (준비물·할 일) — essentials(나라별 필수 항목)는 따로 화면 */
+export type PrepList = Exclude<ListKind, 'essentials'>;
 export interface NewChecklistEntry {
   text: string;
   category?: string | undefined;
@@ -136,6 +138,15 @@ export const checklistRepo = {
         await db.checklistItems.update(r.id, { deletedAt: now, updatedAt: now, dirty: 1 });
       }
     });
+  },
+
+  /** 나라별 필수 항목 체크 (docs/19): 키("JP:arrival")로 찾아 켜고 끄기, 없으면 만든다 */
+  async setEssential(tripId: string, key: string, checked: boolean): Promise<void> {
+    const existing = (await listRows(tripId, 'essentials')).find((r) => r.text === key);
+    if (existing) return this.setChecked(existing.id, checked);
+    if (!checked) return;
+    const item = await this.add(tripId, 'essentials', { text: key });
+    await this.setChecked(item.id, true);
   },
 
   async setChecked(id: string, checked: boolean): Promise<void> {

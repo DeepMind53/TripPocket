@@ -2,7 +2,10 @@ import type { ChecklistTemplate } from '@trippocket/shared';
 import { Check, Pencil, Plus, Trash2, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useTemplates } from '../../data/hooks';
-import type { ListKind, NewChecklistEntry } from '../../data/repositories/checklistRepo';
+import type {
+  PrepList as ListKind,
+  NewChecklistEntry,
+} from '../../data/repositories/checklistRepo';
 import { templateRepo } from '../../data/repositories/templateRepo';
 import { useTranslation } from '../../i18n';
 import { BottomSheet, Button, IconButton, snackbar, toast } from '../../shared/ui';

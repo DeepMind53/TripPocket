@@ -120,6 +120,12 @@ const allRoutes: RouteObject[] = [
     }),
   },
   {
+    path: 'trips/:tripId/essentials',
+    lazy: async () => ({
+      Component: (await import('../features/essentials/EssentialsPage')).EssentialsPage,
+    }),
+  },
+  {
     path: 'me/reviews',
     lazy: async () => ({
       Component: (await import('../features/reviews/MyReviewsPage')).MyReviewsPage,

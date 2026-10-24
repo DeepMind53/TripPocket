@@ -1,9 +1,11 @@
 import type { ChecklistTemplate } from '@trippocket/shared';
+import { useTrip } from '../../data/hooks';
+import { useEssentials } from '../essentials/useEssentials';
 import { Check, ListPlus, Plus, X } from 'lucide-react';
 import { useState } from 'react';
-import { useBeforeUnload, useBlocker, useParams } from 'react-router';
+import { Link, useBeforeUnload, useBlocker, useParams } from 'react-router';
 import { useCanEdit } from '../../data/tripRoles';
-import type { ListKind } from '../../data/repositories/checklistRepo';
+import type { PrepList as ListKind } from '../../data/repositories/checklistRepo';
 import { useTranslation } from '../../i18n';
 import { useBottomInset } from '../../shared/hooks/useBottomInset';
 import { useRouteSheet } from '../../shared/hooks/useRouteSheet';
@@ -34,6 +36,8 @@ export function ChecklistPage() {
   const canEdit = useCanEdit(tripId);
   const [templateOpen, setTemplateOpen] = useRouteSheet('checklist-template');
   const [saving, setSaving] = useState(false);
+  // 해외 여행이면 맨 위에 나라별 필수 항목 바로가기 (docs/19)
+  const essentials = useEssentials(useTrip(tripId) ?? undefined);
 
   // 저장하지 않고 다른 화면으로 가려 하면 묻는다 (같은 화면의 시트 열기는 제외)
   const blocker = useBlocker(
@@ -69,6 +73,17 @@ export function ChecklistPage() {
 
   return (
     <div className={`flex flex-col gap-4 px-5 pt-3 ${dirty ? 'pb-24' : ''}`}>
+      {essentials && essentials.total > 0 && (
+        <Link
+          to={`/trips/${tripId}/essentials`}
+          className="tabular flex items-center justify-between gap-2 rounded-card border border-dashed border-primary/60 px-4 py-3 text-body-2 font-semibold"
+        >
+          <span>🛂 {t('essentials.title')}</span>
+          <span className="text-primary">
+            {essentials.done}/{essentials.total} ›
+          </span>
+        </Link>
+      )}
       {canEdit && (
         <Button
           variant="secondary"
