@@ -792,7 +792,7 @@
       "google_places_search": "해외 장소 검색 · Text Search Pro · 월 5,000회 무료 · 결제 계정 연결됨",
       "google_places_details": "장소 상세 · Place Details Enterprise · 월 1,000회 무료 · 결제 계정 연결됨",
       "google_maps_js": "일정 지도 · Dynamic Maps · 월 10,000회 무료 · 결제 계정 연결됨",
-      "naver_maps_js": "국내 일정 지도 · 대표 계정만 무료 이용량 · 넘으면 네이버 클라우드 요금 (콘솔 수치 확인 전 보수적 값)",
+      "naver_maps_js": "국내 일정 지도 · 대표 계정 무료 이용량 하루·월 600만 회 · 넘으면 네이버 클라우드 요금",
       "kakao_map": "아래 카카오 API를 모두 합쳐 월 300만 건 무료 · 멈추면 카카오 API 전부 멈춤 · 실제 남은 양은 카카오 개발자 콘솔 → 앱 → 쿼터",
       "kakao_keyword": "장소 검색·AI 추천 · 하루 10만 건 무료, 넘으면 건당 2원",
       "kakao_category": "AI 추천 기준점(가까운 지하철역) · 하루 10만 건 무료, 넘으면 건당 2원",

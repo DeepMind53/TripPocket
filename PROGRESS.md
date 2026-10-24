@@ -56,7 +56,7 @@
 ## 다음에 할 일
 
 - ✅ 카카오 무료 쿼터 제공 확인 (2026-10-24 사용자). API별(키워드·카테고리 하루 10만) + 카카오맵 월 합산 300만으로 나눠 관리 (서버 마이그레이션 10)
-- **네이버 지도 (사용자)**: NCP 콘솔에서 Maps 앱 등록 → Pages 환경 변수 `VITE_NAVER_MAP_CLIENT_ID` → 재배포. 콘솔의 Web Dynamic Map 무료 이용량을 보고 `naver_maps_js` 상한 조정
+- **네이버 지도 (사용자)**: NCP 콘솔에서 Maps 앱 등록 → Pages 환경 변수 `VITE_NAVER_MAP_CLIENT_ID` → 재배포. 무료 이용량은 확인됨(대표 계정, 하루·월 600만 회 → 상한 반영)
 
 - **운영자 연락처**: 2026-10-24 사용자 요청으로 비활성화 — `OPERATOR_CONTACT`가 빈 값이면 개인정보처리방침·이용약관의 '문의' 절을 숨긴다. 공개할 연락처가 정해지면 `apps/web/src/features/legal/content.ko.ts`에 넣기만 하면 다시 보인다
 - **서버 반영 확인**: 서버를 다시 띄운 뒤에는 `https://trippocket.day/api/usage/flags`가 `{"maps":...}`로 응답하는지 본다 (2026-10-24 작업이 예전 빌드로 떠 있던 일)

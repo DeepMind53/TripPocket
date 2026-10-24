@@ -66,8 +66,16 @@ export const APIS: readonly ApiDef[] = [
     tz: 'America/Los_Angeles',
     browser: true,
   },
-  // 네이버 지도 (NCP Maps Web Dynamic Map): 대표 계정만 무료 이용량, 넘으면 과금. 콘솔 수치 확인 전이라 보수적으로
-  { id: 'naver_maps_js', group: 'paid', freeMonthly: 10000, tz: 'Asia/Seoul', browser: true },
+  // 네이버 지도 (NCP Maps Web Dynamic Map): 대표 계정만 무료 이용량, 넘으면 과금.
+  // 콘솔 확인(2026-10-24, 대표 계정): 하루·월 모두 600만 회
+  {
+    id: 'naver_maps_js',
+    group: 'paid',
+    freeMonthly: 6_000_000,
+    freeDaily: 6_000_000,
+    tz: 'Asia/Seoul',
+    browser: true,
+  },
   // 카카오맵 REST API (developers.kakao.com 쿼터 문서, 2026-10-24 확인): API마다 하루 무료 쿼터, 넘으면 건당 요금.
   // 모든 카카오맵 API 합산 월 300만 건 무료. 무료 쿼터는 개발자 계정에서 처음 활성화한 앱에만 (이 앱 = 제공받음)
   { id: 'kakao_map', group: 'paid', freeMonthly: 3_000_000, tz: 'Asia/Seoul', poolOnly: true },
