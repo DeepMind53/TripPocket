@@ -1,6 +1,7 @@
 import { getTripStatus, todayIn, type SavedPlace } from '@trippocket/shared';
 import { Map as MapIcon, MapPin, Plus, Trash2 } from 'lucide-react';
 import { lazy, Suspense, useState } from 'react';
+import { useNavigate } from 'react-router';
 import { useSavedPlaces, useTrips } from '../../data/hooks';
 import { itemRepo } from '../../data/repositories/itemRepo';
 import { savedPlaceRepo } from '../../data/repositories/savedPlaceRepo';
@@ -40,6 +41,7 @@ export function SavedPage() {
   const { t } = useTranslation();
   const places = useSavedPlaces();
   const trips = useTrips();
+  const navigate = useNavigate();
   const [mapOpen, setMapOpen] = useRouteSheet('saved-map');
   const [addOpen, setAddOpen] = useRouteSheet('saved-add');
   const [group, setGroup] = useState<{ city: string; list: SavedPlace[] } | null>(null);
@@ -82,7 +84,23 @@ export function SavedPage() {
     <>
       <TopBar title={t('saved.title')} />
       {places && places.length === 0 ? (
-        <EmptyState emoji="❤️" title={t('saved.emptyTitle')} description={t('saved.emptyDesc')} />
+        <EmptyState
+          emoji="❤️"
+          title={t('saved.emptyTitle')}
+          description={t('saved.emptyDesc')}
+          {...(openTrips[0]
+            ? {
+                action: (
+                  <Button
+                    size="lg"
+                    onClick={() => void navigate(`/trips/${openTrips[0]!.id}/places`)}
+                  >
+                    {t('saved.emptyCta', { trip: openTrips[0].title })}
+                  </Button>
+                ),
+              }
+            : {})}
+        />
       ) : (
         <div className="flex flex-col gap-4 px-5 pt-2">
           {[...groups].map(([city, list]) => (

@@ -385,3 +385,11 @@ it('일정 상세 오른쪽 위에서 방문 시간을 바로 적는다 (열 때
   await user.clear(input);
   await waitFor(async () => expect((await itemRepo.get(item.id))?.startTime).toBeUndefined());
 });
+
+it('일정이 하나도 없는 여행: 장소 찾기·AI 추천 버튼 (docs/20 U5)', async () => {
+  const user = userEvent.setup();
+  const router = await renderPlan();
+  expect(screen.getByText('어디부터 가 볼까요?')).toBeInTheDocument();
+  await user.click(screen.getByRole('button', { name: '장소 찾기' }));
+  expect(router.state.location.pathname).toBe(`/trips/${tripId}/places`);
+});

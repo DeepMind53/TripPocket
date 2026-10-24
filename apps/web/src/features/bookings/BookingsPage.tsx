@@ -1,5 +1,5 @@
 import type { Booking } from '@trippocket/shared';
-import { Plus } from 'lucide-react';
+import { Plus, BedDouble, Plane } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from '../../i18n';
 import { useParams } from 'react-router';
@@ -29,12 +29,14 @@ export function BookingsPage() {
   const canEdit = useCanEdit(tripId);
   const [formOpen, setFormOpen] = useRouteSheet('booking-form');
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [newKind, setNewKind] = useState<Booking['kind'] | undefined>(undefined);
 
   if (!trip || !bookings) return <Skeleton rows={2} />;
   const editing = bookings.find((b) => b.id === editingId);
 
-  const openForm = (b?: Booking) => {
+  const openForm = (b?: Booking, kind?: Booking['kind']) => {
     setEditingId(b?.id ?? null);
+    setNewKind(kind);
     setFormOpen(true);
   };
 
@@ -48,13 +50,34 @@ export function BookingsPage() {
           {...(canEdit
             ? {
                 action: (
-                  <Button
-                    size="lg"
-                    leading={<Plus aria-hidden="true" className="size-5" />}
-                    onClick={() => openForm()}
-                  >
-                    {t('bookings.emptyCta')}
-                  </Button>
+                  <div className="flex flex-col items-center gap-2">
+                    <Button
+                      size="lg"
+                      leading={<Plus aria-hidden="true" className="size-5" />}
+                      onClick={() => openForm()}
+                    >
+                      {t('bookings.emptyCta')}
+                    </Button>
+                    {/* 바로 고르기 (docs/20 U5) */}
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        leading={<Plane aria-hidden="true" className="size-4" />}
+                        onClick={() => openForm(undefined, 'flight')}
+                      >
+                        {t('bookings.emptyFlight')}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        leading={<BedDouble aria-hidden="true" className="size-4" />}
+                        onClick={() => openForm(undefined, 'lodging')}
+                      >
+                        {t('bookings.emptyLodging')}
+                      </Button>
+                    </div>
+                  </div>
                 ),
               }
             : {})}
@@ -91,7 +114,13 @@ export function BookingsPage() {
           })}
         </div>
       )}
-      <BookingFormSheet open={formOpen} onOpenChange={setFormOpen} trip={trip} booking={editing} />
+      <BookingFormSheet
+        open={formOpen}
+        onOpenChange={setFormOpen}
+        trip={trip}
+        booking={editing}
+        initialKind={newKind}
+      />
     </div>
   );
 }

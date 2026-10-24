@@ -133,7 +133,8 @@
     "addTitle": "{{n}}곳을 담을 여행",
     "noTrips": "담을 여행이 없어요\n먼저 여행을 만들어 주세요",
     "addHint": "날짜 없는 \"가고 싶은 곳\"으로 담겨요",
-    "added": "{{trip}}에 {{n}}곳을 담았어요"
+    "added": "{{trip}}에 {{n}}곳을 담았어요",
+    "emptyCta": "{{trip}} 장소 찾기"
   },
   "me": {
     "title": "마이",
@@ -179,7 +180,10 @@
     "addShort": "추가",
     "addItemTo": "{{day}}에 일정 추가",
     "emptyRun": "{{from}}~{{to}}일차 · {{range}} · 일정 없음",
-    "showDays": "펼치기"
+    "showDays": "펼치기",
+    "startTitle": "어디부터 가 볼까요?",
+    "startPlaces": "장소 찾기",
+    "startAi": "AI 추천 받기"
   },
   "places": {
     "emptyTitle": "장소 찾기",
@@ -282,7 +286,9 @@
     "lodgingHint": "예: 숙소 이름·주소",
     "flightNoOptional": "편명 (선택)",
     "driverPhone": "기사·업체 연락처",
-    "more": "+ 더 입력하기 (좌석·예약처·결제 메모·메모)"
+    "more": "+ 더 입력하기 (좌석·예약처·결제 메모·메모)",
+    "emptyFlight": "항공편 추가",
+    "emptyLodging": "숙소 추가"
   },
   "checklist": {
     "emptyTitle": "준비물을 챙겨볼까요?",

@@ -36,10 +36,18 @@ export interface BookingFormSheetProps {
   trip: Trip;
   /** 있으면 편집 */
   booking?: Booking | undefined;
+  /** 새 예약의 처음 종류 (빈 화면 버튼에서) */
+  initialKind?: Booking['kind'] | undefined;
 }
 
 /** S-17 예약 추가·편집: 종류를 고르면 종류에 맞는 칸만 보인다 */
-export function BookingFormSheet({ open, onOpenChange, trip, booking }: BookingFormSheetProps) {
+export function BookingFormSheet({
+  open,
+  onOpenChange,
+  trip,
+  booking,
+  initialKind,
+}: BookingFormSheetProps) {
   const { t } = useTranslation();
   return (
     <BottomSheet
@@ -52,6 +60,7 @@ export function BookingFormSheet({ open, onOpenChange, trip, booking }: BookingF
           key={booking?.id ?? 'new'}
           trip={trip}
           booking={booking}
+          initialKind={initialKind}
           onDone={() => onOpenChange(false)}
         />
       )}
@@ -68,14 +77,16 @@ const v = (s: string) => (s.trim() ? s.trim() : undefined);
 function BookingForm({
   trip,
   booking: b,
+  initialKind,
   onDone,
 }: {
   trip: Trip;
   booking: Booking | undefined;
+  initialKind?: Booking['kind'] | undefined;
   onDone: () => void;
 }) {
   const { t } = useTranslation();
-  const [kind, setKind] = useState<Booking['kind']>(b?.kind ?? 'flight');
+  const [kind, setKind] = useState<Booking['kind']>(b?.kind ?? initialKind ?? 'flight');
   const [f, setF] = useState({
     title: b?.title ?? '',
     provider: b?.provider ?? '',

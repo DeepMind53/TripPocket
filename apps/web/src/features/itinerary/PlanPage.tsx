@@ -417,6 +417,20 @@ function PlanView({
         {...gestures}
         className={cn('flex flex-col px-5 pt-2', editing ? 'gap-6' : 'gap-4 pb-4')}
       >
+        {/* 막 만든 여행: 무엇부터 할지 (docs/20 U5) */}
+        {items.length === 0 && canEdit && !editing && (
+          <div className="flex flex-col gap-2 rounded-card bg-bg-subtle p-4">
+            <p className="text-body-2 font-semibold">{t('plan.startTitle')}</p>
+            <div className="grid grid-cols-2 gap-2">
+              <Button variant="secondary" onClick={() => void navigate(`/trips/${trip.id}/places`)}>
+                {t('plan.startPlaces')}
+              </Button>
+              <Button variant="secondary" onClick={() => void navigate(`/ai?trip=${trip.id}`)}>
+                {t('plan.startAi')}
+              </Button>
+            </div>
+          </div>
+        )}
         {mapOpen && mapLarge && !editing ? (
           <MapPager
             list={pagerList}
