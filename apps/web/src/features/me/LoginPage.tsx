@@ -4,6 +4,8 @@ import { loginProviders, useAuth } from '../../data/authStore';
 import { useTranslation } from '../../i18n';
 import { copyText } from '../../shared/lib/clipboard';
 import { BottomSheet, Button, Spinner, TopBar } from '../../shared/ui';
+import { Wordmark } from '../home/Wordmark';
+import { IntroCarousel } from './IntroCarousel';
 
 const STYLE: Record<string, { bg: string; fg: string; border?: string }> = {
   kakao: { bg: '#FEE500', fg: '#191919' },
@@ -36,9 +38,17 @@ export function LoginPage({ returnTo: gateReturn }: { returnTo?: string } = {}) 
 
   return (
     <div className="mx-auto flex min-h-dvh max-w-[560px] flex-col">
-      <TopBar title={t('login.title')} {...(signedIn ? { backTo: '/me' } : {})} />
+      {/* 로그인 전: 맨 위 로고 + 앱 소개(넘겨 보기). 로그인한 뒤 온 경우는 뒤로 버튼 */}
+      {signedIn ? (
+        <TopBar title={t('login.title')} backTo="/me" />
+      ) : (
+        <header className="pt-[calc(env(safe-area-inset-top)+12px)]">
+          <Wordmark label={t('app.name')} />
+        </header>
+      )}
       <div className="flex flex-1 flex-col gap-4 px-5 pt-4">
-        <p className="text-body-2 text-fg-sub">{t('login.why')}</p>
+        {!signedIn && <IntroCarousel />}
+        <p className="text-center text-body-2 text-fg-sub">{t('login.why')}</p>
         {error && (
           <div
             role="alert"

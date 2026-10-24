@@ -117,3 +117,16 @@ it('네이버 로그인을 누르면 먼저 "관리자에게 네이버 아이디
     within(sheet).getByRole('button', { name: '등록됐어요, 네이버로 계속' }),
   ).toBeInTheDocument();
 });
+
+it('로그인 전 화면: 맨 위 로고, 소개 카드 4장을 점으로 넘긴다', async () => {
+  mockServer(false);
+  renderAt('/login');
+  expect(await screen.findByRole('heading', { name: '트립포켓' })).toBeInTheDocument();
+  const intro = screen.getByRole('region', { name: '트립포켓 소개' });
+  expect(within(intro).getAllByRole('group')).toHaveLength(4);
+  expect(within(intro).getByRole('heading', { name: '여행 일정을 한눈에' })).toBeInTheDocument();
+  expect(within(intro).getByRole('button', { name: '1번째 소개 보기' })).toHaveAttribute(
+    'aria-current',
+    'true',
+  );
+});
