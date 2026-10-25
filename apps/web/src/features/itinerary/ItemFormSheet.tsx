@@ -73,11 +73,18 @@ function ItemForm({
   const [url, setUrl] = useState(item?.url ?? '');
   const [saving, setSaving] = useState(false);
 
+  // 메모는 이름 없이 내용만 (사용자 요청 2026-10-26) — 이름은 내용 첫 줄로 저장
+  const isNote = kind === 'note';
   async function submit() {
-    if (!title.trim()) {
+    if (isNote && !memo.trim()) {
+      toast(t('form.needMemo'));
+      return;
+    }
+    if (!isNote && !title.trim()) {
       toast(t('form.needName'));
       return;
     }
+    const name = isNote ? (memo.trim().split('\n')[0] ?? '').slice(0, 100) : title;
     const link = url.trim();
     if (link && !/^https?:\/\//i.test(link)) {
       toast(t('form.invalidUrl'));
@@ -97,7 +104,7 @@ function ItemForm({
         // 비운 값은 undefined로 넘겨 저장소에서 지운다
         await itemRepo.update(item.id, {
           kind,
-          title,
+          title: name,
           startTime: optional.startTime,
           endTime: optional.endTime,
           memo: optional.memo,
@@ -110,7 +117,7 @@ function ItemForm({
           tripId,
           date,
           kind,
-          title,
+          title: name,
           ...optional,
           ...(place ? { place } : {}),
         });
@@ -150,41 +157,45 @@ function ItemForm({
         </div>
       </fieldset>
 
-      <Field label={t('form.name')}>
-        <input
-          id="item-title"
-          value={title}
-          maxLength={100}
-          placeholder={t('form.namePlaceholder')}
-          onChange={(e) => setTitle(e.target.value)}
-          className={inputClass}
-        />
-      </Field>
-      <PlaceAutocomplete
-        query={title}
-        domestic={trip ? isDomesticTrip(trip) : true}
-        near={near}
-        onPick={(p) => {
-          setTitle(p.name);
-          setAddress(p.address);
-          setPicked({
-            name: p.name,
-            ...(p.address ? { address: p.address } : {}),
-            ...(p.coords ? { coords: p.coords, coordsSource: p.source } : {}),
-            ...(p.source === 'google'
-              ? { googlePlaceId: p.id, coordsFetchedAt: new Date().toISOString() }
-              : {}),
-            ...(p.url && p.source !== 'google' ? { externalUrl: p.url } : {}),
-          });
-        }}
-      />
-      {picked?.googlePlaceId && (
-        <PlaceHours
-          googlePlaceId={picked.googlePlaceId}
-          name={picked.name}
-          date={date}
-          time={startTime}
-        />
+      {!isNote && (
+        <>
+          <Field label={t('form.name')}>
+            <input
+              id="item-title"
+              value={title}
+              maxLength={100}
+              placeholder={t('form.namePlaceholder')}
+              onChange={(e) => setTitle(e.target.value)}
+              className={inputClass}
+            />
+          </Field>
+          <PlaceAutocomplete
+            query={title}
+            domestic={trip ? isDomesticTrip(trip) : true}
+            near={near}
+            onPick={(p) => {
+              setTitle(p.name);
+              setAddress(p.address);
+              setPicked({
+                name: p.name,
+                ...(p.address ? { address: p.address } : {}),
+                ...(p.coords ? { coords: p.coords, coordsSource: p.source } : {}),
+                ...(p.source === 'google'
+                  ? { googlePlaceId: p.id, coordsFetchedAt: new Date().toISOString() }
+                  : {}),
+                ...(p.url && p.source !== 'google' ? { externalUrl: p.url } : {}),
+              });
+            }}
+          />
+          {picked?.googlePlaceId && (
+            <PlaceHours
+              googlePlaceId={picked.googlePlaceId}
+              name={picked.name}
+              date={date}
+              time={startTime}
+            />
+          )}
+        </>
       )}
 
       <div className="grid grid-cols-2 gap-3">
@@ -196,23 +207,25 @@ function ItemForm({
         </Field>
       </div>
 
-      <Field label={t('form.address')}>
-        <input
-          id="item-address"
-          value={address}
-          maxLength={200}
-          placeholder={t('form.addressPlaceholder')}
-          onChange={(e) => setAddress(e.target.value)}
-          className={inputClass}
-        />
-      </Field>
+      {!isNote && (
+        <Field label={t('form.address')}>
+          <input
+            id="item-address"
+            value={address}
+            maxLength={200}
+            placeholder={t('form.addressPlaceholder')}
+            onChange={(e) => setAddress(e.target.value)}
+            className={inputClass}
+          />
+        </Field>
+      )}
 
       <Field label={t('form.memo')}>
         <textarea
           id="item-memo"
           value={memo}
           maxLength={2000}
-          rows={3}
+          rows={isNote ? 5 : 3}
           onChange={(e) => setMemo(e.target.value)}
           className={`${inputClass} h-auto py-2`}
         />

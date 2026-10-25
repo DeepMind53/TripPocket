@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { findAirport, searchAirports } from './airports';
+import { allAirports, findAirport, searchAirports } from './airports';
 
 describe('공항 찾기', () => {
+  it('모든 공항에 지도 좌표가 있다', () => {
+    const missing = allAirports().filter((a) => !a.coords);
+    expect(missing.map((a) => a.iata)).toEqual([]);
+    expect(findAirport('ICN')?.coords?.lat).toBeCloseTo(37.46, 1);
+  });
   it('IATA 코드(대소문자 무관)가 정확하면 맨 앞', () => {
     expect(searchAirports('nrt')[0]?.iata).toBe('NRT');
     expect(findAirport(' icn ')?.name).toBe('인천국제공항');

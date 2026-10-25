@@ -24,6 +24,8 @@ import {
   Route,
 } from 'lucide-react';
 import { lazy, Suspense, useCallback, useEffect, useState, Fragment, useRef } from 'react';
+import { placeBookingsInPlan } from '../../data/bookingPlanner';
+import { bookingsToPlan } from '../../domain/bookingPlan';
 import { useTranslation } from '../../i18n';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { useTrip, useTripBookings, useTripItems } from '../../data/hooks';
@@ -100,6 +102,16 @@ function PlanView({
   const [params, setParams] = useSearchParams();
   // 보기 전용으로 공유받은 여행이면 추가·편집·삭제를 숨긴다 (data/tripRoles.ts)
   const canEdit = useCanEdit(trip.id);
+  // 예약을 일정표에 처음 한 번 시각에 맞춰 넣는다 — 이후에는 다른 일정처럼 옮기거나 지울 수 있다 (사용자 요청 2026-10-26)
+  const unplanned = canEdit ? bookingsToPlan(bookings, items).length : 0;
+  useEffect(() => {
+    if (unplanned > 0)
+      // 실패하면(화면을 벗어나 DB가 닫힘 등) 다음에 일정을 열 때 다시
+      placeBookingsInPlan(trip.id, (airport) => t('plan.arriveAt', { airport })).catch(() => {});
+  }, [unplanned, trip.id, t]);
+  // 일정으로 들어간 예약은 위쪽 예약 줄에서 뺀다 (일정을 지우면 다시 줄로 보인다)
+  const linked = new Set(items.map((i) => i.bookingId).filter(Boolean));
+  const rowBookings = bookings.filter((b) => !linked.has(b.id));
   const days = getTripDays(trip.startDate, trip.endDate);
   const today = todayIn(trip.timezone);
   const dimPast = useSettings((st) => st.dimPastItems);
@@ -177,7 +189,7 @@ function PlanView({
   /** 일정·예약·숙소가 하나도 없는 날 */
   const isEmptyDay = (d: LocalDate) =>
     !items.some((i) => i.date === d) &&
-    bookingRowsForDay(bookings, d).length === 0 &&
+    bookingRowsForDay(rowBookings, d).length === 0 &&
     !lodgingForNight(bookings, d);
 
   // 전체 보기: 지금 화면 위쪽에 있는 날의 칩을 테두리로 표시하고 칩 줄을 그 칩으로 (docs/16 C2)
@@ -504,7 +516,7 @@ function PlanView({
                       isPast={dimPast && date !== null && date < today}
                       lodging={date ? lodgingForNight(bookings, date) : null}
                       breakfast={date ? breakfastOn(bookings, date) : null}
-                      bookingRows={date ? bookingRowsForDay(bookings, date) : []}
+                      bookingRows={date ? bookingRowsForDay(rowBookings, date) : []}
                       onBooking={() => void navigate(`/trips/${trip.id}/bookings`)}
                       onLodging={(b) => {
                         const d = { name: b.title, address: b.details?.address };
@@ -876,7 +888,10 @@ function ItemRow({
         type="button"
         data-item-row=""
         onClick={onOpen}
-        aria-label={t('plan.itemLabel', { n, title: item.title })}
+        aria-label={t('plan.itemLabel', {
+          n,
+          title: item.kind === 'note' ? (item.memo ?? item.title) : item.title,
+        })}
         className="flex w-full items-start gap-3 py-3 text-left active:bg-bg-subtle"
       >
         {/* 번호·시간·종류는 제목 첫 줄 높이(24px)에 가운데 맞춤 */}
@@ -896,8 +911,19 @@ function ItemRow({
           {time(item.startTime) ?? <span className="text-fg-muted/60">--:--</span>}
         </span>
         <span className={cn('flex min-w-0 flex-1 flex-col', item.done && 'opacity-50')}>
-          <span className={cn('text-body-1', item.done && 'line-through')}>{item.title}</span>
-          {item.place?.address && (
+          {item.kind === 'note' ? (
+            <span className={cn('line-clamp-4 text-body-2', item.done && 'line-through')}>
+              {item.memo ?? item.title}
+            </span>
+          ) : (
+            <span className={cn('text-body-1', item.done && 'line-through')}>{item.title}</span>
+          )}
+          {item.transport && (item.transport.from || item.transport.to) && (
+            <span className="tabular truncate text-caption text-fg-muted">
+              {item.transport.from ?? ''} → {item.transport.to ?? ''}
+            </span>
+          )}
+          {item.kind !== 'note' && item.place?.address && (
             <span className="truncate text-caption text-fg-muted">{item.place.address}</span>
           )}
         </span>

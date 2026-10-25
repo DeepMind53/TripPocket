@@ -136,7 +136,7 @@ export function ItemDetailSheet({
     <BottomSheet
       open={open}
       onOpenChange={onOpenChange}
-      title={item?.title ?? ''}
+      title={isNote ? t('kind.note') : (item?.title ?? '')}
       description={dayLabel}
       autoFocusInput={false}
       headerAside={

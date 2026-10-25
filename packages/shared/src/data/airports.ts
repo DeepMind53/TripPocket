@@ -1,3 +1,4 @@
+import { AIRPORT_COORDS } from './airportCoords';
 import { normalize } from './places';
 
 /**
@@ -219,15 +220,24 @@ export interface Airport {
   nameEn: string;
   city: string;
   countryCode: string;
+  /** 지도 핀용 좌표 (airportCoords.ts) */
+  coords?: { lat: number; lng: number };
 }
 
-const AIRPORTS: readonly Airport[] = ROWS.map(([iata, name, nameEn, city, countryCode]) => ({
-  iata,
-  name,
-  nameEn,
-  city,
-  countryCode,
-}));
+const AIRPORTS: readonly Airport[] = ROWS.map(([iata, name, nameEn, city, countryCode]) => {
+  const c = AIRPORT_COORDS[iata];
+  return {
+    iata,
+    name,
+    nameEn,
+    city,
+    countryCode,
+    ...(c ? { coords: { lat: c[0], lng: c[1] } } : {}),
+  };
+});
+
+/** 전체 목록 (테스트·검사용) */
+export const allAirports = (): readonly Airport[] => AIRPORTS;
 
 export const findAirport = (iata: string): Airport | undefined =>
   AIRPORTS.find((a) => a.iata === iata.trim().toUpperCase());

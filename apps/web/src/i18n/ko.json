@@ -190,7 +190,8 @@
     "shortenRouteDesc": "시간 정하지 않은 장소만 가까운 순서로\n(직선거리 기준, 되돌릴 수 있어요)",
     "routeAlreadyShort": "지금 순서가 가장 짧아요",
     "routeShortened": "약 {{km}} 줄였어요",
-    "breakfast": "{{name}} 조식"
+    "breakfast": "{{name}} 조식",
+    "arriveAt": "{{airport}} 도착"
   },
   "places": {
     "emptyTitle": "장소 찾기",
@@ -502,7 +503,8 @@
     "saved": "저장했어요",
     "needName": "이름을 입력해 주세요",
     "invalidUrl": "링크는 http:// 또는 https:// 로 시작해야 해요",
-    "failed": "저장하지 못했어요\n입력 내용을 확인해 주세요"
+    "failed": "저장하지 못했어요\n입력 내용을 확인해 주세요",
+    "needMemo": "메모 내용을 적어 주세요"
   },
   "detail": {
     "directions": "길찾기",

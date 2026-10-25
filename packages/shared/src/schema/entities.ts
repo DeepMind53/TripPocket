@@ -162,6 +162,8 @@ export const BookingSchema = z.object({
   ),
   /** "결제 완료 ₩320,000" 같은 자유 메모 (금액 계산 없음) */
   priceNote: z.optional(z.string().check(z.maxLength(100))),
+  /** 일정표에 처음 한 번 넣은 시각 (2026-10-26) — 있으면 다시 넣지 않는다 */
+  plannedAt: z.optional(IsoDateTimeSchema),
   memo: z.optional(z.string().check(z.maxLength(2000))),
 });
 export type Booking = z.infer<typeof BookingSchema>;

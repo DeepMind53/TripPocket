@@ -31,11 +31,18 @@ async function dayRows(tripId: string, date: LocalDate | null): Promise<Row[]> {
 }
 
 export const itemRepo = {
-  /** 해당 날짜 맨 뒤에 추가 */
-  async create(input: NewItem): Promise<ItineraryItem> {
+  /** 해당 날짜 맨 뒤에 추가 (index를 주면 그 자리에) */
+  async create(input: NewItem, index?: number): Promise<ItineraryItem> {
     return db.transaction('rw', db.items, async () => {
       const siblings = await dayRows(input.tripId, input.date);
-      const order = keyBetween(siblings.at(-1)?.order ?? null, null);
+      const at = Math.max(0, Math.min(index ?? siblings.length, siblings.length));
+      const prev = siblings[at - 1]?.order ?? null;
+      const next = siblings[at]?.order ?? null;
+      // 키가 겹친 드문 경우(다른 기기 동시 수정)는 맨 뒤로
+      const order =
+        prev !== null && next !== null && compareKeys(prev, next) >= 0
+          ? keyBetween(siblings.at(-1)?.order ?? null, null)
+          : keyBetween(prev, next);
       const now = nowIso();
       const item = ItineraryItemSchema.parse({
         ...input,

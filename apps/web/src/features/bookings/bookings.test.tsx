@@ -122,7 +122,21 @@ describe('예약', () => {
     expect(line).toHaveTextContent('R-55');
   });
 
-  it('밤 비행기는 출발일과 도착일 일정에 모두 보인다', async () => {
+  it('예약은 일정표에 처음 한 번 시각 순 자리에 들어간다 · 밤 비행기는 도착 공항이 다음 날에', async () => {
+    const early = await itemRepo.create({
+      tripId,
+      date: '2026-10-24',
+      kind: 'place',
+      title: '오전 산책',
+      startTime: '10:00',
+    });
+    const late = await itemRepo.create({
+      tripId,
+      date: '2026-10-24',
+      kind: 'food',
+      title: '야식',
+      startTime: '23:30',
+    });
     await bookingRepo.create({
       tripId,
       kind: 'flight',
@@ -131,15 +145,38 @@ describe('예약', () => {
       end: { date: '2026-10-25', time: '02:10', place: 'BKK' },
     });
     renderAt([`/trips/${tripId}/plan?day=all`]);
+    await waitFor(async () => expect(await itemRepo.listByTrip(tripId)).toHaveLength(4));
+    const items = await itemRepo.listByTrip(tripId);
+    expect(items.map((i) => [i.date, i.startTime, i.title])).toEqual([
+      ['2026-10-24', '10:00', early.title],
+      ['2026-10-24', '22:30', 'KE123 PUS→BKK'],
+      ['2026-10-24', '23:30', late.title],
+      ['2026-10-25', '02:10', '수완나품국제공항 도착'],
+    ]);
+    // 공항이 지도에 보이도록 좌표
+    expect(items[1]?.place?.coords).toBeDefined();
+    expect(items[3]?.place?.coords).toBeDefined();
+    // 일정으로 들어간 예약은 위쪽 예약 줄에서 빠진다
     const day1 = await screen.findByRole('region', { name: '1일차 · 10.24 (토)' });
-    // 출발일은 예약 탭과 같은 탑승권
-    expect(within(day1).getByRole('button', { name: 'KE123 PUS→BKK 예약 보기' })).toHaveTextContent(
-      /PUSs*22:30.*BKKs*02:10/,
+    await waitFor(() =>
+      expect(within(day1).queryByRole('button', { name: 'KE123 PUS→BKK 예약 보기' })).toBeNull(),
     );
-    const day2 = screen.getByRole('region', { name: '2일차 · 10.25 (일)' });
-    expect(within(day2).getByRole('button', { name: 'KE123 PUS→BKK 예약 보기' })).toHaveTextContent(
-      '도착',
-    );
+    // 옮기거나 지워도 다시 넣지 않는다
+    expect((await bookingRepo.listByTrip(tripId))[0]?.plannedAt).toBeDefined();
+  });
+
+  it('일정표의 메모는 이름 없이 내용만 보인다', async () => {
+    await itemRepo.create({
+      tripId,
+      date: '2026-10-24',
+      kind: 'note',
+      title: '환전',
+      memo: '공항에서 환전하기\n현금 조금만',
+    });
+    renderAt([`/trips/${tripId}/plan?day=all`]);
+    const day1 = await screen.findByRole('region', { name: '1일차 · 10.24 (토)' });
+    expect(await within(day1).findByText(/공항에서 환전하기/)).toBeInTheDocument();
+    expect(within(day1).queryByText('환전')).toBeNull();
   });
 
   it('숙소: 체크아웃이 체크인보다 빠르면 저장하지 않는다', async () => {
