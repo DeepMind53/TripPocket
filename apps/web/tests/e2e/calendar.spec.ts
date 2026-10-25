@@ -74,5 +74,6 @@ test('이미 잡힌 다른 여행은 달력에 표시된다 (겹치는 일정 �
   await expect(
     page.getByRole('button', { name: `${dayLabel(4)} · 여행: 도쿄 가을여행` }),
   ).toBeVisible();
-  await expect(page.getByText('여행: 도쿄 가을여행')).toBeVisible();
+  // 여행 이름은 첫날과 매달 1일에 붙는다 — 오늘 날짜에 따라 달을 넘기면 두 곳
+  await expect(page.getByText('여행: 도쿄 가을여행').first()).toBeVisible();
 });
