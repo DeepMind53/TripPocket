@@ -86,7 +86,7 @@ export function meRoutes(app: FastifyInstance, db: Db, config: Config): void {
     },
   );
 
-  // 닉네임 바꾸기: 공유한 여행의 멤버 목록·관리자 화면에 보이는 이름 (1~20자, shared normalizeNickname)
+  // 닉네임 바꾸기: 공유한 여행의 멤버 목록·관리자 화면에 보이는 이름 (1~10자, 한글·한자·영어·숫자 — shared normalizeNickname)
   app.patch<{ Body: { nickname?: unknown } }>(
     '/api/me/nickname',
     { ...auth, config: { rateLimit: { max: 20, timeWindow: '1 minute' } } },

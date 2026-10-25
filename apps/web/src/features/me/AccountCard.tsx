@@ -58,7 +58,16 @@ export function AccountCard() {
     <section className="flex flex-col gap-3 rounded-card bg-bg-subtle p-4">
       {/* 이름 왼쪽, 로그인 수단·동기화는 오른쪽 (사용자 요청 2026-10-25) */}
       <div className="flex items-start justify-between gap-2">
-        <span className="flex min-w-0 items-center gap-1">
+        <span className="flex min-w-0 items-center gap-1.5">
+          {/* 후기 포인트는 닉네임 왼쪽 (사용자 요청 2026-10-25) — 누르면 적립 내역 */}
+          <button
+            type="button"
+            onClick={() => open('points')}
+            aria-label={t('points.label', { n: (me.points ?? 0).toLocaleString() })}
+            className="tabular flex h-8 shrink-0 items-center rounded-full bg-primary-weak px-2.5 text-caption font-bold text-primary"
+          >
+            🅟 {(me.points ?? 0).toLocaleString()}P
+          </button>
           <span className="truncate text-title-2">{me.nickname}</span>
           <IconButton
             label={t('nickname.change')}
@@ -71,15 +80,6 @@ export function AccountCard() {
             {me.providers.map((p) => t(`login.name.${p}` as 'login.name.kakao')).join(' · ')}
           </span>
           <SyncStatus />
-          {/* 후기 포인트 (docs/17 §2.4) — 누르면 적립 내역 */}
-          <button
-            type="button"
-            onClick={() => open('points')}
-            aria-label={t('points.label', { n: (me.points ?? 0).toLocaleString() })}
-            className="tabular mt-0.5 rounded-full bg-primary-weak px-2.5 py-0.5 text-caption font-bold text-primary"
-          >
-            🅟 {(me.points ?? 0).toLocaleString()}P
-          </button>
         </span>
       </div>
       <div className="grid grid-cols-3 gap-2">

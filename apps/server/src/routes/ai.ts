@@ -2,7 +2,7 @@ import {
   buildRecommendations,
   countByPeriod,
   distanceKm,
-  normalizeNickname,
+  cleanShortText,
   pickRadius,
   type AiCategory,
   type CategoryResult,
@@ -134,7 +134,7 @@ export function aiRoutes(app: FastifyInstance, config: Config, db: Db): void {
     if (!naver) return (void reply.code(503).send({ error: 'not_configured' }), null);
     // 키워드는 닉네임과 같은 규칙으로 다듬는다 (제어 문자 제거, 1~20자)
     const rawKeyword = parsed.data.keyword?.trim();
-    const keyword = rawKeyword ? normalizeNickname(rawKeyword) : null;
+    const keyword = rawKeyword ? cleanShortText(rawKeyword, 20) : null;
     if (rawKeyword && !keyword) return (void reply.code(400).send({ error: 'bad_request' }), null);
     const categories = [
       ...[...new Set(parsed.data.categories)].sort(),

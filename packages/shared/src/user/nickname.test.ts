@@ -11,6 +11,17 @@ describe('normalizeNickname', () => {
     expect(normalizeNickname('   ')).toBeNull();
     expect(normalizeNickname(123)).toBeNull();
     expect(normalizeNickname('가'.repeat(NICKNAME_MAX + 1))).toBeNull();
-    expect(normalizeNickname('🧳'.repeat(NICKNAME_MAX))).toBe('🧳'.repeat(NICKNAME_MAX));
+  });
+
+  it('10자까지, 한글·한자·영어·숫자만 (이모지·기호 안 됨)', () => {
+    expect(NICKNAME_MAX).toBe(10);
+    expect(normalizeNickname('김진하')).toBe('김진하');
+    expect(normalizeNickname('JinHa Kim')).toBe('JinHa Kim');
+    expect(normalizeNickname('金鎭夏')).toBe('金鎭夏');
+    expect(normalizeNickname('진하_2026')).toBe('진하_2026');
+    expect(normalizeNickname('가나다라마바사아자차')).toBe('가나다라마바사아자차');
+    expect(normalizeNickname('가나다라마바사아자차카')).toBeNull();
+    expect(normalizeNickname('여행🧳')).toBeNull();
+    expect(normalizeNickname('<b>')).toBeNull();
   });
 });
