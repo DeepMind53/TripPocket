@@ -71,3 +71,15 @@ test('PC 화면: 내용 길이가 달라도(스크롤바 생김) 화면이 옆�
   await page.keyboard.press('Escape');
   expect(await box(quick)).toEqual(quickBefore);
 });
+
+// 태블릿·PC처럼 넓은 화면: ⚡ 버튼은 화면 끝이 아니라 앱 영역(560px) 안쪽 가장자리에 (사용자 요청 2026-10-26)
+test('넓은 화면에서 ⚡ 버튼은 앱 영역 안쪽에 붙는다', async ({ page }) => {
+  await page.setViewportSize({ width: 1024, height: 768 });
+  await page.goto('/');
+  const fab = page.getByRole('button', { name: '빠른 메뉴' });
+  await expect(fab).toBeVisible();
+  const box = (await fab.boundingBox())!;
+  const appRight = (1024 + 560) / 2;
+  expect(box.x + box.width).toBeLessThanOrEqual(appRight);
+  expect(box.x + box.width).toBeGreaterThan(appRight - 40);
+});

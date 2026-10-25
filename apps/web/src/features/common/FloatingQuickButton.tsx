@@ -12,6 +12,11 @@ import { create } from 'zustand';
  */
 const SIZE = 52;
 const EDGE = 16;
+/** 앱 화면 폭 (AppShell·TripLayout max-w-[560px]) — 태블릿 등 넓은 화면에서도 앱 영역 안쪽 가장자리에 붙게 (사용자 요청 2026-10-26) */
+const APP_MAX = 560;
+/** 화면 끝 또는 앱 영역 끝 중 안쪽 + 여백 */
+const sideInset = (side: 'left' | 'right') =>
+  `max(${EDGE}px, calc((100vw - ${APP_MAX}px) / 2 + ${EDGE}px), env(safe-area-inset-${side}, 0px))`;
 /** 하단 탭(약 64px) + 여유 — 탭을 가리지 않게 */
 const BOTTOM_RESERVED = 84;
 const TOP_RESERVED = 72;
@@ -151,12 +156,15 @@ export function FloatingQuickButton({
     save({ side: e.clientX < vp.w / 2 ? 'left' : 'right', y: top / vp.h });
   };
 
+  // 끌 때도 앱 영역 안에서만
+  const appWidth = Math.min(vp.w, APP_MAX);
+  const appLeft = (vp.w - appWidth) / 2;
   const top = drag ? drag.y : clampTop(pos.y * vp.h, vp.h);
   const sideStyle = drag
-    ? { left: Math.min(Math.max(drag.x, 0), vp.w - SIZE) }
+    ? { left: Math.min(Math.max(drag.x, appLeft), appLeft + appWidth - SIZE) }
     : pos.side === 'left'
-      ? { left: `max(${EDGE}px, env(safe-area-inset-left, 0px))` }
-      : { right: `max(${EDGE}px, env(safe-area-inset-right, 0px))` };
+      ? { left: sideInset('left') }
+      : { right: sideInset('right') };
 
   return createPortal(
     <>
@@ -166,9 +174,7 @@ export function FloatingQuickButton({
           onClick={closeHint}
           style={{
             top: top - 52,
-            ...(pos.side === 'left'
-              ? { left: `max(${EDGE}px, env(safe-area-inset-left, 0px))` }
-              : { right: `max(${EDGE}px, env(safe-area-inset-right, 0px))` }),
+            ...(pos.side === 'left' ? { left: sideInset('left') } : { right: sideInset('right') }),
           }}
           className="fixed z-40 max-w-[220px] rounded-btn bg-fg px-3 py-2 text-left text-caption text-bg shadow-lg"
         >
