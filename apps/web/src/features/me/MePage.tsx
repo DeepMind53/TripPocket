@@ -14,6 +14,8 @@ import {
   Gauge,
   FlaskConical,
   SquarePen,
+  Inbox,
+  MessageSquarePlus,
 } from 'lucide-react';
 import { useAuth } from '../../data/authStore';
 import { useRouteSheet } from '../../shared/hooks/useRouteSheet';
@@ -52,9 +54,11 @@ export function MePage() {
             <MenuRow to="/admin/users" icon={<Users />} label={t('admin.title')} />
             <MenuRow to="/admin/api-usage" icon={<Gauge />} label={t('apiUsage.title')} />
             <MenuRow to="/admin/ai" icon={<Sparkles />} label={t('me.devAi')} />
+            <MenuRow to="/admin/suggestions" icon={<Inbox />} label={t('suggest.adminTitle')} />
           </MenuGroup>
         )}
         <MenuGroup title={t('me.groupInfo')}>
+          <MenuRow to="/me/suggestions" icon={<MessageSquarePlus />} label={t('suggest.title')} />
           <MenuRow to="/legal/help" icon={<CircleHelp />} label={t('me.help')} />
           <MenuRow to="/legal/privacy" icon={<ShieldCheck />} label={t('legal.privacy')} />
           <MenuRow to="/legal/terms" icon={<FileText />} label={t('legal.terms')} />

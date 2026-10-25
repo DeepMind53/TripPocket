@@ -1293,5 +1293,32 @@
     "hint": "누르면 크게 보여요\n현지인에게 화면을 보여 주세요",
     "takeMeHereEn": "Please take me here",
     "taxiSub": "기사님께 이 화면을 보여 주세요"
+  },
+  "suggest": {
+    "title": "개선 제안",
+    "adminTitle": "개선 제안 관리",
+    "desc": "불편한 점이나 바라는 기능을 알려 주세요\n관리자가 읽고 답장해요",
+    "body": "내용",
+    "placeholder": "예: 일정 화면에서 ○○ 하면 좋겠어요",
+    "addImage": "+ 사진 1장 붙이기 (10MB까지)",
+    "removeImage": "사진 빼기",
+    "send": "보내기",
+    "sent": "보냈어요\n답장이 오면 알려 드려요",
+    "too_large": "10MB가 넘는 사진은 붙일 수 없어요",
+    "bad_type": "사진만 붙일 수 있어요",
+    "failed": "보내지 못했어요\n연결된 뒤 다시 해 주세요",
+    "mine": "보낸 제안",
+    "none": "아직 제안이 없어요",
+    "withImage": "사진 있음",
+    "reply": "답장",
+    "replyLabel": "답장 쓰기",
+    "sendReply": "답장 보내고 완료",
+    "replied": "답장했어요",
+    "delete": "제안 지우기",
+    "status": {
+      "new": "새 제안",
+      "read": "읽음",
+      "done": "완료"
+    }
   }
 }

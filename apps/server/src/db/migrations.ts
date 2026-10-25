@@ -274,4 +274,18 @@ export const MIGRATIONS: readonly string[] = [
   );
   CREATE INDEX attachments_trip ON attachments(trip_id);
   `,
+  // 17: 개선 제안 (마이 → 개선 제안 → 관리자) — 사진은 DATA_DIR/suggestions/<id>. 탈퇴해도 제안은 남음
+  `
+  CREATE TABLE suggestions (
+    id TEXT PRIMARY KEY,
+    user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+    body TEXT NOT NULL,
+    image_mime TEXT,
+    status TEXT NOT NULL DEFAULT 'new',
+    reply TEXT,
+    created_at TEXT NOT NULL,
+    replied_at TEXT
+  );
+  CREATE INDEX suggestions_user ON suggestions(user_id, created_at);
+  `,
 ];
