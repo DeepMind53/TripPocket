@@ -9,7 +9,7 @@ import {
   type ItineraryItem,
   type Trip,
 } from '@trippocket/shared';
-import { BedDouble, Check, Copy, Navigation, Plus } from 'lucide-react';
+import { BedDouble, Check, CircleHelp, Copy, Navigation, Plus } from 'lucide-react';
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { useTranslation } from '../../i18n';
 import { Link, useNavigate } from 'react-router';
@@ -69,10 +69,17 @@ export function HomePage() {
   return (
     <>
       {/* 홈만 가운데 로고 (빠른 메뉴는 AppShell의 플로팅 버튼) */}
-      <header className="sticky top-0 z-20 grid min-h-[calc(56px+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] grid-cols-[44px_1fr_44px] items-center bg-bg/95 px-1 backdrop-blur">
+      <header className="sticky top-0 z-20 grid min-h-[calc(56px+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] grid-cols-[72px_1fr_72px] items-center bg-bg/95 px-1 backdrop-blur">
         <span />
         <Wordmark label={t('app.name')} />
-        <span />
+        {/* 앱 소개 다시 보기 (사용자 요청 2026-10-26) */}
+        <Link
+          to="/help"
+          className="flex min-h-11 items-center justify-center gap-1 justify-self-end rounded-btn px-2 text-caption font-semibold text-fg-sub active:bg-bg-subtle"
+        >
+          <CircleHelp aria-hidden="true" className="size-4" />
+          {t('help.title')}
+        </Link>
       </header>
       {trips && !featured && (
         <EmptyState

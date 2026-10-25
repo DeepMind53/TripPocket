@@ -3,7 +3,7 @@ import { useTranslation } from '../../i18n';
 import { cn } from '../../shared/lib/cn';
 
 /**
- * 로그인 화면 앱 소개 (사용자 요청 2026-10-24): 옆으로 넘겨 보는 카드 4장.
+ * 로그인 화면 앱 소개 (사용자 요청 2026-10-24): 옆으로 넘겨 보는 카드 7장 (2026-10-26 3장 추가, 홈 [도움말]에서도).
  * 그림은 실제 화면을 본뜬 목업 — 샘플 데이터로 직접 그린다(이미지 파일 없음, 다크 모드도 그대로).
  * 넘기기는 CSS scroll-snap(라이브러리 없음), 아래 점을 눌러도 이동. 자동으로 넘어가지 않는다(읽는 속도는 사용자 몫)
  */
@@ -15,7 +15,10 @@ export function IntroCarousel() {
     { key: 'plan', mock: <PlanMock /> },
     { key: 'map', mock: <MapMock /> },
     { key: 'booking', mock: <BookingMock /> },
+    { key: 'quick', mock: <QuickMock /> },
+    { key: 'alerts', mock: <AlertsMock /> },
     { key: 'together', mock: <TogetherMock /> },
+    { key: 'records', mock: <RecordsMock /> },
   ];
   const go = (i: number) => {
     const el = track.current;
@@ -255,6 +258,100 @@ function TogetherMock() {
         <span className="text-[10px]">1 이치란 신주쿠점 · 블로그 7회 언급</span>
         <span className="text-[10px] text-fg-sub">진한 돈코츠 국물, 줄 서도 먹는 곳</span>
       </div>
+    </Phone>
+  );
+}
+
+function QuickMock() {
+  const tiles: [string, string][] = [
+    ['💱', '환율 계산'],
+    ['🚕', '택시 카드'],
+    ['🗣', '여행 회화'],
+    ['🧭', '길찾기'],
+  ];
+  return (
+    <Phone>
+      <div className="flex flex-col gap-1.5 rounded-xl border border-line bg-surface p-2">
+        <span className="text-[11px] font-bold">⚡ 빠른 메뉴</span>
+        <div className="grid grid-cols-2 gap-1.5">
+          {tiles.map(([e, label]) => (
+            <span
+              key={label}
+              className="flex items-center gap-1 rounded-lg bg-bg-subtle px-2 py-1.5 text-[10px] font-semibold"
+            >
+              {e} {label}
+            </span>
+          ))}
+        </div>
+      </div>
+      <div className="flex flex-col gap-0.5 rounded-xl border border-line bg-surface p-2">
+        <span className="tabular text-[11px] font-bold">¥ 1,000 = ₩ 9,120</span>
+        <span className="text-[10px] text-fg-sub">🚕 新宿駅までお願いします</span>
+      </div>
+      <span className="grid size-8 place-items-center self-end rounded-full bg-primary text-[14px] text-on-primary shadow">
+        ⚡
+      </span>
+    </Phone>
+  );
+}
+
+function AlertsMock() {
+  const notes: [string, string, string][] = [
+    ['✈', '내일 출발이에요', '여권·충전기 챙겼나요'],
+    ['🛂', '입국신고 할 때예요', 'Visit Japan Web 미리 등록'],
+    ['⏰', '30분 뒤 센소지', '걸어서 12분'],
+  ];
+  return (
+    <Phone>
+      {notes.map(([e, title, sub]) => (
+        <div
+          key={title}
+          className="flex items-center gap-2 rounded-xl border border-line bg-surface px-2 py-1.5"
+        >
+          <span className="grid size-6 shrink-0 place-items-center rounded-lg bg-primary-weak text-[12px]">
+            {e}
+          </span>
+          <span className="flex min-w-0 flex-col">
+            <span className="truncate text-[11px] font-bold">{title}</span>
+            <span className="truncate text-[10px] text-fg-sub">{sub}</span>
+          </span>
+        </div>
+      ))}
+      <span className="self-center rounded-full bg-bg-subtle px-2 py-0.5 text-[10px] text-fg-sub">
+        📶 인터넷이 없어도 일정·예약은 그대로
+      </span>
+    </Phone>
+  );
+}
+
+function RecordsMock() {
+  return (
+    <Phone>
+      <div className="grid grid-cols-3 gap-1.5">
+        {(
+          [
+            ['다녀온 여행', '4번'],
+            ['여행한 날', '17일'],
+            ['가 본 나라', '3곳'],
+          ] as const
+        ).map(([k, v]) => (
+          <span
+            key={k}
+            className="flex flex-col items-center rounded-xl border border-line bg-surface py-1.5"
+          >
+            <span className="tabular text-[13px] font-bold">{v}</span>
+            <span className="text-[9px] text-fg-sub">{k}</span>
+          </span>
+        ))}
+      </div>
+      <div className="flex flex-col gap-0.5 rounded-xl border border-line bg-surface p-2">
+        <span className="text-[11px] font-bold">🗼 도쿄 가을여행 · 10.27~10.30</span>
+        <span className="text-[10px] text-rating">★★★★★ 이치란 라멘</span>
+        <span className="text-[10px] text-fg-sub">"새벽에도 줄이 길었어요"</span>
+      </div>
+      <span className="self-start rounded-full bg-primary-weak px-2 py-0.5 text-[10px] font-semibold text-primary">
+        리뷰 남기면 +100P
+      </span>
     </Phone>
   );
 }
