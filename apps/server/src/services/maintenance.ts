@@ -1,4 +1,5 @@
 import type { Db } from '../db/database';
+import { attachmentsDir, purgeEndedTripFiles } from './attachments';
 
 const DAY = 86_400_000;
 
@@ -30,10 +31,16 @@ export function runMaintenance(db: Db, now = Date.now()): Record<string, number>
 }
 
 /** 시작할 때 한 번 + 6시간마다. 반환값으로 멈춤 */
-export function scheduleMaintenance(db: Db, log: (msg: string) => void): () => void {
+export function scheduleMaintenance(
+  db: Db,
+  log: (msg: string) => void,
+  dataDir?: string,
+): () => void {
   const tick = () => {
     try {
       const r = runMaintenance(db);
+      // 끝난 여행의 문서는 서버에서 지운다 — 기기에만 남음 (docs/20 G2)
+      if (dataDir) r.endedTripFiles = purgeEndedTripFiles(db, attachmentsDir(dataDir));
       const total = Object.values(r).reduce((a, b) => a + b, 0);
       if (total) log(`DB 정리: ${JSON.stringify(r)}`);
     } catch (e) {

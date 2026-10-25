@@ -9,6 +9,7 @@
     "start": "node --env-file-if-exists=.env dist/index.js",
     "backup": "node --env-file-if-exists=.env dist/backup.js",
     "restore": "node --env-file-if-exists=.env dist/restore.js",
+    "admin:data": "node --env-file-if-exists=.env dist/admin-data.js",
     "test": "vitest run",
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },

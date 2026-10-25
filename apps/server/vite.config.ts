@@ -13,7 +13,12 @@ export default defineConfig({
     target: 'node24',
     emptyOutDir: true,
     rollupOptions: {
-      input: { index: 'src/index.ts', backup: 'src/cli/backup.ts', restore: 'src/cli/restore.ts' },
+      input: {
+        index: 'src/index.ts',
+        backup: 'src/cli/backup.ts',
+        restore: 'src/cli/restore.ts',
+        'admin-data': 'src/cli/adminData.ts',
+      },
       output: { entryFileNames: '[name].js' },
     },
   },

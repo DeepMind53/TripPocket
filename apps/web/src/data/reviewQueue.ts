@@ -56,3 +56,8 @@ export async function flushReviewQueue(): Promise<number> {
   }
   return points;
 }
+
+/** 기기 데이터 정리: 올리기 대기 중인 후기 모두 지우기 */
+export function clearReviewQueue(): void {
+  write([]);
+}

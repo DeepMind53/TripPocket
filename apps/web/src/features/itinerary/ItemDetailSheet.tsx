@@ -25,6 +25,7 @@ import { placeLink, openMapLink, type MapApp } from '../../shared/lib/directions
 import { BottomSheet, Button, Switch, TimeInput, toast } from '../../shared/ui';
 import { copyText } from '../../shared/lib/clipboard';
 import { FlightTicket } from '../bookings/BookingCard';
+import { BookingDocs } from '../bookings/BookingDocs';
 import { KIND_ICON } from './itemKinds';
 
 export interface ItemDetailSheetProps {
@@ -174,6 +175,8 @@ export function ItemDetailSheet({
           </div>
 
           {booking && <BookingSummary booking={booking} onOpen={onOpenBooking} />}
+          {/* 붙여 둔 이티켓·바우처 바로 열기 (입국 심사·체크인 때) */}
+          {booking && <BookingDocs booking={booking} canEdit={false} compact />}
 
           {/* 누를 수 없는 버튼은 보이지 않게 — 종류·정보에 맞는 것만 (docs/16 D1) */}
           <div className="grid grid-cols-4 gap-2">

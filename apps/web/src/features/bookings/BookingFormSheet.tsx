@@ -8,6 +8,7 @@ import { PlaceAutocomplete } from '../common/PlaceAutocomplete';
 import { addDays, diffDays, nightsBetween, type Booking, type Trip } from '@trippocket/shared';
 import { CalendarRange, Trash2 } from 'lucide-react';
 import { StayRangeSheet } from './StayRangeSheet';
+import { BookingDocs } from './BookingDocs';
 import { formatMonthDay } from '../../shared/lib/dateFormat';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from '../../i18n';
@@ -760,6 +761,12 @@ function BookingForm({
         >
           {t('bookings.more')}
         </button>
+      )}
+
+      {b ? (
+        <BookingDocs trip={trip} booking={b} canEdit />
+      ) : (
+        <p className="text-caption text-fg-muted">{t('docs.afterSave')}</p>
       )}
 
       {/* [저장]은 아래에 붙어 있게 — 칸이 많아도 바로 누를 수 있게 */}

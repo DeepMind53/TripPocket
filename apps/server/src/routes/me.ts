@@ -3,6 +3,7 @@ import { normalizeNickname, parseSettings, pickSynced } from '@trippocket/shared
 import type { Db } from '../db/database';
 import type { Config } from '../config';
 import { fixedAdmins } from '../auth/admins';
+import { attachmentsDir, removeFiles } from '../services/attachments';
 import { requireUser, SESSION_COOKIE } from '../auth/session';
 
 /** 내 정보·로그인한 기기·탈퇴 (docs/09 §8). 모두 로그인 필요, 자기 것만 */
@@ -155,6 +156,14 @@ export function meRoutes(app: FastifyInstance, db: Db, config: Config): void {
     const userId = req.user!.userId;
     db.exec('BEGIN');
     try {
+      // 올린 예약 문서 파일도 (docs/20 G2)
+      const files = (
+        db.prepare('SELECT id FROM attachments WHERE owner_user_id = ?').all(userId) as {
+          id: string;
+        }[]
+      ).map((r) => r.id);
+      removeFiles(attachmentsDir(config.DATA_DIR), files);
+      db.prepare('DELETE FROM attachments WHERE owner_user_id = ?').run(userId);
       db.prepare('DELETE FROM records WHERE owner_user_id = ?').run(userId);
       db.prepare('DELETE FROM users WHERE id = ?').run(userId);
       // 관리자가 탈퇴하면 가장 먼저 가입한 사람이 관리자를 이어받는다 (관리자가 없어지지 않게)

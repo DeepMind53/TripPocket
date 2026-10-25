@@ -24,7 +24,7 @@ it('저장소 v3 → v4: 기존 준비물은 그대로, 새 목록 종류 essent
   old.close();
 
   const db = new TripPocketDB(NAME);
-  expect(db.verno).toBe(4);
+  expect(db.verno).toBeGreaterThanOrEqual(4);
   const [kept] = await db.checklistItems.toArray();
   expect(kept?.text).toBe('여권');
   expect(

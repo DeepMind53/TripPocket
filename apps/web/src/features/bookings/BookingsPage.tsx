@@ -1,6 +1,6 @@
 import type { Booking } from '@trippocket/shared';
 import { Plus, BedDouble, Plane } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from '../../i18n';
 import { useParams } from 'react-router';
 import { useCanEdit } from '../../data/tripRoles';
@@ -9,6 +9,7 @@ import { useRouteSheet } from '../../shared/hooks/useRouteSheet';
 import { Button, EmptyState, Skeleton } from '../../shared/ui';
 import { BookingCard } from './BookingCard';
 import { BookingFormSheet } from './BookingFormSheet';
+import { attachmentRepo } from '../../data/repositories/attachmentRepo';
 
 const GROUPS = [
   { key: 'groupFlight', kinds: ['flight'] },
@@ -30,6 +31,11 @@ export function BookingsPage() {
   const [formOpen, setFormOpen] = useRouteSheet('booking-form');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [newKind, setNewKind] = useState<Booking['kind'] | undefined>(undefined);
+
+  // 문서: 서버에만 있는 것은 기기로 받아 두고, 기기에만 있는 것은 올린다 (docs/20 G2)
+  useEffect(() => {
+    if (trip && navigator.onLine) void attachmentRepo.syncTrip(trip);
+  }, [trip?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!trip || !bookings) return <Skeleton rows={2} />;
   const editing = bookings.find((b) => b.id === editingId);

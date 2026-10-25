@@ -90,3 +90,15 @@ pnpm --filter @trippocket/server build
 - 줄인 것: 로그 단계 기본 `warn`(요청마다 기록 안 함, `.env`의 `LOG_LEVEL=info`로 다시 켬),
   6시간마다 DB 정리(만료 세션·로그인 state·AI 저장본, 13개월 넘은 사용량) + WAL 비우기, 항공편 메모리 저장본 상한
 - 서버가 아닌 것: 개발용 화면 서버(vite, `pnpm dev`)는 400MB 가까이 쓴다 — 개발할 때만 켜 두기
+
+## 6. 서버 데이터 지우기 (관리자, 서버 PC에서만)
+
+서버 데이터는 웹·앱에서 지울 수 없다 (2026-10-25 사용자 결정). 서버 PC에서:
+
+\undefined
+ ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command "admin:data" not found
+undefined
+ ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command "admin:data" not found
+
+- 예약 문서 파일: (1개 10MB까지). 끝난 여행은 서버에서 지우고 기기에만 남는다
+- 문서 파일은 매일 백업(DB)에 들어가지 않는다 — 여행 중 임시 공유용

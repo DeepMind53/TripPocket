@@ -260,4 +260,18 @@ export const MIGRATIONS: readonly string[] = [
     PRIMARY KEY (user_id, key)
   );
   `,
+  // 16: 예약 문서(이티켓·바우처) — 파일은 DATA_DIR/attachments/<id>, 끝난 여행은 지움 (docs/20 G2)
+  `
+  CREATE TABLE attachments (
+    id TEXT PRIMARY KEY,
+    trip_id TEXT NOT NULL,
+    booking_id TEXT NOT NULL,
+    owner_user_id TEXT NOT NULL,
+    name TEXT NOT NULL,
+    mime TEXT NOT NULL,
+    size INTEGER NOT NULL,
+    created_at TEXT NOT NULL
+  );
+  CREATE INDEX attachments_trip ON attachments(trip_id);
+  `,
 ];

@@ -1,6 +1,7 @@
 import type { Settings } from '@trippocket/shared';
 import { useAuth } from '../../data/authStore';
 import { NotificationGroup } from './NotificationGroup';
+import { DeviceDataGroup } from './DeviceDataGroup';
 import { reviewsApi } from '../../data/api/reviews';
 import { maskedName } from '@trippocket/shared';
 import type { ReactNode } from 'react';
@@ -290,6 +291,8 @@ export function SettingsPage() {
         <NotificationGroup />
 
         <PrivacyGroup />
+
+        <DeviceDataGroup />
 
         <Group title={t('settings.data')} onReset={() => resetSettings(['backupReminderDays'])}>
           <div className="flex items-center justify-between gap-3">

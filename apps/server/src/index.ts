@@ -22,7 +22,7 @@ process.on('SIGTERM', () => void close());
 await app.listen({ host: config.HOST, port: config.PORT });
 
 // 오래된 세션·사용량 기록 정리 + SQLite 가볍게 (6시간마다)
-scheduleMaintenance(db, (m) => app.log.warn(m));
+scheduleMaintenance(db, (m) => app.log.warn(m), config.DATA_DIR);
 
 // 알림 (VAPID 키가 있을 때만) — 출발 전·입국신고·일정 30분 전
 if (initPush(config)) schedulePushes(db, (m) => app.log.warn(m));

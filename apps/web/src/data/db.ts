@@ -14,6 +14,23 @@ import type {
 export type Dirty = 0 | 1;
 export type Stored<T> = T & { dirty: Dirty };
 
+/**
+ * 예약 문서 (이티켓·바우처 PDF·사진, docs/20 G2) — 기기에 파일째 저장.
+ * remote = 서버에도 있음 (여행이 끝나면 서버에서는 지워지고 기기에만 남는다)
+ */
+export interface AttachmentRow {
+  id: string;
+  tripId: string;
+  bookingId: string;
+  name: string;
+  mime: string;
+  size: number;
+  /** 파일 내용 (아직 안 받았으면 없음) */
+  blob?: Blob;
+  createdAt: string;
+  remote: 0 | 1;
+}
+
 export interface KeyValueRow {
   key: string;
   value: unknown;
@@ -34,6 +51,7 @@ export class TripPocketDB extends Dexie {
   checklistTemplates!: EntityTable<Stored<ChecklistTemplate>, 'id'>;
   settings!: EntityTable<KeyValueRow, 'key'>;
   syncState!: EntityTable<KeyValueRow, 'key'>;
+  attachments!: EntityTable<AttachmentRow, 'id'>;
 
   constructor(name = 'trippocket') {
     super(name);
@@ -52,6 +70,8 @@ export class TripPocketDB extends Dexie {
     this.version(3).stores({ checklistTemplates: 'id, list, updatedAt, dirty' });
     // v4 (2026-10-25): 준비 목록 종류에 essentials(나라별 필수 항목) 추가 — 인덱스·기존 행은 그대로
     this.version(4).stores({});
+    // v5 (2026-10-25): 예약 문서 파일 (동기화·백업 대상 아님 — 서버 API로 따로 주고받음)
+    this.version(5).stores({ attachments: 'id, tripId, bookingId' });
   }
 }
 
