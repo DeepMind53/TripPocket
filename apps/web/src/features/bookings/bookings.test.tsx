@@ -370,3 +370,25 @@ it('덜 쓰는 칸(좌석·예약처·결제 메모·메모)은 [더 입력하�
   expect(within(sheet).getByLabelText('좌석')).toBeInTheDocument();
   expect(within(sheet).getByLabelText('메모')).toBeInTheDocument();
 });
+
+it('숙소: 조식 포함 → 날짜별로 빼고, 일정 화면 그날 아침에 조식 표시 (사용자 요청 2026-10-26)', async () => {
+  const user = userEvent.setup();
+  renderAt([`/trips/${tripId}/bookings`]);
+  await user.click(await screen.findByRole('button', { name: '예약 추가' }));
+  const sheet = screen.getByRole('dialog', { name: '예약 추가' });
+  await user.click(within(sheet).getByRole('button', { name: '숙소' }));
+  await user.type(within(sheet).getByLabelText('숙소 이름'), '해운대 호텔');
+  fireEvent.change(within(sheet).getByLabelText('체크인'), { target: { value: '2026-10-24' } });
+  fireEvent.change(within(sheet).getByLabelText('체크아웃'), { target: { value: '2026-10-27' } });
+  await user.click(within(sheet).getByRole('switch', { name: '조식 포함' }));
+  const days = within(sheet).getByRole('group', { name: '조식 있는 날' });
+  expect(within(days).getAllByRole('button')).toHaveLength(3); // 25·26·27일 아침
+  await user.click(within(days).getByRole('button', { name: /10\.26/ }));
+  await user.click(within(sheet).getByRole('button', { name: '예약 추가' }));
+  await waitFor(async () => expect(await bookingRepo.listByTrip(tripId)).toHaveLength(1));
+  const [b] = await bookingRepo.listByTrip(tripId);
+  expect(b?.details).toMatchObject({
+    breakfast: true,
+    breakfastDates: ['2026-10-25', '2026-10-27'],
+  });
+});

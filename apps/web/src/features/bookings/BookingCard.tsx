@@ -131,6 +131,16 @@ function LodgingBody({ booking: b }: { booking: Booking }) {
           </span>
         )}
       </div>
+      {b.details?.breakfast && (
+        <p className="text-caption text-fg-sub">
+          🍳{' '}
+          {b.details.breakfastDates
+            ? t('bookings.breakfastSome', {
+                days: b.details.breakfastDates.map(formatMonthDay).join(', '),
+              })
+            : t('bookings.breakfastAll')}
+        </p>
+      )}
       {b.details?.address && (
         <p className="truncate text-caption text-fg-muted">{b.details.address}</p>
       )}

@@ -189,7 +189,8 @@
     "shortenRoute": "동선 짧게 바꾸기",
     "shortenRouteDesc": "시간 정하지 않은 장소만 가까운 순서로\n(직선거리 기준, 되돌릴 수 있어요)",
     "routeAlreadyShort": "지금 순서가 가장 짧아요",
-    "routeShortened": "약 {{km}} 줄였어요"
+    "routeShortened": "약 {{km}} 줄였어요",
+    "breakfast": "{{name}} 조식"
   },
   "places": {
     "emptyTitle": "장소 찾기",
@@ -294,7 +295,12 @@
     "driverPhone": "기사·업체 연락처",
     "more": "+ 더 입력하기 (좌석·예약처·결제 메모·메모)",
     "emptyFlight": "항공편 추가",
-    "emptyLodging": "숙소 추가"
+    "emptyLodging": "숙소 추가",
+    "breakfast": "조식 포함",
+    "breakfastDesc": "체크인 다음 날부터 아침마다\n날짜를 눌러 빼거나 넣을 수 있어요",
+    "breakfastDays": "조식 있는 날",
+    "breakfastAll": "조식 포함 (매일 아침)",
+    "breakfastSome": "조식 {{days}}"
   },
   "checklist": {
     "emptyTitle": "준비물을 챙겨볼까요?",

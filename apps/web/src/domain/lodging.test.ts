@@ -109,3 +109,29 @@ describe('그날 예약 줄', () => {
     ]);
   });
 });
+
+describe('숙소 조식 (사용자 요청 2026-10-26)', () => {
+  const stay = (details: object) =>
+    ({
+      id: 'h',
+      tripId: 't',
+      kind: 'lodging',
+      title: '호텔',
+      start: { date: '2026-11-01' },
+      end: { date: '2026-11-04' },
+      details,
+    }) as unknown as Booking;
+  it('체크인 다음 날 ~ 체크아웃 날 아침, 날짜를 고르면 그날만', async () => {
+    const { breakfastMornings, breakfastOn } = await import('./lodging');
+    expect(breakfastMornings(stay({}))).toEqual(['2026-11-02', '2026-11-03', '2026-11-04']);
+    expect(breakfastOn([stay({ breakfast: true })], '2026-11-01')).toBeNull();
+    expect(breakfastOn([stay({ breakfast: true })], '2026-11-04')?.title).toBe('호텔');
+    expect(
+      breakfastOn([stay({ breakfast: true, breakfastDates: ['2026-11-03'] })], '2026-11-02'),
+    ).toBeNull();
+    expect(
+      breakfastOn([stay({ breakfast: true, breakfastDates: ['2026-11-03'] })], '2026-11-03'),
+    ).not.toBeNull();
+    expect(breakfastOn([stay({ breakfast: false })], '2026-11-02')).toBeNull();
+  });
+});

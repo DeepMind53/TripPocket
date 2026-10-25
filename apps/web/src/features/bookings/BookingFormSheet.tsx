@@ -13,7 +13,7 @@ import { formatMonthDay } from '../../shared/lib/dateFormat';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from '../../i18n';
 import { bookingRepo, type NewBooking } from '../../data/repositories/bookingRepo';
-import { BottomSheet, Button, Chip, snackbar, TimeInput, toast } from '../../shared/ui';
+import { BottomSheet, Button, Chip, snackbar, Switch, TimeInput, toast } from '../../shared/ui';
 import { BOOKING_ICON } from '../common/bookingKinds';
 
 /** 픽업·드랍을 많이 예약하는 곳 (고르면 예약 사이트 칸에 들어감, 직접 입력도 됨) */
@@ -107,6 +107,9 @@ function BookingForm({
     priceNote: b?.priceNote ?? '',
     partySize: b?.details?.partySize ? String(b.details.partySize) : '',
     direction: (b?.details?.direction ?? 'pickup') as 'pickup' | 'drop',
+    breakfast: b?.details?.breakfast ?? false,
+    /** null = 모든 아침 */
+    breakfastDates: (b?.details?.breakfastDates ?? null) as string[] | null,
     memo: b?.memo ?? '',
   });
   const [saving, setSaving] = useState(false);
@@ -154,6 +157,12 @@ function BookingForm({
         ? trip.endDate
         : addDays(f.startDate, 1)
       : f.startDate);
+
+  // 조식 아침들: 체크인 다음 날 ~ 체크아웃 날
+  const mornings: string[] = [];
+  for (let i = 1; i <= diffDays(f.startDate, endDate); i++) mornings.push(addDays(f.startDate, i));
+  const breakfastOn = (d: string) =>
+    f.breakfast && (!f.breakfastDates || f.breakfastDates.includes(d));
 
   /** 종류별 입력값 → 저장할 예약. 문제가 있으면 안내 문구 */
   function build(): NewBooking | string {
@@ -228,7 +237,16 @@ function BookingForm({
         provider: v(f.provider),
         start: clean({ date: f.startDate, time: v(f.startTime) }),
         end: clean({ date: endDate, time: v(f.endTime) }),
-        details: cleanOrUndefined({ address: v(f.address), phone: v(f.phone) }),
+        details: cleanOrUndefined({
+          address: v(f.address),
+          phone: v(f.phone),
+          breakfast: f.breakfast || undefined,
+          // 모든 아침이면 날짜 목록은 저장하지 않는다 (날짜를 바꿔도 그대로 "모두")
+          breakfastDates:
+            f.breakfast && f.breakfastDates && f.breakfastDates.length < mornings.length
+              ? mornings.filter((d) => f.breakfastDates!.includes(d))
+              : undefined,
+        }),
         priceNote: v(f.priceNote),
       });
     }
@@ -507,6 +525,50 @@ function BookingForm({
                 onTime={set('endTime')}
                 idPrefix="bk-out"
               />
+              {/* 조식 포함 — 날짜별로 (사용자 요청 2026-10-26) */}
+              <div className="flex flex-col gap-2 rounded-card bg-bg-subtle px-3 py-2.5">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="flex flex-col">
+                    <span className="text-body-2 font-medium">🍳 {t('bookings.breakfast')}</span>
+                    <span className="text-caption text-fg-muted">
+                      {t('bookings.breakfastDesc')}
+                    </span>
+                  </span>
+                  <Switch
+                    label={t('bookings.breakfast')}
+                    checked={f.breakfast}
+                    onCheckedChange={(on) =>
+                      setF((cur) => ({ ...cur, breakfast: on, breakfastDates: null }))
+                    }
+                  />
+                </div>
+                {f.breakfast && mornings.length > 0 && (
+                  <div
+                    role="group"
+                    aria-label={t('bookings.breakfastDays')}
+                    className="flex flex-wrap gap-1.5"
+                  >
+                    {mornings.map((d) => (
+                      <Chip
+                        key={d}
+                        selected={breakfastOn(d)}
+                        onClick={() =>
+                          setF((cur) => {
+                            const now = cur.breakfastDates ?? mornings;
+                            const next = now.includes(d) ? now.filter((x) => x !== d) : [...now, d];
+                            return {
+                              ...cur,
+                              breakfastDates: next.length === mornings.length ? null : next,
+                            };
+                          })
+                        }
+                      >
+                        <span className="tabular">{formatMonthDay(d)}</span>
+                      </Chip>
+                    ))}
+                  </div>
+                )}
+              </div>
               <Field label={t('bookings.address')}>
                 <input
                   id="bk-address"

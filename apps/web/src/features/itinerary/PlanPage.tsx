@@ -30,6 +30,7 @@ import { useTrip, useTripBookings, useTripItems } from '../../data/hooks';
 import {
   bookingRowsForDay,
   lodgingForNight,
+  breakfastOn,
   type BookingRow,
   type LodgingNight,
   bookingForItem,
@@ -502,6 +503,7 @@ function PlanView({
                       weather={date ? weather[date] : undefined}
                       isPast={dimPast && date !== null && date < today}
                       lodging={date ? lodgingForNight(bookings, date) : null}
+                      breakfast={date ? breakfastOn(bookings, date) : null}
                       bookingRows={date ? bookingRowsForDay(bookings, date) : []}
                       onBooking={() => void navigate(`/trips/${trip.id}/bookings`)}
                       onLodging={(b) => {
@@ -640,8 +642,11 @@ function DaySection({
   onBooking,
   hideWhenEmpty,
   weather,
+  breakfast,
 }: {
   weather?: TripDayWeather | undefined;
+  /** 그날 아침 조식이 있는 숙소 */
+  breakfast?: Booking | null;
   date: LocalDate | null;
   index: number;
   items: ItineraryItem[];
@@ -709,6 +714,13 @@ function DaySection({
           />
         )}
       </div>
+      {/* 그날 아침 숙소 조식 (사용자 요청 2026-10-26) */}
+      {breakfast && (
+        <p className="mx-3 mt-2 flex items-center gap-2 rounded-btn bg-bg-subtle px-3 py-2 text-caption text-fg-sub">
+          <span aria-hidden="true">🍳</span>
+          {t('plan.breakfast', { name: breakfast.title })}
+        </p>
+      )}
       {bookingRows.length > 0 && (
         <ul aria-label={t('plan.bookingsLabel')} className="flex flex-col gap-1 px-3 pt-2">
           {bookingRows.map((row) => (

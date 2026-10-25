@@ -150,6 +150,10 @@ export const BookingSchema = z.object({
       address: z.optional(z.string().check(z.maxLength(200))),
       phone: z.optional(z.string().check(z.maxLength(40))),
       roomType: z.optional(z.string().check(z.maxLength(60))),
+      /** 숙소 조식 포함 (2026-10-26 추가) — breakfastDates가 없으면 모든 아침 */
+      breakfast: z.optional(z.boolean()),
+      /** 조식이 있는 아침 날짜 (체크인 다음 날 ~ 체크아웃 날 중) */
+      breakfastDates: z.optional(z.array(LocalDateSchema).check(z.maxLength(60))),
       /** 음식점·픽업 예약 인원 */
       partySize: z.optional(z.number().check(z.gte(1), z.lte(99))),
       /** 픽업(공항 → 숙소) / 드랍(숙소 → 공항) */

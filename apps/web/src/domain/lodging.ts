@@ -1,4 +1,5 @@
 import {
+  addDays,
   diffDays,
   type Booking,
   type ItineraryItem,
@@ -122,4 +123,23 @@ export function bookingForItem(
   const same = live.filter((b) => want.includes(b.kind) && b.start.date === item.date);
   if (item.kind === 'lodging') return same[0];
   return same.find((b) => b.start.time && b.start.time === item.startTime);
+}
+
+/** 숙소에서 조식을 먹는 아침들: 체크인 다음 날 ~ 체크아웃 날 */
+export function breakfastMornings(b: Booking): LocalDate[] {
+  if (b.kind !== 'lodging' || !b.end) return [];
+  const out: LocalDate[] = [];
+  for (let i = 1; i <= diffDays(b.start.date, b.end.date); i++) out.push(addDays(b.start.date, i));
+  return out;
+}
+
+/** 그날 아침 조식이 있는 숙소 (사용자 요청 2026-10-26) */
+export function breakfastOn(bookings: readonly Booking[], date: LocalDate): Booking | null {
+  for (const b of bookings) {
+    if (b.kind !== 'lodging' || !b.details?.breakfast || b.deletedAt) continue;
+    if (!breakfastMornings(b).includes(date)) continue;
+    const dates = b.details.breakfastDates;
+    if (!dates || dates.includes(date)) return b;
+  }
+  return null;
 }
