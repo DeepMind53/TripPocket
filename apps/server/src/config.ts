@@ -48,9 +48,6 @@ const Env = z.object({
   NAVER_SEARCH_SECRET: z.optional(z.string()),
   /** Google Places API (New) 서버 키 — 브라우저에 절대 넣지 않음, API 제한 = Places API (New) */
   GOOGLE_PLACES_KEY: z.optional(z.string()),
-  /** 서버 전체 하루 Google 호출 상한 (월 무료: 검색 5천·상세 1천 → 하루 150·30이면 안전) */
-  GOOGLE_SEARCH_DAILY: z._default(z.coerce.number().check(z.int(), z.minimum(0)), 150),
-  GOOGLE_DETAILS_DAILY: z._default(z.coerce.number().check(z.int(), z.minimum(0)), 30),
   /**
    * AI 추천 (21단계, 결정 L9) — 무료 AI를 이 순서로 시도: Gemini → Workers AI → Groq.
    * 모두 없거나 한도에 걸리면 AI 없이 언급 수로 집계한다. 키는 서버에만

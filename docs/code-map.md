@@ -72,7 +72,10 @@ Tailscale Funnel https://jin-server.tail0844c0.ts.net ─▶ 홈 PC 127.0.0.1:87
   웹 `features/reviews/`(상세 시트 [후기 입력]·목록, `ReviewSheet`, `/me/reviews`), 오프라인은 `data/reviewQueue.ts`(동기화 뒤 올림).
   닉네임 가리기 = `users.hide_nickname` → 보여 줄 때 `User#public_no`, 탈퇴하면 후기의 user_id만 NULL
 
-### API 사용량 — 등록된 외부 API와 무료 사용량 (2026-10-24 최신 자료로 확인)
+### API 사용량 — 등록된 외부 API와 무료 사용량
+
+> Google 장소(검색 Text Search Pro 월 5,000 · 상세 Enterprise 월 1,000 · 현지어 이름 Pro 월 5,000)는 **월 단위 과금이라 하루 한도 없음 (2026-10-26 사용자 결정)** — 월 90% 자동 중지만. 과금 기준은 매번 최신 공식 자료로 확인 (docs/22 B1)
+ (2026-10-24 최신 자료로 확인)
 
 | id | 분류 | 무료 사용량 (자동 중지 = 90%) | 근거·메모 |
 |---|---|---|---|

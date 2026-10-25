@@ -14,7 +14,6 @@ const config = loadConfig({
   NAVER_CLIENT_ID: 'nid',
   NAVER_CLIENT_SECRET: 'nsec',
   GOOGLE_PLACES_KEY: 'gkey',
-  GOOGLE_SEARCH_DAILY: '2',
 });
 
 let db: Db;
@@ -126,9 +125,20 @@ describe('장소 검색', () => {
     expect(calls.filter((c) => c.url.includes('searchText'))).toHaveLength(1);
   });
 
-  it('서버 전체 Google 하루 상한을 넘으면 Google은 더 부르지 않는다 (무료 한도 지키기)', async () => {
+  it('Google 검색은 하루 한도 없이, 월 무료량 90%에서 자동 중지 → 이유(api_paused)를 알려 준다 (2026-10-26)', async () => {
     for (const q of ['a1', 'a2', 'a3', 'a4']) await search({ q, scope: 'overseas' });
-    expect(calls.filter((c) => c.url.includes('searchText'))).toHaveLength(2);
+    expect(calls.filter((c) => c.url.includes('searchText'))).toHaveLength(4);
+    // 이번 달 4,500회(무료 5,000의 90%)를 쓴 상태
+    const month = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles' }).format(
+      new Date(),
+    );
+    db.prepare(
+      "INSERT INTO api_usage (api, date, count) VALUES ('google_places_search', ?, 4500) ON CONFLICT (api, date) DO UPDATE SET count = 4500",
+    ).run(month);
+    const res = await search({ q: 'b1', scope: 'overseas' });
+    expect(res.statusCode).toBe(503);
+    expect(res.json()).toEqual({ error: 'api_paused', api: 'google_places_search' });
+    expect(calls.filter((c) => c.url.includes('searchText'))).toHaveLength(4);
   });
 
   it('평점·영업시간은 고른 장소를 볼 때만, 로그인 필요', async () => {

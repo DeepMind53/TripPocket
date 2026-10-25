@@ -22,7 +22,7 @@ const SHOWN = 3;
 
 /**
  * 이름 칸 장소 자동완성 (일정·숙소·음식점 예약, 사용자 요청 2026-10-22·25, docs/10 §4.4):
- * 입력 → (0.4초 뒤) 비슷한 순 3개: 이름 + 아래 작은 주소 + 출처 + 오른쪽 지도 버튼, 더 있으면 [+ 더보기].
+ * 입력 → (0.6초 쉬면) 비슷한 순 3개: 이름 + 아래 작은 주소 + 출처 + 오른쪽 지도 버튼, 더 있으면 [+ 더보기].
  * 로그인했을 때만 서버 검색 (비용·남용 통제), 아니면 직접 입력만
  */
 export function PlaceAutocomplete({
@@ -63,7 +63,7 @@ export function PlaceAutocomplete({
           if (limited) attachFallback(placeSearchLinks(q, domestic));
         }
       });
-    }, 400);
+    }, 600);
     return () => {
       alive = false;
       window.clearTimeout(id);
