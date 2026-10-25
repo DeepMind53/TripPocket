@@ -4,7 +4,13 @@ import * as z from 'zod/mini';
 import type { Config } from '../config';
 import type { Db } from '../db/database';
 import { requireUser } from '../auth/session';
-import { googleDetails, searchGoogle, searchKakao, searchNaver } from '../services/places';
+import {
+  googleDetails,
+  googleLocalName,
+  searchGoogle,
+  searchKakao,
+  searchNaver,
+} from '../services/places';
 import { naverSearchKeys } from '../services/naverBlog';
 import { apiAllowed } from '../services/apiUsage';
 
@@ -117,4 +123,23 @@ export function placesRoutes(app: FastifyInstance, config: Config, db: Db): void
     reply.header('cache-control', 'no-store');
     return details;
   });
+
+  // 택시용 현지어 이름·주소 (docs/20 G4) — 상세와 같은 하루 한도를 함께 쓴다
+  app.get<{ Params: { id: string }; Querystring: { lang?: string } }>(
+    '/api/places/google/:id/local',
+    auth,
+    async (req, reply) => {
+      if (!config.GOOGLE_PLACES_KEY) return reply.code(503).send({ error: 'not_configured' });
+      const lang = req.query.lang ?? '';
+      if (!/^[\w-]{10,300}$/.test(req.params.id) || !/^[a-z]{2,3}(-[A-Z]{2})?$/.test(lang))
+        return reply.code(400).send({ error: 'bad_request' });
+      const userId = req.user!.userId;
+      if (!allowed(userId, 'details'))
+        return reply.code(429).send({ error: 'daily_limit', feature: 'places_details' });
+      const local = await googleLocalName(req.params.id, lang, config.GOOGLE_PLACES_KEY);
+      bump(userId, 'details');
+      reply.header('cache-control', 'no-store');
+      return local;
+    },
+  );
 }

@@ -21,6 +21,7 @@ import {
   Map as MapIcon,
   Plus,
   Footprints,
+  Route,
 } from 'lucide-react';
 import { lazy, Suspense, useCallback, useEffect, useState, Fragment, useRef } from 'react';
 import { useTranslation } from '../../i18n';
@@ -38,7 +39,7 @@ import { itemRepo } from '../../data/repositories/itemRepo';
 import { useRouteSheet } from '../../shared/hooks/useRouteSheet';
 import { cn } from '../../shared/lib/cn';
 import { formatMonthDay } from '../../shared/lib/dateFormat';
-import { sortByTimeKeepingUntimed } from '../../domain/schedule';
+import { shortestOrder, sortByTimeKeepingUntimed } from '../../domain/schedule';
 import {
   BottomSheet,
   Button,
@@ -304,6 +305,23 @@ function PlanView({
     toast(t('plan.sorted'));
   }
 
+  // 동선 짧게 (docs/20 G6): 시간 없는 장소 순서만 바꿈, 되돌리기 가능
+  async function shortenDay(date: LocalDate | null) {
+    const dayItems = items.filter((i) => i.date === date);
+    setDayMenuOpen(false);
+    const r = shortestOrder(dayItems, distanceKm);
+    if (!r) {
+      toast(t('plan.routeAlreadyShort'));
+      return;
+    }
+    const before = dayItems.map((i) => i.id);
+    await itemRepo.reorderDay(trip.id, date, r.ids);
+    snackbar(t('plan.routeShortened', { km: formatDistance(r.savedKm) }), {
+      label: t('common.undo'),
+      onAction: () => void itemRepo.reorderDay(trip.id, date, before),
+    });
+  }
+
   const dayTitle = (date: LocalDate | null) => {
     const i = date ? days.indexOf(date) : -1;
     return date
@@ -524,6 +542,17 @@ function PlanView({
             <span className="text-caption text-fg-muted">{t('plan.sortByTimeDesc')}</span>
           </span>
         </button>
+        <button
+          type="button"
+          onClick={() => void shortenDay(menuDate)}
+          className="flex w-full items-start gap-3 rounded-btn py-3 text-left"
+        >
+          <Route aria-hidden="true" className="mt-0.5 size-5 text-fg-sub" />
+          <span className="flex flex-col">
+            <span className="text-body-1">{t('plan.shortenRoute')}</span>
+            <span className="text-caption text-fg-muted">{t('plan.shortenRouteDesc')}</span>
+          </span>
+        </button>
       </BottomSheet>
 
       <ItemFormSheet
@@ -562,6 +591,9 @@ function PlanView({
         visited={!!selected?.date && selected.date <= today}
         domestic={isDomestic}
         near={trip.destinations.find((d) => d.coords)?.coords}
+        countryCode={
+          trip.destinations.find((d) => d.countryCode && d.countryCode !== 'KR')?.countryCode
+        }
         onVisitTime={(time) =>
           selected && void itemRepo.update(selected.id, { startTime: time || undefined })
         }

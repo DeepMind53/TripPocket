@@ -173,3 +173,26 @@ export async function googleDetails(placeId: string, key: string): Promise<Place
     googleMapsUrl: d.googleMapsUri,
   };
 }
+
+/**
+ * 택시용 현지어 이름·주소 (docs/20 G4): 그 나라 말로 장소 이름·주소만.
+ * Place Details Pro 등급(이름) — 무료 월 5,000회. 저장하지 않고 보여 주기만 (Google 약관)
+ */
+export async function googleLocalName(
+  placeId: string,
+  lang: string,
+  key: string,
+): Promise<{ name?: string | undefined; address?: string | undefined }> {
+  guardApi('google_places_local');
+  trackApi('google_places_local');
+  const res = await fetch(
+    `https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}?languageCode=${encodeURIComponent(lang)}`,
+    {
+      headers: { 'X-Goog-Api-Key': key, 'X-Goog-FieldMask': 'displayName,formattedAddress' },
+      signal: timeout(),
+    },
+  );
+  if (!res.ok) throw new Error(`google ${res.status}`);
+  const d = (await res.json()) as { displayName?: { text?: string }; formattedAddress?: string };
+  return { name: d.displayName?.text, address: d.formattedAddress };
+}

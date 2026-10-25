@@ -65,7 +65,9 @@
     "appGoogle": "구글",
     "appKakao": "카카오",
     "appAsk": "묻기",
-    "hint": "환율·AI 추천·길찾기 같은\n자주 쓰는 기능은 여기에 있어요"
+    "hint": "환율·AI 추천·길찾기 같은\n자주 쓰는 기능은 여기에 있어요",
+    "phrases": "번역·회화",
+    "phrasesDesc": "자주 쓰는 말을 현지어로 크게"
   },
   "home": {
     "emptyTitle": "어디로 떠나볼까요?",
@@ -183,7 +185,11 @@
     "showDays": "펼치기",
     "startTitle": "어디부터 가 볼까요?",
     "startPlaces": "장소 찾기",
-    "startAi": "AI 추천 받기"
+    "startAi": "AI 추천 받기",
+    "shortenRoute": "동선 짧게 바꾸기",
+    "shortenRouteDesc": "시간 정하지 않은 장소만 가까운 순서로\n(직선거리 기준, 되돌릴 수 있어요)",
+    "routeAlreadyShort": "지금 순서가 가장 짧아요",
+    "routeShortened": "약 {{km}} 줄였어요"
   },
   "places": {
     "emptyTitle": "장소 찾기",
@@ -513,7 +519,8 @@
     "departTerminal": "출발 {{t}}",
     "arriveTerminal": "도착 {{t}}",
     "confirmationNo": "예약번호 {{no}}",
-    "visitTime": "방문 시간"
+    "visitTime": "방문 시간",
+    "taxi": "택시"
   },
   "dir": {
     "title": "{{name}}까지",
@@ -933,7 +940,8 @@
       "oauth_google": "Google 로그인",
       "cf_functions": "Cloudflare Pages 함수 (홈 서버 연결)",
       "aviationstack": "AviationStack 항공편",
-      "web_push": "웹 푸시 알림"
+      "web_push": "웹 푸시 알림",
+      "google_places_local": "Google 장소 현지어 이름 (택시 카드)"
     },
     "note": {
       "google_places_search": "해외 장소 검색 · 월 5,000회 무료",
@@ -957,7 +965,8 @@
       "oauth_google": "로그인할 때마다 2회 · 무료",
       "cf_functions": "하루 10만 요청 무료 (넘으면 오류, 요금 없음)",
       "aviationstack": "편명으로 불러오기 · 월 100회 무료 (넘으면 거절, 요금 없음)",
-      "web_push": "브라우저 회사 푸시 서버 (무료·한도 없음)"
+      "web_push": "브라우저 회사 푸시 서버 (무료·한도 없음)",
+      "google_places_local": "Place Details Pro · 무료 월 5,000회"
     },
     "autoStoppedDay": "오늘 자동 중지",
     "monthMeter": "이번 달",
@@ -1271,5 +1280,15 @@
     "confirm": "한 번 더 누르면 지워요",
     "cleared": "지웠어요",
     "serverNote": "서버에 있는 데이터는 관리자만 서버 PC에서 지울 수 있어요"
+  },
+  "phrases": {
+    "title": "번역·회화",
+    "lang": "언어",
+    "list": "{{lang}} 자주 쓰는 말",
+    "papago": "파파고로 번역",
+    "google": "Google 번역",
+    "hint": "누르면 크게 보여요\n현지인에게 화면을 보여 주세요",
+    "takeMeHereEn": "Please take me here",
+    "taxiSub": "기사님께 이 화면을 보여 주세요"
   }
 }

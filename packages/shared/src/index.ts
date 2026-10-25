@@ -112,3 +112,4 @@ export { findAirport, searchAirports, type Airport } from './data/airports';
 export { flagEmoji } from './data/flag';
 export * from './reviews/reviews';
 export * from './data/essentials';
+export * from './data/phrases';

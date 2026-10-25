@@ -3,6 +3,7 @@ import {
   Copy,
   CalendarClock,
   ChevronRight,
+  Languages,
   ListChecks,
   Settings,
   Sparkles,
@@ -170,6 +171,20 @@ function QuickMenuContent({ shortcuts }: { shortcuts?: Shortcuts }) {
           <span className="flex min-w-0 flex-1 flex-col">
             <span className="text-body-1">{t('quickMenu.ai')}</span>
             <span className="text-caption text-fg-muted">{t('quickMenu.aiDesc')}</span>
+          </span>
+          <ChevronRight aria-hidden="true" className="size-5 text-fg-muted" />
+        </Link>
+        {/* 번역·회화 (docs/20 G7) */}
+        <Link
+          to={tripId ? `/phrases?trip=${tripId}` : '/phrases'}
+          className="flex items-center gap-3 rounded-card bg-bg-subtle px-4 py-3 text-left"
+        >
+          <span aria-hidden="true" className="text-primary [&>svg]:size-5">
+            <Languages />
+          </span>
+          <span className="flex min-w-0 flex-1 flex-col">
+            <span className="text-body-1">{t('quickMenu.phrases')}</span>
+            <span className="text-caption text-fg-muted">{t('quickMenu.phrasesDesc')}</span>
           </span>
           <ChevronRight aria-hidden="true" className="size-5 text-fg-muted" />
         </Link>

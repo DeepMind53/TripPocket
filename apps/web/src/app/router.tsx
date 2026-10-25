@@ -126,6 +126,12 @@ const allRoutes: RouteObject[] = [
     }),
   },
   {
+    path: 'phrases',
+    lazy: async () => ({
+      Component: (await import('../features/phrases/PhrasesPage')).PhrasesPage,
+    }),
+  },
+  {
     path: 'me/reviews',
     lazy: async () => ({
       Component: (await import('../features/reviews/MyReviewsPage')).MyReviewsPage,

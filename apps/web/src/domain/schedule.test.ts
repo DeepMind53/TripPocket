@@ -1,5 +1,5 @@
 import type { ItineraryItem } from '@trippocket/shared';
-import { planReflow, sortByTimeKeepingUntimed } from './schedule';
+import { planReflow, shortestOrder, sortByTimeKeepingUntimed } from './schedule';
 
 const item = (id: string, date: string | null, startTime?: string): ItineraryItem => ({
   id,
@@ -64,5 +64,42 @@ describe('기간 변경', () => {
     expect(planReflow(items, '2026-10-24', '2026-10-24', '2026-10-30', 'keepDate').moves).toEqual(
       [],
     );
+  });
+});
+
+describe('동선 순서 추천 (docs/20 G6)', () => {
+  const at = (id: string, lat: number, startTime?: string) =>
+    ({
+      id,
+      title: id,
+      date: '2026-11-01',
+      order: id,
+      kind: 'place',
+      tripId: 't',
+      place: { coords: { lat, lng: 0 } },
+      ...(startTime ? { startTime } : {}),
+    }) as unknown as ItineraryItem;
+  const dist = (a: { lat: number }, b: { lat: number }) => Math.abs(a.lat - b.lat) * 111;
+
+  it('시간 없는 장소만 가까운 순서로, 시간 정한 일정은 제자리', () => {
+    const list = [
+      at('호텔', 0, '09:00'),
+      at('C', 3),
+      at('A', 1),
+      at('B', 2),
+      at('저녁', 4, '19:00'),
+    ];
+    const r = shortestOrder(list, dist)!;
+    expect(r.ids).toEqual(['호텔', 'A', 'B', 'C', '저녁']);
+    expect(r.savedKm).toBeCloseTo(444, 0);
+  });
+
+  it('이미 가장 짧으면 null, 8곳 이상도 2-opt로 줄인다', () => {
+    expect(shortestOrder([at('A', 1), at('B', 2), at('C', 3)], dist)).toBeNull();
+    const many = [9, 1, 8, 2, 7, 3, 6, 4, 5].map((n) => at(`p${n}`, n));
+    const r = shortestOrder(many, dist)!;
+    const asc = ['p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8', 'p9'];
+    expect([asc, [...asc].reverse()]).toContainEqual(r.ids);
+    expect(r.savedKm).toBeGreaterThan(0);
   });
 });

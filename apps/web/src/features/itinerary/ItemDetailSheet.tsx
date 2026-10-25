@@ -4,6 +4,7 @@ import {
   ArrowDown,
   ArrowUp,
   CalendarArrowUp,
+  CarTaxiFront,
   Copy,
   ExternalLink,
   MapPinned,
@@ -26,6 +27,7 @@ import { BottomSheet, Button, Switch, TimeInput, toast } from '../../shared/ui';
 import { copyText } from '../../shared/lib/clipboard';
 import { FlightTicket } from '../bookings/BookingCard';
 import { BookingDocs } from '../bookings/BookingDocs';
+import { TaxiCard } from '../phrases/TaxiCard';
 import { KIND_ICON } from './itemKinds';
 
 export interface ItemDetailSheetProps {
@@ -60,6 +62,8 @@ export interface ItemDetailSheetProps {
   visited?: boolean;
   domestic?: boolean;
   near?: { lat: number; lng: number } | undefined;
+  /** 여행지 나라 (해외면 택시 카드) */
+  countryCode?: string | undefined;
 }
 
 /** S-12 일정 상세 */
@@ -87,12 +91,15 @@ export function ItemDetailSheet({
   visited = false,
   domestic = true,
   near,
+  countryCode,
 }: ItemDetailSheetProps) {
   const { t } = useTranslation();
   // 후기: 숙소·맛집·카페·쇼핑·관광·액티비티만, 보기 전용 공유는 못 씀 (사용자 결정 2026-10-25)
   const reviewKind = item && isReviewKind(item.kind) ? item.kind : null;
   const canReview = !!reviewKind && !!tripId && !readOnly;
   const [reviewOpen, setReviewOpen] = useState(false);
+  // 택시 기사에게 보여 주기 (해외 장소만, docs/20 G4)
+  const [taxiOpen, setTaxiOpen] = useState(false);
   const [reviewVersion, setReviewVersion] = useState(0);
   const reviews = useItemReviews(
     tripId ?? '',
@@ -179,7 +186,7 @@ export function ItemDetailSheet({
           {booking && <BookingDocs booking={booking} canEdit={false} compact />}
 
           {/* 누를 수 없는 버튼은 보이지 않게 — 종류·정보에 맞는 것만 (docs/16 D1) */}
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-4 gap-2 [&:has(>:nth-child(5))]:grid-cols-5">
             {placeLike && (
               <Action
                 icon={<Navigation />}
@@ -200,6 +207,13 @@ export function ItemDetailSheet({
                 icon={<MapPinned />}
                 label={t('detail.viewOnMap')}
                 onClick={() => openMapLink(placeLink(mapApp, dest, window.location.hostname))}
+              />
+            )}
+            {placeLike && !domestic && (
+              <Action
+                icon={<CarTaxiFront />}
+                label={t('detail.taxi')}
+                onClick={() => setTaxiOpen(true)}
               />
             )}
             {!readOnly && <Action icon={<Pencil />} label={t('detail.edit')} onClick={onEdit} />}
@@ -287,6 +301,16 @@ export function ItemDetailSheet({
             </div>
           )}
         </div>
+      )}
+      {item && taxiOpen && (
+        <TaxiCard
+          open
+          onClose={() => setTaxiOpen(false)}
+          countryCode={countryCode}
+          name={item.place?.name ?? item.title}
+          address={address}
+          googlePlaceId={item.place?.googlePlaceId}
+        />
       )}
       {item && reviewKind && tripId && reviewOpen && (
         <Suspense fallback={null}>

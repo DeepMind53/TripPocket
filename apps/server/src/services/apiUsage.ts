@@ -12,6 +12,7 @@ import type { Db } from '../db/database';
 export type ApiId =
   | 'google_places_search'
   | 'google_places_details'
+  | 'google_places_local'
   | 'google_maps_js'
   | 'naver_maps_js'
   | 'kakao_map'
@@ -61,6 +62,8 @@ export const APIS: readonly ApiDef[] = [
   // 검색 = Text Search Pro(이름·주소·좌표·지도 링크), 상세 = Place Details Enterprise(평점·영업시간), 지도 = Dynamic Maps(Essentials)
   { id: 'google_places_search', group: 'paid', freeMonthly: 5000, tz: 'America/Los_Angeles' },
   { id: 'google_places_details', group: 'paid', freeMonthly: 1000, tz: 'America/Los_Angeles' },
+  // 택시용 현지어 이름 (Place Details Pro, 무료 월 5,000회) — docs/20 G4
+  { id: 'google_places_local', group: 'paid', freeMonthly: 5000, tz: 'America/Los_Angeles' },
   {
     id: 'google_maps_js',
     group: 'paid',

@@ -60,6 +60,14 @@ export const COMMON_ESSENTIALS: readonly EssentialItem[] = [
     desc: '해외 병원비는 비싸요\n휴대품 도난·항공 지연 보장도 확인하세요',
   },
   {
+    // docs/20 G3 — 앱 지도는 인터넷이 있어야 보여서, 지도 앱의 오프라인 지도를 미리
+    id: 'offlineMap',
+    level: 'recommend',
+    title: '오프라인 지도 받기',
+    desc: 'Google 지도 앱 → 프로필 → 오프라인 지도에서 여행지를 받아 두세요\n트립포켓 일정·주소는 인터넷 없이도 보여요',
+    url: 'https://support.google.com/maps/answer/6291838?hl=ko',
+  },
+  {
     id: 'data',
     level: 'recommend',
     title: '데이터 (eSIM·유심·로밍)',
