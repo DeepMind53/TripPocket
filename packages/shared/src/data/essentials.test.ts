@@ -29,3 +29,17 @@ describe('나라별 필수 항목 (docs/19)', () => {
     expect(passportNeededUntil('2026-11-10', 'stay')).toBe('2026-11-10');
   });
 });
+
+describe('나라별 이벤트 (사용자 요청 2026-10-25)', () => {
+  it('목적지 나라·기간에 맞는 것만, 끝난 이벤트는 안 보임', async () => {
+    const { eventsFor } = await import('./essentials');
+    expect(eventsFor(['TW'], '2026-10-25', '2026-11-03').map((e) => e.id)).toEqual([
+      'tw-lucky-2026',
+    ]);
+    expect(eventsFor(['TW'], '2027-03-25', '2027-04-01')).toEqual([]);
+    expect(eventsFor(['HK'], '2026-10-25', '2026-10-28').map((e) => e.id)).toEqual([
+      'mo-free-coach-2026',
+    ]);
+    expect(eventsFor(['JP'], '2026-10-25', '2026-10-28')).toEqual([]);
+  });
+});

@@ -1,4 +1,5 @@
-import { diffDays, ESSENTIALS_CHECKED_AT, flagEmoji, todayIn } from '@trippocket/shared';
+import { diffDays, ESSENTIALS_CHECKED_AT, eventsFor, flagEmoji, todayIn } from '@trippocket/shared';
+import { Gift } from 'lucide-react';
 import { Check, ExternalLink, TriangleAlert } from 'lucide-react';
 import { useState } from 'react';
 import { useParams } from 'react-router';
@@ -28,6 +29,8 @@ export function EssentialsPage() {
   const stale = diffDays(ESSENTIALS_CHECKED_AT, todayIn(trip?.timezone)) > STALE_DAYS;
 
   if (!trip || !s) return <TopBar title={t('essentials.title')} backTo="/" />;
+  const codes = trip.destinations.flatMap((d) => (d.countryCode ? [d.countryCode] : []));
+  const events = eventsFor(codes, todayIn(trip.timezone), trip.endDate);
   return (
     <>
       <TopBar
@@ -55,6 +58,38 @@ export function EssentialsPage() {
             <p className="tabular text-body-2 font-semibold">
               {t('essentials.progress', { done: s.done, total: s.total })}
             </p>
+            {/* 나라별 이벤트·혜택 (누구나 응모·신청, 끝나면 안 보임) */}
+            {events.length > 0 && (
+              <section aria-label={t('essentials.events')} className="flex flex-col gap-2">
+                <h2 className="flex items-center gap-1.5 text-body-1 font-bold">
+                  <Gift aria-hidden="true" className="size-4 text-primary" />
+                  {t('essentials.events')}
+                </h2>
+                <ul className="flex flex-col gap-2">
+                  {events.map((e) => (
+                    <li
+                      key={e.id}
+                      className="flex flex-col gap-1 rounded-card border border-primary/40 bg-primary-weak/50 px-3 py-2.5"
+                    >
+                      <span className="text-body-2 font-semibold">{e.title}</span>
+                      <span className="text-caption text-fg-sub">{e.desc}</span>
+                      <span className="tabular text-micro text-fg-muted">
+                        {t('essentials.eventPeriod', { from: e.from, until: e.until })}
+                      </span>
+                      <a
+                        href={e.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 self-start text-caption font-semibold text-primary"
+                      >
+                        {t('essentials.eventOpen')}
+                        <ExternalLink aria-hidden="true" className="size-3.5" />
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
             {s.unknown.length > 0 && (
               <p className="text-caption text-fg-sub">
                 {t('essentials.unknown', { codes: s.unknown.map(flagEmoji).join(' ') })}{' '}

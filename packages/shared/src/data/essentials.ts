@@ -672,3 +672,50 @@ export function passportNeededUntil(endDate: string, months: number | 'stay'): s
 
 /** 체크 상태 저장 키 (준비 목록 essentials의 text) */
 export const essentialKey = (country: string, id: string) => `${country}:${id}`;
+
+/**
+ * 나라별 이벤트·혜택 (사용자 요청 2026-10-25): 누구나 응모·신청할 수 있는 것만.
+ * until이 지나면 화면에서 안 보인다. 매달 반복 작업(docs/22)에서 새 이벤트를 찾아 더한다
+ */
+export interface TravelEvent {
+  id: string;
+  /** 보여 줄 나라 (여행 목적지가 이 중 하나면) */
+  codes: readonly string[];
+  title: string;
+  desc: string;
+  url: string;
+  /** 시작·끝 (YYYY-MM-DD, 끝 날 포함) */
+  from: string;
+  until: string;
+  checkedAt: string;
+}
+
+export const TRAVEL_EVENTS: readonly TravelEvent[] = [
+  {
+    id: 'tw-lucky-2026',
+    codes: ['TW'],
+    title: '대만 여행 지원금 추첨 (재방문 NT$5,000)',
+    desc: '도착 7~90일 전에 온라인 등록 → 매주 수요일 추첨\n재방문 NT$5,000, 동행 NT$3,000 소비 지원금 · 3~90일 개별 여행',
+    url: 'https://5000.taiwan.net.tw/campaign_rules_kr.html',
+    from: '2026-10-01',
+    until: '2027-03-24',
+    checkedAt: '2026-10-25',
+  },
+  {
+    id: 'mo-free-coach-2026',
+    codes: ['MO', 'HK'],
+    title: '홍콩공항 → 마카오 무료 버스 (편도)',
+    desc: '홍콩국제공항으로 들어와 마카오로 가는 외국인 여행자\n공항 입국장 안 지정 창구에서 무료 표를 받아요',
+    url: 'https://www.macauhkairportbus.com/news/79',
+    from: '2026-01-20',
+    until: '2026-12-31',
+    checkedAt: '2026-10-25',
+  },
+];
+
+/** 이 나라들의 지금 진행 중인(또는 여행 중에 열리는) 이벤트 */
+export function eventsFor(codes: readonly string[], today: string, tripEnd: string): TravelEvent[] {
+  return TRAVEL_EVENTS.filter(
+    (e) => e.codes.some((c) => codes.includes(c)) && e.until >= today && e.from <= tripEnd,
+  );
+}

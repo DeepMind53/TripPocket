@@ -66,3 +66,21 @@ it('홈 준비 현황에 필수 항목 칸 (완료 수·다음 할 일)', async 
     '다음: 디지털 입국카드 (TDAC)',
   );
 });
+
+it('필수 항목: 대만 여행이면 지원금 추첨 이벤트와 공식 링크 (끝나면 안 보임)', async () => {
+  const tw = await tripRepo.create({
+    title: '타이베이',
+    destinations: [{ name: '타이베이', kind: 'city', countryCode: 'TW' }],
+    startDate: '2026-11-10',
+    endDate: '2026-11-13',
+    timezone: 'Asia/Taipei',
+    cover: {},
+  });
+  renderAt(`/trips/${tw.id}/essentials`);
+  const ev = await screen.findByRole('region', { name: '이벤트·혜택' });
+  expect(ev).toHaveTextContent('대만 여행 지원금 추첨');
+  expect(within(ev).getByRole('link', { name: /공식 안내/ })).toHaveAttribute(
+    'href',
+    'https://5000.taiwan.net.tw/campaign_rules_kr.html',
+  );
+});

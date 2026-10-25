@@ -1219,7 +1219,10 @@
     "passportLabel": "여권 만료일",
     "passportPrivacy": "이 기기에만 저장돼요 (올리지 않음)",
     "next": "다음: {{title}}",
-    "allDone": "모두 챙겼어요"
+    "allDone": "모두 챙겼어요",
+    "events": "이벤트·혜택",
+    "eventPeriod": "기간 {{from}} ~ {{until}}",
+    "eventOpen": "공식 안내 보기"
   },
   "push": {
     "title": "알림",
