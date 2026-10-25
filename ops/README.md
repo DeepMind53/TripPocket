@@ -95,10 +95,13 @@ pnpm --filter @trippocket/server build
 
 서버 데이터는 웹·앱에서 지울 수 없다 (2026-10-25 사용자 결정). 서버 PC에서:
 
-\undefined
- ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command "admin:data" not found
-undefined
- ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command "admin:data" not found
+```
+cd D:\Travel_Planner\apps\server
+pnpm admin:data list                              # 사용자·여행·문서·후기 수, 문서 용량
+pnpm admin:data purge-ended --yes                 # 끝난 여행 문서 지우기 (6시간마다 자동으로도 함)
+pnpm admin:data delete-trip-files <여행id> --yes  # 한 여행의 문서 모두
+pnpm admin:data delete-user <사용자id> --yes      # 계정과 서버 데이터 (후기는 User#N으로 남음)
+```
 
-- 예약 문서 파일: (1개 10MB까지). 끝난 여행은 서버에서 지우고 기기에만 남는다
+- 예약 문서 파일: `DATA_DIR\attachments\` (1개 10MB까지). 끝난 여행은 서버에서 지우고 기기에만 남는다
 - 문서 파일은 매일 백업(DB)에 들어가지 않는다 — 여행 중 임시 공유용
