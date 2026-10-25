@@ -30,7 +30,7 @@ export function TopBar({ title, subtitle, backTo, actions }: TopBarProps) {
   }
 
   return (
-    <header className="sticky top-[env(safe-area-inset-top)] z-20 flex min-h-14 items-center gap-1 bg-bg/95 px-1 backdrop-blur">
+    <header className="sticky top-0 z-20 flex min-h-[calc(56px+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] items-center gap-1 bg-bg/95 px-1 backdrop-blur">
       {backTo !== undefined ? (
         <div className="flex shrink-0 items-center">
           <IconButton

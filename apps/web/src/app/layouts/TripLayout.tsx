@@ -117,7 +117,7 @@ export function TripLayout() {
           {t('share.readOnly.banner')}
         </p>
       )}
-      <main className="pb-[calc(56px+env(safe-area-inset-bottom)+96px)]">{trip && <Outlet />}</main>
+      <main className="pb-[calc(56px+env(safe-area-inset-bottom)+64px)]">{trip && <Outlet />}</main>
       {trip && <QuickMenuButton inTrip />}
       <BottomSheet open={menuOpen} onOpenChange={setMenuOpen} title={trip?.title ?? ''}>
         {trip && (

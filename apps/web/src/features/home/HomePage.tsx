@@ -69,7 +69,7 @@ export function HomePage() {
   return (
     <>
       {/* 홈만 가운데 로고 (빠른 메뉴는 AppShell의 플로팅 버튼) */}
-      <header className="sticky top-[env(safe-area-inset-top)] z-20 grid min-h-14 grid-cols-[44px_1fr_44px] items-center bg-bg/95 px-1 backdrop-blur">
+      <header className="sticky top-0 z-20 grid min-h-[calc(56px+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] grid-cols-[44px_1fr_44px] items-center bg-bg/95 px-1 backdrop-blur">
         <span />
         <Wordmark label={t('app.name')} />
         <span />
