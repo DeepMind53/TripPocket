@@ -834,7 +834,8 @@
     "outsideHours": "{{time}}은 영업시간이 아닐 수 있어요",
     "fromGoogle": "Google 정보 · 볼 때마다 새로 불러와요",
     "more": "더보기 ({{n}}곳)",
-    "moreTitle": "\"{{q}}\" 검색 결과"
+    "moreTitle": "\"{{q}}\" 검색 결과",
+    "searchBtn": "\"{{q}}\" 장소 검색"
   },
   "ai": {
     "title": "AI 추천",

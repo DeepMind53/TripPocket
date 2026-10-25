@@ -86,6 +86,11 @@ describe('일정 입력 장소 검색', () => {
       await user.click(within(day1).getByRole('button', { name: /일정 추가/ }));
       const sheet = await screen.findByRole('dialog', { name: '일정 추가' });
       await user.type(within(sheet).getByLabelText('이름'), '이치란');
+      // 해외(유료)는 글자마다 부르지 않고 [검색]을 눌렀을 때만 (사용자 요청 2026-10-26)
+      const before = searches.length;
+      await new Promise((r) => setTimeout(r, 700));
+      expect(searches.length).toBe(before);
+      await user.click(within(sheet).getByRole('button', { name: '"이치란" 장소 검색' }));
 
       const list = await within(sheet).findByRole('listbox', { name: '장소 검색 결과' });
       // 해외 여행 → overseas, 여행지 좌표로 가까운 곳 우선

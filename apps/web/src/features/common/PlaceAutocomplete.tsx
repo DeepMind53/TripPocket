@@ -2,7 +2,7 @@ import type { PlaceSummary } from '@trippocket/shared';
 import { attachFallback } from '../../data/limitNotice';
 import { placeSearchLinks } from '../../shared/lib/fallbackLinks';
 import { FallbackLinks } from './FallbackLinks';
-import { MapPin, Plus } from 'lucide-react';
+import { MapPin, Plus, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { placesApi } from '../../data/api/places';
 import { useAuth } from '../../data/authStore';
@@ -23,7 +23,8 @@ const SHOWN = 3;
 /**
  * 이름 칸 장소 자동완성 (일정·숙소·음식점 예약, 사용자 요청 2026-10-22·25, docs/10 §4.4):
  * 입력 → (0.6초 쉬면) 비슷한 순 3개: 이름 + 아래 작은 주소 + 출처 + 오른쪽 지도 버튼, 더 있으면 [+ 더보기].
- * 로그인했을 때만 서버 검색 (비용·남용 통제), 아니면 직접 입력만
+ * 로그인했을 때만 서버 검색 (비용·남용 통제), 아니면 직접 입력만.
+ * 해외(Google, 유료)는 [검색]을 눌렀을 때만 — 글자마다 부르지 않게 (사용자 요청 2026-10-26). 국내(무료)는 바로 추천
  */
 export function PlaceAutocomplete({
   query,
@@ -44,36 +45,58 @@ export function PlaceAutocomplete({
   const [picked, setPicked] = useState('');
   // 폼 시트 위에 겹쳐 여는 창 — 주소 기록(useRouteSheet)은 시트 하나만 기억해서 폼이 닫히므로 따로
   const [moreOpen, setMoreOpen] = useState(false);
+  // 해외: [검색]을 누른 검색어
+  const [asked, setAsked] = useState('');
+  const term = domestic ? query.trim() : asked;
 
   useEffect(() => {
-    const q = query.trim();
+    const q = term;
     if (!loggedIn || q.length < 2 || q === picked) return;
     let alive = true;
-    const id = window.setTimeout(() => {
-      setState('loading');
-      void placesApi.search(q, domestic ? 'domestic' : 'overseas', near).then((r) => {
-        if (!alive) return;
-        if (r.ok) {
-          setResults(r.data.places);
-          setState(r.data.places.length ? 'idle' : 'empty');
-        } else {
-          setResults([]);
-          const limited = r.status === 429 || r.reason === 'limit';
-          setState(limited ? 'limit' : 'idle');
-          if (limited) attachFallback(placeSearchLinks(q, domestic));
-        }
-      });
-    }, 600);
+    const id = window.setTimeout(
+      () => {
+        setState('loading');
+        void placesApi.search(q, domestic ? 'domestic' : 'overseas', near).then((r) => {
+          if (!alive) return;
+          if (r.ok) {
+            setResults(r.data.places);
+            setState(r.data.places.length ? 'idle' : 'empty');
+          } else {
+            setResults([]);
+            const limited = r.status === 429 || r.reason === 'limit';
+            setState(limited ? 'limit' : 'idle');
+            if (limited) attachFallback(placeSearchLinks(q, domestic));
+          }
+        });
+      },
+      domestic ? 600 : 0,
+    );
     return () => {
       alive = false;
       window.clearTimeout(id);
     };
-  }, [query, loggedIn, domestic, near, picked]);
+  }, [term, loggedIn, domestic, near, picked]);
 
   // 로그인했던 기기가 서버에 닿지 않을 때 — 직접 입력은 그대로
   if (!loggedIn) return <ServerOfflineNotice inline />;
   const q = query.trim();
   if (q.length < 2 || q === picked) return null;
+  // 해외: 검색어가 바뀌면 [검색] 버튼부터 (지난 결과는 숨김)
+  if (!domestic && q !== asked)
+    return (
+      <button
+        type="button"
+        onClick={() => {
+          setResults([]);
+          setState('idle');
+          setAsked(q);
+        }}
+        className="flex min-h-11 items-center justify-center gap-1.5 rounded-btn border border-line text-caption font-semibold text-primary active:bg-bg-subtle"
+      >
+        <Search aria-hidden="true" className="size-4" />
+        {t('placeSearch.searchBtn', { q })}
+      </button>
+    );
   if (state === 'loading' && results.length === 0)
     return <p className="text-caption text-fg-muted">{t('placeSearch.searching')}</p>;
   if (state === 'empty')

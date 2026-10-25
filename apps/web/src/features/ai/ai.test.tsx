@@ -154,6 +154,8 @@ it('지역 입력 드롭다운에서 고르면 그 장소 위치로, 키워드�
     />,
   );
   await user.type(await screen.findByLabelText('역·지역 이름'), '신주쿠');
+  // 해외는 [검색]을 눌렀을 때만
+  await user.click(await screen.findByRole('button', { name: '"신주쿠" 장소 검색' }));
   await user.click(await screen.findByRole('option', { name: /신주쿠역/ }));
   expect(JSON.parse(searches[0]!)).toMatchObject({ scope: 'overseas' });
   // 맛집·카페는 끄고 키워드만
