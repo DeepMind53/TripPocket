@@ -29,6 +29,16 @@ export const bookingRepo = {
     return row && !row.deletedAt ? toDomain(row) : undefined;
   },
 
+  /** 여러 여행의 예약 (기록 탭 회고) */
+  async listByTrips(tripIds: readonly string[]): Promise<Booking[]> {
+    const rows = await db.bookings
+      .where('tripId')
+      .anyOf([...tripIds])
+      .filter((r) => !r.deletedAt)
+      .toArray();
+    return rows.map(toDomain);
+  },
+
   async listByTrip(tripId: string): Promise<Booking[]> {
     const rows = await db.bookings
       .where('tripId')

@@ -35,6 +35,24 @@ export function useSetting<T>(key: string, fallback: T): T {
   return useLiveQuery(() => settingsRepo.get(key, fallback), [key]) ?? fallback;
 }
 
+/**
+ * 여러 여행의 일정·예약 (기록 탭 회고). 불러오는 중에는 undefined.
+ * 여행 목록이 바뀐 직후에는 예전 결과가 잠깐 남으므로, 지금 목록의 결과일 때만 돌려준다
+ */
+export function useTripsData(
+  tripIds: readonly string[],
+): { items: ItineraryItem[]; bookings: Booking[] } | undefined {
+  const key = tripIds.join(',');
+  const data = useLiveQuery(async () => {
+    const [items, bookings] = await Promise.all([
+      itemRepo.listByTrips(tripIds),
+      bookingRepo.listByTrips(tripIds),
+    ]);
+    return { key, items, bookings };
+  }, [key]);
+  return data?.key === key ? data : undefined;
+}
+
 /** 방문 기록을 남긴 일정 (기록 탭) */
 export function useVisitedItems(): ItineraryItem[] | undefined {
   return useLiveQuery(() => itemRepo.listVisited(), []);

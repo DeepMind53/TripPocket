@@ -1052,6 +1052,10 @@
       "printPlan": {
         "name": "인쇄용 일정표",
         "desc": "여행 메뉴(⋯)에서 날짜별 일정을\n종이·PDF로 깔끔하게 뽑아요"
+      },
+      "travelReview": {
+        "name": "여행 회고",
+        "desc": "기록 탭에 걸은 거리·비행 횟수·\n가장 많이 간 나라를 카드로 쌓아요"
       }
     },
     "pullMore": "당겨서 동기화",
@@ -1382,6 +1386,26 @@
       "read": "읽음",
       "done": "완료"
     }
+  },
+  "travelReview": {
+    "title": "여행 회고",
+    "km": "{{n}}km",
+    "times": "{{n}}번",
+    "count": "{{n}}곳",
+    "days": "{{n}}일",
+    "walk": "걸은 거리",
+    "walkFun": "마라톤 {{n}}번만큼",
+    "walkEmpty": "장소를 검색해 넣으면 쌓여요",
+    "transit": "대중교통·차 이동",
+    "transitFun": "서울~부산 {{n}}번",
+    "flights": "비행기 탑승",
+    "places": "다녀온 장소",
+    "topKind": "제일 많이 간 곳 · {{kind}} {{n}}곳",
+    "topCountry": "가장 많이 간 나라",
+    "topCountryFun": "{{n}}번 다녀왔어요",
+    "longest": "가장 긴 여행",
+    "farthest": "서울에서 가장 먼 곳",
+    "note": "거리는 일정 장소 사이 직선거리로 어림했어요\n미방문으로 남긴 일정은 빼요"
   },
   "print": {
     "title": "인쇄용 일정표",

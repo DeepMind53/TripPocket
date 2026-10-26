@@ -80,6 +80,16 @@ export const itemRepo = {
     return rows.map(toDomain);
   },
 
+  /** 여러 여행의 일정 (기록 탭 회고) */
+  async listByTrips(tripIds: readonly string[]): Promise<ItineraryItem[]> {
+    const rows = await db.items
+      .where('tripId')
+      .anyOf([...tripIds])
+      .filter((r) => !r.deletedAt)
+      .toArray();
+    return rows.map(toDomain);
+  },
+
   /** 방문 기록을 남긴 일정 전부 (기록 탭) — 날짜 최근 순 */
   async listVisited(): Promise<ItineraryItem[]> {
     const rows = await db.items.filter((r) => !r.deletedAt && r.visit !== undefined).toArray();
