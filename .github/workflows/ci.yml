@@ -25,14 +25,21 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm format:check
-      - run: pnpm check
+      # 단계를 나누고, 실패하면 마지막 오류 줄을 주석으로 남긴다 (로그인 없이 원인 확인, scripts/ci-step.sh)
+      - name: Format
+        run: bash scripts/ci-step.sh format pnpm format:check
+      - name: Lint
+        run: bash scripts/ci-step.sh lint pnpm lint
+      - name: Typecheck
+        run: bash scripts/ci-step.sh typecheck pnpm typecheck
+      - name: Unit tests
+        run: bash scripts/ci-step.sh test pnpm test
       - name: Build + first-load size (budget 300KB)
-        run: pnpm --filter @trippocket/web size
+        run: bash scripts/ci-step.sh size pnpm --filter @trippocket/web size
       - name: E2E (Playwright, Chromium)
         run: |
           pnpm --filter @trippocket/web exec playwright install --with-deps chromium
-          pnpm e2e
+          bash scripts/ci-step.sh e2e pnpm e2e
         env:
           CI: true
       - uses: actions/upload-artifact@v4
