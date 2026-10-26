@@ -42,6 +42,8 @@ jobs:
           bash scripts/ci-step.sh e2e pnpm e2e
         env:
           CI: true
+          # 시험 코드(Node)도 브라우저(playwright.config timezoneId)와 같은 한국 시간으로
+          TZ: Asia/Seoul
       - uses: actions/upload-artifact@v4
         if: failure()
         with:

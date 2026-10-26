@@ -15,7 +15,8 @@ test('홈이 열리고 탭으로 이동한다', async ({ page }) => {
 
 test('여행을 만들면 목록에 남고, 뒤로가기는 만들기 화면을 건너뛴다', async ({ page }) => {
   await createTrip(page, '도쿄 가을여행');
-  await expect(page.getByText(/D-3/)).toBeVisible();
+  // 여행 화면이 열렸다 (D-day 숫자는 기기·여행지 시간대에 따라 달라 보지 않는다)
+  await expect(page.getByRole('heading', { name: /도쿄 가을여행/ })).toBeVisible();
 
   // 여행 목록은 홈에 (2026-10-24) — 뒤로 가면 홈, 새로고침해도 남아 있다
   await page.getByRole('button', { name: '뒤로' }).click();

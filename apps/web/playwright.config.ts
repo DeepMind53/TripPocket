@@ -6,13 +6,18 @@ export default defineConfig({
   fullyParallel: true,
   retries: process.env.CI ? 2 : 0,
   reporter: [['list']],
-  use: { baseURL: 'http://localhost:5173', trace: 'on-first-retry' },
+  // 날짜를 다루는 시험이 많아 브라우저 시간대를 한국으로 고정 (CI는 UTC — 시험 쪽 Node도 TZ=Asia/Seoul, ci.yml)
+  use: { baseURL: 'http://localhost:5173', trace: 'on-first-retry', timezoneId: 'Asia/Seoul' },
   projects: [
-    { name: 'Pixel 7', use: { ...devices['Pixel 7'] }, testIgnore: /\.prod\.spec\.ts$/ },
+    {
+      name: 'Pixel 7',
+      use: { ...devices['Pixel 7'], timezoneId: 'Asia/Seoul' },
+      testIgnore: /\.prod\.spec\.ts$/,
+    },
     // 오프라인·서비스 워커는 배포 빌드에서만 (pnpm build && pnpm preview)
     {
       name: 'prod',
-      use: { ...devices['Pixel 7'], baseURL: 'http://localhost:4173' },
+      use: { ...devices['Pixel 7'], baseURL: 'http://localhost:4173', timezoneId: 'Asia/Seoul' },
       testMatch: /\.prod\.spec\.ts$/,
     },
   ],
