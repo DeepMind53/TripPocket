@@ -92,8 +92,12 @@ export const itemRepo = {
 
   /** 방문 기록을 남긴 일정 전부 (기록 탭) — 날짜 최근 순 */
   async listVisited(): Promise<ItineraryItem[]> {
+    // 지운 여행 안의 기록은 빼고 (여행만 지우면 안의 일정은 그대로 남는다)
+    const live = new Set((await db.trips.filter((t) => !t.deletedAt).primaryKeys()).map(String));
     const rows = await db.items
-      .filter((r) => !r.deletedAt && r.visit !== undefined && r.kind !== 'note')
+      .filter(
+        (r) => !r.deletedAt && r.visit !== undefined && r.kind !== 'note' && live.has(r.tripId),
+      )
       .toArray();
     rows.sort((a, b) => compareKeys(b.date ?? '', a.date ?? '') || compareKeys(a.order, b.order));
     return rows.map(toDomain);

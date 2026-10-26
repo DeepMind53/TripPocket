@@ -109,3 +109,24 @@ it('방문 기록은 여행별로 묶어 보여 준다', async () => {
   expect(within(osaka).getAllByRole('listitem')).toHaveLength(2);
   expect(screen.getByRole('region', { name: '후쿠오카' })).toHaveTextContent('캐널시티');
 });
+
+it('지운 여행 안의 방문 기록은 보이지 않는다', async () => {
+  const trip = await tripRepo.create({
+    timezone: 'Asia/Tokyo',
+    cover: {},
+    title: '지운 여행',
+    destinations: [{ name: '도쿄', kind: 'city', countryCode: 'JP' }],
+    startDate: '2025-05-01',
+    endDate: '2025-05-01',
+  });
+  const it = await itemRepo.create({
+    tripId: trip.id,
+    date: '2025-05-01',
+    kind: 'place',
+    title: '센소지',
+  });
+  await itemRepo.setVisit(it.id, 'visited');
+  expect(await itemRepo.listVisited()).toHaveLength(1);
+  await tripRepo.softDelete(trip.id);
+  expect(await itemRepo.listVisited()).toEqual([]);
+});
