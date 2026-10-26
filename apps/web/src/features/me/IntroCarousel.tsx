@@ -377,7 +377,7 @@ function AlertsMock() {
   const notes: [string, string, string][] = [
     ['✈', '내일 출발이에요', '여권·충전기 챙겼나요'],
     ['🛂', '입국신고 할 때예요', 'Visit Japan Web 미리 등록'],
-    ['⏰', '30분 뒤 센소지', '걸어서 12분'],
+    ['⚠️', '도쿄 가을여행 여행지 특보', '태풍 빨강 경보 · 공식 발표 확인'],
   ];
   return (
     <Phone>
