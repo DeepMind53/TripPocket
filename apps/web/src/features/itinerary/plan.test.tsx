@@ -242,7 +242,9 @@ describe('일정 화면', () => {
 
     expect(await screen.findByText('일정을 옮겼어요')).toBeInTheDocument();
     const day3 = await dayAfterSheet('3일차 · 10.26 (월)');
-    expect(within(day3).getByRole('button', { name: '2번째 일정, 센소지' })).toBeInTheDocument();
+    expect(
+      await within(day3).findByRole('button', { name: '2번째 일정, 센소지' }),
+    ).toBeInTheDocument();
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
