@@ -15,7 +15,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-it('날씨 정보: 여행 앞뒤 하루까지 목적지 날씨, 항공편 출발 공항 날씨', async () => {
+it('날씨 정보: 여행 앞뒤 하루까지 목적지 날씨, 항공편 출발·도착 공항 날씨', async () => {
   const urls: string[] = [];
   vi.stubGlobal('fetch', async (url: string) => {
     urls.push(url);
@@ -57,9 +57,14 @@ it('날씨 정보: 여행 앞뒤 하루까지 목적지 날씨, 항공편 출발
   expect(rows[0]).toHaveTextContent('여행 전날');
   expect(rows[4]).toHaveTextContent('여행 다음 날');
   expect(await within(dest).findAllByText('10°/22°')).toHaveLength(5);
-  const air = screen.getByRole('region', { name: '출발 공항 날씨' });
-  expect(within(air).getByText(/ICN/)).toBeInTheDocument();
+  // 편명·공항 코드는 자르지 않고, 출발 공항(출발일)·도착 공항(도착일) 둘 다
+  const air = screen.getByRole('region', { name: '공항 날씨' });
+  expect(within(air).getByText('ICN → NRT')).toBeInTheDocument();
+  expect(within(air).getByText(/KE703/)).not.toHaveClass('truncate');
+  expect(within(air).getByText(/\(ICN\)/)).toBeInTheDocument();
+  expect(within(air).getByText(/\(NRT\)/)).toBeInTheDocument();
   expect(await within(air).findByText('10°/18°')).toBeInTheDocument();
+  expect(await within(air).findByText('10°/22°')).toBeInTheDocument();
 });
 
 it('여행지 특이사항: 나라 코드만 보내고, 특보와 그 나라 기상청 링크를 보여 준다', async () => {

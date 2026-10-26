@@ -76,7 +76,7 @@ export function WeatherPage() {
             <h2 className="text-caption font-bold text-fg-muted">{t('weatherPage.airports')}</h2>
             <ul className="flex flex-col divide-y divide-line rounded-card border border-line">
               {flights.map((b) => (
-                <AirportRow key={b.id} flight={b} />
+                <FlightWeather key={b.id} flight={b} />
               ))}
             </ul>
           </section>
@@ -134,24 +134,73 @@ function DayRow({
   );
 }
 
-/** 항공편 출발 공항의 출발 날 날씨 (공항 목록에 좌표가 있을 때만) */
-function AirportRow({ flight }: { flight: Booking }) {
+/**
+ * 항공편마다 출발 공항(출발일)·도착 공항(도착일) 날씨 (2026-10-27 사용자 요청: 편명·공항 코드가 잘리지 않게, 두 공항 모두).
+ * 공항 목록에 좌표가 있는 공항만 날씨를 받는다
+ */
+function FlightWeather({ flight }: { flight: Booking }) {
   const { t } = useTranslation();
-  const airport = findAirport(flight.start.place ?? '');
-  const weather = useWeatherDays(airport?.coords, flight.start.timezone ?? 'Asia/Seoul', [
-    flight.start.date,
-  ])[flight.start.date];
+  const from = flight.start.place ? findAirport(flight.start.place) : undefined;
+  const to = flight.end?.place ? findAirport(flight.end.place) : undefined;
+  return (
+    <li className="flex flex-col gap-1 px-4 py-2.5">
+      <span className="flex flex-wrap items-center gap-x-1.5 text-body-2 font-semibold break-words">
+        <Plane aria-hidden="true" className="size-4 shrink-0 text-primary" />
+        {flight.title}
+        {(from || flight.start.place) && (
+          <span className="tabular font-normal text-fg-sub">
+            {from?.iata ?? flight.start.place}
+            {flight.end?.place ? ` → ${to?.iata ?? flight.end.place}` : ''}
+          </span>
+        )}
+      </span>
+      <AirportDay
+        role={t('weatherPage.depart')}
+        place={flight.start.place}
+        date={flight.start.date}
+        time={flight.start.time}
+        tz={flight.start.timezone}
+      />
+      {flight.end?.place && flight.end.date && (
+        <AirportDay
+          role={t('weatherPage.arrive')}
+          place={flight.end.place}
+          date={flight.end.date}
+          time={flight.end.time}
+          tz={flight.end.timezone}
+        />
+      )}
+    </li>
+  );
+}
+
+function AirportDay({
+  role,
+  place,
+  date,
+  time,
+  tz,
+}: {
+  role: string;
+  place: string | undefined;
+  date: LocalDate;
+  time?: string | undefined;
+  tz?: string | undefined;
+}) {
+  const { t } = useTranslation();
+  const airport = place ? findAirport(place) : undefined;
+  const weather = useWeatherDays(airport?.coords, tz ?? 'Asia/Seoul', [date])[date];
   const look = weather ? weatherLook(weather.code) : null;
   return (
-    <li className="flex items-center gap-3 px-4 py-2.5">
-      <Plane aria-hidden="true" className="size-4 shrink-0 text-primary" />
+    <span className="flex items-center gap-3 pl-5.5">
       <span className="flex min-w-0 flex-1 flex-col">
-        <span className="truncate text-body-2 font-medium">
-          {airport ? `${airport.name} (${airport.iata})` : flight.start.place}
+        <span className="text-caption break-words text-fg-sub">
+          <span className="font-semibold">{role}</span>{' '}
+          {airport ? `${airport.name} (${airport.iata})` : place}
         </span>
-        <span className="tabular truncate text-caption text-fg-muted">
-          {flight.title} · {formatMonthDay(flight.start.date)}
-          {flight.start.time ? ` ${flight.start.time}` : ''}
+        <span className="tabular text-micro text-fg-muted">
+          {formatMonthDay(date)}
+          {time ? ` ${time}` : ''}
         </span>
       </span>
       {weather && look ? (
@@ -162,6 +211,6 @@ function AirportRow({ flight }: { flight: Booking }) {
       ) : (
         <span className="shrink-0 text-caption text-fg-muted">{t('prep.weatherNone')}</span>
       )}
-    </li>
+    </span>
   );
 }
