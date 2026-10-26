@@ -4,13 +4,19 @@ import { useTranslation } from '../../i18n';
 import { BottomSheet, Button } from '../../shared/ui';
 import { OpenInBrowser } from '../common/InAppBanner';
 
-/** S-42 설치 안내: 안드로이드 = 설치 버튼, 아이폰 = 공유 → 홈 화면에 추가, 앱 안 브라우저 = 다른 브라우저로 */
+/**
+ * S-42 설치 안내: 안드로이드 = 설치 버튼, 아이폰 = 공유 → 홈 화면에 추가, 앱 안 브라우저 = 다른 브라우저로.
+ * first = 처음 로그인한 뒤 한 번 (사용자 요청 2026-10-26): [확인]이 설치를 시작한다.
+ * 브라우저 정책상 마지막 "설치" 확인은 브라우저 창에서 한 번 더 누르고, 아이폰은 직접 추가해야 한다
+ */
 export function InstallSheet({
   open,
   onOpenChange,
+  first = false,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  first?: boolean;
 }) {
   const { t } = useTranslation();
   const { prompt, installed } = useInstall();
@@ -54,10 +60,20 @@ export function InstallSheet({
               })
             }
           >
-            {t('pwa.install')}
+            {first ? t('pwa.installConfirm') : t('pwa.install')}
           </Button>
         ) : (
           <p className="text-body-2">{t('pwa.installMenu')}</p>
+        )}
+        {first && (
+          <Button
+            size="lg"
+            fullWidth
+            variant={prompt && !inApp && where !== 'ios' ? 'ghost' : 'primary'}
+            onClick={() => onOpenChange(false)}
+          >
+            {prompt && !inApp && where !== 'ios' ? t('pwa.installLater') : t('pwa.installConfirm')}
+          </Button>
         )}
       </div>
     </BottomSheet>

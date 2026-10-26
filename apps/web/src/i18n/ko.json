@@ -634,6 +634,8 @@
     "installWhy": "홈 화면에 추가하면 앱처럼 바로 열려요\n인터넷 없이도 써요",
     "installed": "이 기기에는 이미 설치했어요 ✓\n아이콘을 지웠다면 아래 방법으로 다시 추가하세요",
     "install": "설치하기",
+    "installConfirm": "확인",
+    "installLater": "나중에",
     "installMenu": "브라우저 메뉴(⋮)에서 \"앱 설치\" 또는 \"홈 화면에 추가\"를 눌러 주세요",
     "iosStep1": "Safari 아래쪽 공유 버튼 누르기",
     "iosStep2": "\"홈 화면에 추가\" 누르기",
