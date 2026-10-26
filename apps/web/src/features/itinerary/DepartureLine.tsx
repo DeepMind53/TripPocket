@@ -2,7 +2,7 @@ import { distanceKm, walkMinutes, type ItineraryItem, type RouteEta } from '@tri
 import { Clock } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { routeEta } from '../../data/api/routes';
-import { leaveAt } from '../../domain/dayTools';
+import { isFlightLeg, leaveAt } from '../../domain/dayTools';
 import { useTranslation } from '../../i18n';
 
 /**
@@ -18,7 +18,8 @@ export function DepartureLine({ from, to }: { from: ItineraryItem; to: Itinerary
   const [eta, setEta] = useState<RouteEta | null | undefined>(undefined);
 
   useEffect(() => {
-    if (!a || !b) return;
+    // 비행 구간은 묻지 않는다 (무료량 아끼기)
+    if (!a || !b || isFlightLeg(from)) return;
     let alive = true;
     void routeEta(a, b, google).then((r) => alive && setEta(r));
     return () => {
@@ -26,7 +27,7 @@ export function DepartureLine({ from, to }: { from: ItineraryItem; to: Itinerary
     };
   }, [a?.lat, a?.lng, b?.lat, b?.lng, google]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (!a || !b) return null;
+  if (!a || !b || isFlightLeg(from)) return null;
   const rough = { walk: walkMinutes(distanceKm(a, b)) };
   const shown = eta ?? rough;
   const leave = leaveAt(to.startTime, shown);

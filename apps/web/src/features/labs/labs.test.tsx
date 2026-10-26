@@ -1,4 +1,5 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
+import { useAuth } from '../../data/authStore';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { routes } from '../../app/router';
@@ -233,5 +234,40 @@ describe('실험실', () => {
     await user.click(screen.getByRole('button', { name: '인쇄 · PDF로 저장' }));
     expect(print).toHaveBeenCalled();
     print.mockRestore();
+  });
+
+  it('샘플 테스트: 관리자에게만, 누르면 오늘 출발 도쿄 5일 샘플을 만들어 열고 지울 수 있다', async () => {
+    const user = userEvent.setup();
+    const me = { id: 'u', nickname: '관리자', createdAt: '', providers: [] };
+    useAuth.setState({ status: 'user', me: { ...me, isAdmin: false } });
+    const router = createMemoryRouter(routes, { initialEntries: ['/labs'] });
+    const { unmount } = render(<RouterProvider router={router} />);
+    await screen.findByRole('switch', { name: /다음 장소까지 거리/ });
+    expect(screen.queryByRole('button', { name: '샘플 테스트' })).not.toBeInTheDocument();
+    unmount();
+
+    useAuth.setState({ status: 'user', me: { ...me, isAdmin: true } });
+    const admin = createMemoryRouter(routes, { initialEntries: ['/labs'] });
+    render(<RouterProvider router={admin} />);
+    await user.click(await screen.findByRole('button', { name: '샘플 테스트' }));
+    await waitFor(() => expect(admin.state.location.pathname).toMatch(/^\/trips\/.+\/plan$/));
+    const trips = await tripRepo.listActive();
+    expect(trips.map((t) => t.title).sort()).toEqual([
+      '[샘플] 도쿄 5일',
+      '[샘플] 지난 오사카 여행',
+    ]);
+    const tokyo = trips.find((t) => t.title === '[샘플] 도쿄 5일')!;
+    expect(tokyo.startDate).toBe(
+      new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Tokyo' }).format(new Date()),
+    );
+    expect(JSON.parse(localStorage.getItem('tp-labs')!)).toMatchObject({
+      visitLog: true,
+      departure: true,
+    });
+
+    await act(() => admin.navigate('/labs'));
+    await user.click(await screen.findByRole('button', { name: '샘플 지우기' }));
+    await waitFor(async () => expect(await tripRepo.listActive()).toEqual([]));
+    useAuth.setState({ status: 'unknown', me: null });
   });
 });

@@ -1,4 +1,4 @@
-import { currentItemId, dayText, leaveAt, pastItemIds, tightGap } from './dayTools';
+import { currentItemId, dayText, isFlightLeg, leaveAt, pastItemIds, tightGap } from './dayTools';
 
 const at = (lat: number, lng: number) => ({ name: 'p', coords: { lat, lng } });
 
@@ -110,5 +110,18 @@ describe('leaveAt', () => {
 
   it('자정 전으로 넘어가지 않는다', () => {
     expect(leaveAt('00:10', { walk: 15 })).toBe('00:00');
+  });
+});
+
+describe('isFlightLeg', () => {
+  it('항공 출발 다음 구간은 빠듯함을 따지지 않는다', () => {
+    const flight = {
+      startTime: '06:30',
+      transport: { mode: 'flight' as const },
+      place: { coords: { lat: 37.46, lng: 126.44 } },
+    };
+    const arrive = { startTime: '08:50', place: { coords: { lat: 35.77, lng: 140.39 } } };
+    expect(isFlightLeg(flight)).toBe(true);
+    expect(tightGap(flight, arrive)).toBeNull();
   });
 });

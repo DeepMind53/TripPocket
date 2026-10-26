@@ -26,7 +26,7 @@ import {
   Route,
   TriangleAlert,
 } from 'lucide-react';
-import { currentItemId, dayText, pastItemIds, tightGap } from '../../domain/dayTools';
+import { currentItemId, dayText, isFlightLeg, pastItemIds, tightGap } from '../../domain/dayTools';
 import type { Visit } from '../../domain/visit';
 import { flightSignature, flightsToReconfirm } from '../../domain/flightCheck';
 import { confirmFlight, useFlightChecks } from '../../data/flightCheckStore';
@@ -1028,7 +1028,7 @@ function LegLine({ from, to }: { from: ItineraryItem; to: ItineraryItem | undefi
   const { t } = useTranslation();
   const a = from.place?.coords;
   const b = to?.place?.coords;
-  if (!a || !b) return null;
+  if (!a || !b || isFlightLeg(from)) return null;
   const km = distanceKm(a, b);
   return (
     <li className="flex items-center gap-1.5 py-1 pl-9 text-micro text-fg-muted">

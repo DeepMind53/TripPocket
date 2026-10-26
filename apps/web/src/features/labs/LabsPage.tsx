@@ -1,7 +1,10 @@
-import { FlaskConical } from 'lucide-react';
+import { FlaskConical, TestTube2 } from 'lucide-react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router';
+import { useAuth } from '../../data/authStore';
 import { LABS, setLab, useLab, type LabId } from '../../data/labsStore';
 import { useTranslation } from '../../i18n';
-import { Switch, TopBar } from '../../shared/ui';
+import { Button, Switch, toast, TopBar } from '../../shared/ui';
 
 /** 마이 → 실험실: 정식 기능 전에 시험해 보는 기능 켜기/끄기 (이 기기에만 저장) */
 export function LabsPage() {
@@ -19,6 +22,7 @@ export function LabsPage() {
             <LabRow key={id} id={id} />
           ))}
         </ul>
+        <SampleTest />
       </div>
     </div>
   );
@@ -36,5 +40,54 @@ function LabRow({ id }: { id: LabId }) {
       </label>
       <Switch id={inputId} checked={on} onCheckedChange={(v) => setLab(id, v)} />
     </li>
+  );
+}
+
+/**
+ * 관리자만: 오늘 출발 도쿄 5일 샘플(항공·숙소·일정) + 지난 여행·저장 장소를 만들고 실험실을 모두 켠다
+ * (사용자 요청 2026-10-26 — 여행 당일에만 보이는 화면 점검용). 샘플 코드는 누를 때만 불러온다
+ */
+function SampleTest() {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const isAdmin = useAuth((s) => s.status === 'user' && s.me?.isAdmin === true);
+  const [busy, setBusy] = useState(false);
+  if (!isAdmin) return null;
+  return (
+    <section aria-label={t('labs.sample.title')} className="flex flex-col gap-2 pt-2">
+      <h2 className="text-caption font-bold text-fg-muted">{t('labs.sample.title')}</h2>
+      <p className="text-caption text-fg-muted">{t('labs.sample.desc')}</p>
+      <Button
+        fullWidth
+        disabled={busy}
+        leading={<TestTube2 aria-hidden="true" className="size-[18px]" />}
+        onClick={() => {
+          setBusy(true);
+          void import('../../data/labSample')
+            .then((m) => m.createLabSample())
+            .then((id) => {
+              toast(t('labs.sample.created'));
+              void navigate(`/trips/${id}/plan`);
+            })
+            .finally(() => setBusy(false));
+        }}
+      >
+        {t('labs.sample.create')}
+      </Button>
+      <Button
+        variant="ghost"
+        fullWidth
+        disabled={busy}
+        onClick={() => {
+          setBusy(true);
+          void import('../../data/labSample')
+            .then((m) => m.removeLabSample())
+            .then((n) => toast(t('labs.sample.removed', { n })))
+            .finally(() => setBusy(false));
+        }}
+      >
+        {t('labs.sample.remove')}
+      </Button>
+    </section>
   );
 }

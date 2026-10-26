@@ -25,21 +25,23 @@ export function TravelReview({ pastTrips }: { pastTrips: readonly Trip[] }) {
   if (!data || pastTrips.length === 0) return null;
   const s = travelStats(pastTrips, data.items, data.bookings);
   const km = (n: number) => n.toLocaleString('ko-KR', { maximumFractionDigits: 1 });
+  // 한 번이 안 되면 "마라톤의 3%"처럼 (0번은 어색하다)
+  const ratio = (r: number, key: 'walkFun' | 'transitFun') =>
+    r >= 1
+      ? t(`travelReview.${key}`, { n: km(r) })
+      : t(`travelReview.${key}Pct`, { n: Math.max(1, Math.round(r * 100)) });
   const cards: { emoji: string; value: string; label: string; fun?: string | undefined }[] = [
     {
       emoji: '🚶',
       value: t('travelReview.km', { n: km(s.walkKm) }),
       label: t('travelReview.walk'),
-      fun:
-        s.walkKm > 0
-          ? t('travelReview.walkFun', { n: km(s.walkKm / MARATHON_KM) })
-          : t('travelReview.walkEmpty'),
+      fun: s.walkKm > 0 ? ratio(s.walkKm / MARATHON_KM, 'walkFun') : t('travelReview.walkEmpty'),
     },
     {
       emoji: '🚇',
       value: t('travelReview.km', { n: km(s.transitKm) }),
       label: t('travelReview.transit'),
-      fun: t('travelReview.transitFun', { n: km(s.transitKm / SEOUL_BUSAN_KM) }),
+      fun: ratio(s.transitKm / SEOUL_BUSAN_KM, 'transitFun'),
     },
     {
       emoji: '✈️',

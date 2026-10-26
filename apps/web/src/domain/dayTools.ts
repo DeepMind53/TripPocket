@@ -1,5 +1,9 @@
 import { distanceKm, walkMinutes, type ItineraryItem } from '@trippocket/shared';
 
+/** 항공 출발 일정 다음 구간은 비행 — 걷는 거리·빠듯함·출발 시각을 따지지 않는다 (2026-10-26) */
+export const isFlightLeg = (from: Pick<ItineraryItem, 'transport'>) =>
+  from.transport?.mode === 'flight';
+
 const minutes = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5));
 
 /**
@@ -7,9 +11,10 @@ const minutes = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5)
  * 시작 시각 차이보다 길면 { walk, gap } (분). 아니면 null
  */
 export function tightGap(
-  from: Pick<ItineraryItem, 'startTime' | 'endTime' | 'place'>,
+  from: Pick<ItineraryItem, 'startTime' | 'endTime' | 'place' | 'transport'>,
   to: Pick<ItineraryItem, 'startTime' | 'place'> | undefined,
 ): { walk: number; gap: number } | null {
+  if (isFlightLeg(from)) return null;
   const a = from.place?.coords;
   const b = to?.place?.coords;
   if (!a || !b || !from.startTime || !to?.startTime) return null;
