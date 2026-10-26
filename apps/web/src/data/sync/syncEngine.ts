@@ -6,6 +6,7 @@ import {
   type PushResult,
   type SyncTable,
 } from '@trippocket/shared';
+import { isExpiredTombstone } from '../../domain/tombstone';
 import { api } from '../api/client';
 import { useAuth } from '../authStore';
 import { db, toDomain } from '../db';
@@ -138,6 +139,10 @@ async function pull(): Promise<Step> {
       for (const c of res.data.changes) {
         const local = await table(c.table).get(c.record.id);
         if (local?.dirty) continue; // 기기에서 고친 것이 이긴다 (다음 push)
+        if (isExpiredTombstone(c.record)) {
+          await table(c.table).delete(c.record.id);
+          continue;
+        }
         if (c.table === 'checklistTemplates') await dropPristineTwin(c.record as Row);
         await table(c.table).put({ ...(c.record as Row), dirty: 0 });
       }
