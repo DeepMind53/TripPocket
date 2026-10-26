@@ -139,6 +139,11 @@
   4. `apps/server/.env`의 `GOOGLE_PLACES_KEY` (브라우저용 지도 키와 다른 키 — 웹앱에 넣지 않음)
 - 서버도 하루 상한(`GOOGLE_SEARCH_DAILY`, `GOOGLE_DETAILS_DAILY`)과 사람별 한도를 지켜 무료 범위를 넘지 않게 한다
 - 평점·리뷰 수·영업시간은 저장하지 않고 볼 때마다 받는다 (Google 약관)
+- **무료량이 끝났을 때 백업** (docs/23·ADR-0007, 모두 무료):
+  1. Google: 같은 서버 키로 **Places API (New)** 안의 Autocomplete·Place Details를 쓰므로 추가 설정 없음 (API 제한이 "Places API (New)"면 그대로 됨)
+  2. Geoapify (선택, 사용자 작업): https://myprojects.geoapify.com 가입(카드 불필요) → 프로젝트 만들기 → API 키 복사 →
+     `apps/server/.env`에 `GEOAPIFY_KEY=...` → 서버 다시 시작(`ops/restart-server.ps1`). 키 화면에서 허용 IP를 집 공인 IP로 제한하면 더 안전
+  3. 지도 백업(OpenFreeMap)은 키·가입 없음
 
 ## 10. AI 추천 키 (21단계, 사용자 작업 — 모두 무료)
 서버는 아래 순서로 시도하고, 한도에 걸린 곳은 잠시 건너뛴다. 셋 다 막히면 **AI 없이** 지도 검색(카카오·네이버) 후보를 블로그 언급 수로 골라 준다 (앱에 "AI 요약 없이" 안내).
