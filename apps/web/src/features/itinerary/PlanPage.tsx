@@ -112,6 +112,7 @@ function PlanView({
   // 일정으로 들어간 예약은 위쪽 예약 줄에서 뺀다 (일정을 지우면 다시 줄로 보인다)
   const linked = new Set(items.map((i) => i.bookingId).filter(Boolean));
   const rowBookings = bookings.filter((b) => !linked.has(b.id));
+  const bookingById = new Map(bookings.map((b) => [b.id, b]));
   const days = getTripDays(trip.startDate, trip.endDate);
   const today = todayIn(trip.timezone);
   const dimPast = useSettings((st) => st.dimPastItems);
@@ -517,6 +518,7 @@ function PlanView({
                       lodging={date ? lodgingForNight(bookings, date) : null}
                       breakfast={date ? breakfastOn(bookings, date) : null}
                       bookingRows={date ? bookingRowsForDay(rowBookings, date) : []}
+                      bookingById={bookingById}
                       onBooking={() => void navigate(`/trips/${trip.id}/bookings`)}
                       onLodging={(b) => {
                         const d = { name: b.title, address: b.details?.address };
@@ -651,6 +653,7 @@ function DaySection({
   lodging,
   onLodging,
   bookingRows,
+  bookingById,
   onBooking,
   hideWhenEmpty,
   weather,
@@ -672,6 +675,8 @@ function DaySection({
   lodging: LodgingNight | null;
   onLodging: (booking: Booking) => void;
   bookingRows: BookingRow[];
+  /** 예약에서 넘어온 일정의 원래 예약 (점선 테두리·탑승권 모양) */
+  bookingById: ReadonlyMap<string, Booking>;
   onBooking: () => void;
   hideWhenEmpty: boolean;
 }) {
@@ -748,7 +753,13 @@ function DaySection({
       <ol className="flex flex-col divide-y divide-line/70 px-4">
         {items.map((item, i) => (
           <Fragment key={item.id}>
-            <ItemRow item={item} n={i + 1} color={color} onOpen={() => onOpen(item)} />
+            <ItemRow
+              item={item}
+              n={i + 1}
+              color={color}
+              booking={item.bookingId ? bookingById.get(item.bookingId) : undefined}
+              onOpen={() => onOpen(item)}
+            />
             {legs && <LegLine from={item} to={items[i + 1]} />}
           </Fragment>
         ))}
@@ -872,36 +883,75 @@ function ItemRow({
   item,
   n,
   color,
+  booking,
   onOpen,
 }: {
   item: ItineraryItem;
   n: number;
   color: string;
+  /** 예약에서 넘어온 일정이면 그 예약: 점선 테두리로 구분 (사용자 요청 2026-10-26) */
+  booking?: Booking | undefined;
   onOpen: () => void;
 }) {
   const { time, wide } = useTimeText();
   const { t } = useTranslation();
   const Icon = KIND_ICON[item.kind];
+  const label = t('plan.itemLabel', {
+    n,
+    title: item.kind === 'note' ? (item.memo ?? item.title) : item.title,
+  });
+  const badge = (
+    <span
+      aria-hidden="true"
+      className="tabular grid size-6 shrink-0 place-items-center rounded-full text-micro font-bold text-white"
+      style={{ background: color }}
+    >
+      {item.done ? <Check className="size-3.5" /> : n}
+    </span>
+  );
+  // 항공편 출발 일정은 예약 탭과 같은 탑승권 모양 그대로 (도착 공항 일정은 아래 보통 줄)
+  if (booking?.kind === 'flight' && item.transport)
+    return (
+      <li className="py-2">
+        <button
+          type="button"
+          data-item-row=""
+          data-from-booking=""
+          onClick={onOpen}
+          aria-label={label}
+          className={cn(
+            'flex w-full items-start gap-3 rounded-btn border border-dashed border-fg-muted/60 px-2 py-3 text-left active:bg-bg-subtle',
+            item.done && 'opacity-50',
+          )}
+        >
+          {badge}
+          <span className="flex min-w-0 flex-1 flex-col gap-2">
+            <FlightTicket booking={booking} />
+            {booking.confirmationNo && (
+              <span className="tabular border-t border-dashed border-line pt-1.5 text-caption text-fg-sub">
+                {t('bookings.confirmationNo')}{' '}
+                <strong className="font-bold text-fg">{booking.confirmationNo}</strong>
+              </span>
+            )}
+          </span>
+        </button>
+      </li>
+    );
   return (
-    <li>
+    <li className={cn(booking && 'py-2')}>
       <button
         type="button"
         data-item-row=""
+        {...(booking ? { 'data-from-booking': '' } : {})}
         onClick={onOpen}
-        aria-label={t('plan.itemLabel', {
-          n,
-          title: item.kind === 'note' ? (item.memo ?? item.title) : item.title,
-        })}
-        className="flex w-full items-start gap-3 py-3 text-left active:bg-bg-subtle"
+        aria-label={label}
+        className={cn(
+          'flex w-full items-start gap-3 py-3 text-left active:bg-bg-subtle',
+          booking && 'rounded-btn border border-dashed border-fg-muted/60 px-2',
+        )}
       >
         {/* 번호·시간·종류는 제목 첫 줄 높이(24px)에 가운데 맞춤 */}
-        <span
-          aria-hidden="true"
-          className="tabular grid size-6 shrink-0 place-items-center rounded-full text-micro font-bold text-white"
-          style={{ background: color }}
-        >
-          {item.done ? <Check className="size-3.5" /> : n}
-        </span>
+        {badge}
         <span
           className={cn(
             'tabular shrink-0 text-caption leading-6 font-semibold text-fg-sub',
