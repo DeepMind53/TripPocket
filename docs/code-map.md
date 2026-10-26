@@ -1,6 +1,6 @@
 # 코드 지도 (실제 구조) — 고칠 때 여기서 시작
 
-> 2026-10-24 기준. `03-architecture.md`는 설계 초안이고, **지금 코드가 어떻게 생겼는지는 이 문서**가 기준이다.
+> 2026-10-27 기준. `03-architecture.md`는 설계 초안이고, **지금 코드가 어떻게 생겼는지는 이 문서**가 기준이다.
 > 구조가 바뀌면 이 문서도 같이 고친다.
 
 ## 1. 한눈에
@@ -11,12 +11,13 @@
    │  /api/*, /auth/* 만 ─▶ functions/_proxy.ts (비밀 헤더 x-tp-proxy + 들어온 주소 x-tp-origin)
    ▼
 Tailscale Funnel https://jin-server.tail0844c0.ts.net ─▶ 홈 PC 127.0.0.1:8787 (Fastify + node:sqlite)
-   └─▶ 외부 API: Google Places · NAVER API HUB · 카카오 로컬 · 수출입은행 · Gemini → Workers AI → Groq
+   └─▶ 외부 API: Google Places·Routes · Geoapify · NAVER API HUB · 카카오 로컬 · 수출입은행 · AviationStack
+        · Gemini → Workers AI → Groq · 특보(GDACS·USGS·외교부·기상청 한국·일본·미국·대만·캐나다)
 ```
 
 - 옛 주소 `trippocket.pages.dev`의 화면 이동은 `functions/_middleware.ts`가 새 주소로 301. 앱 파일·API·로그인은 그대로 통과
   (설치된 앱은 `MovedBanner`로 안내). 서버 `WEB_ORIGIN`은 두 주소를 모두 허용
-- 결정 근거: ADR-0001(로컬 우선)·0002(PWA)·0003(홈 PC 서버)·0004(지도)·0005(스택)·0006(Pages 프록시)
+- 결정 근거: ADR-0001(로컬 우선)·0002(PWA)·0003(홈 PC 서버)·0004(지도)·0005(스택)·0006(Pages 프록시)·0007(무료 백업)·0008(여행지 특보)
 
 ## 2. 폴더
 
@@ -30,11 +31,12 @@ Tailscale Funnel https://jin-server.tail0844c0.ts.net ─▶ 홈 PC 127.0.0.1:87
 | `apps/web/src/shared` | UI 부품(`ui/`), 훅(`hooks/`), 유틸(`lib/`), 지도 SDK 감싸기(`maps/`) |
 | `apps/web/src/sw/sw-template.js` | 직접 만든 서비스 워커 (빌드 때 `vite.config.ts` 플러그인이 파일 목록을 채움) |
 | `apps/web/public` | `_headers`(CSP·캐시), `_routes.json`(함수가 도는 경로 — 앱 파일 제외), 아이콘·매니페스트 |
-| `apps/server/src/routes` | API. `auth`(소셜 로그인·가입 요청), `me`, `admin`(사용자 관리·API 사용량), `sync`, `share`, `places`, `ai`, `usage`(지도 로드 기록) |
+| `apps/server/src/routes` | API. `auth`(소셜 로그인·가입 요청), `me`, `admin`(사용자 관리·API 사용량), `sync`, `share`, `places`, `ai`, `usage`(지도 로드 기록), `routes`(이동 시간), `flights`, `reviews`, `push`, `attachments`(예약 문서), `suggestions`(개선 제안), `alerts`(여행지 특보) |
 | `apps/server/src/services` | 외부 API 호출. **모든 외부 호출은 `apiUsage.ts`의 `guardApi`/`trackApi`를 거친다** |
-| `apps/server/src/db` | `migrations.ts` — 이미 배포된 항목은 고치지 말고 뒤에 추가 (지금 8번까지) |
+| `apps/server/src/db` | `migrations.ts` — 이미 배포된 항목은 고치지 말고 뒤에 추가 (지금 17번까지) |
 | `functions/` | Cloudflare Pages Functions: `_proxy.ts`(→ 홈 서버), `_middleware.ts`(옛 주소 이동) |
-| `ops/` | 홈 PC 설치(`install.ps1`, 작업 스케줄러 S4U)·Funnel·운영 문서 |
+| `ops/` | 홈 PC 설치(`install.ps1`, 작업 스케줄러 S4U)·Funnel·운영 문서·`restart-server.ps1`(바탕화면 "TripPocket 서버 재시작.bat") |
+| `apps/server/.env` | 비밀값·키. 기능별로 묶고 키마다 [유효기간] 안내 (`.env.example`이 같은 틀, 값 비움). 값은 절대 출력·커밋하지 않는다 |
 
 레이어 방향: `app → features → shared / data / domain` (거꾸로 금지), `packages/shared`는 앱을 import 하지 않는다.
 
@@ -52,6 +54,9 @@ Tailscale Funnel https://jin-server.tail0844c0.ts.net ─▶ 홈 PC 127.0.0.1:87
 - **서버 DB 표 추가**: `db/migrations.ts` 끝에 새 항목 + 테스트
 - **웹 DB 표 추가**: `data/db.ts` 버전 올림 + `data/migrations` + 마이그레이션 테스트 (CLAUDE.md)
 - **관리자 전용 기능**: 서버는 `routes/admin.ts`의 `requireAdmin`, 웹은 `useAuth((s) => s.me?.isAdmin)`로 메뉴 표시
+- **삭제 확인 팝업**: `shared/ui/confirmStore.ts`의 `confirmDelete(문구)` (모든 삭제는 한 번 더 묻는다)
+- **여행지 특보 나라 추가**: 링크는 shared `alerts/alerts.ts` `WEATHER_WARNING_LINKS`, 내용은 서버 `services/nationalAlerts.ts`에 파서 + `APIS` 등록 + docs/24 §7 표
+- **월간 갱신 요청문**: 주기적으로 확인할 정보를 넣으면 `features/me/monthlyUpdate.ko.ts`와 docs/22에 함께 더한다
 
 ## 4. 주요 흐름
 
@@ -71,6 +76,11 @@ Tailscale Funnel https://jin-server.tail0844c0.ts.net ─▶ 홈 PC 127.0.0.1:87
   서버 `routes/reviews.ts`(쓰기는 소유자·편집자만, 동기화된 지난 일정만, 포인트는 서버만 `point_ledger`) →
   웹 `features/reviews/`(상세 시트 [후기 입력]·목록, `ReviewSheet`, `/me/reviews`), 오프라인은 `data/reviewQueue.ts`(동기화 뒤 올림).
   닉네임 가리기 = `users.hide_nickname` → 보여 줄 때 `User#public_no`, 탈퇴하면 후기의 user_id만 NULL
+- **삭제·복원**: 지우면 `deletedAt`(삭제 표시)만 → 마이 → 삭제 기록 복원(`trashRepo`, 7일). 기기는 동기화된 7일 지난 삭제 표시를 한가할 때 정리,
+  서버는 `services/maintenance.ts`가 6시간마다 7일 지난 삭제 기록의 내용을 비우고(`purged`) 표시만 남긴다. 받은 기기는 `domain/tombstone.ts` 기준으로 바로 지운다
+- **여행지 특보** (docs/24·ADR-0008): 웹 `features/weather/DestinationAlerts`·`useTripAlerts` → `GET /api/alerts?countries=&points=` →
+  서버 `services/alerts.ts`(GDACS·USGS·외교부, 10분·3시간 보관) + `nationalAlerts.ts`(기상청: 한국 전국·대만 전국·일본·미국·캐나다는 목적지 좌표 약 10km).
+  알림은 `services/alertPush.ts`(출발 7일 전~귀국일, 새 빨강 특보, 여행마다 하루 1번) — `pushScheduler`가 30분마다
 
 ### API 사용량 — 등록된 외부 API와 무료 사용량
 
@@ -84,7 +94,7 @@ Tailscale Funnel https://jin-server.tail0844c0.ts.net ─▶ 홈 PC 127.0.0.1:87
 | google_maps_js | 과금 가능 | 월 10,000 | Dynamic Maps (지도 1회 로드). 브라우저 |
 | google_autocomplete | 과금 가능 | 월 10,000 | **검색 백업**(docs/23·ADR-0007): Text Search 무료량이 끝나면 Autocomplete (New). 세션 토큰 |
 | google_details_basic | 과금 가능 | 월 10,000 | 자동완성에서 고른 장소의 주소·좌표 — Place Details **Essentials** (FieldMask: formattedAddress,location) |
-| google_routes | 과금 가능 | 월 10,000 | 실험실 "출발 시각": Compute Routes Essentials(걷기·대중교통 2건씩, FieldMask: routes.duration). Google 좌표가 낀 구간만 — 나머지는 Geoapify 먼저. `services/routes.ts`·`POST /api/routes/eta` |
+| google_routes | 과금 가능 | 월 10,000 | 다음 일정 바·구간 시간: Compute Routes Essentials(걷기·대중교통 2건씩, FieldMask: routes.duration). Google 좌표가 낀 구간만 — 나머지는 Geoapify 먼저. 둘 다 없으면 웹이 직선거리로 어림(팝업 없음). `services/routes.ts`·`POST /api/routes/eta` |
 | geoapify | 무료 | 하루 3,000 | Google 백업까지 멈추면 검색·택시 카드(역지오코딩), 출발 시각(걷기·approximated_transit). OSM 데이터, 출처 표기 필수. 키 `GEOAPIFY_KEY` |
 | openfreemap | 무료 | 없음 | 지도 백업(MapLibre). Google·네이버 지도를 못 쓸 때. 기록만. 브라우저 |
 | naver_maps_js | 과금 가능 | 하루·월 6,000,000 | NCP Maps Web Dynamic Map, **대표 계정만** 무료 이용량 (2026-10-24 콘솔 확인: 대표 계정). 브라우저 |
@@ -102,6 +112,11 @@ Tailscale Funnel https://jin-server.tail0844c0.ts.net ─▶ 홈 PC 127.0.0.1:87
 | nager_date · jsdelivr | 무료 | 없음 | 브라우저 |
 | oauth_kakao/naver/google | 무료 | 없음 | 기록만 (멈추면 로그인 불가) |
 | cf_functions | 무료 | 하루 100,000 | Pages Functions 무료 플랜(넘으면 오류). 홈 서버까지 온 요청만 셈. 기록만 |
+| web_push | 무료 | 없음 | 브라우저 회사 푸시 서버. 기록만 |
+| gdacs · usgs | 무료 | 없음 | 여행지 특보 (전 세계 재난·지진). 10분에 한 번만 받음. 기록만 |
+| mofa_alert | 무료 | 하루 10,000 | 외교부 여행경보·특별여행주의보 (공공데이터포털 `DATA_GO_KR_KEY`). 3시간 보관 |
+| kma_warning | 무료 | 하루 10,000 | 한국 기상청 특보 현황 (같은 키). 10분 보관 |
+| jma · nws · cwa · eccc | 무료 | 없음 | 일본·미국·대만(`CWA_API_KEY`)·캐나다 기상청 특보. 10분 보관. 기록만 |
 
 새 외부 API를 넣으면 이 표와 `APIS`를 함께 고친다 (`test/apiUsage.test.ts`가 등록 누락을 잡는다)
 
@@ -115,4 +130,4 @@ pnpm format:check
 ```
 
 - 실제 키로 외부 API를 시험할 때는 `apps/server/test/`에 임시 테스트를 만들어 `node --env-file=.env ./node_modules/vitest/vitest.mjs run <파일>`로 돌리고 지운다 (키는 출력하지 않는다)
-- 서버 반영: `pnpm --filter @trippocket/server build` → 작업 스케줄러 TripPocket Server 끝내기 → **3초 기다렸다가** 실행 (바로 켜면 포트가 아직 안 풀려 실패할 수 있음)
+- 서버 반영: `pnpm --filter @trippocket/server build` → `ops/restart-server.ps1` (작업 스케줄러 TripPocket Server를 끄고 3초 뒤 다시 켬)

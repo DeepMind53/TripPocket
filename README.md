@@ -1,20 +1,22 @@
 # 트립포켓 (TripPocket)
 
-> 누구나 브라우저에서 바로 쓰는 **오프라인 우선(Offline-first) 여행 일정 정리 웹앱**.
-> 로그인 없이도 휴대폰 안에서 바로 쓰고, 로그인하면 **홈 PC 서버**에 동기화·백업된다.
-> 구글/네이버 지도, 평점·리뷰 필터 장소 검색, 현재 위치 길찾기, 환율 계산기·AI 추천(빠른 메뉴)을 지원한다.
+> 브라우저에서 바로 쓰는 **오프라인 우선(Offline-first) 여행 일정 정리 웹앱(PWA)**.
+> **로그인한 사람만** 쓰고(2026-10-24 결정), 한 번 로그인한 기기는 서버 없이도 전부 동작한다. 데이터는 기기에 먼저 저장되고 **홈 PC 서버**와 동기화된다.
+> 구글/네이버 지도, 장소 검색·평점, 길찾기 딥링크, 다음 일정까지 이동 시간, 방문 기록, 나라별 입국 준비·긴급 연락처,
+> 여행지 기상·재난 특보, 환율 계산기·AI 추천·여행 회화(빠른 메뉴)를 지원한다.
 
 ## 상태
 
 - 운영 중: **https://trippocket.day** (Cloudflare Pages) + 홈 PC 서버 (Tailscale Funnel)
-- 23단계 구현 완료 후 운영 기능 추가: 관리자 가입 승인, API 사용량·자동 중지, 무료 AI 순서(Gemini → Workers AI → Groq → AI 없음), 실험실
+- 23단계 구현 완료 후 운영 기능 추가: 관리자 가입 승인, API 사용량·자동 중지(무료량 95%)와 대체 API, 무료 AI 순서(Gemini → Workers AI → Groq → AI 없음),
+  실험실, 삭제 확인·7일 복원, 방문 기록, 여행지 특보(ADR-0008), 관리자 월간 갱신 요청문
 - 지금 상태·남은 일: [`PROGRESS.md`](PROGRESS.md) / **코드 구조: [`docs/code-map.md`](docs/code-map.md)**
 
 ## 핵심 컨셉
 
 | 원칙                  | 의미                                                                           |
 | --------------------- | ------------------------------------------------------------------------------ |
-| **Optional Account**  | 로그인 없이 로컬 모드로 전부 사용 가능. 로그인 시 홈 PC 서버와 동기화          |
+| **Login, then Local** | 로그인한 사람만 사용. 한 번 로그인한 기기는 서버 없이도 전부 동작              |
 | **Secure by Default** | 비밀번호 미저장(소셜 로그인), 인바운드 포트 0개(Tailscale Funnel), 위치 미저장 |
 | **Offline-first**     | 비행기 모드·해외 로밍 없이도 100% 동작 (PWA)                                   |
 | **Mobile-first**      | 한 손 조작, 여행 중 빠른 조회가 최우선                                         |
@@ -22,31 +24,39 @@
 
 ## 문서 지도
 
-| 문서                                                                   | 내용                                                               |
-| ---------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| [CLAUDE.md](CLAUDE.md)                                                 | AI 협업 규칙 (Claude가 매 세션 읽는 규칙)                          |
-| [docs/01-product-requirements.md](docs/01-product-requirements.md)     | PRD: 목표, 페르소나, 기능 목록, 우선순위                           |
-| [docs/02-benchmark.md](docs/02-benchmark.md)                           | 유사 앱 분석 및 차용할 기능                                        |
-| [docs/code-map.md](docs/code-map.md)                                   | **지금 코드 구조·자주 하는 수정 위치 (고칠 때 먼저 보기)**         |
-| [docs/03-architecture.md](docs/03-architecture.md)                     | 설계 초안: 기술 스택, 레이어 구조 (실제 구조는 code-map)           |
-| [docs/deploy.md](docs/deploy.md)                                       | 배포·도메인·키 발급 절차                                           |
-| [docs/04-data-model.md](docs/04-data-model.md)                         | 엔티티, 스키마, 마이그레이션                                       |
-| [docs/05-screens-ux.md](docs/05-screens-ux.md)                         | 화면 목록, 플로우, 와이어프레임                                    |
-| [docs/06-storage-backup-sharing.md](docs/06-storage-backup-sharing.md) | 로컬 저장 전략, 백업, 공유                                         |
-| [docs/07-roadmap.md](docs/07-roadmap.md)                               | 마일스톤 / 작업 단위                                               |
-| [docs/08-open-decisions.md](docs/08-open-decisions.md)                 | 결정 항목과 확정 내용                                              |
-| [docs/09-server-auth-security.md](docs/09-server-auth-security.md)     | 홈 서버, 로그인, 동기화, 보안 체크리스트                           |
-| [docs/10-maps-places.md](docs/10-maps-places.md)                       | 구글/네이버 지도, 평점·리뷰 검색, 길찾기                           |
-| [docs/11-design-system.md](docs/11-design-system.md)                   | 디자인 원칙, 컬러·타이포, 내비게이션, 컴포넌트, 한국어 문구 가이드 |
-| [docs/12-quick-menu-settings-fx.md](docs/12-quick-menu-settings-fx.md) | 빠른 메뉴, 환율 계산기, 설정 항목·컨트롤 명세                      |
-| [docs/14-ai-recommendations.md](docs/14-ai-recommendations.md)         | AI 추천: 내 근처 맛집·핫플·놀거리 (기간 단계 확장)                 |
-| [docs/15-implementation-steps.md](docs/15-implementation-steps.md)     | 단계별 구현 계획 (23단계)                                          |
-| [docs/16-ux-ui-improvements.md](docs/16-ux-ui-improvements.md)         | UX·UI 개선 설계 (점검 결과·상세 설계·구현 순서)                    |
-| [PROGRESS.md](PROGRESS.md)                                             | 진행 상황                                                          |
-| [docs/13-design-review.md](docs/13-design-review.md)                   | 설계 점검: 빠진 부분·리스크·추가 결정 사항                         |
-| [docs/design/mockups.html](docs/design/mockups.html)                   | 주요 화면 시각 시안 (브라우저로 열기)                              |
-| [docs/adr/](docs/adr/)                                                 | 아키텍처 결정 기록 (ADR)                                           |
-| [docs/conventions/](docs/conventions/)                                 | 코딩·Git·테스트 규칙                                               |
+| 문서                                                                     | 내용                                                               |
+| ------------------------------------------------------------------------ | ------------------------------------------------------------------ |
+| [CLAUDE.md](CLAUDE.md)                                                   | AI 협업 규칙 (Claude가 매 세션 읽는 규칙)                          |
+| [docs/01-product-requirements.md](docs/01-product-requirements.md)       | PRD: 목표, 페르소나, 기능 목록, 우선순위                           |
+| [docs/02-benchmark.md](docs/02-benchmark.md)                             | 유사 앱 분석 및 차용할 기능                                        |
+| [docs/code-map.md](docs/code-map.md)                                     | **지금 코드 구조·자주 하는 수정 위치 (고칠 때 먼저 보기)**         |
+| [docs/03-architecture.md](docs/03-architecture.md)                       | 설계 초안: 기술 스택, 레이어 구조 (실제 구조는 code-map)           |
+| [docs/deploy.md](docs/deploy.md)                                         | 배포·도메인·키 발급 절차                                           |
+| [docs/04-data-model.md](docs/04-data-model.md)                           | 엔티티, 스키마, 마이그레이션                                       |
+| [docs/05-screens-ux.md](docs/05-screens-ux.md)                           | 화면 목록, 플로우, 와이어프레임                                    |
+| [docs/06-storage-backup-sharing.md](docs/06-storage-backup-sharing.md)   | 로컬 저장 전략, 백업, 공유                                         |
+| [docs/07-roadmap.md](docs/07-roadmap.md)                                 | 마일스톤 / 작업 단위                                               |
+| [docs/08-open-decisions.md](docs/08-open-decisions.md)                   | 결정 항목과 확정 내용                                              |
+| [docs/09-server-auth-security.md](docs/09-server-auth-security.md)       | 홈 서버, 로그인, 동기화, 보안 체크리스트                           |
+| [docs/10-maps-places.md](docs/10-maps-places.md)                         | 구글/네이버 지도, 평점·리뷰 검색, 길찾기                           |
+| [docs/11-design-system.md](docs/11-design-system.md)                     | 디자인 원칙, 컬러·타이포, 내비게이션, 컴포넌트, 한국어 문구 가이드 |
+| [docs/12-quick-menu-settings-fx.md](docs/12-quick-menu-settings-fx.md)   | 빠른 메뉴, 환율 계산기, 설정 항목·컨트롤 명세                      |
+| [docs/14-ai-recommendations.md](docs/14-ai-recommendations.md)           | AI 추천: 내 근처 맛집·핫플·놀거리 (기간 단계 확장)                 |
+| [docs/15-implementation-steps.md](docs/15-implementation-steps.md)       | 단계별 구현 계획 (23단계)                                          |
+| [docs/16-ux-ui-improvements.md](docs/16-ux-ui-improvements.md)           | UX·UI 개선 설계 (점검 결과·상세 설계·구현 순서)                    |
+| [docs/17-reviews-points.md](docs/17-reviews-points.md)                   | 후기·포인트                                                        |
+| [docs/18-booking-import.md](docs/18-booking-import.md)                   | 예약 불러오기 (설계)                                               |
+| [docs/19-entry-checklist.md](docs/19-entry-checklist.md)                 | 나라별 입국 필수 항목                                              |
+| [docs/20-copy-ux-gap-review.md](docs/20-copy-ux-gap-review.md)           | 문구 규칙·UX 개선·빠진 기능                                        |
+| [docs/21-paid-services.md](docs/21-paid-services.md)                     | 유료 서비스 가격 참고                                              |
+| [docs/22-recurring-tasks.md](docs/22-recurring-tasks.md)                 | 정기 점검 목록 (월간 갱신 요청문의 근거)                           |
+| [docs/23-paid-api-fallbacks.md](docs/23-paid-api-fallbacks.md)           | 무료량이 끝났을 때 대체 API·대체 기능                              |
+| [docs/24-weather-disaster-alerts.md](docs/24-weather-disaster-alerts.md) | 여행지 기상·재난 특보 (나라별 출처표)                              |
+| [PROGRESS.md](PROGRESS.md)                                               | 진행 상황                                                          |
+| [docs/13-design-review.md](docs/13-design-review.md)                     | 설계 점검: 빠진 부분·리스크·추가 결정 사항                         |
+| [docs/design/mockups.html](docs/design/mockups.html)                     | 주요 화면 시각 시안 (브라우저로 열기)                              |
+| [docs/adr/](docs/adr/)                                                   | 아키텍처 결정 기록 (ADR)                                           |
+| [docs/conventions/](docs/conventions/)                                   | 코딩·Git·테스트 규칙                                               |
 
 ## 개발
 
