@@ -206,7 +206,6 @@ export function FloatingQuickButton({
       >
         <Zap aria-hidden="true" />
       </button>
-      ,
     </>,
     document.body,
   );
