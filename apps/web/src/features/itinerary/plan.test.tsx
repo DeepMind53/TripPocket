@@ -4,6 +4,7 @@ import { createMemoryRouter, RouterProvider } from 'react-router';
 import { routes } from '../../app/router';
 import { resetLocalDb } from '../../data/dev';
 import { itemRepo } from '../../data/repositories/itemRepo';
+import { bookingRepo } from '../../data/repositories/bookingRepo';
 import { tripRepo } from '../../data/repositories/tripRepo';
 import { Toaster } from '../../shared/ui';
 import { setLab } from '../../data/labsStore';
@@ -48,6 +49,27 @@ const day = (name: string) => screen.getByRole('region', { name });
 const dayAfterSheet = (name: string) => screen.findByRole('region', { name });
 
 describe('일정 화면', () => {
+  it('항공편 출발 전날: 일정 위 [확인]과 빨간 깜빡임, 누르면 사라진다', async () => {
+    const user = userEvent.setup();
+    localStorage.removeItem('tp-flight-ok');
+    vi.setSystemTime(new Date('2026-10-23T03:00:00Z')); // 도쿄 10.23 = 출발 전날
+    await bookingRepo.create({
+      tripId,
+      kind: 'flight',
+      title: 'KE703',
+      start: { date: '2026-10-24', time: '09:10', place: 'ICN' },
+      end: { date: '2026-10-24', time: '11:30', place: 'NRT' },
+    });
+    await renderPlan('?day=1');
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('반드시 항공편 일정을 재확인해 주세요');
+    const row = screen.getByRole('button', { name: /KE703/ });
+    expect(row.className).toContain('flight-alert');
+    await user.click(within(alert).getByRole('button', { name: '확인' }));
+    await waitFor(() => expect(screen.queryByRole('alert')).not.toBeInTheDocument());
+    expect(screen.getByRole('button', { name: /KE703/ }).className).not.toContain('flight-alert');
+  });
+
   it('실험실 방문 기록: 지난 일정에 [방문][미방문], 누르면 기록으로 표시되고 다시 누르면 지운다', async () => {
     const user = userEvent.setup();
     setLab('visitLog', true);

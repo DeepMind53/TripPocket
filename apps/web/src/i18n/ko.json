@@ -1389,6 +1389,11 @@
       "done": "완료"
     }
   },
+  "flightCheck": {
+    "title": "✈ {{title}} 출발 전이에요",
+    "notice": "항공편 일정이 변동된 경우\n자동으로 반영되지 않아요\n반드시 항공편 일정을 재확인해 주세요",
+    "confirm": "확인"
+  },
   "travelReview": {
     "title": "여행 회고",
     "km": "{{n}}km",

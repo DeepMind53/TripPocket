@@ -245,3 +245,20 @@
     color: #000;
   }
 }
+
+/* 출발 전날~출발 날 항공편: [확인]을 누를 때까지 빨간 테두리·바탕이 깜빡인다 (사용자 요청 2026-10-26) */
+.flight-alert {
+  box-shadow: inset 0 0 0 2px var(--tp-danger);
+  animation: flight-alert 1.2s ease-in-out infinite;
+}
+@keyframes flight-alert {
+  50% {
+    background: color-mix(in srgb, var(--tp-danger) 22%, var(--tp-surface));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .flight-alert {
+    animation: none;
+    background: color-mix(in srgb, var(--tp-danger) 16%, var(--tp-surface));
+  }
+}

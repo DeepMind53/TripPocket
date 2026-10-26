@@ -28,6 +28,8 @@ import {
 } from 'lucide-react';
 import { currentItemId, dayText, pastItemIds, tightGap } from '../../domain/dayTools';
 import type { Visit } from '../../domain/visit';
+import { flightSignature, flightsToReconfirm } from '../../domain/flightCheck';
+import { confirmFlight, useFlightChecks } from '../../data/flightCheckStore';
 import { timeIn, useMinuteClock } from '../../shared/hooks/useMinuteClock';
 import { copyText } from '../../shared/lib/clipboard';
 import {
@@ -785,6 +787,11 @@ function DaySection({
   // 실험실 "방문 기록": 지난 일정에 [방문][미방문] (보기 전용이면 없음)
   const visitOn = useLab('visitLog') && canEdit;
   const departureOn = useLab('departure');
+  // 출발 전날~출발 날 항공편은 [확인]을 누를 때까지 빨갛게 (이 기기 기록)
+  const flightChecks = useFlightChecks();
+  const recheck = new Set(
+    flightsToReconfirm([...bookingById.values()], todayIn(timezone), flightChecks).map((b) => b.id),
+  );
   const today = todayIn(timezone);
   const past = visitOn ? pastItemIds(items, today, timeIn(timezone, now) ?? '00:00') : null;
   if (hideWhenEmpty && items.length === 0) return null;
@@ -888,6 +895,12 @@ function DaySection({
               booking={item.bookingId ? bookingById.get(item.bookingId) : undefined}
               onOpen={() => onOpen(item)}
               onVisit={past?.has(item.id) ? (v) => void itemRepo.setVisit(item.id, v) : undefined}
+              onConfirmFlight={(() => {
+                const b = item.bookingId ? bookingById.get(item.bookingId) : undefined;
+                return b && item.transport && recheck.has(b.id)
+                  ? () => confirmFlight(b.id, flightSignature(b))
+                  : undefined;
+              })()}
             />
             {departureOn && item.id === nowId && items[i + 1] && (
               <DepartureLine from={item} to={items[i + 1]!} />
@@ -1033,6 +1046,7 @@ function ItemRow({
   booking,
   onOpen,
   onVisit,
+  onConfirmFlight,
 }: {
   item: ItineraryItem;
   n: number;
@@ -1041,6 +1055,8 @@ function ItemRow({
   now: boolean;
   /** 실험실 "방문 기록": 지난 일정이면 위에 [방문][미방문] (null = 기록 지우기) */
   onVisit?: ((visit: Visit | null) => void) | undefined;
+  /** 출발 전날~출발 날 항공편: 위에 [확인], 누르기 전까지 빨갛게 깜빡임 (사용자 요청 2026-10-26) */
+  onConfirmFlight?: (() => void) | undefined;
   /** 예약에서 넘어온 일정이면 그 예약: 점선 테두리로 구분 (사용자 요청 2026-10-26) */
   booking?: Booking | undefined;
   onOpen: () => void;
@@ -1057,6 +1073,21 @@ function ItemRow({
   const marked = onVisit !== undefined && item.visit !== undefined;
   const wrap = (row: ReactNode) => (
     <li className="flex flex-col gap-1">
+      {onConfirmFlight && (
+        <div
+          role="alert"
+          className="flex items-center gap-2 rounded-btn bg-danger/10 px-3 py-2 text-caption text-danger"
+        >
+          <span className="flex-1 whitespace-pre-line">{t('flightCheck.notice')}</span>
+          <button
+            type="button"
+            onClick={onConfirmFlight}
+            className="h-8 shrink-0 rounded-full bg-danger px-4 text-caption font-bold text-white"
+          >
+            {t('flightCheck.confirm')}
+          </button>
+        </div>
+      )}
       {onVisit && <VisitBar value={item.visit} onChange={onVisit} />}
       <div className="relative">
         {row}
@@ -1098,6 +1129,7 @@ function ItemRow({
           item.done && !marked && 'opacity-50',
           now && 'kind-now border-transparent font-bold',
           marked && 'visit-mark',
+          onConfirmFlight && 'flight-alert border-transparent',
         )}
       >
         {badge}
