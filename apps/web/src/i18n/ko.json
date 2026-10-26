@@ -214,7 +214,12 @@
     "save": "{{name}} 저장",
     "saved": "저장했어요",
     "addToTrip": "{{name}} 가고 싶은 곳에 담기",
-    "added": "가고 싶은 곳에 담았어요"
+    "added": "가고 싶은 곳에 담았어요",
+    "addedTo": "{{trip}}\n가고 싶은 곳에 담았어요",
+    "unsave": "{{name}} 저장 취소",
+    "unsaved": "저장을 취소했어요",
+    "pickTrip": "어느 여행에 담을까요?",
+    "noTrip": "이 나라로 가는 여행이 없어요\n여행을 만들면 일정에 담을 수 있어요"
   },
   "bookings": {
     "emptyTitle": "예약을 모아두세요",

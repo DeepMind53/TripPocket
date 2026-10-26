@@ -1,21 +1,30 @@
-import { SAVED_PLACES_MAX, type ItemKind, type PlaceSummary } from '@trippocket/shared';
+import {
+  getTripStatus,
+  SAVED_PLACES_MAX,
+  todayIn,
+  type ItemKind,
+  type PlaceSummary,
+  type SavedPlace,
+  type Trip,
+} from '@trippocket/shared';
 import { attachFallback } from '../../data/limitNotice';
 import { placeSearchLinks, type FallbackLink } from '../../shared/lib/fallbackLinks';
 import { FallbackLinks } from '../common/FallbackLinks';
 import { Heart, MapPin, Plus, Search } from 'lucide-react';
 import { useState } from 'react';
 import { useParams } from 'react-router';
-import { useCanEdit } from '../../data/tripRoles';
+import { canEditTrip } from '../../data/tripRoles';
 import { placesApi, resolvePlace } from '../../data/api/places';
 import { useAuth } from '../../data/authStore';
-import { useTrip } from '../../data/hooks';
+import { useSavedPlaces, useTrip, useTrips } from '../../data/hooks';
 import { itemRepo } from '../../data/repositories/itemRepo';
 import { SavedLimitError, savedPlaceRepo } from '../../data/repositories/savedPlaceRepo';
 import { isDomesticTrip } from '../../domain/tripPlace';
 import { ServerOfflineNotice } from '../common/ServerOfflineNotice';
 import { useTranslation } from '../../i18n';
 import { openMapLink, placeLink } from '../../shared/lib/directions';
-import { Button, Chip, IconButton, toast, ScrollRow } from '../../shared/ui';
+import { BottomSheet, Button, Chip, IconButton, toast, ScrollRow } from '../../shared/ui';
+import { cn } from '../../shared/lib/cn';
 
 const CATEGORIES: { kind: ItemKind; key: 'food' | 'cafe' | 'place' | 'shopping' | 'lodging' }[] = [
   { kind: 'food', key: 'food' },
@@ -28,13 +37,18 @@ const CATEGORIES: { kind: ItemKind; key: 'food' | 'cafe' | 'place' | 'shopping' 
 /**
  * S-14 장소 찾기 (18단계): 카테고리 + 검색 → 일정의 '가고 싶은 곳'에 담기 / 저장 / 지도.
  * 평점·영업시간은 일정에 담은 뒤 일정 편집에서 [영업시간·평점 보기] (Google 무료 사용량 아끼기, docs/10 §6.2)
+ * 2026-10-27 사용자 요청:
+ * - 하트 = 저장 탭에 바로 반영(채운 하트), 한 번 더 누르면 저장 취소
+ * - [+]는 이 나라로 가는(끝나지 않은·고칠 수 있는) 여행이 있을 때만. 여럿이면 여행을 골라 그 여행의 '가고 싶은 곳'에
  */
 export function PlacesPage() {
   const { t } = useTranslation();
   const { tripId = '' } = useParams();
-  // 보기 전용 여행이면 "일정에 추가"를 숨긴다 (저장한 장소는 내 것이라 그대로)
-  const canEdit = useCanEdit(tripId);
   const trip = useTrip(tripId);
+  const trips = useTrips();
+  const saved = useSavedPlaces() ?? [];
+  // [+]를 고를 여행 (여럿일 때 시트)
+  const [picking, setPicking] = useState<PlaceSummary | null>(null);
   const loggedIn = useAuth((s) => s.status === 'user');
   const [q, setQ] = useState('');
   const [cat, setCat] = useState<(typeof CATEGORIES)[number] | null>(null);
@@ -48,6 +62,58 @@ export function PlacesPage() {
   // 저장할 때 나라도 같이 (저장 탭 나라 칸·일정 추가에서 그 나라만 보여 주기)
   const country = trip.destinations[0]?.countryCode;
   const near = trip.destinations.find((d) => d.coords)?.coords;
+  // 담을 수 있는 여행: 이 나라로 가는, 아직 안 끝난, 내가 고칠 수 있는 여행 (가까운 순)
+  const targets = (trips ?? [])
+    .filter(
+      (tr) =>
+        tr.destinations.some((d) => (country ? d.countryCode === country : tr.id === tripId)) &&
+        getTripStatus(tr.startDate, tr.endDate, todayIn(tr.timezone)) !== 'past' &&
+        canEditTrip(tr.id),
+    )
+    .sort((a, b) => a.startDate.localeCompare(b.startDate));
+  const savedOf = (p: PlaceSummary): SavedPlace | undefined =>
+    saved.find((s) =>
+      p.source === 'google' && s.googlePlaceId
+        ? s.googlePlaceId === p.id
+        : s.name === p.name && (s.address ?? '') === (p.address ?? ''),
+    );
+
+  async function addTo(target: Trip, p0: PlaceSummary) {
+    const p = await resolvePlace(p0);
+    await itemRepo.create({
+      tripId: target.id,
+      date: null,
+      kind: cat?.kind ?? 'place',
+      title: p.name,
+      place: toPlaceRef(p),
+    });
+    toast(target.id === tripId ? t('places.added') : t('places.addedTo', { trip: target.title }));
+  }
+
+  async function toggleSave(p0: PlaceSummary) {
+    const had = savedOf(p0);
+    if (had) {
+      await savedPlaceRepo.softDelete(had.id);
+      toast(t('places.unsaved'));
+      return;
+    }
+    try {
+      const p = await resolvePlace(p0);
+      await savedPlaceRepo.create({
+        name: p.name,
+        kind: cat?.kind ?? 'place',
+        ...(p.address ? { address: p.address } : {}),
+        ...(p.coords ? { coords: p.coords, coordsSource: p.source } : {}),
+        ...(p.source === 'google' ? { googlePlaceId: p.id } : {}),
+        ...(city ? { cityTag: city } : {}),
+        ...(country ? { countryCode: country } : {}),
+      });
+      toast(t('places.saved'));
+    } catch (e) {
+      if (e instanceof SavedLimitError) toast(t('saved.limit', { max: SAVED_PLACES_MAX }));
+      else throw e;
+    }
+  }
 
   async function run(category = cat, text = q) {
     const query = [text.trim() || city, category ? t(`places.cat.${category.key}`) : '']
@@ -153,55 +219,53 @@ export function PlacesPage() {
                 }
               />
               <IconButton
-                label={t('places.save', { name: p.name })}
-                icon={<Heart />}
-                onClick={() =>
-                  void resolvePlace(p)
-                    .then((p) =>
-                      savedPlaceRepo.create({
-                        name: p.name,
-                        kind: cat?.kind ?? 'place',
-                        ...(p.address ? { address: p.address } : {}),
-                        ...(p.coords ? { coords: p.coords, coordsSource: p.source } : {}),
-                        ...(p.source === 'google' ? { googlePlaceId: p.id } : {}),
-                        ...(city ? { cityTag: city } : {}),
-                        ...(country ? { countryCode: country } : {}),
-                      }),
-                    )
-                    .then(
-                      () => toast(t('places.saved')),
-                      (e: unknown) => {
-                        if (e instanceof SavedLimitError)
-                          toast(t('saved.limit', { max: SAVED_PLACES_MAX }));
-                        else throw e;
-                      },
-                    )
-                }
+                label={t(savedOf(p) ? 'places.unsave' : 'places.save', { name: p.name })}
+                aria-pressed={!!savedOf(p)}
+                icon={<Heart className={cn(savedOf(p) && 'fill-danger text-danger')} />}
+                onClick={() => void toggleSave(p)}
               />
-              {canEdit && (
-                <IconButton
-                  label={t('places.addToTrip', { name: p.name })}
-                  icon={<Plus />}
-                  tone="tint"
-                  onClick={() =>
-                    void resolvePlace(p)
-                      .then((p) =>
-                        itemRepo.create({
-                          tripId,
-                          date: null,
-                          kind: cat?.kind ?? 'place',
-                          title: p.name,
-                          place: toPlaceRef(p),
-                        }),
-                      )
-                      .then(() => toast(t('places.added')))
-                  }
-                />
-              )}
+              <IconButton
+                label={t('places.addToTrip', { name: p.name })}
+                icon={<Plus />}
+                tone="tint"
+                disabled={targets.length === 0}
+                onClick={() => (targets.length === 1 ? void addTo(targets[0]!, p) : setPicking(p))}
+              />
             </li>
           ))}
         </ul>
       )}
+      {results !== null && targets.length === 0 && (
+        <p className="text-caption text-fg-muted">{t('places.noTrip')}</p>
+      )}
+
+      <BottomSheet
+        open={picking !== null}
+        onOpenChange={(o) => !o && setPicking(null)}
+        title={t('places.pickTrip')}
+      >
+        <ul className="flex flex-col divide-y divide-line pb-2">
+          {targets.map((tr) => (
+            <li key={tr.id}>
+              <button
+                type="button"
+                onClick={() => {
+                  const p = picking;
+                  setPicking(null);
+                  if (p) void addTo(tr, p);
+                }}
+                className="flex min-h-12 w-full items-center gap-2 py-2 text-left"
+              >
+                <span aria-hidden="true">{tr.cover.emoji ?? '🧳'}</span>
+                <span className="min-w-0 flex-1 truncate text-body-1">{tr.title}</span>
+                <span className="tabular shrink-0 text-caption text-fg-muted">
+                  {tr.startDate.slice(5).replace('-', '.')}~{tr.endDate.slice(5).replace('-', '.')}
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      </BottomSheet>
     </div>
   );
 }
