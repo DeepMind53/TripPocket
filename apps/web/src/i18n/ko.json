@@ -1314,6 +1314,10 @@
       "sharing": {
         "name": "함께 쓰기",
         "desc": "참여 요청·허용"
+      },
+      "alert": {
+        "name": "여행지 특보",
+        "desc": "출발 7일 전부터 빨강 특보"
       }
     }
   },
@@ -1422,6 +1426,7 @@
       "eccc": "캐나다 기상청"
     },
     "national": "🌦 {{agency}} · {{names}}",
+    "homeDot": "여행지 특보 {{n}}건",
     "announced": "특보 발표",
     "gdacs": "{{kind}} · {{level}} 경보",
     "quake": "🌏 지진 · 규모 {{mag}}",

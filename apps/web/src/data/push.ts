@@ -2,10 +2,16 @@ import { create } from 'zustand';
 import { api } from './api/client';
 
 /** 알림 종류 (서버 services/push.ts와 같게) — docs/20 G1 */
-export const PUSH_KINDS = ['departure', 'entry', 'itemSoon', 'sharing'] as const;
+export const PUSH_KINDS = ['departure', 'entry', 'itemSoon', 'sharing', 'alert'] as const;
 export type PushKind = (typeof PUSH_KINDS)[number];
 export type PushPrefs = Record<PushKind, boolean>;
-const DEFAULT: PushPrefs = { departure: true, entry: true, itemSoon: true, sharing: true };
+const DEFAULT: PushPrefs = {
+  departure: true,
+  entry: true,
+  itemSoon: true,
+  sharing: true,
+  alert: true,
+};
 
 /** 이 기기의 알림 상태 (켜짐·종류) — 기기마다 따로, 서버에는 구독과 함께 저장 */
 const KEY = 'tp-push';

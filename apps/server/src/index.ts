@@ -25,7 +25,11 @@ await app.listen({ host: config.HOST, port: config.PORT });
 scheduleMaintenance(db, (m) => app.log.warn(m), config.DATA_DIR);
 
 // 알림 (VAPID 키가 있을 때만) — 출발 전·입국신고·일정 30분 전
-if (initPush(config)) schedulePushes(db, (m) => app.log.warn(m));
+if (initPush(config))
+  schedulePushes(db, (m) => app.log.warn(m), {
+    dataGoKr: config.DATA_GO_KR_KEY,
+    cwa: config.CWA_API_KEY,
+  });
 
 // 환율 받기 (키가 있을 때만)
 if (config.EXIM_API_KEY) scheduleFx(db, config.EXIM_API_KEY, (m) => app.log.warn(m));

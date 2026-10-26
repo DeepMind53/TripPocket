@@ -1,5 +1,7 @@
 import { daysUntil, essentialKey, essentialsFor, todayIn } from '@trippocket/shared';
 import type { Db } from '../db/database';
+import { planAlertPushes } from './alertPush';
+import type { NationalKeys } from './nationalAlerts';
 import { sendPush, type PushMessage, type PushKind } from './push';
 
 interface TripData {
@@ -147,12 +149,20 @@ export function planPushes(db: Db, now: Date): PlannedPush[] {
   return out;
 }
 
-/** 5분마다 계산해 보낸다. 반환값으로 멈춤 */
-export function schedulePushes(db: Db, log: (m: string) => void): () => void {
+/** 5분마다 계산해 보낸다 (여행지 특보는 30분마다). 반환값으로 멈춤 */
+export function schedulePushes(
+  db: Db,
+  log: (m: string) => void,
+  alertKeys: NationalKeys = {},
+): () => void {
+  let n = 0;
   const tick = async () => {
     try {
       for (const p of planPushes(db, new Date()))
         await sendPush(db, p.userId, p.kind, p.msg, p.key);
+      if (n++ % 6 === 0)
+        for (const p of await planAlertPushes(db, alertKeys, new Date()))
+          await sendPush(db, p.userId, p.kind, p.msg, p.key);
       // 30일 지난 발송 기록 정리
       db.prepare('DELETE FROM push_sent WHERE sent_at < ?').run(
         new Date(Date.now() - 30 * 86_400_000).toISOString(),

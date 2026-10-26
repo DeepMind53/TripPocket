@@ -2,14 +2,13 @@ import {
   addDays,
   findAirport,
   getTripDays,
-  POINT_ALERT_COUNTRIES,
-  roundAlertPoint,
   type Booking,
   type LocalDate,
 } from '@trippocket/shared';
 import { Plane } from 'lucide-react';
 import { useParams } from 'react-router';
 import { useTrip, useTripBookings } from '../../data/hooks';
+import { alertQuery } from '../../domain/alerts';
 import { formatTemps, weatherLook } from '../../domain/weather';
 import { useTranslation } from '../../i18n';
 import { formatMonthDay } from '../../shared/lib/dateFormat';
@@ -37,15 +36,7 @@ export function WeatherPage() {
     : [];
   const weather = useWeatherDays(dest?.coords, trip?.timezone ?? 'Asia/Seoul', dates);
   const flights = bookings.filter((b) => b.kind === 'flight' && b.start.place);
-  const countries = (trip?.destinations ?? [])
-    .map((d) => d.countryCode)
-    .filter((c): c is string => !!c);
-  // 일본·미국은 그 나라 기상청이 지역별로 발표 → 목적지 도시 좌표를 약 10km로 줄여 함께
-  const points = (trip?.destinations ?? []).flatMap((d) =>
-    d.countryCode && d.coords && POINT_ALERT_COUNTRIES.includes(d.countryCode)
-      ? [`${d.countryCode}:${roundAlertPoint(d.coords.lat)}:${roundAlertPoint(d.coords.lng)}`]
-      : [],
-  );
+  const { countries, points } = alertQuery(trip ?? { destinations: [] });
   if (!trip) return null;
 
   const label = (i: number) =>

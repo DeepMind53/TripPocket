@@ -4,7 +4,7 @@ import type { Db } from '../db/database';
 import { apiAllowed, trackApi } from './apiUsage';
 
 /** 알림 종류 — 기기마다 켜고 끈다 (docs/20 G1) */
-export const PUSH_KINDS = ['departure', 'entry', 'itemSoon', 'sharing'] as const;
+export const PUSH_KINDS = ['departure', 'entry', 'itemSoon', 'sharing', 'alert'] as const;
 export type PushKind = (typeof PUSH_KINDS)[number];
 export type PushPrefs = Record<PushKind, boolean>;
 export const DEFAULT_PREFS: PushPrefs = {
@@ -12,6 +12,7 @@ export const DEFAULT_PREFS: PushPrefs = {
   entry: true,
   itemSoon: true,
   sharing: true,
+  alert: true,
 };
 
 export interface PushMessage {

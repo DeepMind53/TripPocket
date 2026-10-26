@@ -22,6 +22,8 @@ import {
 } from '../../domain/weather';
 import { useTripWeather } from '../common/useTripWeather';
 import { useEssentials } from '../essentials/useEssentials';
+import { useTripAlerts } from '../weather/useTripAlerts';
+import { topLevel } from '../../domain/alerts';
 import { useTranslation } from '../../i18n';
 import { WeatherIcon } from '../../shared/ui';
 
@@ -42,6 +44,9 @@ export function PrepCards({ trip }: { trip: Trip }) {
   const essentials = useEssentials(trip);
   const [fx, setFx] = useState<FxSnapshot | null>(null);
   const daysLeft = daysUntil(trip.startDate, todayIn(trip.timezone));
+  // 출발 7일 전부터 여행지 특보(빨강·주황) 점 (docs/24 §2-2)
+  const alerts = useTripAlerts(trip, daysLeft <= 7);
+  const alertLevel = topLevel(alerts);
   const currency = trip.destinations
     .map((d) => (d.countryCode ? COUNTRY_CURRENCY[d.countryCode] : undefined))
     .find((c) => c && c !== 'KRW');
@@ -140,7 +145,13 @@ export function PrepCards({ trip }: { trip: Trip }) {
                 <span className="text-caption text-warning">{t('prep.noLodging')}</span>
               )}
             </Card>
-            <Card to={`${base}/weather`} emoji="☀️" label={t('prep.weather')}>
+            <Card
+              to={`${base}/weather`}
+              emoji="☀️"
+              label={t('prep.weather')}
+              alert={alertLevel ?? false}
+              alertLabel={alertLevel ? t('alerts.homeDot', { n: alerts.length }) : undefined}
+            >
               {weather ? (
                 <>
                   <span className="flex items-center gap-1.5">
@@ -249,12 +260,15 @@ function Card({
   emoji,
   label,
   alert = false,
+  alertLabel,
   children,
 }: {
   to: string;
   emoji: string;
   label: string;
-  alert?: boolean;
+  /** true = 할 일(주황 점), 'red'·'orange' = 여행지 특보 등급 점 */
+  alert?: boolean | 'red' | 'orange';
+  alertLabel?: string | undefined;
   children: ReactNode;
 }) {
   const { t } = useTranslation();
@@ -271,8 +285,12 @@ function Card({
       {alert && (
         <span
           role="img"
-          aria-label={t('prep.needsAttention')}
-          className="absolute top-3 right-3 size-2 rounded-full bg-warning"
+          aria-label={alertLabel ?? t('prep.needsAttention')}
+          className={
+            alert === 'red'
+              ? 'absolute top-3 right-3 size-2.5 animate-pulse rounded-full bg-danger'
+              : 'absolute top-3 right-3 size-2 rounded-full bg-warning'
+          }
         />
       )}
     </Link>

@@ -10,7 +10,7 @@ beforeEach(() => {
   localStorage.removeItem('tp-push');
   usePush.setState({
     enabled: false,
-    prefs: { departure: true, entry: true, itemSoon: true, sharing: true },
+    prefs: { departure: true, entry: true, itemSoon: true, sharing: true, alert: true },
   });
   const sub = {
     endpoint: 'https://push.example/abc',

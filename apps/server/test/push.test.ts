@@ -3,6 +3,8 @@ import { buildApp, PROXY_HEADER } from '../src/app';
 import { createSession } from '../src/auth/session';
 import { loadConfig } from '../src/config';
 import { openDb, type Db } from '../src/db/database';
+import { planAlertPushes } from '../src/services/alertPush';
+import { resetAlertCache } from '../src/services/alerts';
 import { planPushes } from '../src/services/pushScheduler';
 
 const SECRET = 's'.repeat(40);
@@ -66,6 +68,7 @@ describe('알림 (docs/20 G1)', () => {
       entry: true,
       itemSoon: false,
       sharing: true,
+      alert: true,
     });
     await call('PUT', '/api/push/subscription', { ...sub, prefs: { itemSoon: true } });
     expect(db.prepare('SELECT COUNT(*) n FROM push_subscriptions').get()).toEqual({ n: 1 });
@@ -102,5 +105,61 @@ describe('알림 (docs/20 G1)', () => {
     expect(plan.filter((p) => p.kind === 'itemSoon').map((p) => p.msg.title)).toEqual([
       '11:10 왓포',
     ]);
+  });
+});
+
+describe('여행지 특보 알림 (docs/24, ADR-0008)', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('출발 7일 전부터 빨강 특보가 새로 생기면 1번, 같은 것은 다시 알리지 않는다', async () => {
+    resetAlertCache();
+    let level = 'Red';
+    vi.stubGlobal('fetch', async (input: string | URL) => {
+      const url = String(input);
+      if (url.includes('gdacs'))
+        return Response.json({
+          features: [
+            {
+              properties: {
+                eventtype: 'TC',
+                eventid: 7,
+                name: 'Tropical Cyclone X',
+                alertlevel: level,
+                iscurrent: 'true',
+                affectedcountries: [{ iso2: 'JP' }],
+              },
+            },
+          ],
+        });
+      return Response.json({ features: [] });
+    });
+    await call('PUT', '/api/push/subscription', sub);
+    db.prepare(
+      "INSERT INTO trip_members (trip_id, user_id, role, created_at) VALUES ('t', 'u', 'owner', 'x')",
+    ).run();
+    record('trips', 't', null, {
+      id: 't',
+      title: '도쿄',
+      startDate: '2026-11-05',
+      endDate: '2026-11-07',
+      timezone: 'Asia/Tokyo',
+      destinations: [{ countryCode: 'JP' }],
+    });
+    // 출발 8일 전: 아직
+    expect(await planAlertPushes(db, {}, new Date('2026-10-28T03:00:00Z'))).toEqual([]);
+    const now = new Date('2026-10-30T03:00:00Z');
+    const plan = await planAlertPushes(db, {}, now);
+    expect(plan).toHaveLength(1);
+    expect(plan[0]).toMatchObject({ kind: 'alert', key: 'alertday:t:2026-10-30' });
+    expect(plan[0]!.msg.body).toContain('태풍 빨강 경보');
+    expect(plan[0]!.msg.url).toBe('/trips/t/weather');
+    // 같은 특보는 다음 날에도 다시 알리지 않는다
+    resetAlertCache();
+    expect(await planAlertPushes(db, {}, new Date('2026-10-31T03:00:00Z'))).toEqual([]);
+    // 주황은 알리지 않는다
+    level = 'Orange';
+    resetAlertCache();
+    db.prepare('DELETE FROM push_sent').run();
+    expect(await planAlertPushes(db, {}, now)).toEqual([]);
   });
 });
