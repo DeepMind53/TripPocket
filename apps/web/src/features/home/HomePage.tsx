@@ -32,9 +32,12 @@ import { Wordmark } from './Wordmark';
 import { TripList } from '../trips/TripsPage';
 
 const PrepCards = lazy(async () => ({ default: (await import('./PrepCards')).PrepCards }));
+// 여행 중 특보 한 줄 — 첫 화면에 넣지 않고 따로 받는다
+const TripAlertBanner = lazy(async () => ({
+  default: (await import('../weather/TripAlertBanner')).TripAlertBanner,
+}));
 import { openDirectionsDirect } from '../common/openDirections';
 import { isDomesticTrip } from '../../domain/tripPlace';
-import { TripAlertBanner } from '../weather/TripAlertBanner';
 
 // 길찾기 시트(이동수단 고르기)는 누를 때 불러온다 — 첫 화면 크기
 const DirectionsSheet = lazy(async () => ({
@@ -239,7 +242,9 @@ function OngoingTrip({ trip }: { trip: Trip }) {
           {formatTripBadge(trip.startDate, trip.endDate, today)}
         </span>
       </Link>
-      <TripAlertBanner trip={trip} />
+      <Suspense fallback={null}>
+        <TripAlertBanner trip={trip} />
+      </Suspense>
 
       {current && current.id !== next?.id && (
         <section
