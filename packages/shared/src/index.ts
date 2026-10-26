@@ -98,6 +98,8 @@ export {
 export { RouteEtaBody, type Coords, type RouteEta } from './places/route';
 export {
   MOFA_SAFETY_URL,
+  POINT_ALERT_COUNTRIES,
+  roundAlertPoint,
   WEATHER_WARNING_LINKS,
   WMO_SEVERE_WEATHER,
   warningLinkFor,

@@ -3,14 +3,21 @@
  * 서버는 공식 출처 내용을 옮기기만 한다 — 자체 판단 문구를 만들지 않는다 (일본 기상업무법, docs/24 §5)
  */
 
-/** 종류: 열대저기압(태풍)·지진·홍수·화산·산불·가뭄·외교부 여행경보 */
+/** 종류: 열대저기압(태풍)·지진·홍수·화산·산불·가뭄·외교부 여행경보·나라 기상청 특보(weather) */
 export type AlertKind =
-  'cyclone' | 'earthquake' | 'flood' | 'volcano' | 'wildfire' | 'drought' | 'travel';
+  'cyclone' | 'earthquake' | 'flood' | 'volcano' | 'wildfire' | 'drought' | 'travel' | 'weather';
 
 /** red = GDACS 빨강·외교부 3~4단계·특별여행주의보·경보 / orange = GDACS 주황·외교부 2단계·규모 6 이상 지진 / info = 그 밖 */
 export type AlertLevel = 'red' | 'orange' | 'info';
 
-export type AlertSource = 'gdacs' | 'usgs' | 'mofa';
+/** 전 세계: gdacs·usgs·mofa / 나라 기상청 (docs/24 §7): jma 일본·kma 한국·nws 미국(괌·사이판)·cwa 대만 */
+export type AlertSource = 'gdacs' | 'usgs' | 'mofa' | 'jma' | 'kma' | 'nws' | 'cwa';
+
+/** 목적지 좌표가 있어야 지역을 고를 수 있는 나라 (일본 기상청·미국 기상청). 그 밖은 나라 전체 특보 */
+export const POINT_ALERT_COUNTRIES: readonly string[] = ['JP', 'US'];
+
+/** 목적지 도시 좌표를 약 10km로 줄인다 (지역 고르기에만, 서버에 남기지 않음) */
+export const roundAlertPoint = (n: number) => Math.round(n * 10) / 10;
 
 export interface DestinationAlert {
   /** 출처 안에서 겹치지 않는 값 (같은 사건을 다시 알리지 않으려고) */
@@ -28,6 +35,8 @@ export interface DestinationAlert {
   area?: string | undefined;
   /** 외교부: 나라 전체인가 */
   whole?: boolean | undefined;
+  /** 나라 기상청 특보 종류 (원문 이름, 예: "강풍주의보", "大雨警報", "Flood Warning") */
+  names?: string[] | undefined;
   /** 지진 규모 */
   magnitude?: number | undefined;
   /** ISO 시각 */

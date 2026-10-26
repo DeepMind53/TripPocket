@@ -2,6 +2,8 @@ import {
   addDays,
   findAirport,
   getTripDays,
+  POINT_ALERT_COUNTRIES,
+  roundAlertPoint,
   type Booking,
   type LocalDate,
 } from '@trippocket/shared';
@@ -38,6 +40,12 @@ export function WeatherPage() {
   const countries = (trip?.destinations ?? [])
     .map((d) => d.countryCode)
     .filter((c): c is string => !!c);
+  // 일본·미국은 그 나라 기상청이 지역별로 발표 → 목적지 도시 좌표를 약 10km로 줄여 함께
+  const points = (trip?.destinations ?? []).flatMap((d) =>
+    d.countryCode && d.coords && POINT_ALERT_COUNTRIES.includes(d.countryCode)
+      ? [`${d.countryCode}:${roundAlertPoint(d.coords.lat)}:${roundAlertPoint(d.coords.lng)}`]
+      : [],
+  );
   if (!trip) return null;
 
   const label = (i: number) =>
@@ -51,7 +59,7 @@ export function WeatherPage() {
     <div className="mx-auto min-h-dvh max-w-[560px] pb-10">
       <TopBar title={t('weatherPage.title')} backTo="/" />
       <div className="flex flex-col gap-5 px-5 pt-2">
-        <DestinationAlerts countries={countries} />
+        <DestinationAlerts countries={countries} points={points} />
         <section
           aria-label={t('weatherPage.dest', { place: dest?.name ?? trip.title })}
           className="flex flex-col gap-2"

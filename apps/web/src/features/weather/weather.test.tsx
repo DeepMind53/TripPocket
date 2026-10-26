@@ -90,6 +90,16 @@ it('여행지 특이사항: 나라 코드만 보내고, 특보와 그 나라 기
             source: 'mofa',
             url: 'https://www.0404.go.kr/',
           },
+          {
+            id: 'jma-130010-x',
+            country: 'JP',
+            kind: 'weather',
+            level: 'orange',
+            title: '大雨警報を発表します。',
+            names: ['大雨警報'],
+            source: 'jma',
+            url: 'https://www.jma.go.jp/bosai/warning/',
+          },
         ],
         checkedAt: '2026-10-22T03:00:00Z',
         missing: [],
@@ -120,7 +130,11 @@ it('여행지 특이사항: 나라 코드만 보내고, 특보와 그 나라 기
     'href',
     'https://www.jma.go.jp/bosai/warning/',
   );
-  const alertUrl = urls.find((u) => u.includes('/api/alerts'))!;
+  expect(within(box).getByText('🌦 일본 기상청 · 大雨警報')).toBeInTheDocument();
+  expect(within(box).getByText('大雨警報を発表します。')).toBeInTheDocument();
+  const alertUrl = decodeURIComponent(urls.find((u) => u.includes('/api/alerts'))!);
   expect(alertUrl).toContain('countries=JP');
-  expect(alertUrl).not.toMatch(/lat|lng|35\.68/);
+  // 일본은 그 지역 기상청 특보를 고르려고 목적지 도시 좌표를 약 10km로 줄여 보낸다
+  expect(alertUrl).toContain('points=JP:35.7:139.7');
+  expect(alertUrl).not.toContain('35.68');
 });

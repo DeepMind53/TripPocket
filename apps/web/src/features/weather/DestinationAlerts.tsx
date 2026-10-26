@@ -15,24 +15,33 @@ import { cn } from '../../shared/lib/cn';
  * GDACS·USGS·외교부 특보 + 나라마다 그 나라 기상청 공식 특보 링크(모르는 나라는 WMO).
  * 공식 출처 내용을 옮기기만 한다 — 자체 판단 문구 없음 (docs/24 §5)
  */
-export function DestinationAlerts({ countries }: { countries: readonly string[] }) {
+export function DestinationAlerts({
+  countries,
+  points = [],
+}: {
+  countries: readonly string[];
+  /** 일본·미국 목적지 도시 좌표 "JP:35.7:139.7" */
+  points?: readonly string[];
+}) {
   const { t } = useTranslation();
   const key = [...new Set(countries)].sort().join(',');
+  const pointKey = [...new Set(points)].sort().join(',');
+  const fetchKey = `${key}|${pointKey}`;
   const [result, setResult] = useState<{ key: string; value: AlertsResult | null } | null>(null);
 
   useEffect(() => {
     if (!key) return;
     let alive = true;
-    void fetchAlerts(key.split(',')).then((value) => {
-      if (alive) setResult({ key, value });
+    void fetchAlerts(key.split(','), pointKey ? pointKey.split(',') : []).then((value) => {
+      if (alive) setResult({ key: fetchKey, value });
     });
     return () => {
       alive = false;
     };
-  }, [key]);
+  }, [key, pointKey, fetchKey]);
 
   if (!key) return null;
-  const current = result && result.key === key ? result : undefined;
+  const current = result && result.key === fetchKey ? result : undefined;
   const data = current?.value?.data;
   const many = key.includes(',');
 
@@ -102,18 +111,32 @@ const localHm = (iso: string) => {
 function AlertRow({ alert: a, flag }: { alert: DestinationAlert; flag: boolean }) {
   const { t } = useTranslation();
   const head =
+    a.kind === 'weather'
+      ? t('alerts.national', {
+          agency: t(`alerts.agency.${a.source}` as 'alerts.agency.kma'),
+          names: a.names?.join(' · ') || t('alerts.announced'),
+        })
+      : a.source === 'mofa'
+        ? a.special
+          ? t(`alerts.${a.special}`)
+          : t('alerts.step', { n: a.step ?? 1 })
+        : a.source === 'usgs'
+          ? t('alerts.quake', { mag: a.magnitude?.toFixed(1) ?? '' })
+          : t('alerts.gdacs', {
+              kind: t(`alerts.kind.${a.kind}`),
+              level: t(`alerts.level.${a.level}`),
+            });
+  // 외교부·나라 기상청은 지역 설명(일본은 발표 요약 원문), 그 밖은 원문 이름
+  const detail =
     a.source === 'mofa'
-      ? a.special
-        ? t(`alerts.${a.special}`)
-        : t('alerts.step', { n: a.step ?? 1 })
-      : a.source === 'usgs'
-        ? t('alerts.quake', { mag: a.magnitude?.toFixed(1) ?? '' })
-        : t('alerts.gdacs', {
-            kind: t(`alerts.kind.${a.kind}`),
-            level: t(`alerts.level.${a.level}`),
-          });
-  // 외교부는 지역 설명, 그 밖은 원문 이름
-  const detail = a.source === 'mofa' ? (a.whole ? t('alerts.whole') : a.area) : a.title;
+      ? a.whole
+        ? t('alerts.whole')
+        : a.area
+      : a.source === 'jma'
+        ? a.title
+        : a.kind === 'weather'
+          ? a.area
+          : a.title;
   return (
     <li
       className={cn(

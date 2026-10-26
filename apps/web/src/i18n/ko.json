@@ -966,6 +966,10 @@
       "gdacs": "GDACS 재난 경보",
       "usgs": "USGS 지진",
       "mofa_alert": "외교부 여행경보",
+      "kma_warning": "기상청 특보",
+      "jma": "일본 기상청",
+      "nws": "미국 기상청",
+      "cwa": "대만 중앙기상서",
       "google_places_local": "Google 장소 현지어 이름 (택시 카드)",
       "google_autocomplete": "Google 자동완성 (검색 백업)",
       "google_details_basic": "Google 장소 주소·좌표 (검색 백업)",
@@ -999,6 +1003,10 @@
       "gdacs": "UN·EU 재난 경보 (키 없음·10분마다)",
       "usgs": "미국 지질조사국 (키 없음·10분마다)",
       "mofa_alert": "공공데이터포털 (하루 1만 건·3시간마다)",
+      "kma_warning": "공공데이터포털 (하루 1만 건·10분마다)",
+      "jma": "키 없음·10분마다",
+      "nws": "키 없음·10분마다",
+      "cwa": "무료 회원 키·10분마다",
       "google_places_local": "Place Details Pro · 무료 월 5,000회",
       "google_autocomplete": "장소 검색 무료량이 끝나면 대신 · 월 10,000회 무료",
       "google_details_basic": "자동완성에서 고른 장소 · Essentials · 월 10,000회 무료",
@@ -1401,8 +1409,17 @@
       "volcano": "🌋 화산",
       "wildfire": "🔥 산불",
       "drought": "🏜 가뭄",
-      "travel": "🛂 외교부"
+      "travel": "🛂 외교부",
+      "weather": "🌦 기상청"
     },
+    "agency": {
+      "kma": "기상청",
+      "jma": "일본 기상청",
+      "nws": "미국 기상청",
+      "cwa": "대만 기상서"
+    },
+    "national": "🌦 {{agency}} · {{names}}",
+    "announced": "특보 발표",
     "gdacs": "{{kind}} · {{level}} 경보",
     "quake": "🌏 지진 · 규모 {{mag}}",
     "step": "🛂 여행경보 {{n}}단계",
@@ -1413,7 +1430,7 @@
     "sourceOf": "{{title}} 원문 보기",
     "officialTitle": "공식 특보 페이지",
     "mofaLink": "외교부 해외안전여행",
-    "note": "참고용이에요\n공식 발표를 꼭 확인하세요\n출처: GDACS · USGS · 외교부"
+    "note": "참고용이에요\n공식 발표를 꼭 확인하세요\n출처: GDACS · USGS · 외교부\n각 나라 기상청 (원문 그대로)"
   },
   "flightCheck": {
     "title": "✈ {{title}} 출발 전이에요",

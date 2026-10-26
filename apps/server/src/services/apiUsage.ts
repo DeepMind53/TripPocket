@@ -40,7 +40,11 @@ export type ApiId =
   | 'web_push'
   | 'gdacs'
   | 'usgs'
-  | 'mofa_alert';
+  | 'mofa_alert'
+  | 'kma_warning'
+  | 'jma'
+  | 'nws'
+  | 'cwa';
 
 type Tz = 'UTC' | 'America/Los_Angeles' | 'Asia/Seoul';
 
@@ -142,6 +146,13 @@ export const APIS: readonly ApiDef[] = [
   { id: 'usgs', group: 'free', tz: 'UTC' },
   // 외교부 여행경보·특별여행주의보 (공공데이터포털): 개발 계정 서비스마다 하루 1만 건 — 둘을 합쳐 세므로 1만으로
   { id: 'mofa_alert', group: 'free', freeDaily: 10000, tz: 'Asia/Seoul' },
+  // 나라 기상청 특보 (docs/24 §7) — 10분 보관. 기상청 특보(공공데이터포털): 하루 1만 건
+  { id: 'kma_warning', group: 'free', freeDaily: 10000, tz: 'Asia/Seoul' },
+  // 일본 기상청 bosai JSON·미국 기상청 api.weather.gov: 키·공식 한도 없음 → 기록만
+  { id: 'jma', group: 'free', tz: 'UTC' },
+  { id: 'nws', group: 'free', tz: 'UTC' },
+  // 대만 중앙기상서 오픈데이터: 무료 회원 키, 공식 한도 안내 없음 → 기록만
+  { id: 'cwa', group: 'free', tz: 'UTC' },
 ];
 
 /** 무료량의 95%(남은 5%)에서 자동 중지 (사용자 결정 2026-10-27, 전에는 90%) */

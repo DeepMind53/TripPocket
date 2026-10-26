@@ -2,7 +2,7 @@ import type { AlertsResponse } from '@trippocket/shared';
 import { api } from './client';
 
 /**
- * 여행지 기상·재난 특보 (docs/24, ADR-0008) — 나라 코드만 보낸다.
+ * 여행지 기상·재난 특보 (docs/24, ADR-0008) — 나라 코드(+ 일본·미국은 목적지 도시 좌표 약 10km)만 보낸다.
  * 이 기기에 1시간 보관, 오프라인이면 마지막 결과(확인 시각과 함께)
  */
 const KEY = 'tp-alerts';
@@ -36,13 +36,23 @@ export interface AlertsResult {
   stale: boolean;
 }
 
-export async function fetchAlerts(countries: readonly string[]): Promise<AlertsResult | null> {
-  const k = [...new Set(countries)].sort().join(',');
-  if (!k) return null;
+/**
+ * countries = 여행 나라 코드, points = 일본·미국 목적지 도시 좌표를 약 10km로 줄인 "JP:35.7:139.7"
+ * (그 나라 기상청의 지역 고르기에만 — 사용자 현재 위치가 아님)
+ */
+export async function fetchAlerts(
+  countries: readonly string[],
+  points: readonly string[] = [],
+): Promise<AlertsResult | null> {
+  const c = [...new Set(countries)].sort().join(',');
+  if (!c) return null;
+  const p = [...new Set(points)].sort().join(',');
+  const k = p ? `${c}|${p}` : c;
   const store = load();
   const hit = store[k];
   if (hit && Date.now() - hit.at < FRESH_MS) return { data: hit.data, stale: false };
-  const res = await api<AlertsResponse>(`/api/alerts?countries=${encodeURIComponent(k)}`);
+  const q = `countries=${encodeURIComponent(c)}${p ? `&points=${encodeURIComponent(p)}` : ''}`;
+  const res = await api<AlertsResponse>(`/api/alerts?${q}`);
   if (!res.ok || !Array.isArray(res.data.alerts))
     return hit ? { data: hit.data, stale: true } : null;
   store[k] = { at: Date.now(), data: res.data };

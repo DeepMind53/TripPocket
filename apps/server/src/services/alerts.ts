@@ -1,6 +1,7 @@
 import type { AlertKind, AlertSource, DestinationAlert } from '@trippocket/shared';
 import { MOFA_SAFETY_URL } from '@trippocket/shared';
 import { guardApi, trackApi, type ApiId } from './apiUsage';
+import { dataGoKrOk, nationalAlerts, type NationalKeys } from './nationalAlerts';
 
 /**
  * 여행지 기상·재난 특보 (docs/24 §1, ADR-0008) — 전 세계 공통 출처 3곳.
@@ -13,20 +14,21 @@ import { guardApi, trackApi, type ApiId } from './apiUsage';
  */
 
 const MIN = 60_000;
-const TTL: Record<AlertSource, number> = { gdacs: 10 * MIN, usgs: 10 * MIN, mofa: 180 * MIN };
-const API: Record<AlertSource, ApiId> = { gdacs: 'gdacs', usgs: 'usgs', mofa: 'mofa_alert' };
+type GlobalSource = 'gdacs' | 'usgs' | 'mofa';
+const TTL: Record<GlobalSource, number> = { gdacs: 10 * MIN, usgs: 10 * MIN, mofa: 180 * MIN };
+const API: Record<GlobalSource, ApiId> = { gdacs: 'gdacs', usgs: 'usgs', mofa: 'mofa_alert' };
 
 interface Cached {
   at: number;
   alerts: DestinationAlert[];
 }
-const cache = new Map<AlertSource, Cached>();
+const cache = new Map<GlobalSource, Cached>();
 /** 같은 출처를 동시에 여러 번 받지 않게 */
-const inflight = new Map<AlertSource, Promise<DestinationAlert[]>>();
+const inflight = new Map<GlobalSource, Promise<DestinationAlert[]>>();
 
 const str = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : undefined);
 
-async function getJson(source: AlertSource, url: string): Promise<unknown> {
+async function getJson(source: GlobalSource, url: string): Promise<unknown> {
   guardApi(API[source]);
   trackApi(API[source]);
   const res = await fetch(url, {
@@ -232,8 +234,16 @@ interface MofaItem {
   forbidden_region_ty?: string | null;
 }
 const items = (raw: unknown): MofaItem[] => {
-  const item = (raw as { response?: { body?: { items?: { item?: MofaItem[] | MofaItem } } } })
-    .response?.body?.items?.item;
+  const res = (
+    raw as {
+      response?: {
+        header?: { resultCode?: string };
+        body?: { items?: { item?: MofaItem[] | MofaItem } };
+      };
+    }
+  ).response;
+  dataGoKrOk(res?.header?.resultCode);
+  const item = res?.body?.items?.item;
   return Array.isArray(item) ? item : item ? [item] : [];
 };
 
@@ -292,7 +302,7 @@ async function fetchMofa(key: string): Promise<DestinationAlert[]> {
 
 // ── 묶기 ──
 async function load(
-  source: AlertSource,
+  source: GlobalSource,
   get: () => Promise<DestinationAlert[]>,
 ): Promise<DestinationAlert[] | null> {
   const hit = cache.get(source);
@@ -316,26 +326,29 @@ async function load(
 
 export async function alertsFor(
   countries: readonly string[],
-  mofaKey: string | undefined,
+  keys: NationalKeys,
+  /** 나라별 목적지 좌표 (약 10km로 줄인 도시 좌표) — 일본·미국 기상청 지역 고르기에만 */
+  points: ReadonlyMap<string, [number, number][]> = new Map(),
 ): Promise<{ alerts: DestinationAlert[]; missing: AlertSource[]; checkedAt: string }> {
-  const sources: [AlertSource, (() => Promise<DestinationAlert[]>) | null][] = [
+  const mofaKey = keys.dataGoKr;
+  const sources: [GlobalSource, (() => Promise<DestinationAlert[]>) | null][] = [
     ['gdacs', fetchGdacs],
     ['usgs', fetchUsgs],
     ['mofa', mofaKey ? () => fetchMofa(mofaKey) : null],
   ];
-  const results = await Promise.all(
-    sources.map(async ([s, get]) => [s, get ? await load(s, get) : null] as const),
-  );
+  const [results, national] = await Promise.all([
+    Promise.all(sources.map(async ([s, get]) => [s, get ? await load(s, get) : null] as const)),
+    nationalAlerts(countries, points, keys),
+  ]);
   const want = new Set(countries);
   const order = { red: 0, orange: 1, info: 2 } as const;
-  const alerts = results
-    .flatMap(([, a]) => a ?? [])
+  const alerts = [...results.flatMap(([, a]) => a ?? []), ...national.alerts]
     .filter((a) => want.has(a.country))
     .sort((a, b) => order[a.level] - order[b.level]);
   const times = sources.map(([s]) => cache.get(s)?.at).filter((t): t is number => !!t);
   return {
     alerts,
-    missing: results.filter(([, a]) => a === null).map(([s]) => s),
+    missing: [...results.filter(([, a]) => a === null).map(([s]) => s), ...national.missing],
     checkedAt: new Date(times.length ? Math.min(...times) : Date.now()).toISOString(),
   };
 }
