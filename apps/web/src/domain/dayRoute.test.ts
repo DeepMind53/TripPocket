@@ -17,6 +17,16 @@ describe('하루 동선', () => {
     expect(url.searchParams.get('destination')).toBe('35.69,139.7');
     expect(url.searchParams.get('travelmode')).toBe('transit');
   });
+  it('항공 구간(공항 → 공항)은 뺀다', () => {
+    const flight = {
+      kind: 'transport' as const,
+      transport: { mode: 'flight' as const },
+      place: { name: 'NRT', coords: { lat: 35.77, lng: 140.39 } },
+    };
+    const url = new URL(dayRouteUrl([flight, p(35.71, 139.79), p(35.69, 139.7)])!);
+    expect(url.searchParams.get('origin')).toBe('35.71,139.79');
+    expect(url.searchParams.get('waypoints')).toBeNull();
+  });
   it('2곳보다 적으면 없음, 10곳 넘으면 앞 9곳 + 마지막', () => {
     expect(dayRouteUrl([p(1, 1)])).toBeNull();
     const many = Array.from({ length: 12 }, (_, i) => p(i, i));

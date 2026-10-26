@@ -27,6 +27,8 @@ export interface Settings {
   dateFormat: 'dot' | 'korean';
   /** 일정 화면을 열 때 지도를 펼쳐 둘지 */
   planMapOpen: boolean;
+  /** 일정 사이에 일출·일몰 시각 줄 (2026-10-27 실험실에서 정식) */
+  sunTimes: boolean;
   /** ⚡ 빠른 메뉴 버튼 보이기 */
   quickButton: boolean;
   /** AI 추천을 열 때 처음 골라 둘 카테고리 */
@@ -52,6 +54,7 @@ export const SETTINGS_DEFAULTS: Settings = {
   startScreen: 'home',
   dateFormat: 'dot',
   planMapOpen: false,
+  sunTimes: true,
   quickButton: true,
   aiCats: ['food', 'cafe'],
   aiAnchor: 'text',
@@ -79,6 +82,7 @@ const VALID: { [K in keyof Settings]: (v: unknown) => v is Settings[K] } = {
   startScreen: oneOf('home', 'ongoing', 'last'),
   dateFormat: oneOf('dot', 'korean'),
   planMapOpen: (v): v is boolean => typeof v === 'boolean',
+  sunTimes: (v): v is boolean => typeof v === 'boolean',
   quickButton: (v): v is boolean => typeof v === 'boolean',
   aiCats: (v): v is Settings['aiCats'] =>
     Array.isArray(v) &&

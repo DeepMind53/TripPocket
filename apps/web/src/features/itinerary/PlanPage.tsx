@@ -92,7 +92,7 @@ import { BOOKING_ICON } from '../common/bookingKinds';
 import { FlightTicket } from '../bookings/BookingCard';
 import { isDomesticTrip } from '../../domain/tripPlace';
 import { dayRouteUrl } from '../../domain/dayRoute';
-import { sunTimes } from '../../domain/sun';
+import { sunSlot, sunTimes } from '../../domain/sun';
 import { distanceKm, formatDistance, walkMinutes } from '@trippocket/shared';
 import { useLab } from '../../data/labsStore';
 import { DayWeatherBadge } from '../common/DayWeatherBadge';
@@ -149,8 +149,8 @@ function PlanView({
   const today = todayIn(trip.timezone);
   const dimPast = useSettings((st) => st.dimPastItems);
   const copyDayOn = useLab('copyDay');
-  // 실험실: 일출·일몰(목적지 좌표로 계산), 하루 동선 지도
-  const sunOn = useLab('sunTimes');
+  // 설정 "일정 사이 일출·일몰"(목적지 좌표로 계산) · 실험실 하루 동선 지도
+  const sunOn = useSettings((st) => st.sunTimes);
   const dayRouteOn = useLab('dayRoute');
   const sunCoords = trip.destinations.find((d) => d.coords)?.coords;
   const { time: timeText } = useTimeText();
@@ -832,7 +832,7 @@ function DaySection({
   /** 이 일정 장소를 예전에 방문한 날 */
   historyOf: (item: ItineraryItem) => { date: string; trip: string }[];
   weather?: TripDayWeather | undefined;
-  /** 실험실 "일출·일몰" (현지 시각) */
+  /** 일출·일몰 (현지 시각) — 일정 사이 시간 순서 자리에 한 줄씩 */
   sun?: { rise: string; set: string } | null;
   /** 여행지 시간대 — 당일 진행 중인 일정 계산 */
   timezone: string;
@@ -946,15 +946,6 @@ function DaySection({
           </span>
         </div>
       )}
-      {/* 실험실: 일출·일몰 */}
-      {sun && (
-        <p
-          className="tabular mx-4 mt-2 text-micro text-fg-muted"
-          aria-label={t('labs.sunLabel', sun)}
-        >
-          🌅 {sun.rise} · 🌇 {sun.set}
-        </p>
-      )}
       {/* 그날 아침 숙소 조식 (사용자 요청 2026-10-26) */}
       {breakfast && (
         <p className="mx-3 mt-2 flex items-center gap-2 rounded-btn bg-bg-subtle px-3 py-2 text-caption text-fg-sub">
@@ -977,6 +968,12 @@ function DaySection({
       <ol className="flex flex-col gap-1.5 px-3 py-2">
         {items.map((item, i) => (
           <Fragment key={item.id}>
+            {sun && sunSlot(items, sun.rise) === i && (
+              <SunLine label={t('plan.sunrise')} time={sun.rise} />
+            )}
+            {sun && sunSlot(items, sun.set) === i && (
+              <SunLine label={t('plan.sunset')} time={sun.set} />
+            )}
             <ItemRow
               item={item}
               n={i + 1}
@@ -996,6 +993,12 @@ function DaySection({
             {legs && <LegLine from={item} to={items[i + 1]} />}
           </Fragment>
         ))}
+        {sun && items.length > 0 && sunSlot(items, sun.rise) === items.length && (
+          <SunLine label={t('plan.sunrise')} time={sun.rise} />
+        )}
+        {sun && items.length > 0 && sunSlot(items, sun.set) === items.length && (
+          <SunLine label={t('plan.sunset')} time={sun.set} />
+        )}
       </ol>
       {canEdit && (
         <button
@@ -1519,5 +1522,29 @@ function EmptyRun({ from, to, onOpen }: { from: Section; to: Section; onOpen: ()
       </span>
       <span className="text-caption text-primary">{t('plan.showDays')}</span>
     </button>
+  );
+}
+
+/** "------ 일몰 17:40 ------" — 좌우 '-'는 화면 폭만큼 채우고 넘치면 잘린다. 일정이 아니라 옮기거나 지울 수 없음 */
+function SunLine({ label, time }: { label: string; time: string }) {
+  const dashes = '-'.repeat(120);
+  return (
+    <li
+      aria-label={`${label} ${time}`}
+      className="tabular flex items-center gap-2 px-1 text-micro text-fg-muted select-none"
+    >
+      <span
+        aria-hidden="true"
+        className="flex min-w-0 flex-1 justify-end overflow-hidden whitespace-nowrap"
+      >
+        {dashes}
+      </span>
+      <span className="shrink-0">
+        {label} {time}
+      </span>
+      <span aria-hidden="true" className="min-w-0 flex-1 overflow-hidden whitespace-nowrap">
+        {dashes}
+      </span>
+    </li>
   );
 }

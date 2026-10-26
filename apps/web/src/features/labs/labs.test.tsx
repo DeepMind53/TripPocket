@@ -99,7 +99,7 @@ describe('실험실', () => {
     }
   });
 
-  it('실험: 일출·일몰 · 하루 동선 지도 · 날씨 맞춤 준비물 (2026-10-27)', async () => {
+  it('일출·일몰 줄(정식) · 실험: 하루 동선 지도 (2026-10-27)', async () => {
     vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(new Date('2026-10-22T03:00:00Z'));
     vi.stubGlobal('fetch', async () =>
@@ -136,7 +136,7 @@ describe('실험실', () => {
           title,
           place: at(lat),
         });
-      for (const id of ['sunTimes', 'dayRoute', 'weatherPacking'] as const) setLab(id, true);
+      for (const id of ['dayRoute', 'weatherPacking'] as const) setLab(id, true);
       const user = userEvent.setup();
       render(
         <>
@@ -149,13 +149,15 @@ describe('실험실', () => {
         </>,
       );
       const day = await screen.findByRole('region', { name: /^1일차/ });
-      expect(within(day).getByLabelText(/^일출 0[56]:\d\d 일몰 1[67]:\d\d$/)).toBeInTheDocument();
+      // 일출·일몰은 정식(설정 기본 켬): 시각 없는 일정 뒤 맨 아래에 한 줄씩
+      expect(within(day).getByLabelText(/^일출 0[56]:\d\d$/)).toBeInTheDocument();
+      expect(within(day).getByLabelText(/^일몰 1[67]:\d\d$/)).toBeInTheDocument();
       await user.click(within(day).getByRole('button', { name: /날짜 메뉴|메뉴/ }));
       const route = await screen.findByRole('link', { name: /하루 동선 지도로 보기/ });
       expect(route.getAttribute('href')).toMatch(/^https:\/\/www\.google\.com\/maps\/dir\/\?/);
       expect(route.getAttribute('target')).toBe('_blank');
     } finally {
-      for (const id of ['sunTimes', 'dayRoute', 'weatherPacking'] as const) setLab(id, false);
+      for (const id of ['dayRoute', 'weatherPacking'] as const) setLab(id, false);
       vi.useRealTimers();
       vi.unstubAllGlobals();
     }
@@ -373,7 +375,6 @@ describe('실험실', () => {
     expect(JSON.parse(localStorage.getItem('tp-labs')!)).toMatchObject({
       legDistance: true,
       dayProgress: true,
-      sunTimes: true,
       weatherPacking: true,
       dayRoute: true,
     });

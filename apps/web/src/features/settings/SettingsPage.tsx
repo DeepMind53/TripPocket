@@ -186,7 +186,7 @@ export function SettingsPage() {
 
         <Group
           title={t('settings.plan')}
-          onReset={() => resetSettings(['timeStepMin', 'dimPastItems', 'planMapOpen'])}
+          onReset={() => resetSettings(['timeStepMin', 'dimPastItems', 'planMapOpen', 'sunTimes'])}
         >
           <Field label={t('settings.timeStep')}>
             <SegmentedControl
@@ -210,6 +210,11 @@ export function SettingsPage() {
             label={t('settings.planMapOpen')}
             checked={s.planMapOpen}
             onChange={set('planMapOpen')}
+          />
+          <SwitchRow
+            label={t('settings.sunTimes')}
+            checked={s.sunTimes}
+            onChange={set('sunTimes')}
           />
         </Group>
 

@@ -1,5 +1,5 @@
 /**
- * 일출·일몰 시각 (실험실 "일출·일몰", 2026-10-27) — NOAA 태양 위치 근사식, 외부 호출 없음.
+ * 일출·일몰 시각 (2026-10-27, 설정 "일정 사이 일출·일몰") — NOAA 태양 위치 근사식, 외부 호출 없음.
  * 결과는 그 시간대의 "HH:mm". 극지방처럼 해가 안 지거나 안 뜨는 날은 null. 오차는 보통 1~2분
  */
 const rad = Math.PI / 180;
@@ -57,4 +57,16 @@ export function sunTimes(
     if (localDay === date) return { rise: hm(s.rise, timeZone), set: hm(s.set, timeZone) };
   }
   return null;
+}
+
+/**
+ * 일정 목록에서 일출·일몰 줄이 들어갈 자리: 시각이 그보다 늦은 첫 일정 앞 (시각 없는 일정은 건너뜀).
+ * 늦은 일정이 없으면 맨 뒤(= items.length). 줄은 일정이 아니라 옮기거나 지울 수 없다
+ */
+export function sunSlot(
+  items: readonly { startTime?: string | undefined }[],
+  time: string,
+): number {
+  const i = items.findIndex((it) => !!it.startTime && it.startTime > time);
+  return i === -1 ? items.length : i;
 }

@@ -2,15 +2,20 @@ import type { ItineraryItem } from '@trippocket/shared';
 
 /**
  * 하루 동선을 Google 지도 길찾기로 (실험실 "하루 동선 지도로", 2026-10-27) — 키 없는 공식 URL(딥링크), 외부 호출 없음.
- * 좌표가 있는 장소를 일정 순서대로: 첫 곳 → 경유(최대 8곳) → 마지막 곳. 메모·좌표 없는 일정은 건너뛴다.
+ * 좌표가 있는 장소를 일정 순서대로: 첫 곳 → 경유(최대 8곳) → 마지막 곳. 메모·좌표 없는 일정과
+ * 항공 구간(공항 → 공항, 지도 길찾기가 안 됨 — 2026-10-27 사용자 요청)은 건너뛴다.
  * 2곳보다 적으면 null
  */
 export function dayRouteUrl(
-  items: readonly Pick<ItineraryItem, 'kind' | 'place'>[],
+  items: readonly Pick<ItineraryItem, 'kind' | 'place' | 'transport'>[],
   mode: 'walking' | 'transit' | 'driving' = 'transit',
 ): string | null {
   const pts = items
-    .flatMap((i) => (i.kind !== 'note' && i.place?.coords ? [i.place.coords] : []))
+    .flatMap((i) =>
+      i.kind !== 'note' && i.transport?.mode !== 'flight' && i.place?.coords
+        ? [i.place.coords]
+        : [],
+    )
     .map((c) => `${c.lat},${c.lng}`)
     .filter((p, idx, arr) => idx === 0 || arr[idx - 1] !== p);
   if (pts.length < 2) return null;

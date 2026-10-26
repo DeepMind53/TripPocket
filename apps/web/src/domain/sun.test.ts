@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { sunTimes } from './sun';
+import { sunSlot, sunTimes } from './sun';
 
 const min = (hm: string) => Number(hm.slice(0, 2)) * 60 + Number(hm.slice(3));
 const near = (got: string, want: string) =>
@@ -23,5 +23,15 @@ describe('일출·일몰', () => {
   });
   it('백야면 없음', () => {
     expect(sunTimes('2026-06-21', { lat: 78.2, lng: 15.6 }, 'Arctic/Longyearbyen')).toBeNull();
+  });
+});
+
+describe('일출·일몰 줄 자리', () => {
+  it('시각이 늦은 첫 일정 앞, 시각 없는 일정은 건너뛰고, 없으면 맨 뒤', () => {
+    const items = [{ startTime: '05:30' }, {}, { startTime: '09:00' }, { startTime: '18:30' }];
+    expect(sunSlot(items, '06:12')).toBe(2);
+    expect(sunSlot(items, '17:40')).toBe(3);
+    expect(sunSlot(items, '19:00')).toBe(4);
+    expect(sunSlot([], '06:00')).toBe(0);
   });
 });
