@@ -10,8 +10,10 @@
  * - 중국: 광저우시 외국인 안내(gz.gov.cn) 110·120·119, 주중국 대사관 24시간 긴급전화
  * - 미국: 911 (카운티 정부 안내)
  * - EU: 유럽연합 집행위원회 112 (digital-strategy.ec.europa.eu/en/policies/112)
+ * - 2026-10-27 추가: 싱가포르·홍콩·인도네시아·스위스·몽골·뉴질랜드·영국 (각 항목 위 출처)
+ * - 공식 출처를 열지 못해 넣지 않음: 호주·캐나다·말레이시아·마카오·괌 (영사안전콜센터·외교부 링크만)
  */
-export const EMERGENCY_CHECKED_AT = '2026-10-26';
+export const EMERGENCY_CHECKED_AT = '2026-10-27';
 
 /** 외교부 영사안전콜센터 (서울, 24시간, 해외에서 걸면 통화료) */
 export const CONSULAR_CALL_CENTER = '+82-2-3210-0404';
@@ -112,6 +114,54 @@ export const COUNTRY_EMERGENCY: readonly CountryEmergency[] = [
     ],
   },
   { country: 'US', lines: [{ kind: 'all', number: '911' }] },
+  // 2026-10-27 추가 — 싱가포르 정부 안내(gov.sg 비상 대비 자료)
+  {
+    country: 'SG',
+    lines: [
+      { kind: 'police', number: '999' },
+      { kind: 'ambulance', number: '995' },
+    ],
+  },
+  // 홍콩 특구 정부 HKEngage: 경찰·소방·구급 모두 999
+  { country: 'HK', lines: [{ kind: 'all', number: '999' }] },
+  // 인도네시아 관광청(indonesia.travel): 경찰 110·112, 구급 118·119
+  {
+    country: 'ID',
+    lines: [
+      { kind: 'police', number: '110' },
+      { kind: 'ambulance', number: '118' },
+      { kind: 'all', number: '112' },
+    ],
+  },
+  // 스위스 연방 포털 ch.ch: 경찰 117, 구급 144, 소방 118, 유럽 공통 112
+  {
+    country: 'CH',
+    lines: [
+      { kind: 'police', number: '117' },
+      { kind: 'ambulance', number: '144' },
+      { kind: 'fire', number: '118' },
+      { kind: 'all', number: '112' },
+    ],
+  },
+  // 몽골 통신규제청(crc.gov.mn): 경찰 102, 구급 103, 소방 101
+  {
+    country: 'MN',
+    lines: [
+      { kind: 'police', number: '102' },
+      { kind: 'ambulance', number: '103' },
+      { kind: 'fire', number: '101' },
+    ],
+  },
+  // 뉴질랜드 경찰(police.govt.nz): 경찰·소방·구급 111
+  { country: 'NZ', lines: [{ kind: 'all', number: '111' }] },
+  // 영국 정부(gov.uk): 999, 112도 됨
+  {
+    country: 'GB',
+    lines: [
+      { kind: 'all', number: '999' },
+      { kind: 'all', number: '112' },
+    ],
+  },
   ...EU.map((country) => ({ country, lines: EU_112 })),
 ];
 
