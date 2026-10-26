@@ -355,7 +355,7 @@ function PlanView({
   return (
     <div className="flex flex-col">
       {/* 날짜 칩·지도·편집은 스크롤해도 늘 보이게 (사용자 요청 2026-10-26) */}
-      <div className="sticky top-[calc(env(safe-area-inset-top)+56px)] z-10 bg-bg pb-1">
+      <div className="sticky top-[calc(var(--safe-top)+56px)] z-10 bg-bg pb-1">
         <ScrollRow
           ref={chipsRef}
           role="toolbar"

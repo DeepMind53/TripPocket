@@ -74,6 +74,12 @@
   li {
     white-space: pre-line;
   }
+  /* 위쪽 상태바 여백 (사용자 요청 2026-10-26): 앱은 상태바 아래에서 시작하므로(standalone, iOS 기본 상태바) 0.
+     갤럭시 Chrome은 카메라 구멍 때문에 safe-area-inset-top 값을 주면서도 상태바 아래에 그려서 빈 띠가 생겼다.
+     상태바 밑까지 그리는 방식으로 바꾸면 여기만 env(safe-area-inset-top)으로 */
+  :root {
+    --safe-top: 0px;
+  }
   html {
     -webkit-text-size-adjust: 100%;
     -webkit-tap-highlight-color: transparent;

@@ -69,7 +69,7 @@ export function PullToSync() {
     <div
       role="status"
       className="pointer-events-none fixed inset-x-0 z-50 flex justify-center"
-      style={{ top: `calc(env(safe-area-inset-top, 0px) + ${Math.min(pull, PULL_PX) - 8}px)` }}
+      style={{ top: `calc(var(--safe-top) + ${Math.min(pull, PULL_PX) - 8}px)` }}
     >
       <span className="flex items-center gap-1.5 rounded-full bg-surface px-3 py-1.5 text-caption text-fg-sub shadow-card">
         <RefreshCw

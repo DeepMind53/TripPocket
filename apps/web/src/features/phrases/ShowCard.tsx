@@ -35,7 +35,7 @@ export function ShowCard({
       role="dialog"
       aria-modal="true"
       aria-label={big}
-      className="fixed inset-0 z-[70] flex flex-col bg-bg px-[max(20px,env(safe-area-inset-left))] pt-[max(16px,env(safe-area-inset-top))] pb-[max(24px,env(safe-area-inset-bottom))]"
+      className="fixed inset-0 z-[70] flex flex-col bg-bg px-[max(20px,env(safe-area-inset-left))] pt-[max(16px,var(--safe-top))] pb-[max(24px,env(safe-area-inset-bottom))]"
     >
       <button
         type="button"

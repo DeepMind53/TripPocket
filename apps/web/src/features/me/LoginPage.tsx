@@ -42,7 +42,7 @@ export function LoginPage({ returnTo: gateReturn }: { returnTo?: string } = {}) 
       {signedIn ? (
         <TopBar title={t('login.title')} backTo="/me" />
       ) : (
-        <header className="pt-[calc(env(safe-area-inset-top)+12px)]">
+        <header className="pt-[calc(var(--safe-top)+12px)]">
           <Wordmark label={t('app.name')} />
         </header>
       )}

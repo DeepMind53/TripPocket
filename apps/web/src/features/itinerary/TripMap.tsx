@@ -292,7 +292,7 @@ export function TripMap({
           label={t('map.closeFull')}
           icon={<X />}
           onClick={() => onSizeChange('large')}
-          className="absolute top-[calc(env(safe-area-inset-top)+8px)] right-[calc(env(safe-area-inset-right)+8px)] z-[1] bg-surface/95 shadow"
+          className="absolute top-[calc(var(--safe-top)+8px)] right-[calc(env(safe-area-inset-right)+8px)] z-[1] bg-surface/95 shadow"
         />
       )}
       {message && (

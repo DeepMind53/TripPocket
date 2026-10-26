@@ -33,7 +33,7 @@ export function OfflineBanner() {
     <p
       role="status"
       className={
-        'sticky top-0 z-50 px-4 pt-[calc(env(safe-area-inset-top)+4px)] pb-1 text-center text-caption font-semibold ' +
+        'sticky top-0 z-50 px-4 pt-[calc(var(--safe-top)+4px)] pb-1 text-center text-caption font-semibold ' +
         (online ? 'bg-success text-white' : 'bg-fg text-bg')
       }
     >

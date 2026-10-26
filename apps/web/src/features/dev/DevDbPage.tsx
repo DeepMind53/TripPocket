@@ -39,7 +39,7 @@ export function DevDbPage() {
 
   return (
     <div className="mx-auto min-h-dvh max-w-[560px] pb-24">
-      <header className="sticky top-0 z-10 flex items-center gap-1 border-b border-line bg-bg/90 px-2 pt-[env(safe-area-inset-top)] backdrop-blur">
+      <header className="sticky top-0 z-10 flex items-center gap-1 border-b border-line bg-bg/90 px-2 pt-[var(--safe-top)] backdrop-blur">
         <Link to="/me" aria-label="마이로" className="grid size-11 place-items-center text-fg-sub">
           <ArrowLeft aria-hidden="true" className="size-5" />
         </Link>
