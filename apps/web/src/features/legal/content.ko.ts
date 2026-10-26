@@ -4,7 +4,7 @@
  * (2026-10-24 사용자 요청: 공개할 연락처를 정할 때까지 비활성화).
  */
 export const OPERATOR_CONTACT: string = '';
-export const UPDATED = '2026-10-26';
+export const UPDATED = '2026-10-27';
 
 export interface Section {
   title: string;
@@ -25,7 +25,7 @@ export const PRIVACY: Section[] = [
       '로그인: 카카오·네이버·Google 계정의 고유 번호만 받습니다. 비밀번호·연락처·이메일·사진은 받지 않습니다. 닉네임은 처음 로그인할 때 직접 정합니다.',
       '가입 승인: 처음 로그인하면 관리자가 승인할 때까지 고유 번호와 닉네임을 신청 목록에 보관합니다.',
       '로그인 유지: 기기별 로그인 기록(만든 시각, 마지막 사용 시각, 브라우저 종류)을 저장합니다.',
-      '동기화: 여행·일정·예약·준비물·템플릿과 앱 설정을 저장해 다른 기기·함께 쓰는 사람과 맞춥니다.',
+      '동기화: 여행·일정(방문·미방문 기록 포함)·예약·준비물·템플릿·저장 장소와 앱 설정을 저장해 다른 기기·함께 쓰는 사람과 맞춥니다.',
       '예약 문서(이티켓·바우처)를 붙이면 여행이 끝날 때까지 서버에 보관해 함께 쓰는 사람이 볼 수 있게 하고, 여행이 끝나면 서버에서 지웁니다 (기기에는 남음).',
       '후기: 장소 이름·별점·글·방문 날짜를 저장하고, 로그인한 다른 사용자에게 닉네임(또는 설정에서 가리면 User#번호)과 등록 날짜와 함께 보여 줍니다. 장소를 연결하지 않은 후기는 그 여행 멤버만 봅니다. 후기 포인트 적립 내역도 계정별로 저장합니다.',
       '개선 제안: 보낸 글과 사진(1장)을 관리자가 읽고 답장할 수 있게 저장합니다. 보낸 사람은 언제든 지울 수 있습니다.',
@@ -54,6 +54,7 @@ export const PRIVACY: Section[] = [
     title: '4. 보관과 삭제',
     body: [
       '기기 데이터는 사용자가 지우기 전까지 기기에 남습니다 (마이 → 백업·복원으로 파일 보관 가능).',
+      '지운 여행·일정 등은 7일 동안 마이 → 삭제 기록 복원에서 되살릴 수 있고, 그 뒤 기기에서 정리합니다. 서버에는 다른 기기·함께 쓰는 사람에게 삭제를 알리기 위해 삭제 표시와 함께 남고, 회원 탈퇴 때 함께 지워집니다.',
       '회원 탈퇴 시 서버의 계정·여행 데이터·설정·포인트는 즉시 삭제됩니다. 쓴 후기는 남고 작성자는 User#번호로만 보입니다. 보낸 개선 제안은 보낸 사람 표시 없이 남습니다. 암호화된 서버 백업은 보관 주기(최대 약 6개월)가 지나면 자동으로 지워집니다.',
       '보기 전용 링크는 언제든 끌 수 있고, 끄면 바로 열리지 않습니다.',
     ],
@@ -123,7 +124,7 @@ export const DATA_SOURCES: { name: string; use: string; license: string; url: st
   },
   {
     name: 'Geoapify',
-    use: '백업 장소 검색·택시 카드 현지어 이름',
+    use: '백업 장소 검색·택시 카드 현지어 이름·다음 일정까지 시간',
     license: 'Geoapify 이용약관 (Powered by Geoapify)',
     url: 'https://www.geoapify.com',
   },
@@ -135,7 +136,7 @@ export const DATA_SOURCES: { name: string; use: string; license: string; url: st
   },
   {
     name: 'Google 지도 · Google Places',
-    use: '해외 지도·장소 검색·평점',
+    use: '해외 지도·장소 검색·평점, 이동 시간(Routes)',
     license: 'Google Maps Platform 이용약관',
     url: 'https://cloud.google.com/maps-platform/terms',
   },
@@ -189,15 +190,9 @@ export const DATA_SOURCES: { name: string; use: string; license: string; url: st
     url: 'https://aviationstack.com',
   },
   {
-    name: '네이버 검색 API',
+    name: '네이버 검색 API (NAVER API HUB)',
     use: 'AI 추천 블로그 수집',
-    license: '네이버 개발자 이용약관',
-    url: 'https://developers.naver.com',
-  },
-  {
-    name: 'NAVER API HUB (네이버 클라우드)',
-    use: '블로그·지역 검색',
-    license: '네이버 클라우드 이용약관',
+    license: '네이버 클라우드·개발자 이용약관',
     url: 'https://www.ncloud.com',
   },
   {
@@ -205,6 +200,12 @@ export const DATA_SOURCES: { name: string; use: string; license: string; url: st
     use: 'AI 추천 정리 (무료 등급, 이 순서로 시도)',
     license: '각 서비스 이용약관',
     url: 'https://ai.google.dev',
+  },
+  {
+    name: '외교부 해외안전여행 · 각국 정부·관광청 공식 안내',
+    use: '나라별 입국 준비·긴급 연락처·여행 이벤트 (앱에 포함, 확인 날짜 표시)',
+    license: '공공 정보',
+    url: 'https://www.0404.go.kr',
   },
 ];
 
