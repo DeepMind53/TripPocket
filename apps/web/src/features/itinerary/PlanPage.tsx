@@ -207,8 +207,8 @@ function PlanView({
           visible.set((e.target as HTMLElement).dataset.day!, e.isIntersecting);
         setInView(els.find((el) => visible.get(el.dataset.day!))?.dataset.day ?? null);
       },
-      // 위쪽 고정 머리(제목·칩 줄) 아래부터 화면 절반까지
-      { rootMargin: '-120px 0px -50% 0px' },
+      // 위쪽 고정 머리(제목·칩 줄·지도/편집 줄) 아래부터 화면 절반까지
+      { rootMargin: '-160px 0px -50% 0px' },
     );
     els.forEach((el) => io.observe(el));
     return () => io.disconnect();
@@ -354,74 +354,76 @@ function PlanView({
 
   return (
     <div className="flex flex-col">
-      <ScrollRow
-        ref={chipsRef}
-        role="toolbar"
-        aria-label={t('plan.dayChipsLabel')}
-        outerClassName="sticky top-[calc(env(safe-area-inset-top)+56px)] z-10 bg-bg"
-        className="flex gap-2 px-5 py-2"
-      >
-        <Chip selected={filter === 'all'} onClick={() => setFilter('all')}>
-          {t('plan.all')}
-        </Chip>
-        {days.map((d, i) => (
-          <Chip
-            key={d}
-            data-chip={d}
-            aria-current={inView === d ? 'location' : undefined}
-            className={inView === d ? 'border-primary text-primary' : undefined}
-            selected={filter === i + 1}
-            onClick={() => setFilter(i + 1)}
-            leading={
-              <span
-                aria-hidden="true"
-                className="size-2 rounded-full"
-                style={{ background: dayColor(i) }}
-              />
-            }
-          >
-            <span className="tabular">
-              {t('plan.dayChip', { n: i + 1, date: d.slice(5).replace('-', '.') })}
-            </span>
-            {d === today && <span className="sr-only"> · {t('date.today')}</span>}
-          </Chip>
-        ))}
-        <Chip
-          data-chip="wish"
-          aria-current={inView === 'wish' ? 'location' : undefined}
-          className={inView === 'wish' ? 'border-primary text-primary' : undefined}
-          selected={filter === 'wish'}
-          onClick={() => setFilter('wish')}
+      {/* 날짜 칩·지도·편집은 스크롤해도 늘 보이게 (사용자 요청 2026-10-26) */}
+      <div className="sticky top-[calc(env(safe-area-inset-top)+56px)] z-10 bg-bg pb-1">
+        <ScrollRow
+          ref={chipsRef}
+          role="toolbar"
+          aria-label={t('plan.dayChipsLabel')}
+          className="flex gap-2 px-5 py-2"
         >
-          {t('plan.wishlist')}
-        </Chip>
-      </ScrollRow>
-
-      <div className="flex items-center justify-between gap-2 px-5 pt-1">
-        {editing ? (
-          <p className="flex-1 text-caption text-fg-muted">{t('plan.editHint')}</p>
-        ) : (
-          <Chip
-            selected={mapOpen}
-            leading={<MapIcon aria-hidden="true" className="size-4" />}
-            onClick={() => {
-              setMapOpen(!mapOpen);
-              setMapLarge(false);
-            }}
-          >
-            {t('map.toggle')}
+          <Chip selected={filter === 'all'} onClick={() => setFilter('all')}>
+            {t('plan.all')}
           </Chip>
-        )}
-        {canEdit && (
-          <Button
-            size="sm"
-            variant={editing ? 'primary' : 'ghost'}
-            disabled={items.length === 0 && !editing}
-            onClick={() => setEditing(!editing)}
+          {days.map((d, i) => (
+            <Chip
+              key={d}
+              data-chip={d}
+              aria-current={inView === d ? 'location' : undefined}
+              className={inView === d ? 'border-primary text-primary' : undefined}
+              selected={filter === i + 1}
+              onClick={() => setFilter(i + 1)}
+              leading={
+                <span
+                  aria-hidden="true"
+                  className="size-2 rounded-full"
+                  style={{ background: dayColor(i) }}
+                />
+              }
+            >
+              <span className="tabular">
+                {t('plan.dayChip', { n: i + 1, date: d.slice(5).replace('-', '.') })}
+              </span>
+              {d === today && <span className="sr-only"> · {t('date.today')}</span>}
+            </Chip>
+          ))}
+          <Chip
+            data-chip="wish"
+            aria-current={inView === 'wish' ? 'location' : undefined}
+            className={inView === 'wish' ? 'border-primary text-primary' : undefined}
+            selected={filter === 'wish'}
+            onClick={() => setFilter('wish')}
           >
-            {editing ? t('plan.editDone') : t('plan.edit')}
-          </Button>
-        )}
+            {t('plan.wishlist')}
+          </Chip>
+        </ScrollRow>
+
+        <div className="flex items-center justify-between gap-2 px-5 pt-1">
+          {editing ? (
+            <p className="flex-1 text-caption text-fg-muted">{t('plan.editHint')}</p>
+          ) : (
+            <Chip
+              selected={mapOpen}
+              leading={<MapIcon aria-hidden="true" className="size-4" />}
+              onClick={() => {
+                setMapOpen(!mapOpen);
+                setMapLarge(false);
+              }}
+            >
+              {t('map.toggle')}
+            </Chip>
+          )}
+          {canEdit && (
+            <Button
+              size="sm"
+              variant={editing ? 'primary' : 'ghost'}
+              disabled={items.length === 0 && !editing}
+              onClick={() => setEditing(!editing)}
+            >
+              {editing ? t('plan.editDone') : t('plan.edit')}
+            </Button>
+          )}
+        </div>
       </div>
 
       {mapOpen && !editing && (
@@ -521,6 +523,9 @@ function PlanView({
                       bookingById={bookingById}
                       onBooking={() => void navigate(`/trips/${trip.id}/bookings`)}
                       onLodging={(b) => {
+                        // 일정표에 들어간 숙소 일정이 있으면 다른 장소처럼 상세 (시간·후기·메모·길찾기)
+                        const stay = items.find((i) => i.bookingId === b.id);
+                        if (stay) return openDetail(stay);
                         const d = { name: b.title, address: b.details?.address };
                         if (openDirectionsDirect(d)) return;
                         setDirDest(d);
