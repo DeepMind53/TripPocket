@@ -5,7 +5,7 @@
  * 고칠 때: 이 파일만 고치고 CHECKED_AT·sources를 갱신한다
  */
 
-export const ESSENTIALS_CHECKED_AT = '2026-10-25';
+export const ESSENTIALS_CHECKED_AT = '2026-10-27';
 
 export type EssentialLevel = 'must' | 'recommend' | 'tip';
 
@@ -699,17 +699,17 @@ export const TRAVEL_EVENTS: readonly TravelEvent[] = [
     url: 'https://5000.taiwan.net.tw/campaign_rules_kr.html',
     from: '2026-10-01',
     until: '2027-03-24',
-    checkedAt: '2026-10-25',
+    checkedAt: '2026-10-27',
   },
   {
     id: 'mo-free-coach-2026',
     codes: ['MO', 'HK'],
     title: '홍콩공항 → 마카오 무료 버스 (편도)',
-    desc: '홍콩국제공항으로 들어와 마카오로 가는 외국인 여행자\n공항 입국장 안 지정 창구에서 무료 표를 받아요',
+    desc: '홍콩국제공항으로 들어와 마카오로 가는 외국인 여행자\nE2 환승 구역 38~40번 창구에서 받아요 (여권 지참)',
     url: 'https://www.macauhkairportbus.com/news/79',
     from: '2026-01-20',
     until: '2026-12-31',
-    checkedAt: '2026-10-25',
+    checkedAt: '2026-10-27',
   },
 ];
 
