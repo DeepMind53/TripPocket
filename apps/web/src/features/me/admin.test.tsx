@@ -98,4 +98,22 @@ describe('사용자 관리', () => {
     renderAt('/admin/users');
     expect(await screen.findByText('관리자만 볼 수 있어요')).toBeInTheDocument();
   });
+
+  it.each(['/admin/users', '/admin/api-usage', '/admin/suggestions', '/admin/ai'])(
+    '관리자가 아니면 %s 주소로 들어와도 잠금 화면, 관리자 API를 부르지 않는다',
+    async (path) => {
+      const calls: string[] = [];
+      vi.stubGlobal('fetch', async (url: string) => {
+        calls.push(url);
+        if (url === '/api/me') return Response.json({ ...admin, isAdmin: false });
+        return Response.json({ error: 'forbidden' }, { status: 403 });
+      });
+      useAuth.setState({ status: 'user', me: { ...admin, isAdmin: false } });
+      renderAt(path);
+      expect(await screen.findByText('관리자만 볼 수 있어요')).toBeInTheDocument();
+      expect(calls.filter((u) => u.startsWith('/api/admin') || u.includes('/ai/collect'))).toEqual(
+        [],
+      );
+    },
+  );
 });

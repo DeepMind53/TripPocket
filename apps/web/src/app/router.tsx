@@ -1,5 +1,6 @@
 import { createBrowserRouter, Navigate, type RouteObject } from 'react-router';
 import { HomePage } from '../features/home/HomePage';
+import { AdminGate } from './AdminGate';
 import { AuthGate } from './AuthGate';
 import { AppShell } from './layouts/AppShell';
 import { NotFoundPage } from './NotFoundPage';
@@ -154,35 +155,41 @@ const allRoutes: RouteObject[] = [
     }),
   },
   {
-    path: 'admin/suggestions',
-    lazy: async () => ({
-      Component: (await import('../features/me/AdminSuggestionsPage')).AdminSuggestionsPage,
-    }),
-  },
-  {
-    path: 'admin/api-usage',
-    lazy: async () => ({
-      Component: (await import('../features/me/ApiUsagePage')).ApiUsagePage,
-    }),
-  },
-  {
-    path: 'admin/users',
-    lazy: async () => ({
-      Component: (await import('../features/me/AdminUsersPage')).AdminUsersPage,
-    }),
-  },
-  {
     path: 'backup',
     lazy: async () => ({
       Component: (await import('../features/backup/BackupPage')).BackupPage,
     }),
   },
-  // AI 수집 원자료 점검 — 관리자만 (서버도 관리자만, docs/16 A3)
+  // 관리자 화면은 관리자에게만 (AdminGate). ai = AI 수집 원자료 점검 (docs/16 A3)
   {
-    path: 'admin/ai',
-    lazy: async () => ({
-      Component: (await import('../features/dev/DevAiPage')).DevAiPage,
-    }),
+    path: 'admin',
+    element: <AdminGate />,
+    children: [
+      {
+        path: 'suggestions',
+        lazy: async () => ({
+          Component: (await import('../features/me/AdminSuggestionsPage')).AdminSuggestionsPage,
+        }),
+      },
+      {
+        path: 'api-usage',
+        lazy: async () => ({
+          Component: (await import('../features/me/ApiUsagePage')).ApiUsagePage,
+        }),
+      },
+      {
+        path: 'users',
+        lazy: async () => ({
+          Component: (await import('../features/me/AdminUsersPage')).AdminUsersPage,
+        }),
+      },
+      {
+        path: 'ai',
+        lazy: async () => ({
+          Component: (await import('../features/dev/DevAiPage')).DevAiPage,
+        }),
+      },
+    ],
   },
   // 개발용 화면은 개발 서버에서만 (운영 빌드에는 경로 자체가 없음)
   ...(import.meta.env.DEV
