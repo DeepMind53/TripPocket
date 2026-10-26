@@ -1,6 +1,6 @@
 import { daysUntil, essentialKey, essentialsFor, todayIn } from '@trippocket/shared';
 import type { Db } from '../db/database';
-import { planAlertPushes } from './alertPush';
+import { markAlertsSent, planAlertPushes } from './alertPush';
 import type { NationalKeys } from './nationalAlerts';
 import { sendPush, type PushMessage, type PushKind } from './push';
 
@@ -156,19 +156,27 @@ export function schedulePushes(
   alertKeys: NationalKeys = {},
 ): () => void {
   let n = 0;
+  let running = false;
   const tick = async () => {
+    // 지난 회차가 아직 돌고 있으면(느린 외부 API) 이번 회차는 건너뛴다
+    if (running) return;
+    running = true;
     try {
       for (const p of planPushes(db, new Date()))
         await sendPush(db, p.userId, p.kind, p.msg, p.key);
-      if (n++ % 6 === 0)
-        for (const p of await planAlertPushes(db, alertKeys, new Date()))
-          await sendPush(db, p.userId, p.kind, p.msg, p.key);
+      if (n++ % 6 === 0) {
+        const now = new Date();
+        for (const p of await planAlertPushes(db, alertKeys, now))
+          if ((await sendPush(db, p.userId, p.kind, p.msg, p.key)) > 0) markAlertsSent(db, p, now);
+      }
       // 30일 지난 발송 기록 정리
       db.prepare('DELETE FROM push_sent WHERE sent_at < ?').run(
         new Date(Date.now() - 30 * 86_400_000).toISOString(),
       );
     } catch (e) {
       log(`알림 보내기 실패: ${String(e)}`);
+    } finally {
+      running = false;
     }
   };
   const id = setInterval(() => void tick(), 5 * 60_000);

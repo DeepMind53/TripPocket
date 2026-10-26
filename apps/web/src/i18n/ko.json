@@ -1427,6 +1427,7 @@
     },
     "national": "🌦 {{agency}} · {{names}}",
     "homeDot": "여행지 특보 {{n}}건",
+    "banner": "여행지 특보 {{n}}건 · 날씨 정보에서 확인",
     "announced": "특보 발표",
     "gdacs": "{{kind}} · {{level}} 경보",
     "quake": "🌏 지진 · 규모 {{mag}}",

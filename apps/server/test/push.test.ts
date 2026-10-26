@@ -3,7 +3,7 @@ import { buildApp, PROXY_HEADER } from '../src/app';
 import { createSession } from '../src/auth/session';
 import { loadConfig } from '../src/config';
 import { openDb, type Db } from '../src/db/database';
-import { planAlertPushes } from '../src/services/alertPush';
+import { markAlertsSent, planAlertPushes } from '../src/services/alertPush';
 import { resetAlertCache } from '../src/services/alerts';
 import { planPushes } from '../src/services/pushScheduler';
 
@@ -153,7 +153,10 @@ describe('여행지 특보 알림 (docs/24, ADR-0008)', () => {
     expect(plan[0]).toMatchObject({ kind: 'alert', key: 'alertday:t:2026-10-30' });
     expect(plan[0]!.msg.body).toContain('태풍 빨강 경보');
     expect(plan[0]!.msg.url).toBe('/trips/t/weather');
-    // 같은 특보는 다음 날에도 다시 알리지 않는다
+    // 보내지 못했으면(기록 없음) 다음 회차에 다시 후보
+    expect(await planAlertPushes(db, {}, now)).toHaveLength(1);
+    // 보낸 뒤에는 같은 특보를 다음 날에도 다시 알리지 않는다
+    markAlertsSent(db, plan[0]!, now);
     resetAlertCache();
     expect(await planAlertPushes(db, {}, new Date('2026-10-31T03:00:00Z'))).toEqual([]);
     // 주황은 알리지 않는다
@@ -161,5 +164,44 @@ describe('여행지 특보 알림 (docs/24, ADR-0008)', () => {
     resetAlertCache();
     db.prepare('DELETE FROM push_sent').run();
     expect(await planAlertPushes(db, {}, now)).toEqual([]);
+  });
+
+  it('오늘 이미 알렸으면 새 빨강 특보는 기록하지 않고 내일로 미룬다', async () => {
+    resetAlertCache();
+    vi.stubGlobal('fetch', async (input: string | URL) =>
+      String(input).includes('gdacs')
+        ? Response.json({
+            features: [
+              {
+                properties: {
+                  eventtype: 'EQ',
+                  eventid: 9,
+                  name: 'Earthquake',
+                  alertlevel: 'Red',
+                  iscurrent: 'true',
+                  affectedcountries: [{ iso2: 'JP' }],
+                },
+              },
+            ],
+          })
+        : Response.json({ features: [] }),
+    );
+    await call('PUT', '/api/push/subscription', sub);
+    db.prepare(
+      "INSERT INTO trip_members (trip_id, user_id, role, created_at) VALUES ('t', 'u', 'owner', 'x')",
+    ).run();
+    record('trips', 't', null, {
+      id: 't',
+      title: '도쿄',
+      startDate: '2026-11-05',
+      endDate: '2026-11-07',
+      timezone: 'Asia/Tokyo',
+      destinations: [{ countryCode: 'JP' }],
+    });
+    db.prepare(
+      "INSERT INTO push_sent (user_id, key, sent_at) VALUES ('u', 'alertday:t:2026-10-30', 'x')",
+    ).run();
+    expect(await planAlertPushes(db, {}, new Date('2026-10-30T06:00:00Z'))).toEqual([]);
+    expect(await planAlertPushes(db, {}, new Date('2026-10-31T03:00:00Z'))).toHaveLength(1);
   });
 });

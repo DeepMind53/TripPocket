@@ -1,7 +1,8 @@
 import {
   addDays,
-  POINT_ALERT_COUNTRIES,
-  roundAlertPoint,
+  alertQuery,
+  notableAlerts,
+  pointsByCountry,
   todayIn,
   type DestinationAlert,
 } from '@trippocket/shared';
@@ -40,76 +41,79 @@ export function describeAlert(a: DestinationAlert): string {
   return `${KIND_KO[a.kind] ?? a.title} 빨강 경보`;
 }
 
+/** 보낼 알림 + 보내지면 "알렸음"으로 남길 특보 키 */
+export interface AlertPush extends PlannedPush {
+  markKeys: string[];
+}
+
 /**
  * 여행지 특보 알림 (docs/24 §2-3, ADR-0008 결정 4): 출발 7일 전 ~ 귀국일인 여행에
- * 빨강 등급 특보가 **새로** 생기면 알림 1번 — 여행 1개당 하루 1번까지.
- * 외교부 여행경보는 거의 바뀌지 않는 상시 정보라 알림에서 뺀다 (특별여행주의보·경보는 포함)
+ * 빨강 특보(외교부 상시 단계 제외)가 **새로** 생기면 알림 1번 — 여행 1개당 하루 1번까지.
+ * - 특보는 여행마다 한 번만 묻는다(함께 쓰는 사람이 여럿이어도), 여행끼리는 동시에
+ * - "알렸음" 기록은 실제로 보낸 뒤에 남긴다(markKeys) — 못 보냈거나 오늘 이미 보냈으면 내일 다시 후보
  */
-export async function planAlertPushes(
-  db: Db,
-  keys: NationalKeys,
-  now: Date,
-): Promise<PlannedPush[]> {
-  const users = db.prepare('SELECT DISTINCT user_id FROM push_subscriptions').all() as {
-    user_id: string;
-  }[];
+export async function planAlertPushes(db: Db, keys: NationalKeys, now: Date): Promise<AlertPush[]> {
+  const rows = db
+    .prepare(
+      `SELECT DISTINCT m.user_id, r.id, r.data_json FROM push_subscriptions s
+       JOIN trip_members m ON m.user_id = s.user_id
+       JOIN records r ON r.table_name = 'trips' AND r.id = m.trip_id AND r.deleted_at IS NULL`,
+    )
+    .all() as { user_id: string; id: string; data_json: string }[];
+
+  const trips = new Map<string, { trip: TripData; today: string; users: string[] }>();
+  for (const r of rows) {
+    const hit = trips.get(r.id);
+    if (hit) {
+      hit.users.push(r.user_id);
+      continue;
+    }
+    const trip = JSON.parse(r.data_json) as TripData;
+    let today: string;
+    try {
+      today = todayIn(trip.timezone, now);
+    } catch {
+      continue;
+    }
+    if (today > trip.endDate || today < addDays(trip.startDate, -7)) continue;
+    trips.set(r.id, { trip, today, users: [r.user_id] });
+  }
+
   const sent = db.prepare('SELECT 1 FROM push_sent WHERE user_id = ? AND key = ?');
+  const perTrip = await Promise.all(
+    [...trips.values()].map(async ({ trip, today, users }) => {
+      const { countries, points } = alertQuery(trip);
+      if (!countries.length) return [];
+      const { alerts } = await alertsFor(countries, keys, pointsByCountry(points));
+      const red = notableAlerts(alerts).filter((a) => a.level === 'red');
+      return users.flatMap((userId): AlertPush[] => {
+        const fresh = red.filter((a) => !sent.get(userId, `alert:${trip.id}:${a.id}`));
+        const day = `alertday:${trip.id}:${today}`;
+        if (!fresh.length || sent.get(userId, day)) return [];
+        const first = fresh[0]!;
+        return [
+          {
+            userId,
+            kind: 'alert',
+            key: day,
+            markKeys: fresh.map((a) => `alert:${trip.id}:${a.id}`),
+            msg: {
+              title: `⚠️ ${trip.title} 여행지 특보`,
+              body: `${describeAlert(first)}${fresh.length > 1 ? ` 외 ${fresh.length - 1}건` : ''}\n날씨 정보에서 공식 발표를 확인하세요`,
+              url: `/trips/${trip.id}/weather`,
+            },
+          },
+        ];
+      });
+    }),
+  );
+  return perTrip.flat();
+}
+
+/** 보낸 알림의 특보를 "알렸음"으로 */
+export function markAlertsSent(db: Db, p: AlertPush, now: Date): void {
   const mark = db.prepare(
     'INSERT OR IGNORE INTO push_sent (user_id, key, sent_at) VALUES (?, ?, ?)',
   );
-  const out: PlannedPush[] = [];
-  for (const { user_id: userId } of users) {
-    const trips = (
-      db
-        .prepare(
-          `SELECT r.data_json FROM records r JOIN trip_members m ON m.trip_id = r.id
-           WHERE r.table_name = 'trips' AND r.deleted_at IS NULL AND m.user_id = ?`,
-        )
-        .all(userId) as { data_json: string }[]
-    ).map((r) => JSON.parse(r.data_json) as TripData);
-    for (const trip of trips) {
-      let today: string;
-      try {
-        today = todayIn(trip.timezone, now);
-      } catch {
-        continue;
-      }
-      if (today > trip.endDate || today < addDays(trip.startDate, -7)) continue;
-      const dests = trip.destinations ?? [];
-      const countries = [...new Set(dests.flatMap((d) => (d.countryCode ? [d.countryCode] : [])))];
-      if (!countries.length) continue;
-      const points = new Map<string, [number, number][]>();
-      for (const d of dests)
-        if (d.countryCode && d.coords && POINT_ALERT_COUNTRIES.includes(d.countryCode))
-          points.set(d.countryCode, [
-            ...(points.get(d.countryCode) ?? []),
-            [roundAlertPoint(d.coords.lat), roundAlertPoint(d.coords.lng)],
-          ]);
-      const { alerts } = await alertsFor(countries, keys, points);
-      const fresh = alerts.filter(
-        (a) =>
-          a.level === 'red' &&
-          !(a.source === 'mofa' && !a.special) &&
-          !sent.get(userId, `alert:${trip.id}:${a.id}`),
-      );
-      if (!fresh.length) continue;
-      // 새 특보는 모두 "알렸음"으로 (내일 같은 것을 다시 알리지 않게)
-      const at = now.toISOString();
-      for (const a of fresh) mark.run(userId, `alert:${trip.id}:${a.id}`, at);
-      const day = `alertday:${trip.id}:${today}`;
-      if (sent.get(userId, day)) continue;
-      const first = fresh[0]!;
-      out.push({
-        userId,
-        kind: 'alert',
-        key: day,
-        msg: {
-          title: `⚠️ ${trip.title} 여행지 특보`,
-          body: `${describeAlert(first)}${fresh.length > 1 ? ` 외 ${fresh.length - 1}건` : ''}\n날씨 정보에서 공식 발표를 확인하세요`,
-          url: `/trips/${trip.id}/weather`,
-        },
-      });
-    }
-  }
-  return out;
+  for (const k of p.markKeys) mark.run(p.userId, k, now.toISOString());
 }

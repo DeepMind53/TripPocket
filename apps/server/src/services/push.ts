@@ -1,19 +1,11 @@
+import { DEFAULT_PUSH_PREFS, PUSH_KINDS, type PushKind, type PushPrefs } from '@trippocket/shared';
 import webpush from 'web-push';
 import type { Config } from '../config';
 import type { Db } from '../db/database';
 import { apiAllowed, trackApi } from './apiUsage';
 
-/** 알림 종류 — 기기마다 켜고 끈다 (docs/20 G1) */
-export const PUSH_KINDS = ['departure', 'entry', 'itemSoon', 'sharing', 'alert'] as const;
-export type PushKind = (typeof PUSH_KINDS)[number];
-export type PushPrefs = Record<PushKind, boolean>;
-export const DEFAULT_PREFS: PushPrefs = {
-  departure: true,
-  entry: true,
-  itemSoon: true,
-  sharing: true,
-  alert: true,
-};
+export { PUSH_KINDS, type PushKind, type PushPrefs };
+export const DEFAULT_PREFS: PushPrefs = DEFAULT_PUSH_PREFS;
 
 export interface PushMessage {
   title: string;

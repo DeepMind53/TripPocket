@@ -1,5 +1,6 @@
 import {
   addDays,
+  alertQuery,
   findAirport,
   getTripDays,
   type Booking,
@@ -8,7 +9,6 @@ import {
 import { Plane } from 'lucide-react';
 import { useParams } from 'react-router';
 import { useTrip, useTripBookings } from '../../data/hooks';
-import { alertQuery } from '../../domain/alerts';
 import { formatTemps, weatherLook } from '../../domain/weather';
 import { useTranslation } from '../../i18n';
 import { formatMonthDay } from '../../shared/lib/dateFormat';

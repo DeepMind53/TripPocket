@@ -97,6 +97,11 @@ export {
 } from './places/placeSearch';
 export { RouteEtaBody, type Coords, type RouteEta } from './places/route';
 export {
+  alertQuery,
+  MAX_ALERT_POINTS,
+  notableAlerts,
+  pointsByCountry,
+  topAlertLevel,
   MOFA_SAFETY_URL,
   POINT_ALERT_COUNTRIES,
   roundAlertPoint,
@@ -128,3 +133,4 @@ export * from './reviews/reviews';
 export * from './data/essentials';
 export * from './data/phrases';
 export * from './data/emergency';
+export { DEFAULT_PUSH_PREFS, PUSH_KINDS, type PushKind, type PushPrefs } from './push/push';

@@ -169,7 +169,8 @@ export function parseNws(raw: unknown, country: string): DestinationAlert[] {
       p.severity === 'Extreme' ? 'red' : p.severity === 'Severe' ? 'orange' : 'info';
     return [
       {
-        id: `nws-${f.id ?? p.event}`,
+        // feature id는 갱신마다 바뀐다 → 종류·지역으로 (같은 경보가 이어지면 같은 id)
+        id: `nws-${country}-${p.event}-${p.areaDesc ?? ''}`,
         country,
         kind: 'weather',
         level,
@@ -345,7 +346,8 @@ export function parseJma(map: unknown, class10: string): DestinationAlert[] {
   const level = known.reduce<AlertLevel>((lv, [, l]) => (rank[l] < rank[lv] ? l : lv), 'info');
   return [
     {
-      id: `jma-${class10}-${latest.r.reportDatetime ?? ''}`,
+      // 재발표마다 바뀌는 시각 대신 구역·종류로 (같은 경보가 이어지면 같은 id)
+      id: `jma-${class10}-${[...latest.codes].sort().join('.')}`,
       country: 'JP',
       kind: 'weather',
       level,

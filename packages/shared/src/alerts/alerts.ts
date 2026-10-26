@@ -102,3 +102,61 @@ export const warningLinkFor = (country: string) =>
 
 /** 외교부 해외안전여행 나라 정보 */
 export const MOFA_SAFETY_URL = 'https://www.0404.go.kr/';
+
+/** 한 여행에서 보낼 목적지 좌표 수 (나라마다 3곳·전체 6곳 — 서버가 6곳 넘으면 거절) */
+const MAX_POINTS_PER_COUNTRY = 3;
+export const MAX_ALERT_POINTS = 6;
+
+/**
+ * 여행지 특보를 물을 때 보낼 값 (웹·서버 알림 공용): 나라 코드 + 일본·미국·캐나다는 목적지 도시 좌표를
+ * 약 10km로 줄인 "JP:35.7:139.7" (같은 값은 하나로, 나라마다 3곳까지). 사용자 현재 위치가 아니라 여행 목적지
+ */
+export function alertQuery(trip: {
+  destinations?: readonly {
+    countryCode?: string | undefined;
+    coords?: { lat: number; lng: number } | undefined;
+  }[];
+}): { countries: string[]; points: string[] } {
+  const dests = trip.destinations ?? [];
+  const countries = [...new Set(dests.flatMap((d) => (d.countryCode ? [d.countryCode] : [])))];
+  const points: string[] = [];
+  const perCountry = new Map<string, number>();
+  for (const d of dests) {
+    if (!d.countryCode || !d.coords || !POINT_ALERT_COUNTRIES.includes(d.countryCode)) continue;
+    const p = `${d.countryCode}:${roundAlertPoint(d.coords.lat)}:${roundAlertPoint(d.coords.lng)}`;
+    const n = perCountry.get(d.countryCode) ?? 0;
+    if (points.includes(p) || n >= MAX_POINTS_PER_COUNTRY || points.length >= MAX_ALERT_POINTS)
+      continue;
+    perCountry.set(d.countryCode, n + 1);
+    points.push(p);
+  }
+  return { countries, points };
+}
+
+/** "JP:35.7:139.7" → 나라별 [위도, 경도] */
+export function pointsByCountry(points: readonly string[]): Map<string, [number, number][]> {
+  const out = new Map<string, [number, number][]>();
+  for (const p of points) {
+    const [c, lat, lng] = p.split(':');
+    if (!c || lat === undefined || lng === undefined) continue;
+    out.set(c, [...(out.get(c) ?? []), [Number(lat), Number(lng)]]);
+  }
+  return out;
+}
+
+/**
+ * 홈 표시·알림에 쓸 특보만: 빨강·주황. 외교부 여행경보 단계는 거의 바뀌지 않는 상시 정보라 뺀다
+ * (특별여행주의보·경보는 포함)
+ */
+export function notableAlerts(alerts: readonly DestinationAlert[]): DestinationAlert[] {
+  return alerts.filter((a) => a.level !== 'info' && !(a.source === 'mofa' && !a.special));
+}
+
+/** 가장 높은 등급 (없으면 null) */
+export function topAlertLevel(
+  alerts: readonly DestinationAlert[],
+): Exclude<AlertLevel, 'info'> | null {
+  if (alerts.some((a) => a.level === 'red')) return 'red';
+  if (alerts.some((a) => a.level === 'orange')) return 'orange';
+  return null;
+}

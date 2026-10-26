@@ -34,6 +34,7 @@ import { TripList } from '../trips/TripsPage';
 const PrepCards = lazy(async () => ({ default: (await import('./PrepCards')).PrepCards }));
 import { openDirectionsDirect } from '../common/openDirections';
 import { isDomesticTrip } from '../../domain/tripPlace';
+import { TripAlertBanner } from '../weather/TripAlertBanner';
 
 // 길찾기 시트(이동수단 고르기)는 누를 때 불러온다 — 첫 화면 크기
 const DirectionsSheet = lazy(async () => ({
@@ -238,6 +239,7 @@ function OngoingTrip({ trip }: { trip: Trip }) {
           {formatTripBadge(trip.startDate, trip.endDate, today)}
         </span>
       </Link>
+      <TripAlertBanner trip={trip} />
 
       {current && current.id !== next?.id && (
         <section

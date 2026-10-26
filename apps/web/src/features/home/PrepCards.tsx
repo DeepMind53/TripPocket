@@ -3,6 +3,7 @@ import {
   daysUntil,
   HUNDRED_UNIT,
   todayIn,
+  topAlertLevel,
   type FxSnapshot,
   type Trip,
 } from '@trippocket/shared';
@@ -23,7 +24,6 @@ import {
 import { useTripWeather } from '../common/useTripWeather';
 import { useEssentials } from '../essentials/useEssentials';
 import { useTripAlerts } from '../weather/useTripAlerts';
-import { topLevel } from '../../domain/alerts';
 import { useTranslation } from '../../i18n';
 import { WeatherIcon } from '../../shared/ui';
 
@@ -46,7 +46,7 @@ export function PrepCards({ trip }: { trip: Trip }) {
   const daysLeft = daysUntil(trip.startDate, todayIn(trip.timezone));
   // 출발 7일 전부터 여행지 특보(빨강·주황) 점 (docs/24 §2-2)
   const alerts = useTripAlerts(trip, daysLeft <= 7);
-  const alertLevel = topLevel(alerts);
+  const alertLevel = topAlertLevel(alerts);
   const currency = trip.destinations
     .map((d) => (d.countryCode ? COUNTRY_CURRENCY[d.countryCode] : undefined))
     .find((c) => c && c !== 'KRW');
