@@ -38,7 +38,20 @@ export async function routeEta(
   from: Coords,
   to: Coords,
   google: boolean,
+  /** 출발점이 지금 내 위치: 약 100m로 줄여 보내고, 기기·서버 어디에도 보관하지 않는다 */
+  live = false,
 ): Promise<RouteEta | null> {
+  if (live) {
+    const round = (c: Coords) => ({
+      lat: Math.round(c.lat * 1000) / 1000,
+      lng: Math.round(c.lng * 1000) / 1000,
+    });
+    const res = await api<RouteEta>('/api/routes/eta', {
+      method: 'POST',
+      body: JSON.stringify({ from: round(from), to, google, live: true }),
+    });
+    return res.ok ? res.data : null;
+  }
   const k = pairKey(from, to);
   const store = load();
   const hit = store[k];

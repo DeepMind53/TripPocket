@@ -124,3 +124,45 @@ export function leaveAt(
   const t = Math.max(0, minutes(nextStart) - need);
   return `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}`;
 }
+
+/** 일정 화면 "다음 일정" 줄: 지금 시각 뒤에 시작하는 첫 일정 (메모 빼고, 시각 있는 것만) */
+export function nextStop<T extends Pick<ItineraryItem, 'startTime' | 'kind'>>(
+  items: readonly T[],
+  now: string,
+): T | null {
+  return (
+    [...items]
+      .filter((i) => i.kind !== 'note' && !!i.startTime && i.startTime > now)
+      .sort((a, b) => (a.startTime! < b.startTime! ? -1 : 1))[0] ?? null
+  );
+}
+
+const hhmmOf = (m: number) => {
+  const c = Math.max(0, m);
+  return `${String(Math.floor(c / 60)).padStart(2, '0')}:${String(c % 60).padStart(2, '0')}`;
+};
+
+/**
+ * 지금 위치에서 다음 일정까지 (사용자 요청 2026-10-27): 걸어서·대중교통 각각 몇 시에 나가면 되는지와,
+ * 남은 시간보다 오래 걸리는지. 시간을 모르는 쪽은 비운다
+ */
+export function departurePlan(
+  start: string,
+  now: string,
+  eta: { walk?: number | undefined; transit?: number | undefined },
+): {
+  left: number;
+  walkLeave?: string;
+  transitLeave?: string;
+  walkLate: boolean;
+  transitLate: boolean;
+} {
+  const left = minutes(start) - minutes(now);
+  return {
+    left,
+    ...(eta.walk !== undefined ? { walkLeave: hhmmOf(minutes(start) - eta.walk) } : {}),
+    ...(eta.transit !== undefined ? { transitLeave: hhmmOf(minutes(start) - eta.transit) } : {}),
+    walkLate: eta.walk !== undefined && eta.walk > left,
+    transitLate: eta.transit !== undefined && eta.transit > left,
+  };
+}

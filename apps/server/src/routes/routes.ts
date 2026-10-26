@@ -18,13 +18,13 @@ export function routeEtaRoutes(app: FastifyInstance, config: Config, db: Db): vo
   app.post('/api/routes/eta', auth, async (req, reply) => {
     const body = RouteEtaBody.safeParse(req.body);
     if (!body.success) return reply.code(400).send({ error: 'bad_request' });
-    const { from, to, google } = body.data;
+    const { from, to, google, live = false } = body.data;
     reply.header('cache-control', 'no-store');
     const gkey = config.GOOGLE_PLACES_KEY;
     const okey = config.GEOAPIFY_KEY;
     // Google 좌표는 Google로만 (약관). 그 밖은 무료 Geoapify 먼저, 멈췄으면 Google
-    if (!google && okey && apiAllowed('geoapify')) return geoapifyEta(from, to, okey);
-    if (gkey && apiAllowed('google_routes')) return googleEta(from, to, gkey);
+    if (!google && okey && apiAllowed('geoapify')) return geoapifyEta(from, to, okey, live);
+    if (gkey && apiAllowed('google_routes')) return googleEta(from, to, gkey, live);
     return reply
       .code(503)
       .send({ error: 'api_paused', api: google ? 'google_routes' : 'geoapify' });

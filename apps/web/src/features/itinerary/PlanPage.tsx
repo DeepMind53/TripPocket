@@ -26,7 +26,8 @@ import {
   Footprints,
   Route,
 } from 'lucide-react';
-import { currentItemId, dayText, isFlightLeg, pastItemIds } from '../../domain/dayTools';
+import { currentItemId, dayText, isFlightLeg, nextStop, pastItemIds } from '../../domain/dayTools';
+import { NextStopBar } from './NextStopBar';
 import { earlierVisits, type Visit } from '../../domain/visit';
 import { saveSkippedPlace } from '../../data/skippedToSaved';
 import { flightSignature, flightsToReconfirm } from '../../domain/flightCheck';
@@ -156,6 +157,15 @@ function PlanView({
   const [openRuns, setOpenRuns] = useState<ReadonlySet<string>>(new Set());
   const dayIndexOf = useCallback((d: LocalDate) => days.indexOf(d), [days]);
   const ongoing = getTripStatus(trip.startDate, trip.endDate, today) === 'ongoing';
+  // 여행 당일 지금 시각 (1분마다) — "다음 일정" 줄
+  const clock = useMinuteClock(ongoing);
+  const nowTime = ongoing ? timeIn(trip.timezone, clock) : null;
+  const nextStopItem = nowTime
+    ? nextStop(
+        items.filter((i) => i.date === today),
+        nowTime,
+      )
+    : null;
   const isDomestic = isDomesticTrip(trip);
   const weather = useTripWeather(trip);
 
@@ -474,6 +484,8 @@ function PlanView({
               {t('map.toggle')}
             </Chip>
           )}
+          {/* 여행 당일: 지금 위치에서 다음 일정까지 (사용자 요청 2026-10-27) */}
+          {!editing && nextStopItem && nowTime && <NextStopBar next={nextStopItem} now={nowTime} />}
           {canEdit && (
             <Button
               size="sm"

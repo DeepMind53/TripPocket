@@ -1420,13 +1420,6 @@
       "checklist": "준비물"
     }
   },
-  "departure": {
-    "next": "다음 · {{title}}",
-    "walk": "도보 {{min}}분",
-    "transit": "대중교통 {{min}}분",
-    "leaveAt": "{{time}}에 출발",
-    "rough": "길 정보를 못 받아 직선거리로 어림했어요"
-  },
   "visit": {
     "button": {
       "visited": "방문",
@@ -1483,5 +1476,16 @@
     },
     "askTitle": "모르는 게 있나요?",
     "askDesc": "개선 제안으로 물어보면\n관리자가 답장해요"
+  },
+  "nextStop": {
+    "ask": "현재 위치 제공 후 관련 정보 수신",
+    "denied": "위치 권한을 켜면 다음 일정 정보가 보여요",
+    "title": "다음 {{time}} {{title}}",
+    "loading": "길 찾는 중",
+    "failed": "길 정보를 받지 못했어요",
+    "walk": "도보 {{min}}분 · {{time}} 출발",
+    "transit": "대중교통 {{min}}분 · {{time}} 출발",
+    "walkLate": "걸어서 약 {{min}}분인데 {{left}}분 뒤 일정이에요",
+    "transitLate": "대중교통 약 {{min}}분인데 {{left}}분 뒤 일정이에요"
   }
 }

@@ -106,4 +106,10 @@ describe('출발 시각 (두 장소 소요 시간)', () => {
     used('geoapify', 2700, 'UTC');
     expect((await eta({ from, to, google: false })).json().source).toBe('google');
   });
+
+  it('내 위치에서 출발(live)이면 서버 메모리에도 남기지 않는다 — 같은 요청도 다시 묻는다', async () => {
+    await eta({ from, to, google: false, live: true });
+    await eta({ from, to, google: false, live: true });
+    expect(calls).toHaveLength(4);
+  });
 });

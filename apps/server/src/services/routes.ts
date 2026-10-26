@@ -70,16 +70,23 @@ async function googleOne(
   return minutesOf(raw ? Number.parseFloat(raw) : undefined);
 }
 
-export async function googleEta(from: Coords, to: Coords, apiKey: string): Promise<RouteEta> {
+export async function googleEta(
+  from: Coords,
+  to: Coords,
+  apiKey: string,
+  live = false,
+): Promise<RouteEta> {
   const k = key(from, to, 'g');
-  const hit = cached(k);
+  const hit = live ? undefined : cached(k);
   if (hit) return hit;
   const [walk, transit] = await Promise.all([
     googleOne(from, to, 'WALK', apiKey),
     // 대중교통 노선이 없는 곳(가까운 거리 등)은 빈 결과 — 실패로 보지 않는다
     googleOne(from, to, 'TRANSIT', apiKey).catch(() => undefined),
   ]);
-  return remember(k, { walk, transit, source: 'google' });
+  const eta: RouteEta = { walk, transit, source: 'google' };
+  // 내 위치에서 출발하는 요청은 메모리에도 남기지 않는다
+  return live ? eta : remember(k, eta);
 }
 
 async function geoapifyOne(
@@ -100,13 +107,19 @@ async function geoapifyOne(
   return minutesOf(d.features?.[0]?.properties?.time);
 }
 
-export async function geoapifyEta(from: Coords, to: Coords, apiKey: string): Promise<RouteEta> {
+export async function geoapifyEta(
+  from: Coords,
+  to: Coords,
+  apiKey: string,
+  live = false,
+): Promise<RouteEta> {
   const k = key(from, to, 'o');
-  const hit = cached(k);
+  const hit = live ? undefined : cached(k);
   if (hit) return hit;
   const [walk, transit] = await Promise.all([
     geoapifyOne(from, to, 'walk', apiKey),
     geoapifyOne(from, to, 'approximated_transit', apiKey).catch(() => undefined),
   ]);
-  return remember(k, { walk, transit, source: 'osm' });
+  const eta: RouteEta = { walk, transit, source: 'osm' };
+  return live ? eta : remember(k, eta);
 }

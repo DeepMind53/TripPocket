@@ -1,4 +1,13 @@
-import { currentItemId, dayText, isFlightLeg, leaveAt, pastItemIds, tightGap } from './dayTools';
+import {
+  currentItemId,
+  dayText,
+  departurePlan,
+  isFlightLeg,
+  leaveAt,
+  nextStop,
+  pastItemIds,
+  tightGap,
+} from './dayTools';
 
 const at = (lat: number, lng: number) => ({ name: 'p', coords: { lat, lng } });
 
@@ -129,5 +138,35 @@ describe('isFlightLeg', () => {
     const arrive = { startTime: '08:50', place: { coords: { lat: 35.77, lng: 140.39 } } };
     expect(isFlightLeg(flight)).toBe(true);
     expect(tightGap(flight, arrive)).toBeNull();
+  });
+});
+
+describe('nextStop · departurePlan', () => {
+  const items = [
+    { id: 'a', kind: 'place' as const, startTime: '09:00' },
+    { id: 'm', kind: 'note' as const, startTime: '13:00' },
+    { id: 'c', kind: 'cafe' as const, startTime: '15:00' },
+    { id: 'b', kind: 'food' as const, startTime: '13:30' },
+    { id: 'x', kind: 'place' as const },
+  ];
+
+  it('지금 뒤 첫 일정 (메모·시각 없는 것 빼고)', () => {
+    expect(nextStop(items, '12:00')?.id).toBe('b');
+    expect(nextStop(items, '16:00')).toBeNull();
+  });
+
+  it('걸어서·대중교통 각각 출발 시각과 늦는지', () => {
+    expect(departurePlan('13:30', '13:00', { walk: 40, transit: 20 })).toEqual({
+      left: 30,
+      walkLeave: '12:50',
+      transitLeave: '13:10',
+      walkLate: true,
+      transitLate: false,
+    });
+    expect(departurePlan('13:30', '13:00', {})).toEqual({
+      left: 30,
+      walkLate: false,
+      transitLate: false,
+    });
   });
 });

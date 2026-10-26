@@ -1,0 +1,85 @@
+import type { ItineraryItem, RouteEta } from '@trippocket/shared';
+import { LocateFixed } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { routeEta } from '../../data/api/routes';
+import { departurePlan } from '../../domain/dayTools';
+import { useTranslation } from '../../i18n';
+import { useCurrentPosition } from '../../shared/hooks/useCurrentPosition';
+
+/**
+ * 일정 화면 지도·편집 사이 "다음 일정" 줄 (사용자 요청 2026-10-27): 여행 당일 지금 위치에서
+ * 다음 일정까지 실제 걷는 길·대중교통 시간과 각각 몇 시에 나가면 되는지, 늦을 것 같으면 알림.
+ * 위치를 아직 허락하지 않았으면 버튼 하나 — 누르면 묻고 계산한다. 위치는 화면에서만 쓴다
+ */
+export function NextStopBar({ next, now }: { next: ItineraryItem; now: string }) {
+  const { t } = useTranslation();
+  const { state, request } = useCurrentPosition(true);
+  const [result, setResult] = useState<{ key: string; eta: RouteEta | null } | null>(null);
+  const to = next.place?.coords;
+  const google = next.place?.coordsSource === 'google';
+  const here = state.status === 'ok' ? state.coords : undefined;
+  // 위치가 100m 넘게 바뀌었을 때만 다시 묻는다 (routeEta도 100m로 줄여 보낸다)
+  const key =
+    here && to
+      ? `${Math.round(here.lat * 1000)},${Math.round(here.lng * 1000)}>${to.lat},${to.lng},${google}`
+      : '';
+
+  useEffect(() => {
+    if (!key || !here || !to) return;
+    let alive = true;
+    void routeEta(here, to, google, true).then((eta) => alive && setResult({ key, eta }));
+    return () => {
+      alive = false;
+    };
+  }, [key]); // eslint-disable-line react-hooks/exhaustive-deps -- key에 here·to·google이 담겨 있다
+
+  // 지금 위치에 맞는 결과가 올 때까지는 "길 찾는 중"
+  const eta = result && result.key === key ? result.eta : undefined;
+
+  if (!to) return null;
+  if (state.status !== 'ok')
+    return (
+      <button
+        type="button"
+        onClick={request}
+        disabled={state.status === 'asking'}
+        className="flex min-h-9 min-w-0 flex-1 items-center justify-center gap-1 rounded-full border border-primary/40 px-2 text-micro font-semibold text-primary disabled:opacity-60"
+      >
+        <LocateFixed aria-hidden="true" className="size-3.5 shrink-0" />
+        <span className="truncate">
+          {state.status === 'denied' ? t('nextStop.denied') : t('nextStop.ask')}
+        </span>
+      </button>
+    );
+
+  const plan = departurePlan(next.startTime!, now, eta ?? {});
+  return (
+    <div role="status" className="flex min-w-0 flex-1 flex-col text-micro leading-tight">
+      <span className="truncate font-semibold">
+        {t('nextStop.title', { time: next.startTime!, title: next.title })}
+      </span>
+      {eta === undefined ? (
+        <span className="text-fg-muted">{t('nextStop.loading')}</span>
+      ) : eta === null ? (
+        <span className="text-fg-muted">{t('nextStop.failed')}</span>
+      ) : (
+        <>
+          {plan.walkLeave && (
+            <span className={plan.walkLate ? 'font-semibold text-warning' : 'text-fg-sub'}>
+              {plan.walkLate
+                ? t('nextStop.walkLate', { min: eta.walk!, left: Math.max(0, plan.left) })
+                : t('nextStop.walk', { min: eta.walk!, time: plan.walkLeave })}
+            </span>
+          )}
+          {plan.transitLeave && (
+            <span className={plan.transitLate ? 'font-semibold text-warning' : 'text-fg-sub'}>
+              {plan.transitLate
+                ? t('nextStop.transitLate', { min: eta.transit!, left: Math.max(0, plan.left) })
+                : t('nextStop.transit', { min: eta.transit!, time: plan.transitLeave })}
+            </span>
+          )}
+        </>
+      )}
+    </div>
+  );
+}

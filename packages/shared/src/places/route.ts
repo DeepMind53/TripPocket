@@ -18,4 +18,6 @@ export const RouteEtaBody = z.object({
   from: CoordsSchema,
   to: CoordsSchema,
   google: z.boolean(),
+  /** 출발점이 지금 내 위치 — 서버는 이 요청을 어디에도 보관하지 않는다 (CLAUDE.md 위치 규칙) */
+  live: z.optional(z.boolean()),
 });
