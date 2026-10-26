@@ -391,5 +391,6 @@ it('일정이 하나도 없는 여행: 장소 찾기·AI 추천 버튼 (docs/20 
   const router = await renderPlan();
   expect(screen.getByText('어디부터 가 볼까요?')).toBeInTheDocument();
   await user.click(screen.getByRole('button', { name: '장소 찾기' }));
-  expect(router.state.location.pathname).toBe(`/trips/${tripId}/places`);
+  // 장소 화면은 지연 로딩 — 다 불러온 뒤 주소가 바뀐다
+  await waitFor(() => expect(router.state.location.pathname).toBe(`/trips/${tripId}/places`));
 });

@@ -28,7 +28,10 @@ test('예약: 숙소를 추가하면 예약 탭 카드와 일정 화면 숙소 �
   await expect(
     day1.getByRole('button', { name: /신주쿠 그레이스리 호텔, 1번째 밤 숙소/ }),
   ).toBeVisible();
-  // 숙소 띠를 누르면 숙소로 길찾기
+  // 숙소 띠를 누르면 다른 장소처럼 상세 — 조식·길찾기(이동 방법·지도 앱)가 시트 안에 (사용자 요청 2026-10-26)
   await day1.getByRole('button', { name: /1번째 밤 숙소/ }).click();
-  await expect(page.getByRole('dialog', { name: '신주쿠 그레이스리 호텔까지' })).toBeVisible();
+  const detail = page.getByRole('dialog', { name: '신주쿠 그레이스리 호텔' });
+  await expect(detail).toBeVisible();
+  await expect(detail.getByText('조식 없음')).toBeVisible();
+  await expect(detail.getByRole('region', { name: '길찾기' })).toBeVisible();
 });
