@@ -337,25 +337,31 @@ function OngoingTrip({ trip }: { trip: Trip }) {
           aria-label={t('home.todayItems', { n: todayItems.length })}
           className="flex flex-col"
         >
-          <h2 className="mb-1 text-caption font-bold text-fg-muted">
+          <h2 className="text-caption font-bold text-fg-muted">
             {t('home.todayItems', { n: todayItems.length })}
           </h2>
+          {/* 체크 = 방문 완료 (방문 기록에 남는다, 사용자 요청 2026-10-27). 메모는 체크하지 않는다 */}
+          <p className="mb-1 text-micro text-fg-muted">{t('home.checkHint')}</p>
           <ul className="flex flex-col">
             {todayItems.map((item) => (
               <li key={item.id} className="flex items-center gap-3 py-1.5">
-                <button
-                  type="button"
-                  role="checkbox"
-                  aria-checked={item.done ?? false}
-                  aria-label={item.title}
-                  onClick={() => void itemRepo.update(item.id, { done: !item.done })}
-                  className={cn(
-                    'grid size-6 shrink-0 place-items-center rounded-full border-2',
-                    item.done ? 'border-success bg-success text-white' : 'border-line',
-                  )}
-                >
-                  {item.done && <Check aria-hidden="true" className="size-3.5" />}
-                </button>
+                {item.kind === 'note' ? (
+                  <span aria-hidden="true" className="size-6 shrink-0" />
+                ) : (
+                  <button
+                    type="button"
+                    role="checkbox"
+                    aria-checked={item.done ?? false}
+                    aria-label={item.title}
+                    onClick={() => void itemRepo.update(item.id, { done: !item.done })}
+                    className={cn(
+                      'grid size-6 shrink-0 place-items-center rounded-full border-2',
+                      item.done ? 'border-success bg-success text-white' : 'border-line',
+                    )}
+                  >
+                    {item.done && <Check aria-hidden="true" className="size-3.5" />}
+                  </button>
+                )}
                 <span
                   className={cn(
                     'tabular shrink-0 text-caption text-fg-sub',

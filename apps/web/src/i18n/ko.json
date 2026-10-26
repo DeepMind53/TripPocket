@@ -78,6 +78,7 @@
     "inHours": "{{h}}시간 {{m}}분 후",
     "now": "지금",
     "todayItems": "오늘 일정 {{n}}개",
+    "checkHint": "체크시 방문 완료처리",
     "noItemsToday": "오늘 일정이 없어요",
     "allDone": "오늘 일정을 모두 마쳤어요",
     "lodgingTonight": "오늘 숙소",

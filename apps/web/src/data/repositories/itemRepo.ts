@@ -92,7 +92,9 @@ export const itemRepo = {
 
   /** 방문 기록을 남긴 일정 전부 (기록 탭) — 날짜 최근 순 */
   async listVisited(): Promise<ItineraryItem[]> {
-    const rows = await db.items.filter((r) => !r.deletedAt && r.visit !== undefined).toArray();
+    const rows = await db.items
+      .filter((r) => !r.deletedAt && r.visit !== undefined && r.kind !== 'note')
+      .toArray();
     rows.sort((a, b) => compareKeys(b.date ?? '', a.date ?? '') || compareKeys(a.order, b.order));
     return rows.map(toDomain);
   },
@@ -107,9 +109,11 @@ export const itemRepo = {
       if (!row || row.deletedAt) throw new Error(`일정을 찾을 수 없어요: ${id}`);
       // 다녀옴(done)과 방문 기록(visit)은 함께 바뀐다 (domain/visit.ts)
       const linked =
-        'done' in patch || 'visit' in patch
-          ? visitPatch(row, { done: patch.done, visit: patch.visit })
-          : {};
+        row.kind === 'note'
+          ? {}
+          : 'done' in patch || 'visit' in patch
+            ? visitPatch(row, { done: patch.done, visit: patch.visit })
+            : {};
       const merged: Record<string, unknown> = {
         ...toDomain(row),
         ...patch,

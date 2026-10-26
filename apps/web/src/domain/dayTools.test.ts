@@ -88,6 +88,12 @@ describe('pastItemIds', () => {
     expect([...pastItemIds(items, '2026-10-25', '12:00')].sort()).toEqual(['a', 'b', 'y']);
   });
 
+  it('메모는 방문 기록 대상이 아니다', () => {
+    expect([
+      ...pastItemIds([{ id: 'n', date: '2026-10-24', kind: 'note' }], '2026-10-25', '08:00'),
+    ]).toEqual([]);
+  });
+
   it('하루가 지나면 시각 없는 일정도', () => {
     expect([...pastItemIds(items, '2026-10-26', '08:00')].sort()).toEqual(['a', 'b', 'memo', 'y']);
   });

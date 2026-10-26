@@ -87,7 +87,9 @@ export function currentItemId(
  * 지난 날의 일정은 모두, 오늘은 끝난 일정만(시각 없는 일정은 오늘이 지나야). 가고 싶은 곳(날짜 없음)은 아님
  */
 export function pastItemIds(
-  items: readonly Pick<ItineraryItem, 'id' | 'date' | 'startTime' | 'endTime'>[],
+  items: readonly (Pick<ItineraryItem, 'id' | 'date' | 'startTime' | 'endTime'> & {
+    kind?: ItineraryItem['kind'];
+  })[],
   today: string,
   now: string,
 ): Set<string> {
@@ -96,7 +98,8 @@ export function pastItemIds(
   const windows = timeWindows(todays);
   const t = minutes(now);
   for (const i of items) {
-    if (!i.date || i.date > today) continue;
+    // 메모는 방문 기록이 필요 없다 (사용자 요청 2026-10-27)
+    if (!i.date || i.date > today || i.kind === 'note') continue;
     if (i.date < today) out.add(i.id);
     else if ((windows.get(i.id)?.end ?? Infinity) <= t) out.add(i.id);
   }
