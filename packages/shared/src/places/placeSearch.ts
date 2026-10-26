@@ -2,7 +2,8 @@
  * 장소 검색 결과 공통 형식 (docs/10 §3.1) — 카카오·네이버·Google 응답을 서버에서 이 모양으로 바꾼다.
  * 평점·리뷰·영업시간은 여기 넣지 않는다 (저장 금지, 상세를 볼 때만 따로 받음 — docs/10 §2.1)
  */
-export type PlaceSource = 'kakao' | 'naver' | 'google';
+/** osm = Geoapify(OpenStreetMap 데이터) — Google 무료량이 끝났을 때 백업 (docs/23) */
+export type PlaceSource = 'kakao' | 'naver' | 'google' | 'osm';
 
 export interface PlaceSummary {
   source: PlaceSource;
@@ -16,6 +17,11 @@ export interface PlaceSummary {
   url?: string | undefined;
   /** 전화 (카카오·네이버 검색 결과에 있을 때만 — Google은 상세 요금 등급이 올라가 받지 않음) */
   phone?: string | undefined;
+  /**
+   * Google 자동완성 백업 결과: 좌표·주소가 아직 없음 → 고를 때 이 세션으로 상세(Essentials)를 받는다.
+   * 같은 세션이면 자동완성 요청은 무료 처리 (Google 세션 요금 규칙, docs/23 §1)
+   */
+  session?: string | undefined;
 }
 
 export interface PlaceDetails {
@@ -29,6 +35,8 @@ export interface PlaceDetails {
   phone?: string | undefined;
   website?: string | undefined;
   googleMapsUrl?: string | undefined;
+  /** trippocket = Google 무료량이 끝나 트립포켓 후기 별점으로 대신 보여 줌 (docs/23 §2) */
+  source?: 'google' | 'trippocket' | undefined;
 }
 
 const norm = (s: string) => s.toLowerCase().replace(/[\s()·\-_,.]/g, '');

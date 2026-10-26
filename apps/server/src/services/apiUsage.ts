@@ -13,6 +13,10 @@ export type ApiId =
   | 'google_places_search'
   | 'google_places_details'
   | 'google_places_local'
+  | 'google_autocomplete'
+  | 'google_details_basic'
+  | 'geoapify'
+  | 'openfreemap'
   | 'google_maps_js'
   | 'naver_maps_js'
   | 'kakao_map'
@@ -64,6 +68,10 @@ export const APIS: readonly ApiDef[] = [
   { id: 'google_places_details', group: 'paid', freeMonthly: 1000, tz: 'America/Los_Angeles' },
   // 택시용 현지어 이름 (Place Details Pro, 무료 월 5,000회) — docs/20 G4
   { id: 'google_places_local', group: 'paid', freeMonthly: 5000, tz: 'America/Los_Angeles' },
+  // 백업 (docs/23, 사용자 결정 2026-10-26): 검색(Text Search)이 이번 달 무료량을 다 쓰면 자동완성 + 상세 Essentials.
+  // Autocomplete Requests 월 1만·Place Details Essentials 월 1만 무료 (가격표 2026-10-23 갱신판) — 무료량 안에서만
+  { id: 'google_autocomplete', group: 'paid', freeMonthly: 10000, tz: 'America/Los_Angeles' },
+  { id: 'google_details_basic', group: 'paid', freeMonthly: 10000, tz: 'America/Los_Angeles' },
   {
     id: 'google_maps_js',
     group: 'paid',
@@ -103,6 +111,11 @@ export const APIS: readonly ApiDef[] = [
   // AviationStack 무료: 월 100회(넘으면 거절, 결제 수단 없음) — 편명으로 항공편 불러오기
   // 하루 제한 없이 월 100회만 (사용자 결정 2026-10-25) — 90회에서 자동 중지
   { id: 'aviationstack', group: 'free', freeMonthly: 100, tz: 'UTC' },
+  // Geoapify 무료 플랜: 하루 3,000 크레딧(요청 1건 = 1), 상업 이용 가능, 결제 수단 없음 — Google 다음 백업 (검색·택시 카드)
+  // 초기화 시간대는 공식 문서에 없어 UTC로 셈 (90%에서 멈추니 여유 있음)
+  { id: 'geoapify', group: 'free', freeDaily: 3000, tz: 'UTC' },
+  // OpenFreeMap 지도 타일 (키·한도 없음, 기부 운영) — Google·네이버 지도를 못 쓸 때 MapLibre로. 기록만
+  { id: 'openfreemap', group: 'free', tz: 'UTC', browser: true },
   // OpenStreetMap Overpass: 공용 서버 정책 "하루 1만 회 미만, 꾸준히 쓰면 그 1/100" → 100
   { id: 'overpass', group: 'free', freeDaily: 100, tz: 'UTC' },
   // 브라우저: Open-Meteo 날씨(비상업 무료, IP당 하루 1만), Nager.Date 공휴일(제한 없음), jsDelivr(대만 공휴일·환율 보조)

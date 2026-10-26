@@ -196,3 +196,164 @@ export async function googleLocalName(
   const d = (await res.json()) as { displayName?: { text?: string }; formattedAddress?: string };
   return { name: d.displayName?.text, address: d.formattedAddress };
 }
+
+/**
+ * 백업 ① Google 자동완성 (docs/23 §1): Text Search가 이번 달 무료량을 다 썼을 때.
+ * 결과에는 좌표·주소가 없다 → 고를 때 googleBasicDetails(같은 세션)로 받는다
+ */
+export async function autocompleteGoogle(
+  q: string,
+  key: string,
+  session: string,
+  near?: { lat: number; lng: number },
+): Promise<PlaceSummary[]> {
+  guardApi('google_autocomplete');
+  trackApi('google_autocomplete');
+  const res = await fetch('https://places.googleapis.com/v1/places:autocomplete', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'X-Goog-Api-Key': key,
+      'X-Goog-FieldMask':
+        'suggestions.placePrediction.placeId,suggestions.placePrediction.structuredFormat',
+    },
+    body: JSON.stringify({
+      input: q,
+      languageCode: 'ko',
+      sessionToken: session,
+      ...(near
+        ? {
+            locationBias: {
+              circle: { center: { latitude: near.lat, longitude: near.lng }, radius: 30000 },
+            },
+          }
+        : {}),
+    }),
+    signal: timeout(),
+  });
+  if (!res.ok) throw new Error(`google ac ${res.status}`);
+  const body = (await res.json()) as {
+    suggestions?: {
+      placePrediction?: {
+        placeId?: string;
+        structuredFormat?: { mainText?: { text?: string }; secondaryText?: { text?: string } };
+      };
+    }[];
+  };
+  return (body.suggestions ?? []).flatMap((s) => {
+    const p = s.placePrediction;
+    if (!p?.placeId) return [];
+    return [
+      {
+        source: 'google' as const,
+        id: p.placeId,
+        name: p.structuredFormat?.mainText?.text ?? '',
+        address: p.structuredFormat?.secondaryText?.text ?? '',
+        coords: null,
+        session,
+      },
+    ];
+  });
+}
+
+/** 자동완성에서 고른 장소의 주소·좌표 (Place Details Essentials — 이름·평점 같은 비싼 필드는 부르지 않음) */
+export async function googleBasicDetails(
+  placeId: string,
+  key: string,
+  session?: string,
+): Promise<{ address?: string | undefined; coords: { lat: number; lng: number } | null }> {
+  guardApi('google_details_basic');
+  trackApi('google_details_basic');
+  const url = new URL(`https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}`);
+  url.searchParams.set('languageCode', 'ko');
+  if (session) url.searchParams.set('sessionToken', session);
+  const res = await fetch(url, {
+    headers: { 'X-Goog-Api-Key': key, 'X-Goog-FieldMask': 'formattedAddress,location' },
+    signal: timeout(),
+  });
+  if (!res.ok) throw new Error(`google basic ${res.status}`);
+  const d = (await res.json()) as {
+    formattedAddress?: string;
+    location?: { latitude: number; longitude: number };
+  };
+  return {
+    address: d.formattedAddress,
+    coords: d.location ? { lat: d.location.latitude, lng: d.location.longitude } : null,
+  };
+}
+
+interface GeoapifyResult {
+  place_id?: string;
+  name?: string;
+  formatted?: string;
+  address_line1?: string;
+  address_line2?: string;
+  lat?: number;
+  lon?: number;
+  category?: string;
+}
+
+/**
+ * 백업 ② Geoapify 검색 (OpenStreetMap 데이터, 무료 하루 3,000) — Google 백업까지 멈췄을 때.
+ * 출처 표기 필수: 화면에 "Powered by Geoapify · © OpenStreetMap" (docs/23 §1)
+ */
+export async function searchGeoapify(
+  q: string,
+  key: string,
+  near?: { lat: number; lng: number },
+): Promise<PlaceSummary[]> {
+  guardApi('geoapify');
+  trackApi('geoapify');
+  const url = new URL('https://api.geoapify.com/v1/geocode/search');
+  url.searchParams.set('text', q);
+  url.searchParams.set('lang', 'ko');
+  url.searchParams.set('limit', '8');
+  url.searchParams.set('format', 'json');
+  if (near) url.searchParams.set('bias', `proximity:${near.lng},${near.lat}`);
+  url.searchParams.set('apiKey', key);
+  const res = await fetch(url, { signal: timeout() });
+  if (!res.ok) throw new Error(`geoapify ${res.status}`);
+  const body = (await res.json()) as { results?: GeoapifyResult[] };
+  return (body.results ?? []).map((r) => {
+    const name = r.name || r.address_line1 || r.formatted || '';
+    const coords =
+      typeof r.lat === 'number' && typeof r.lon === 'number' ? { lat: r.lat, lng: r.lon } : null;
+    return {
+      source: 'osm' as const,
+      id: r.place_id ?? `${name}|${r.lat},${r.lon}`,
+      name,
+      address: (r.name ? r.formatted : r.address_line2) ?? '',
+      coords,
+      ...(r.category ? { category: r.category.split('.').at(-1) } : {}),
+      ...(coords
+        ? {
+            url: `https://www.openstreetmap.org/?mlat=${coords.lat}&mlon=${coords.lng}#map=18/${coords.lat}/${coords.lng}`,
+          }
+        : {}),
+    };
+  });
+}
+
+/**
+ * 택시 카드 백업: 좌표 → 그 나라 말 이름·주소 (Geoapify 역지오코딩).
+ * 좌표는 요청에만 쓰고 저장·로그하지 않는다 (CLAUDE.md)
+ */
+export async function geoapifyLocalName(
+  coords: { lat: number; lng: number },
+  lang: string,
+  key: string,
+): Promise<{ name?: string | undefined; address?: string | undefined }> {
+  guardApi('geoapify');
+  trackApi('geoapify');
+  const url = new URL('https://api.geoapify.com/v1/geocode/reverse');
+  url.searchParams.set('lat', String(coords.lat));
+  url.searchParams.set('lon', String(coords.lng));
+  // Geoapify는 두 글자 언어 코드 (zh-TW → zh)
+  url.searchParams.set('lang', lang.split('-')[0]!);
+  url.searchParams.set('format', 'json');
+  url.searchParams.set('apiKey', key);
+  const res = await fetch(url, { signal: timeout() });
+  if (!res.ok) throw new Error(`geoapify ${res.status}`);
+  const r = ((await res.json()) as { results?: GeoapifyResult[] }).results?.[0];
+  return { name: r?.name, address: r?.formatted };
+}

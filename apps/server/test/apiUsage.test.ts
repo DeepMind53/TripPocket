@@ -107,8 +107,9 @@ describe('API 사용량 (관리자)', () => {
       503,
     );
     const blocked = await req('GET', '/api/places/google/ChIJ1111111111', member);
-    expect(blocked.statusCode).toBe(503);
-    expect(blocked.json()).toEqual({ error: 'api_paused', api: 'google_places_details' });
+    // 멈추면 Google 대신 트립포켓 후기 별점 + Google 지도 링크 (docs/23 §2)
+    expect(blocked.statusCode).toBe(200);
+    expect(blocked.json()).toMatchObject({ source: 'trippocket' });
     expect(api(await report(), 'google_places_details').autoStopped).toBe(true);
   });
 

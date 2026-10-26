@@ -48,6 +48,8 @@ const Env = z.object({
   NAVER_SEARCH_SECRET: z.optional(z.string()),
   /** Google Places API (New) 서버 키 — 브라우저에 절대 넣지 않음, API 제한 = Places API (New) */
   GOOGLE_PLACES_KEY: z.optional(z.string()),
+  /** Geoapify 서버 키 (무료 플랜) — Google 무료량이 끝났을 때 해외 검색·택시 카드 백업 (docs/23). 없으면 건너뜀 */
+  GEOAPIFY_KEY: z.optional(z.string()),
   /**
    * AI 추천 (21단계, 결정 L9) — 무료 AI를 이 순서로 시도: Gemini → Workers AI → Groq.
    * 모두 없거나 한도에 걸리면 AI 없이 언급 수로 집계한다. 키는 서버에만
