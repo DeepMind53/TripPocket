@@ -47,6 +47,14 @@ const day = (name: string) => screen.getByRole('region', { name });
 const dayAfterSheet = (name: string) => screen.findByRole('region', { name });
 
 describe('일정 화면', () => {
+  it('여행 중에는 오늘 일차 칩이 기본으로 골라져 그날만 보인다', async () => {
+    vi.setSystemTime(new Date('2026-10-25T03:00:00Z')); // 도쿄 10.25 = 2일차
+    await renderPlan();
+    expect(screen.getByRole('button', { name: /2일차 10\.25/, pressed: true })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: '2일차 · 10.25 (일)' })).toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: '1일차 · 10.24 (토)' })).not.toBeInTheDocument();
+  });
+
   it('일차별로 나뉘고, 직접 입력으로 일정을 추가한다', async () => {
     const user = userEvent.setup();
     await renderPlan();

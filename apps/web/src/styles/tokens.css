@@ -34,6 +34,19 @@
   --tp-day-7: #3ba55c;
   --tp-day-8: #5a6b85;
 
+  /* 일정 종류 색 (사용자 요청 2026-10-26) — 바탕은 이 색을 아주 조금만 섞은 파스텔(--tp-kind-tint),
+     진행 중인 일정은 테두리·깜빡임에 이 색. 색상환에서 고르게 떨어뜨려 서로 겹치지 않게, 교통은 회색 */
+  --tp-kind-place: #2b8fe0; /* 하늘 */
+  --tp-kind-food: #f2762e; /* 주황 */
+  --tp-kind-cafe: #14a89a; /* 민트 */
+  --tp-kind-shopping: #e04f9a; /* 분홍 */
+  --tp-kind-transport: #6b7a90; /* 회색 */
+  --tp-kind-lodging: #8656ee; /* 보라 */
+  --tp-kind-activity: #34a853; /* 초록 */
+  --tp-kind-note: #e0b000; /* 노랑 */
+  --tp-kind-tint: 8%;
+  --tp-kind-pulse: 30%;
+
   /* 화면 하단 고정 요소(탭바 등) 높이 — 토스트 위치 계산용. 3단계에서 탭바가 갱신 */
   --tp-bottom-inset: 0px;
 
@@ -42,6 +55,8 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
+    --tp-kind-tint: 11%;
+    --tp-kind-pulse: 34%;
     --tp-primary: #5b8cff;
     --tp-primary-pressed: #7aa2ff;
     --tp-primary-weak: #1b2747;
@@ -66,6 +81,8 @@
 }
 
 :root[data-theme='dark'] {
+  --tp-kind-tint: 11%;
+  --tp-kind-pulse: 34%;
   --tp-primary: #5b8cff;
   --tp-primary-pressed: #7aa2ff;
   --tp-primary-weak: #1b2747;

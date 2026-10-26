@@ -35,3 +35,33 @@ export function dayText(
   });
   return [heading, ...lines].join('\n');
 }
+
+/** 끝 시각도 다음 일정도 없는 마지막 일정은 시작부터 이만큼 진행 중으로 본다 (분) */
+const LAST_ITEM_MINUTES = 120;
+
+/**
+ * 여행 당일 현지 시각 now("HH:mm")에 진행 중인 일정 (사용자 요청 2026-10-26).
+ * 시작 시각 ≤ now < 끝(끝 시각, 없으면 다음 일정 시작, 그것도 없으면 2시간 뒤). 시각 없는 일정은 건너뛴다.
+ * 여러 개면 가장 늦게 시작한 것
+ */
+export function currentItemId(
+  items: readonly Pick<ItineraryItem, 'id' | 'startTime' | 'endTime'>[],
+  now: string,
+): string | null {
+  const timed = items
+    .filter((i): i is typeof i & { startTime: string } => i.startTime !== undefined)
+    .sort((a, b) => minutes(a.startTime) - minutes(b.startTime));
+  const t = minutes(now);
+  let found: string | null = null;
+  timed.forEach((item, n) => {
+    const start = minutes(item.startTime);
+    const next = timed.slice(n + 1).find((i) => minutes(i.startTime) > start);
+    const end = item.endTime
+      ? minutes(item.endTime)
+      : next
+        ? minutes(next.startTime)
+        : start + LAST_ITEM_MINUTES;
+    if (start <= t && t < end) found = item.id;
+  });
+  return found;
+}

@@ -25,9 +25,19 @@ import {
   Route,
   TriangleAlert,
 } from 'lucide-react';
-import { dayText, tightGap } from '../../domain/dayTools';
+import { currentItemId, dayText, tightGap } from '../../domain/dayTools';
+import { timeIn, useMinuteClock } from '../../shared/hooks/useMinuteClock';
 import { copyText } from '../../shared/lib/clipboard';
-import { lazy, Suspense, useCallback, useEffect, useState, Fragment, useRef } from 'react';
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useState,
+  Fragment,
+  useRef,
+  type CSSProperties,
+} from 'react';
 import { placeBookingsInPlan } from '../../data/bookingPlanner';
 import { bookingsToPlan } from '../../domain/bookingPlan';
 import { useTranslation } from '../../i18n';
@@ -529,6 +539,7 @@ function PlanView({
                       index={index}
                       items={items.filter((i) => i.date === date)}
                       isToday={date === today}
+                      timezone={trip.timezone}
                       weather={date ? weather[date] : undefined}
                       isPast={dimPast && date !== null && date < today}
                       lodging={date ? lodgingForNight(bookings, date) : null}
@@ -705,8 +716,11 @@ function DaySection({
   hideWhenEmpty,
   weather,
   breakfast,
+  timezone,
 }: {
   weather?: TripDayWeather | undefined;
+  /** 여행지 시간대 — 당일 진행 중인 일정 계산 */
+  timezone: string;
   /** 그날 아침 조식이 있는 숙소 */
   breakfast?: Booking | null;
   date: LocalDate | null;
@@ -732,6 +746,10 @@ function DaySection({
   const tight = useLab('tightGap');
   const progressOn = useLab('dayProgress');
   const copyDayOn = useLab('copyDay');
+  // 여행 당일: 현지 시각으로 지금 진행 중인 일정 (1분마다 다시 계산)
+  const now = useMinuteClock(isToday);
+  const nowTime = isToday ? timeIn(timezone, now) : null;
+  const nowId = nowTime ? currentItemId(items, nowTime) : null;
   if (hideWhenEmpty && items.length === 0) return null;
   const done = items.filter((i) => i.done).length;
   const color = date ? dayColor(index) : 'var(--tp-fg-muted)';
@@ -821,13 +839,14 @@ function DaySection({
           {date ? t('plan.emptyDay') : t('plan.wishEmpty')}
         </p>
       )}
-      <ol className="flex flex-col divide-y divide-line/70 px-4">
+      <ol className="flex flex-col gap-1.5 px-3 py-2">
         {items.map((item, i) => (
           <Fragment key={item.id}>
             <ItemRow
               item={item}
               n={i + 1}
               color={color}
+              now={item.id === nowId}
               booking={item.bookingId ? bookingById.get(item.bookingId) : undefined}
               onOpen={() => onOpen(item)}
             />
@@ -968,12 +987,15 @@ function ItemRow({
   item,
   n,
   color,
+  now,
   booking,
   onOpen,
 }: {
   item: ItineraryItem;
   n: number;
   color: string;
+  /** 여행 당일 지금 진행 중: 진한 테두리·굵은 글자·바탕 깜빡임 (사용자 요청 2026-10-26) */
+  now: boolean;
   /** 예약에서 넘어온 일정이면 그 예약: 점선 테두리로 구분 (사용자 요청 2026-10-26) */
   booking?: Booking | undefined;
   onOpen: () => void;
@@ -994,19 +1016,24 @@ function ItemRow({
       {item.done ? <Check className="size-3.5" /> : n}
     </span>
   );
+  // 종류마다 아주 연한 파스텔 바탕 (styles/index.css .kind-tint)
+  const kindStyle = { '--kind': `var(--tp-kind-${item.kind})` } as CSSProperties;
   // 항공편 출발 일정은 예약 탭과 같은 탑승권 모양 그대로 (도착 공항 일정은 아래 보통 줄)
   if (booking?.kind === 'flight' && item.transport)
     return (
-      <li className="py-2">
+      <li>
         <button
           type="button"
           data-item-row=""
           data-from-booking=""
           onClick={onOpen}
           aria-label={label}
+          aria-current={now ? 'time' : undefined}
+          style={kindStyle}
           className={cn(
-            'flex w-full items-start gap-3 rounded-btn border border-dashed border-fg-muted/60 px-2 py-3 text-left active:bg-bg-subtle',
+            'kind-tint flex w-full items-start gap-3 rounded-btn border border-dashed border-fg-muted/60 px-2 py-3 text-left active:bg-bg-subtle',
             item.done && 'opacity-50',
+            now && 'kind-now border-transparent font-bold',
           )}
         >
           {badge}
@@ -1023,16 +1050,19 @@ function ItemRow({
       </li>
     );
   return (
-    <li className={cn(booking && 'py-2')}>
+    <li>
       <button
         type="button"
         data-item-row=""
         {...(booking ? { 'data-from-booking': '' } : {})}
         onClick={onOpen}
         aria-label={label}
+        aria-current={now ? 'time' : undefined}
+        style={kindStyle}
         className={cn(
-          'flex w-full items-start gap-3 py-3 text-left active:bg-bg-subtle',
-          booking && 'rounded-btn border border-dashed border-fg-muted/60 px-2',
+          'kind-tint flex w-full items-start gap-3 rounded-btn px-2 py-3 text-left active:bg-bg-subtle',
+          booking && 'border border-dashed border-fg-muted/60',
+          now && 'kind-now border-transparent',
         )}
       >
         {/* 번호·시간·종류는 제목 첫 줄 높이(24px)에 가운데 맞춤 */}
@@ -1047,11 +1077,19 @@ function ItemRow({
         </span>
         <span className={cn('flex min-w-0 flex-1 flex-col', item.done && 'opacity-50')}>
           {item.kind === 'note' ? (
-            <span className={cn('line-clamp-4 text-body-2', item.done && 'line-through')}>
+            <span
+              className={cn(
+                'line-clamp-4 text-body-2',
+                item.done && 'line-through',
+                now && 'font-bold',
+              )}
+            >
               {item.memo ?? item.title}
             </span>
           ) : (
-            <span className={cn('text-body-1', item.done && 'line-through')}>{item.title}</span>
+            <span className={cn('text-body-1', item.done && 'line-through', now && 'font-bold')}>
+              {item.title}
+            </span>
           )}
           {item.transport && (item.transport.from || item.transport.to) && (
             <span className="tabular truncate text-caption text-fg-muted">
@@ -1125,6 +1163,7 @@ function MapPager({
           item={entry.item}
           n={entry.n}
           color={entry.color}
+          now={false}
           onOpen={() => onOpen(entry.item)}
         />
       </ol>

@@ -1,4 +1,4 @@
-import { dayText, tightGap } from './dayTools';
+import { currentItemId, dayText, tightGap } from './dayTools';
 
 const at = (lat: number, lng: number) => ({ name: 'p', coords: { lat, lng } });
 
@@ -44,4 +44,31 @@ it('하루 일정 글: 제목 줄 + 번호·시각·이름·주소, 메모는 �
       (t) => t ?? null,
     ),
   ).toBe('1일차 · 10.24 (토)\n1. 10:00 센소지 (도쿄 다이토구)\n2. 환전하기\n3. 이치란');
+});
+
+describe('currentItemId', () => {
+  const items = [
+    { id: 'a', startTime: '09:00' },
+    { id: 'memo' },
+    { id: 'b', startTime: '11:30', endTime: '12:30' },
+    { id: 'c', startTime: '14:00' },
+  ];
+
+  it('runs until the next item starts', () => {
+    expect(currentItemId(items, '10:59')).toBe('a');
+  });
+
+  it('uses the end time when written', () => {
+    expect(currentItemId(items, '12:00')).toBe('b');
+    expect(currentItemId(items, '13:00')).toBeNull();
+  });
+
+  it('keeps the last item for two hours', () => {
+    expect(currentItemId(items, '15:59')).toBe('c');
+    expect(currentItemId(items, '16:00')).toBeNull();
+  });
+
+  it('is empty before the first item', () => {
+    expect(currentItemId(items, '08:00')).toBeNull();
+  });
 });

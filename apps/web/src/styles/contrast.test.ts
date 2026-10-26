@@ -47,3 +47,32 @@ describe.each(Object.entries(themes))('%s 테마 글자 대비', (_name, c) => {
 it('다크 모드 두 곳(시스템 설정·직접 선택)의 색이 같다', () => {
   expect(block('prefers-color-scheme: dark')).toEqual(themes.dark);
 });
+
+// 일정 종류 파스텔 바탕(color-mix srgb) 위의 흐린 글자도 4.5:1 (사용자 요청 2026-10-26)
+const tintOf = (selector: string) => {
+  const start = css.indexOf(selector);
+  const body = css.slice(start, css.indexOf('}', start));
+  return Number(/--tp-kind-tint:\s*(\d+)%/.exec(body)![1]) / 100;
+};
+const mix = (a: string, b: string, p: number) =>
+  '#' +
+  [1, 3, 5]
+    .map((i) =>
+      Math.round(parseInt(a.slice(i, i + 2), 16) * p + parseInt(b.slice(i, i + 2), 16) * (1 - p))
+        .toString(16)
+        .padStart(2, '0'),
+    )
+    .join('');
+const kinds = Object.keys(themes.light).filter((k) => k.startsWith('kind-'));
+
+describe.each([
+  ['light', themes.light, tintOf(':root {')],
+  ['dark', themes.dark, tintOf("[data-theme='dark']")],
+] as const)('%s 테마 일정 종류 바탕', (_name, c, tint) => {
+  it('종류 색 8개', () => expect(kinds).toHaveLength(8));
+  it.each(kinds)('fg-muted / %s 바탕 ≥ 4.5', (k) => {
+    expect(ratio(c['fg-muted']!, mix(themes.light[k]!, c.surface!, tint))).toBeGreaterThanOrEqual(
+      4.5,
+    );
+  });
+});

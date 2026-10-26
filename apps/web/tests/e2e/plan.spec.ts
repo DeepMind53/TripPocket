@@ -37,3 +37,38 @@ test('일정: 추가 → 상세 → 길찾기 → 삭제·실행 취소', async 
   await page.getByRole('button', { name: '실행 취소' }).click();
   await expect(row).toBeVisible();
 });
+
+test('여행 당일: 오늘 칩이 골라지고 지금 진행 중인 일정이 강조된다', async ({ page }) => {
+  await page.clock.install();
+  await createTrip(page, '당일 여행');
+  const day1 = page.getByRole('region', { name: /^1일차/ });
+  for (const [kind, name, time] of [
+    ['관광', '센소지', '09:00'],
+    ['맛집', '이치란 라멘', '11:30'],
+    ['카페', '블루보틀', '14:00'],
+    ['쇼핑', '돈키호테', '16:00'],
+  ] as const) {
+    await day1.getByRole('button', { name: '일정 추가' }).click();
+    const form = page.getByRole('dialog', { name: '일정 추가' });
+    await form.getByRole('button', { name: kind, exact: true }).click();
+    await form.getByLabel('이름').fill(name);
+    await form.getByLabel('시작').fill(time);
+    await form.getByRole('button', { name: '일정에 추가' }).click();
+    await expect(form).toBeHidden();
+  }
+
+  // 여행 첫날 12:00 (기기·여행지 모두 UTC+9)
+  const first = new Date();
+  first.setDate(first.getDate() + 3);
+  first.setHours(12, 0, 0, 0);
+  await page.clock.setFixedTime(first);
+  await page.goto(page.url().replace(/\?.*$/, ''));
+
+  await expect(page.getByRole('button', { name: /^1일차/, pressed: true })).toBeVisible();
+  await expect(page.getByRole('region', { name: /^2일차/ })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /이치란 라멘/ })).toHaveAttribute(
+    'aria-current',
+    'time',
+  );
+  await expect(page.locator('[aria-current="time"]')).toHaveCount(1);
+});
