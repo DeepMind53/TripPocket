@@ -6,6 +6,7 @@ import { resetLocalDb } from '../../data/dev';
 import { itemRepo } from '../../data/repositories/itemRepo';
 import { tripRepo } from '../../data/repositories/tripRepo';
 import { Toaster } from '../../shared/ui';
+import { acceptDelete } from '../../test/confirm';
 
 let tripId = '';
 
@@ -95,6 +96,7 @@ describe('여행 설정', () => {
     const router = renderAt(['/trips', `/trips/${tripId}/plan`]);
     await user.click(await screen.findByRole('button', { name: '더보기' }));
     await user.click(screen.getByRole('button', { name: '여행 삭제' }));
+    await acceptDelete(user);
     expect(await screen.findByText('여행을 삭제했어요')).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/trips');
     await user.click(screen.getByRole('button', { name: '실행 취소' }));

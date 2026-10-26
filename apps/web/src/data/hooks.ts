@@ -14,6 +14,7 @@ import { itemRepo } from './repositories/itemRepo';
 import { settingsRepo } from './repositories/settingsRepo';
 import { tripRepo } from './repositories/tripRepo';
 import { savedPlaceRepo } from './repositories/savedPlaceRepo';
+import { trashRepo, type TrashEntry } from './repositories/trashRepo';
 
 // 저장소가 바뀌면 화면이 자동으로 다시 그려진다. 불러오는 중에는 undefined.
 
@@ -51,6 +52,11 @@ export function useTripsData(
     return { key, items, bookings };
   }, [key]);
   return data?.key === key ? data : undefined;
+}
+
+/** 삭제 기록 복원 목록 (마이 → 삭제 기록 복원) */
+export function useTrash(): TrashEntry[] | undefined {
+  return useLiveQuery(() => trashRepo.list(), []);
 }
 
 /** 방문 기록을 남긴 일정 (기록 탭) */

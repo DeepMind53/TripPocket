@@ -1,4 +1,5 @@
 import {
+  ArchiveRestore,
   ChevronRight,
   CircleHelp,
   Database,
@@ -47,6 +48,7 @@ export function MePage() {
             onClick={() => setInstallOpen(true)}
           />
           <MenuRow to="/me/reviews" icon={<SquarePen />} label={t('review.myTitle')} />
+          <MenuRow to="/me/trash" icon={<ArchiveRestore />} label={t('trash.title')} />
           <MenuRow to="/labs" icon={<FlaskConical />} label={t('me.labs')} />
         </MenuGroup>
         {isAdmin && (

@@ -18,6 +18,7 @@ import {
   toast,
   Skeleton,
   ScrollRow,
+  confirmDelete,
 } from '../../shared/ui';
 import { ChecklistBoard } from './ChecklistBoard';
 import { TemplateSheet } from './TemplateSheet';
@@ -117,14 +118,21 @@ export function ChecklistPage() {
         items={items}
         categories={list === 'packing' ? draft.categories : undefined}
         onToggle={(key) => actions.toggle(list, key)}
-        onRemove={(key) => actions.remove(list, key)}
+        onRemove={(key) => {
+          const name = items.find((i) => i.key === key)?.text ?? '';
+          void confirmDelete(t('confirm.checklist', { name })).then(
+            (ok) => ok && actions.remove(list, key),
+          );
+        }}
         readOnly={!canEdit}
         onRemoveGroup={
           canEdit
-            ? (name) => {
-                actions.removeCategory(name);
-                toast(t('checklist.groupDeleted', { name }));
-              }
+            ? (name) =>
+                void confirmDelete(t('confirm.group', { name })).then((ok) => {
+                  if (!ok) return;
+                  actions.removeCategory(name);
+                  toast(t('checklist.groupDeleted', { name }));
+                })
             : undefined
         }
         onReorder={(next) => actions.reorder(list, next)}

@@ -5,6 +5,7 @@ import { routes } from '../../app/router';
 import { resetLocalDb } from '../../data/dev';
 import { tripRepo } from '../../data/repositories/tripRepo';
 import { Toaster } from '../../shared/ui';
+import { acceptDelete } from '../../test/confirm';
 
 function renderAt(path: string) {
   const router = createMemoryRouter(routes, { initialEntries: [path] });
@@ -154,6 +155,7 @@ describe('내 여행 목록', () => {
 
     await user.click(await screen.findByRole('button', { name: '제주 메뉴' }));
     await user.click(screen.getByRole('button', { name: '여행 삭제' }));
+    await acceptDelete(user);
     expect(await screen.findByText('아직 여행이 없어요')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: '실행 취소' }));

@@ -15,6 +15,8 @@ export { Switch } from './Switch';
 export { TabBar, type TabItem } from './TabBar';
 export { Toaster } from './Toaster';
 export { snackbar, toast } from './toastStore';
+export { confirmDelete } from './confirmStore';
+export { ConfirmHost } from './ConfirmHost';
 export { TopBar } from './TopBar';
 export { TimeInput } from './TimeInput';
 export { Skeleton } from './Skeleton';

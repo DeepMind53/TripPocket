@@ -77,8 +77,7 @@ function TripSettingsForm({ trip, items }: { trip: Trip; items: ItineraryItem[] 
   }
 
   async function remove() {
-    await deleteTripWithUndo(trip);
-    void navigate('/trips', { replace: true });
+    if (await deleteTripWithUndo(trip)) void navigate('/trips', { replace: true });
   }
 
   return (

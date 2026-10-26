@@ -16,7 +16,15 @@ import { useTranslation } from '../../i18n';
 import { useRouteSheet } from '../../shared/hooks/useRouteSheet';
 import { cn } from '../../shared/lib/cn';
 import { openMapLink, placeLink } from '../../shared/lib/directions';
-import { BottomSheet, Button, EmptyState, IconButton, snackbar, TopBar } from '../../shared/ui';
+import {
+  BottomSheet,
+  Button,
+  confirmDelete,
+  EmptyState,
+  IconButton,
+  snackbar,
+  TopBar,
+} from '../../shared/ui';
 
 // 지도는 열 때만 (첫 화면 크기)
 const SavedMap = lazy(() => import('./SavedMap').then((m) => ({ default: m.SavedMap })));
@@ -171,14 +179,15 @@ export function SavedPage() {
                     <IconButton
                       label={t('saved.remove', { name: p.name })}
                       icon={<Trash2 />}
-                      onClick={() =>
+                      onClick={async () => {
+                        if (!(await confirmDelete(t('confirm.item', { name: p.name })))) return;
                         void savedPlaceRepo.softDelete(p.id).then(() =>
                           snackbar(t('saved.removed'), {
                             label: t('common.undo'),
                             onAction: () => void savedPlaceRepo.restore(p.id),
                           }),
-                        )
-                      }
+                        );
+                      }}
                     />
                   </li>
                 ))}

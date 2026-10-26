@@ -8,6 +8,7 @@ import { templateRepo } from '../../data/repositories/templateRepo';
 import { tripRepo } from '../../data/repositories/tripRepo';
 import { Toaster } from '../../shared/ui';
 import { TEMPLATE_SEEDS, TEMPLATES } from './templates';
+import { acceptDelete } from '../../test/confirm';
 
 let tripId = '';
 
@@ -88,6 +89,7 @@ describe('준비 탭 (저장·취소)', () => {
     await checklistRepo.add(tripId, 'packing', { text: '여권', category: '서류' });
     renderAt(`/trips/${tripId}/checklist`);
     await user.click(await screen.findByRole('button', { name: '여권 삭제' }));
+    await acceptDelete(user);
     expect(screen.queryByRole('checkbox', { name: '여권' })).not.toBeInTheDocument();
     await user.click(within(saveBar() as HTMLElement).getByRole('button', { name: '취소' }));
     expect(await screen.findByRole('checkbox', { name: '여권' })).toBeInTheDocument();
@@ -104,6 +106,7 @@ describe('준비 탭 (저장·취소)', () => {
     expect(await screen.findByRole('checkbox', { name: '랜턴' })).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: '캠핑 그룹 삭제' }));
+    await acceptDelete(user);
     expect(screen.queryByRole('checkbox', { name: '랜턴' })).not.toBeInTheDocument();
     expect(screen.queryByRole('radio', { name: '캠핑' })).not.toBeInTheDocument();
   });
@@ -144,6 +147,7 @@ describe('템플릿 관리', () => {
     ).toBeInTheDocument();
 
     await user.click(within(sheet).getByRole('button', { name: '아이 동반 삭제' }));
+    await acceptDelete(user);
     await waitFor(() =>
       expect(
         within(sheet).queryByRole('button', { name: '아이 동반 불러오기' }),

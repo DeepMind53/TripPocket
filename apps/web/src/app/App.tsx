@@ -61,6 +61,11 @@ export function App() {
     }
   }, [offerInstall]);
   const { t } = useTranslation();
+  // 지운 지 7일 넘은 기록은 한가할 때 기기에서 정리 (삭제 기록 복원, 2026-10-27)
+  useEffect(() => {
+    const idle = window.requestIdleCallback ?? ((cb: () => void) => window.setTimeout(cb, 3000));
+    idle(() => void import('../data/repositories/trashRepo').then((m) => m.trashRepo.purge()));
+  }, []);
   // 보기 전용 여행을 고치려 하면 저장소(db.ts)가 막는다 → 안내만 (화면 버튼은 미리 숨김)
   useEffect(() => {
     const onReject = (e: PromiseRejectionEvent) => {

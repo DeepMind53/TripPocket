@@ -172,8 +172,9 @@ export function TripLayout() {
                   className="justify-start text-danger"
                   leading={<Trash2 aria-hidden="true" className="size-[18px]" />}
                   onClick={() => {
-                    void deleteTripWithUndo(trip);
-                    void navigate('/trips', { replace: true });
+                    void deleteTripWithUndo(trip).then(
+                      (gone) => gone && void navigate('/trips', { replace: true }),
+                    );
                   }}
                 >
                   {t('trips.delete')}

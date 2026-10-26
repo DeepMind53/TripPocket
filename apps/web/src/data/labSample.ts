@@ -208,7 +208,12 @@ export async function createLabSample(): Promise<string> {
 /** [샘플]로 만든 여행·저장 장소 지우기. 지운 여행 수 */
 export async function removeLabSample(): Promise<number> {
   const trips = (await tripRepo.listActive()).filter((t) => t.title.startsWith(SAMPLE_MARK));
-  for (const t of trips) await tripRepo.softDelete(t.id);
+  for (const t of trips) {
+    // 안의 일정·예약까지 (여행만 지우면 방문 기록 등이 남는다)
+    for (const i of await itemRepo.listByTrip(t.id)) await itemRepo.softDelete(i.id);
+    for (const b of await bookingRepo.listByTrip(t.id)) await bookingRepo.softDelete(b.id);
+    await tripRepo.softDelete(t.id);
+  }
   for (const p of await savedPlaceRepo.listActive())
     if (p.memo === SAMPLE_MARK) await savedPlaceRepo.softDelete(p.id);
   return trips.length;

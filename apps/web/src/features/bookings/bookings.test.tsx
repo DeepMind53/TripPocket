@@ -8,6 +8,7 @@ import { bookingRepo } from '../../data/repositories/bookingRepo';
 import { itemRepo } from '../../data/repositories/itemRepo';
 import { tripRepo } from '../../data/repositories/tripRepo';
 import { Toaster } from '../../shared/ui';
+import { acceptDelete } from '../../test/confirm';
 
 let tripId = '';
 
@@ -262,6 +263,7 @@ describe('예약', () => {
     renderAt([`/trips/${tripId}/bookings`]);
     await user.click(await screen.findByRole('button', { name: '감천 투어 편집' }));
     await user.click(screen.getByRole('button', { name: '예약 삭제' }));
+    await acceptDelete(user);
     expect(await screen.findByText('예약을 삭제했어요')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: '실행 취소' }));
     expect(await screen.findByRole('button', { name: '감천 투어 편집' })).toBeInTheDocument();

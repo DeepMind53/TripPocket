@@ -35,3 +35,9 @@ await Promise.all([
 
 // jsdom에는 스크롤이 없다 (화면별 보던 위치 기억 — app/AuthGate.tsx ScrollRestoration)
 window.scrollTo = (() => {}) as typeof window.scrollTo;
+
+// 삭제 확인 창(confirmDelete)이 열린 채 다음 시험으로 넘어가지 않게
+afterEach(async () => {
+  const { closeConfirm } = await import('../shared/ui/confirmStore');
+  closeConfirm(false);
+});

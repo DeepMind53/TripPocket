@@ -16,6 +16,7 @@ import { syncBookingToPlan } from '../../data/bookingPlanner';
 import { bookingRepo, type NewBooking } from '../../data/repositories/bookingRepo';
 import { BottomSheet, Button, Chip, snackbar, Switch, TimeInput, toast } from '../../shared/ui';
 import { BOOKING_ICON } from '../common/bookingKinds';
+import { confirmDelete } from '../../shared/ui';
 
 /** 픽업·드랍을 많이 예약하는 곳 (고르면 예약 사이트 칸에 들어감, 직접 입력도 됨) */
 const TRANSFER_SITES = ['KKday', 'Klook', '아고다', '마이리얼트립', '네이버'] as const;
@@ -297,6 +298,7 @@ function BookingForm({
 
   async function remove() {
     if (!b) return;
+    if (!(await confirmDelete(t('confirm.item', { name: b.title })))) return;
     onDone();
     await bookingRepo.softDelete(b.id);
     snackbar(t('bookings.deleted'), {

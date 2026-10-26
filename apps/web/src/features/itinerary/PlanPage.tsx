@@ -94,6 +94,7 @@ import { distanceKm, formatDistance, walkMinutes } from '@trippocket/shared';
 import { useLab } from '../../data/labsStore';
 import { DayWeatherBadge } from '../common/DayWeatherBadge';
 import { useTripWeather, type TripDayWeather } from '../common/useTripWeather';
+import { confirmDelete } from '../../shared/ui';
 
 // 드래그 편집은 편집 모드에 들어갈 때만 불러온다 (dnd-kit 포함)
 const EditModeList = lazy(() => import('./EditModeList'));
@@ -364,6 +365,7 @@ function PlanView({
   }
 
   async function remove(item: ItineraryItem) {
+    if (!(await confirmDelete(t('confirm.item', { name: item.title })))) return;
     setDetailOpen(false);
     await itemRepo.softDelete(item.id);
     snackbar(t('detail.deleted'), {

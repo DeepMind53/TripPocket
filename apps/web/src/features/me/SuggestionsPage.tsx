@@ -4,6 +4,7 @@ import { suggestionsApi, type Suggestion } from '../../data/api/suggestions';
 import { useTranslation } from '../../i18n';
 import { Button, IconButton, toast, TopBar } from '../../shared/ui';
 import { ServerOfflineNotice } from '../common/ServerOfflineNotice';
+import { confirmDelete } from '../../shared/ui';
 
 const date = (iso: string) => iso.slice(0, 10).replaceAll('-', '.');
 
@@ -116,7 +117,11 @@ export function SuggestionsPage() {
                   <IconButton
                     label={t('suggest.delete')}
                     icon={<Trash2 />}
-                    onClick={() => void suggestionsApi.remove(s.id).then(load)}
+                    onClick={() =>
+                      void confirmDelete(t('confirm.suggestion')).then(
+                        (ok) => ok && void suggestionsApi.remove(s.id).then(load),
+                      )
+                    }
                   />
                 </li>
               ))}

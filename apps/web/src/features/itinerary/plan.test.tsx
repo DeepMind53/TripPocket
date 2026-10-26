@@ -9,6 +9,7 @@ import { bookingRepo } from '../../data/repositories/bookingRepo';
 import { tripRepo } from '../../data/repositories/tripRepo';
 import { Toaster } from '../../shared/ui';
 import { ReadOnlyTripError, setMemberCounts, setTripRoles } from '../../data/tripRoles';
+import { acceptDelete } from '../../test/confirm';
 
 let tripId = '';
 
@@ -220,6 +221,7 @@ describe('일정 화면', () => {
     await user.click(await screen.findByRole('button', { name: '1번째 일정, 센소지' }));
     const sheet = screen.getByRole('dialog', { name: '센소지' });
     await user.click(within(sheet).getByRole('button', { name: '삭제' }));
+    await acceptDelete(user);
 
     expect(await screen.findByText('일정을 삭제했어요')).toBeInTheDocument();
     await waitFor(() =>

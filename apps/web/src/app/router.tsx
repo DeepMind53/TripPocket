@@ -162,6 +162,13 @@ const allRoutes: RouteObject[] = [
       Component: (await import('../features/labs/LabsPage')).LabsPage,
     }),
   },
+  // 마이 → 삭제 기록 복원 (7일)
+  {
+    path: 'me/trash',
+    lazy: async () => ({
+      Component: (await import('../features/me/TrashPage')).TrashPage,
+    }),
+  },
   {
     path: 'me/suggestions',
     lazy: async () => ({

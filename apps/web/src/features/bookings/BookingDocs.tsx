@@ -6,6 +6,7 @@ import type { AttachmentRow } from '../../data/db';
 import { attachmentRepo } from '../../data/repositories/attachmentRepo';
 import { useTranslation } from '../../i18n';
 import { IconButton, toast } from '../../shared/ui';
+import { confirmDelete } from '../../shared/ui';
 
 const mb = (n: number) => `${(n / 1024 / 1024).toFixed(n < 1024 * 1024 ? 2 : 1)}MB`;
 
@@ -69,7 +70,10 @@ export function BookingDocs({
                     label={t('docs.remove', { name: d.name })}
                     icon={<Trash2 />}
                     onClick={() =>
-                      void attachmentRepo.remove(d).then(() => toast(t('docs.removed')))
+                      void confirmDelete(t('confirm.permanent', { name: d.name })).then(
+                        (ok) =>
+                          ok && void attachmentRepo.remove(d).then(() => toast(t('docs.removed'))),
+                      )
                     }
                   />
                 )}

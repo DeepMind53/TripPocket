@@ -2,7 +2,7 @@ import { lazy, Suspense } from 'react';
 import { Outlet, useLocation } from 'react-router';
 import { useScrollMemory } from './useScrollMemory';
 import { useAuth, wasSignedIn } from '../data/authStore';
-import { Spinner } from '../shared/ui';
+import { ConfirmHost, Spinner } from '../shared/ui';
 import { useStartScreen } from './useStartScreen';
 
 const LoginPage = lazy(async () => ({
@@ -34,6 +34,8 @@ export function AuthGate() {
     return (
       <>
         <Outlet />
+        {/* 삭제 확인 창 (confirmDelete) — 사용자 요청 2026-10-27 */}
+        <ConfirmHost />
       </>
     );
   if (status === 'unknown') return <Loading />;

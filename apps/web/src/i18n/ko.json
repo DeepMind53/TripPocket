@@ -1499,5 +1499,39 @@
     "transit": "대중교통 {{min}}분 · {{time}} 출발",
     "walkLate": "걸어서 약 {{min}}분인데 {{left}}분 뒤 일정이에요",
     "transitLate": "대중교통 약 {{min}}분인데 {{left}}분 뒤 일정이에요"
+  },
+  "confirm": {
+    "title": "삭제할까요?",
+    "delete": "삭제",
+    "trip": "‘{{name}}’ 여행을 삭제해요\n7일 안에는 복원할 수 있어요",
+    "item": "‘{{name}}’ 삭제해요\n7일 안에는 복원할 수 있어요",
+    "permanent": "‘{{name}}’ 삭제해요\n되돌릴 수 없어요",
+    "suggestion": "보낸 제안을 삭제해요\n되돌릴 수 없어요",
+    "checklist": "‘{{name}}’ 빼요\n저장해야 반영돼요",
+    "group": "‘{{name}}’ 묶음을 통째로 빼요\n저장해야 반영돼요"
+  },
+  "trash": {
+    "title": "삭제 기록 복원",
+    "desc": "지운 지 {{n}}일 안의 것을 되살려요\n여행을 되살리면 안의 일정도 함께예요",
+    "empty": "최근 7일 동안 지운 것이 없어요",
+    "today": "오늘 삭제",
+    "daysAgo": "{{n}}일 전 삭제",
+    "restore": "복원",
+    "restoreOf": "{{name}} 복원",
+    "restored": "‘{{name}}’ 복원했어요",
+    "group": {
+      "trips": "여행 전체",
+      "inTrip": "일정·예약·준비물",
+      "saved": "저장 장소",
+      "templates": "준비물 템플릿"
+    },
+    "kind": {
+      "trip": "여행",
+      "item": "일정",
+      "booking": "예약",
+      "checklist": "준비물",
+      "saved": "저장 장소",
+      "template": "템플릿"
+    }
   }
 }

@@ -10,6 +10,7 @@ import { templateRepo } from '../../data/repositories/templateRepo';
 import { useTranslation } from '../../i18n';
 import { BottomSheet, Button, IconButton, snackbar, toast } from '../../shared/ui';
 import { TEMPLATE_SEEDS } from './templates';
+import { confirmDelete } from '../../shared/ui';
 
 export interface TemplateSheetProps {
   open: boolean;
@@ -48,6 +49,7 @@ export function TemplateSheet({ open, onOpenChange, list, current, onApply }: Te
   }
 
   async function remove(tpl: ChecklistTemplate) {
+    if (!(await confirmDelete(t('confirm.item', { name: tpl.name })))) return;
     await templateRepo.softDelete(tpl.id);
     snackbar(t('checklist.templateDeleted'), {
       label: t('common.undo'),

@@ -33,6 +33,11 @@ test('일정: 추가 → 상세 → 길찾기 → 삭제·실행 취소', async 
   await page.goBack();
   await expect(detail).toBeVisible();
   await detail.getByRole('button', { name: '삭제' }).click();
+  // 한 번 더 묻는다 (2026-10-27)
+  await page
+    .getByRole('dialog', { name: '삭제할까요?' })
+    .getByRole('button', { name: '삭제' })
+    .click();
   await expect(row).toBeHidden();
   await page.getByRole('button', { name: '실행 취소' }).click();
   await expect(row).toBeVisible();

@@ -9,6 +9,7 @@ import { EmptyState, IconButton, toast, TopBar } from '../../shared/ui';
 import { ServerOfflineNotice } from '../common/ServerOfflineNotice';
 import { reviewDate } from './reviewDate';
 import { Stars } from './StarRating';
+import { confirmDelete } from '../../shared/ui';
 
 /** 내 후기 모아 보기 (마이 → 여행 도구, 사용자 요청 2026-10-25) — 서버에서 받아 보여 줌, 지우면 포인트 회수 */
 export function MyReviewsPage() {
@@ -21,6 +22,7 @@ export function MyReviewsPage() {
   }, []);
 
   async function remove(r: ReviewView) {
+    if (!(await confirmDelete(t('confirm.permanent', { name: r.placeName ?? '' })))) return;
     const res = await reviewsApi.remove(r.id);
     if (!res.ok) return toast(t('review.failed'));
     setList((l) => (Array.isArray(l) ? l.filter((x) => x.id !== r.id) : l));
