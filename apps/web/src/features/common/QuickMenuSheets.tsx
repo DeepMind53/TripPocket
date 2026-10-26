@@ -4,17 +4,20 @@ import {
   CalendarClock,
   ChevronRight,
   Languages,
+  Siren,
   ListChecks,
   Settings,
   Sparkles,
   Ticket,
   Wallet,
 } from 'lucide-react';
-import { dayNumberOf, todayIn } from '@trippocket/shared';
+import { dayNumberOf, getTripStatus, todayIn, type Trip } from '@trippocket/shared';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from '../../i18n';
 import { Link, useNavigate, useParams } from 'react-router';
-import { useTrip, useTripBookings } from '../../data/hooks';
+import { useTrip, useTripBookings, useTrips } from '../../data/hooks';
+import { useLab } from '../../data/labsStore';
+import { EmergencySheet } from './EmergencySheet';
 import { lodgingForNight } from '../../domain/lodging';
 import { copyText } from '../../shared/lib/clipboard';
 import type { Destination } from '../../shared/lib/directions';
@@ -39,14 +42,30 @@ export function QuickMenuSheets({
   setOpen: (open: boolean) => void;
 }) {
   const { t } = useTranslation();
+  const trips = useTrips();
+  const [sosOpen, setSosOpen] = useRouteSheet('quick-emergency');
   if (inTrip) return <TripQuickMenu open={open} setOpen={setOpen} />;
+  // 여행 밖: 진행 중이거나 가장 가까운 다가오는 여행의 나라
+  const soon = (trips ?? [])
+    .filter((tr) => getTripStatus(tr.startDate, tr.endDate, todayIn(tr.timezone)) !== 'past')
+    .sort((a, b) => a.startDate.localeCompare(b.startDate))[0];
   return (
     <>
       <BottomSheet open={open} onOpenChange={setOpen} title={t('quickMenu.title')}>
-        <QuickMenuContent />
+        <QuickMenuContent onEmergency={() => setSosOpen(true)} />
       </BottomSheet>
+      <EmergencySheet open={sosOpen} onOpenChange={setSosOpen} countries={tripCountries(soon)} />
     </>
   );
+}
+
+/** 여행 목적지 나라 코드 (중복 없이, 적힌 순서) */
+function tripCountries(trip: Trip | null | undefined): string[] {
+  return [
+    ...new Set(
+      (trip?.destinations ?? []).map((d) => d.countryCode).filter((c): c is string => !!c),
+    ),
+  ];
 }
 
 /**
@@ -61,6 +80,7 @@ function TripQuickMenu({ open, setOpen }: { open: boolean; setOpen: (open: boole
   const bookings = useTripBookings(tripId) ?? [];
   const [dirOpen, setDirOpen] = useRouteSheet('quick-directions');
   const [numbersOpen, setNumbersOpen] = useRouteSheet('quick-booking-numbers');
+  const [sosOpen, setSosOpen] = useRouteSheet('quick-emergency');
   const [dest, setDest] = useState<Destination | null>(null);
 
   const today = trip ? todayIn(trip.timezone) : '';
@@ -94,8 +114,9 @@ function TripQuickMenu({ open, setOpen }: { open: boolean; setOpen: (open: boole
   return (
     <>
       <BottomSheet open={open} onOpenChange={setOpen} title={t('quickMenu.title')}>
-        <QuickMenuContent shortcuts={shortcuts} />
+        <QuickMenuContent shortcuts={shortcuts} onEmergency={() => setSosOpen(true)} />
       </BottomSheet>
+      <EmergencySheet open={sosOpen} onOpenChange={setSosOpen} countries={tripCountries(trip)} />
       <DirectionsSheet
         open={dirOpen}
         onOpenChange={setDirOpen}
@@ -137,8 +158,15 @@ interface Shortcuts {
   checklist: () => void;
 }
 
-function QuickMenuContent({ shortcuts }: { shortcuts?: Shortcuts }) {
+function QuickMenuContent({
+  shortcuts,
+  onEmergency,
+}: {
+  shortcuts?: Shortcuts;
+  onEmergency: () => void;
+}) {
   const inTrip = shortcuts !== undefined;
+  const sosLab = useLab('emergency');
   const { tripId } = useParams();
   const { t } = useTranslation();
   const theme = useSettings((st) => st.theme);
@@ -148,6 +176,23 @@ function QuickMenuContent({ shortcuts }: { shortcuts?: Shortcuts }) {
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-col gap-2">
+        {/* 실험실: 긴급 연락처 — 급할 때 찾기 쉽게 맨 위 */}
+        {sosLab && (
+          <button
+            type="button"
+            onClick={onEmergency}
+            className="flex items-center gap-3 rounded-card border border-danger/40 px-4 py-3 text-left"
+          >
+            <span aria-hidden="true" className="text-danger [&>svg]:size-5">
+              <Siren />
+            </span>
+            <span className="flex min-w-0 flex-1 flex-col">
+              <span className="text-body-1">{t('emergency.title')}</span>
+              <span className="text-caption text-fg-muted">{t('emergency.menuDesc')}</span>
+            </span>
+            <ChevronRight aria-hidden="true" className="size-5 text-fg-muted" />
+          </button>
+        )}
         <Link
           to={tripId ? `/fx?trip=${tripId}` : '/fx'}
           className="flex items-center gap-3 rounded-card bg-bg-subtle px-4 py-3 text-left"

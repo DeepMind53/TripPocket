@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { routes } from '../../app/router';
 import { resetLocalDb } from '../../data/dev';
-import { setLab } from '../../data/labsStore';
+import { LABS, setLab } from '../../data/labsStore';
 import { itemRepo } from '../../data/repositories/itemRepo';
 import { tripRepo } from '../../data/repositories/tripRepo';
 import { Toaster } from '../../shared/ui';
@@ -25,10 +25,10 @@ describe('실험실', () => {
     expect(sw).toHaveAttribute('aria-checked', 'true');
     expect(JSON.parse(localStorage.getItem('tp-labs')!)).toEqual({ legDistance: true });
     expect(screen.getByRole('switch', { name: /화면 켜짐 유지/ })).toBeInTheDocument();
-    // 정식 기능이 된 것은 목록에서 빠지고 (2026-10-26), 새 실험 3개
+    // 실험실 목록(LABS)마다 스위치 하나
     expect(
       screen.getAllByRole('switch').map((s) => s.getAttribute('aria-label') ?? s.id),
-    ).toHaveLength(5);
+    ).toHaveLength(LABS.length);
     expect(screen.queryByRole('switch', { name: /현지 시각 표시/ })).toBeNull();
     expect(screen.queryByRole('switch', { name: /당겨서 동기화/ })).toBeNull();
     for (const name of [/오늘 일정 진행률/, /빠듯한 일정 알림/, /하루 일정 글로 복사/])
@@ -107,5 +107,34 @@ describe('실험실', () => {
       other === 'Asia/Bangkok' ? '현지 10:05' : '현지 12:05',
     );
     expect(localTimeLabel('Not/AZone', now, t)).toBeNull();
+  });
+
+  it('긴급 연락처 카드: 켜면 ⚡ 메뉴 맨 위, 여행 나라 번호를 누르면 전화', async () => {
+    const user = userEvent.setup();
+    setLab('emergency', true);
+    const trip = await tripRepo.create({
+      title: '도쿄',
+      destinations: [{ name: '도쿄', kind: 'city', countryCode: 'JP' }],
+      startDate: '2026-11-12',
+      endDate: '2026-11-14',
+      timezone: 'Asia/Tokyo',
+      cover: { emoji: '🗼' },
+    });
+    render(
+      <RouterProvider
+        router={createMemoryRouter(routes, { initialEntries: [`/trips/${trip.id}/plan`] })}
+      />,
+    );
+    await user.click(await screen.findByRole('button', { name: '빠른 메뉴' }));
+    await user.click(await screen.findByRole('button', { name: /긴급 연락처/ }));
+    const sheet = await screen.findByRole('dialog', { name: '긴급 연락처' });
+    expect(within(sheet).getByRole('link', { name: /경찰\s*110/ })).toHaveAttribute(
+      'href',
+      'tel:110',
+    );
+    expect(within(sheet).getByRole('link', { name: /\+82-2-3210-0404/ })).toHaveAttribute(
+      'href',
+      'tel:+82232100404',
+    );
   });
 });

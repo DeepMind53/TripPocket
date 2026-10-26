@@ -12,6 +12,8 @@ export const LABS = [
   'dayProgress',
   'tightGap',
   'copyDay',
+  // 2026-10-26 저녁 (사용자 선택)
+  'emergency',
 ] as const;
 export type LabId = (typeof LABS)[number];
 
