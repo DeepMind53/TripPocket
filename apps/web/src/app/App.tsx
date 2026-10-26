@@ -25,6 +25,9 @@ const NicknameSheet = lazy(async () => ({
 const AccountChoiceSheet = lazy(async () => ({
   default: (await import('../features/me/AccountChoiceSheet')).AccountChoiceSheet,
 }));
+const AdminMonthlyNotice = lazy(async () => ({
+  default: (await import('../features/me/AdminMonthlyNotice')).AdminMonthlyNotice,
+}));
 const InstallSheet = lazy(async () => ({
   default: (await import('../features/me/InstallSheet')).InstallSheet,
 }));
@@ -48,6 +51,7 @@ export function App() {
   const [nicknameDismissed, setNicknameDismissed] = useState(false);
   // 닉네임을 정한 다음, 설치하지 않은 기기에서 한 번만 홈 화면 추가 안내 (사용자 요청 2026-10-26)
   const signedIn = useAuth((s) => s.status === 'user');
+  const isAdmin = useAuth((s) => s.status === 'user' && s.me?.isAdmin === true);
   const installed = useInstall((s) => s.installed);
   const [installDone, setInstallDone] = useState(installOffered);
   const offerInstall =
@@ -104,6 +108,11 @@ export function App() {
         </Suspense>
       )}
       {signedIn && <FlightReminder />}
+      {isAdmin && (
+        <Suspense fallback={null}>
+          <AdminMonthlyNotice />
+        </Suspense>
+      )}
       <Toaster />
     </>
   );

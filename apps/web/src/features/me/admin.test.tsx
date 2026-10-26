@@ -116,4 +116,17 @@ describe('사용자 관리', () => {
       );
     },
   );
+
+  it('관리자: 마이에서 월간 갱신 요청문을 열어 그대로 복사', async () => {
+    mockServer();
+    useAuth.setState({ status: 'user', me: admin });
+    const user = userEvent.setup();
+    renderAt('/me');
+    await user.click(await screen.findByRole('button', { name: '월간 갱신 요청문' }));
+    const sheet = await screen.findByRole('dialog', { name: '월간 갱신 요청문' });
+    expect(sheet).toHaveTextContent('월간 정보 갱신을 해 줘');
+    expect(sheet).toHaveTextContent('emergency.ts');
+    await user.click(within(sheet).getByRole('button', { name: '요청문 복사' }));
+    expect(await navigator.clipboard.readText()).toMatch(/^트립포켓 \d{4}-\d{2} 월간 정보 갱신/);
+  });
 });

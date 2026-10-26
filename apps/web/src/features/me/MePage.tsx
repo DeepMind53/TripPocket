@@ -1,5 +1,6 @@
 import {
   ArchiveRestore,
+  CalendarCheck,
   ChevronRight,
   CircleHelp,
   Database,
@@ -22,6 +23,8 @@ import { useAuth } from '../../data/authStore';
 import { useRouteSheet } from '../../shared/hooks/useRouteSheet';
 import { AccountCard } from './AccountCard';
 import { InstallSheet } from './InstallSheet';
+import { MonthlyUpdateSheet } from './MonthlyUpdateSheet';
+import { todayIn } from '@trippocket/shared';
 import type { ReactNode } from 'react';
 import { useTranslation } from '../../i18n';
 import { Link } from 'react-router';
@@ -32,6 +35,7 @@ export function MePage() {
   const { t } = useTranslation();
   const isAdmin = useAuth((s) => s.status === 'user' && s.me?.isAdmin === true);
   const [installOpen, setInstallOpen] = useRouteSheet('install');
+  const [monthlyOpen, setMonthlyOpen] = useRouteSheet('monthly-update');
   return (
     <>
       <TopBar title={t('me.title')} />
@@ -57,6 +61,11 @@ export function MePage() {
             <MenuRow to="/admin/api-usage" icon={<Gauge />} label={t('apiUsage.title')} />
             <MenuRow to="/admin/ai" icon={<Sparkles />} label={t('me.devAi')} />
             <MenuRow to="/admin/suggestions" icon={<Inbox />} label={t('suggest.adminTitle')} />
+            <MenuRow
+              icon={<CalendarCheck />}
+              label={t('monthly.title')}
+              onClick={() => setMonthlyOpen(true)}
+            />
           </MenuGroup>
         )}
         <MenuGroup title={t('me.groupInfo')}>
@@ -78,6 +87,13 @@ export function MePage() {
         </p>
       </div>
       <InstallSheet open={installOpen} onOpenChange={setInstallOpen} />
+      {isAdmin && monthlyOpen && (
+        <MonthlyUpdateSheet
+          open={monthlyOpen}
+          onOpenChange={setMonthlyOpen}
+          month={todayIn('Asia/Seoul').slice(0, 7)}
+        />
+      )}
     </>
   );
 }
