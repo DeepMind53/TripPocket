@@ -1,6 +1,7 @@
 import { useTrip } from '../../data/hooks';
 import { isDomesticTrip } from '../../domain/tripPlace';
 import { PlaceAutocomplete } from '../common/PlaceAutocomplete';
+import { SavedPick } from '../saved/SavedPick';
 import { PlaceHours } from './PlaceHours';
 import { useSettings } from '../../data/settingsStore';
 import { ITEM_KINDS, type ItemKind, type ItineraryItem, type LocalDate } from '@trippocket/shared';
@@ -159,6 +160,26 @@ function ItemForm({
 
       {!isNote && (
         <>
+          {/* 새 일정이면 이 여행 나라에 저장해 둔 장소에서 고르기 */}
+          {!item && trip && (
+            <SavedPick
+              countries={trip.destinations.flatMap((d) => (d.countryCode ? [d.countryCode] : []))}
+              onPick={(p) => {
+                setKind(p.kind);
+                setTitle(p.name);
+                setAddress(p.address ?? '');
+                setPicked({
+                  name: p.name,
+                  ...(p.address ? { address: p.address } : {}),
+                  ...(p.coords ? { coords: p.coords } : {}),
+                  ...(p.coordsSource ? { coordsSource: p.coordsSource } : {}),
+                  ...(p.coordsFetchedAt ? { coordsFetchedAt: p.coordsFetchedAt } : {}),
+                  ...(p.googlePlaceId ? { googlePlaceId: p.googlePlaceId } : {}),
+                  ...(p.naverPlaceUrl ? { naverPlaceUrl: p.naverPlaceUrl } : {}),
+                });
+              }}
+            />
+          )}
           <Field label={t('form.name')}>
             <input
               id="item-title"

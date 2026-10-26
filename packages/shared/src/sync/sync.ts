@@ -61,7 +61,7 @@ export function parseRecord(
 
 export interface PushResult {
   applied: { table: SyncTable; id: string; rev: number }[];
-  rejected: { table: SyncTable; id: string; reason: 'invalid' | 'forbidden' }[];
+  rejected: { table: SyncTable; id: string; reason: 'invalid' | 'forbidden' | 'limit' }[];
 }
 
 export type TripRole = 'owner' | 'editor' | 'viewer';

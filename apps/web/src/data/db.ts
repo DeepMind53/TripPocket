@@ -75,6 +75,8 @@ export class TripPocketDB extends Dexie {
     this.version(5).stores({ attachments: 'id, tripId, bookingId' });
     // v6 (2026-10-26): 일정 방문 기록(visit) — 인덱스는 그대로, 다녀옴 일정은 방문으로
     this.version(6).stores({}).upgrade(upgradeToV6);
+    // v7 (2026-10-26): 저장한 장소에 나라 코드(countryCode) — 인덱스 없음, 예전 행은 저장 탭을 열 때 도시 이름으로 채운다
+    this.version(7).stores({});
   }
 }
 

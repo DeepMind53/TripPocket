@@ -1,5 +1,6 @@
 import {
   parseRecord,
+  SAVED_PLACES_MAX,
   TRIP_SCOPED,
   USER_SCOPED,
   type PullResult,
@@ -97,6 +98,18 @@ export function syncRepo(db: Db) {
           // 없는 것과 같은 응답 — 다른 사람 데이터가 있는지 알려 주지 않는다
           result.rejected.push({ table: c.table, id: record.id, reason: 'forbidden' });
           continue;
+        }
+        // 저장한 장소는 한 사람 200곳까지 (기기도 막지만, 고친 앱·여러 기기에서 넘지 않게)
+        if (c.table === 'savedPlaces' && !existing && !record.deletedAt) {
+          const { n } = db
+            .prepare(
+              "SELECT COUNT(*) AS n FROM records WHERE table_name = 'savedPlaces' AND owner_user_id = ? AND deleted_at IS NULL",
+            )
+            .get(userId) as { n: number };
+          if (n >= SAVED_PLACES_MAX) {
+            result.rejected.push({ table: c.table, id: record.id, reason: 'limit' });
+            continue;
+          }
         }
         // 충돌: 기기가 본 뒤에 서버 쪽이 바뀌었으면, 진 쪽(서버 기존 값)을 보관하고 나중 도착분 채택
         if (existing && c.baseRev !== existing.rev) {

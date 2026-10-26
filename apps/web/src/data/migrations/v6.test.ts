@@ -15,7 +15,7 @@ it('저장소 v5 → v6: 다녀옴 일정은 방문 기록으로, 나머지는 �
   ]);
   old.close();
   const db = new TripPocketDB(NAME);
-  expect(db.verno).toBe(6);
+  expect(db.verno).toBeGreaterThanOrEqual(6);
   expect(await db.items.get('a')).toMatchObject({ done: true, visit: 'visited', dirty: 0 });
   expect((await db.items.get('b'))?.visit).toBeUndefined();
   db.close();

@@ -193,9 +193,13 @@ export const SavedPlaceSchema = z.object({
   googlePlaceId: z.optional(z.string()),
   naverPlaceUrl: z.optional(z.url()),
   cityTag: z.optional(z.string().check(z.maxLength(40))),
+  /** 나라 코드 (2026-10-26): 저장 탭 나라별 칸, 일정 세울 때 그 나라 장소만 보여 주기 */
+  countryCode: z.optional(z.string().check(z.regex(/^[A-Z]{2}$/))),
   memo: z.optional(z.string().check(z.maxLength(2000))),
 });
 export type SavedPlace = z.infer<typeof SavedPlaceSchema>;
+/** 한 사람이 저장할 수 있는 장소 수 (사용자 결정 2026-10-26) — 기기와 서버가 같이 지킨다 */
+export const SAVED_PLACES_MAX = 200;
 
 /** 준비물·할 일 템플릿 (여행과 무관, 사용자가 이름 수정·추가·삭제) */
 export const ChecklistTemplateSchema = z.object({

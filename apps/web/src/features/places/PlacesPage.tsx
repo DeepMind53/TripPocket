@@ -1,4 +1,4 @@
-import type { ItemKind, PlaceSummary } from '@trippocket/shared';
+import { SAVED_PLACES_MAX, type ItemKind, type PlaceSummary } from '@trippocket/shared';
 import { attachFallback } from '../../data/limitNotice';
 import { placeSearchLinks, type FallbackLink } from '../../shared/lib/fallbackLinks';
 import { FallbackLinks } from '../common/FallbackLinks';
@@ -10,7 +10,7 @@ import { placesApi, resolvePlace } from '../../data/api/places';
 import { useAuth } from '../../data/authStore';
 import { useTrip } from '../../data/hooks';
 import { itemRepo } from '../../data/repositories/itemRepo';
-import { savedPlaceRepo } from '../../data/repositories/savedPlaceRepo';
+import { SavedLimitError, savedPlaceRepo } from '../../data/repositories/savedPlaceRepo';
 import { isDomesticTrip } from '../../domain/tripPlace';
 import { ServerOfflineNotice } from '../common/ServerOfflineNotice';
 import { useTranslation } from '../../i18n';
@@ -45,6 +45,8 @@ export function PlacesPage() {
   const [limitLinks, setLimitLinks] = useState<FallbackLink[]>([]);
   if (!trip) return null;
   const city = trip.destinations[0]?.name ?? '';
+  // 저장할 때 나라도 같이 (저장 탭 나라 칸·일정 추가에서 그 나라만 보여 주기)
+  const country = trip.destinations[0]?.countryCode;
   const near = trip.destinations.find((d) => d.coords)?.coords;
 
   async function run(category = cat, text = q) {
@@ -163,9 +165,17 @@ export function PlacesPage() {
                         ...(p.coords ? { coords: p.coords, coordsSource: p.source } : {}),
                         ...(p.source === 'google' ? { googlePlaceId: p.id } : {}),
                         ...(city ? { cityTag: city } : {}),
+                        ...(country ? { countryCode: country } : {}),
                       }),
                     )
-                    .then(() => toast(t('places.saved')))
+                    .then(
+                      () => toast(t('places.saved')),
+                      (e: unknown) => {
+                        if (e instanceof SavedLimitError)
+                          toast(t('saved.limit', { max: SAVED_PLACES_MAX }));
+                        else throw e;
+                      },
+                    )
                 }
               />
               {canEdit && (

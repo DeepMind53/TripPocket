@@ -191,3 +191,37 @@ describe('동기화', () => {
     expect(rest.hasMore).toBe(false);
   });
 });
+
+describe('저장한 장소 200곳 제한', () => {
+  const saved = (id: string) => ({
+    id,
+    name: '이치란',
+    kind: 'food',
+    countryCode: 'JP',
+    createdAt: T,
+    updatedAt: T,
+  });
+
+  it('200곳이 차면 새로 올린 것만 거절(limit), 있던 것 고치기·다른 사람은 그대로', async () => {
+    const insert = db.prepare(
+      "INSERT INTO records (table_name, id, trip_id, owner_user_id, data_json, updated_at, deleted_at, rev) VALUES ('savedPlaces', ?, NULL, 'u-A', ?, ?, NULL, ?)",
+    );
+    for (let n = 0; n < 200; n++) {
+      const id = U(`s${n}`);
+      insert.run(id, JSON.stringify(saved(id)), T, n + 1);
+    }
+    const res = (
+      await push(A, [{ table: 'savedPlaces', record: saved(U('new')), baseRev: null }])
+    ).json();
+    expect(res.rejected).toEqual([{ table: 'savedPlaces', id: U('new'), reason: 'limit' }]);
+
+    const edit = { ...saved(U('s0')), name: '이치란 본점', updatedAt: '2026-10-24T00:00:00.000Z' };
+    const ok = (await push(A, [{ table: 'savedPlaces', record: edit, baseRev: 1 }])).json();
+    expect(ok.applied).toHaveLength(1);
+
+    const other = (
+      await push(B, [{ table: 'savedPlaces', record: saved(U('b1')), baseRev: null }])
+    ).json();
+    expect(other.applied).toHaveLength(1);
+  });
+});
