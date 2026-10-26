@@ -1,4 +1,4 @@
-import { useRef, useState, type ReactNode } from 'react';
+import { useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { useTranslation } from '../../i18n';
 import { cn } from '../../shared/lib/cn';
 
@@ -87,7 +87,7 @@ export function IntroCarousel() {
 function Phone({ children }: { children: ReactNode }) {
   return (
     <div className="overflow-hidden rounded-[22px] border-4 border-fg/10 bg-bg shadow-card">
-      <div className="flex h-[216px] flex-col gap-2 overflow-hidden p-3">{children}</div>
+      <div className="flex h-[240px] flex-col gap-2 overflow-hidden p-3">{children}</div>
     </div>
   );
 }
@@ -107,24 +107,32 @@ function Row({
   time,
   title,
   kind,
+  label,
 }: {
   n: number;
   color: string;
   time: string;
   title: string;
+  /** 일정 종류 — 실제 화면처럼 종류별 연한 바탕 (styles/index.css .kind-tint) */
   kind: string;
+  label: string;
 }) {
   return (
-    <div className="flex items-center gap-2 border-b border-line/70 py-1.5 last:border-0">
+    <div
+      className="kind-tint flex items-center gap-2 rounded-lg px-1.5 py-1"
+      style={{ '--kind': `var(--tp-kind-${kind})` } as CSSProperties}
+    >
       <span
-        className="grid size-4 shrink-0 place-items-center rounded-full text-[9px] font-bold text-white"
+        className="grid size-4 shrink-0 place-items-center rounded-full text-[9px] leading-none font-bold text-white"
         style={{ background: color }}
       >
         {n}
       </span>
-      <span className="tabular w-8 shrink-0 text-[10px] font-semibold text-fg-sub">{time}</span>
+      <span className="tabular w-8 shrink-0 text-[10px] font-semibold whitespace-nowrap text-fg-sub">
+        {time}
+      </span>
       <span className="min-w-0 flex-1 truncate text-[11px]">{title}</span>
-      <span className="shrink-0 rounded bg-bg-subtle px-1 text-[9px] text-fg-sub">{kind}</span>
+      <span className="shrink-0 rounded bg-bg-subtle px-1 text-[9px] text-fg-sub">{label}</span>
     </div>
   );
 }
@@ -132,69 +140,89 @@ function Row({
 const BLUE = '#2F6BFF';
 const CORAL = '#FF6B4A';
 
+/** 일정 화면: 날짜 칩 줄 + 날짜 카드(회색 머리·왼쪽 색 띠) + 종류별 바탕 일정 + 빈 날 접기 */
 function PlanMock() {
   return (
     <Phone>
-      <div className="flex items-center gap-1 text-[11px] font-bold">🗼 도쿄 가을여행</div>
-      <div className="flex flex-col rounded-xl border border-line bg-surface px-2">
-        <div className="flex items-center gap-1.5 py-1.5">
+      <span className="text-[11px] font-bold">🇯🇵 도쿄 가을여행 · D-3</span>
+      <div className="flex gap-1 text-[9px]">
+        <span className="rounded-full bg-primary-weak px-1.5 py-0.5 font-semibold text-primary">
+          전체
+        </span>
+        <span className="rounded-full border border-line px-1.5 py-0.5">
+          <span style={{ color: BLUE }}>●</span> 1일차 10.27
+        </span>
+        <span className="rounded-full border border-line px-1.5 py-0.5">
+          <span style={{ color: CORAL }}>●</span> 2일차 10.28
+        </span>
+      </div>
+      <div className="flex flex-col overflow-hidden rounded-xl border border-line bg-surface">
+        <div
+          className="flex items-center gap-1.5 border-b border-line bg-bg-subtle/60 px-2 py-1"
+          style={{ boxShadow: `inset 3px 0 0 ${BLUE}` }}
+        >
           <Pill color={BLUE}>1일차</Pill>
           <span className="text-[11px] font-bold">10.27 (화)</span>
         </div>
-        <Row n={1} color={BLUE} time="09:10" title="인천 → 나리타 KE703" kind="이동" />
-        <Row n={2} color={BLUE} time="15:00" title="신주쿠 호텔 체크인" kind="숙소" />
-        <Row n={3} color={BLUE} time="19:00" title="이치란 라멘" kind="맛집" />
-      </div>
-      <div className="flex items-center gap-1.5 rounded-xl border border-dashed border-line px-2 py-1.5">
-        <Pill color={CORAL}>2일차</Pill>
-        <span className="text-[10px] text-fg-muted">10.28 (수) · 일정 없음</span>
+        <div className="flex flex-col gap-1 p-1.5">
+          <Row
+            n={1}
+            color={BLUE}
+            time="09:10"
+            title="인천 → 나리타"
+            kind="transport"
+            label="이동"
+          />
+          <Row n={2} color={BLUE} time="15:00" title="신주쿠 호텔" kind="lodging" label="숙소" />
+          <Row n={3} color={BLUE} time="19:00" title="이치란 라멘" kind="food" label="맛집" />
+        </div>
       </div>
     </Phone>
   );
 }
 
+/** 지도 크게 보기: 일차 색 핀·순서선 + 아래 한 개씩 넘기는 일정 */
 function MapMock() {
-  const pins: [number, number, string][] = [
-    [40, 120, BLUE],
-    [110, 70, BLUE],
-    [190, 95, BLUE],
-    [230, 40, CORAL],
+  const pins: [number, number][] = [
+    [40, 80],
+    [110, 40],
+    [190, 62],
   ];
   return (
     <Phone>
-      <svg
-        viewBox="0 0 260 150"
-        className="h-full w-full rounded-xl bg-[#E8F0E6] dark:bg-[#1f2a22]"
-      >
+      <svg viewBox="0 0 260 105" className="w-full rounded-xl bg-[#E8F0E6] dark:bg-[#1f2a22]">
         <path
-          d="M0 110 C 60 90, 120 130, 260 80"
+          d="M0 80 C 60 60, 120 95, 260 55"
           stroke="#ffffff"
-          strokeWidth="10"
+          strokeWidth="9"
           fill="none"
           opacity="0.9"
         />
-        <path d="M120 0 L 140 150" stroke="#ffffff" strokeWidth="7" fill="none" opacity="0.9" />
-        <path d="M200 0 C 180 60, 230 100, 210 150" stroke="#BFD7F5" strokeWidth="12" fill="none" />
+        <path d="M120 0 L 135 105" stroke="#ffffff" strokeWidth="6" fill="none" opacity="0.9" />
+        <path d="M205 0 C 185 40, 230 70, 212 105" stroke="#BFD7F5" strokeWidth="11" fill="none" />
         <polyline
-          points="40,120 110,70 190,95"
+          points="40,80 110,40 190,62"
           fill="none"
           stroke={BLUE}
           strokeWidth="3"
           strokeDasharray="6 4"
         />
-        {pins.map(([x, y, c], i) => (
+        {pins.map(([x, y], i) => (
           <g key={i}>
-            <circle cx={x} cy={y} r="11" fill={c} stroke="#fff" strokeWidth="2.5" />
+            <circle cx={x} cy={y} r="10" fill={BLUE} stroke="#fff" strokeWidth="2.5" />
             <text x={x} y={y + 4} textAnchor="middle" fontSize="11" fontWeight="700" fill="#fff">
-              {i < 3 ? i + 1 : 1}
+              {i + 1}
             </text>
           </g>
         ))}
       </svg>
-      <div className="flex items-center gap-2 rounded-xl border border-line bg-surface px-2 py-1.5 text-[11px]">
-        <span className="font-bold text-primary">‹</span>
-        <span className="flex-1 truncate">2 / 4 · 센소지 · 걸어서 12분</span>
-        <span className="font-bold text-primary">›</span>
+      <div className="flex flex-col gap-1 rounded-xl border border-line bg-surface p-1.5">
+        <div className="flex items-center justify-between px-1 text-[10px]">
+          <span className="font-bold text-primary">‹</span>
+          <span className="tabular text-fg-sub">1일차 · 10.27 (화) · 2 / 3</span>
+          <span className="font-bold text-primary">›</span>
+        </div>
+        <Row n={2} color={BLUE} time="15:00" title="신주쿠 호텔" kind="lodging" label="숙소" />
       </div>
     </Phone>
   );
@@ -240,57 +268,74 @@ function BookingMock() {
 }
 
 function TogetherMock() {
+  const members: [string, string][] = [
+    ['하늘', '소유자'],
+    ['구름', '수정'],
+    ['민지', '보기만'],
+  ];
   return (
     <Phone>
       <div className="flex items-center justify-between">
-        <span className="text-[11px] font-bold">🗼 도쿄 가을여행</span>
+        <span className="text-[11px] font-bold">🇯🇵 도쿄 가을여행</span>
         <span className="rounded-full bg-primary-weak px-2 py-0.5 text-[10px] font-semibold text-primary">
           👥 3
         </span>
       </div>
-      <div className="flex flex-col gap-1 rounded-xl border border-line bg-surface p-2 text-[10px]">
-        <span>진하 · 수정 · 소유자</span>
-        <span>야멍 · 수정</span>
-        <span className="text-fg-muted">민지 · 보기만</span>
+      <div className="flex flex-col divide-y divide-line rounded-xl border border-line bg-surface px-2 text-[10px]">
+        {members.map(([name, role]) => (
+          <span key={name} className="flex justify-between py-1">
+            <span className="font-semibold">{name}</span>
+            <span className="text-fg-muted">{role}</span>
+          </span>
+        ))}
       </div>
-      <div className="flex flex-col gap-0.5 rounded-xl border border-line bg-surface p-2">
-        <span className="text-[11px] font-bold">✨ 신주쿠역 근처 맛집 · 5km 안</span>
-        <span className="text-[10px]">1 이치란 신주쿠점 · 블로그 7회 언급</span>
-        <span className="text-[10px] text-fg-sub">진한 돈코츠 국물, 줄 서도 먹는 곳</span>
+      <div className="flex flex-col gap-0.5 rounded-xl border border-line bg-surface p-2 leading-tight">
+        <span className="text-[11px] font-bold">✨ 신주쿠역 근처 맛집</span>
+        <span className="text-[10px]">1 이치란 신주쿠점 · 블로그 7회</span>
+        <span className="truncate text-[9px] text-fg-muted">진한 돈코츠 국물, 줄 서도 먹는 곳</span>
       </div>
     </Phone>
   );
 }
 
+/** 빠른 메뉴: 환율·AI 추천·번역 회화 + 여행 안 바로가기 4개 (실제 시트와 같은 순서) */
 function QuickMock() {
-  const tiles: [string, string][] = [
-    ['💱', '환율 계산'],
-    ['🚕', '택시 카드'],
-    ['🗣', '여행 회화'],
-    ['🧭', '길찾기'],
+  const links: [string, string, string, boolean][] = [
+    ['💱', '환율', '여행 국가 통화를 원화로', false],
+    ['✨', 'AI 추천', '내 근처 맛집·핫플', true],
+    ['🗣', '번역·회화', '자주 쓰는 말을 현지어로', false],
   ];
+  const shortcuts = ['🛏 숙소로 길찾기', '🎫 예약번호', '🗓 다음 일정', '☑ 준비물'];
   return (
     <Phone>
-      <div className="flex flex-col gap-1.5 rounded-xl border border-line bg-surface p-2">
-        <span className="text-[11px] font-bold">⚡ 빠른 메뉴</span>
-        <div className="grid grid-cols-2 gap-1.5">
-          {tiles.map(([e, label]) => (
-            <span
-              key={label}
-              className="flex items-center gap-1 rounded-lg bg-bg-subtle px-2 py-1.5 text-[10px] font-semibold"
-            >
-              {e} {label}
-            </span>
-          ))}
-        </div>
+      <span className="text-[11px] font-bold">⚡ 빠른 메뉴</span>
+      {links.map(([e, title, desc, ai]) => (
+        <span
+          key={title}
+          className={cn(
+            'flex items-center gap-2 rounded-lg px-2 py-0.5',
+            ai ? 'bg-primary-weak' : 'bg-bg-subtle',
+          )}
+        >
+          <span className="text-[11px]">{e}</span>
+          <span className="min-w-0 flex-1 truncate text-[10px]">
+            <span className="font-semibold">{title}</span>
+            <span className="text-fg-muted"> · {desc}</span>
+          </span>
+          <span className="text-[10px] text-fg-muted">›</span>
+        </span>
+      ))}
+      <span className="text-[9px] font-bold text-fg-muted">바로가기</span>
+      <div className="grid grid-cols-2 gap-1">
+        {shortcuts.map((label) => (
+          <span
+            key={label}
+            className="truncate rounded-lg bg-bg-subtle px-2 py-0.5 text-[9px] font-semibold"
+          >
+            {label}
+          </span>
+        ))}
       </div>
-      <div className="flex flex-col gap-0.5 rounded-xl border border-line bg-surface p-2">
-        <span className="tabular text-[11px] font-bold">¥ 1,000 = ₩ 9,120</span>
-        <span className="text-[10px] text-fg-sub">🚕 新宿駅までお願いします</span>
-      </div>
-      <span className="grid size-8 place-items-center self-end rounded-full bg-primary text-[14px] text-on-primary shadow">
-        ⚡
-      </span>
     </Phone>
   );
 }
@@ -306,12 +351,12 @@ function AlertsMock() {
       {notes.map(([e, title, sub]) => (
         <div
           key={title}
-          className="flex items-center gap-2 rounded-xl border border-line bg-surface px-2 py-1.5"
+          className="flex items-center gap-2 rounded-xl border border-line bg-surface px-2 py-1"
         >
           <span className="grid size-6 shrink-0 place-items-center rounded-lg bg-primary-weak text-[12px]">
             {e}
           </span>
-          <span className="flex min-w-0 flex-col">
+          <span className="flex min-w-0 flex-col leading-tight">
             <span className="truncate text-[11px] font-bold">{title}</span>
             <span className="truncate text-[10px] text-fg-sub">{sub}</span>
           </span>
@@ -324,9 +369,11 @@ function AlertsMock() {
   );
 }
 
+/** 기록 탭: 나의 여행 통계(회색 칸) + 가 본 나라 국기 + 다녀온 여행 */
 function RecordsMock() {
   return (
     <Phone>
+      <span className="text-[9px] font-bold text-fg-muted">나의 여행</span>
       <div className="grid grid-cols-3 gap-1.5">
         {(
           [
@@ -335,23 +382,20 @@ function RecordsMock() {
             ['가 본 나라', '3곳'],
           ] as const
         ).map(([k, v]) => (
-          <span
-            key={k}
-            className="flex flex-col items-center rounded-xl border border-line bg-surface py-1.5"
-          >
+          <span key={k} className="flex flex-col items-center rounded-xl bg-bg-subtle py-1.5">
             <span className="tabular text-[13px] font-bold">{v}</span>
-            <span className="text-[9px] text-fg-sub">{k}</span>
+            <span className="text-[9px] text-fg-muted">{k}</span>
           </span>
         ))}
       </div>
-      <div className="flex flex-col gap-0.5 rounded-xl border border-line bg-surface p-2">
-        <span className="text-[11px] font-bold">🗼 도쿄 가을여행 · 10.27~10.30</span>
+      <span className="text-[18px] leading-none">🇯🇵 🇹🇼 🇹🇭</span>
+      <div className="flex flex-col gap-0.5 rounded-xl border border-line bg-surface p-2 leading-tight">
+        <span className="text-[11px] font-bold">🇯🇵 도쿄 가을여행 · 10.27~10.30</span>
         <span className="text-[10px] text-rating">★★★★★ 이치란 라멘</span>
-        <span className="text-[10px] text-fg-sub">"새벽에도 줄이 길었어요"</span>
+        <span className="self-start rounded-full bg-primary-weak px-1.5 text-[9px] font-semibold text-primary">
+          리뷰 남기면 +100P
+        </span>
       </div>
-      <span className="self-start rounded-full bg-primary-weak px-2 py-0.5 text-[10px] font-semibold text-primary">
-        리뷰 남기면 +100P
-      </span>
     </Phone>
   );
 }

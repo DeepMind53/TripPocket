@@ -92,11 +92,11 @@ describe('계정', () => {
     const input = within(sheet).getByLabelText('닉네임');
     await user.clear(input);
     expect(within(sheet).getByRole('button', { name: '저장' })).toBeDisabled();
-    await user.type(input, '  진하  ');
+    await user.type(input, '  하늘  ');
     await user.click(within(sheet).getByRole('button', { name: '저장' }));
     expect(await screen.findByText('닉네임을 바꿨어요')).toBeInTheDocument();
     expect(calls).toContain('PATCH /api/me/nickname');
-    expect(await screen.findByText('진하')).toBeInTheDocument();
+    expect(await screen.findByText('하늘')).toBeInTheDocument();
   });
 });
 

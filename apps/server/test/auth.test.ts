@@ -121,10 +121,10 @@ describe('로그인', () => {
 
   it('닉네임 바꾸기: 다듬어 저장하고 "정함"으로 표시, 잘못된 값은 400, 로그인 필요', async () => {
     const { sid } = await login('kakao');
-    const res = await api('PATCH', '/api/me/nickname', sid, { nickname: '  진하  ' });
-    expect(res.json()).toEqual({ nickname: '진하' });
+    const res = await api('PATCH', '/api/me/nickname', sid, { nickname: '  하늘  ' });
+    expect(res.json()).toEqual({ nickname: '하늘' });
     expect((await api('GET', '/api/me', sid)).json()).toMatchObject({
-      nickname: '진하',
+      nickname: '하늘',
       nicknameSet: true,
     });
     expect((await api('PATCH', '/api/me/nickname', sid, { nickname: ' ' })).statusCode).toBe(400);

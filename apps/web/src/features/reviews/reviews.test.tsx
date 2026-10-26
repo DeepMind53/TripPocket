@@ -33,7 +33,7 @@ beforeEach(async () => {
     .id;
   useAuth.setState({
     status: 'user',
-    me: { id: 'u', nickname: '진하', createdAt: '', providers: [], publicNo: 7, points: 0 },
+    me: { id: 'u', nickname: '하늘', createdAt: '', providers: [], publicNo: 7, points: 0 },
   });
   vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
     if (url.startsWith('/api/reviews?'))
@@ -63,7 +63,7 @@ beforeEach(async () => {
         review: {
           id: 'r1',
           ...body,
-          author: '진하',
+          author: '하늘',
           mine: true,
           visitedOn: null,
           createdAt: '',
