@@ -1,6 +1,5 @@
 import { RefreshCw } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { useLab } from '../../data/labsStore';
 import { useSync } from '../../data/sync/syncStore';
 import { useTranslation } from '../../i18n';
 import { toast } from '../../shared/ui';
@@ -9,16 +8,14 @@ import { toast } from '../../shared/ui';
 const PULL_PX = 70;
 
 /**
- * 실험실 I3 당겨서 동기화: 화면 맨 위에서 아래로 당겼다 놓으면 지금 동기화 (docs/16 I3).
+ * 당겨서 동기화 (2026-10-26 정식): 화면 맨 위에서 아래로 당겼다 놓으면 지금 동기화 (docs/16 I3).
  * 시트가 열려 있거나 스크롤이 맨 위가 아니면 아무 일도 안 한다
  */
 export function PullToSync() {
   const { t } = useTranslation();
-  const on = useLab('pullToSync');
   const [pull, setPull] = useState(0);
 
   useEffect(() => {
-    if (!on) return;
     let y0: number | null = null;
     let dist = 0;
     const start = (e: TouchEvent) => {
@@ -61,9 +58,9 @@ export function PullToSync() {
       window.removeEventListener('touchend', end);
       window.removeEventListener('touchcancel', end);
     };
-  }, [on, t]);
+  }, [t]);
 
-  if (!on || pull < 8) return null;
+  if (pull < 8) return null;
   const ready = pull >= PULL_PX;
   return (
     <div

@@ -1,8 +1,12 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { routes } from '../../app/router';
 import { resetLocalDb } from '../../data/dev';
+import { setLab } from '../../data/labsStore';
+import { itemRepo } from '../../data/repositories/itemRepo';
+import { tripRepo } from '../../data/repositories/tripRepo';
+import { Toaster } from '../../shared/ui';
 import { localTimeLabel } from '../../shared/hooks/useMinuteClock';
 
 beforeEach(async () => {
@@ -21,7 +25,76 @@ describe('실험실', () => {
     expect(sw).toHaveAttribute('aria-checked', 'true');
     expect(JSON.parse(localStorage.getItem('tp-labs')!)).toEqual({ legDistance: true });
     expect(screen.getByRole('switch', { name: /화면 켜짐 유지/ })).toBeInTheDocument();
-    expect(screen.getByRole('switch', { name: /현지 시각 표시/ })).toBeInTheDocument();
+    // 정식 기능이 된 것은 목록에서 빠지고 (2026-10-26), 새 실험 3개
+    expect(
+      screen.getAllByRole('switch').map((s) => s.getAttribute('aria-label') ?? s.id),
+    ).toHaveLength(5);
+    expect(screen.queryByRole('switch', { name: /현지 시각 표시/ })).toBeNull();
+    expect(screen.queryByRole('switch', { name: /당겨서 동기화/ })).toBeNull();
+    for (const name of [/오늘 일정 진행률/, /빠듯한 일정 알림/, /하루 일정 글로 복사/])
+      expect(screen.getByRole('switch', { name })).toBeInTheDocument();
+  });
+
+  it('새 실험: 오늘 진행률 · 빠듯한 일정 알림 · 하루 일정 글로 복사 (2026-10-26)', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-10-24T03:00:00Z')); // 서울 12:00, 여행 1일차
+    try {
+      const trip = await tripRepo.create({
+        title: '도쿄',
+        destinations: [{ name: '도쿄', kind: 'city', countryCode: 'JP' }],
+        startDate: '2026-10-24',
+        endDate: '2026-10-25',
+        timezone: 'Asia/Seoul',
+        cover: {},
+      });
+      const at = (lat: number) => ({ name: 'p', coords: { lat, lng: 139.69 }, address: '도쿄' });
+      const a = await itemRepo.create({
+        tripId: trip.id,
+        date: '2026-10-24',
+        kind: 'place',
+        title: '센소지',
+        startTime: '10:00',
+        place: at(35.68),
+      });
+      await itemRepo.update(a.id, { done: true });
+      await itemRepo.create({
+        tripId: trip.id,
+        date: '2026-10-24',
+        kind: 'food',
+        title: '이치란',
+        startTime: '10:10',
+        place: at(35.7),
+      });
+      setLab('dayProgress', true);
+      setLab('tightGap', true);
+      setLab('copyDay', true);
+      const user = userEvent.setup();
+      render(
+        <>
+          <RouterProvider
+            router={createMemoryRouter(routes, {
+              initialEntries: [`/trips/${trip.id}/plan?day=1`],
+            })}
+          />
+          <Toaster />
+        </>,
+      );
+      const day = await screen.findByRole('region', { name: /^1일차/ });
+      expect(
+        await within(day).findByLabelText('오늘 일정 2개 중 1개 다녀왔어요'),
+      ).toBeInTheDocument();
+      expect(within(day).getByText(/걸어서 약 \d+분인데 10분 뒤 일정이에요/)).toBeInTheDocument();
+      await user.click(within(day).getByRole('button', { name: /날짜 메뉴|메뉴/ }));
+      await user.click(await screen.findByRole('button', { name: /일정 글로 복사/ }));
+      // userEvent.setup()이 클립보드 흉내를 넣는다
+      expect(await screen.findByText('하루 일정을 복사했어요')).toBeInTheDocument();
+      expect(await navigator.clipboard.readText()).toMatch(
+        /^1일차 · 10\.24 \(토\)\n1\. 10:00 센소지 \(도쿄\)\n2\. 10:10 이치란/,
+      );
+    } finally {
+      for (const id of ['dayProgress', 'tightGap', 'copyDay'] as const) setLab(id, false);
+      vi.useRealTimers();
+    }
   });
 
   it('현지 시각: 시간대가 기기와 다를 때만', () => {

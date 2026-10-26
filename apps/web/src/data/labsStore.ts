@@ -8,13 +8,10 @@ import { create } from 'zustand';
 export const LABS = [
   'legDistance',
   'wakeLock',
-  'localClock',
-  // docs/16 C4·C5·I2·I3·I4 (2026-10-25)
-  'longPressEdit',
-  'swipeDays',
-  'sheetResize',
-  'pullToSync',
-  'viewTransitions',
+  // 2026-10-26 새 실험 (현지 시각·꾹 눌러 편집·밀어 날짜 넘기기·시트 높이·당겨서 동기화·화면 전환은 이날 정식 기능으로)
+  'dayProgress',
+  'tightGap',
+  'copyDay',
 ] as const;
 export type LabId = (typeof LABS)[number];
 

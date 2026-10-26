@@ -17,12 +17,16 @@ import {
   Check,
   ChevronLeft,
   ChevronRight,
+  ClipboardCopy,
   Ellipsis,
   Map as MapIcon,
   Plus,
   Footprints,
   Route,
+  TriangleAlert,
 } from 'lucide-react';
+import { dayText, tightGap } from '../../domain/dayTools';
+import { copyText } from '../../shared/lib/clipboard';
 import { lazy, Suspense, useCallback, useEffect, useState, Fragment, useRef } from 'react';
 import { placeBookingsInPlan } from '../../data/bookingPlanner';
 import { bookingsToPlan } from '../../domain/bookingPlan';
@@ -116,6 +120,8 @@ function PlanView({
   const days = getTripDays(trip.startDate, trip.endDate);
   const today = todayIn(trip.timezone);
   const dimPast = useSettings((st) => st.dimPastItems);
+  const copyDayOn = useLab('copyDay');
+  const { time: timeText } = useTimeText();
   // 지도는 누를 때만 (지도 불러오기도 무료 사용량에 포함)
   // 설정 "일정 화면 지도 기본 펼침"
   const [mapOpen, setMapOpen] = useState(() => useSettings.getState().planMapOpen);
@@ -223,9 +229,7 @@ function PlanView({
     });
   }, [inView]);
 
-  // 실험실 C5: 하루 보기에서 목록을 옆으로 밀면 이전·다음 날 / C4: 일정을 꾹 누르면 편집 모드
-  const swipeDays = useLab('swipeDays');
-  const longPressEdit = useLab('longPressEdit');
+  // C5: 하루 보기에서 목록을 옆으로 밀면 이전·다음 날 / C4: 일정을 꾹 누르면 편집 모드 (2026-10-26 정식)
   const touch = useRef<{ x: number; y: number } | null>(null);
   const press = useRef<{ x: number; y: number; timer: number } | null>(null);
   const swallowClick = useRef(false);
@@ -234,7 +238,7 @@ function PlanView({
     press.current = null;
   };
   const gestures = {
-    ...(swipeDays && typeof filter === 'number' && !editing && !(mapOpen && mapLarge)
+    ...(typeof filter === 'number' && !editing && !(mapOpen && mapLarge)
       ? {
           onTouchStart: (e: React.TouchEvent) => {
             const p = e.touches[0]!;
@@ -253,7 +257,7 @@ function PlanView({
           },
         }
       : {}),
-    ...(longPressEdit && canEdit && !editing
+    ...(canEdit && !editing
       ? {
           onPointerDown: (e: React.PointerEvent) => {
             if (!(e.target as Element).closest('[data-item-row]')) return;
@@ -552,28 +556,56 @@ function PlanView({
         onOpenChange={setDayMenuOpen}
         title={t('plan.dayMenu', { day: dayTitle(menuDate) })}
       >
-        <button
-          type="button"
-          onClick={() => void sortDay(menuDate)}
-          className="flex w-full items-start gap-3 rounded-btn py-3 text-left"
-        >
-          <ArrowDownWideNarrow aria-hidden="true" className="mt-0.5 size-5 text-fg-sub" />
-          <span className="flex flex-col">
-            <span className="text-body-1">{t('plan.sortByTime')}</span>
-            <span className="text-caption text-fg-muted">{t('plan.sortByTimeDesc')}</span>
-          </span>
-        </button>
-        <button
-          type="button"
-          onClick={() => void shortenDay(menuDate)}
-          className="flex w-full items-start gap-3 rounded-btn py-3 text-left"
-        >
-          <Route aria-hidden="true" className="mt-0.5 size-5 text-fg-sub" />
-          <span className="flex flex-col">
-            <span className="text-body-1">{t('plan.shortenRoute')}</span>
-            <span className="text-caption text-fg-muted">{t('plan.shortenRouteDesc')}</span>
-          </span>
-        </button>
+        {/* 실험실: 그날 일정을 카톡 등에 붙여 넣을 글로 */}
+        {copyDayOn && (
+          <button
+            type="button"
+            onClick={() => {
+              setDayMenuOpen(false);
+              void copyText(
+                dayText(
+                  dayTitle(menuDate),
+                  items.filter((i) => i.date === menuDate),
+                  timeText,
+                ),
+                t('labs.dayCopied'),
+              );
+            }}
+            className="flex w-full items-start gap-3 rounded-btn py-3 text-left"
+          >
+            <ClipboardCopy aria-hidden="true" className="mt-0.5 size-5 text-fg-sub" />
+            <span className="flex flex-col">
+              <span className="text-body-1">{t('labs.copyDay')}</span>
+              <span className="text-caption text-fg-muted">{t('labs.copyDayDesc')}</span>
+            </span>
+          </button>
+        )}
+        {canEdit && (
+          <>
+            <button
+              type="button"
+              onClick={() => void sortDay(menuDate)}
+              className="flex w-full items-start gap-3 rounded-btn py-3 text-left"
+            >
+              <ArrowDownWideNarrow aria-hidden="true" className="mt-0.5 size-5 text-fg-sub" />
+              <span className="flex flex-col">
+                <span className="text-body-1">{t('plan.sortByTime')}</span>
+                <span className="text-caption text-fg-muted">{t('plan.sortByTimeDesc')}</span>
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => void shortenDay(menuDate)}
+              className="flex w-full items-start gap-3 rounded-btn py-3 text-left"
+            >
+              <Route aria-hidden="true" className="mt-0.5 size-5 text-fg-sub" />
+              <span className="flex flex-col">
+                <span className="text-body-1">{t('plan.shortenRoute')}</span>
+                <span className="text-caption text-fg-muted">{t('plan.shortenRouteDesc')}</span>
+              </span>
+            </button>
+          </>
+        )}
       </BottomSheet>
 
       <ItemFormSheet
@@ -687,7 +719,11 @@ function DaySection({
 }) {
   const { t } = useTranslation();
   const legs = useLab('legDistance');
+  const tight = useLab('tightGap');
+  const progressOn = useLab('dayProgress');
+  const copyDayOn = useLab('copyDay');
   if (hideWhenEmpty && items.length === 0) return null;
+  const done = items.filter((i) => i.done).length;
   const color = date ? dayColor(index) : 'var(--tp-fg-muted)';
   const title = date
     ? t('plan.dayHeader', { n: index + 1, date: formatMonthDay(date) })
@@ -728,7 +764,7 @@ function DaySection({
           )}
         </h2>
         <DayWeatherBadge weather={weather} />
-        {canEdit && items.length > 1 && (
+        {((canEdit && items.length > 1) || (copyDayOn && items.length > 0)) && (
           <IconButton
             label={t('plan.dayMenu', { day: title })}
             icon={<Ellipsis />}
@@ -736,6 +772,26 @@ function DaySection({
           />
         )}
       </div>
+      {/* 실험실: 여행 중 오늘 일정 진행률 */}
+      {progressOn && isToday && items.length > 0 && (
+        <div
+          className="mx-4 mt-2 flex items-center gap-2"
+          aria-label={t('labs.progress', { done, total: items.length })}
+        >
+          <span
+            aria-hidden="true"
+            className="h-1.5 flex-1 overflow-hidden rounded-full bg-bg-subtle"
+          >
+            <span
+              className="block h-full rounded-full transition-[width]"
+              style={{ width: `${(done / items.length) * 100}%`, background: color }}
+            />
+          </span>
+          <span className="tabular text-micro text-fg-muted" aria-hidden="true">
+            {done}/{items.length}
+          </span>
+        </div>
+      )}
       {/* 그날 아침 숙소 조식 (사용자 요청 2026-10-26) */}
       {breakfast && (
         <p className="mx-3 mt-2 flex items-center gap-2 rounded-btn bg-bg-subtle px-3 py-2 text-caption text-fg-sub">
@@ -766,6 +822,7 @@ function DaySection({
               onOpen={() => onOpen(item)}
             />
             {legs && <LegLine from={item} to={items[i + 1]} />}
+            {tight && <TightLine from={item} to={items[i + 1]} />}
           </Fragment>
         ))}
       </ol>
@@ -865,6 +922,19 @@ function BookingLine({ row, onOpen }: { row: BookingRow; onOpen: () => void }) {
           {t(`bookingKind.${b.kind}`)}
         </span>
       </button>
+    </li>
+  );
+}
+
+/** 실험실 "빠듯한 일정 알림": 걸어서 걸리는 시간이 두 일정 시각 차이보다 길 때 */
+function TightLine({ from, to }: { from: ItineraryItem; to: ItineraryItem | undefined }) {
+  const { t } = useTranslation();
+  const r = tightGap(from, to);
+  if (!r) return null;
+  return (
+    <li className="flex items-center gap-1.5 py-1 pl-9 text-micro font-semibold text-warning">
+      <TriangleAlert aria-hidden="true" className="size-3" />
+      {t('labs.tight', { walk: r.walk, gap: r.gap })}
     </li>
   );
 }

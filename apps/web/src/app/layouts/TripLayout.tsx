@@ -47,9 +47,7 @@ export function TripLayout() {
   const [shareOpen, setShareOpen] = useRouteSheet('trip-share');
   useBottomInset(trip ? TAB_BAR_HEIGHT : 0);
   useWakeLock(useLab('wakeLock'));
-  const clockOn = useLab('localClock');
-  const vt = useLab('viewTransitions');
-  const now = useMinuteClock(clockOn);
+  const now = useMinuteClock(true);
 
   if (trip === null) {
     return (
@@ -74,7 +72,7 @@ export function TripLayout() {
   }
 
   const base = `/trips/${encodeURIComponent(tripId)}`;
-  const localClock = clockOn && trip ? localTimeLabel(trip.timezone, now, t) : null;
+  const localClock = trip ? localTimeLabel(trip.timezone, now, t) : null;
 
   return (
     <div className="mx-auto min-h-dvh max-w-[560px]">
@@ -166,7 +164,7 @@ export function TripLayout() {
         </Suspense>
       )}
       <TabBar
-        viewTransition={vt}
+        viewTransition
         label={t('tripNav.label')}
         items={[
           { to: `${base}/plan`, label: t('tripNav.plan'), icon: CalendarDays },

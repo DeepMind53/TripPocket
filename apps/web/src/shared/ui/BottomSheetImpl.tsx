@@ -1,6 +1,5 @@
 import * as Dialog from '@radix-ui/react-dialog';
 import { useRef, useState, type ReactNode } from 'react';
-import { useLab } from '../../data/labsStore';
 import { cn } from '../lib/cn';
 
 export interface BottomSheetProps {
@@ -34,29 +33,26 @@ export function BottomSheetImpl({
   children,
   className,
 }: BottomSheetProps) {
-  // 실험실 I2: 손잡이를 위로 끌면 화면 가득, 아래로 끌면 원래 높이 → 닫기
-  const resizable = useLab('sheetResize');
+  // 손잡이를 위로 끌면 화면 가득, 아래로 끌면 원래 높이 → 닫기 (docs/16 I2, 2026-10-26 정식)
   const [full, setFull] = useState(false);
   if (!open && full) setFull(false);
   const dragY = useRef<number | null>(null);
-  const handleDrag = resizable
-    ? {
-        onPointerDown: (e: React.PointerEvent) => {
-          dragY.current = e.clientY;
-          (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
-        },
-        onPointerUp: (e: React.PointerEvent) => {
-          if (dragY.current === null) return;
-          const dy = e.clientY - dragY.current;
-          dragY.current = null;
-          if (dy < -40) setFull(true);
-          else if (dy > 40) {
-            if (full) setFull(false);
-            else onOpenChange(false);
-          }
-        },
+  const handleDrag = {
+    onPointerDown: (e: React.PointerEvent) => {
+      dragY.current = e.clientY;
+      (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
+    },
+    onPointerUp: (e: React.PointerEvent) => {
+      if (dragY.current === null) return;
+      const dy = e.clientY - dragY.current;
+      dragY.current = null;
+      if (dy < -40) setFull(true);
+      else if (dy > 40) {
+        if (full) setFull(false);
+        else onOpenChange(false);
       }
-    : {};
+    },
+  };
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
@@ -83,7 +79,7 @@ export function BottomSheetImpl({
           <div
             aria-hidden="true"
             {...handleDrag}
-            className={cn('shrink-0 pt-2 pb-1', resizable && 'cursor-grab touch-none py-3')}
+            className={'shrink-0 cursor-grab touch-none py-3'}
           >
             <div className="mx-auto h-1 w-9 rounded-full bg-line" />
           </div>

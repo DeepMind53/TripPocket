@@ -3,7 +3,6 @@ import { useTranslation } from '../../i18n';
 import { Outlet } from 'react-router';
 import { useBottomInset } from '../../shared/hooks/useBottomInset';
 import { TabBar } from '../../shared/ui';
-import { useLab } from '../../data/labsStore';
 import { QuickMenuButton } from '../../features/common/QuickMenu';
 
 export const TAB_BAR_HEIGHT = 56;
@@ -11,7 +10,6 @@ export const TAB_BAR_HEIGHT = 56;
 /** 앱 하단 탭 4개 (docs/11 §6, 2026-10-24 변경): 홈(여행 목록) · 기록 · 저장 · 마이 + ⚡ 플로팅 빠른 메뉴 */
 export function AppShell() {
   const { t } = useTranslation();
-  const vt = useLab('viewTransitions');
   useBottomInset(TAB_BAR_HEIGHT);
   return (
     <div className="mx-auto min-h-dvh max-w-[560px]">
@@ -20,7 +18,7 @@ export function AppShell() {
       </main>
       <QuickMenuButton />
       <TabBar
-        viewTransition={vt}
+        viewTransition
         label={t('nav.label')}
         items={[
           { to: '/', label: t('nav.home'), icon: House, end: true },

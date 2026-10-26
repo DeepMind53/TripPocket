@@ -1,5 +1,4 @@
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { setLab } from '../../data/labsStore';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { routes } from '../../app/router';
@@ -331,14 +330,8 @@ describe('일정 상세 — 종류별 맞춤·예약 연결 (docs/16 D1·D2)', (
   });
 });
 
-describe('실험실 손동작 (docs/16 C4·C5)', () => {
-  afterEach(() => {
-    setLab('swipeDays', false);
-    setLab('longPressEdit', false);
-  });
-
+describe('손동작 (docs/16 C4·C5, 2026-10-26 정식)', () => {
   it('C5: 하루 보기에서 왼쪽으로 밀면 다음 날, 오른쪽이면 이전 날 (첫날에서 더 뒤로는 안 감)', async () => {
-    setLab('swipeDays', true);
     const router = await renderPlan('?day=1');
     const list = (await screen.findByRole('region', { name: '1일차 · 10.24 (토)' })).parentElement!;
     const swipe = (dx: number) => {
@@ -352,7 +345,6 @@ describe('실험실 손동작 (docs/16 C4·C5)', () => {
   });
 
   it('C4: 일정 줄을 꾹 누르면 편집 모드 (상세는 열리지 않음)', async () => {
-    setLab('longPressEdit', true);
     await itemRepo.create({ tripId, date: '2026-10-24', kind: 'food', title: '이치란 라멘' });
     await renderPlan('?day=1');
     const row = await screen.findByRole('button', { name: /이치란 라멘/ });
