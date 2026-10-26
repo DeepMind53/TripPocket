@@ -1039,7 +1039,31 @@
       "copyDay": {
         "name": "하루 일정 글로 복사",
         "desc": "날짜 메뉴(⋯)에서 그날 일정을\n카톡 등에 붙여 넣을 글로 복사해요"
+      },
+      "sunTimes": {
+        "name": "일출·일몰 시각",
+        "desc": "날짜마다 여행지 일출·일몰을\n현지 시각으로 보여 줘요"
+      },
+      "weatherPacking": {
+        "name": "날씨 맞춤 준비물",
+        "desc": "예보를 보고 우산·선크림 등을\n준비물 화면에서 제안해요"
+      },
+      "dayRoute": {
+        "name": "하루 동선 지도로 보기",
+        "desc": "날짜 메뉴(⋯)에서 그날 장소를\n순서대로 Google 지도로 열어요"
       }
+    },
+    "sunLabel": "일출 {{rise}} 일몰 {{set}}",
+    "dayRoute": "하루 동선 지도로 보기",
+    "dayRouteDesc": "장소 순서대로 Google 지도 길찾기",
+    "packTitle": "날씨 보고 챙길 것",
+    "packAdd": "{{text}} 추가",
+    "packAdded": "{{text}}을 넣었어요\n저장해야 반영돼요",
+    "packReason": {
+      "rain": "비 예보",
+      "snow": "눈 예보",
+      "hot": "낮 28° 넘음",
+      "cold": "아침 5° 아래"
     },
     "sample": {
       "title": "샘플 테스트 (관리자)",

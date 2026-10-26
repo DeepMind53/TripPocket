@@ -25,6 +25,7 @@ import {
   Plus,
   Footprints,
   Route,
+  MapPinned,
 } from 'lucide-react';
 import { currentItemId, dayText, isFlightLeg, nextStop, pastItemIds } from '../../domain/dayTools';
 import { NextStopBar } from './NextStopBar';
@@ -90,6 +91,8 @@ import { MoveDaySheet } from './MoveDaySheet';
 import { BOOKING_ICON } from '../common/bookingKinds';
 import { FlightTicket } from '../bookings/BookingCard';
 import { isDomesticTrip } from '../../domain/tripPlace';
+import { dayRouteUrl } from '../../domain/dayRoute';
+import { sunTimes } from '../../domain/sun';
 import { distanceKm, formatDistance, walkMinutes } from '@trippocket/shared';
 import { useLab } from '../../data/labsStore';
 import { DayWeatherBadge } from '../common/DayWeatherBadge';
@@ -146,6 +149,10 @@ function PlanView({
   const today = todayIn(trip.timezone);
   const dimPast = useSettings((st) => st.dimPastItems);
   const copyDayOn = useLab('copyDay');
+  // 실험실: 일출·일몰(목적지 좌표로 계산), 하루 동선 지도
+  const sunOn = useLab('sunTimes');
+  const dayRouteOn = useLab('dayRoute');
+  const sunCoords = trip.destinations.find((d) => d.coords)?.coords;
   const { time: timeText } = useTimeText();
   // 지도는 누를 때만 (지도 불러오기도 무료 사용량에 포함)
   // 설정 "일정 화면 지도 기본 펼침"
@@ -594,6 +601,9 @@ function PlanView({
                       onVisitItem={(item, v) => void markVisit(item, v)}
                       historyOf={historyOf}
                       weather={date ? weather[date] : undefined}
+                      sun={
+                        sunOn && date && sunCoords ? sunTimes(date, sunCoords, trip.timezone) : null
+                      }
                       isPast={dimPast && date !== null && date < today}
                       lodging={date ? lodgingForNight(bookings, date) : null}
                       breakfast={date ? breakfastOn(bookings, date) : null}
@@ -653,6 +663,22 @@ function PlanView({
               <span className="text-caption text-fg-muted">{t('labs.copyDayDesc')}</span>
             </span>
           </button>
+        )}
+        {/* 실험실: 그날 장소를 순서대로 Google 지도 길찾기로 (키 없는 공식 URL) */}
+        {dayRouteOn && dayRouteUrl(items.filter((i) => i.date === menuDate)) && (
+          <a
+            href={dayRouteUrl(items.filter((i) => i.date === menuDate))!}
+            target="_blank"
+            rel="noreferrer"
+            onClick={() => setDayMenuOpen(false)}
+            className="flex w-full items-start gap-3 rounded-btn py-3 text-left"
+          >
+            <MapPinned aria-hidden="true" className="mt-0.5 size-5 text-fg-sub" />
+            <span className="flex flex-col">
+              <span className="text-body-1">{t('labs.dayRoute')}</span>
+              <span className="text-caption text-fg-muted">{t('labs.dayRouteDesc')}</span>
+            </span>
+          </a>
         )}
         {/* 실험실: 그날 일정을 다른 날·다른 여행으로 복제 */}
         {dupOn && canEdit && items.some((i) => i.date === menuDate) && (
@@ -799,12 +825,15 @@ function DaySection({
   timezone,
   onVisitItem,
   historyOf,
+  sun,
 }: {
   /** 지난 일정 방문·미방문 (미방문이면 저장 탭에도 담는다) */
   onVisitItem: (item: ItineraryItem, visit: Visit) => void;
   /** 이 일정 장소를 예전에 방문한 날 */
   historyOf: (item: ItineraryItem) => { date: string; trip: string }[];
   weather?: TripDayWeather | undefined;
+  /** 실험실 "일출·일몰" (현지 시각) */
+  sun?: { rise: string; set: string } | null;
   /** 여행지 시간대 — 당일 진행 중인 일정 계산 */
   timezone: string;
   /** 그날 아침 조식이 있는 숙소 */
@@ -831,6 +860,7 @@ function DaySection({
   const legs = useLab('legDistance');
   const progressOn = useLab('dayProgress');
   const copyDayOn = useLab('copyDay');
+  const dayRouteOn = useLab('dayRoute');
   const dupOn = true;
   // 여행 당일: 현지 시각으로 지금 진행 중인 일정 (1분마다 다시 계산)
   const now = useMinuteClock(isToday);
@@ -888,7 +918,7 @@ function DaySection({
         </h2>
         <DayWeatherBadge weather={weather} />
         {((canEdit && items.length > 1) ||
-          ((copyDayOn || (dupOn && canEdit)) && items.length > 0)) && (
+          ((copyDayOn || dayRouteOn || (dupOn && canEdit)) && items.length > 0)) && (
           <IconButton
             label={t('plan.dayMenu', { day: title })}
             icon={<Ellipsis />}
@@ -915,6 +945,15 @@ function DaySection({
             {done}/{items.length}
           </span>
         </div>
+      )}
+      {/* 실험실: 일출·일몰 */}
+      {sun && (
+        <p
+          className="tabular mx-4 mt-2 text-micro text-fg-muted"
+          aria-label={t('labs.sunLabel', sun)}
+        >
+          🌅 {sun.rise} · 🌇 {sun.set}
+        </p>
       )}
       {/* 그날 아침 숙소 조식 (사용자 요청 2026-10-26) */}
       {breakfast && (

@@ -23,6 +23,8 @@ import {
 import { ChecklistBoard } from './ChecklistBoard';
 import { TemplateSheet } from './TemplateSheet';
 import { useChecklistDraft, type Draft } from './useChecklistDraft';
+import { WeatherPackingTips } from './WeatherPackingTips';
+import { useLab } from '../../data/labsStore';
 
 /**
  * S-18 준비: 준비물 / 할 일.
@@ -38,7 +40,9 @@ export function ChecklistPage() {
   const [templateOpen, setTemplateOpen] = useRouteSheet('checklist-template');
   const [saving, setSaving] = useState(false);
   // 해외 여행이면 맨 위에 나라별 필수 항목 바로가기 (docs/19)
-  const essentials = useEssentials(useTrip(tripId) ?? undefined);
+  const trip = useTrip(tripId) ?? undefined;
+  const essentials = useEssentials(trip);
+  const packOn = useLab('weatherPacking');
 
   // 저장하지 않고 다른 화면으로 가려 하면 묻는다 (같은 화면의 시트 열기는 제외)
   const blocker = useBlocker(
@@ -109,6 +113,18 @@ export function ChecklistPage() {
       {total > 0 && <Progress done={done} total={total} list={list} />}
 
       {canEdit && <AddRow key={list} list={list} draft={draft} actions={actions} />}
+
+      {/* 실험실: 날씨 맞춤 준비물 */}
+      {packOn && canEdit && list === 'packing' && trip && (
+        <WeatherPackingTips
+          trip={trip}
+          have={draft.packing.map((i) => i.text)}
+          onAdd={(tip) => {
+            actions.add('packing', { text: tip.text, category: tip.category });
+            toast(t('labs.packAdded', { text: tip.text }));
+          }}
+        />
+      )}
 
       {total === 0 && list === 'todo' && (
         <p className="py-6 text-center text-body-2 text-fg-muted">{t('checklist.emptyTodo')}</p>

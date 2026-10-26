@@ -98,6 +98,113 @@ describe('실험실', () => {
     }
   });
 
+  it('실험: 일출·일몰 · 하루 동선 지도 · 날씨 맞춤 준비물 (2026-10-27)', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-10-22T03:00:00Z'));
+    vi.stubGlobal('fetch', async () =>
+      Response.json({
+        daily: {
+          time: ['2026-10-24', '2026-10-25'],
+          weather_code: [61, 0],
+          temperature_2m_max: [20, 22],
+          temperature_2m_min: [12, 13],
+        },
+      }),
+    );
+    try {
+      const trip = await tripRepo.create({
+        title: '도쿄',
+        destinations: [
+          { name: '도쿄', kind: 'city', countryCode: 'JP', coords: { lat: 35.68, lng: 139.69 } },
+        ],
+        startDate: '2026-10-24',
+        endDate: '2026-10-25',
+        timezone: 'Asia/Tokyo',
+        cover: {},
+      });
+      const at = (lat: number) => ({ name: 'p', coords: { lat, lng: 139.69 } });
+      for (const [title, lat] of [
+        ['센소지', 35.71],
+        ['스카이트리', 35.71],
+        ['신주쿠', 35.69],
+      ] as const)
+        await itemRepo.create({
+          tripId: trip.id,
+          date: '2026-10-24',
+          kind: 'place',
+          title,
+          place: at(lat),
+        });
+      for (const id of ['sunTimes', 'dayRoute', 'weatherPacking'] as const) setLab(id, true);
+      const user = userEvent.setup();
+      render(
+        <>
+          <RouterProvider
+            router={createMemoryRouter(routes, {
+              initialEntries: [`/trips/${trip.id}/plan?day=1`],
+            })}
+          />
+          <Toaster />
+        </>,
+      );
+      const day = await screen.findByRole('region', { name: /^1일차/ });
+      expect(within(day).getByLabelText(/^일출 0[56]:\d\d 일몰 1[67]:\d\d$/)).toBeInTheDocument();
+      await user.click(within(day).getByRole('button', { name: /날짜 메뉴|메뉴/ }));
+      const route = await screen.findByRole('link', { name: /하루 동선 지도로 보기/ });
+      expect(route.getAttribute('href')).toMatch(/^https:\/\/www\.google\.com\/maps\/dir\/\?/);
+      expect(route.getAttribute('target')).toBe('_blank');
+    } finally {
+      for (const id of ['sunTimes', 'dayRoute', 'weatherPacking'] as const) setLab(id, false);
+      vi.useRealTimers();
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('실험: 날씨 맞춤 준비물 — 비 예보면 [우산] 제안, 누르면 초안에 들어간다', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-10-22T03:00:00Z'));
+    vi.stubGlobal('fetch', async () =>
+      Response.json({
+        daily: {
+          time: ['2026-10-24', '2026-10-25'],
+          weather_code: [61, 0],
+          temperature_2m_max: [20, 22],
+          temperature_2m_min: [12, 13],
+        },
+      }),
+    );
+    setLab('weatherPacking', true);
+    try {
+      const trip = await tripRepo.create({
+        title: '도쿄',
+        destinations: [
+          { name: '도쿄', kind: 'city', countryCode: 'JP', coords: { lat: 35.68, lng: 139.69 } },
+        ],
+        startDate: '2026-10-24',
+        endDate: '2026-10-25',
+        timezone: 'Asia/Tokyo',
+        cover: {},
+      });
+      const user = userEvent.setup();
+      render(
+        <>
+          <RouterProvider
+            router={createMemoryRouter(routes, { initialEntries: [`/trips/${trip.id}/checklist`] })}
+          />
+          <Toaster />
+        </>,
+      );
+      const box = await screen.findByRole('region', { name: '날씨 보고 챙길 것' });
+      await user.click(within(box).getByRole('button', { name: '우산 추가' }));
+      expect(await screen.findByText(/우산을 넣었어요/)).toBeInTheDocument();
+      expect(screen.queryByRole('region', { name: '날씨 보고 챙길 것' })).not.toBeInTheDocument();
+    } finally {
+      setLab('weatherPacking', false);
+      vi.useRealTimers();
+      vi.unstubAllGlobals();
+    }
+  });
+
   it('현지 시각: 시간대가 기기와 다를 때만', () => {
     const t = (_k: string, o: { time: string }) => `현지 ${o.time}`;
     const now = new Date('2026-10-24T03:05:00Z');
