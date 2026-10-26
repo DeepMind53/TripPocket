@@ -44,6 +44,7 @@ export const PRIVACY: Section[] = [
       '택시 카드 현지어 이름: 장소 좌표를 서버가 Google(무료 사용량이 끝나면 Geoapify)로 보내 현지어 이름을 받습니다',
       '다음 일정까지 시간: 여행 당일 위치 사용을 허락하면, 지금 위치(약 100m 단위로 줄임)와 다음 일정 장소 좌표를 서버가 Google Routes(Google에서 찾은 장소) 또는 Geoapify로 보내 걷는·대중교통 시간을 받습니다. 지금 위치는 기기·서버 어디에도 저장하거나 기록하지 않습니다',
       '항공편 불러오기: 편명과 날짜만 AviationStack으로 보냅니다',
+      '여행지 특이사항: 여행 나라 코드만 서버로 보냅니다. 서버는 GDACS·USGS·외교부(공공데이터포털)의 전 세계 목록을 받아 그중 그 나라 것만 돌려줍니다 (위치·일정은 보내지 않음)',
       'AI 추천 수집: 기준점 이름(예: "신주쿠역")을 네이버 검색 API로. 현재 위치를 쓰면 약 100m 단위로 줄인 좌표를 가까운 역 찾기(카카오 로컬·OpenStreetMap)에만 쓰고 바로 버립니다',
       'AI 추천 정리: 기준점 이름과 블로그 공개 글의 제목·요약 앞부분만 무료 AI(Google Gemini → Cloudflare Workers AI → Groq 순서)로 보냅니다. 내 이름·계정·위치·일정은 보내지 않습니다. Gemini 무료 등급은 받은 내용을 Google 서비스 개선에 쓸 수 있습니다',
       '알림(켰을 때만): 여행·일정 이름과 시간이 담긴 알림이 휴대폰 브라우저 회사의 푸시 서버(Google·Apple 등)를 거쳐 전달됩니다. 내용은 암호화돼 그 회사가 읽을 수 없습니다',
@@ -200,6 +201,24 @@ export const DATA_SOURCES: { name: string; use: string; license: string; url: st
     use: 'AI 추천 정리 (무료 등급, 이 순서로 시도)',
     license: '각 서비스 이용약관',
     url: 'https://ai.google.dev',
+  },
+  {
+    name: 'GDACS (Global Disaster Alert and Coordination System)',
+    use: '여행지 태풍·지진·홍수·화산·산불 경보',
+    license: 'GDACS 이용 조건 (출처 표기)',
+    url: 'https://www.gdacs.org',
+  },
+  {
+    name: 'USGS 지진 정보',
+    use: '여행지 규모 5.5 이상 지진',
+    license: '미국 정부 공공 자료',
+    url: 'https://earthquake.usgs.gov',
+  },
+  {
+    name: '외교부 여행경보·특별여행주의보 (공공데이터포털)',
+    use: '여행지 여행경보 단계',
+    license: '공공데이터 (이용허락 범위 제한 없음)',
+    url: 'https://www.data.go.kr/data/15076237/openapi.do',
   },
   {
     name: '외교부 해외안전여행 · 각국 정부·관광청 공식 안내',

@@ -13,6 +13,7 @@ import { useTranslation } from '../../i18n';
 import { formatMonthDay } from '../../shared/lib/dateFormat';
 import { TopBar, WeatherIcon } from '../../shared/ui';
 import { useWeatherDays, type TripDayWeather } from '../common/useTripWeather';
+import { DestinationAlerts } from './DestinationAlerts';
 
 /**
  * 날씨 정보 (사용자 요청 2026-10-26): 홈 "날씨 정보" 카드를 누르면.
@@ -34,6 +35,9 @@ export function WeatherPage() {
     : [];
   const weather = useWeatherDays(dest?.coords, trip?.timezone ?? 'Asia/Seoul', dates);
   const flights = bookings.filter((b) => b.kind === 'flight' && b.start.place);
+  const countries = (trip?.destinations ?? [])
+    .map((d) => d.countryCode)
+    .filter((c): c is string => !!c);
   if (!trip) return null;
 
   const label = (i: number) =>
@@ -47,6 +51,7 @@ export function WeatherPage() {
     <div className="mx-auto min-h-dvh max-w-[560px] pb-10">
       <TopBar title={t('weatherPage.title')} backTo="/" />
       <div className="flex flex-col gap-5 px-5 pt-2">
+        <DestinationAlerts countries={countries} />
         <section
           aria-label={t('weatherPage.dest', { place: dest?.name ?? trip.title })}
           className="flex flex-col gap-2"

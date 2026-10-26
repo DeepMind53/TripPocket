@@ -97,6 +97,17 @@ export {
 } from './places/placeSearch';
 export { RouteEtaBody, type Coords, type RouteEta } from './places/route';
 export {
+  MOFA_SAFETY_URL,
+  WEATHER_WARNING_LINKS,
+  WMO_SEVERE_WEATHER,
+  warningLinkFor,
+  type AlertKind,
+  type AlertLevel,
+  type AlertSource,
+  type AlertsResponse,
+  type DestinationAlert,
+} from './alerts/alerts';
+export {
   buildRecommendations,
   type AiCategory,
   type CategoryResult,

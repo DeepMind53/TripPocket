@@ -37,7 +37,10 @@ export type ApiId =
   | 'oauth_naver'
   | 'oauth_google'
   | 'cf_functions'
-  | 'web_push';
+  | 'web_push'
+  | 'gdacs'
+  | 'usgs'
+  | 'mofa_alert';
 
 type Tz = 'UTC' | 'America/Los_Angeles' | 'Asia/Seoul';
 
@@ -133,6 +136,12 @@ export const APIS: readonly ApiDef[] = [
   { id: 'cf_functions', group: 'free', freeDaily: 100000, tz: 'UTC', pausable: false },
   // 웹 푸시 알림 (브라우저 회사 푸시 서버 — 무료·한도 없음). 기록만, 멈추면 알림만 안 감
   { id: 'web_push', group: 'free', tz: 'UTC' },
+  // 여행지 특보 (docs/24, ADR-0008) — 서버가 출처마다 10분(외교부 3시간)에 한 번만 받는다 (사용자 수와 무관)
+  // GDACS(UN·EU)·USGS 지진: 키·공식 한도 없음 → 기록만
+  { id: 'gdacs', group: 'free', tz: 'UTC' },
+  { id: 'usgs', group: 'free', tz: 'UTC' },
+  // 외교부 여행경보·특별여행주의보 (공공데이터포털): 개발 계정 서비스마다 하루 1만 건 — 둘을 합쳐 세므로 1만으로
+  { id: 'mofa_alert', group: 'free', freeDaily: 10000, tz: 'Asia/Seoul' },
 ];
 
 /** 무료량의 95%(남은 5%)에서 자동 중지 (사용자 결정 2026-10-27, 전에는 90%) */

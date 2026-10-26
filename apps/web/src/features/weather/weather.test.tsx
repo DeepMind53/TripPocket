@@ -61,3 +61,66 @@ it('날씨 정보: 여행 앞뒤 하루까지 목적지 날씨, 항공편 출발
   expect(within(air).getByText(/ICN/)).toBeInTheDocument();
   expect(await within(air).findByText('10°/18°')).toBeInTheDocument();
 });
+
+it('여행지 특이사항: 나라 코드만 보내고, 특보와 그 나라 기상청 링크를 보여 준다', async () => {
+  const urls: string[] = [];
+  vi.stubGlobal('fetch', async (url: string) => {
+    urls.push(url);
+    if (url.includes('/api/alerts'))
+      return Response.json({
+        alerts: [
+          {
+            id: 'gdacs-TC-1-JP',
+            country: 'JP',
+            kind: 'cyclone',
+            level: 'red',
+            title: 'Tropical Cyclone CHAMPI-26',
+            source: 'gdacs',
+            url: 'https://www.gdacs.org/report.aspx?eventid=1',
+          },
+          {
+            id: 'mofa-JP-3',
+            country: 'JP',
+            kind: 'travel',
+            level: 'red',
+            title: '일본',
+            step: 3,
+            area: '후쿠시마 원전 반경 30km 이내',
+            whole: false,
+            source: 'mofa',
+            url: 'https://www.0404.go.kr/',
+          },
+        ],
+        checkedAt: '2026-10-22T03:00:00Z',
+        missing: [],
+      });
+    return Response.json({});
+  });
+  const trip = await tripRepo.create({
+    title: '도쿄',
+    destinations: [
+      { name: '도쿄', kind: 'city', countryCode: 'JP', coords: { lat: 35.68, lng: 139.69 } },
+    ],
+    startDate: '2026-10-24',
+    endDate: '2026-10-26',
+    timezone: 'Asia/Tokyo',
+    cover: {},
+  });
+  render(
+    <RouterProvider
+      router={createMemoryRouter(routes, { initialEntries: [`/trips/${trip.id}/weather`] })}
+    />,
+  );
+  const box = await screen.findByRole('region', { name: '여행지 특이사항' });
+  expect(await within(box).findByText('🌀 태풍 · 빨강 경보')).toBeInTheDocument();
+  expect(within(box).getByText('Tropical Cyclone CHAMPI-26')).toBeInTheDocument();
+  expect(within(box).getByText('🛂 여행경보 3단계')).toBeInTheDocument();
+  expect(within(box).getByText('후쿠시마 원전 반경 30km 이내')).toBeInTheDocument();
+  expect(within(box).getByRole('link', { name: /일본 기상청 경보·주의보/ })).toHaveAttribute(
+    'href',
+    'https://www.jma.go.jp/bosai/warning/',
+  );
+  const alertUrl = urls.find((u) => u.includes('/api/alerts'))!;
+  expect(alertUrl).toContain('countries=JP');
+  expect(alertUrl).not.toMatch(/lat|lng|35\.68/);
+});
