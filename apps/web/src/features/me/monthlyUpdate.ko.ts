@@ -23,12 +23,16 @@ export function monthlyUpdateRequest(month: string): string {
 5. 공항 목록·터미널: packages/shared/src/data/airports.ts
 6. 여행 회화·택시 카드 문구가 어색한 곳이 있는지
 7. 환율 보조 출처 동작 (apps/web/src/data/services/fxService.ts)
+8. 여행지 특보: 나라별 기상청 특보 링크가 열리는지, 새로 약관이 허락된 나라가 있는지
+   - packages/shared/src/alerts/alerts.ts, docs/24 §7
 
 [B. 무료 사용량·요금 — 과금 방지]
 1. 외부 API 무료 한도·요금 변경 (Google 지도·장소·Routes, 카카오, 네이버, Geoapify, Gemini·Workers AI·Groq, AviationStack, Open-Meteo, OpenFreeMap, 웹 푸시)
    - apps/server/src/services/apiUsage.ts APIS + docs/code-map.md §3 표
 2. 한도가 끝났을 때 대체 API·대체 기능이 아직 맞게 동작하는지 (docs/23-paid-api-fallbacks.md)
 3. 유료 서비스 가격 참고 문서: docs/21-paid-services.md
+4. API 키 유효기간: apps/server/.env 각 키 위 [유효기간] 안내를 다시 확인
+   - 값은 출력하지 말고, 유효기간 정책이 바뀐 서비스만 알려 줘
 
 [C. 법적 고지·출처]
 1. 개인정보처리방침·이용약관·데이터 출처가 지금 쓰는 서비스와 맞는지 (apps/web/src/features/legal/content.ko.ts)
@@ -42,6 +46,9 @@ export function monthlyUpdateRequest(month: string): string {
 [E. 사람이 직접 볼 것 — 결과 보고 끝에 체크리스트로 남겨 줘]
 - 서버 PC 백업이 매일 생기는지, 디스크·문서 용량 (pnpm admin:data list)
 - 관리자 → API 사용량에서 한도 20% 아래인 API
+- 공공데이터포털 마이페이지 → 개발계정: 활용기간 끝나는 날 (한 달 전이면 [연장신청])
+- Google 결제 카드 만료일, Cloudflare API 토큰 만료일
+- 반년 안에 Google 계정으로 로그인한 적이 있는지 (안 쓰면 Google 로그인 설정이 자동 삭제)
 - 신고된 후기, 개선 제안 답장
 
 끝나면 바뀐 것·출처 링크·확인 못 한 것을 표로 보고해 줘. 커밋·푸시는 보고를 보고 내가 말할게.`;

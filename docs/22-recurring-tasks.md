@@ -25,6 +25,7 @@
 | B1 | 외부 API **무료 한도·요금 변경** (Google 지도·장소, 카카오, 네이버, Gemini·Workers AI·Groq, AviationStack, Open-Meteo, 웹 푸시) | `apps/server/src/services/apiUsage.ts` `APIS` + `docs/code-map.md` §3 표 |
 | B2 | 유료 서비스 가격 (참고 문서) | `docs/21-paid-services.md` |
 | B3 | 관리자 **API 사용량** 화면에서 남은 무료량 20% 아래(주황·빨강)였던 API 점검 — 자동 중지는 95% | 앱 → 마이 → 관리자 → API 사용량 |
+| B4 | API 키 유효기간 — 공공데이터포털 활용기간(보통 2년, 한 달 전 연장신청)·Cloudflare 토큰 만료·Google 결제 카드 만료·Google 로그인 6개월 미사용 삭제 | `apps/server/.env` 각 키 위 [유효기간] |
 
 ## C. 보안·의존성
 
