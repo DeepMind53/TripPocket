@@ -6,9 +6,12 @@ import { savedPlaceRepo, SavedLimitError } from './repositories/savedPlaceRepo';
 import { tripRepo } from './repositories/tripRepo';
 
 /**
- * 관리자 실험실 "샘플 테스트" (사용자 요청 2026-10-26): 당장 볼 수 없는 화면을 한 번에 보려고
- * 오늘 출발하는 도쿄 5일 여행 + 지난 오사카 여행 + 저장 장소를 만든다. 제목·메모의 [샘플]로 알아보고 지운다.
- * 실험실 기능도 모두 켠다. 만든 지금 여행 id를 돌려준다
+ * 관리자 실험실 "샘플 테스트" (사용자 요청 2026-10-26, 2026-10-27 최신 기능 반영): 당장 볼 수 없는 화면을 한 번에 보려고
+ * - 오늘 출발 도쿄 5일: 항공(출발 확인)·숙소·지금 기준 지난/진행 중/다음 일정(방문 버튼·다음 일정 바)·메모·가고 싶은 곳,
+ *   좌표 있는 목적지(일출·일몰·여행지 특보·하루 동선), 지운 일정 1개(삭제 기록 복원)
+ * - 6일 뒤 타이베이 3일: 다가오는 여행(준비 현황·특보 점·대만 기상 특보·입국 항목)
+ * - 지난 오사카 여행·1년 전 도쿄 여행: 방문 기록·여행 회고·"방문기록 N회"(센소지)
+ * - 저장 장소. 제목·메모의 [샘플]로 알아보고 지운다. 실험실 기능도 모두 켠다. 만든 지금 여행 id를 돌려준다
  */
 export const SAMPLE_MARK = '[샘플]';
 const TZ = 'Asia/Tokyo';
@@ -150,6 +153,46 @@ export async function createLabSample(): Promise<string> {
   }
   // 날짜 없는 가고 싶은 곳
   await itemRepo.create({ tripId: trip.id, date: null, kind: 'cafe', title: '사루타히코 커피' });
+  // 지운 일정 하나 (마이 → 삭제 기록 복원에서 되살리기)
+  const gone = await makeItem(
+    trip.id,
+    day(1),
+    P('스카이트리', 'place', 35.7101, 139.8107, '도쿄 스미다구 오시아게 1-1-2'),
+  );
+  await itemRepo.softDelete(gone.id);
+
+  // 6일 뒤 타이베이 3일 (다가오는 여행: 준비 현황·여행지 특보·대만 입국 항목)
+  const taipei = await tripRepo.create({
+    title: `${SAMPLE_MARK} 타이베이 3일`,
+    destinations: [
+      {
+        name: '타이베이',
+        kind: 'city',
+        countryCode: 'TW',
+        timezone: 'Asia/Taipei',
+        coords: { lat: 25.033, lng: 121.5654 },
+      },
+    ],
+    startDate: day(6),
+    endDate: day(8),
+    timezone: 'Asia/Taipei',
+    cover: { emoji: '🧋', color: '#FF6B4A' },
+  });
+  await bookingRepo.create({
+    tripId: taipei.id,
+    kind: 'flight',
+    title: '에바항공 BR169',
+    provider: '에바항공',
+    confirmationNo: 'SMPL03',
+    start: { date: day(6), time: '09:00', place: 'ICN' },
+    end: { date: day(6), time: '10:40', place: 'TPE' },
+  });
+  for (const [n, s] of [
+    P('타이베이 101', 'place', 25.0339, 121.5645, '타이베이 신이구 신이로 5단 7'),
+    P('딘타이펑 신이점', 'food', 25.0331, 121.5654, '타이베이 신이구 숭가오로 194'),
+    P('스린 야시장', 'food', 25.0881, 121.5241, '타이베이 스린구 지허로 101'),
+  ].entries())
+    await makeItem(taipei.id, day(6 + Math.min(n, 2)), s, hhmm(11 * 60 + n * 180));
 
   // 지난 여행 (기록 탭: 방문 기록·여행 회고)
   const past = await tripRepo.create({
@@ -184,6 +227,28 @@ export async function createLabSample(): Promise<string> {
   for (const [n, s] of osaka.entries()) {
     const it = await makeItem(past.id, addDays(today, -89), s, hhmm(10 * 60 + n * 120));
     await itemRepo.setVisit(it.id, n === 3 ? 'skipped' : 'visited');
+  }
+
+  // 1년 전 도쿄 여행 — 오늘 센소지에 "방문기록 1회"
+  const lastYear = await tripRepo.create({
+    title: `${SAMPLE_MARK} 작년 도쿄 여행`,
+    destinations: [
+      {
+        name: '도쿄',
+        kind: 'city',
+        countryCode: 'JP',
+        timezone: TZ,
+        coords: { lat: 35.6812, lng: 139.7671 },
+      },
+    ],
+    startDate: addDays(today, -365),
+    endDate: addDays(today, -363),
+    timezone: TZ,
+    cover: { emoji: '⛩️' },
+  });
+  for (const [n, s] of [TOKYO[0]![0]!, TOKYO[2]![0]!].entries()) {
+    const it = await makeItem(lastYear.id, addDays(today, -364), s, hhmm(10 * 60 + n * 180));
+    await itemRepo.setVisit(it.id, 'visited');
   }
 
   // 저장한 장소 (저장 탭 나라 칸·일정 추가 고르기)

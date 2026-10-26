@@ -6,6 +6,7 @@ import { routes } from '../../app/router';
 import { resetLocalDb } from '../../data/dev';
 import { LABS, setLab } from '../../data/labsStore';
 import { itemRepo } from '../../data/repositories/itemRepo';
+import { trashRepo } from '../../data/repositories/trashRepo';
 import { tripRepo } from '../../data/repositories/tripRepo';
 import { Toaster } from '../../shared/ui';
 import { localTimeLabel } from '../../shared/hooks/useMinuteClock';
@@ -359,8 +360,12 @@ describe('실험실', () => {
     const trips = await tripRepo.listActive();
     expect(trips.map((t) => t.title).sort()).toEqual([
       '[샘플] 도쿄 5일',
+      '[샘플] 작년 도쿄 여행',
       '[샘플] 지난 오사카 여행',
+      '[샘플] 타이베이 3일',
     ]);
+    // 삭제 기록 복원에서 볼 지운 일정
+    expect((await trashRepo.list()).some((e) => e.title === '스카이트리')).toBe(true);
     const tokyo = trips.find((t) => t.title === '[샘플] 도쿄 5일')!;
     expect(tokyo.startDate).toBe(
       new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Tokyo' }).format(new Date()),
@@ -368,6 +373,9 @@ describe('실험실', () => {
     expect(JSON.parse(localStorage.getItem('tp-labs')!)).toMatchObject({
       legDistance: true,
       dayProgress: true,
+      sunTimes: true,
+      weatherPacking: true,
+      dayRoute: true,
     });
 
     await act(() => admin.navigate('/labs'));
