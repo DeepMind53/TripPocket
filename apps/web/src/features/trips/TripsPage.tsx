@@ -89,7 +89,7 @@ export function TripList({
         {showActive && (
           <>
             <TripSection
-              title={t('trips.sectionOngoing')}
+              title={`📌 ${t('trips.sectionOngoing')}`}
               trips={groups.ongoing}
               onMenu={openMenu}
             />

@@ -134,7 +134,7 @@ describe('내 여행 목록', () => {
     });
     renderAt('/trips');
 
-    const ongoing = (await screen.findByRole('heading', { name: '여행 중' })).closest('section');
+    const ongoing = (await screen.findByRole('heading', { name: '📌 여행 중' })).closest('section');
     expect(within(ongoing as HTMLElement).getByText('지금 여행')).toBeInTheDocument();
     expect(within(ongoing as HTMLElement).getByText('여행 중 · 2일차')).toBeInTheDocument();
     const upcoming = screen.getByRole('heading', { name: '다가오는 여행' }).closest('section');
