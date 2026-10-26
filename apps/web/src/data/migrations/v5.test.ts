@@ -12,7 +12,7 @@ it('저장소 v4 → v5: 기존 여행은 그대로, 예약 문서 표가 생긴
   await old.table('trips').add({ id: 't', title: '도쿄', dirty: 0 });
   old.close();
   const db = new TripPocketDB(NAME);
-  expect(db.verno).toBe(5);
+  expect(db.verno).toBeGreaterThanOrEqual(5);
   expect((await db.trips.get('t'))?.title).toBe('도쿄');
   await db.attachments.add({
     id: 'a',

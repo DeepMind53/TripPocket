@@ -1,4 +1,4 @@
-import { currentItemId, dayText, tightGap } from './dayTools';
+import { currentItemId, dayText, pastItemIds, tightGap } from './dayTools';
 
 const at = (lat: number, lng: number) => ({ name: 'p', coords: { lat, lng } });
 
@@ -70,5 +70,25 @@ describe('currentItemId', () => {
 
   it('is empty before the first item', () => {
     expect(currentItemId(items, '08:00')).toBeNull();
+  });
+});
+
+describe('pastItemIds', () => {
+  const items = [
+    { id: 'y', date: '2026-10-24' },
+    { id: 'a', date: '2026-10-25', startTime: '09:00' },
+    { id: 'b', date: '2026-10-25', startTime: '11:00', endTime: '12:00' },
+    { id: 'memo', date: '2026-10-25' },
+    { id: 'tomorrow', date: '2026-10-26', startTime: '09:00' },
+    { id: 'wish', date: null },
+  ];
+
+  it('지난 날은 모두, 오늘은 끝난 일정만', () => {
+    expect([...pastItemIds(items, '2026-10-25', '11:30')].sort()).toEqual(['a', 'y']);
+    expect([...pastItemIds(items, '2026-10-25', '12:00')].sort()).toEqual(['a', 'b', 'y']);
+  });
+
+  it('하루가 지나면 시각 없는 일정도', () => {
+    expect([...pastItemIds(items, '2026-10-26', '08:00')].sort()).toEqual(['a', 'b', 'memo', 'y']);
   });
 });

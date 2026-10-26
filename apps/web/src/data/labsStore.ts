@@ -14,6 +14,7 @@ export const LABS = [
   'copyDay',
   // 2026-10-26 저녁 (사용자 선택)
   'emergency',
+  'visitLog',
 ] as const;
 export type LabId = (typeof LABS)[number];
 

@@ -6,6 +6,7 @@ import { resetLocalDb } from '../../data/dev';
 import { itemRepo } from '../../data/repositories/itemRepo';
 import { tripRepo } from '../../data/repositories/tripRepo';
 import { Toaster } from '../../shared/ui';
+import { setLab } from '../../data/labsStore';
 import { ReadOnlyTripError, setMemberCounts, setTripRoles } from '../../data/tripRoles';
 
 let tripId = '';
@@ -47,6 +48,52 @@ const day = (name: string) => screen.getByRole('region', { name });
 const dayAfterSheet = (name: string) => screen.findByRole('region', { name });
 
 describe('일정 화면', () => {
+  it('실험실 방문 기록: 지난 일정에 [방문][미방문], 누르면 기록으로 표시되고 다시 누르면 지운다', async () => {
+    const user = userEvent.setup();
+    setLab('visitLog', true);
+    vi.setSystemTime(new Date('2026-10-25T03:00:00Z')); // 도쿄 10.25 12:00 = 2일차
+    await itemRepo.create({ tripId, date: '2026-10-24', kind: 'place', title: '센소지' });
+    await itemRepo.create({
+      tripId,
+      date: '2026-10-25',
+      kind: 'food',
+      title: '라멘',
+      startTime: '09:00',
+      endTime: '10:00',
+    });
+    await itemRepo.create({
+      tripId,
+      date: '2026-10-25',
+      kind: 'cafe',
+      title: '카페',
+      startTime: '13:00',
+    });
+    await renderPlan('?day=all');
+
+    const day1 = day('1일차 · 10.24 (토)');
+    await user.click(within(day1).getByRole('button', { name: '방문' }));
+    expect(
+      await within(day1).findByRole('button', { name: /센소지, 방문 기록/ }),
+    ).toBeInTheDocument();
+    expect(await itemRepo.get((await itemRepo.listByTrip(tripId))[0]!.id)).toMatchObject({
+      visit: 'visited',
+      done: true,
+    });
+
+    const day2 = day('2일차 · 10.25 (일)');
+    // 끝난 라멘에만 버튼, 아직인 카페에는 없음
+    expect(within(day2).getAllByRole('button', { name: '미방문' })).toHaveLength(1);
+    await user.click(within(day2).getByRole('button', { name: '미방문' }));
+    expect(
+      await within(day2).findByRole('button', { name: /라멘, 미방문 기록/ }),
+    ).toBeInTheDocument();
+    await user.click(within(day2).getByRole('button', { name: '미방문', pressed: true }));
+    expect(
+      await within(day2).findByRole('button', { name: '1번째 일정, 라멘' }),
+    ).toBeInTheDocument();
+    setLab('visitLog', false);
+  });
+
   it('여행 중에는 오늘 일차 칩이 기본으로 골라져 그날만 보인다', async () => {
     vi.setSystemTime(new Date('2026-10-25T03:00:00Z')); // 도쿄 10.25 = 2일차
     await renderPlan();

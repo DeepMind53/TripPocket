@@ -35,6 +35,11 @@ export function useSetting<T>(key: string, fallback: T): T {
   return useLiveQuery(() => settingsRepo.get(key, fallback), [key]) ?? fallback;
 }
 
+/** 방문 기록을 남긴 일정 (기록 탭) */
+export function useVisitedItems(): ItineraryItem[] | undefined {
+  return useLiveQuery(() => itemRepo.listVisited(), []);
+}
+
 export function useTripBookings(tripId: string | undefined): Booking[] | undefined {
   return useLiveQuery(async () => (tripId ? bookingRepo.listByTrip(tripId) : []), [tripId]);
 }

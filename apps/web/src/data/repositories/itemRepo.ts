@@ -9,6 +9,7 @@ import {
 } from '@trippocket/shared';
 import { nowIso } from '../clock';
 import { db, toDomain, type Stored } from '../db';
+import { visitPatch, type Visit } from '../../domain/visit';
 
 export type NewItem = Omit<
   ItineraryItem,
@@ -79,6 +80,13 @@ export const itemRepo = {
     return rows.map(toDomain);
   },
 
+  /** 방문 기록을 남긴 일정 전부 (기록 탭) — 날짜 최근 순 */
+  async listVisited(): Promise<ItineraryItem[]> {
+    const rows = await db.items.filter((r) => !r.deletedAt && r.visit !== undefined).toArray();
+    rows.sort((a, b) => compareKeys(b.date ?? '', a.date ?? '') || compareKeys(a.order, b.order));
+    return rows.map(toDomain);
+  },
+
   async listByDay(tripId: string, date: LocalDate | null): Promise<ItineraryItem[]> {
     return (await dayRows(tripId, date)).map(toDomain);
   },
@@ -87,12 +95,29 @@ export const itemRepo = {
     return db.transaction('rw', db.items, async () => {
       const row = await db.items.get(id);
       if (!row || row.deletedAt) throw new Error(`일정을 찾을 수 없어요: ${id}`);
-      const merged: Record<string, unknown> = { ...toDomain(row), ...patch, updatedAt: nowIso() };
+      // 다녀옴(done)과 방문 기록(visit)은 함께 바뀐다 (domain/visit.ts)
+      const linked =
+        'done' in patch || 'visit' in patch
+          ? visitPatch(row, { done: patch.done, visit: patch.visit })
+          : {};
+      const merged: Record<string, unknown> = {
+        ...toDomain(row),
+        ...patch,
+        ...linked,
+        updatedAt: nowIso(),
+      };
       for (const key of Object.keys(merged)) if (merged[key] === undefined) delete merged[key];
       const item = ItineraryItemSchema.parse(merged);
       await db.items.put({ ...item, dirty: 1 });
       return item;
     });
+  },
+
+  /** 지난 일정의 방문 기록: 방문·미방문, null이면 기록 지우기 (다녀옴도 함께) */
+  async setVisit(id: string, visit: Visit | null): Promise<ItineraryItem> {
+    const row = await db.items.get(id);
+    if (!row) throw new Error(`일정을 찾을 수 없어요: ${id}`);
+    return this.update(id, visitPatch(row, { visit }));
   },
 
   /**

@@ -1030,6 +1030,10 @@
       "emergency": {
         "name": "긴급 연락처 카드",
         "desc": "⚡ 빠른 메뉴 맨 위에서\n여행 나라 경찰·구급 번호를 바로 걸어요"
+      },
+      "visitLog": {
+        "name": "방문 기록",
+        "desc": "지난 일정에 [방문][미방문]을 눌러\n기록 탭에 남겨요"
       }
     },
     "pullMore": "당겨서 동기화",
@@ -1360,6 +1364,13 @@
       "read": "읽음",
       "done": "완료"
     }
+  },
+  "visit": {
+    "button": { "visited": "방문", "skipped": "미방문" },
+    "record": { "visited": "방문 기록", "skipped": "미방문 기록" },
+    "logTitle": "방문 기록",
+    "logCounts": "방문 {{visited}}곳 · 미방문 {{skipped}}곳",
+    "logEmpty": "지난 일정에서 [방문][미방문]을 누르면\n여기에 모여요"
   },
   "emergency": {
     "title": "긴급 연락처",

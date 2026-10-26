@@ -4,6 +4,8 @@ import { useTrips } from '../../data/hooks';
 import { useTranslation } from '../../i18n';
 import { EmptyState, TopBar } from '../../shared/ui';
 import { TripList } from '../trips/TripsPage';
+import { useLab } from '../../data/labsStore';
+import { VisitLog } from './VisitLog';
 
 /**
  * 기록 탭 (2026-10-24 사용자 선택): 다녀온 여행 모음 + 나의 여행 통계(여행 횟수·여행한 날·가 본 나라).
@@ -12,6 +14,7 @@ import { TripList } from '../trips/TripsPage';
 export function RecordsPage() {
   const { t } = useTranslation();
   const trips = useTrips();
+  const visitOn = useLab('visitLog');
   const past = (trips ?? []).filter(
     (tr) => getTripStatus(tr.startDate, tr.endDate, todayIn(tr.timezone)) === 'past',
   );
@@ -49,6 +52,8 @@ export function RecordsPage() {
             </p>
           )}
         </section>
+
+        {visitOn && <VisitLog trips={trips ?? []} />}
 
         <section aria-label={t('records.pastTitle')} className="flex flex-col gap-2">
           <h2 className="text-caption font-bold text-fg-muted">{t('records.pastTitle')}</h2>

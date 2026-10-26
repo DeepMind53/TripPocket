@@ -217,3 +217,17 @@
     background: color-mix(in srgb, var(--kind) var(--tp-kind-pulse), var(--tp-surface));
   }
 }
+
+/* 방문·미방문을 남긴 지난 일정 (실험실 "방문 기록", 사용자 요청 2026-10-26): 회색 바탕 + 옅은 빗금, 내용은 흐리게 */
+.visit-mark {
+  background:
+    repeating-linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--tp-fg) 7%, transparent) 0 2px,
+      transparent 2px 10px
+    ),
+    var(--tp-bg-subtle);
+}
+.visit-mark > * {
+  opacity: 0.35;
+}

@@ -25,7 +25,8 @@ import {
   Route,
   TriangleAlert,
 } from 'lucide-react';
-import { currentItemId, dayText, tightGap } from '../../domain/dayTools';
+import { currentItemId, dayText, pastItemIds, tightGap } from '../../domain/dayTools';
+import type { Visit } from '../../domain/visit';
 import { timeIn, useMinuteClock } from '../../shared/hooks/useMinuteClock';
 import { copyText } from '../../shared/lib/clipboard';
 import {
@@ -37,6 +38,7 @@ import {
   Fragment,
   useRef,
   type CSSProperties,
+  type ReactNode,
 } from 'react';
 import { placeBookingsInPlan } from '../../data/bookingPlanner';
 import { bookingsToPlan } from '../../domain/bookingPlan';
@@ -750,6 +752,10 @@ function DaySection({
   const now = useMinuteClock(isToday);
   const nowTime = isToday ? timeIn(timezone, now) : null;
   const nowId = nowTime ? currentItemId(items, nowTime) : null;
+  // 실험실 "방문 기록": 지난 일정에 [방문][미방문] (보기 전용이면 없음)
+  const visitOn = useLab('visitLog') && canEdit;
+  const today = todayIn(timezone);
+  const past = visitOn ? pastItemIds(items, today, timeIn(timezone, now) ?? '00:00') : null;
   if (hideWhenEmpty && items.length === 0) return null;
   const done = items.filter((i) => i.done).length;
   const color = date ? dayColor(index) : 'var(--tp-fg-muted)';
@@ -849,6 +855,7 @@ function DaySection({
               now={item.id === nowId}
               booking={item.bookingId ? bookingById.get(item.bookingId) : undefined}
               onOpen={() => onOpen(item)}
+              onVisit={past?.has(item.id) ? (v) => void itemRepo.setVisit(item.id, v) : undefined}
             />
             {legs && <LegLine from={item} to={items[i + 1]} />}
             {tight && <TightLine from={item} to={items[i + 1]} />}
@@ -990,12 +997,15 @@ function ItemRow({
   now,
   booking,
   onOpen,
+  onVisit,
 }: {
   item: ItineraryItem;
   n: number;
   color: string;
   /** 여행 당일 지금 진행 중: 진한 테두리·굵은 글자·바탕 깜빡임 (사용자 요청 2026-10-26) */
   now: boolean;
+  /** 실험실 "방문 기록": 지난 일정이면 위에 [방문][미방문] (null = 기록 지우기) */
+  onVisit?: ((visit: Visit | null) => void) | undefined;
   /** 예약에서 넘어온 일정이면 그 예약: 점선 테두리로 구분 (사용자 요청 2026-10-26) */
   booking?: Booking | undefined;
   onOpen: () => void;
@@ -1003,10 +1013,29 @@ function ItemRow({
   const { time, wide } = useTimeText();
   const { t } = useTranslation();
   const Icon = KIND_ICON[item.kind];
-  const label = t('plan.itemLabel', {
-    n,
-    title: item.kind === 'note' ? (item.memo ?? item.title) : item.title,
-  });
+  const label =
+    t('plan.itemLabel', {
+      n,
+      title: item.kind === 'note' ? (item.memo ?? item.title) : item.title,
+    }) + (item.visit ? `, ${t(`visit.record.${item.visit}`)}` : '');
+  // 방문·미방문을 누른 일정: 회색 바탕에 옅은 빗금 + 가운데 큰 글씨 (styles/index.css .visit-mark)
+  const marked = onVisit !== undefined && item.visit !== undefined;
+  const wrap = (row: ReactNode) => (
+    <li className="flex flex-col gap-1">
+      {onVisit && <VisitBar value={item.visit} onChange={onVisit} />}
+      <div className="relative">
+        {row}
+        {marked && (
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 grid place-items-center text-title-2 font-bold text-fg-sub"
+          >
+            {t(`visit.record.${item.visit!}`)}
+          </span>
+        )}
+      </div>
+    </li>
+  );
   const badge = (
     <span
       aria-hidden="true"
@@ -1020,92 +1049,121 @@ function ItemRow({
   const kindStyle = { '--kind': `var(--tp-kind-${item.kind})` } as CSSProperties;
   // 항공편 출발 일정은 예약 탭과 같은 탑승권 모양 그대로 (도착 공항 일정은 아래 보통 줄)
   if (booking?.kind === 'flight' && item.transport)
-    return (
-      <li>
-        <button
-          type="button"
-          data-item-row=""
-          data-from-booking=""
-          onClick={onOpen}
-          aria-label={label}
-          aria-current={now ? 'time' : undefined}
-          style={kindStyle}
-          className={cn(
-            'kind-tint flex w-full items-start gap-3 rounded-btn border border-dashed border-fg-muted/60 px-2 py-3 text-left active:bg-bg-subtle',
-            item.done && 'opacity-50',
-            now && 'kind-now border-transparent font-bold',
-          )}
-        >
-          {badge}
-          <span className="flex min-w-0 flex-1 flex-col gap-2">
-            <FlightTicket booking={booking} />
-            {booking.confirmationNo && (
-              <span className="tabular border-t border-dashed border-line pt-1.5 text-caption text-fg-sub">
-                {t('bookings.confirmationNo')}{' '}
-                <strong className="font-bold text-fg">{booking.confirmationNo}</strong>
-              </span>
-            )}
-          </span>
-        </button>
-      </li>
-    );
-  return (
-    <li>
+    return wrap(
       <button
         type="button"
         data-item-row=""
-        {...(booking ? { 'data-from-booking': '' } : {})}
+        data-from-booking=""
         onClick={onOpen}
         aria-label={label}
         aria-current={now ? 'time' : undefined}
         style={kindStyle}
         className={cn(
-          'kind-tint flex w-full items-start gap-3 rounded-btn px-2 py-3 text-left active:bg-bg-subtle',
-          booking && 'border border-dashed border-fg-muted/60',
-          now && 'kind-now border-transparent',
+          'kind-tint flex w-full items-start gap-3 rounded-btn border border-dashed border-fg-muted/60 px-2 py-3 text-left active:bg-bg-subtle',
+          item.done && !marked && 'opacity-50',
+          now && 'kind-now border-transparent font-bold',
+          marked && 'visit-mark',
         )}
       >
-        {/* 번호·시간·종류는 제목 첫 줄 높이(24px)에 가운데 맞춤 */}
         {badge}
-        <span
+        <span className="flex min-w-0 flex-1 flex-col gap-2">
+          <FlightTicket booking={booking} />
+          {booking.confirmationNo && (
+            <span className="tabular border-t border-dashed border-line pt-1.5 text-caption text-fg-sub">
+              {t('bookings.confirmationNo')}{' '}
+              <strong className="font-bold text-fg">{booking.confirmationNo}</strong>
+            </span>
+          )}
+        </span>
+      </button>,
+    );
+  return wrap(
+    <button
+      type="button"
+      data-item-row=""
+      {...(booking ? { 'data-from-booking': '' } : {})}
+      onClick={onOpen}
+      aria-label={label}
+      aria-current={now ? 'time' : undefined}
+      style={kindStyle}
+      className={cn(
+        'kind-tint flex w-full items-start gap-3 rounded-btn px-2 py-3 text-left active:bg-bg-subtle',
+        booking && 'border border-dashed border-fg-muted/60',
+        now && 'kind-now border-transparent',
+        marked && 'visit-mark',
+      )}
+    >
+      {/* 번호·시간·종류는 제목 첫 줄 높이(24px)에 가운데 맞춤 */}
+      {badge}
+      <span
+        className={cn(
+          'tabular shrink-0 text-caption leading-6 font-semibold text-fg-sub',
+          wide ? 'w-16' : 'w-11',
+        )}
+      >
+        {time(item.startTime) ?? <span className="text-fg-muted/60">--:--</span>}
+      </span>
+      <span className={cn('flex min-w-0 flex-1 flex-col', item.done && 'opacity-50')}>
+        {item.kind === 'note' ? (
+          <span
+            className={cn(
+              'line-clamp-4 text-body-2',
+              item.done && 'line-through',
+              now && 'font-bold',
+            )}
+          >
+            {item.memo ?? item.title}
+          </span>
+        ) : (
+          <span className={cn('text-body-1', item.done && 'line-through', now && 'font-bold')}>
+            {item.title}
+          </span>
+        )}
+        {item.transport && (item.transport.from || item.transport.to) && (
+          <span className="tabular truncate text-caption text-fg-muted">
+            {item.transport.from ?? ''} → {item.transport.to ?? ''}
+          </span>
+        )}
+        {item.kind !== 'note' && item.place?.address && (
+          <span className="truncate text-caption text-fg-muted">{item.place.address}</span>
+        )}
+      </span>
+      <span className="flex h-6 shrink-0 items-center gap-1 rounded-md bg-bg-subtle px-1.5 text-micro text-fg-sub">
+        <Icon aria-hidden="true" className="size-3" />
+        {t(`kind.${item.kind}`)}
+      </span>
+    </button>,
+  );
+}
+
+/** 지난 일정 위 [방문] [미방문] — 고른 것을 다시 누르면 기록 지우기 */
+function VisitBar({
+  value,
+  onChange,
+}: {
+  value: Visit | undefined;
+  onChange: (visit: Visit | null) => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <div className="flex justify-end gap-1.5">
+      {(['visited', 'skipped'] as const).map((v) => (
+        <button
+          key={v}
+          type="button"
+          aria-pressed={value === v}
+          onClick={() => onChange(value === v ? null : v)}
           className={cn(
-            'tabular shrink-0 text-caption leading-6 font-semibold text-fg-sub',
-            wide ? 'w-16' : 'w-11',
+            'h-8 rounded-full border px-3 text-caption font-semibold',
+            value === v
+              ? 'border-transparent bg-fg-sub text-bg'
+              : 'border-line bg-surface text-fg-sub',
           )}
         >
-          {time(item.startTime) ?? <span className="text-fg-muted/60">--:--</span>}
-        </span>
-        <span className={cn('flex min-w-0 flex-1 flex-col', item.done && 'opacity-50')}>
-          {item.kind === 'note' ? (
-            <span
-              className={cn(
-                'line-clamp-4 text-body-2',
-                item.done && 'line-through',
-                now && 'font-bold',
-              )}
-            >
-              {item.memo ?? item.title}
-            </span>
-          ) : (
-            <span className={cn('text-body-1', item.done && 'line-through', now && 'font-bold')}>
-              {item.title}
-            </span>
-          )}
-          {item.transport && (item.transport.from || item.transport.to) && (
-            <span className="tabular truncate text-caption text-fg-muted">
-              {item.transport.from ?? ''} → {item.transport.to ?? ''}
-            </span>
-          )}
-          {item.kind !== 'note' && item.place?.address && (
-            <span className="truncate text-caption text-fg-muted">{item.place.address}</span>
-          )}
-        </span>
-        <span className="flex h-6 shrink-0 items-center gap-1 rounded-md bg-bg-subtle px-1.5 text-micro text-fg-sub">
-          <Icon aria-hidden="true" className="size-3" />
-          {t(`kind.${item.kind}`)}
-        </span>
-      </button>
-    </li>
+          {t(`visit.button.${v}`)}
+        </button>
+      ))}
+    </div>
   );
 }
 

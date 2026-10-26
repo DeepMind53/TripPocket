@@ -109,6 +109,8 @@ export const ItineraryItemSchema = z.object({
   memo: z.optional(z.string().check(z.maxLength(2000))),
   /** 여행 중 "다녀옴" 체크 */
   done: z.optional(z.boolean()),
+  /** 지난 일정에 남긴 방문 기록 (2026-10-26): visited = 방문(done도 true), skipped = 미방문 */
+  visit: z.optional(z.enum(['visited', 'skipped'])),
 });
 export type ItineraryItem = z.infer<typeof ItineraryItemSchema>;
 

@@ -1,6 +1,7 @@
 import { assertEditable } from './tripRoles';
 import Dexie, { type EntityTable } from 'dexie';
 import { upgradeToV2 } from './migrations/v2';
+import { upgradeToV6 } from './migrations/v6';
 import type {
   Booking,
   ChecklistItem,
@@ -72,6 +73,8 @@ export class TripPocketDB extends Dexie {
     this.version(4).stores({});
     // v5 (2026-10-25): 예약 문서 파일 (동기화·백업 대상 아님 — 서버 API로 따로 주고받음)
     this.version(5).stores({ attachments: 'id, tripId, bookingId' });
+    // v6 (2026-10-26): 일정 방문 기록(visit) — 인덱스는 그대로, 다녀옴 일정은 방문으로
+    this.version(6).stores({}).upgrade(upgradeToV6);
   }
 }
 
