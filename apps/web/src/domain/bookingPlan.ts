@@ -157,3 +157,44 @@ export function fitPoints<T extends Pick<ItineraryItem, 'kind' | 'bookingId' | '
   const rest = items.filter((i) => !isAirportStop(i));
   return rest.length > 0 ? rest : [...items];
 }
+
+/**
+ * 예약을 고친 뒤 이미 일정표에 들어간 일정을 맞출 짝 (사용자 요청 2026-10-26).
+ * 항공은 출발(이동 정보 있음)·도착 두 일정 — 이동 정보 유무로 짝짓고, 그 밖은 차례대로.
+ * 사용자가 지운 일정은 짝이 없으면 다시 만들지 않는다
+ */
+export function pairDrafts<T extends Pick<ItineraryItem, 'transport'>>(
+  linked: readonly T[],
+  drafts: readonly PlanDraft[],
+): { item: T; draft: PlanDraft }[] {
+  const left = [...linked];
+  const out: { item: T; draft: PlanDraft }[] = [];
+  for (const draft of drafts) {
+    const i = left.findIndex((it) => !!it.transport === !!draft.transport);
+    if (i < 0) continue;
+    out.push({ item: left[i]!, draft });
+    left.splice(i, 1);
+  }
+  return out;
+}
+
+/**
+ * 짝지은 일정에 예약 내용을 덮어쓸 값. 메모·다녀옴·방문 기록은 그대로,
+ * 장소는 이름·주소가 같으면 사용자가 검색해 넣은 좌표를 살린다
+ */
+export function draftPatch(
+  item: Pick<ItineraryItem, 'place'>,
+  draft: PlanDraft,
+): Pick<ItineraryItem, 'title' | 'startTime' | 'place' | 'transport'> {
+  const same =
+    item.place &&
+    draft.place &&
+    item.place.name === draft.place.name &&
+    (draft.place.address === undefined || item.place.address === draft.place.address);
+  return {
+    title: draft.title,
+    startTime: draft.startTime,
+    place: same ? item.place : draft.place,
+    transport: draft.transport,
+  };
+}

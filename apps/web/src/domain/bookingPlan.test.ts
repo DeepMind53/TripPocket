@@ -2,8 +2,10 @@ import type { Booking } from '@trippocket/shared';
 import { describe, expect, it } from 'vitest';
 import {
   bookingsToPlan,
+  draftPatch,
   fitPoints,
   isAirportStop,
+  pairDrafts,
   planDraftsFromBooking,
   timeSlotIndex,
 } from './bookingPlan';
@@ -103,5 +105,55 @@ describe('fitPoints', () => {
 
   it('uses airports when nothing else is on the map', () => {
     expect(fitPoints([depart, arrive])).toEqual([depart, arrive]);
+  });
+});
+
+describe('예약 고치면 일정에 반영', () => {
+  const flight = {
+    ...base,
+    id: 'b',
+    kind: 'flight',
+    title: 'KE705',
+    start: { date: '2026-10-25', time: '10:00', place: 'ICN' },
+    end: { date: '2026-10-25', time: '12:30', place: 'NRT' },
+  } as Booking;
+
+  it('항공 출발·도착 일정과 새 초안을 이동 정보로 짝짓는다', () => {
+    const drafts = planDraftsFromBooking(flight, arrive);
+    const linked = [
+      { id: 'arr', transport: undefined },
+      { id: 'dep', transport: { mode: 'flight' as const } },
+    ];
+    expect(pairDrafts(linked, drafts).map((p) => [p.item.id, p.draft.startTime])).toEqual([
+      ['dep', '10:00'],
+      ['arr', '12:30'],
+    ]);
+  });
+
+  it('지운 일정은 짝이 없어 다시 만들지 않는다', () => {
+    const drafts = planDraftsFromBooking(flight, arrive);
+    expect(
+      pairDrafts([{ id: 'dep', transport: { mode: 'flight' as const } }], drafts),
+    ).toHaveLength(1);
+  });
+
+  it('장소가 같으면 사용자가 넣은 좌표를 살리고, 바뀌면 예약 장소로', () => {
+    const draft = {
+      date: '2026-10-25',
+      kind: 'lodging',
+      title: '호텔',
+      bookingId: 'b',
+      place: { name: '호텔', address: '신주쿠' },
+    } as const;
+    const kept = draftPatch(
+      { place: { name: '호텔', address: '신주쿠', coords: { lat: 1, lng: 2 } } },
+      draft,
+    );
+    expect(kept.place?.coords).toEqual({ lat: 1, lng: 2 });
+    const moved = draftPatch(
+      { place: { name: '호텔', address: '시부야', coords: { lat: 1, lng: 2 } } },
+      draft,
+    );
+    expect(moved.place).toEqual({ name: '호텔', address: '신주쿠' });
   });
 });

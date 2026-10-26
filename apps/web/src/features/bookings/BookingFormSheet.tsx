@@ -12,6 +12,7 @@ import { BookingDocs } from './BookingDocs';
 import { formatMonthDay } from '../../shared/lib/dateFormat';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from '../../i18n';
+import { syncBookingToPlan } from '../../data/bookingPlanner';
 import { bookingRepo, type NewBooking } from '../../data/repositories/bookingRepo';
 import { BottomSheet, Button, Chip, snackbar, Switch, TimeInput, toast } from '../../shared/ui';
 import { BOOKING_ICON } from '../common/bookingKinds';
@@ -280,6 +281,8 @@ function BookingForm({
           priceNote: input.priceNote,
           memo: input.memo,
         });
+        // 일정표에 들어간 그 예약 일정도 고친 내용으로 (사용자 요청 2026-10-26)
+        await syncBookingToPlan(b.id, (airport) => t('plan.arriveAt', { airport }));
         toast(t('form.saved'));
       } else {
         await bookingRepo.create(input);
