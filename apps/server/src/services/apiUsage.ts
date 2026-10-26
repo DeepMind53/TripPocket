@@ -15,6 +15,7 @@ export type ApiId =
   | 'google_places_local'
   | 'google_autocomplete'
   | 'google_details_basic'
+  | 'google_routes'
   | 'geoapify'
   | 'openfreemap'
   | 'google_maps_js'
@@ -72,6 +73,8 @@ export const APIS: readonly ApiDef[] = [
   // Autocomplete Requests 월 1만·Place Details Essentials 월 1만 무료 (가격표 2026-10-23 갱신판) — 무료량 안에서만
   { id: 'google_autocomplete', group: 'paid', freeMonthly: 10000, tz: 'America/Los_Angeles' },
   { id: 'google_details_basic', group: 'paid', freeMonthly: 10000, tz: 'America/Los_Angeles' },
+  // 출발 시각(실험실, 2026-10-26): Routes API Compute Routes Essentials 월 1만 무료 — 걷기·대중교통 2건씩
+  { id: 'google_routes', group: 'paid', freeMonthly: 10000, tz: 'America/Los_Angeles' },
   {
     id: 'google_maps_js',
     group: 'paid',

@@ -963,6 +963,7 @@
       "google_places_local": "Google 장소 현지어 이름 (택시 카드)",
       "google_autocomplete": "Google 자동완성 (검색 백업)",
       "google_details_basic": "Google 장소 주소·좌표 (검색 백업)",
+      "google_routes": "Google 길 소요 시간 (출발 시각)",
       "geoapify": "Geoapify (검색·택시 카드 백업)",
       "openfreemap": "OpenFreeMap 지도 (지도 백업)"
     },
@@ -992,6 +993,7 @@
       "google_places_local": "Place Details Pro · 무료 월 5,000회",
       "google_autocomplete": "장소 검색 무료량이 끝나면 대신 · 월 10,000회 무료",
       "google_details_basic": "자동완성에서 고른 장소 · Essentials · 월 10,000회 무료",
+      "google_routes": "걷기·대중교통 1번에 2건 · Essentials · 월 10,000회 무료",
       "geoapify": "Google 백업까지 멈추면 · 하루 3,000회 무료 (요금 없음)",
       "openfreemap": "Google·네이버 지도를 못 쓸 때 · 무료·한도 없음"
     },
@@ -1034,6 +1036,10 @@
       "visitLog": {
         "name": "방문 기록",
         "desc": "지난 일정에 [방문][미방문]을 눌러\n기록 탭에 남겨요"
+      },
+      "departure": {
+        "name": "출발 시각 알려 주기",
+        "desc": "여행 당일 지금 일정 아래에\n다음 장소까지 걸리는 시간과\n몇 시에 나가면 되는지 보여요"
       }
     },
     "pullMore": "당겨서 동기화",
@@ -1364,6 +1370,13 @@
       "read": "읽음",
       "done": "완료"
     }
+  },
+  "departure": {
+    "next": "다음 · {{title}}",
+    "walk": "도보 {{min}}분",
+    "transit": "대중교통 {{min}}분",
+    "leaveAt": "{{time}}에 출발",
+    "rough": "길 정보를 못 받아 직선거리로 어림했어요"
   },
   "visit": {
     "button": { "visited": "방문", "skipped": "미방문" },

@@ -15,6 +15,7 @@ export const LABS = [
   // 2026-10-26 저녁 (사용자 선택)
   'emergency',
   'visitLog',
+  'departure',
 ] as const;
 export type LabId = (typeof LABS)[number];
 

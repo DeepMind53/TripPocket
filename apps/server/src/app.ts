@@ -19,6 +19,7 @@ import { ApiPaused, initApiUsage, trackApi } from './services/apiUsage';
 import { aiRoutes } from './routes/ai';
 import { meRoutes } from './routes/me';
 import { placesRoutes } from './routes/places';
+import { routeEtaRoutes } from './routes/routes';
 import { shareRoutes } from './routes/share';
 import { syncRoutes } from './routes/sync';
 import { latestFx } from './services/fx';
@@ -101,6 +102,7 @@ export async function buildApp(config: Config, db: Db): Promise<FastifyInstance>
   aiRoutes(app, config, db);
   shareRoutes(app, db);
   placesRoutes(app, config, db);
+  routeEtaRoutes(app, config, db);
   flightRoutes(app, config, db);
   reviewRoutes(app, db);
   pushRoutes(app, config, db);

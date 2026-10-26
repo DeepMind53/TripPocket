@@ -144,6 +144,7 @@
   2. Geoapify (선택, 사용자 작업): https://myprojects.geoapify.com 가입(카드 불필요) → 프로젝트 만들기 → API 키 복사 →
      `apps/server/.env`에 `GEOAPIFY_KEY=...` → 서버 다시 시작(`ops/restart-server.ps1`). 키 화면에서 허용 IP를 집 공인 IP로 제한하면 더 안전
   3. 지도 백업(OpenFreeMap)은 키·가입 없음
+- **출발 시각 (실험실, 2026-10-26)**: Google Cloud 콘솔 → API 및 서비스 → 라이브러리 → **Routes API** 사용 설정 (서버 키 `GOOGLE_PLACES_KEY`의 API 제한 목록에도 Routes API 추가). Compute Routes Essentials 월 10,000 무료, 90%에서 자동 중지. 켜지 않으면 Geoapify만 씀 (Google에서 찾은 장소는 직선거리 어림)
 
 ## 10. AI 추천 키 (21단계, 사용자 작업 — 모두 무료)
 서버는 아래 순서로 시도하고, 한도에 걸린 곳은 잠시 건너뛴다. 셋 다 막히면 **AI 없이** 지도 검색(카카오·네이버) 후보를 블로그 언급 수로 골라 준다 (앱에 "AI 요약 없이" 안내).

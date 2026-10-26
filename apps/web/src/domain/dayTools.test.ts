@@ -1,4 +1,4 @@
-import { currentItemId, dayText, pastItemIds, tightGap } from './dayTools';
+import { currentItemId, dayText, leaveAt, pastItemIds, tightGap } from './dayTools';
 
 const at = (lat: number, lng: number) => ({ name: 'p', coords: { lat, lng } });
 
@@ -90,5 +90,25 @@ describe('pastItemIds', () => {
 
   it('하루가 지나면 시각 없는 일정도', () => {
     expect([...pastItemIds(items, '2026-10-26', '08:00')].sort()).toEqual(['a', 'b', 'memo', 'y']);
+  });
+});
+
+describe('leaveAt', () => {
+  it('걸어서 20분 안이면 도보 기준', () => {
+    expect(leaveAt('14:00', { walk: 15, transit: 10 })).toBe('13:45');
+  });
+
+  it('멀면 대중교통 기준, 없으면 도보', () => {
+    expect(leaveAt('14:00', { walk: 50, transit: 25 })).toBe('13:35');
+    expect(leaveAt('14:00', { walk: 50 })).toBe('13:10');
+  });
+
+  it('다음 일정 시각이 없거나 시간을 모르면 null', () => {
+    expect(leaveAt(undefined, { walk: 10 })).toBeNull();
+    expect(leaveAt('14:00', {})).toBeNull();
+  });
+
+  it('자정 전으로 넘어가지 않는다', () => {
+    expect(leaveAt('00:10', { walk: 15 })).toBe('00:00');
   });
 });

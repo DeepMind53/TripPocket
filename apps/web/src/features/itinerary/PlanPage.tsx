@@ -71,6 +71,7 @@ import {
 } from '../../shared/ui';
 import { DirectionsSheet } from '../common/DirectionsSheet';
 import { openDirectionsDirect } from '../common/openDirections';
+import { DepartureLine } from './DepartureLine';
 import { ItemDetailSheet } from './ItemDetailSheet';
 import { ItemFormSheet } from './ItemFormSheet';
 import { dayColor, KIND_ICON } from './itemKinds';
@@ -754,6 +755,7 @@ function DaySection({
   const nowId = nowTime ? currentItemId(items, nowTime) : null;
   // 실험실 "방문 기록": 지난 일정에 [방문][미방문] (보기 전용이면 없음)
   const visitOn = useLab('visitLog') && canEdit;
+  const departureOn = useLab('departure');
   const today = todayIn(timezone);
   const past = visitOn ? pastItemIds(items, today, timeIn(timezone, now) ?? '00:00') : null;
   if (hideWhenEmpty && items.length === 0) return null;
@@ -857,6 +859,9 @@ function DaySection({
               onOpen={() => onOpen(item)}
               onVisit={past?.has(item.id) ? (v) => void itemRepo.setVisit(item.id, v) : undefined}
             />
+            {departureOn && item.id === nowId && items[i + 1] && (
+              <DepartureLine from={item} to={items[i + 1]!} />
+            )}
             {legs && <LegLine from={item} to={items[i + 1]} />}
             {tight && <TightLine from={item} to={items[i + 1]} />}
           </Fragment>

@@ -97,3 +97,22 @@ export function pastItemIds(
   }
   return out;
 }
+
+/** 걸어서 이 분 넘게 걸리면 대중교통 시간으로 출발 시각을 잡는다 */
+const WALK_LIMIT = 20;
+
+/**
+ * 실험실 "출발 시각 알려 주기": 다음 일정 시작에 맞추려면 몇 시에 나가야 하는지 ("HH:mm").
+ * 걸어서 20분 안이면 도보, 넘으면 대중교통(없으면 도보). 다음 일정에 시각이 없으면 null
+ */
+export function leaveAt(
+  nextStart: string | undefined,
+  eta: { walk?: number | undefined; transit?: number | undefined },
+): string | null {
+  if (!nextStart) return null;
+  const walk = eta.walk;
+  const need = walk !== undefined && walk <= WALK_LIMIT ? walk : (eta.transit ?? walk);
+  if (need === undefined) return null;
+  const t = Math.max(0, minutes(nextStart) - need);
+  return `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}`;
+}

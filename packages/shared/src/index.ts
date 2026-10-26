@@ -95,6 +95,7 @@ export {
   type PlaceSource,
   type PlaceSummary,
 } from './places/placeSearch';
+export { RouteEtaBody, type Coords, type RouteEta } from './places/route';
 export {
   buildRecommendations,
   type AiCategory,
