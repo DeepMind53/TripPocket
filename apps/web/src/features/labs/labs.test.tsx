@@ -229,8 +229,10 @@ describe('실험실', () => {
     render(<RouterProvider router={router} />);
     await user.click(await screen.findByRole('button', { name: '더보기' }));
     await user.click(await screen.findByRole('button', { name: '인쇄용 일정표' }));
+    // 주소는 일정 화면에도 있으니, 인쇄 화면으로 옮긴 뒤에 확인한다 (느린 CI에서 먼저 찾히던 문제)
+    await waitFor(() => expect(router.state.location.pathname).toBe(`/trips/${trip.id}/print`));
+    expect(await screen.findByRole('button', { name: '인쇄 · PDF로 저장' })).toBeInTheDocument();
     expect(await screen.findByText('아사쿠사 2-3-1')).toBeInTheDocument();
-    expect(router.state.location.pathname).toBe(`/trips/${trip.id}/print`);
     await user.click(screen.getByRole('button', { name: '인쇄 · PDF로 저장' }));
     expect(print).toHaveBeenCalled();
     print.mockRestore();
