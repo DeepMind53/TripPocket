@@ -40,9 +40,9 @@
   "quickMenu": {
     "title": "빠른 메뉴",
     "fx": "환율",
-    "fxDesc": "여행 국가 통화를 원화로 바로 계산",
+    "fxDesc": "원화로 바로 계산",
     "ai": "AI 추천",
-    "aiDesc": "내 근처 지금 뜨는 맛집·핫플·놀거리",
+    "aiDesc": "근처 맛집·핫플",
     "soon": "준비 중",
     "shortcuts": "바로가기",
     "shortcut": {
@@ -67,7 +67,7 @@
     "appAsk": "묻기",
     "hint": "환율·AI 추천·길찾기 같은\n자주 쓰는 기능은 여기에 있어요",
     "phrases": "번역·회화",
-    "phrasesDesc": "자주 쓰는 말을 현지어로 크게"
+    "phrasesDesc": "현지어로 크게 보여 주기"
   },
   "home": {
     "emptyTitle": "어디로 떠나볼까요?",
@@ -1441,7 +1441,7 @@
   },
   "emergency": {
     "title": "긴급 연락처",
-    "menuDesc": "경찰·구급·영사안전콜센터",
+    "menuDesc": "경찰·구급·영사콜센터",
     "kind": {
       "police": "경찰",
       "ambulance": "구급·소방",

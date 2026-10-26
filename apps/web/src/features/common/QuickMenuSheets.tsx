@@ -173,63 +173,41 @@ function QuickMenuContent({
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex flex-col gap-2">
-        {/* 실험실: 긴급 연락처 — 급할 때 찾기 쉽게 맨 위 */}
-        {
-          <button
-            type="button"
-            onClick={onEmergency}
-            className="flex items-center gap-3 rounded-card border border-danger/40 px-4 py-3 text-left"
-          >
-            <span aria-hidden="true" className="text-danger [&>svg]:size-5">
-              <Siren />
-            </span>
-            <span className="flex min-w-0 flex-1 flex-col">
-              <span className="text-body-1">{t('emergency.title')}</span>
-              <span className="text-caption text-fg-muted">{t('emergency.menuDesc')}</span>
-            </span>
-            <ChevronRight aria-hidden="true" className="size-5 text-fg-muted" />
-          </button>
-        }
+      {/* 자주 쓰는 4개를 2×2로 (사용자 요청 2026-10-27) — 긴급 연락처는 급할 때 찾기 쉽게 왼쪽 위 */}
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          type="button"
+          onClick={onEmergency}
+          className="flex min-h-20 flex-col justify-center gap-0.5 rounded-card border border-danger/40 px-3 py-2.5 text-left"
+        >
+          <Siren aria-hidden="true" className="size-5 text-danger" />
+          <span className="text-body-2 font-semibold">{t('emergency.title')}</span>
+          <span className="text-micro text-fg-muted">{t('emergency.menuDesc')}</span>
+        </button>
         <Link
           to={tripId ? `/fx?trip=${tripId}` : '/fx'}
-          className="flex items-center gap-3 rounded-card bg-bg-subtle px-4 py-3 text-left"
+          className="flex min-h-20 flex-col justify-center gap-0.5 rounded-card bg-bg-subtle px-3 py-2.5 text-left"
         >
-          <span aria-hidden="true" className="text-primary [&>svg]:size-5">
-            <Wallet />
-          </span>
-          <span className="flex min-w-0 flex-1 flex-col">
-            <span className="text-body-1">{t('quickMenu.fx')}</span>
-            <span className="text-caption text-fg-muted">{t('quickMenu.fxDesc')}</span>
-          </span>
-          <ChevronRight aria-hidden="true" className="size-5 text-fg-muted" />
+          <Wallet aria-hidden="true" className="size-5 text-primary" />
+          <span className="text-body-2 font-semibold">{t('quickMenu.fx')}</span>
+          <span className="text-micro text-fg-muted">{t('quickMenu.fxDesc')}</span>
         </Link>
         <Link
           to={tripId ? `/ai?trip=${tripId}` : '/ai'}
-          className="flex items-center gap-3 rounded-card bg-primary-weak px-4 py-3 text-left"
+          className="flex min-h-20 flex-col justify-center gap-0.5 rounded-card bg-primary-weak px-3 py-2.5 text-left"
         >
-          <span aria-hidden="true" className="text-primary [&>svg]:size-5">
-            <Sparkles />
-          </span>
-          <span className="flex min-w-0 flex-1 flex-col">
-            <span className="text-body-1">{t('quickMenu.ai')}</span>
-            <span className="text-caption text-fg-muted">{t('quickMenu.aiDesc')}</span>
-          </span>
-          <ChevronRight aria-hidden="true" className="size-5 text-fg-muted" />
+          <Sparkles aria-hidden="true" className="size-5 text-primary" />
+          <span className="text-body-2 font-semibold">{t('quickMenu.ai')}</span>
+          <span className="text-micro text-fg-muted">{t('quickMenu.aiDesc')}</span>
         </Link>
         {/* 번역·회화 (docs/20 G7) */}
         <Link
           to={tripId ? `/phrases?trip=${tripId}` : '/phrases'}
-          className="flex items-center gap-3 rounded-card bg-bg-subtle px-4 py-3 text-left"
+          className="flex min-h-20 flex-col justify-center gap-0.5 rounded-card bg-bg-subtle px-3 py-2.5 text-left"
         >
-          <span aria-hidden="true" className="text-primary [&>svg]:size-5">
-            <Languages />
-          </span>
-          <span className="flex min-w-0 flex-1 flex-col">
-            <span className="text-body-1">{t('quickMenu.phrases')}</span>
-            <span className="text-caption text-fg-muted">{t('quickMenu.phrasesDesc')}</span>
-          </span>
-          <ChevronRight aria-hidden="true" className="size-5 text-fg-muted" />
+          <Languages aria-hidden="true" className="size-5 text-primary" />
+          <span className="text-body-2 font-semibold">{t('quickMenu.phrases')}</span>
+          <span className="text-micro text-fg-muted">{t('quickMenu.phrasesDesc')}</span>
         </Link>
       </div>
 
