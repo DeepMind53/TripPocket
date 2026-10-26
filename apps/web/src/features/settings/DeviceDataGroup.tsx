@@ -20,14 +20,12 @@ export function DeviceDataGroup() {
 
   useEffect(() => {
     if (!trips) return;
-    void attachmentRepo
-      .pastTripDocs(trips)
-      .then((rows) =>
-        setDocs({
-          ids: rows.map((r) => r.id),
-          bytes: rows.reduce((s, r) => s + (r.blob ? r.size : 0), 0),
-        }),
-      );
+    void attachmentRepo.pastTripDocs(trips).then((rows) =>
+      setDocs({
+        ids: rows.map((r) => r.id),
+        bytes: rows.reduce((s, r) => s + (r.blob ? r.size : 0), 0),
+      }),
+    );
   }, [trips]);
 
   // 두 번 눌러야 지움 (3초 안에)
