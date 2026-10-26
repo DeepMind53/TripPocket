@@ -31,6 +31,10 @@ import { localTimeLabel, useMinuteClock } from '../../shared/hooks/useMinuteCloc
 const ShareSheet = lazy(async () => ({
   default: (await import('../../features/share/ShareSheet')).ShareSheet,
 }));
+// 실험실 "여행 안 검색" — 열 때만
+const TripSearchSheet = lazy(async () => ({
+  default: (await import('../../features/trips/TripSearchSheet')).TripSearchSheet,
+}));
 
 /**
  * 여행 상세: 앱 탭 대신 여행 전용 탭 4개 (docs/11 §6)
@@ -45,6 +49,8 @@ export function TripLayout() {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen, switchMenuTo] = useRouteSheet('trip-menu');
   const [shareOpen, setShareOpen] = useRouteSheet('trip-share');
+  const [searchOpen, setSearchOpen] = useRouteSheet('trip-search');
+  const searchOn = useLab('tripSearch');
   useBottomInset(trip ? TAB_BAR_HEIGHT : 0);
   useWakeLock(useLab('wakeLock'));
   const now = useMinuteClock(true);
@@ -120,6 +126,17 @@ export function TripLayout() {
       <BottomSheet open={menuOpen} onOpenChange={setMenuOpen} title={trip?.title ?? ''}>
         {trip && (
           <div className="flex flex-col gap-2">
+            {searchOn && (
+              <Button
+                variant="secondary"
+                fullWidth
+                className="justify-start"
+                leading={<Search aria-hidden="true" className="size-[18px]" />}
+                onClick={() => switchMenuTo('trip-search')}
+              >
+                {t('tripSearch.title')}
+              </Button>
+            )}
             <Button
               variant="secondary"
               fullWidth
@@ -158,6 +175,11 @@ export function TripLayout() {
           </div>
         )}
       </BottomSheet>
+      {trip && searchOpen && (
+        <Suspense fallback={null}>
+          <TripSearchSheet trip={trip} open={searchOpen} onOpenChange={setSearchOpen} />
+        </Suspense>
+      )}
       {trip && shareOpen && (
         <Suspense fallback={null}>
           <ShareSheet trip={trip} open={shareOpen} onOpenChange={setShareOpen} />

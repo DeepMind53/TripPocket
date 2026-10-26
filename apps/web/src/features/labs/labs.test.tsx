@@ -137,4 +137,31 @@ describe('실험실', () => {
       'tel:+82232100404',
     );
   });
+
+  it('여행 안 검색: ⋯ 메뉴에서 열어 일정·예약을 찾고, 누르면 그날 일정으로', async () => {
+    const user = userEvent.setup();
+    setLab('tripSearch', true);
+    const trip = await tripRepo.create({
+      title: '도쿄',
+      destinations: [{ name: '도쿄', kind: 'city', countryCode: 'JP' }],
+      startDate: '2026-11-12',
+      endDate: '2026-11-14',
+      timezone: 'Asia/Tokyo',
+      cover: { emoji: '🗼' },
+    });
+    await itemRepo.create({
+      tripId: trip.id,
+      date: '2026-11-13',
+      kind: 'food',
+      title: '이치란 라멘',
+    });
+    const router = createMemoryRouter(routes, { initialEntries: [`/trips/${trip.id}/plan`] });
+    render(<RouterProvider router={router} />);
+    await user.click(await screen.findByRole('button', { name: '더보기' }));
+    await user.click(await screen.findByRole('button', { name: '여행 안 검색' }));
+    const sheet = await screen.findByRole('dialog', { name: '여행 안 검색' });
+    await user.type(within(sheet).getByRole('searchbox'), '라멘');
+    await user.click(await within(sheet).findByRole('button', { name: /이치란 라멘/ }));
+    expect(router.state.location.search).toBe('?day=2');
+  });
 });
