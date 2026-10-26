@@ -3,6 +3,7 @@ import {
   CalendarDays,
   Ellipsis,
   ListChecks,
+  Printer,
   Search,
   Settings,
   Share2,
@@ -51,6 +52,7 @@ export function TripLayout() {
   const [shareOpen, setShareOpen] = useRouteSheet('trip-share');
   const [searchOpen, setSearchOpen] = useRouteSheet('trip-search');
   const searchOn = useLab('tripSearch');
+  const printOn = useLab('printPlan');
   useBottomInset(trip ? TAB_BAR_HEIGHT : 0);
   useWakeLock(useLab('wakeLock'));
   const now = useMinuteClock(true);
@@ -135,6 +137,17 @@ export function TripLayout() {
                 onClick={() => switchMenuTo('trip-search')}
               >
                 {t('tripSearch.title')}
+              </Button>
+            )}
+            {printOn && (
+              <Button
+                variant="secondary"
+                fullWidth
+                className="justify-start"
+                leading={<Printer aria-hidden="true" className="size-[18px]" />}
+                onClick={() => void navigate(`${base}/print`, { replace: true })}
+              >
+                {t('print.title')}
               </Button>
             )}
             <Button

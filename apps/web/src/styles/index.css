@@ -231,3 +231,17 @@
 .visit-mark > * {
   opacity: 0.35;
 }
+
+/* 인쇄용 일정표 (실험실, 2026-10-26): 버튼·머리 빼고, 하루가 쪽 사이에서 잘리지 않게, 흰 바탕 */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  .print-avoid-break {
+    break-inside: avoid;
+  }
+  body {
+    background: #fff;
+    color: #000;
+  }
+}

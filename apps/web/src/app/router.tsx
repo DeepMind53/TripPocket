@@ -124,6 +124,13 @@ const allRoutes: RouteObject[] = [
       Component: (await import('../features/me/LoginPage')).LoginPage,
     }),
   },
+  // 실험실 "인쇄용 일정표" — 여행 탭 없이 종이용 한 장
+  {
+    path: 'trips/:tripId/print',
+    lazy: async () => ({
+      Component: (await import('../features/itinerary/PrintPage')).PrintPage,
+    }),
+  },
   {
     path: 'trips/:tripId/essentials',
     lazy: async () => ({

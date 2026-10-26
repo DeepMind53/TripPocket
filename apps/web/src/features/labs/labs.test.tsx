@@ -203,4 +203,35 @@ describe('실험실', () => {
     expect(copies[0]!.bookingId).toBeUndefined();
     expect(copies[0]!.done).toBeUndefined();
   });
+
+  it('인쇄용 일정표: 여행 메뉴에서 열면 날짜별 일정·예약번호, 버튼은 브라우저 인쇄', async () => {
+    const user = userEvent.setup();
+    setLab('printPlan', true);
+    const print = vi.spyOn(window, 'print').mockImplementation(() => {});
+    const trip = await tripRepo.create({
+      title: '도쿄',
+      destinations: [{ name: '도쿄', kind: 'city', countryCode: 'JP' }],
+      startDate: '2026-11-12',
+      endDate: '2026-11-13',
+      timezone: 'Asia/Tokyo',
+      cover: { emoji: '🗼' },
+    });
+    await itemRepo.create({
+      tripId: trip.id,
+      date: '2026-11-13',
+      kind: 'place',
+      title: '센소지',
+      startTime: '09:30',
+      place: { address: '아사쿠사 2-3-1' },
+    });
+    const router = createMemoryRouter(routes, { initialEntries: [`/trips/${trip.id}/plan`] });
+    render(<RouterProvider router={router} />);
+    await user.click(await screen.findByRole('button', { name: '더보기' }));
+    await user.click(await screen.findByRole('button', { name: '인쇄용 일정표' }));
+    expect(await screen.findByText('아사쿠사 2-3-1')).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe(`/trips/${trip.id}/print`);
+    await user.click(screen.getByRole('button', { name: '인쇄 · PDF로 저장' }));
+    expect(print).toHaveBeenCalled();
+    print.mockRestore();
+  });
 });
