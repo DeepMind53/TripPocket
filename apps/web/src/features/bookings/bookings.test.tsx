@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { routes } from '../../app/router';
+import { useAuth } from '../../data/authStore';
 import { resetLocalDb } from '../../data/dev';
 import { bookingRepo } from '../../data/repositories/bookingRepo';
 import { itemRepo } from '../../data/repositories/itemRepo';
@@ -160,6 +161,19 @@ describe('예약', () => {
     const day1 = await screen.findByRole('region', { name: '1일차 · 10.24 (토)' });
     await waitFor(() =>
       expect(within(day1).queryByRole('button', { name: 'KE123 PUS→BKK 예약 보기' })).toBeNull(),
+    );
+    // 예약에서 넘어온 일정은 점선 테두리, 출발 일정은 예약 탭과 같은 탑승권 모양
+    const flight = within(day1).getByRole('button', { name: /KE123 PUS→BKK/ });
+    expect(flight).toHaveAttribute('data-from-booking');
+    expect(flight).toHaveClass('border-dashed');
+    expect(within(flight).getByText('PUS')).toBeInTheDocument();
+    expect(within(flight).getByText('BKK')).toBeInTheDocument();
+    const day2 = screen.getByRole('region', { name: '2일차 · 10.25 (일)' });
+    expect(within(day2).getByRole('button', { name: /수완나품국제공항 도착/ })).toHaveClass(
+      'border-dashed',
+    );
+    expect(within(day1).getByRole('button', { name: /오전 산책/ })).not.toHaveClass(
+      'border-dashed',
     );
     // 옮기거나 지워도 다시 넣지 않는다
     expect((await bookingRepo.listByTrip(tripId))[0]?.plannedAt).toBeDefined();
@@ -371,6 +385,42 @@ describe('픽업·드랍 예약 (사용자 요청 2026-10-25)', () => {
       end: { place: '해운대 호텔' },
       details: { direction: 'pickup', partySize: 3, flightNo: 'KE123' },
     });
+  });
+
+  it('타는 곳·내리는 곳도 장소 검색으로 고른다 (사용자 요청 2026-10-26)', async () => {
+    useAuth.setState({
+      status: 'user',
+      me: { id: 'u', nickname: 'n', createdAt: '', providers: [] },
+    });
+    vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
+      if (url === '/api/places/search') {
+        const q = JSON.parse(String(init?.body)).q as string;
+        return Response.json({
+          places: [
+            q.includes('김해')
+              ? { source: 'naver', id: 'n1', name: '김해국제공항', address: '부산 강서구' }
+              : { source: 'naver', id: 'n2', name: '해운대 그랜드호텔', address: '부산 해운대구' },
+          ],
+        });
+      }
+      return Response.json({}, { status: 404 });
+    });
+    try {
+      const user = userEvent.setup();
+      renderAt([`/trips/${tripId}/bookings`]);
+      await user.click(await screen.findByRole('button', { name: '예약 추가' }));
+      const sheet = screen.getByRole('dialog', { name: '예약 추가' });
+      await user.click(within(sheet).getByRole('button', { name: '픽업·드랍' }));
+      await user.type(within(sheet).getByLabelText('타는 곳'), '김해');
+      await user.click(await within(sheet).findByRole('option', { name: /김해국제공항/ }));
+      expect(within(sheet).getByLabelText('타는 곳')).toHaveValue('김해국제공항');
+      await user.type(within(sheet).getByLabelText('내리는 곳'), '해운대');
+      await user.click(await within(sheet).findByRole('option', { name: /해운대 그랜드호텔/ }));
+      expect(within(sheet).getByLabelText('내리는 곳')).toHaveValue('해운대 그랜드호텔');
+    } finally {
+      vi.unstubAllGlobals();
+      useAuth.setState({ status: 'unknown', me: null });
+    }
   });
 });
 

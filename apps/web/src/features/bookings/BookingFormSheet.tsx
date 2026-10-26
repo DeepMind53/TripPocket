@@ -637,36 +637,43 @@ function BookingForm({
                 onTime={set('startTime')}
                 idPrefix="bk-transfer"
               />
-              <Row>
-                <Field label={t('bookings.transferFrom')}>
-                  <input
-                    id="bk-from"
-                    value={f.from}
-                    maxLength={100}
-                    placeholder={
-                      f.direction === 'pickup'
-                        ? t('bookings.airportHint')
-                        : t('bookings.lodgingHint')
-                    }
-                    onChange={set('from')}
-                    className={inputClass}
-                  />
-                </Field>
-                <Field label={t('bookings.transferTo')}>
-                  <input
-                    id="bk-to"
-                    value={f.to}
-                    maxLength={100}
-                    placeholder={
-                      f.direction === 'pickup'
-                        ? t('bookings.lodgingHint')
-                        : t('bookings.airportHint')
-                    }
-                    onChange={set('to')}
-                    className={inputClass}
-                  />
-                </Field>
-              </Row>
+              {/* 출발·도착 위치도 장소 검색 (사용자 요청 2026-10-26) — 한 줄에 하나씩, 추천 목록이 넓게 */}
+              <Field label={t('bookings.transferFrom')}>
+                <input
+                  id="bk-from"
+                  value={f.from}
+                  maxLength={100}
+                  placeholder={
+                    f.direction === 'pickup' ? t('bookings.airportHint') : t('bookings.lodgingHint')
+                  }
+                  onChange={set('from')}
+                  className={inputClass}
+                />
+              </Field>
+              <PlaceAutocomplete
+                query={f.from}
+                domestic={isDomesticTrip(trip)}
+                near={trip.destinations.find((d) => d.coords)?.coords}
+                onPick={(p) => setF((cur) => ({ ...cur, from: p.name.slice(0, 100) }))}
+              />
+              <Field label={t('bookings.transferTo')}>
+                <input
+                  id="bk-to"
+                  value={f.to}
+                  maxLength={100}
+                  placeholder={
+                    f.direction === 'drop' ? t('bookings.airportHint') : t('bookings.lodgingHint')
+                  }
+                  onChange={set('to')}
+                  className={inputClass}
+                />
+              </Field>
+              <PlaceAutocomplete
+                query={f.to}
+                domestic={isDomesticTrip(trip)}
+                near={trip.destinations.find((d) => d.coords)?.coords}
+                onPick={(p) => setF((cur) => ({ ...cur, to: p.name.slice(0, 100) }))}
+              />
               <Row>
                 <Field label={t('bookings.partySize')}>
                   <input
