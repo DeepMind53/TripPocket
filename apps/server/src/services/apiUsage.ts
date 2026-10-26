@@ -44,7 +44,8 @@ export type ApiId =
   | 'kma_warning'
   | 'jma'
   | 'nws'
-  | 'cwa';
+  | 'cwa'
+  | 'eccc';
 
 type Tz = 'UTC' | 'America/Los_Angeles' | 'Asia/Seoul';
 
@@ -153,6 +154,8 @@ export const APIS: readonly ApiDef[] = [
   { id: 'nws', group: 'free', tz: 'UTC' },
   // 대만 중앙기상서 오픈데이터: 무료 회원 키, 공식 한도 안내 없음 → 기록만
   { id: 'cwa', group: 'free', tz: 'UTC' },
+  // 캐나다 환경부 경보 (api.weather.gc.ca): 키·공식 한도 없음 → 기록만
+  { id: 'eccc', group: 'free', tz: 'UTC' },
 ];
 
 /** 무료량의 95%(남은 5%)에서 자동 중지 (사용자 결정 2026-10-27, 전에는 90%) */

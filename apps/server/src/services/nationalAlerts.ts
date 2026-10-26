@@ -7,6 +7,7 @@ import { guardApi, trackApi, type ApiId } from './apiUsage';
  * - 한국 기상청(공공데이터포털 getPwnStatus): 지금 발효 중인 특보 전국 현황 → 특보 종류마다 하나
  * - 대만 중앙기상서(W-C0033-001): 현·시별 특보 → 같은 특보끼리 묶어 지역 목록
  * - 미국 기상청(api.weather.gov): 목적지 좌표 지점 경보 (괌·사이판은 지역 코드로)
+ * - 캐나다 환경부(api.weather.gc.ca, Open Government Licence – Canada): 목적지 주변 경보
  * - 일본 기상청(bosai r8, 2026-05 새 체계): 목적지에서 가까운 대표 관측소의 1차 세분 구역 경보·주의보
  *   새 체계 코드표가 공개되지 않아 아는 코드만 이름을 붙이고, 발표 요약(headline) 원문을 함께 보여 준다
  * 목적지 좌표는 도시 좌표를 약 10km로 줄인 것 — 사용자 현재 위치가 아니며 저장하지 않는다
@@ -204,6 +205,59 @@ const fetchNws = (country: string, point?: [number, number]) => {
   );
 };
 
+// ── 캐나다 환경부 ──
+interface EcccFeature {
+  properties?: {
+    alert_code?: string;
+    alert_name_en?: string;
+    alert_short_name_en?: string;
+    risk_colour_en?: string;
+    feature_name_en?: string;
+    feature_id?: string;
+    validity_datetime?: string;
+    event_end_datetime?: string;
+  };
+}
+
+export function parseEccc(raw: unknown): DestinationAlert[] {
+  const features = (raw as { features?: EcccFeature[] }).features ?? [];
+  return features.flatMap((f): DestinationAlert[] => {
+    const p = f.properties ?? {};
+    if (!p.alert_code || !p.alert_name_en) return [];
+    const level: AlertLevel =
+      p.risk_colour_en === 'red' ? 'red' : p.risk_colour_en === 'orange' ? 'orange' : 'info';
+    return [
+      {
+        id: `eccc-${p.alert_code}-${p.feature_id ?? ''}`,
+        country: 'CA',
+        kind: 'weather',
+        level,
+        title: p.alert_name_en,
+        names: [p.alert_short_name_en ?? p.alert_name_en],
+        area: p.feature_name_en,
+        from: p.validity_datetime,
+        until: p.event_end_datetime,
+        source: 'eccc',
+        url: link('CA'),
+      },
+    ];
+  });
+}
+
+/** 목적지 좌표 주변(약 ±10km) 경보 구역 */
+const fetchEccc = (point: [number, number]) => {
+  const [lat, lng] = point;
+  const bbox = [lng - 0.1, lat - 0.1, lng + 0.1, lat + 0.1].map((n) => n.toFixed(1)).join(',');
+  return cached(`eccc-${bbox}`, 10 * MIN, async () =>
+    parseEccc(
+      await getJson(
+        'eccc',
+        `https://api.weather.gc.ca/collections/weather-alerts/items?f=json&lang=en&limit=50&bbox=${bbox}`,
+      ),
+    ),
+  );
+};
+
 // ── 일본 기상청 ──
 /** 옛 코드표 (2026-05 개편 뒤에도 바람·눈·파도 등은 그대로 쓰임). 모르는 코드는 이름을 붙이지 않는다 */
 const JMA_CODE: Record<string, [string, AlertLevel]> = {
@@ -325,7 +379,7 @@ async function fetchJma(point: [number, number]): Promise<DestinationAlert[]> {
 }
 
 // ── 묶기 ──
-export type NationalSource = 'jma' | 'kma' | 'nws' | 'cwa';
+export type NationalSource = 'jma' | 'kma' | 'nws' | 'cwa' | 'eccc';
 
 export interface NationalKeys {
   dataGoKr?: string | undefined;
@@ -353,6 +407,8 @@ export async function nationalAlerts(
   for (const c of ['GU', 'MP'] as const) if (want.has(c)) jobs.push(['nws', fetchNws(c)]);
   if (want.has('US'))
     for (const p of (points.get('US') ?? []).slice(0, 3)) jobs.push(['nws', fetchNws('US', p)]);
+  if (want.has('CA'))
+    for (const p of (points.get('CA') ?? []).slice(0, 3)) jobs.push(['eccc', fetchEccc(p)]);
   if (want.has('JP'))
     for (const p of (points.get('JP') ?? []).slice(0, 3)) jobs.push(['jma', fetchJma(p)]);
 

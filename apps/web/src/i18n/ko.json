@@ -970,6 +970,7 @@
       "jma": "일본 기상청",
       "nws": "미국 기상청",
       "cwa": "대만 중앙기상서",
+      "eccc": "캐나다 환경부 경보",
       "google_places_local": "Google 장소 현지어 이름 (택시 카드)",
       "google_autocomplete": "Google 자동완성 (검색 백업)",
       "google_details_basic": "Google 장소 주소·좌표 (검색 백업)",
@@ -1007,6 +1008,7 @@
       "jma": "키 없음·10분마다",
       "nws": "키 없음·10분마다",
       "cwa": "무료 회원 키·10분마다",
+      "eccc": "키 없음·10분마다",
       "google_places_local": "Place Details Pro · 무료 월 5,000회",
       "google_autocomplete": "장소 검색 무료량이 끝나면 대신 · 월 10,000회 무료",
       "google_details_basic": "자동완성에서 고른 장소 · Essentials · 월 10,000회 무료",
@@ -1416,7 +1418,8 @@
       "kma": "기상청",
       "jma": "일본 기상청",
       "nws": "미국 기상청",
-      "cwa": "대만 기상서"
+      "cwa": "대만 기상서",
+      "eccc": "캐나다 기상청"
     },
     "national": "🌦 {{agency}} · {{names}}",
     "announced": "특보 발표",

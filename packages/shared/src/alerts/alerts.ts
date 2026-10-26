@@ -10,11 +10,11 @@ export type AlertKind =
 /** red = GDACS 빨강·외교부 3~4단계·특별여행주의보·경보 / orange = GDACS 주황·외교부 2단계·규모 6 이상 지진 / info = 그 밖 */
 export type AlertLevel = 'red' | 'orange' | 'info';
 
-/** 전 세계: gdacs·usgs·mofa / 나라 기상청 (docs/24 §7): jma 일본·kma 한국·nws 미국(괌·사이판)·cwa 대만 */
-export type AlertSource = 'gdacs' | 'usgs' | 'mofa' | 'jma' | 'kma' | 'nws' | 'cwa';
+/** 전 세계: gdacs·usgs·mofa / 나라 기상청 (docs/24 §7): jma 일본·kma 한국·nws 미국(괌·사이판)·cwa 대만·eccc 캐나다 */
+export type AlertSource = 'gdacs' | 'usgs' | 'mofa' | 'jma' | 'kma' | 'nws' | 'cwa' | 'eccc';
 
-/** 목적지 좌표가 있어야 지역을 고를 수 있는 나라 (일본 기상청·미국 기상청). 그 밖은 나라 전체 특보 */
-export const POINT_ALERT_COUNTRIES: readonly string[] = ['JP', 'US'];
+/** 목적지 좌표가 있어야 지역을 고를 수 있는 나라 (일본·미국·캐나다 기상청). 그 밖은 나라 전체 특보 */
+export const POINT_ALERT_COUNTRIES: readonly string[] = ['JP', 'US', 'CA'];
 
 /** 목적지 도시 좌표를 약 10km로 줄인다 (지역 고르기에만, 서버에 남기지 않음) */
 export const roundAlertPoint = (n: number) => Math.round(n * 10) / 10;

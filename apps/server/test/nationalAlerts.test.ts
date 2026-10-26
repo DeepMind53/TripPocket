@@ -120,3 +120,34 @@ describe('목적지 지점', () => {
     expect(parsePoints('US:40.7:-74.0', ['JP'])).toBeNull();
   });
 });
+
+describe('캐나다', () => {
+  it('위험 색으로 등급, 구역 이름', async () => {
+    const { parseEccc } = await import('../src/services/nationalAlerts');
+    const out = parseEccc({
+      features: [
+        {
+          properties: {
+            alert_code: 'FTA',
+            alert_name_en: 'frost advisory',
+            alert_short_name_en: 'Frost (advisory)',
+            risk_colour_en: 'yellow',
+            feature_name_en: 'Burlington - Oakville',
+            feature_id: 'f1',
+          },
+        },
+        {
+          properties: {
+            alert_code: 'SWW',
+            alert_name_en: 'snowfall warning',
+            risk_colour_en: 'orange',
+          },
+        },
+      ],
+    });
+    expect(out.map((a) => [a.names?.[0], a.level, a.area])).toEqual([
+      ['Frost (advisory)', 'info', 'Burlington - Oakville'],
+      ['snowfall warning', 'orange', undefined],
+    ]);
+  });
+});
