@@ -201,6 +201,7 @@ function PlanView({
 
   // 전체 보기: 지금 화면 위쪽에 있는 날의 칩을 테두리로 표시하고 칩 줄을 그 칩으로 (docs/16 C2)
   const chipsRef = useRef<HTMLDivElement>(null);
+  const stickyRef = useRef<HTMLDivElement>(null);
   const [seenDay, setInView] = useState<string | null>(null);
   const inView = filter === 'all' ? seenDay : null;
   useEffect(() => {
@@ -213,12 +214,14 @@ function PlanView({
           visible.set((e.target as HTMLElement).dataset.day!, e.isIntersecting);
         setInView(els.find((el) => visible.get(el.dataset.day!))?.dataset.day ?? null);
       },
-      // 위쪽 고정 머리(제목·칩 줄·지도/편집 줄) 아래부터 화면 절반까지
-      { rootMargin: '-160px 0px -50% 0px' },
+      // 위쪽 고정 머리(제목·칩 줄·지도/편집 줄, 켜져 있으면 지도까지) 아래부터 화면 절반까지
+      {
+        rootMargin: `-${Math.round(stickyRef.current?.getBoundingClientRect().bottom ?? 160)}px 0px -50% 0px`,
+      },
     );
     els.forEach((el) => io.observe(el));
     return () => io.disconnect();
-  }, [filter, items, bookings, openRuns]);
+  }, [filter, items, bookings, openRuns, mapOpen, editing]);
   useEffect(() => {
     const bar = chipsRef.current;
     const chip = inView ? bar?.querySelector<HTMLElement>(`[data-chip="${inView}"]`) : null;
@@ -358,8 +361,15 @@ function PlanView({
 
   return (
     <div className="flex flex-col">
-      {/* 날짜 칩·지도·편집은 스크롤해도 늘 보이게 (사용자 요청 2026-10-26) */}
-      <div className="sticky top-[calc(var(--safe-top)+56px)] z-10 bg-bg pb-1">
+      {/* 날짜 칩·지도·편집은 스크롤해도 늘 보이게, 켜 둔 지도도 함께 고정 (사용자 요청 2026-10-26).
+          전체 화면 지도는 이 상자 안에서 fixed라 위 머리(z-20)보다 위로 올라오게 상자를 올린다 */}
+      <div
+        ref={stickyRef}
+        className={cn(
+          'sticky top-[calc(var(--safe-top)+56px)] bg-bg pb-1',
+          mapFull ? 'z-50' : 'z-10',
+        )}
+      >
         <ScrollRow
           ref={chipsRef}
           role="toolbar"
@@ -428,28 +438,28 @@ function PlanView({
             </Button>
           )}
         </div>
-      </div>
 
-      {mapOpen && !editing && (
-        <div className="px-5 pt-2">
-          <Suspense fallback={<div className="h-60 rounded-2xl bg-bg-subtle" />}>
-            <TripMap
-              trip={trip}
-              items={mapItems}
-              dayIndexOf={dayIndexOf}
-              // 크게 볼 때 핀을 누르면 아래 카드를 그 일정으로, 작게 볼 때는 바로 상세
-              onSelect={(i) => (mapLarge || mapFull ? setPagerId(i.id) : openDetail(i))}
-              size={mapFull ? 'full' : mapLarge ? 'large' : 'small'}
-              focus={mapLarge || mapFull ? pagerItem : undefined}
-              onSizeChange={(next) => {
-                if (next === 'full') setMapFull(true);
-                else if (mapFull) setMapFull(false);
-                else setMapLarge(next === 'large');
-              }}
-            />
-          </Suspense>
-        </div>
-      )}
+        {mapOpen && !editing && (
+          <div className="px-5 pt-2">
+            <Suspense fallback={<div className="h-60 rounded-2xl bg-bg-subtle" />}>
+              <TripMap
+                trip={trip}
+                items={mapItems}
+                dayIndexOf={dayIndexOf}
+                // 크게 볼 때 핀을 누르면 아래 카드를 그 일정으로, 작게 볼 때는 바로 상세
+                onSelect={(i) => (mapLarge || mapFull ? setPagerId(i.id) : openDetail(i))}
+                size={mapFull ? 'full' : mapLarge ? 'large' : 'small'}
+                focus={mapLarge || mapFull ? pagerItem : undefined}
+                onSizeChange={(next) => {
+                  if (next === 'full') setMapFull(true);
+                  else if (mapFull) setMapFull(false);
+                  else setMapLarge(next === 'large');
+                }}
+              />
+            </Suspense>
+          </div>
+        )}
+      </div>
 
       <div
         {...gestures}

@@ -257,7 +257,8 @@ export function TripMap({
           ? 'fixed inset-0 z-50'
           : cn(
               'relative rounded-2xl border border-line transition-[height] duration-200',
-              size === 'large' ? 'h-[58dvh]' : 'h-60',
+              // 크게 볼 때도 지도가 위에 고정되므로 아래 일정 카드가 화면에 들어오게 (2026-10-26)
+              size === 'large' ? 'h-[45dvh]' : 'h-60',
             ),
       )}
       {...(size === 'full'
@@ -281,7 +282,7 @@ export function TripMap({
         <button
           type="button"
           onClick={() => onSizeChange('small')}
-          className="absolute top-2 left-2 z-[1] flex h-9 items-center gap-1 rounded-full bg-surface/95 px-3 text-caption font-semibold shadow"
+          className="absolute top-2 right-2 z-[1] flex h-9 items-center gap-1 rounded-full bg-surface/95 px-3 text-caption font-semibold shadow"
         >
           <Minimize2 aria-hidden="true" className="size-4" />
           {t('map.shrink')}
