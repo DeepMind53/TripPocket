@@ -59,7 +59,7 @@ export function MePage() {
         )}
         <MenuGroup title={t('me.groupInfo')}>
           <MenuRow to="/me/suggestions" icon={<MessageSquarePlus />} label={t('suggest.title')} />
-          <MenuRow to="/legal/help" icon={<CircleHelp />} label={t('me.help')} />
+          <MenuRow to="/help" icon={<CircleHelp />} label={t('me.help')} />
           <MenuRow to="/legal/privacy" icon={<ShieldCheck />} label={t('legal.privacy')} />
           <MenuRow to="/legal/terms" icon={<FileText />} label={t('legal.terms')} />
           <MenuRow to="/legal/licenses" icon={<Scale />} label={t('legal.licenses')} />
