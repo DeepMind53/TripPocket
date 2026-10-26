@@ -5,7 +5,6 @@ import { resetLocalDb } from '../../data/dev';
 import { tripRepo } from '../../data/repositories/tripRepo';
 import { itemRepo } from '../../data/repositories/itemRepo';
 import { bookingRepo } from '../../data/repositories/bookingRepo';
-import { setLab } from '../../data/labsStore';
 
 beforeEach(async () => {
   await resetLocalDb();
@@ -44,7 +43,6 @@ it('기록 탭: 다녀온 여행만 모으고 횟수·여행한 날·가 본 나
 });
 
 it('실험실 여행 회고: 걸은 거리·비행기 탑승·가장 많이 간 나라 카드', async () => {
-  setLab('travelReview', true);
   const trip = await tripRepo.create({
     timezone: 'Asia/Tokyo',
     cover: {},
@@ -78,5 +76,4 @@ it('실험실 여행 회고: 걸은 거리·비행기 탑승·가장 많이 간 
   expect(within(review).getByText('비행기 탑승').parentElement).toHaveTextContent('1번');
   expect(within(review).getByText('가장 많이 간 나라').parentElement).toHaveTextContent('일본');
   expect(within(review).getByText('걸은 거리').parentElement).toHaveTextContent('0.1km');
-  setLab('travelReview', false);
 });

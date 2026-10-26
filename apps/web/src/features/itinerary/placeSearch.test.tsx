@@ -77,7 +77,9 @@ describe('일정 입력 장소 검색', () => {
       render(
         <>
           <RouterProvider
-            router={createMemoryRouter(routes, { initialEntries: [`/trips/${tripId}/plan`] })}
+            router={createMemoryRouter(routes, {
+              initialEntries: [`/trips/${tripId}/plan?day=all`],
+            })}
           />
           <Toaster />
         </>,
@@ -135,7 +137,7 @@ describe('무료량이 끝났을 때 백업 (docs/23, 사용자 결정 2026-10-2
     render(
       <>
         <RouterProvider
-          router={createMemoryRouter(routes, { initialEntries: [`/trips/${tripId}/plan`] })}
+          router={createMemoryRouter(routes, { initialEntries: [`/trips/${tripId}/plan?day=all`] })}
         />
         <Toaster />
       </>,

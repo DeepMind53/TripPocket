@@ -16,7 +16,6 @@ import { useState, type ReactNode } from 'react';
 import { useTranslation } from '../../i18n';
 import { Link, useNavigate, useParams } from 'react-router';
 import { useTrip, useTripBookings, useTrips } from '../../data/hooks';
-import { useLab } from '../../data/labsStore';
 import { EmergencySheet } from './EmergencySheet';
 import { lodgingForNight } from '../../domain/lodging';
 import { copyText } from '../../shared/lib/clipboard';
@@ -166,7 +165,6 @@ function QuickMenuContent({
   onEmergency: () => void;
 }) {
   const inTrip = shortcuts !== undefined;
-  const sosLab = useLab('emergency');
   const { tripId } = useParams();
   const { t } = useTranslation();
   const theme = useSettings((st) => st.theme);
@@ -177,7 +175,7 @@ function QuickMenuContent({
     <div className="flex flex-col gap-5">
       <div className="flex flex-col gap-2">
         {/* 실험실: 긴급 연락처 — 급할 때 찾기 쉽게 맨 위 */}
-        {sosLab && (
+        {
           <button
             type="button"
             onClick={onEmergency}
@@ -192,7 +190,7 @@ function QuickMenuContent({
             </span>
             <ChevronRight aria-hidden="true" className="size-5 text-fg-muted" />
           </button>
-        )}
+        }
         <Link
           to={tripId ? `/fx?trip=${tripId}` : '/fx'}
           className="flex items-center gap-3 rounded-card bg-bg-subtle px-4 py-3 text-left"

@@ -4,7 +4,6 @@ import { useTrips } from '../../data/hooks';
 import { useTranslation } from '../../i18n';
 import { EmptyState, TopBar } from '../../shared/ui';
 import { TripList } from '../trips/TripsPage';
-import { useLab } from '../../data/labsStore';
 import { TravelReview } from './TravelReview';
 import { VisitLog } from './VisitLog';
 
@@ -15,8 +14,6 @@ import { VisitLog } from './VisitLog';
 export function RecordsPage() {
   const { t } = useTranslation();
   const trips = useTrips();
-  const visitOn = useLab('visitLog');
-  const reviewOn = useLab('travelReview');
   const past = (trips ?? []).filter(
     (tr) => getTripStatus(tr.startDate, tr.endDate, todayIn(tr.timezone)) === 'past',
   );
@@ -55,8 +52,8 @@ export function RecordsPage() {
           )}
         </section>
 
-        {reviewOn && <TravelReview pastTrips={past} />}
-        {visitOn && <VisitLog trips={trips ?? []} />}
+        <TravelReview pastTrips={past} />
+        <VisitLog trips={trips ?? []} />
 
         <section aria-label={t('records.pastTitle')} className="flex flex-col gap-2">
           <h2 className="text-caption font-bold text-fg-muted">{t('records.pastTitle')}</h2>

@@ -24,8 +24,6 @@ import { useBottomInset } from '../../shared/hooks/useBottomInset';
 import { formatPeriod, formatTripBadge } from '../../shared/lib/dateFormat';
 import { BottomSheet, Button, EmptyState, IconButton, TabBar, TopBar } from '../../shared/ui';
 import { TAB_BAR_HEIGHT } from './AppShell';
-import { useLab } from '../../data/labsStore';
-import { useWakeLock } from '../../shared/hooks/useWakeLock';
 import { localTimeLabel, useMinuteClock } from '../../shared/hooks/useMinuteClock';
 
 // 공유는 누를 때만 불러온다
@@ -51,10 +49,7 @@ export function TripLayout() {
   const [menuOpen, setMenuOpen, switchMenuTo] = useRouteSheet('trip-menu');
   const [shareOpen, setShareOpen] = useRouteSheet('trip-share');
   const [searchOpen, setSearchOpen] = useRouteSheet('trip-search');
-  const searchOn = useLab('tripSearch');
-  const printOn = useLab('printPlan');
   useBottomInset(trip ? TAB_BAR_HEIGHT : 0);
-  useWakeLock(useLab('wakeLock'));
   const now = useMinuteClock(true);
 
   if (trip === null) {
@@ -128,7 +123,7 @@ export function TripLayout() {
       <BottomSheet open={menuOpen} onOpenChange={setMenuOpen} title={trip?.title ?? ''}>
         {trip && (
           <div className="flex flex-col gap-2">
-            {searchOn && (
+            {
               <Button
                 variant="secondary"
                 fullWidth
@@ -138,8 +133,8 @@ export function TripLayout() {
               >
                 {t('tripSearch.title')}
               </Button>
-            )}
-            {printOn && (
+            }
+            {
               <Button
                 variant="secondary"
                 fullWidth
@@ -149,7 +144,7 @@ export function TripLayout() {
               >
                 {t('print.title')}
               </Button>
-            )}
+            }
             <Button
               variant="secondary"
               fullWidth

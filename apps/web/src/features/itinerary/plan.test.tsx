@@ -7,7 +7,6 @@ import { itemRepo } from '../../data/repositories/itemRepo';
 import { bookingRepo } from '../../data/repositories/bookingRepo';
 import { tripRepo } from '../../data/repositories/tripRepo';
 import { Toaster } from '../../shared/ui';
-import { setLab } from '../../data/labsStore';
 import { ReadOnlyTripError, setMemberCounts, setTripRoles } from '../../data/tripRoles';
 
 let tripId = '';
@@ -72,7 +71,6 @@ describe('일정 화면', () => {
 
   it('실험실 방문 기록: 지난 일정에 [방문][미방문], 누르면 기록으로 표시되고 다시 누르면 지운다', async () => {
     const user = userEvent.setup();
-    setLab('visitLog', true);
     vi.setSystemTime(new Date('2026-10-25T03:00:00Z')); // 도쿄 10.25 12:00 = 2일차
     await itemRepo.create({ tripId, date: '2026-10-24', kind: 'place', title: '센소지' });
     await itemRepo.create({
@@ -113,7 +111,6 @@ describe('일정 화면', () => {
     expect(
       await within(day2).findByRole('button', { name: '1번째 일정, 라멘' }),
     ).toBeInTheDocument();
-    setLab('visitLog', false);
   });
 
   it('여행 중에는 오늘 일차 칩이 기본으로 골라져 그날만 보인다', async () => {

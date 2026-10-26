@@ -25,18 +25,20 @@ describe('실험실', () => {
     await user.click(sw);
     expect(sw).toHaveAttribute('aria-checked', 'true');
     expect(JSON.parse(localStorage.getItem('tp-labs')!)).toEqual({ legDistance: true });
-    expect(screen.getByRole('switch', { name: /화면 켜짐 유지/ })).toBeInTheDocument();
     // 실험실 목록(LABS)마다 스위치 하나
     expect(
       screen.getAllByRole('switch').map((s) => s.getAttribute('aria-label') ?? s.id),
     ).toHaveLength(LABS.length);
     expect(screen.queryByRole('switch', { name: /현지 시각 표시/ })).toBeNull();
     expect(screen.queryByRole('switch', { name: /당겨서 동기화/ })).toBeNull();
-    for (const name of [/오늘 일정 진행률/, /빠듯한 일정 알림/, /하루 일정 글로 복사/])
+    // 2026-10-27 정식이 되거나 빠진 것
+    for (const name of [/화면 켜짐 유지/, /방문 기록/, /긴급 연락처/, /여행 회고/])
+      expect(screen.queryByRole('switch', { name })).toBeNull();
+    for (const name of [/오늘 일정 진행률/, /하루 일정 글로 복사/])
       expect(screen.getByRole('switch', { name })).toBeInTheDocument();
   });
 
-  it('새 실험: 오늘 진행률 · 빠듯한 일정 알림 · 하루 일정 글로 복사 (2026-10-26)', async () => {
+  it('실험: 오늘 진행률 · 하루 일정 글로 복사 (2026-10-26)', async () => {
     vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(new Date('2026-10-24T03:00:00Z')); // 서울 12:00, 여행 1일차
     try {
@@ -67,7 +69,6 @@ describe('실험실', () => {
         place: at(35.7),
       });
       setLab('dayProgress', true);
-      setLab('tightGap', true);
       setLab('copyDay', true);
       const user = userEvent.setup();
       render(
@@ -84,7 +85,6 @@ describe('실험실', () => {
       expect(
         await within(day).findByLabelText('오늘 일정 2개 중 1개 다녀왔어요'),
       ).toBeInTheDocument();
-      expect(within(day).getByText(/걸어서 약 \d+분인데 10분 뒤 일정이에요/)).toBeInTheDocument();
       await user.click(within(day).getByRole('button', { name: /날짜 메뉴|메뉴/ }));
       await user.click(await screen.findByRole('button', { name: /일정 글로 복사/ }));
       // userEvent.setup()이 클립보드 흉내를 넣는다
@@ -93,7 +93,7 @@ describe('실험실', () => {
         /^1일차 · 10\.24 \(토\)\n1\. 10:00 센소지 \(도쿄\)\n2\. 10:10 이치란/,
       );
     } finally {
-      for (const id of ['dayProgress', 'tightGap', 'copyDay'] as const) setLab(id, false);
+      for (const id of ['dayProgress', 'copyDay'] as const) setLab(id, false);
       vi.useRealTimers();
     }
   });
@@ -112,7 +112,6 @@ describe('실험실', () => {
 
   it('긴급 연락처 카드: 켜면 ⚡ 메뉴 맨 위, 여행 나라 번호를 누르면 전화', async () => {
     const user = userEvent.setup();
-    setLab('emergency', true);
     const trip = await tripRepo.create({
       title: '도쿄',
       destinations: [{ name: '도쿄', kind: 'city', countryCode: 'JP' }],
@@ -141,7 +140,6 @@ describe('실험실', () => {
 
   it('여행 안 검색: ⋯ 메뉴에서 열어 일정·예약을 찾고, 누르면 그날 일정으로', async () => {
     const user = userEvent.setup();
-    setLab('tripSearch', true);
     const trip = await tripRepo.create({
       title: '도쿄',
       destinations: [{ name: '도쿄', kind: 'city', countryCode: 'JP' }],
@@ -168,7 +166,6 @@ describe('실험실', () => {
 
   it('하루 일정 복제: 날짜 메뉴에서 다른 날로, 예약 연결·다녀옴은 빼고', async () => {
     const user = userEvent.setup();
-    setLab('dupDay', true);
     const trip = await tripRepo.create({
       title: '도쿄',
       destinations: [{ name: '도쿄', kind: 'city', countryCode: 'JP' }],
@@ -207,7 +204,6 @@ describe('실험실', () => {
 
   it('인쇄용 일정표: 여행 메뉴에서 열면 날짜별 일정·예약번호, 버튼은 브라우저 인쇄', async () => {
     const user = userEvent.setup();
-    setLab('printPlan', true);
     const print = vi.spyOn(window, 'print').mockImplementation(() => {});
     const trip = await tripRepo.create({
       title: '도쿄',
@@ -263,8 +259,8 @@ describe('실험실', () => {
       new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Tokyo' }).format(new Date()),
     );
     expect(JSON.parse(localStorage.getItem('tp-labs')!)).toMatchObject({
-      visitLog: true,
-      departure: true,
+      legDistance: true,
+      dayProgress: true,
     });
 
     await act(() => admin.navigate('/labs'));

@@ -24,9 +24,8 @@ import {
   Plus,
   Footprints,
   Route,
-  TriangleAlert,
 } from 'lucide-react';
-import { currentItemId, dayText, isFlightLeg, pastItemIds, tightGap } from '../../domain/dayTools';
+import { currentItemId, dayText, isFlightLeg, pastItemIds } from '../../domain/dayTools';
 import type { Visit } from '../../domain/visit';
 import { flightSignature, flightsToReconfirm } from '../../domain/flightCheck';
 import { confirmFlight, useFlightChecks } from '../../data/flightCheckStore';
@@ -74,7 +73,6 @@ import {
 } from '../../shared/ui';
 import { DirectionsSheet } from '../common/DirectionsSheet';
 import { openDirectionsDirect } from '../common/openDirections';
-import { DepartureLine } from './DepartureLine';
 import { DuplicateDaySheet } from './DuplicateDaySheet';
 import { ItemDetailSheet } from './ItemDetailSheet';
 import { ItemFormSheet } from './ItemFormSheet';
@@ -171,7 +169,7 @@ function PlanView({
   const [editing, setEditing] = useRouteSheet('edit-mode');
   const [dayMenuOpen, setDayMenuOpen, switchDayMenuTo] = useRouteSheet('day-menu');
   const [dupOpen, setDupOpen] = useRouteSheet('dup-day');
-  const dupOn = useLab('dupDay');
+  const dupOn = true;
   const [menuDate, setMenuDate] = useState<LocalDate | null>(null);
   const [dirDest, setDirDest] = useState<Destination | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -776,17 +774,15 @@ function DaySection({
 }) {
   const { t } = useTranslation();
   const legs = useLab('legDistance');
-  const tight = useLab('tightGap');
   const progressOn = useLab('dayProgress');
   const copyDayOn = useLab('copyDay');
-  const dupOn = useLab('dupDay');
+  const dupOn = true;
   // 여행 당일: 현지 시각으로 지금 진행 중인 일정 (1분마다 다시 계산)
   const now = useMinuteClock(isToday);
   const nowTime = isToday ? timeIn(timezone, now) : null;
   const nowId = nowTime ? currentItemId(items, nowTime) : null;
   // 실험실 "방문 기록": 지난 일정에 [방문][미방문] (보기 전용이면 없음)
-  const visitOn = useLab('visitLog') && canEdit;
-  const departureOn = useLab('departure');
+  const visitOn = canEdit;
   // 출발 전날~출발 날 항공편은 [확인]을 누를 때까지 빨갛게 (이 기기 기록)
   const flightChecks = useFlightChecks();
   const recheck = new Set(
@@ -902,11 +898,7 @@ function DaySection({
                   : undefined;
               })()}
             />
-            {departureOn && item.id === nowId && items[i + 1] && (
-              <DepartureLine from={item} to={items[i + 1]!} />
-            )}
             {legs && <LegLine from={item} to={items[i + 1]} />}
-            {tight && <TightLine from={item} to={items[i + 1]} />}
           </Fragment>
         ))}
       </ol>
@@ -1011,17 +1003,6 @@ function BookingLine({ row, onOpen }: { row: BookingRow; onOpen: () => void }) {
 }
 
 /** 실험실 "빠듯한 일정 알림": 걸어서 걸리는 시간이 두 일정 시각 차이보다 길 때 */
-function TightLine({ from, to }: { from: ItineraryItem; to: ItineraryItem | undefined }) {
-  const { t } = useTranslation();
-  const r = tightGap(from, to);
-  if (!r) return null;
-  return (
-    <li className="flex items-center gap-1.5 py-1 pl-9 text-micro font-semibold text-warning">
-      <TriangleAlert aria-hidden="true" className="size-3" />
-      {t('labs.tight', { walk: r.walk, gap: r.gap })}
-    </li>
-  );
-}
 
 /** 실험실 "다음 장소까지 거리": 두 일정 모두 좌표가 있을 때만 직선거리·도보 어림 */
 function LegLine({ from, to }: { from: ItineraryItem; to: ItineraryItem | undefined }) {

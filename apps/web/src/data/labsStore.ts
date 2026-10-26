@@ -7,19 +7,10 @@ import { create } from 'zustand';
  */
 export const LABS = [
   'legDistance',
-  'wakeLock',
-  // 2026-10-26 새 실험 (현지 시각·꾹 눌러 편집·밀어 날짜 넘기기·시트 높이·당겨서 동기화·화면 전환은 이날 정식 기능으로)
   'dayProgress',
-  'tightGap',
   'copyDay',
-  // 2026-10-26 저녁 (사용자 선택)
-  'emergency',
-  'visitLog',
-  'departure',
-  'tripSearch',
-  'dupDay',
-  'printPlan',
-  'travelReview',
+  // 2026-10-27 정식으로: 방문 기록·긴급 연락처·여행 안 검색·하루 일정 복제·인쇄용 일정표·여행 회고.
+  // 출발 시각·빠듯한 일정은 일정 화면 위 "다음 일정" 줄로 합쳐 정식. 화면 켜짐 유지는 뺐다 (사용자 요청)
 ] as const;
 export type LabId = (typeof LABS)[number];
 
