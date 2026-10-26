@@ -25,7 +25,8 @@ import { useTranslation } from '../../i18n';
 import { placeLink, openMapLink, type MapApp } from '../../shared/lib/directions';
 import { BottomSheet, Button, Switch, TimeInput, toast } from '../../shared/ui';
 import { copyText } from '../../shared/lib/clipboard';
-import { FlightTicket } from '../bookings/BookingCard';
+import { FlightTicket, LodgingBody } from '../bookings/BookingCard';
+import { DirectionsPanel } from '../common/DirectionsPanel';
 import { BookingDocs } from '../bookings/BookingDocs';
 import { TaxiCard } from '../phrases/TaxiCard';
 import { KIND_ICON } from './itemKinds';
@@ -114,6 +115,8 @@ export function ItemDetailSheet({
   const isNote = item?.kind === 'note';
   const placeLike = !isNote && !(isMove && !address && !item?.place?.coords);
   const hasPlace = !!address || !!item?.place?.coords;
+  // 숙소: 이동 방법·지도 앱을 시트 안에 바로 (사용자 요청 2026-10-26)
+  const inlineDirections = item?.kind === 'lodging';
 
   async function copyAddress() {
     if (!address) return;
@@ -187,7 +190,7 @@ export function ItemDetailSheet({
 
           {/* 누를 수 없는 버튼은 보이지 않게 — 종류·정보에 맞는 것만 (docs/16 D1) */}
           <div className="grid grid-cols-4 gap-2 [&:has(>:nth-child(5))]:grid-cols-5">
-            {placeLike && (
+            {placeLike && !inlineDirections && (
               <Action
                 icon={<Navigation />}
                 label={t('detail.directions')}
@@ -218,6 +221,13 @@ export function ItemDetailSheet({
             )}
             {!readOnly && <Action icon={<Pencil />} label={t('detail.edit')} onClick={onEdit} />}
           </div>
+
+          {inlineDirections && (
+            <section aria-label={t('detail.directions')} className="flex flex-col gap-2">
+              <h3 className="text-body-2 font-bold">{t('detail.directions')}</h3>
+              <DirectionsPanel destination={dest} isDomestic={domestic} />
+            </section>
+          )}
 
           <dl className="flex flex-col gap-3 text-body-2">
             {placeLike && (
@@ -412,6 +422,8 @@ function BookingSummary({
       </div>
       {b.kind === 'flight' ? (
         <FlightTicket booking={b} />
+      ) : b.kind === 'lodging' ? (
+        <LodgingBody booking={b} />
       ) : (
         <>
           <p className="text-body-2 font-semibold">

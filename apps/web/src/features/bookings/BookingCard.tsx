@@ -100,7 +100,7 @@ function Point({
   );
 }
 
-function LodgingBody({ booking: b }: { booking: Booking }) {
+export function LodgingBody({ booking: b }: { booking: Booking }) {
   const { time } = useTimeText();
   const { t } = useTranslation();
   const nights = b.end ? nightsBetween(b.start.date, b.end.date) : 0;
@@ -131,14 +131,19 @@ function LodgingBody({ booking: b }: { booking: Booking }) {
           </span>
         )}
       </div>
-      {b.details?.breakfast && (
-        <p className="text-caption text-fg-sub">
+      {/* 조식 있음·없음을 한눈에 (사용자 요청 2026-10-26) */}
+      {b.details?.breakfast ? (
+        <p className="self-start rounded-full bg-primary-weak px-2 py-0.5 text-caption font-semibold text-primary">
           🍳{' '}
           {b.details.breakfastDates
             ? t('bookings.breakfastSome', {
                 days: b.details.breakfastDates.map(formatMonthDay).join(', '),
               })
             : t('bookings.breakfastAll')}
+        </p>
+      ) : (
+        <p className="self-start rounded-full bg-bg-subtle px-2 py-0.5 text-caption text-fg-sub">
+          {t('bookings.noBreakfast')}
         </p>
       )}
       {b.details?.address && (

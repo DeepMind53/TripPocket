@@ -107,6 +107,11 @@ export function preferredAppOrder(isDomestic: boolean): MapApp[] {
   return isDomestic ? ['naver', 'kakao', 'google'] : ['google', 'naver', 'kakao'];
 }
 
+/** 길찾기에 보여 줄 앱: 국내는 네이버·카카오, 해외는 구글만 (사용자 요청 2026-10-26) */
+export function directionApps(isDomestic: boolean): MapApp[] {
+  return isDomestic ? ['naver', 'kakao'] : ['google'];
+}
+
 /**
  * 링크 열기: 휴대폰이면 앱을 먼저 시도하고, 1.5초 안에 화면이 바뀌지 않으면(앱 없음) 웹으로.
  * PC·앱 주소가 없으면 바로 웹을 새 탭으로.

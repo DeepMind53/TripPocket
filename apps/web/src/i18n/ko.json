@@ -172,7 +172,7 @@
     "sortByTimeDesc": "시간이 있는 일정만 시간 순서로 바꾸고, 시간 없는 일정은 제자리에 둬요",
     "sorted": "시간순으로 정렬했어요",
     "sortNeedsTime": "시간이 있는 일정이 2개 이상이어야 해요",
-    "lodgingLabel": "{{title}}, {{night}}번째 밤 숙소. 누르면 길찾기",
+    "lodgingLabel": "{{title}}, {{night}}번째 밤 숙소",
     "lodging": "숙소",
     "bookingsLabel": "이날 예약",
     "arrive": "도착",
@@ -301,7 +301,8 @@
     "breakfastDesc": "체크인 다음 날부터 아침마다\n날짜를 눌러 빼거나 넣을 수 있어요",
     "breakfastDays": "조식 있는 날",
     "breakfastAll": "조식 포함 (매일 아침)",
-    "breakfastSome": "조식 {{days}}"
+    "breakfastSome": "조식 {{days}}",
+    "noBreakfast": "조식 없음"
   },
   "checklist": {
     "emptyTitle": "준비물을 챙겨볼까요?",

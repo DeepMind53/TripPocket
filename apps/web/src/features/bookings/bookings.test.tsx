@@ -227,6 +227,30 @@ describe('예약', () => {
     expect(within(day3).queryByRole('button', { name: /밤 숙소/ })).not.toBeInTheDocument();
   });
 
+  it('숙소 줄을 누르면 다른 장소처럼 상세: 시간·조식·길찾기(국내는 네이버·카카오) (사용자 요청 2026-10-26)', async () => {
+    await bookingRepo.create({
+      tripId,
+      kind: 'lodging',
+      title: '해운대 호텔',
+      start: { date: '2026-10-24', time: '15:00' },
+      end: { date: '2026-10-26' },
+      details: { address: '부산 해운대구' },
+    });
+    const user = userEvent.setup();
+    renderAt([`/trips/${tripId}/plan?day=all`]);
+    await waitFor(async () => expect(await itemRepo.listByTrip(tripId)).toHaveLength(1));
+    const day2 = await screen.findByRole('region', { name: '2일차 · 10.25 (일)' });
+    await user.click(within(day2).getByRole('button', { name: /2번째 밤 숙소/ }));
+    const sheet = await screen.findByRole('dialog', { name: '해운대 호텔' });
+    expect(within(sheet).getByLabelText('방문 시간')).toHaveValue('15:00');
+    expect(within(sheet).getByText('조식 없음')).toBeInTheDocument();
+    const dir = within(sheet).getByRole('region', { name: '길찾기' });
+    expect(within(dir).getByRole('link', { name: '네이버 지도로 열기' })).toBeInTheDocument();
+    expect(within(dir).getByRole('link', { name: '카카오맵로 열기' })).toBeInTheDocument();
+    expect(within(dir).queryByRole('link', { name: /Google/ })).toBeNull();
+    expect(within(sheet).getByRole('button', { name: /후기/ })).toBeInTheDocument();
+  });
+
   it('편집에서 삭제하고 실행 취소한다', async () => {
     const user = userEvent.setup();
     await bookingRepo.create({
