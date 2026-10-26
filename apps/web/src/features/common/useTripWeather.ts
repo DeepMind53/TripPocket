@@ -17,18 +17,29 @@ export interface TripDayWeather extends DayWeather {
  * 보내는 정보: 목적지 도시 좌표·날짜뿐
  */
 export function useTripWeather(trip: Trip | undefined): Record<LocalDate, TripDayWeather> {
-  const [out, setOut] = useState<Record<LocalDate, TripDayWeather>>({});
   const coords = trip?.destinations.find((d) => d.coords)?.coords;
-  const tz = trip?.timezone ?? 'Asia/Seoul';
-  const start = trip?.startDate;
-  const end = trip?.endDate;
+  const dates = trip ? getTripDays(trip.startDate, trip.endDate) : [];
+  return useWeatherDays(coords, trip?.timezone ?? 'Asia/Seoul', dates);
+}
+
+/**
+ * 좌표 한 곳의 날짜별 날씨 (날씨 정보 화면: 여행 앞뒤 하루·출발 공항, 2026-10-26).
+ * 오늘부터 16일은 예보, 그 뒤는 작년 같은 날 기록, 지난 날은 비움
+ */
+export function useWeatherDays(
+  coords: { lat: number; lng: number } | undefined,
+  tz: string,
+  dates: readonly LocalDate[],
+): Record<LocalDate, TripDayWeather> {
+  const [out, setOut] = useState<Record<LocalDate, TripDayWeather>>({});
+  const key = dates.join(',');
 
   useEffect(() => {
-    if (!coords || !start || !end) return;
+    if (!coords || dates.length === 0) return;
     let alive = true;
     const today = todayIn(tz);
     const lastForecast = addDays(today, FORECAST_DAYS - 1);
-    const days = getTripDays(start, end).filter((d) => d >= today);
+    const days = dates.filter((d) => d >= today);
     const near = days.filter((d) => d <= lastForecast);
     const far = days.filter((d) => d > lastForecast);
     void Promise.all([
@@ -44,7 +55,7 @@ export function useTripWeather(trip: Trip | undefined): Record<LocalDate, TripDa
     return () => {
       alive = false;
     };
-  }, [coords?.lat, coords?.lng, tz, start, end]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [coords?.lat, coords?.lng, tz, key]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return out;
 }

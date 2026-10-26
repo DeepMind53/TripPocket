@@ -140,7 +140,7 @@ export function PrepCards({ trip }: { trip: Trip }) {
                 <span className="text-caption text-warning">{t('prep.noLodging')}</span>
               )}
             </Card>
-            <Card to={`${base}/plan`} emoji="☀️" label={t('prep.weather')}>
+            <Card to={`${base}/weather`} emoji="☀️" label={t('prep.weather')}>
               {weather ? (
                 <>
                   <span className="flex items-center gap-1.5">

@@ -124,6 +124,13 @@ const allRoutes: RouteObject[] = [
       Component: (await import('../features/me/LoginPage')).LoginPage,
     }),
   },
+  // 홈 "날씨 정보" 카드 → 여행 앞뒤 하루·출발 공항 날씨
+  {
+    path: 'trips/:tripId/weather',
+    lazy: async () => ({
+      Component: (await import('../features/weather/WeatherPage')).WeatherPage,
+    }),
+  },
   // 실험실 "인쇄용 일정표" — 여행 탭 없이 종이용 한 장
   {
     path: 'trips/:tripId/print',

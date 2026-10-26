@@ -1162,7 +1162,7 @@
     "bookings": "예약",
     "bookingCounts": "항공 {{flights}} · 숙소 {{lodgings}}",
     "noLodging": "숙소 예약이 없어요",
-    "weather": "첫날 날씨",
+    "weather": "날씨 정보",
     "weatherLater": "예보는 출발 2주 전부터 보여요",
     "weatherPast": "과거 {{yy}}년 날씨 정보\n예보는 출발 2주 전부터 보여요",
     "weatherForecast": "{{date}} 예보 날씨",
@@ -1396,6 +1396,16 @@
       "read": "읽음",
       "done": "완료"
     }
+  },
+  "weatherPage": {
+    "title": "날씨 정보",
+    "dest": "여행지 · {{place}}",
+    "dayBefore": "여행 전날",
+    "dayAfter": "여행 다음 날",
+    "dayN": "{{n}}일차",
+    "forecast": "예보",
+    "airports": "출발 공항 날씨",
+    "note": "2주 안쪽은 예보예요\n그보다 먼 날은 작년 같은 날 날씨예요\n날씨: Open-Meteo"
   },
   "flightCheck": {
     "title": "✈ {{title}} 출발 전이에요",
