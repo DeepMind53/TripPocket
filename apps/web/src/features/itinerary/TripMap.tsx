@@ -9,6 +9,7 @@ import { useTranslation } from '../../i18n';
 import {
   chooseProvider,
   mountMap,
+  type ActiveMapId,
   type LatLng,
   type MapHandle,
   type MapMarker,
@@ -71,18 +72,27 @@ export function TripMap({
   const handle = useRef<MapHandle | null>(null);
   const [status, setStatus] = useState<'loading' | 'ready' | 'error' | 'paused'>('loading');
   const pref = useSettings((s) => s.inAppMap);
-  const provider = chooseProvider(trip.mapProvider ?? pref, isDomesticTrip(trip));
+  const chosen = chooseProvider(trip.mapProvider ?? pref, isDomesticTrip(trip));
+  // 고른 지도가 무료 사용량으로 멈췄거나 못 불러오면 무료 지도(MapLibre + OpenFreeMap)로 (docs/23 §4)
+  const [fallback, setFallback] = useState(false);
+  const provider: ActiveMapId | null = fallback ? 'osm' : (chosen ?? 'osm');
   const online = typeof navigator === 'undefined' || navigator.onLine;
   const [hintDone, setHintDone] = useState(hintSeen);
 
+  // Google 약관: Google에서 받은 좌표는 Google 지도에만 (docs/10 §2.1)
   const visible = useMemo(
     () =>
       items.filter(
         (i) =>
-          i.date && i.place?.coords && !(provider === 'naver' && i.place.coordsSource === 'google'),
+          i.date &&
+          i.place?.coords &&
+          !(provider !== 'google' && i.place.coordsSource === 'google'),
       ),
     [items, provider],
   );
+  const hiddenGoogle =
+    provider !== 'google' &&
+    items.some((i) => i.date && i.place?.coords && i.place.coordsSource === 'google');
 
   // 지도 만들기 (제공자가 바뀔 때만)
   useEffect(() => {
@@ -94,9 +104,10 @@ export function TripMap({
     };
     const target = el.current;
     // Google 지도는 유료 가능 API — 관리자가 멈췄거나 이번 달 상한이면 열지 않는다 (API 사용량)
+    setStatus('loading');
     void mapAllowed(provider).then((ok) => {
       if (!alive) return;
-      if (!ok) return setStatus('paused');
+      if (!ok) return provider === 'osm' ? setStatus('paused') : setFallback(true);
       mountMap(provider, target, { center, zoom: 12 }).then(
         (h) => {
           if (!alive) return h.destroy();
@@ -104,7 +115,11 @@ export function TripMap({
           setStatus('ready');
           reportMapLoad(provider);
         },
-        () => alive && setStatus('error'),
+        () => {
+          if (!alive) return;
+          if (provider === 'osm') setStatus('error');
+          else setFallback(true);
+        },
       );
     });
     return () => {
@@ -225,15 +240,13 @@ export function TripMap({
 
   const message = !online
     ? t('map.offline')
-    : !provider
-      ? t('map.noKey')
-      : status === 'error'
-        ? t('map.error')
-        : status === 'paused'
-          ? t('map.paused')
-          : showHint
-            ? t('map.noPlaces')
-            : null;
+    : status === 'error'
+      ? t('map.error')
+      : status === 'paused'
+        ? t('map.paused')
+        : showHint
+          ? t('map.noPlaces')
+          : null;
 
   return (
     <div
@@ -295,6 +308,12 @@ export function TripMap({
             />
           )}
         </div>
+      )}
+      {/* 무료 지도로 바꿨을 때: Google에서 찾은 장소는 약관상 이 지도에 못 올린다 */}
+      {provider === 'osm' && status === 'ready' && (
+        <p className="pointer-events-none absolute top-2 right-12 left-2 z-[1] rounded-btn bg-surface/90 px-2 py-1 text-micro whitespace-pre-line text-fg-sub">
+          {hiddenGoogle ? t('map.osmHidden') : t('map.osm')}
+        </p>
       )}
       {size !== 'full' && onSizeChange && status === 'ready' && !message && (
         <p className="pointer-events-none absolute right-2 bottom-2 z-[1] rounded-full bg-surface/90 px-2 py-0.5 text-micro text-fg-muted">

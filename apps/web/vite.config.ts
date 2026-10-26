@@ -20,6 +20,8 @@ function serviceWorker(): Plugin {
         .map((f) => `/icons/${f}`);
       const files = Object.keys(bundle)
         .filter((f) => !f.endsWith('.map') && !f.endsWith('.woff2') && f !== 'sw.js')
+        // 무료 지도 백업(MapLibre, 약 1.5MB)은 인터넷이 될 때만 쓰므로 미리 받지 않는다 (docs/23 §4)
+        .filter((f) => !/(^|\/)(osmMap|maplibre-gl-worker)-/.test(f))
         .map((f) => `/${f}`)
         .filter((f) => f !== '/index.html')
         .concat('/', '/boot.js', '/manifest.webmanifest', ...icons)

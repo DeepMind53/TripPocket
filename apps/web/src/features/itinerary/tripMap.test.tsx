@@ -207,23 +207,44 @@ describe('일정 지도 — 안내 문구', () => {
 describe('일정 지도 — 사용량 관리', () => {
   afterEach(() => vi.unstubAllGlobals());
 
-  it('관리자가 Google 지도를 멈추면 지도를 열지 않고 안내, 열리면 로드 1회 기록', async () => {
+  it('Google 지도가 멈추면 무료 지도(OpenFreeMap)로 · Google에서 찾은 장소는 그 지도에 안 올린다, 무료 지도까지 멈추면 안내 (docs/23 §4)', async () => {
     resetUsageFlags();
     const posts: string[] = [];
-    let maps = false;
+    let apis: Record<string, boolean> = { google_maps_js: false, openfreemap: false };
     vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
-      if (init?.method === 'POST') posts.push(url);
-      return Response.json(url === '/api/usage/flags' ? { maps } : { ok: true });
+      if (init?.method === 'POST') posts.push(String(init.body));
+      return Response.json(
+        url === '/api/usage/flags' ? { maps: apis.google_maps_js, apis } : { ok: true },
+      );
     });
-    const { unmount } = render(
-      <TripMap trip={trip} items={[]} dayIndexOf={() => 0} onSelect={() => {}} />,
-    );
+    const r1 = render(<TripMap trip={trip} items={[]} dayIndexOf={() => 0} onSelect={() => {}} />);
     expect(await screen.findByText(/지도를 잠시 멈췄어요/)).toBeInTheDocument();
     expect(posts).toEqual([]);
-    unmount();
-    maps = true;
+    r1.unmount();
+
+    apis = { google_maps_js: false, openfreemap: true };
+    resetUsageFlags();
+    const fromGoogle = { ...item('g', '2026-11-01', 'a0', { lat: 35.69, lng: 139.7 }) };
+    fromGoogle.place = { ...fromGoogle.place!, coordsSource: 'google' };
+    const r2 = render(
+      <TripMap
+        trip={trip}
+        items={[fromGoogle, item('u', '2026-11-01', 'a1', { lat: 35.7, lng: 139.71 })]}
+        dayIndexOf={() => 0}
+        onSelect={() => {}}
+      />,
+    );
+    expect(
+      await screen.findByText(/Google에서 찾은 장소는 이 지도에 안 보여요/),
+    ).toBeInTheDocument();
+    await waitFor(() => expect(calls.markers.map((m) => m.id)).toEqual(['u']));
+    expect(posts).toEqual([JSON.stringify({ api: 'openfreemap' })]);
+    r2.unmount();
+    posts.length = 0;
+    const maps = true;
+    apis = { google_maps_js: maps, openfreemap: true };
     resetUsageFlags(); // 허용 여부는 5분 동안 저장해 두므로 시험에서는 비운다
     render(<TripMap trip={trip} items={[]} dayIndexOf={() => 0} onSelect={() => {}} />);
-    await waitFor(() => expect(posts).toEqual(['/api/usage/map-load']));
+    await waitFor(() => expect(posts).toEqual([JSON.stringify({ api: 'google_maps_js' })]));
   });
 });

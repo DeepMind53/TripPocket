@@ -817,7 +817,9 @@
     "pagerPos": "{{n}} / {{total}}",
     "prev": "이전 일정",
     "next": "다음 일정",
-    "pagerEmpty": "날짜가 정해진 일정이 없어요"
+    "pagerEmpty": "날짜가 정해진 일정이 없어요",
+    "osm": "무료 사용량이 끝나 무료 지도로 보여요",
+    "osmHidden": "무료 사용량이 끝나 무료 지도로 보여요\nGoogle에서 찾은 장소는 이 지도에 안 보여요"
   },
   "placeSearch": {
     "label": "장소 검색 결과",
@@ -827,7 +829,8 @@
     "source": {
       "kakao": "카카오",
       "naver": "네이버",
-      "google": "Google"
+      "google": "Google",
+      "osm": "OpenStreetMap"
     },
     "openMap": "{{name}} 지도에서 보기",
     "showHours": "영업시간·평점 보기",
@@ -836,7 +839,11 @@
     "fromGoogle": "Google 정보 · 볼 때마다 새로 불러와요",
     "more": "더보기 ({{n}}곳)",
     "moreTitle": "\"{{q}}\" 검색 결과",
-    "searchBtn": "\"{{q}}\" 장소 검색"
+    "searchBtn": "\"{{q}}\" 장소 검색",
+    "fallback": "무료 검색 한도가 끝나 다른 검색으로 찾았어요",
+    "ourReviews": "트립포켓 후기 {{n}}개",
+    "noOurReviews": "아직 트립포켓 후기가 없어요",
+    "detailsFallback": "Google 무료 사용량이 끝나 트립포켓 후기로 보여요\n평점·영업시간은 Google 지도에서 확인하세요"
   },
   "ai": {
     "title": "AI 추천",
@@ -951,7 +958,11 @@
       "cf_functions": "Cloudflare Pages 함수 (홈 서버 연결)",
       "aviationstack": "AviationStack 항공편",
       "web_push": "웹 푸시 알림",
-      "google_places_local": "Google 장소 현지어 이름 (택시 카드)"
+      "google_places_local": "Google 장소 현지어 이름 (택시 카드)",
+      "google_autocomplete": "Google 자동완성 (검색 백업)",
+      "google_details_basic": "Google 장소 주소·좌표 (검색 백업)",
+      "geoapify": "Geoapify (검색·택시 카드 백업)",
+      "openfreemap": "OpenFreeMap 지도 (지도 백업)"
     },
     "note": {
       "google_places_search": "해외 장소 검색 · 월 5,000회 무료",
@@ -976,7 +987,11 @@
       "cf_functions": "하루 10만 요청 무료 (넘으면 오류, 요금 없음)",
       "aviationstack": "편명으로 불러오기 · 월 100회 무료 (넘으면 거절, 요금 없음)",
       "web_push": "브라우저 회사 푸시 서버 (무료·한도 없음)",
-      "google_places_local": "Place Details Pro · 무료 월 5,000회"
+      "google_places_local": "Place Details Pro · 무료 월 5,000회",
+      "google_autocomplete": "장소 검색 무료량이 끝나면 대신 · 월 10,000회 무료",
+      "google_details_basic": "자동완성에서 고른 장소 · Essentials · 월 10,000회 무료",
+      "geoapify": "Google 백업까지 멈추면 · 하루 3,000회 무료 (요금 없음)",
+      "openfreemap": "Google·네이버 지도를 못 쓸 때 · 무료·한도 없음"
     },
     "autoStoppedDay": "오늘 자동 중지",
     "monthMeter": "이번 달",

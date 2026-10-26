@@ -1,6 +1,6 @@
-import type { MapHandle, MapOptions, MapProviderId } from './types';
+import type { ActiveMapId, MapHandle, MapOptions, MapProviderId } from './types';
 
-export type { LatLng, MapHandle, MapMarker, MapProviderId } from './types';
+export type { ActiveMapId, LatLng, MapHandle, MapMarker, MapProviderId } from './types';
 
 /** 빌드 때 넣는 브라우저 키 (Cloudflare Pages 환경 변수). 없으면 그 제공자는 못 씀 */
 export const MAP_KEYS: Record<MapProviderId, string | undefined> = {
@@ -25,10 +25,12 @@ export function chooseProvider(
 
 /** 지도 SDK는 지도를 열 때만 불러온다 */
 export async function mountMap(
-  id: MapProviderId,
+  id: ActiveMapId,
   el: HTMLElement,
   opts: MapOptions,
 ): Promise<MapHandle> {
+  // 키가 없는 무료 지도 (Google·네이버를 못 쓸 때)
+  if (id === 'osm') return (await import('./osmMap')).mountOsm(el, opts);
   const key = MAP_KEYS[id];
   if (!key) throw new Error('no key');
   if (id === 'google') return (await import('./googleMap')).mountGoogle(el, opts, key);
