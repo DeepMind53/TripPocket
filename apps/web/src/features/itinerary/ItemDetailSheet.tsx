@@ -1,4 +1,5 @@
 import { useTimeText } from '../../shared/hooks/useTimeText';
+import type { Visit } from '../../domain/visit';
 import type { Booking, ItineraryItem } from '@trippocket/shared';
 import {
   ArrowDown,
@@ -23,7 +24,7 @@ const ReviewSheet = lazy(() =>
 );
 import { useTranslation } from '../../i18n';
 import { placeLink, openMapLink, type MapApp } from '../../shared/lib/directions';
-import { BottomSheet, Button, Switch, TimeInput, toast } from '../../shared/ui';
+import { BottomSheet, Button, SegmentedControl, Switch, TimeInput, toast } from '../../shared/ui';
 import { copyText } from '../../shared/lib/clipboard';
 import { FlightTicket, LodgingBody } from '../bookings/BookingCard';
 import { DirectionsPanel } from '../common/DirectionsPanel';
@@ -46,6 +47,8 @@ export interface ItemDetailSheetProps {
   onMoveDay: () => void;
   onDelete: () => void;
   onToggleDone: (done: boolean) => void;
+  /** 지난 일정이면 방문 기록을 고칠 수 있다 (방문·미방문·기록 없음, 사용자 요청 2026-10-27) */
+  onVisit?: ((visit: Visit | null) => void) | undefined;
   /** 같은 날 안에서의 위치 (1부터) */
   position: number;
   total: number;
@@ -80,6 +83,7 @@ export function ItemDetailSheet({
   onMoveDay,
   onDelete,
   onToggleDone,
+  onVisit,
   position,
   total,
   onMoveUp,
@@ -282,7 +286,25 @@ export function ItemDetailSheet({
             </div>
           )}
 
-          {!readOnly && showDone && (
+          {!readOnly && onVisit && item.kind !== 'note' && (
+            <div className="flex flex-col gap-1.5">
+              <span className="text-caption font-semibold text-fg-sub">
+                {t('visit.detailLabel')}
+              </span>
+              <SegmentedControl
+                label={t('visit.detailLabel')}
+                value={item.visit ?? 'none'}
+                onChange={(v) => onVisit(v === 'none' ? null : v)}
+                options={[
+                  { value: 'visited', label: t('visit.button.visited') },
+                  { value: 'skipped', label: t('visit.button.skipped') },
+                  { value: 'none', label: t('visit.none') },
+                ]}
+              />
+            </div>
+          )}
+
+          {!readOnly && showDone && !onVisit && (
             <div className="flex items-center justify-between rounded-card bg-bg-subtle px-4 py-3">
               <label htmlFor="item-done" className="text-body-2 font-medium">
                 {t('detail.done')}

@@ -4,6 +4,7 @@ import { createMemoryRouter, RouterProvider } from 'react-router';
 import { routes } from '../../app/router';
 import { resetLocalDb } from '../../data/dev';
 import { itemRepo } from '../../data/repositories/itemRepo';
+import { savedPlaceRepo } from '../../data/repositories/savedPlaceRepo';
 import { bookingRepo } from '../../data/repositories/bookingRepo';
 import { tripRepo } from '../../data/repositories/tripRepo';
 import { Toaster } from '../../shared/ui';
@@ -69,10 +70,11 @@ describe('일정 화면', () => {
     expect(screen.getByRole('button', { name: /KE703/ }).className).not.toContain('flight-alert');
   });
 
-  it('실험실 방문 기록: 지난 일정에 [방문][미방문], 누르면 기록으로 표시되고 다시 누르면 지운다', async () => {
+  it('지난 일정 오른쪽 [방문][미방문]: 누르면 둘 다 사라지고, 미방문은 빗금·저장 탭으로, 상세에서 고친다', async () => {
     const user = userEvent.setup();
     vi.setSystemTime(new Date('2026-10-25T03:00:00Z')); // 도쿄 10.25 12:00 = 2일차
     await itemRepo.create({ tripId, date: '2026-10-24', kind: 'place', title: '센소지' });
+    await itemRepo.create({ tripId, date: '2026-10-24', kind: 'note', title: '메모' });
     await itemRepo.create({
       tripId,
       date: '2026-10-25',
@@ -91,26 +93,70 @@ describe('일정 화면', () => {
     await renderPlan('?day=all');
 
     const day1 = day('1일차 · 10.24 (토)');
+    // 메모에는 버튼이 없다
+    expect(within(day1).getAllByRole('button', { name: '방문' })).toHaveLength(1);
     await user.click(within(day1).getByRole('button', { name: '방문' }));
     expect(
       await within(day1).findByRole('button', { name: /센소지, 방문 기록/ }),
     ).toBeInTheDocument();
-    expect(await itemRepo.get((await itemRepo.listByTrip(tripId))[0]!.id)).toMatchObject({
-      visit: 'visited',
-      done: true,
-    });
+    expect(within(day1).queryByRole('button', { name: '방문' })).not.toBeInTheDocument();
+    expect(within(day1).queryByRole('button', { name: '미방문' })).not.toBeInTheDocument();
+    const [senso] = await itemRepo.listByTrip(tripId);
+    expect(senso).toMatchObject({ visit: 'visited', done: true });
 
     const day2 = day('2일차 · 10.25 (일)');
     // 끝난 라멘에만 버튼, 아직인 카페에는 없음
     expect(within(day2).getAllByRole('button', { name: '미방문' })).toHaveLength(1);
     await user.click(within(day2).getByRole('button', { name: '미방문' }));
+    const ramen = await within(day2).findByRole('button', { name: /라멘, 미방문 기록/ });
+    expect(ramen.className).toContain('visit-mark');
+    expect(within(day2).queryByRole('button', { name: '미방문' })).not.toBeInTheDocument();
+    // 미방문은 저장 탭으로 (나라 정보와 함께)
+    await waitFor(async () =>
+      expect(await savedPlaceRepo.listActive()).toMatchObject([
+        { name: '라멘', countryCode: 'JP' },
+      ]),
+    );
+
+    // 상세에서 기록 없음으로 고치면 버튼이 다시
+    await user.click(ramen);
+    const sheet = await screen.findByRole('dialog', { name: '라멘' });
+    await user.click(within(sheet).getByRole('radio', { name: '기록 없음' }));
+    await user.keyboard('{Escape}');
     expect(
-      await within(day2).findByRole('button', { name: /라멘, 미방문 기록/ }),
+      await within(day('2일차 · 10.25 (일)')).findByRole('button', { name: '미방문' }),
     ).toBeInTheDocument();
-    await user.click(within(day2).getByRole('button', { name: '미방문', pressed: true }));
-    expect(
-      await within(day2).findByRole('button', { name: '1번째 일정, 라멘' }),
-    ).toBeInTheDocument();
+  });
+
+  it('예전에 방문한 장소는 이름 옆 "방문기록 N회", 누르면 날짜', async () => {
+    const user = userEvent.setup();
+    vi.setSystemTime(new Date('2026-10-25T03:00:00Z'));
+    const old = await tripRepo.create({
+      title: '지난 도쿄',
+      destinations: [{ name: '도쿄', kind: 'city', countryCode: 'JP' }],
+      startDate: '2025-05-01',
+      endDate: '2025-05-03',
+      timezone: 'Asia/Tokyo',
+      cover: {},
+    });
+    const v = await itemRepo.create({
+      tripId: old.id,
+      date: '2025-05-02',
+      kind: 'place',
+      title: '센소지',
+    });
+    await itemRepo.setVisit(v.id, 'visited');
+    await itemRepo.create({ tripId, date: '2026-10-26', kind: 'place', title: '센소지' });
+    await renderPlan('?day=all');
+    const chip = await within(day('3일차 · 10.26 (월)')).findByRole('button', {
+      name: '방문기록 1회',
+    });
+    await user.click(chip);
+    expect(await screen.findByRole('list', { name: '예전에 방문한 날' })).toHaveTextContent(
+      '25.05.02 · 지난 도쿄',
+    );
+    // 날짜만 펼치고 상세는 열지 않는다
+    expect(screen.queryByRole('dialog', { name: '센소지' })).not.toBeInTheDocument();
   });
 
   it('여행 중에는 오늘 일차 칩이 기본으로 골라져 그날만 보인다', async () => {

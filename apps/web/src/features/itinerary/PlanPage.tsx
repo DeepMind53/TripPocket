@@ -10,6 +10,7 @@ import {
   type ItineraryItem,
   type LocalDate,
   type Trip,
+  SAVED_PLACES_MAX,
 } from '@trippocket/shared';
 import {
   ArrowDownWideNarrow,
@@ -26,7 +27,8 @@ import {
   Route,
 } from 'lucide-react';
 import { currentItemId, dayText, isFlightLeg, pastItemIds } from '../../domain/dayTools';
-import type { Visit } from '../../domain/visit';
+import { earlierVisits, type Visit } from '../../domain/visit';
+import { saveSkippedPlace } from '../../data/skippedToSaved';
 import { flightSignature, flightsToReconfirm } from '../../domain/flightCheck';
 import { confirmFlight, useFlightChecks } from '../../data/flightCheckStore';
 import { timeIn, useMinuteClock } from '../../shared/hooks/useMinuteClock';
@@ -46,7 +48,13 @@ import { placeBookingsInPlan } from '../../data/bookingPlanner';
 import { bookingsToPlan } from '../../domain/bookingPlan';
 import { useTranslation } from '../../i18n';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
-import { useTrip, useTripBookings, useTripItems } from '../../data/hooks';
+import {
+  useTrip,
+  useTripBookings,
+  useTripItems,
+  useTrips,
+  useVisitedItems,
+} from '../../data/hooks';
 import {
   bookingRowsForDay,
   lodgingForNight,
@@ -168,6 +176,24 @@ function PlanView({
   const [moveOpen, setMoveOpen] = useRouteSheet('move-day');
   const [editing, setEditing] = useRouteSheet('edit-mode');
   const [dayMenuOpen, setDayMenuOpen, switchDayMenuTo] = useRouteSheet('day-menu');
+  // 방문 기록: 예전에 같은 장소를 방문한 날(다른 여행 포함), 미방문은 저장 탭으로 (사용자 요청 2026-10-27)
+  const visitedAll = useVisitedItems() ?? [];
+  const tripTitles = new Map((useTrips() ?? []).map((tr) => [tr.id, tr.title]));
+  const historyOf = (item: ItineraryItem) =>
+    earlierVisits(item, visitedAll).map((v) => ({
+      date: v.date!,
+      trip: tripTitles.get(v.tripId) ?? '',
+    }));
+  async function markVisit(item: ItineraryItem, visit: Visit | null) {
+    await itemRepo.setVisit(item.id, visit);
+    if (visit !== 'skipped') return;
+    const r = await saveSkippedPlace(item, {
+      countryCode: trip.destinations[0]?.countryCode,
+      cityTag: trip.destinations[0]?.name,
+    });
+    if (r === 'saved') toast(t('visit.savedToSaved'));
+    else if (r === 'limit') toast(t('saved.limit', { max: SAVED_PLACES_MAX }));
+  }
   const [dupOpen, setDupOpen] = useRouteSheet('dup-day');
   const dupOn = true;
   const [menuDate, setMenuDate] = useState<LocalDate | null>(null);
@@ -179,6 +205,10 @@ function PlanView({
   });
 
   const selected = items.find((i) => i.id === selectedId);
+  // 상세에서 방문 기록을 고칠 수 있는 지난 일정 (여행지 지금 시각 기준)
+  const selectedPast =
+    !!selected &&
+    pastItemIds([selected], today, timeIn(trip.timezone, new Date()) ?? '00:00').has(selected.id);
   const sameDay = selected ? items.filter((i) => i.date === selected.date) : [];
   const position = selected ? sameDay.findIndex((i) => i.id === selected.id) + 1 : 0;
   const selectedDayIndex = selected?.date ? days.indexOf(selected.date) : -1;
@@ -547,6 +577,8 @@ function PlanView({
                       items={items.filter((i) => i.date === date)}
                       isToday={date === today}
                       timezone={trip.timezone}
+                      onVisitItem={(item, v) => void markVisit(item, v)}
+                      historyOf={historyOf}
                       weather={date ? weather[date] : undefined}
                       isPast={dimPast && date !== null && date < today}
                       lodging={date ? lodgingForNight(bookings, date) : null}
@@ -692,6 +724,9 @@ function PlanView({
         onMoveDay={() => setMoveOpen(true)}
         onDelete={() => selected && void remove(selected)}
         onToggleDone={(done) => selected && void itemRepo.update(selected.id, { done })}
+        onVisit={
+          selected && canEdit && selectedPast ? (v) => void markVisit(selected, v) : undefined
+        }
         tripId={trip.id}
         visited={!!selected?.date && selected.date <= today}
         domestic={isDomestic}
@@ -748,7 +783,13 @@ function DaySection({
   weather,
   breakfast,
   timezone,
+  onVisitItem,
+  historyOf,
 }: {
+  /** 지난 일정 방문·미방문 (미방문이면 저장 탭에도 담는다) */
+  onVisitItem: (item: ItineraryItem, visit: Visit) => void;
+  /** 이 일정 장소를 예전에 방문한 날 */
+  historyOf: (item: ItineraryItem) => { date: string; trip: string }[];
   weather?: TripDayWeather | undefined;
   /** 여행지 시간대 — 당일 진행 중인 일정 계산 */
   timezone: string;
@@ -890,7 +931,8 @@ function DaySection({
               now={item.id === nowId}
               booking={item.bookingId ? bookingById.get(item.bookingId) : undefined}
               onOpen={() => onOpen(item)}
-              onVisit={past?.has(item.id) ? (v) => void itemRepo.setVisit(item.id, v) : undefined}
+              onVisit={past?.has(item.id) && !item.visit ? (v) => onVisitItem(item, v) : undefined}
+              history={historyOf(item)}
               onConfirmFlight={(() => {
                 const b = item.bookingId ? bookingById.get(item.bookingId) : undefined;
                 return b && item.transport && recheck.has(b.id)
@@ -1028,14 +1070,17 @@ function ItemRow({
   onOpen,
   onVisit,
   onConfirmFlight,
+  history,
 }: {
   item: ItineraryItem;
   n: number;
   color: string;
   /** 여행 당일 지금 진행 중: 진한 테두리·굵은 글자·바탕 깜빡임 (사용자 요청 2026-10-26) */
   now: boolean;
-  /** 실험실 "방문 기록": 지난 일정이면 위에 [방문][미방문] (null = 기록 지우기) */
-  onVisit?: ((visit: Visit | null) => void) | undefined;
+  /** 아직 방문 기록이 없는 지난 일정: 오른쪽에 [방문][미방문] — 누르면 둘 다 사라진다 (2026-10-27) */
+  onVisit?: ((visit: Visit) => void) | undefined;
+  /** 예전에 이 장소를 방문한 날 (다른 여행 포함) — 이름 오른쪽 "방문기록 N회" */
+  history?: readonly { date: string; trip: string }[] | undefined;
   /** 출발 전날~출발 날 항공편: 위에 [확인], 누르기 전까지 빨갛게 깜빡임 (사용자 요청 2026-10-26) */
   onConfirmFlight?: (() => void) | undefined;
   /** 예약에서 넘어온 일정이면 그 예약: 점선 테두리로 구분 (사용자 요청 2026-10-26) */
@@ -1050,8 +1095,11 @@ function ItemRow({
       n,
       title: item.kind === 'note' ? (item.memo ?? item.title) : item.title,
     }) + (item.visit ? `, ${t(`visit.record.${item.visit}`)}` : '');
-  // 방문·미방문을 누른 일정: 회색 바탕에 옅은 빗금 + 가운데 큰 글씨 (styles/index.css .visit-mark)
-  const marked = onVisit !== undefined && item.visit !== undefined;
+  // 미방문으로 남긴 일정: 회색 바탕에 옅은 빗금 + 가운데 큰 글씨 (styles/index.css .visit-mark).
+  // 방문은 그대로 둔다 (번호 자리에 ✓, 사용자 요청 2026-10-27)
+  const marked = item.visit === 'skipped';
+  const [showHistory, setShowHistory] = useState(false);
+  const visitedLook = item.visit === 'visited';
   const wrap = (row: ReactNode) => (
     <li className="flex flex-col gap-1">
       {onConfirmFlight && (
@@ -1069,18 +1117,32 @@ function ItemRow({
           </button>
         </div>
       )}
-      {onVisit && <VisitBar value={item.visit} onChange={onVisit} />}
-      <div className="relative">
-        {row}
-        {marked && (
-          <span
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0 grid place-items-center text-title-2 font-bold text-fg-sub"
-          >
-            {t(`visit.record.${item.visit!}`)}
-          </span>
-        )}
+      <div className="flex items-stretch gap-1.5">
+        <div className="relative min-w-0 flex-1">
+          {row}
+          {marked && (
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 grid place-items-center text-title-2 font-bold text-fg-sub"
+            >
+              {t('visit.record.skipped')}
+            </span>
+          )}
+        </div>
+        {onVisit && <VisitBar onChange={onVisit} />}
       </div>
+      {showHistory && history && history.length > 0 && (
+        <ul
+          aria-label={t('visit.historyTitle')}
+          className="ml-9 flex flex-col gap-0.5 rounded-btn bg-bg-subtle px-3 py-2 text-caption text-fg-sub"
+        >
+          {history.map((h) => (
+            <li key={h.date + h.trip} className="tabular">
+              {t('visit.historyRow', { date: h.date.slice(2).replace(/-/g, '.'), trip: h.trip })}
+            </li>
+          ))}
+        </ul>
+      )}
     </li>
   );
   const badge = (
@@ -1107,7 +1169,7 @@ function ItemRow({
         style={kindStyle}
         className={cn(
           'kind-tint flex w-full items-start gap-3 rounded-btn border border-dashed border-fg-muted/60 px-2 py-3 text-left active:bg-bg-subtle',
-          item.done && !marked && 'opacity-50',
+          item.done && !marked && !visitedLook && 'opacity-50',
           now && 'kind-now border-transparent font-bold',
           marked && 'visit-mark',
           onConfirmFlight && 'flight-alert border-transparent',
@@ -1151,7 +1213,9 @@ function ItemRow({
       >
         {time(item.startTime) ?? <span className="text-fg-muted/60">--:--</span>}
       </span>
-      <span className={cn('flex min-w-0 flex-1 flex-col', item.done && 'opacity-50')}>
+      <span
+        className={cn('flex min-w-0 flex-1 flex-col', item.done && !visitedLook && 'opacity-50')}
+      >
         {item.kind === 'note' ? (
           <span
             className={cn(
@@ -1163,8 +1227,37 @@ function ItemRow({
             {item.memo ?? item.title}
           </span>
         ) : (
-          <span className={cn('text-body-1', item.done && 'line-through', now && 'font-bold')}>
-            {item.title}
+          <span className="flex flex-wrap items-center gap-x-2">
+            <span
+              className={cn(
+                'text-body-1',
+                item.done && !visitedLook && 'line-through',
+                now && 'font-bold',
+              )}
+            >
+              {item.title}
+            </span>
+            {history && history.length > 0 && (
+              // 줄 전체가 버튼이라 안쪽은 span — 누르면 방문한 날짜만 펼치고 상세는 열지 않는다
+              <span
+                role="button"
+                tabIndex={0}
+                aria-expanded={showHistory}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowHistory(!showHistory);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key !== 'Enter' && e.key !== ' ') return;
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setShowHistory(!showHistory);
+                }}
+                className="rounded-full bg-primary-weak px-2 py-0.5 text-micro font-semibold text-primary"
+              >
+                {t('visit.historyCount', { n: history.length })}
+              </span>
+            )}
           </span>
         )}
         {item.transport && (item.transport.from || item.transport.to) && (
@@ -1184,27 +1277,20 @@ function ItemRow({
   );
 }
 
-/** 지난 일정 위 [방문] [미방문] — 고른 것을 다시 누르면 기록 지우기 */
-function VisitBar({
-  value,
-  onChange,
-}: {
-  value: Visit | undefined;
-  onChange: (visit: Visit | null) => void;
-}) {
+/** 지난 일정 오른쪽 [방문] [미방문] — 어느 것이든 누르면 둘 다 사라진다 (사용자 요청 2026-10-27) */
+function VisitBar({ onChange }: { onChange: (visit: Visit) => void }) {
   const { t } = useTranslation();
   return (
-    <div className="flex justify-end gap-1.5">
+    <div className="flex w-16 shrink-0 flex-col justify-center gap-1">
       {(['visited', 'skipped'] as const).map((v) => (
         <button
           key={v}
           type="button"
-          aria-pressed={value === v}
-          onClick={() => onChange(value === v ? null : v)}
+          onClick={() => onChange(v)}
           className={cn(
-            'h-8 rounded-full border px-3 text-caption font-semibold',
-            value === v
-              ? 'border-transparent bg-fg-sub text-bg'
+            'h-9 rounded-btn border text-caption font-semibold',
+            v === 'visited'
+              ? 'border-primary/40 bg-primary-weak text-primary'
               : 'border-line bg-surface text-fg-sub',
           )}
         >
