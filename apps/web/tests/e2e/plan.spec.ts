@@ -57,11 +57,11 @@ test('여행 당일: 오늘 칩이 골라지고 지금 진행 중인 일정이 �
     await expect(form).toBeHidden();
   }
 
-  // 여행 첫날 12:00 (기기·여행지 모두 UTC+9)
-  const first = new Date();
-  first.setDate(first.getDate() + 3);
-  first.setHours(12, 0, 0, 0);
-  await page.clock.setFixedTime(first);
+  // 여행 첫날 도쿄 12:00 — 기기 시간대(CI는 UTC)와 상관없이 여행지 시각으로 맞춘다
+  const d = new Date();
+  d.setDate(d.getDate() + 3);
+  const ymd = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  await page.clock.setFixedTime(new Date(`${ymd}T12:00:00+09:00`));
   await page.goto(page.url().replace(/\?.*$/, ''));
 
   await expect(page.getByRole('button', { name: /^1일차/, pressed: true })).toBeVisible();

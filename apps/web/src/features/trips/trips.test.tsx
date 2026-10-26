@@ -75,7 +75,8 @@ describe('여행 만들기', () => {
     expect(router.state.location.pathname).toBe(`/trips/${trip?.id}/plan`);
     // 만들기 단계 기록은 걷어내서, 뒤로 가면 만들기 전 화면
     expect(router.state.historyAction).toBe('REPLACE');
-    expect(screen.getByText('2026.10.24 – 10.28 · D-2')).toBeInTheDocument();
+    // 기기 시간대가 여행지와 다르면 뒤에 " · 현지 12:00"이 붙는다 (CI는 UTC)
+    expect(screen.getByText(/^2026\.10\.24 – 10\.28 · D-2/)).toBeInTheDocument();
   });
 
   it('영어·나라 이름으로 찾고, 나라를 고르면 대표 도시 시간대가 들어간다', async () => {
