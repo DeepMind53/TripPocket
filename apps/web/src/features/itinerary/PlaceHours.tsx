@@ -59,6 +59,28 @@ export function PlaceHours({
       </div>
     );
 
+  // Google 상세 무료량이 끝나면: 트립포켓 후기 별점 + Google 지도에서 보기 (사용자 결정 2026-10-26, docs/23 §2)
+  if (d.source === 'trippocket')
+    return (
+      <div className="flex flex-col gap-1.5 rounded-btn bg-bg-subtle px-3 py-2 text-caption">
+        {d.rating !== undefined ? (
+          <span className="flex items-center gap-1 font-semibold">
+            <Star aria-hidden="true" className="size-3.5 fill-rating text-rating" />
+            {d.rating.toFixed(1)}
+            <span className="font-normal text-fg-muted">
+              {t('placeSearch.ourReviews', { n: d.userRatingCount ?? 0 })}
+            </span>
+          </span>
+        ) : (
+          <span className="text-fg-sub">{t('placeSearch.noOurReviews')}</span>
+        )}
+        <span className="text-[11px] whitespace-pre-line text-fg-muted">
+          {t('placeSearch.detailsFallback')}
+        </span>
+        <FallbackLinks links={placeDetailLinks(name ?? '', googlePlaceId)} />
+      </div>
+    );
+
   const wd = date ? weekday(date) : new Date().getDay();
   // Google 요일 문장은 월요일부터 → 일요일(0)은 마지막
   const todayText = d.weekdayText?.[(wd + 6) % 7];

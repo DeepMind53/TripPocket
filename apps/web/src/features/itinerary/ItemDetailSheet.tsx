@@ -320,6 +320,7 @@ export function ItemDetailSheet({
           name={item.place?.name ?? item.title}
           address={address}
           googlePlaceId={item.place?.googlePlaceId}
+          coords={item.place?.coordsSource === 'google' ? undefined : item.place?.coords}
         />
       )}
       {item && reviewKind && tripId && reviewOpen && (

@@ -4,7 +4,7 @@ import { placeSearchLinks } from '../../shared/lib/fallbackLinks';
 import { FallbackLinks } from './FallbackLinks';
 import { MapPin, Plus, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { placesApi } from '../../data/api/places';
+import { placesApi, resolvePlace } from '../../data/api/places';
 import { useAuth } from '../../data/authStore';
 import { ServerOfflineNotice } from './ServerOfflineNotice';
 import { useTranslation } from '../../i18n';
@@ -15,6 +15,8 @@ const BADGE: Record<PlaceSummary['source'], { letter: string; bg: string; fg: st
   kakao: { letter: 'K', bg: '#FEE500', fg: '#191F28' },
   naver: { letter: 'N', bg: '#03C75A', fg: '#FFFFFF' },
   google: { letter: 'G', bg: '#4285F4', fg: '#FFFFFF' },
+  // OpenStreetMap (Geoapify 백업)
+  osm: { letter: 'O', bg: '#7EBC6F', fg: '#FFFFFF' },
 };
 
 /** 처음 보여 주는 추천 수 — 나머지는 [더보기] 창 (사용자 요청 2026-10-25) */
@@ -40,6 +42,8 @@ export function PlaceAutocomplete({
   const { t } = useTranslation();
   const loggedIn = useAuth((s) => s.status === 'user');
   const [results, setResults] = useState<PlaceSummary[]>([]);
+  // 무료량이 끝나 백업으로 찾았는지 (안내 한 줄 + 출처 표기)
+  const [fallback, setFallback] = useState<string | undefined>();
   const [state, setState] = useState<'idle' | 'loading' | 'empty' | 'limit'>('idle');
   // 고른 이름 — 같은 이름으로 다시 검색하지 않게
   const [picked, setPicked] = useState('');
@@ -60,6 +64,7 @@ export function PlaceAutocomplete({
           if (!alive) return;
           if (r.ok) {
             setResults(r.data.places);
+            setFallback(r.data.fallback);
             setState(r.data.places.length ? 'idle' : 'empty');
           } else {
             setResults([]);
@@ -114,8 +119,27 @@ export function PlaceAutocomplete({
     setPicked(p.name);
     setResults([]);
     setMoreOpen(false);
-    onPick(p);
+    void resolvePlace(p).then(onPick);
   };
+  const credit = fallback && (
+    <p className="px-1 text-micro whitespace-pre-line text-fg-muted">
+      {t('placeSearch.fallback')}
+      {results.some((p) => p.source === 'osm') && (
+        <>
+          {'\n'}
+          <a
+            href="https://www.geoapify.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline"
+          >
+            Powered by Geoapify
+          </a>{' '}
+          · © OpenStreetMap
+        </>
+      )}
+    </p>
+  );
   const rest = results.length - SHOWN;
 
   return (
@@ -128,6 +152,7 @@ export function PlaceAutocomplete({
         {results.slice(0, SHOWN).map((p) => (
           <PlaceOption key={`${p.source}:${p.id}`} place={p} onPick={() => pick(p)} />
         ))}
+        {credit && <li className="py-1.5">{credit}</li>}
         {rest > 0 && (
           <li>
             <button
@@ -190,7 +215,12 @@ function PlaceOption({ place: p, onPick }: { place: PlaceSummary; onPick: () => 
         type="button"
         aria-label={t('placeSearch.openMap', { name: p.name })}
         onClick={() => {
-          const app = p.source === 'google' ? 'google' : p.source === 'kakao' ? 'kakao' : 'naver';
+          const app =
+            p.source === 'google' || p.source === 'osm'
+              ? 'google'
+              : p.source === 'kakao'
+                ? 'kakao'
+                : 'naver';
           const link = placeLink(
             app,
             {

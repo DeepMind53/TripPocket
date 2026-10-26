@@ -1,6 +1,6 @@
 import { phraseLangFor, placeLangFor } from '@trippocket/shared';
 import { useEffect, useState } from 'react';
-import { api } from '../../data/api/client';
+import { placesApi } from '../../data/api/places';
 import { useTranslation } from '../../i18n';
 import { ShowCard } from './ShowCard';
 
@@ -16,6 +16,7 @@ export function TaxiCard({
   name,
   address,
   googlePlaceId,
+  coords,
 }: {
   open: boolean;
   onClose: () => void;
@@ -23,21 +24,29 @@ export function TaxiCard({
   name: string;
   address?: string | undefined;
   googlePlaceId?: string | undefined;
+  /**
+   * Google 무료량이 끝났을 때 백업(Geoapify)용 좌표. Google에서 받은 좌표는 넘기지 않는다 (Google 약관 — 다른 서비스에 쓰지 않음)
+   */
+  coords?: { lat: number; lng: number } | undefined;
 }) {
   const { t } = useTranslation();
   const lang = phraseLangFor(countryCode);
   const placeLang = placeLangFor(countryCode);
   const [local, setLocal] = useState<{ key: string; name?: string; address?: string } | null>(null);
-  const key = `${googlePlaceId}|${placeLang}`;
+  const key = `${googlePlaceId}|${coords?.lat},${coords?.lng}|${placeLang}`;
 
   useEffect(() => {
-    if (!open || !googlePlaceId || !placeLang || navigator.onLine === false) return;
+    if (!open || (!googlePlaceId && !coords) || !placeLang || navigator.onLine === false) return;
     let alive = true;
-    void api<{ name?: string; address?: string }>(
-      `/api/places/google/${encodeURIComponent(googlePlaceId)}/local?lang=${encodeURIComponent(placeLang)}`,
-    ).then((r) => {
-      if (alive && r.ok) setLocal({ key, ...r.data });
-    });
+    void placesApi
+      .localName({
+        ...(googlePlaceId ? { placeId: googlePlaceId } : {}),
+        ...(coords ? { coords } : {}),
+        lang: placeLang,
+      })
+      .then((r) => {
+        if (alive && r.ok) setLocal({ key, ...r.data });
+      });
     return () => {
       alive = false;
     };

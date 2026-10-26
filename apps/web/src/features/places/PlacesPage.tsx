@@ -6,7 +6,7 @@ import { Heart, MapPin, Plus, Search } from 'lucide-react';
 import { useState } from 'react';
 import { useParams } from 'react-router';
 import { useCanEdit } from '../../data/tripRoles';
-import { placesApi } from '../../data/api/places';
+import { placesApi, resolvePlace } from '../../data/api/places';
 import { useAuth } from '../../data/authStore';
 import { useTrip } from '../../data/hooks';
 import { itemRepo } from '../../data/repositories/itemRepo';
@@ -138,7 +138,7 @@ export function PlacesPage() {
                 onClick={() =>
                   openMapLink(
                     placeLink(
-                      p.source === 'google' ? 'google' : p.source,
+                      p.source === 'osm' ? 'google' : p.source,
                       {
                         name: p.name,
                         address: p.address,
@@ -154,15 +154,17 @@ export function PlacesPage() {
                 label={t('places.save', { name: p.name })}
                 icon={<Heart />}
                 onClick={() =>
-                  void savedPlaceRepo
-                    .create({
-                      name: p.name,
-                      kind: cat?.kind ?? 'place',
-                      ...(p.address ? { address: p.address } : {}),
-                      ...(p.coords ? { coords: p.coords, coordsSource: p.source } : {}),
-                      ...(p.source === 'google' ? { googlePlaceId: p.id } : {}),
-                      ...(city ? { cityTag: city } : {}),
-                    })
+                  void resolvePlace(p)
+                    .then((p) =>
+                      savedPlaceRepo.create({
+                        name: p.name,
+                        kind: cat?.kind ?? 'place',
+                        ...(p.address ? { address: p.address } : {}),
+                        ...(p.coords ? { coords: p.coords, coordsSource: p.source } : {}),
+                        ...(p.source === 'google' ? { googlePlaceId: p.id } : {}),
+                        ...(city ? { cityTag: city } : {}),
+                      }),
+                    )
                     .then(() => toast(t('places.saved')))
                 }
               />
@@ -172,14 +174,16 @@ export function PlacesPage() {
                   icon={<Plus />}
                   tone="tint"
                   onClick={() =>
-                    void itemRepo
-                      .create({
-                        tripId,
-                        date: null,
-                        kind: cat?.kind ?? 'place',
-                        title: p.name,
-                        place: toPlaceRef(p),
-                      })
+                    void resolvePlace(p)
+                      .then((p) =>
+                        itemRepo.create({
+                          tripId,
+                          date: null,
+                          kind: cat?.kind ?? 'place',
+                          title: p.name,
+                          place: toPlaceRef(p),
+                        }),
+                      )
                       .then(() => toast(t('places.added')))
                   }
                 />

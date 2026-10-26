@@ -19,8 +19,10 @@ beforeEach(async () => {
       cover: {},
     })
   ).id;
-  vi.stubGlobal('fetch', async (url: string) =>
-    url.includes('/local?lang=ja')
+  vi.stubGlobal('fetch', async (url: string, init?: RequestInit) =>
+    url === '/api/places/local' &&
+    JSON.parse(String(init?.body)).lang === 'ja' &&
+    JSON.parse(String(init?.body)).placeId === 'ChIJ_hotel_123'
       ? Response.json({ name: 'ホテルグレイスリー新宿', address: '東京都新宿区歌舞伎町1-19-1' })
       : Response.json({}, { status: 404 }),
   );
