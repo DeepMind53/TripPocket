@@ -1,4 +1,4 @@
-import { flagEmoji, type Trip } from '@trippocket/shared';
+import { flagEmoji, todayIn, type Trip } from '@trippocket/shared';
 import { useTripsData } from '../../data/hooks';
 import { travelStats } from '../../domain/tripStats';
 import { useTranslation } from '../../i18n';
@@ -23,7 +23,7 @@ export function TravelReview({ pastTrips }: { pastTrips: readonly Trip[] }) {
   const { t } = useTranslation();
   const data = useTripsData(pastTrips.map((tr) => tr.id));
   if (!data || pastTrips.length === 0) return null;
-  const s = travelStats(pastTrips, data.items, data.bookings);
+  const s = travelStats(pastTrips, data.items, data.bookings, todayIn('Asia/Seoul'));
   const km = (n: number) => n.toLocaleString('ko-KR', { maximumFractionDigits: 1 });
   // 한 번이 안 되면 "마라톤의 3%"처럼 (0번은 어색하다)
   const ratio = (r: number, key: 'walkFun' | 'transitFun') =>
@@ -81,6 +81,47 @@ export function TravelReview({ pastTrips }: { pastTrips: readonly Trip[] }) {
           },
         ]
       : []),
+    {
+      emoji: '🛏',
+      value: t('travelReview.nightsN', { n: s.nights }),
+      label: t('travelReview.nights'),
+    },
+    {
+      emoji: '🌍',
+      value: t('travelReview.tripsSplit', { overseas: s.overseas, domestic: s.domestic }),
+      label: t('travelReview.split'),
+      fun: t('travelReview.thisYear', { n: s.thisYear }),
+    },
+    ...(s.earliest
+      ? [
+          {
+            emoji: '🌅',
+            value: s.earliest,
+            label: t('travelReview.earliest'),
+            fun: t('travelReview.latestFun', { time: s.latest ?? s.earliest }),
+          },
+        ]
+      : []),
+    ...(s.busiestDay
+      ? [
+          {
+            emoji: '🏃',
+            value: t('travelReview.count', { n: s.busiestDay.count }),
+            label: t('travelReview.busiest'),
+            fun: s.busiestDay.date.slice(2).replace(/-/g, '.'),
+          },
+        ]
+      : []),
+    {
+      emoji: '☕',
+      value: t('travelReview.cafeFood', { cafe: s.cafes, food: s.restaurants }),
+      label: t('travelReview.cafeFoodLabel'),
+    },
+    {
+      emoji: '🔁',
+      value: t('travelReview.count', { n: s.revisits }),
+      label: t('travelReview.revisits'),
+    },
     ...(s.farthest
       ? [
           {

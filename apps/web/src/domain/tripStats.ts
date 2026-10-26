@@ -25,6 +25,21 @@ export interface TravelStats {
   topKind?: { kind: ItemKind; count: number } | undefined;
   longest?: { title: string; days: number } | undefined;
   farthest?: { title: string; km: number } | undefined;
+  /** 숙소 예약 박 수 합 */
+  nights: number;
+  /** 가장 이른·늦은 일정 시작 시각 (아침형·올빼미형) */
+  earliest?: string | undefined;
+  latest?: string | undefined;
+  /** 하루에 일정이 가장 많았던 날 */
+  busiestDay?: { date: string; count: number } | undefined;
+  cafes: number;
+  restaurants: number;
+  /** 두 번 넘게 간 장소 수 (방문 기록, 같은 이름) */
+  revisits: number;
+  overseas: number;
+  domestic: number;
+  /** 올해(오늘 날짜의 해) 다녀온 여행 */
+  thisYear: number;
 }
 
 const round1 = (n: number) => Math.round(n * 10) / 10;
@@ -38,6 +53,8 @@ export function travelStats(
   pastTrips: readonly Trip[],
   items: readonly ItineraryItem[],
   bookings: readonly Booking[],
+  /** 오늘 날짜 — "올해 다녀온 여행" */
+  today?: string,
 ): TravelStats {
   const ids = new Set(pastTrips.map((t) => t.id));
   const mine = items.filter((i) => ids.has(i.tripId) && !i.deletedAt && i.visit !== 'skipped');
@@ -91,6 +108,27 @@ export function travelStats(
     )
     .sort((a, b) => b.km - a.km)[0];
 
+  const nights = bookings
+    .filter((b) => ids.has(b.tripId) && !b.deletedAt && b.kind === 'lodging' && b.end)
+    .reduce((n, b) => n + Math.max(0, nightsBetween(b.start.date, b.end!.date)), 0);
+  const times = mine
+    .filter((i) => i.kind !== 'note' && i.startTime && i.transport?.mode !== 'flight')
+    .map((i) => i.startTime!)
+    .sort();
+  const perDay = new Map<string, number>();
+  for (const i of mine)
+    if (i.date && i.kind !== 'note') perDay.set(i.date, (perDay.get(i.date) ?? 0) + 1);
+  const busiest = [...perDay].sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1))[0];
+  const nameCount = new Map<string, number>();
+  for (const i of mine)
+    if (i.visit === 'visited') {
+      const k = (i.place?.name ?? i.title).replace(/\s/g, '');
+      nameCount.set(k, (nameCount.get(k) ?? 0) + 1);
+    }
+  const isDomestic = (t: Trip) =>
+    t.destinations.every((d) => !d.countryCode || d.countryCode === 'KR');
+  const year = (today ?? '').slice(0, 4);
+
   return {
     trips: pastTrips.length,
     days: lengths.reduce((s, l) => s + l.days, 0),
@@ -102,5 +140,15 @@ export function travelStats(
     topKind: topKind ? { kind: topKind[0], count: topKind[1] } : undefined,
     longest,
     farthest: far,
+    nights,
+    earliest: times[0],
+    latest: times[times.length - 1],
+    busiestDay: busiest ? { date: busiest[0], count: busiest[1] } : undefined,
+    cafes: mine.filter((i) => i.kind === 'cafe').length,
+    restaurants: mine.filter((i) => i.kind === 'food').length,
+    revisits: [...nameCount.values()].filter((n) => n >= 2).length,
+    overseas: pastTrips.filter((t) => !isDomestic(t)).length,
+    domestic: pastTrips.filter(isDomestic).length,
+    thisYear: year ? pastTrips.filter((t) => t.startDate.startsWith(year)).length : 0,
   };
 }

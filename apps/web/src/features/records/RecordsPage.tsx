@@ -1,8 +1,9 @@
-import { flagEmoji, getTripStatus, nightsBetween, todayIn } from '@trippocket/shared';
+import { getTripStatus, nightsBetween, todayIn } from '@trippocket/shared';
 import { Link } from 'react-router';
 import { useTrips } from '../../data/hooks';
 import { useTranslation } from '../../i18n';
 import { EmptyState, TopBar } from '../../shared/ui';
+import { CountryGrid } from './CountryGrid';
 import { TripList } from '../trips/TripsPage';
 import { TravelReview } from './TravelReview';
 import { VisitLog } from './VisitLog';
@@ -18,6 +19,11 @@ export function RecordsPage() {
     (tr) => getTripStatus(tr.startDate, tr.endDate, todayIn(tr.timezone)) === 'past',
   );
   const days = past.reduce((sum, tr) => sum + nightsBetween(tr.startDate, tr.endDate) + 1, 0);
+  // 나라별 다녀온 횟수 — 많이 간 나라 먼저
+  const countryTrips = new Map<string, number>();
+  for (const tr of past)
+    for (const c of new Set(tr.destinations.flatMap((d) => (d.countryCode ? [d.countryCode] : []))))
+      countryTrips.set(c, (countryTrips.get(c) ?? 0) + 1);
   const countries = [
     ...new Set(
       past.flatMap((tr) => tr.destinations.flatMap((d) => (d.countryCode ? [d.countryCode] : []))),
@@ -38,18 +44,7 @@ export function RecordsPage() {
               value={t('records.countriesN', { n: countries.length })}
             />
           </div>
-          {countries.length > 0 && (
-            <p
-              className="flex flex-wrap gap-1 text-[28px] leading-none"
-              aria-label={countries.join(', ')}
-            >
-              {countries.map((c) => (
-                <span key={c} aria-hidden="true">
-                  {flagEmoji(c)}
-                </span>
-              ))}
-            </p>
-          )}
+          {countries.length > 0 && <CountryGrid codes={countries} counts={countryTrips} />}
         </section>
 
         <TravelReview pastTrips={past} />

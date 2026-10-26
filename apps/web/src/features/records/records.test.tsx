@@ -77,3 +77,35 @@ it('실험실 여행 회고: 걸은 거리·비행기 탑승·가장 많이 간 
   expect(within(review).getByText('가장 많이 간 나라').parentElement).toHaveTextContent('일본');
   expect(within(review).getByText('걸은 거리').parentElement).toHaveTextContent('0.1km');
 });
+
+it('방문 기록은 여행별로 묶어 보여 준다', async () => {
+  const mk = (title: string, start: string) =>
+    tripRepo.create({
+      timezone: 'Asia/Tokyo',
+      cover: {},
+      title,
+      destinations: [{ name: title, kind: 'city', countryCode: 'JP' }],
+      startDate: start,
+      endDate: start,
+    });
+  const a = await mk('오사카', '2025-05-01');
+  const b = await mk('후쿠오카', '2025-08-01');
+  for (const [trip, title, v] of [
+    [a, '오사카성', 'visited'],
+    [a, '도톤보리', 'skipped'],
+    [b, '캐널시티', 'visited'],
+  ] as const) {
+    const it = await itemRepo.create({
+      tripId: trip.id,
+      date: trip.startDate,
+      kind: 'place',
+      title,
+    });
+    await itemRepo.setVisit(it.id, v);
+  }
+  render(<RouterProvider router={createMemoryRouter(routes, { initialEntries: ['/records'] })} />);
+  const osaka = await screen.findByRole('region', { name: '오사카' });
+  expect(osaka).toHaveTextContent('방문 1곳 · 미방문 1곳');
+  expect(within(osaka).getAllByRole('listitem')).toHaveLength(2);
+  expect(screen.getByRole('region', { name: '후쿠오카' })).toHaveTextContent('캐널시티');
+});

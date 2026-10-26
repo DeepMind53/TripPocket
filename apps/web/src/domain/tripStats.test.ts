@@ -90,4 +90,36 @@ describe('travelStats', () => {
   it('다녀온 여행이 없으면 0', () => {
     expect(travelStats([], items, bookings)).toMatchObject({ trips: 0, walkKm: 0, flights: 0 });
   });
+
+  it('숙박·이른/늦은 일정·가장 바쁜 날·카페·맛집·국내외·올해', () => {
+    const more = [
+      ...items,
+      item('d', 't1', 'e', 35.7, { startTime: '06:30' }),
+      item('e', 't1', 'f', 35.7, { startTime: '22:10', kind: 'cafe' }),
+    ];
+    const lodging = [
+      ...bookings,
+      {
+        ...base,
+        id: 'h2',
+        tripId: 't1',
+        kind: 'lodging',
+        title: '호텔',
+        start: { date: '2026-10-01' },
+        end: { date: '2026-10-04' },
+      },
+    ] as Booking[];
+    const s = travelStats(trips, more, lodging, '2026-10-27');
+    expect(s).toMatchObject({
+      nights: 3,
+      earliest: '06:30',
+      latest: '22:10',
+      busiestDay: { date: '2026-10-01', count: 5 },
+      cafes: 2,
+      restaurants: 3,
+      overseas: 2,
+      domestic: 0,
+      thisYear: 2,
+    });
+  });
 });

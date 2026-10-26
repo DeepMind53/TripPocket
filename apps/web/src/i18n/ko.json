@@ -1084,7 +1084,8 @@
     "pastTitle": "다녀온 여행",
     "empty": "아직 다녀온 여행이 없어요",
     "emptyDesc": "여행이 끝나면 여기에 모여요",
-    "allTrips": "모든 여행 보기"
+    "allTrips": "모든 여행 보기",
+    "moreCountries": "+ 더보기 ({{n}}개 나라)"
   },
   "intro": {
     "label": "트립포켓 소개",
@@ -1396,7 +1397,18 @@
     "topCountryFun": "{{n}}번 다녀왔어요",
     "longest": "가장 긴 여행",
     "farthest": "서울에서 가장 먼 곳",
-    "note": "거리는 일정 장소 사이 직선거리로 어림했어요\n미방문으로 남긴 일정은 빼요"
+    "note": "거리는 일정 장소 사이 직선거리로 어림했어요\n미방문으로 남긴 일정은 빼요",
+    "nights": "숙소에서 잔 밤",
+    "nightsN": "{{n}}박",
+    "split": "해외 · 국내 여행",
+    "tripsSplit": "{{overseas}} · {{domestic}}",
+    "thisYear": "올해 {{n}}번",
+    "earliest": "가장 이른 일정",
+    "latestFun": "가장 늦은 일정 {{time}}",
+    "busiest": "가장 바빴던 하루",
+    "cafeFood": "{{cafe}} · {{food}}",
+    "cafeFoodLabel": "카페 · 맛집",
+    "revisits": "두 번 넘게 간 곳"
   },
   "print": {
     "title": "인쇄용 일정표",
