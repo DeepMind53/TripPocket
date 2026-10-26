@@ -9,7 +9,12 @@ export const FORECAST_DAYS = 16;
 export interface TripDayWeather extends DayWeather {
   /** 작년 기록이면 그 해 (예: 2025) — 예보면 없음 */
   year?: number;
+  /** 이미 지난 날 (최근 7일, 예보 API의 지난 날 값) */
+  past?: true;
 }
+
+/** 지난 날도 이만큼은 보여 준다 (Open-Meteo past_days) */
+export const PAST_DAYS = 7;
 
 /**
  * 여행 날짜별 날씨 (사용자 요청 2026-10-25): 2주 안쪽은 달력과 같은 예보,
@@ -24,7 +29,8 @@ export function useTripWeather(trip: Trip | undefined): Record<LocalDate, TripDa
 
 /**
  * 좌표 한 곳의 날짜별 날씨 (날씨 정보 화면: 여행 앞뒤 하루·출발 공항, 2026-10-26).
- * 오늘부터 16일은 예보, 그 뒤는 작년 같은 날 기록, 지난 날은 비움
+ * 오늘부터 16일은 예보, 그 뒤는 작년 같은 날 기록, 지난 7일은 지난 날씨, 그보다 오래된 날은 비움
+ * (2026-10-27: 오늘 출발이면 '여행 전날'이 비던 문제 — 지난 7일을 더함)
  */
 export function useWeatherDays(
   coords: { lat: number; lng: number } | undefined,
@@ -39,7 +45,7 @@ export function useWeatherDays(
     let alive = true;
     const today = todayIn(tz);
     const lastForecast = addDays(today, FORECAST_DAYS - 1);
-    const days = dates.filter((d) => d >= today);
+    const days = dates.filter((d) => d >= addDays(today, -PAST_DAYS));
     const near = days.filter((d) => d <= lastForecast);
     const far = days.filter((d) => d > lastForecast);
     void Promise.all([
@@ -48,7 +54,7 @@ export function useWeatherDays(
     ]).then(([f, ly]: [Record<LocalDate, DayWeather>, Record<LocalDate, DayWeather>]) => {
       if (!alive) return;
       const next: Record<LocalDate, TripDayWeather> = {};
-      for (const d of near) if (f[d]) next[d] = f[d];
+      for (const d of near) if (f[d]) next[d] = d < today ? { ...f[d], past: true } : f[d];
       for (const d of far) if (ly[d]) next[d] = { ...ly[d], year: Number(d.slice(0, 4)) - 1 };
       setOut(next);
     });

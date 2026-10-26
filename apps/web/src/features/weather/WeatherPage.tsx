@@ -118,7 +118,11 @@ function DayRow({
           <span className="flex min-w-0 flex-1 flex-col">
             <span className="text-body-2">{look.label}</span>
             <span className="text-micro text-fg-muted">
-              {weather.year ? t('weather.pastShort') : t('weatherPage.forecast')}
+              {weather.year
+                ? t('weather.pastShort')
+                : weather.past
+                  ? t('weatherPage.observed')
+                  : t('weatherPage.forecast')}
             </span>
           </span>
           <span className="tabular text-body-1 font-semibold">{formatTemps(weather)}</span>

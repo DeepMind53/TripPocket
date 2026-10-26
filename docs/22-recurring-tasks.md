@@ -12,28 +12,33 @@
 |---|---|---|---|
 | A1 | **나라별 입국 필수 항목** (비자·무비자 기간·입국신고·전자여행허가 요금·여권 기준) 20개국 | `packages/shared/src/data/essentials.ts` (`ESSENTIALS_CHECKED_AT`도 갱신) | 각 나라 공식 사이트·주재 한국 공관·외교부 해외안전여행(0404.go.kr) |
 | A2 | **나라별 이벤트·혜택** — 새 이벤트 추가, 끝난 것 정리 (예: 대만 여행 지원금, 마카오 무료 버스) | 같은 파일 `TRAVEL_EVENTS` | 각국 관광청 공식 사이트 |
-| A3 | **공휴일** — 다음 해 태국·말레이시아 (앱에 담는 나라) | `apps/web/src/data/holidays/*.json` (`scripts/gen-holidays.mjs`) | Google 캘린더 공휴일 피드 |
+| A3 | **공휴일** — 다음 해 태국·말레이시아 (앱에 담는 나라), 대만 TaiwanCalendar 다음 해 파일, 한국 임시·대체공휴일 | `apps/web/src/data/holidays/*.json` (`scripts/gen-holidays.mjs`), `data/services/travelInfo.ts` | Google 캘린더 공휴일 피드, TaiwanCalendar 저장소, Nager.Date |
 | A4 | **공항 목록** — 새 공항·터미널 | `packages/shared/src/data/airports.ts` | 공항 공식 사이트 |
 | A5 | **환율 보조 출처·통화** 동작 확인 | `apps/web/src/data/services/fxService.ts` | 앱 환율 화면 |
 | A6 | **긴급 연락처** — 나라별 경찰·구급, 영사안전콜센터 (`EMERGENCY_CHECKED_AT`) | `packages/shared/src/data/emergency.ts` | 각국 정부·공관 공식 안내 |
 | A7 | **법적 고지·데이터 출처** — 쓰는 서비스와 맞는지, 오픈소스 목록 | `apps/web/src/features/legal/content.ko.ts`, `licenses.json` | 실제 코드에서 부르는 서비스 |
+| A8 | **여행지 특보** — 나라별 특보 링크, 새로 약관이 허락된 나라, 일본 기상청 새 코드표 공개 여부 | `packages/shared/src/alerts/alerts.ts`, 서버 `services/nationalAlerts.ts`, docs/24 §7 | 각 나라 기상청 |
+| A9 | **도움말·소개 카드**가 지금 화면과 맞는지 | `features/me/IntroCarousel.tsx`, `legal/content.ko.ts` HELP | 앱 화면 |
 
 ## B. 무료 사용량·요금 (과금 방지 — CLAUDE.md 무료 우선)
 
 | # | 무엇 | 어디 |
 |---|---|---|
-| B1 | 외부 API **무료 한도·요금 변경** (Google 지도·장소, 카카오, 네이버, Gemini·Workers AI·Groq, AviationStack, Open-Meteo, 웹 푸시) | `apps/server/src/services/apiUsage.ts` `APIS` + `docs/code-map.md` §3 표 |
+| B1 | 외부 API **무료 한도·요금 변경** (Google 지도·장소·Routes, 카카오, 네이버 지도·검색(API HUB 한시적 무료), Geoapify, Gemini·Workers AI·Groq, 수출입은행, AviationStack, Open-Meteo, OpenFreeMap, Overpass, 공공데이터포털, GDACS·USGS·기상청들, 웹 푸시) + 기반 서비스(Cloudflare Pages·Functions, Tailscale Funnel, GitHub Actions) | `apps/server/src/services/apiUsage.ts` `APIS` + `docs/code-map.md` §3 표 |
 | B2 | 유료 서비스 가격 (참고 문서) | `docs/21-paid-services.md` |
 | B3 | 관리자 **API 사용량** 화면에서 남은 무료량 20% 아래(주황·빨강)였던 API 점검 — 자동 중지는 95% | 앱 → 마이 → 관리자 → API 사용량 |
+| B5 | **API 주소·버전 폐기 공지** (수출입은행 도메인 2026-04·일본 기상청 경보 데이터 2026-05에 실제로 바뀜) | 서버 `services/*.ts`, 웹 `shared/maps/*` |
+| B6 | **AI 모델 폐기·교체** (Gemini·Workers AI·Groq 기본 모델) | `apps/server/src/config.ts` `*_MODEL` |
 | B4 | API 키 유효기간 — 공공데이터포털 활용기간(보통 2년, 한 달 전 연장신청)·Cloudflare 토큰 만료·Google 결제 카드 만료·Google 로그인 6개월 미사용 삭제 | `apps/server/.env` 각 키 위 [유효기간] |
 
 ## C. 보안·의존성
 
 | # | 무엇 | 어떻게 |
 |---|---|---|
-| C1 | 라이브러리 보안 알림 | `pnpm audit --prod` — 심각(high 이상)만 고치기, 새 메이저 버전은 사용자에게 묻기 |
+| C1 | 라이브러리 보안 알림 | `pnpm audit --prod` — 심각(high 이상)만 고치기, 새 메이저 버전은 사용자에게 묻기. `pnpm outdated`는 목록만 보고 |
 | C2 | Node·브라우저 지원 확인 | `pnpm check`, `pnpm e2e` |
-| C3 | 로그인 앱 키·도메인 제한 확인 (Google·카카오·네이버 콘솔) | 사람이 직접 (키 값은 채팅·PR에 쓰지 않기) |
+| C3 | 로그인 앱 키·지도 키 도메인 제한 확인 (Google·카카오·네이버 콘솔) | 사람이 직접 (키 값은 채팅·PR에 쓰지 않기) |
+| C4 | 도메인 `trippocket.day` 갱신일·자동 갱신 결제 수단 | 사람이 직접 (도메인 등록 업체 화면) |
 
 ## D. 서버 PC (사람이 직접 — 클라우드 루틴은 이 PC에 못 들어옴)
 
@@ -51,6 +56,7 @@
 | E1 | 신고·숨김된 후기 확인 | 관리자 후기 API (`/api/admin/reviews`) |
 | E2 | 개선 제안 읽고 답하기 | 마이 → 관리자 → 개선 제안 |
 | E3 | 문구 규칙 (한 줄 = 한 문장) | `pnpm --filter @trippocket/web test` (copy.test.ts) |
+| E4 | 실험실 기능 중 정식으로 넣거나 뺄 것 | 마이 → 실험실 (`data/labsStore.ts`) |
 
 ## 정기 작업이 하는 일 (A·B·C1·C2·E3)
 

@@ -138,3 +138,43 @@ it('여행지 특이사항: 나라 코드만 보내고, 특보와 그 나라 기
   expect(alertUrl).toContain('points=JP:35.7:139.7');
   expect(alertUrl).not.toContain('35.68');
 });
+
+it('오늘 출발이면 여행 전날(어제)은 지난 날씨로 보인다 (2026-10-27)', async () => {
+  vi.setSystemTime(new Date('2026-10-24T03:00:00Z')); // 도쿄 10.24 = 출발일
+  const urls: string[] = [];
+  vi.stubGlobal('fetch', async (url: string) => {
+    urls.push(url);
+    if (url.includes('/api/alerts'))
+      return Response.json({ alerts: [], checkedAt: 'x', missing: [] });
+    const days = ['2026-10-23', '2026-10-24', '2026-10-25', '2026-10-26', '2026-10-27'];
+    return Response.json({
+      daily: {
+        time: days,
+        weather_code: days.map(() => 0),
+        temperature_2m_max: days.map(() => 21),
+        temperature_2m_min: days.map(() => 11),
+      },
+    });
+  });
+  const trip = await tripRepo.create({
+    title: '도쿄',
+    destinations: [
+      { name: '도쿄', kind: 'city', countryCode: 'JP', coords: { lat: 35.68, lng: 139.69 } },
+    ],
+    startDate: '2026-10-24',
+    endDate: '2026-10-26',
+    timezone: 'Asia/Tokyo',
+    cover: {},
+  });
+  render(
+    <RouterProvider
+      router={createMemoryRouter(routes, { initialEntries: [`/trips/${trip.id}/weather`] })}
+    />,
+  );
+  const dest = await screen.findByRole('region', { name: '여행지 · 도쿄' });
+  const before = within(dest).getAllByRole('listitem')[0]!;
+  expect(before).toHaveTextContent('여행 전날');
+  expect(await within(before).findByText('지난 날씨')).toBeInTheDocument();
+  expect(before).toHaveTextContent('11°/21°');
+  expect(urls.some((u) => u.includes('past_days=7'))).toBe(true);
+});

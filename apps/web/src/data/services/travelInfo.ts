@@ -145,20 +145,21 @@ const TW_EN: Record<string, string> = {
   行憲紀念日: 'Constitution Day',
 };
 
-/** 목적지 좌표의 일별 예보 (오늘부터 16일) */
+/** 목적지 좌표의 일별 예보 (오늘부터 16일) + 지난 7일 실제에 가까운 값 (past_days, 날씨 정보 화면 '여행 전날' 등) */
 export function getForecast(
   lat: number,
   lng: number,
   timezone: string,
 ): Promise<Record<LocalDate, DayWeather>> {
-  const key = `weather:${lat.toFixed(2)},${lng.toFixed(2)}`;
+  // 지난 7일을 더하면서 저장 키를 바꿨다 (예전 저장본에는 지난 날이 없음)
+  const key = `weather2:${lat.toFixed(2)},${lng.toFixed(2)}`;
   return cached(
     key,
     WEATHER_TTL,
     async () => {
       const url =
         `https://api.open-meteo.com/v1/forecast?latitude=${lat.toFixed(2)}&longitude=${lng.toFixed(2)}` +
-        `&daily=weather_code,temperature_2m_max,temperature_2m_min&forecast_days=16` +
+        `&daily=weather_code,temperature_2m_max,temperature_2m_min&forecast_days=16&past_days=7` +
         `&timezone=${encodeURIComponent(timezone)}`;
       const res = await fetchCounted('open_meteo', url);
       if (!res.ok) throw new Error(`weather ${res.status}`);

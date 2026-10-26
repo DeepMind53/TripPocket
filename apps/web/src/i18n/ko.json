@@ -139,7 +139,7 @@
     "mapTitle": "{{city}} 지도",
     "mapNoCoords": "위치가 있는 장소가 없어요",
     "openInMapApp": "지도 앱에서 열기",
-    "emptyCta": "{{trip}} 장소 찾기"
+    "emptyCta": "여행 장소 찾기"
   },
   "me": {
     "title": "마이",
@@ -1417,8 +1417,9 @@
     "dayAfter": "여행 다음 날",
     "dayN": "{{n}}일차",
     "forecast": "예보",
+    "observed": "지난 날씨",
     "airports": "출발 공항 날씨",
-    "note": "2주 안쪽은 예보예요\n그보다 먼 날은 작년 같은 날 날씨예요\n날씨: Open-Meteo"
+    "note": "2주 안쪽은 예보예요\n그보다 먼 날은 작년 같은 날 날씨예요\n지난 7일은 지난 날씨를 보여 줘요\n날씨: Open-Meteo"
   },
   "alerts": {
     "title": "여행지 특이사항",

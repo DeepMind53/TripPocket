@@ -99,7 +99,7 @@ export function SavedPage() {
             ? {
                 action: (
                   <Button size="lg" onClick={() => void navigate(`/trips/${openTrip.id}/places`)}>
-                    {t('saved.emptyCta', { trip: openTrip.title })}
+                    {t('saved.emptyCta')}
                   </Button>
                 ),
               }
