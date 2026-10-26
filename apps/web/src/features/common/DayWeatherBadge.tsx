@@ -3,7 +3,7 @@ import { useTranslation } from '../../i18n';
 import { WeatherIcon } from '../../shared/ui';
 import type { TripDayWeather } from './useTripWeather';
 
-/** 날짜 머리글 오른쪽 날씨: 그림 + 최저/최고. 작년 기록이면 앞에 작은 글씨 "25년 정보" */
+/** 날짜 머리글 오른쪽 날씨: 그림 + 최저/최고. 작년 기록이면 앞에 작은 글씨 "과거 날씨" (사용자 요청 2026-10-26) */
 export function DayWeatherBadge({ weather }: { weather: TripDayWeather | undefined }) {
   const { t } = useTranslation();
   if (!weather) return null;
@@ -19,7 +19,7 @@ export function DayWeatherBadge({ weather }: { weather: TripDayWeather | undefin
     <span role="img" aria-label={label} className="flex shrink-0 items-center gap-1">
       {weather.year && (
         <span aria-hidden="true" className="text-micro text-fg-muted">
-          {t('weather.yearShort', { yy: String(weather.year).slice(2) })}
+          {t('weather.pastShort')}
         </span>
       )}
       <WeatherIcon kind={look.kind} className="size-5" />

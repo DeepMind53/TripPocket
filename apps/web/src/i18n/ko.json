@@ -1122,6 +1122,10 @@
     "noLodging": "숙소 예약이 없어요",
     "weather": "첫날 날씨",
     "weatherLater": "예보는 출발 2주 전부터 보여요",
+    "weatherPast": "과거 {{yy}}년 날씨 정보\n예보는 출발 2주 전부터 보여요",
+    "weatherForecast": "{{date}} 예보 날씨",
+    "weatherDays": "{{n}}일",
+    "weatherDaysLabel": "{{look}} {{n}}일",
     "weatherNone": "날씨 정보 없음",
     "fx": "환율",
     "fxValue": "{{unit}} {{code}} = {{won}}원",
@@ -1130,7 +1134,7 @@
     "needsAttention": "확인이 필요해요"
   },
   "weather": {
-    "yearShort": "{{yy}}년 정보",
+    "pastShort": "과거 날씨",
     "lastYearLabel": "작년({{year}}년) 같은 날 날씨: {{look}} {{temps}}",
     "forecastLabel": "날씨 예보: {{look}} {{temps}}"
   },

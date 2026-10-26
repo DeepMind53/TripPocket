@@ -33,3 +33,20 @@ export interface DayWeather {
 export function formatTemps(w: DayWeather): string {
   return `${Math.round(w.min)}°/${Math.round(w.max)}°`;
 }
+
+/** 여행 기간 날씨 요약 "맑음 3일 · 비 1일" — 많은 날 순, 같으면 먼저 나온 날씨 순 */
+export function countWeatherKinds(days: readonly DayWeather[]): (WeatherLook & { days: number })[] {
+  const counts = new Map<WeatherKind, WeatherLook & { days: number }>();
+  for (const d of days) {
+    const look = weatherLook(d.code);
+    const c = counts.get(look.kind);
+    if (c) c.days += 1;
+    else counts.set(look.kind, { ...look, days: 1 });
+  }
+  return [...counts.values()].sort((a, b) => b.days - a.days);
+}
+
+/** 날짜 "2026-11-12" → "26.11/12" (홈 날씨 카드, 사용자 요청 2026-10-26) */
+export function formatForecastDate(date: string): string {
+  return `${date.slice(2, 4)}.${date.slice(5, 7)}/${date.slice(8, 10)}`;
+}

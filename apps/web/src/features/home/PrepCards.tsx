@@ -14,7 +14,12 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { Link } from 'react-router';
 import { useChecklist, useTripBookings } from '../../data/hooks';
 import { cachedFx } from '../../data/services/fxService';
-import { formatTemps, weatherLook } from '../../domain/weather';
+import {
+  countWeatherKinds,
+  formatForecastDate,
+  formatTemps,
+  weatherLook,
+} from '../../domain/weather';
 import { useTripWeather } from '../common/useTripWeather';
 import { useEssentials } from '../essentials/useEssentials';
 import { useTranslation } from '../../i18n';
@@ -30,7 +35,10 @@ export function PrepCards({ trip }: { trip: Trip }) {
   const bookings = useTripBookings(trip.id) ?? [];
   const packing = useChecklist(trip.id, 'packing');
   // 달력과 같은 예보(2주 안), 그보다 먼 날은 작년 같은 날 기록
-  const weather = useTripWeather(trip)[trip.startDate];
+  const tripWeather = useTripWeather(trip);
+  const weather = tripWeather[trip.startDate];
+  // 예보가 나온 날만 모아 "맑음 3일 · 비 1일" (사용자 요청 2026-10-26)
+  const forecastKinds = countWeatherKinds(Object.values(tripWeather).filter((w) => !w.year));
   const essentials = useEssentials(trip);
   const [fx, setFx] = useState<FxSnapshot | null>(null);
   const daysLeft = daysUntil(trip.startDate, todayIn(trip.timezone));
@@ -142,11 +150,32 @@ export function PrepCards({ trip }: { trip: Trip }) {
                     </span>
                     <span className="tabular text-body-2">{formatTemps(weather)}</span>
                   </span>
-                  {weather.year && (
+                  {weather.year ? (
                     <span className="text-micro text-fg-muted">
-                      {t('weather.yearShort', { yy: String(weather.year).slice(2) })} ·{' '}
-                      {t('prep.weatherLater')}
+                      {t('prep.weatherPast', { yy: String(weather.year).slice(2) })}
                     </span>
+                  ) : (
+                    <>
+                      <span className="tabular text-micro text-fg-muted">
+                        {t('prep.weatherForecast', { date: formatForecastDate(trip.startDate) })}
+                      </span>
+                      <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                        {forecastKinds.map(({ kind, label, days }) => (
+                          <span
+                            key={kind}
+                            role="img"
+                            aria-label={t('prep.weatherDaysLabel', {
+                              look: label,
+                              n: days,
+                            })}
+                            className="tabular flex items-center gap-0.5 text-caption text-fg-sub"
+                          >
+                            <WeatherIcon kind={kind} className="size-4" />
+                            {t('prep.weatherDays', { n: days })}
+                          </span>
+                        ))}
+                      </span>
+                    </>
                   )}
                 </>
               ) : (
