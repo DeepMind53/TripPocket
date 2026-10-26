@@ -3,7 +3,7 @@ import type { Db } from '../db/database';
 /**
  * 외부 API 사용량 기록·자동 중지 (관리자 "API 사용량" 화면). 앱이 부르는 외부 API는 **모두** 여기 등록한다.
  * - 날짜별로 센다. 날짜는 그 API가 무료량을 다시 채우는 시간대 기준 (Google = 미국 태평양, 카카오 = 한국 …)
- * - 무료 사용량을 아는 API는 그 90%에서 자동으로 멈춘다: 월 한도(freeMonthly)와 하루 한도(freeDaily) 각각.
+ * - 무료 사용량을 아는 API는 그 95%에서 자동으로 멈춘다(남은 5%): 월 한도(freeMonthly)와 하루 한도(freeDaily) 각각.
  *   관리자가 상한을 바꿀 수 있다
  * - 관리자가 언제든 수동으로 멈추고 다시 켤 수 있다 (pausable: false인 로그인·프록시 제외 — 멈추면 앱 자체가 안 됨)
  * - 브라우저에서 바로 부르는 API(browser: true)는 routes/usage.ts로 허용 여부를 묻고 사용을 알린다
@@ -135,7 +135,8 @@ export const APIS: readonly ApiDef[] = [
   { id: 'web_push', group: 'free', tz: 'UTC' },
 ];
 
-const AUTO_RATIO = 0.9;
+/** 무료량의 95%(남은 5%)에서 자동 중지 (사용자 결정 2026-10-27, 전에는 90%) */
+const AUTO_RATIO = 0.95;
 const def = (id: ApiId) => APIS.find((a) => a.id === id)!;
 /** 그 API 시간대의 오늘 날짜 YYYY-MM-DD */
 const dayIn = (tz: Tz, now = new Date()) =>

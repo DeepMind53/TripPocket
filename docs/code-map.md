@@ -64,7 +64,7 @@ Tailscale Funnel https://jin-server.tail0844c0.ts.net ─▶ 홈 PC 127.0.0.1:87
   거리 단계 5 → 10 → 50km(shared `pickRadius`, 3곳 이상이면 그 반경) } → 6시간 캐시.
   Google 장소 정보는 AI에 보내지 않는다(목록에만 표시). Google 장소 검색은 API 사용량 자동 중지 안에서만 — 멈추면 블로그만으로
 - **API 사용량**: `api_usage`(날짜별 호출 수, 날짜는 API마다 무료량 초기화 시간대) + `api_controls`(수동 중지·월/하루 자동 상한).
-  무료 월·하루 사용량을 아는 API는 그 90%에서 자동 중지. 서버 호출은 `guardApi`/`trackApi`, 브라우저 호출은
+  무료 월·하루 사용량을 아는 API는 그 95%(남은 5%)에서 자동 중지 (2026-10-27, 전에는 90%). 서버 호출은 `guardApi`/`trackApi`, 브라우저 호출은
   `data/api/usage.ts`의 `externalAllowed`/`reportExternal`(→ `/api/usage/flags`·`/api/usage/map-load`, IP당 하루 100회까지만 셈)
 
 - **후기·포인트** (docs/17): 템플릿·장소 키·검사 = shared `reviews/reviews.ts` (`REVIEW_ASPECTS`·`placeKeyOf`·`ReviewInputSchema`) →
@@ -74,10 +74,10 @@ Tailscale Funnel https://jin-server.tail0844c0.ts.net ─▶ 홈 PC 127.0.0.1:87
 
 ### API 사용량 — 등록된 외부 API와 무료 사용량
 
-> Google 장소(검색 Text Search Pro 월 5,000 · 상세 Enterprise 월 1,000 · 현지어 이름 Pro 월 5,000)는 **월 단위 과금이라 하루 한도 없음 (2026-10-26 사용자 결정)** — 월 90% 자동 중지만. 과금 기준은 매번 최신 공식 자료로 확인 (docs/22 B1)
+> Google 장소(검색 Text Search Pro 월 5,000 · 상세 Enterprise 월 1,000 · 현지어 이름 Pro 월 5,000)는 **월 단위 과금이라 하루 한도 없음 (2026-10-26 사용자 결정)** — 월 95% 자동 중지만. 과금 기준은 매번 최신 공식 자료로 확인 (docs/22 B1)
  (2026-10-24 최신 자료로 확인)
 
-| id | 분류 | 무료 사용량 (자동 중지 = 90%) | 근거·메모 |
+| id | 분류 | 무료 사용량 (자동 중지 = 95%) | 근거·메모 |
 |---|---|---|---|
 | google_places_search | 과금 가능 | 월 5,000 | Text Search **Pro** (FieldMask: id·이름·주소·좌표·지도 링크). 2025-03 SKU별 무료: Essentials 1만·Pro 5천·Enterprise 1천 |
 | google_places_details | 과금 가능 | 월 1,000 | Place Details **Enterprise** (평점·영업시간·전화·웹사이트). FieldMask를 바꾸면 등급이 바뀌니 주의 |

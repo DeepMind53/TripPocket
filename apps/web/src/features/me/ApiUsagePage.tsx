@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { apiUsageApi, type ApiUsage, type ApiUsageReport } from '../../data/api/admin';
+import { remainingRatio, remainingTone } from '../../domain/apiRemaining';
 import { useAuth } from '../../data/authStore';
 import { useTranslation } from '../../i18n';
 import { cn } from '../../shared/lib/cn';
@@ -48,14 +49,18 @@ export function ApiUsagePage() {
       <section className="flex flex-col gap-3">
         <h2 className="text-caption font-bold text-fg-muted">{t(`apiUsage.${group}`)}</h2>
         {group === 'free' && <p className="text-caption text-fg-muted">{t('apiUsage.freeDesc')}</p>}
-        {apis.filter(hasLimit).map((a) => (
-          <LimitCard
-            key={a.id}
-            api={a}
-            busy={busy === a.id}
-            onUpdate={(b) => void update(a.id, b)}
-          />
-        ))}
+        {/* 남은 무료량이 적은 것부터 (사용자 요청 2026-10-27) */}
+        {apis
+          .filter(hasLimit)
+          .sort((x, y) => (remainingRatio(x) ?? 1) - (remainingRatio(y) ?? 1))
+          .map((a) => (
+            <LimitCard
+              key={a.id}
+              api={a}
+              busy={busy === a.id}
+              onUpdate={(b) => void update(a.id, b)}
+            />
+          ))}
         {rows.length > 0 && (
           <ul className="flex flex-col divide-y divide-line overflow-hidden rounded-card border border-line">
             {rows.map((a) => (
@@ -102,6 +107,8 @@ function LimitCard({
   onUpdate: (b: Update) => void;
 }) {
   const { t } = useTranslation();
+  // 남은 무료량 20% 미만 옅은 주황, 5% 미만 옅은 빨강
+  const tone = remainingTone(remainingRatio(a));
   const state = a.paused
     ? 'paused'
     : a.autoStoppedBy === 'day'
@@ -110,7 +117,13 @@ function LimitCard({
         ? 'autoStopped'
         : 'running';
   return (
-    <article className="flex flex-col gap-2 rounded-card border border-line p-4">
+    <article
+      className={cn(
+        'flex flex-col gap-2 rounded-card border border-line p-4',
+        tone === 'danger' && 'border-danger/40 bg-danger/10',
+        tone === 'warning' && 'border-warning/40 bg-warning/10',
+      )}
+    >
       <div className="flex items-start gap-2">
         <div className="flex min-w-0 flex-1 flex-col">
           <h3 className="text-body-1 font-semibold">{apiName(t, a.id)}</h3>

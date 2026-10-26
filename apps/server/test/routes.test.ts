@@ -96,14 +96,14 @@ describe('출발 시각 (두 장소 소요 시간)', () => {
   });
 
   it('Google 무료량이 끝나면 Google 좌표는 503 (다른 회사로 보내지 않음)', async () => {
-    used('google_routes', 9000, 'America/Los_Angeles');
+    used('google_routes', 9500, 'America/Los_Angeles');
     const res = await eta({ from, to, google: true });
     expect(res.statusCode).toBe(503);
     expect(calls).toHaveLength(0);
   });
 
   it('Geoapify가 멈추면 Google로', async () => {
-    used('geoapify', 2700, 'UTC');
+    used('geoapify', 2850, 'UTC');
     expect((await eta({ from, to, google: false })).json().source).toBe('google');
   });
 

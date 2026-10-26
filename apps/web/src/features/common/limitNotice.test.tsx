@@ -16,7 +16,7 @@ it('AI 하루 한도(429) → 이유 팝업, 같은 이유는 한 번만', async
   const res = await api('/api/v1/ai/recommend', { method: 'POST', body: '{}' });
   expect(res).toMatchObject({ ok: false, reason: 'limit', status: 429 });
   render(<LimitNoticeSheet />);
-  expect(await screen.findByRole('dialog', { name: '사용량 한도에 닿았어요' })).toHaveTextContent(
+  expect(await screen.findByRole('dialog', { name: '사용량 한도 초과' })).toHaveTextContent(
     'AI 추천은 하루 20번까지예요',
   );
   useLimitNotice.setState({ notice: null });

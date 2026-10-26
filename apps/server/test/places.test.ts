@@ -126,15 +126,15 @@ describe('장소 검색', () => {
     expect(calls.filter((c) => c.url.includes('searchText'))).toHaveLength(1);
   });
 
-  it('Google 검색은 하루 한도 없이, 월 무료량 90%에서 자동 중지 → 이유(api_paused)를 알려 준다 (2026-10-26)', async () => {
+  it('Google 검색은 하루 한도 없이, 월 무료량 95%에서 자동 중지 → 이유(api_paused)를 알려 준다 (2026-10-26)', async () => {
     for (const q of ['a1', 'a2', 'a3', 'a4']) await search({ q, scope: 'overseas' });
     expect(calls.filter((c) => c.url.includes('searchText'))).toHaveLength(4);
-    // 이번 달 4,500회(무료 5,000의 90%)를 쓴 상태
+    // 이번 달 4,750회(무료 5,000의 95%)를 쓴 상태
     const month = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles' }).format(
       new Date(),
     );
     db.prepare(
-      "INSERT INTO api_usage (api, date, count) VALUES ('google_places_search', ?, 4500) ON CONFLICT (api, date) DO UPDATE SET count = 4500",
+      "INSERT INTO api_usage (api, date, count) VALUES ('google_places_search', ?, 4750) ON CONFLICT (api, date) DO UPDATE SET count = 4750",
     ).run(month);
     const res = await search({ q: 'b1', scope: 'overseas' });
     expect(res.statusCode).toBe(503);
@@ -225,7 +225,7 @@ describe('무료량이 끝나면 백업 (docs/23, 사용자 결정 2026-10-26)',
 
   it('검색: Text Search 무료량을 다 쓰면 Google 자동완성 → 고르면 같은 세션으로 주소·좌표(Essentials)', async () => {
     stubBackups();
-    used('google_places_search', 4500);
+    used('google_places_search', 4750);
     const res = (await search({ q: '어니언', scope: 'overseas' })).json();
     expect(res.fallback).toBe('google_autocomplete');
     expect(res.places[0]).toMatchObject({
@@ -258,8 +258,8 @@ describe('무료량이 끝나면 백업 (docs/23, 사용자 결정 2026-10-26)',
 
   it('검색: Google 백업까지 다 쓰면 Geoapify(OSM) — 좌표 포함, 결과에 출처 osm', async () => {
     stubBackups();
-    used('google_places_search', 4500);
-    used('google_autocomplete', 9000);
+    used('google_places_search', 4750);
+    used('google_autocomplete', 9500);
     const res = (
       await search({ q: '어니언 시부야', scope: 'overseas', near: { lat: 35.68, lng: 139.69 } })
     ).json();
@@ -273,13 +273,13 @@ describe('무료량이 끝나면 백업 (docs/23, 사용자 결정 2026-10-26)',
     const g = calls.find((c) => c.url.includes('geoapify'))!;
     expect(g.url).toContain('bias=proximity%3A139.69%2C35.68');
     // Geoapify까지 하루 한도면 이유를 알려 준다
-    used('geoapify', 2700, 'UTC');
+    used('geoapify', 2850, 'UTC');
     const res2 = await search({ q: '다른곳', scope: 'overseas' });
     expect(res2.statusCode).toBe(503);
   });
 
   it('평점: 상세 무료량을 다 쓰면 트립포켓 후기 별점 + Google 지도 링크 (Google은 부르지 않음)', async () => {
-    used('google_places_details', 900);
+    used('google_places_details', 950);
     for (const [id, overall] of [
       ['r1', 5],
       ['r2', 4],
@@ -307,7 +307,7 @@ describe('무료량이 끝나면 백업 (docs/23, 사용자 결정 2026-10-26)',
     stubBackups();
     const local = (payload: object) =>
       app.inject({ method: 'POST', url: '/api/places/local', headers: headers(), payload });
-    used('google_places_local', 4500);
+    used('google_places_local', 4750);
     const res = await local({
       placeId: 'ChIJ_onion_tokyo',
       coords: { lat: 35.66, lng: 139.7 },

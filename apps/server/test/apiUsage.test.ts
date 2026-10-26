@@ -85,7 +85,7 @@ describe('API 사용량 (관리자)', () => {
       used: 2,
       today: 2,
       freeMonthly: 5000,
-      autoLimit: 4500,
+      autoLimit: 4750,
     });
     expect(api(r, 'gemini').group).toBe('free');
     expect(r.month).toBe(new Date().toISOString().slice(0, 7));
@@ -163,15 +163,15 @@ describe('dailyQuota (지도 로드 부풀리기 방지)', () => {
 });
 
 describe('API 사용량 — 모든 외부 API·하루 한도·중지 불가 항목', () => {
-  it('하루 무료량이 있는 API는 오늘 90%에서 자동 중지, 관리자가 하루 상한을 바꿀 수 있다', async () => {
-    trackApi('kakao_keyword', 89_999);
+  it('하루 무료량이 있는 API는 오늘 95%에서 자동 중지, 관리자가 하루 상한을 바꿀 수 있다', async () => {
+    trackApi('kakao_keyword', 94_999);
     expect(apiAllowed('kakao_keyword')).toBe(true);
     trackApi('kakao_keyword');
     expect(apiAllowed('kakao_keyword')).toBe(false);
     expect(() => guardApi('kakao_keyword')).toThrow('api_paused');
     const k = api(await report(), 'kakao_keyword') as unknown as { autoStoppedBy: string };
     expect(k.autoStoppedBy).toBe('day');
-    await req('POST', '/api/admin/api-usage/kakao_keyword', admin, { dailyLimit: 95_000 });
+    await req('POST', '/api/admin/api-usage/kakao_keyword', admin, { dailyLimit: 98_000 });
     expect(apiAllowed('kakao_keyword')).toBe(true);
   });
 
