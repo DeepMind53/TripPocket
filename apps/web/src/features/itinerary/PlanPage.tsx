@@ -18,6 +18,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ClipboardCopy,
+  CopyPlus,
   Ellipsis,
   Map as MapIcon,
   Plus,
@@ -72,6 +73,7 @@ import {
 import { DirectionsSheet } from '../common/DirectionsSheet';
 import { openDirectionsDirect } from '../common/openDirections';
 import { DepartureLine } from './DepartureLine';
+import { DuplicateDaySheet } from './DuplicateDaySheet';
 import { ItemDetailSheet } from './ItemDetailSheet';
 import { ItemFormSheet } from './ItemFormSheet';
 import { dayColor, KIND_ICON } from './itemKinds';
@@ -165,7 +167,9 @@ function PlanView({
   const [dirOpen, setDirOpen] = useRouteSheet('directions');
   const [moveOpen, setMoveOpen] = useRouteSheet('move-day');
   const [editing, setEditing] = useRouteSheet('edit-mode');
-  const [dayMenuOpen, setDayMenuOpen] = useRouteSheet('day-menu');
+  const [dayMenuOpen, setDayMenuOpen, switchDayMenuTo] = useRouteSheet('day-menu');
+  const [dupOpen, setDupOpen] = useRouteSheet('dup-day');
+  const dupOn = useLab('dupDay');
   const [menuDate, setMenuDate] = useState<LocalDate | null>(null);
   const [dirDest, setDirDest] = useState<Destination | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -604,6 +608,20 @@ function PlanView({
             </span>
           </button>
         )}
+        {/* 실험실: 그날 일정을 다른 날·다른 여행으로 복제 */}
+        {dupOn && canEdit && items.some((i) => i.date === menuDate) && (
+          <button
+            type="button"
+            onClick={() => switchDayMenuTo('dup-day')}
+            className="flex w-full items-start gap-3 rounded-btn py-3 text-left"
+          >
+            <CopyPlus aria-hidden="true" className="mt-0.5 size-5 text-fg-sub" />
+            <span className="flex flex-col">
+              <span className="text-body-1">{t('duplicate.title')}</span>
+              <span className="text-caption text-fg-muted">{t('duplicate.desc')}</span>
+            </span>
+          </button>
+        )}
         {canEdit && (
           <>
             <button
@@ -631,6 +649,16 @@ function PlanView({
           </>
         )}
       </BottomSheet>
+
+      {dupOpen && (
+        <DuplicateDaySheet
+          open={dupOpen}
+          onOpenChange={setDupOpen}
+          trip={trip}
+          from={menuDate}
+          items={items.filter((i) => i.date === menuDate)}
+        />
+      )}
 
       <ItemFormSheet
         open={formOpen}
@@ -749,6 +777,7 @@ function DaySection({
   const tight = useLab('tightGap');
   const progressOn = useLab('dayProgress');
   const copyDayOn = useLab('copyDay');
+  const dupOn = useLab('dupDay');
   // 여행 당일: 현지 시각으로 지금 진행 중인 일정 (1분마다 다시 계산)
   const now = useMinuteClock(isToday);
   const nowTime = isToday ? timeIn(timezone, now) : null;
@@ -800,7 +829,8 @@ function DaySection({
           )}
         </h2>
         <DayWeatherBadge weather={weather} />
-        {((canEdit && items.length > 1) || (copyDayOn && items.length > 0)) && (
+        {((canEdit && items.length > 1) ||
+          ((copyDayOn || (dupOn && canEdit)) && items.length > 0)) && (
           <IconButton
             label={t('plan.dayMenu', { day: title })}
             icon={<Ellipsis />}

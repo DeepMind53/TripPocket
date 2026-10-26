@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { routes } from '../../app/router';
@@ -163,5 +163,44 @@ describe('실험실', () => {
     await user.type(within(sheet).getByRole('searchbox'), '라멘');
     await user.click(await within(sheet).findByRole('button', { name: /이치란 라멘/ }));
     expect(router.state.location.search).toBe('?day=2');
+  });
+
+  it('하루 일정 복제: 날짜 메뉴에서 다른 날로, 예약 연결·다녀옴은 빼고', async () => {
+    const user = userEvent.setup();
+    setLab('dupDay', true);
+    const trip = await tripRepo.create({
+      title: '도쿄',
+      destinations: [{ name: '도쿄', kind: 'city', countryCode: 'JP' }],
+      startDate: '2026-11-12',
+      endDate: '2026-11-14',
+      timezone: 'Asia/Tokyo',
+      cover: { emoji: '🗼' },
+    });
+    await itemRepo.create({
+      tripId: trip.id,
+      date: '2026-11-12',
+      kind: 'food',
+      title: '라멘',
+      startTime: '12:00',
+      done: true,
+      bookingId: '01890000-0000-7000-8000-000000000000',
+    });
+    render(
+      <RouterProvider
+        router={createMemoryRouter(routes, { initialEntries: [`/trips/${trip.id}/plan?day=all`] })}
+      />,
+    );
+    await user.click(await screen.findByRole('button', { name: /1일차.*메뉴/ }));
+    await user.click(await screen.findByRole('button', { name: /다른 날로 복제/ }));
+    const sheet = await screen.findByRole('dialog', { name: '다른 날로 복제' });
+    await user.click(within(sheet).getByRole('button', { name: /3일차/ }));
+    let copies: Awaited<ReturnType<typeof itemRepo.listByTrip>> = [];
+    await waitFor(async () => {
+      copies = (await itemRepo.listByTrip(trip.id)).filter((i) => i.date === '2026-11-14');
+      expect(copies).toHaveLength(1);
+    });
+    expect(copies[0]).toMatchObject({ title: '라멘', startTime: '12:00' });
+    expect(copies[0]!.bookingId).toBeUndefined();
+    expect(copies[0]!.done).toBeUndefined();
   });
 });

@@ -113,6 +113,33 @@ export const itemRepo = {
     });
   },
 
+  /**
+   * 일정 묶음을 다른 날(다른 여행도)의 맨 뒤로 복제 (실험실 "하루 일정 복제", 2026-10-26).
+   * 새 일정이라 예약 연결·다녀옴·방문 기록은 옮기지 않는다
+   */
+  async duplicate(
+    items: readonly ItineraryItem[],
+    tripId: string,
+    date: LocalDate | null,
+  ): Promise<number> {
+    for (const i of items) {
+      const {
+        id: _id,
+        createdAt: _c,
+        updatedAt: _u,
+        deletedAt: _d,
+        rev: _r,
+        order: _o,
+        bookingId: _b,
+        done: _done,
+        visit: _v,
+        ...rest
+      } = i;
+      await this.create({ ...rest, tripId, date });
+    }
+    return items.length;
+  },
+
   /** 지난 일정의 방문 기록: 방문·미방문, null이면 기록 지우기 (다녀옴도 함께) */
   async setVisit(id: string, visit: Visit | null): Promise<ItineraryItem> {
     const row = await db.items.get(id);

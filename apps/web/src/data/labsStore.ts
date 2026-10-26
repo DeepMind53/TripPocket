@@ -17,6 +17,7 @@ export const LABS = [
   'visitLog',
   'departure',
   'tripSearch',
+  'dupDay',
 ] as const;
 export type LabId = (typeof LABS)[number];
 
