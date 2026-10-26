@@ -118,12 +118,12 @@ it('네이버 로그인을 누르면 먼저 "관리자에게 네이버 아이디
   ).toBeInTheDocument();
 });
 
-it('로그인 전 화면: 맨 위 로고, 소개 카드 7장을 점으로 넘긴다', async () => {
+it('로그인 전 화면: 맨 위 로고, 소개 카드 8장을 점으로 넘긴다', async () => {
   mockServer(false);
   renderAt('/login');
   expect(await screen.findByRole('heading', { name: '트립포켓' })).toBeInTheDocument();
   const intro = screen.getByRole('region', { name: '트립포켓 소개' });
-  expect(within(intro).getAllByRole('group')).toHaveLength(7);
+  expect(within(intro).getAllByRole('group')).toHaveLength(8);
   expect(within(intro).getByRole('heading', { name: '⚡ 버튼 하나로' })).toBeInTheDocument();
   expect(within(intro).getByRole('heading', { name: '여행 일정을 한눈에' })).toBeInTheDocument();
   expect(within(intro).getByRole('button', { name: '1번째 소개 보기' })).toHaveAttribute(
@@ -138,5 +138,5 @@ it('홈 로고 옆 [도움말]에서 앱 소개를 언제든 다시 본다', asy
   renderAt('/');
   await user.click(await screen.findByRole('link', { name: '도움말' }));
   const intro = await screen.findByRole('region', { name: '트립포켓 소개' });
-  expect(within(intro).getAllByRole('group')).toHaveLength(7);
+  expect(within(intro).getAllByRole('group')).toHaveLength(8);
 });

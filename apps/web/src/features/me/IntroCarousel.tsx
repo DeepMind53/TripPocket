@@ -3,7 +3,7 @@ import { useTranslation } from '../../i18n';
 import { cn } from '../../shared/lib/cn';
 
 /**
- * 로그인 화면 앱 소개 (사용자 요청 2026-10-24): 옆으로 넘겨 보는 카드 7장 (2026-10-26 3장 추가, 홈 [도움말]에서도).
+ * 로그인 화면 앱 소개 (사용자 요청 2026-10-24): 옆으로 넘겨 보는 카드 8장 (2026-10-26 3장, 10-27 방문 기록 1장 추가, 홈 [도움말]에서도).
  * 그림은 실제 화면을 본뜬 목업 — 샘플 데이터로 직접 그린다(이미지 파일 없음, 다크 모드도 그대로).
  * 넘기기는 CSS scroll-snap(라이브러리 없음), 아래 점을 눌러도 이동. 자동으로 넘어가지 않는다(읽는 속도는 사용자 몫)
  */
@@ -15,6 +15,7 @@ export function IntroCarousel() {
     { key: 'plan', mock: <PlanMock /> },
     { key: 'map', mock: <MapMock /> },
     { key: 'booking', mock: <BookingMock /> },
+    { key: 'visit', mock: <VisitMock /> },
     { key: 'quick', mock: <QuickMock /> },
     { key: 'alerts', mock: <AlertsMock /> },
     { key: 'together', mock: <TogetherMock /> },
@@ -298,33 +299,34 @@ function TogetherMock() {
   );
 }
 
-/** 빠른 메뉴: 환율·AI 추천·번역 회화 + 여행 안 바로가기 4개 (실제 시트와 같은 순서) */
+/** 빠른 메뉴: 긴급·환율·AI 추천·회화 2×2 + 여행 안 바로가기 4개 (실제 시트와 같은 순서, 2026-10-27) */
 function QuickMock() {
   const links: [string, string, string, boolean][] = [
-    ['💱', '환율', '여행 국가 통화를 원화로', false],
-    ['✨', 'AI 추천', '내 근처 맛집·핫플', true],
-    ['🗣', '번역·회화', '자주 쓰는 말을 현지어로', false],
+    ['🚨', '긴급 연락처', '경찰·구급·영사콜센터', false],
+    ['💱', '환율', '원화로 바로 계산', false],
+    ['✨', 'AI 추천', '근처 맛집·핫플', true],
+    ['🗣', '번역·회화', '현지어로 크게 보여 주기', false],
   ];
   const shortcuts = ['🛏 숙소로 길찾기', '🎫 예약번호', '🗓 다음 일정', '☑ 준비물'];
   return (
     <Phone>
       <span className="text-[11px] font-bold">⚡ 빠른 메뉴</span>
-      {links.map(([e, title, desc, ai]) => (
-        <span
-          key={title}
-          className={cn(
-            'flex items-center gap-2 rounded-lg px-2 py-0.5',
-            ai ? 'bg-primary-weak' : 'bg-bg-subtle',
-          )}
-        >
-          <span className="text-[11px]">{e}</span>
-          <span className="min-w-0 flex-1 truncate text-[10px]">
-            <span className="font-semibold">{title}</span>
-            <span className="text-fg-muted"> · {desc}</span>
+      <div className="grid grid-cols-2 gap-1">
+        {links.map(([e, title, desc, ai]) => (
+          <span
+            key={title}
+            className={cn(
+              'flex flex-col rounded-lg px-2 py-1 leading-tight',
+              ai ? 'bg-primary-weak' : 'bg-bg-subtle',
+            )}
+          >
+            <span className="truncate text-[10px] font-semibold">
+              {e} {title}
+            </span>
+            <span className="truncate text-[9px] text-fg-muted">{desc}</span>
           </span>
-          <span className="text-[10px] text-fg-muted">›</span>
-        </span>
-      ))}
+        ))}
+      </div>
       <span className="text-[9px] font-bold text-fg-muted">바로가기</span>
       <div className="grid grid-cols-2 gap-1">
         {shortcuts.map((label) => (
@@ -335,6 +337,37 @@ function QuickMock() {
             {label}
           </span>
         ))}
+      </div>
+    </Phone>
+  );
+}
+
+/** 여행 중 일정: 지난 일정 오른쪽 [방문][미방문] + 미방문 빗금 + 다음 일정 바 (2026-10-27) */
+function VisitMock() {
+  return (
+    <Phone>
+      <span className="text-[11px] font-bold">🇯🇵 도쿄 가을여행 · 오늘</span>
+      <div className="flex flex-col px-1 text-[9px] leading-tight">
+        <span className="truncate text-[10px] font-semibold">다음 19:00 이치란 라멘</span>
+        <span className="text-fg-sub">도보 35분 · 18:25 출발</span>
+        <span className="text-fg-sub">대중교통 14분 · 18:46 출발</span>
+      </div>
+      <div className="flex flex-col gap-1 rounded-xl border border-line bg-surface p-1.5">
+        <div className="flex items-center gap-1">
+          <div className="min-w-0 flex-1">
+            <Row n={1} color={BLUE} time="10:00" title="센소지" kind="place" label="관광" />
+          </div>
+          <span className="flex flex-col gap-0.5 text-[8px] font-semibold">
+            <span className="rounded bg-primary px-1 text-white">방문</span>
+            <span className="rounded border border-line px-1 text-fg-sub">미방문</span>
+          </span>
+        </div>
+        <div className="relative">
+          <Row n={2} color={BLUE} time="14:00" title="스카이트리" kind="place" label="관광" />
+          <span className="pointer-events-none absolute inset-0 rounded-lg bg-[repeating-linear-gradient(135deg,transparent_0_5px,rgb(0_0_0/0.08)_5px_7px)]" />
+        </div>
+        <span className="self-end text-[9px] text-fg-muted">미방문 기록 → 저장 탭에 담김</span>
+        <Row n={3} color={BLUE} time="19:00" title="이치란 라멘" kind="food" label="맛집" />
       </div>
     </Phone>
   );

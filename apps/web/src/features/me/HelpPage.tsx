@@ -6,7 +6,16 @@ import { HELP } from '../legal/content.ko';
 import { IntroCarousel } from './IntroCarousel';
 
 /** 2026-10-26 정식이 된 손동작 등, 소개 카드에 없는 쓰는 법 */
-const TIPS = ['longPress', 'swipeDay', 'pullSync', 'mapFull', 'sheetResize', 'offline'] as const;
+const TIPS = [
+  'longPress',
+  'swipeDay',
+  'pullSync',
+  'mapFull',
+  'sheetResize',
+  'offline',
+  'pinned',
+  'trash',
+] as const;
 
 /**
  * 홈 로고 옆·마이 → [도움말] (사용자 요청 2026-10-26): 로그인 화면의 앱 소개 + 알아 두면 편한 기능 + 자주 묻는 질문
