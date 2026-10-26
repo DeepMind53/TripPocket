@@ -1,6 +1,12 @@
 import type { Booking } from '@trippocket/shared';
 import { describe, expect, it } from 'vitest';
-import { bookingsToPlan, planDraftsFromBooking, timeSlotIndex } from './bookingPlan';
+import {
+  bookingsToPlan,
+  fitPoints,
+  isAirportStop,
+  planDraftsFromBooking,
+  timeSlotIndex,
+} from './bookingPlan';
 
 const base = {
   tripId: 't',
@@ -75,5 +81,27 @@ describe('예약 → 일정표 (처음 한 번)', () => {
     });
     const list = [mk('a'), mk('b', { plannedAt: '2026-10-26T00:00:00.000Z' }), mk('c')];
     expect(bookingsToPlan(list, [{ bookingId: 'c' }]).map((b) => b.id)).toEqual(['a']);
+  });
+});
+
+describe('fitPoints', () => {
+  const depart = {
+    kind: 'transport' as const,
+    bookingId: 'b',
+    transport: { mode: 'flight' as const },
+  };
+  const arrive = { kind: 'transport' as const, bookingId: 'b' };
+  const train = { kind: 'transport' as const, transport: { mode: 'train' as const } };
+  const sight = { kind: 'place' as const };
+
+  it('leaves airports out of the map bounds', () => {
+    expect(isAirportStop(depart)).toBe(true);
+    expect(isAirportStop(arrive)).toBe(true);
+    expect(isAirportStop(train)).toBe(false);
+    expect(fitPoints([depart, sight, train, arrive])).toEqual([sight, train]);
+  });
+
+  it('uses airports when nothing else is on the map', () => {
+    expect(fitPoints([depart, arrive])).toEqual([depart, arrive]);
   });
 });

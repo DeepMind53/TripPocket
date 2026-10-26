@@ -137,3 +137,23 @@ export function bookingsToPlan(
   const linked = new Set(items.map((i) => i.bookingId).filter(Boolean));
   return bookings.filter((b) => !b.deletedAt && !b.plannedAt && !linked.has(b.id));
 }
+
+/** 공항 일정: 항공 이동(직접 넣은 것 포함)·항공 예약에서 들어온 도착 공항 */
+export function isAirportStop(
+  item: Pick<ItineraryItem, 'kind' | 'bookingId' | 'transport'>,
+): boolean {
+  if (item.kind !== 'transport') return false;
+  if (item.transport) return item.transport.mode === 'flight';
+  return item.bookingId !== undefined;
+}
+
+/**
+ * 지도를 맞출 좌표: 공항은 핀만 보이고 범위에서 뺀다 — 인천~타이베이처럼 지도가 너무 멀리 빠지지 않게
+ * (사용자 요청 2026-10-26). 공항만 있으면 공항으로 맞춘다
+ */
+export function fitPoints<T extends Pick<ItineraryItem, 'kind' | 'bookingId' | 'transport'>>(
+  items: readonly T[],
+): T[] {
+  const rest = items.filter((i) => !isAirportStop(i));
+  return rest.length > 0 ? rest : [...items];
+}

@@ -1,6 +1,7 @@
 import type { ItineraryItem, LocalDate, Trip } from '@trippocket/shared';
 import { Minimize2, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { fitPoints } from '../../domain/bookingPlan';
 import { cn } from '../../shared/lib/cn';
 import { IconButton } from '../../shared/ui';
 import { useSettings } from '../../data/settingsStore';
@@ -163,7 +164,7 @@ export function TripMap({
     }
     h.setMarkers(markers);
     h.drawPaths(paths);
-    h.fitBounds(markers.map((m) => m.position));
+    h.fitBounds(fitPoints(visible).map((i) => i.place!.coords!));
     h.onMarkerClick((id) => {
       const item = visible.find((i) => i.id === id);
       if (item) onSelect(item);
@@ -189,7 +190,8 @@ export function TripMap({
     if (!h || status !== 'ready') return;
     const id = requestAnimationFrame(() => {
       h.resize();
-      if (!focus?.place?.coords) h.fitBounds(latest.current.visible.map((i) => i.place!.coords!));
+      if (!focus?.place?.coords)
+        h.fitBounds(fitPoints(latest.current.visible).map((i) => i.place!.coords!));
     });
     return () => cancelAnimationFrame(id);
     // focus는 아래 효과가 맡는다
