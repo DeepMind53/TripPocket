@@ -124,3 +124,21 @@
 - Nominatim 이용 정책 (초당 1건, 자동완성 금지): https://operations.osmfoundation.org/policies/nominatim/
 - OpenFreeMap (키·한도 없음, 기부 운영): https://openfreemap.org/
 - 확인 못 함 → 추천에서 뺌: Foursquare Places 무료량 (2차 자료끼리 다름)
+
+## 2026-10-27 점검 — API마다 한도가 끝나면 (자동 중지 = 무료량 95%)
+
+| API | 한도가 끝나면 (순서) | 그것도 없으면 |
+|---|---|---|
+| Google Text Search | Google 자동완성+상세 Essentials → Geoapify | 지도 앱 검색 링크 + 직접 입력 |
+| Google 상세(평점·영업시간) | 트립포켓 후기 별점 + "Google 지도에서 보기" | — |
+| Google 현지어 이름(택시 카드) | Geoapify 역지오코딩 | 한국어 이름 + 주소 복사 |
+| Google Routes · Geoapify 길 (다음 일정) | 서로 대신 (Google 좌표는 Google만) | 직선거리 어림 — 한도 팝업 없음 (`no_route`) |
+| Google 지도 JS · 네이버 지도 | 서로 대신 → MapLibre + OpenFreeMap | 목록 + 지도 앱 링크 |
+| 카카오 검색 ↔ 네이버 검색 | 서로 대신 | 한도 팝업 + 직접 입력 |
+| Gemini → Workers AI → Groq | 차례로 | AI 없이 블로그 언급 수로 목록 |
+| 수출입은행 환율 | jsDelivr currency-api | 저장해 둔 환율 |
+| AviationStack (편명 불러오기) | — | 한도 팝업 + 직접 입력 |
+| Open-Meteo · Nager.Date | (한도 넉넉, 무료) | 날씨·공휴일 칸 비움 |
+
+- 한도는 달(하루 한도는 날)이 바뀌면 자동으로 풀리고, 원래 우선순위의 API를 다시 쓴다 (`apiAllowed`가 그 기간 사용량으로 판단).
+- 대체도 대체 기능도 없을 때만 "API 사용량 한도 초과로 해당 기능이 일시적으로 비활성화되었습니다" 팝업 (`limit.paused`).

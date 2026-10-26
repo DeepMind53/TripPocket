@@ -25,8 +25,11 @@ export function routeEtaRoutes(app: FastifyInstance, config: Config, db: Db): vo
     // Google 좌표는 Google로만 (약관). 그 밖은 무료 Geoapify 먼저, 멈췄으면 Google
     if (!google && okey && apiAllowed('geoapify')) return geoapifyEta(from, to, okey, live);
     if (gkey && apiAllowed('google_routes')) return googleEta(from, to, gkey, live);
-    return reply
-      .code(503)
-      .send({ error: 'api_paused', api: google ? 'google_routes' : 'geoapify' });
+    return (
+      reply
+        .code(503)
+        // 웹이 직선거리 어림으로 대신하므로 한도 팝업(api_paused)을 띄우지 않는다 (대체 기능 있음, 2026-10-27)
+        .send({ error: 'no_route', api: google ? 'google_routes' : 'geoapify' })
+    );
   });
 }

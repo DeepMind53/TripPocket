@@ -1494,11 +1494,11 @@
     "denied": "위치 권한을 켜면 다음 일정 정보가 보여요",
     "title": "다음 {{time}} {{title}}",
     "loading": "길 찾는 중",
-    "failed": "길 정보를 받지 못했어요",
     "walk": "도보 {{min}}분 · {{time}} 출발",
     "transit": "대중교통 {{min}}분 · {{time}} 출발",
     "walkLate": "걸어서 약 {{min}}분인데 {{left}}분 뒤 일정이에요",
-    "transitLate": "대중교통 약 {{min}}분인데 {{left}}분 뒤 일정이에요"
+    "transitLate": "대중교통 약 {{min}}분인데 {{left}}분 뒤 일정이에요",
+    "rough": "길 정보가 없어 직선거리로 어림했어요"
   },
   "confirm": {
     "title": "삭제할까요?",

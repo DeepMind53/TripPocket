@@ -1,4 +1,4 @@
-import type { ItineraryItem, RouteEta } from '@trippocket/shared';
+import { distanceKm, walkMinutes, type ItineraryItem, type RouteEta } from '@trippocket/shared';
 import { LocateFixed } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { routeEta } from '../../data/api/routes';
@@ -52,32 +52,35 @@ export function NextStopBar({ next, now }: { next: ItineraryItem; now: string })
       </button>
     );
 
-  const plan = departurePlan(next.startTime!, now, eta ?? {});
+  // 길 정보를 못 받으면(무료량 끝·오프라인) 직선거리로 어림한 걷는 시간으로 대신 (대체 기능)
+  const rough: { walk: number; transit?: number } | undefined =
+    eta === null && here ? { walk: walkMinutes(distanceKm(here, to)) } : undefined;
+  const shown = eta ?? rough;
+  const plan = departurePlan(next.startTime!, now, shown ?? {});
   return (
     <div role="status" className="flex min-w-0 flex-1 flex-col text-micro leading-tight">
       <span className="truncate font-semibold">
         {t('nextStop.title', { time: next.startTime!, title: next.title })}
       </span>
-      {eta === undefined ? (
+      {shown === undefined ? (
         <span className="text-fg-muted">{t('nextStop.loading')}</span>
-      ) : eta === null ? (
-        <span className="text-fg-muted">{t('nextStop.failed')}</span>
       ) : (
         <>
           {plan.walkLeave && (
             <span className={plan.walkLate ? 'font-semibold text-warning' : 'text-fg-sub'}>
               {plan.walkLate
-                ? t('nextStop.walkLate', { min: eta.walk!, left: Math.max(0, plan.left) })
-                : t('nextStop.walk', { min: eta.walk!, time: plan.walkLeave })}
+                ? t('nextStop.walkLate', { min: shown.walk!, left: Math.max(0, plan.left) })
+                : t('nextStop.walk', { min: shown.walk!, time: plan.walkLeave })}
             </span>
           )}
           {plan.transitLeave && (
             <span className={plan.transitLate ? 'font-semibold text-warning' : 'text-fg-sub'}>
               {plan.transitLate
-                ? t('nextStop.transitLate', { min: eta.transit!, left: Math.max(0, plan.left) })
-                : t('nextStop.transit', { min: eta.transit!, time: plan.transitLeave })}
+                ? t('nextStop.transitLate', { min: shown.transit!, left: Math.max(0, plan.left) })
+                : t('nextStop.transit', { min: shown.transit!, time: plan.transitLeave })}
             </span>
           )}
+          {rough && <span className="text-fg-muted">{t('nextStop.rough')}</span>}
         </>
       )}
     </div>
