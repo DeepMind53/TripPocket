@@ -147,8 +147,10 @@ export function SettingsPage() {
 
         <Group
           title={t('settings.maps')}
-          onReset={() => resetSettings(['directionsApp', 'travelMode', 'inAppMap'])}
+          onReset={() => resetSettings(['directionsApp', 'travelMode'])}
         >
+          {/* 해외는 늘 Google 지도 — 국내만 고른다 (사용자 요청 2026-10-27) */}
+          <p className="text-caption whitespace-pre-line text-fg-muted">{t('settings.mapRule')}</p>
           <Field label={t('settings.directionsApp')}>
             <RadioList
               label={t('settings.directionsApp')}
@@ -156,21 +158,8 @@ export function SettingsPage() {
               onChange={set('directionsApp')}
               options={[
                 { value: 'naver', label: t('dir.naver'), icon: <MapAppMark app="naver" /> },
-                { value: 'google', label: t('dir.google'), icon: <MapAppMark app="google" /> },
                 { value: 'kakao', label: t('dir.kakao'), icon: <MapAppMark app="kakao" /> },
                 { value: 'ask', label: t('settings.askEveryTime') },
-              ]}
-            />
-          </Field>
-          <Field label={t('settings.inAppMap')}>
-            <SegmentedControl
-              label={t('settings.inAppMap')}
-              value={s.inAppMap}
-              onChange={set('inAppMap')}
-              options={[
-                { value: 'auto', label: t('settings.mapAuto') },
-                { value: 'naver', label: t('quickMenu.appNaver') },
-                { value: 'google', label: t('quickMenu.appGoogle') },
               ]}
             />
           </Field>

@@ -4,6 +4,7 @@ import {
   type CategoryResult,
   type PlaceSummary,
   type Recommendation,
+  inKorea,
 } from '@trippocket/shared';
 import { attachFallback } from '../../data/limitNotice';
 import { recommendLinks, type FallbackLink } from '../../shared/lib/fallbackLinks';
@@ -44,7 +45,6 @@ const SHOWN: AiCategory[] = ['custom', 'food', 'cafe', 'play'];
 const KEYWORD_MAX = 20;
 /** 여행 화면 밖에서 열면 휴대폰 시간대로 국내/해외를 정한다 (해외에 가면 시간대가 바뀜) */
 const deviceInKorea = () => Intl.DateTimeFormat().resolvedOptions().timeZone === 'Asia/Seoul';
-const inKorea = (lat: number, lng: number) => lat > 33 && lat < 38.7 && lng > 124.5 && lng < 131.9;
 
 /**
  * S-52 AI 추천 (docs/14 §7): 기준 위치(가까운 역·숙소·직접 입력) + 카테고리 → 블로그 최근 언급 많은 곳.
@@ -98,7 +98,7 @@ export function AiPage() {
       const r = (n: number) => Math.round(n * 1000) / 1000;
       const lat = r(pos.coords.latitude);
       const lng = r(pos.coords.longitude);
-      return { anchor: { type: 'coords', lat, lng }, domestic: inKorea(lat, lng) };
+      return { anchor: { type: 'coords', lat, lng }, domestic: inKorea({ lat, lng }) };
     }
     if (picked?.coords && picked.name === text.trim())
       return {

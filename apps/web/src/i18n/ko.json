@@ -425,6 +425,7 @@
     "fxFeePercent": "수수료율",
     "fxFeeDesc": "현찰 살 때 추정 = 매매기준율 × (1 + 수수료)",
     "inAppMap": "앱 안 지도",
+    "mapRule": "해외는 늘 Google 지도로 열어요\n국내 길찾기만 아래에서 골라요",
     "mapAuto": "자동",
     "start": "시작",
     "startScreen": "앱을 열면",

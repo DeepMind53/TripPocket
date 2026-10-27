@@ -17,7 +17,9 @@ export function chooseProvider(
   domestic: boolean,
   keys = MAP_KEYS,
 ): MapProviderId | null {
-  const wanted: MapProviderId = pref === 'auto' ? (domestic ? 'naver' : 'google') : pref;
+  // 해외는 늘 Google, 국내는 네이버 (2026-10-27 — 국내 지도만 고르게 했고, 지금 앱 안 국내 지도는 네이버뿐)
+  void pref;
+  const wanted: MapProviderId = domestic ? 'naver' : 'google';
   if (keys[wanted]) return wanted;
   const other: MapProviderId = wanted === 'google' ? 'naver' : 'google';
   return keys[other] ? other : null;

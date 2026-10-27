@@ -7,7 +7,8 @@ export interface Settings {
   fontScale: 0.9 | 1 | 1.15 | 1.3;
   timeFormat: '24h' | '12h';
   haptics: boolean;
-  directionsApp: 'naver' | 'google' | 'kakao' | 'ask';
+  /** 국내 길찾기 앱 — 해외는 늘 Google 지도 (2026-10-27). 예전 값 'google'은 기본값으로 */
+  directionsApp: 'naver' | 'kakao' | 'ask';
   travelMode: 'transit' | 'walk' | 'car';
   /** 앱 안 지도: 자동(국내=네이버, 해외=구글) */
   inAppMap: 'auto' | 'naver' | 'google';
@@ -89,7 +90,7 @@ const VALID: { [K in keyof Settings]: (v: unknown) => v is Settings[K] } = {
   fontScale: oneOf(0.9, 1, 1.15, 1.3),
   timeFormat: oneOf('24h', '12h'),
   haptics: (v): v is boolean => typeof v === 'boolean',
-  directionsApp: oneOf('naver', 'google', 'kakao', 'ask'),
+  directionsApp: oneOf('naver', 'kakao', 'ask'),
   travelMode: oneOf('transit', 'walk', 'car'),
   inAppMap: oneOf('auto', 'naver', 'google'),
   timeStepMin: oneOf(5, 10, 15, 30),

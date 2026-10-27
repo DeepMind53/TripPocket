@@ -1,13 +1,12 @@
-import type { SavedPlace } from '@trippocket/shared';
+import { inKorea, type SavedPlace } from '@trippocket/shared';
 import { useEffect, useRef, useState } from 'react';
 import { mapAllowed, reportMapLoad } from '../../data/api/usage';
 import { useSettings } from '../../data/settingsStore';
 import { useTranslation } from '../../i18n';
-import { chooseProvider, mountMap, type LatLng } from '../../shared/maps';
+import { chooseProvider, mountMap } from '../../shared/maps';
 import { OfflineNote } from '../common/OfflineNote';
 
 /** 한국 안 좌표면 국내 (네이버 지도 우선) */
-const inKorea = (c: LatLng) => c.lat > 33 && c.lat < 39 && c.lng > 124 && c.lng < 132;
 
 /**
  * 저장한 장소 한 묶음(도시)을 지도에 번호 핀으로 (docs/16 E2).

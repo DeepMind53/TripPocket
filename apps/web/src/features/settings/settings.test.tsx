@@ -69,16 +69,23 @@ describe('설정 저장소', () => {
     expect(formatTime('13:00', '12h')).toBe('오후 1:00');
   });
 
-  it('기본 길찾기 앱을 고르면 시트 없이 바로 연다', () => {
+  it('해외는 늘 Google, 국내는 고른 네이버·카카오 (매번 묻기면 시트) — 2026-10-27', () => {
     // PC(마우스) 환경으로 — 웹 링크를 새 탭으로 연다
     window.matchMedia = vi
       .fn()
       .mockReturnValue({ matches: false }) as unknown as typeof window.matchMedia;
     const open = vi.spyOn(window, 'open').mockReturnValue(null);
-    expect(openDirectionsDirect({ name: '센소지' })).toBe(false);
-    updateSettings({ directionsApp: 'google', travelMode: 'walk' });
-    expect(openDirectionsDirect({ name: '센소지' })).toBe(true);
+    const tokyo = { name: '센소지', coords: { lat: 35.71, lng: 139.79 } };
+    const seoul = { name: '경복궁', coords: { lat: 37.58, lng: 126.98 } };
+    updateSettings({ directionsApp: 'ask', travelMode: 'walk' });
+    // 해외: 묻지 않고 Google
+    expect(openDirectionsDirect(tokyo)).toBe(true);
     expect(open.mock.calls[0]?.[0]).toMatch(/google\.com\/maps.*travelmode=walking/);
+    // 국내: 매번 묻기면 시트
+    expect(openDirectionsDirect(seoul)).toBe(false);
+    updateSettings({ directionsApp: 'kakao' });
+    expect(openDirectionsDirect(seoul)).toBe(true);
+    expect(open.mock.calls[1]?.[0]).toMatch(/map\.kakao\.com/);
     open.mockRestore();
   });
 });

@@ -261,7 +261,6 @@ function QuickMenuContent({
           onChange={(v) => updateSettings({ directionsApp: v })}
           options={[
             { value: 'naver', label: t('quickMenu.appNaver') },
-            { value: 'google', label: t('quickMenu.appGoogle') },
             { value: 'kakao', label: t('quickMenu.appKakao') },
             { value: 'ask', label: t('quickMenu.appAsk') },
           ]}
