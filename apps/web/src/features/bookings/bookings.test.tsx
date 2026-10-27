@@ -12,6 +12,8 @@ import { acceptDelete } from '../../test/confirm';
 
 let tripId = '';
 
+/** 날짜 칸 — 일정이 바뀌면 다시 그려지므로 쓸 때마다 새로 찾는다 */
+const region = (name: string) => screen.getByRole('region', { name });
 beforeEach(async () => {
   await resetLocalDb();
   vi.useFakeTimers({ toFake: ['Date'] });
@@ -118,8 +120,17 @@ describe('예약', () => {
 
     // 일정 화면 2일차에 예약 줄
     await user.click(screen.getByRole('link', { name: '일정' }));
-    const day2 = await screen.findByRole('region', { name: '2일차 · 10.25 (일)' });
-    const line = within(day2).getByRole('button', { name: '해운대 암소갈비 예약 보기' });
+    // 날짜 칸은 예약이 일정표에 들어가며 새로 그려질 수 있다 → 기다릴 때마다 다시 찾는다
+    await waitFor(() =>
+      expect(
+        within(region('2일차 · 10.25 (일)')).getByRole('button', {
+          name: '해운대 암소갈비 예약 보기',
+        }),
+      ).toBeInTheDocument(),
+    );
+    const line = within(region('2일차 · 10.25 (일)')).getByRole('button', {
+      name: '해운대 암소갈비 예약 보기',
+    });
     expect(line).toHaveTextContent('19:00');
     expect(line).toHaveTextContent('R-55');
   });
@@ -159,10 +170,14 @@ describe('예약', () => {
     expect(items[1]?.place?.coords).toBeDefined();
     expect(items[3]?.place?.coords).toBeDefined();
     // 일정으로 들어간 예약은 위쪽 예약 줄에서 빠진다
-    const day1 = await screen.findByRole('region', { name: '1일차 · 10.24 (토)' });
     await waitFor(() =>
-      expect(within(day1).queryByRole('button', { name: 'KE123 PUS→BKK 예약 보기' })).toBeNull(),
+      expect(
+        within(region('1일차 · 10.24 (토)')).queryByRole('button', {
+          name: 'KE123 PUS→BKK 예약 보기',
+        }),
+      ).toBeNull(),
     );
+    const day1 = region('1일차 · 10.24 (토)');
     // 예약에서 넘어온 일정은 점선 테두리, 출발 일정은 예약 탭과 같은 탑승권 모양
     const flight = within(day1).getByRole('button', { name: /KE123 PUS→BKK/ });
     expect(flight).toHaveAttribute('data-from-booking');
@@ -217,10 +232,13 @@ describe('예약', () => {
       end: { date: '2026-10-26' },
     });
     renderAt([`/trips/${tripId}/plan?day=all`]);
-    const day1 = await screen.findByRole('region', { name: '1일차 · 10.24 (토)' });
-    expect(
-      within(day1).getByRole('button', { name: /해운대 호텔, 1번째 밤 숙소/ }),
-    ).toHaveTextContent('1/2');
+    await waitFor(() =>
+      expect(
+        within(region('1일차 · 10.24 (토)')).getByRole('button', {
+          name: /해운대 호텔, 1번째 밤 숙소/,
+        }),
+      ).toHaveTextContent('1/2'),
+    );
     const day2 = screen.getByRole('region', { name: '2일차 · 10.25 (일)' });
     expect(within(day2).getByRole('button', { name: /2번째 밤/ })).toBeInTheDocument();
     // 체크아웃 날(3일차)에는 없다
@@ -240,8 +258,14 @@ describe('예약', () => {
     const user = userEvent.setup();
     renderAt([`/trips/${tripId}/plan?day=all`]);
     await waitFor(async () => expect(await itemRepo.listByTrip(tripId)).toHaveLength(1));
-    const day2 = await screen.findByRole('region', { name: '2일차 · 10.25 (일)' });
-    await user.click(within(day2).getByRole('button', { name: /2번째 밤 숙소/ }));
+    await waitFor(() =>
+      expect(
+        within(region('2일차 · 10.25 (일)')).getByRole('button', { name: /2번째 밤 숙소/ }),
+      ).toBeInTheDocument(),
+    );
+    await user.click(
+      within(region('2일차 · 10.25 (일)')).getByRole('button', { name: /2번째 밤 숙소/ }),
+    );
     const sheet = await screen.findByRole('dialog', { name: '해운대 호텔' });
     expect(within(sheet).getByLabelText('방문 시간')).toHaveValue('15:00');
     expect(within(sheet).getByText('조식 없음')).toBeInTheDocument();

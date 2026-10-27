@@ -46,8 +46,6 @@ async function renderPlan(search = '') {
 }
 
 const day = (name: string) => screen.getByRole('region', { name });
-// 시트가 닫혀 나머지 화면이 다시 보일 때까지 기다린다
-const dayAfterSheet = (name: string) => screen.findByRole('region', { name });
 
 describe('일정 화면', () => {
   it('항공편 출발 전날: 일정 위 [확인]과 빨간 깜빡임, 누르면 사라진다', async () => {
@@ -184,9 +182,12 @@ describe('일정 화면', () => {
 
     expect(await screen.findByText('일정을 추가했어요')).toBeInTheDocument();
     // 저장 → 목록 갱신은 비동기라 줄이 그려질 때까지 기다린다 (CI에서 가끔 늦음)
-    const row = await within(await dayAfterSheet('1일차 · 10.24 (토)')).findByRole('button', {
-      name: '1번째 일정, 이치란 라멘',
-    });
+    const rowOf = () =>
+      within(screen.getByRole('region', { name: '1일차 · 10.24 (토)' })).getByRole('button', {
+        name: '1번째 일정, 이치란 라멘',
+      });
+    await waitFor(() => expect(rowOf()).toBeInTheDocument());
+    const row = rowOf();
     expect(row).toHaveTextContent('11:30');
     expect(row).toHaveTextContent('신주쿠 3-34-11');
     const [saved] = await itemRepo.listByTrip(tripId);
@@ -242,10 +243,14 @@ describe('일정 화면', () => {
     await user.click(screen.getByRole('button', { name: /3일차 · 10\.26 \(월\)/ }));
 
     expect(await screen.findByText('일정을 옮겼어요')).toBeInTheDocument();
-    const day3 = await dayAfterSheet('3일차 · 10.26 (월)');
-    expect(
-      await within(day3).findByRole('button', { name: '2번째 일정, 센소지' }),
-    ).toBeInTheDocument();
+    // 1일차가 비면 날짜 칸이 새로 그려질 수 있다 → 기다리는 동안 매번 화면에서 다시 찾는다 (예전 칸을 잡고 있으면 영영 안 바뀜)
+    await waitFor(() =>
+      expect(
+        within(screen.getByRole('region', { name: '3일차 · 10.26 (월)' })).getByRole('button', {
+          name: '2번째 일정, 센소지',
+        }),
+      ).toBeInTheDocument(),
+    );
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
