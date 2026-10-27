@@ -11,8 +11,8 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from '../../i18n';
 import { useNavigate, useSearchParams } from 'react-router';
 import { tripRepo } from '../../data/repositories/tripRepo';
-import { cn } from '../../shared/lib/cn';
 import { COVER_COLORS, DEFAULT_EMOJIS } from '../../shared/lib/coverColors';
+import { EmojiPicker } from './EmojiPicker';
 import { formatMonthDay, formatTripLength } from '../../shared/lib/dateFormat';
 import type { DateRange } from '../../shared/lib/dateRange';
 import { Button, Chip, TopBar, toast } from '../../shared/ui';
@@ -187,24 +187,11 @@ export function NewTripPage() {
               <legend className="mb-2 text-caption font-semibold text-fg-sub">
                 {t('newTrip.emojiLabel')}
               </legend>
-              <div className="flex flex-wrap gap-2">
-                {emojiOptions(destinations).map((e) => (
-                  <button
-                    key={e}
-                    type="button"
-                    aria-pressed={e === effectiveEmoji}
-                    onClick={() => setEmoji(e)}
-                    className={cn(
-                      'grid size-12 place-items-center rounded-btn border text-[24px]',
-                      e === effectiveEmoji
-                        ? 'border-primary bg-primary-weak'
-                        : 'border-line bg-surface',
-                    )}
-                  >
-                    {e}
-                  </button>
-                ))}
-              </div>
+              <EmojiPicker
+                countryCodes={destinations.flatMap((d) => (d.countryCode ? [d.countryCode] : []))}
+                value={effectiveEmoji}
+                onChange={setEmoji}
+              />
             </fieldset>
             <fieldset className="flex flex-col gap-2">
               <legend className="mb-2 text-caption font-semibold text-fg-sub">
@@ -231,11 +218,6 @@ export function NewTripPage() {
       )}
     </div>
   );
-}
-
-function emojiOptions(destinations: Destination[]): string[] {
-  const flags = destinations.flatMap((d) => (d.countryCode ? [flagEmoji(d.countryCode)] : []));
-  return [...new Set([...flags, ...DEFAULT_EMOJIS])].slice(0, 10);
 }
 
 function StepBody({

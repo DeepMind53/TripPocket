@@ -7,8 +7,8 @@ import { planReflow, type ReflowMode } from '../../domain/schedule';
 import { useTrip, useTripItems } from '../../data/hooks';
 import { updateTripWithReflow } from '../../data/services/tripService';
 import { useRouteSheet } from '../../shared/hooks/useRouteSheet';
-import { cn } from '../../shared/lib/cn';
 import { COVER_COLORS, DEFAULT_EMOJIS } from '../../shared/lib/coverColors';
+import { EmojiPicker } from './EmojiPicker';
 import { formatPeriod, formatTripLength } from '../../shared/lib/dateFormat';
 import type { DateRange } from '../../shared/lib/dateRange';
 import { BottomSheet, Button, SegmentedControl, TopBar, toast } from '../../shared/ui';
@@ -160,22 +160,11 @@ function TripSettingsForm({ trip, items }: { trip: Trip; items: ItineraryItem[] 
           <legend className="mb-2 text-caption font-semibold text-fg-sub">
             {t('newTrip.emojiLabel')}
           </legend>
-          <div className="flex flex-wrap gap-2">
-            {[...new Set([emoji, ...DEFAULT_EMOJIS])].map((e) => (
-              <button
-                key={e}
-                type="button"
-                aria-pressed={e === emoji}
-                onClick={() => setEmoji(e)}
-                className={cn(
-                  'grid size-12 place-items-center rounded-btn border text-[24px]',
-                  e === emoji ? 'border-primary bg-primary-weak' : 'border-line bg-surface',
-                )}
-              >
-                {e}
-              </button>
-            ))}
-          </div>
+          <EmojiPicker
+            countryCodes={trip.destinations.flatMap((d) => (d.countryCode ? [d.countryCode] : []))}
+            value={emoji}
+            onChange={setEmoji}
+          />
         </fieldset>
 
         <fieldset className="flex flex-col gap-2">

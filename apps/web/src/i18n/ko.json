@@ -479,6 +479,8 @@
     "nameTitle": "여행 이름을 정해주세요",
     "nameLabel": "여행 이름",
     "emojiLabel": "이모지",
+    "emojiCountry": "여행 나라 이모지",
+    "emojiCommon": "공통 이모지",
     "colorLabel": "색",
     "colorOption": "{{n}}번 색",
     "titleDefault": "{{dest}} 여행",
