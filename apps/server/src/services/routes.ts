@@ -2,8 +2,8 @@ import type { Coords, RouteEta } from '@trippocket/shared';
 import { guardApi, trackApi } from './apiUsage';
 
 /**
- * 두 장소 사이 걸어서·대중교통 소요 시간 (실험실 "출발 시각 알려 주기", 사용자 결정 2026-10-26).
- * - Google에서 받은 좌표가 끼면 Google Routes (약관상 다른 회사로 보내지 않는다), 아니면 Geoapify
+ * 두 장소 사이 걸어서·대중교통 소요 시간 (사용자 결정 2026-10-26, 2026-10-27 "실제 지도상 시간으로 둘 다"):
+ * - Google Routes가 먼저 (걷기·대중교통). 멈췄거나 실패하면 Google 좌표가 아닐 때만 Geoapify (약관상 Google 좌표는 다른 회사로 보내지 않는다)
  * - Google Routes: Compute Routes Essentials(걷기·대중교통은 기본 기능) 월 10,000 무료
  * - Geoapify: 걷기 + approximated_transit(OSM 노선으로 어림) — 하루 3,000 크레딧을 검색 백업과 같이 씀
  * 좌표는 일정 장소의 좌표(내 위치가 아님)이고, 요청에만 쓰고 저장·로그하지 않는다.

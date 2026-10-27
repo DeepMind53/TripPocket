@@ -1596,11 +1596,11 @@
     "denied": "위치를 허용하면 이동 시간이 보여요",
     "title": "다음 {{time}} {{title}}",
     "loading": "길 찾는 중",
-    "walk": "도보 {{min}}분 · {{time}} 출발",
-    "transit": "대중교통 {{min}}분 · {{time}} 출발",
-    "walkLate": "도보 {{min}}분 · {{left}}분 뒤 시작",
-    "transitLate": "대중교통 {{min}}분 · {{left}}분 뒤 시작",
-    "rough": "직선거리로 어림한 시간이에요"
+    "walkMin": "도보 {{min}}분",
+    "transitMin": "대중교통 {{min}}분",
+    "roughShort": "(직선거리 어림)",
+    "leaveBy": "{{time}} 전 출발 (여유 {{margin}}분)",
+    "leaveNow": "지금 바로 출발하세요"
   },
   "confirm": {
     "title": "삭제할까요?",

@@ -349,8 +349,8 @@ function VisitMock() {
       <span className="text-[11px] font-bold">🇯🇵 도쿄 가을여행 · 오늘</span>
       <div className="flex flex-col px-1 text-[9px] leading-tight">
         <span className="truncate text-[10px] font-semibold">다음 19:00 이치란 라멘</span>
-        <span className="text-fg-sub">도보 35분 · 18:25 출발</span>
-        <span className="text-fg-sub">대중교통 14분 · 18:46 출발</span>
+        <span className="text-fg-sub">도보 35분 · 대중교통 14분</span>
+        <span className="font-semibold text-primary">18:36 전 출발 (여유 10분)</span>
       </div>
       <div className="flex flex-col gap-1 rounded-xl border border-line bg-surface p-1.5">
         <div className="flex items-center gap-1">

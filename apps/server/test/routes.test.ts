@@ -75,7 +75,8 @@ describe('출발 시각 (두 장소 소요 시간)', () => {
     expect(calls).toHaveLength(0);
   });
 
-  it('Google 좌표가 아니면 무료 Geoapify: 걷기 + 대중교통 어림', async () => {
+  it('Google Routes가 멈추면 Google 좌표가 아닐 때만 무료 Geoapify: 걷기 + 대중교통 어림', async () => {
+    used('google_routes', 9500, 'America/Los_Angeles');
     const res = await eta({ from, to, google: false });
     expect(res.json()).toEqual({ walk: 50, transit: 30, source: 'osm' });
     expect(calls.map((c) => new URL(c.url).searchParams.get('mode'))).toEqual([
@@ -87,7 +88,11 @@ describe('출발 시각 (두 장소 소요 시간)', () => {
     expect(calls).toHaveLength(2);
   });
 
-  it('Google 좌표가 끼면 Google Routes만 (시간 필드만 요청)', async () => {
+  it('실제 길 시간은 Google Routes가 먼저 — 걷기·대중교통 둘 다 (시간 필드만 요청)', async () => {
+    const plain = await eta({ from, to, google: false });
+    expect(plain.json()).toEqual({ walk: 60, transit: 25, source: 'google' });
+    clearRouteCache();
+    calls.length = 0;
     const res = await eta({ from, to, google: true });
     expect(res.json()).toEqual({ walk: 60, transit: 25, source: 'google' });
     expect(calls.every((c) => c.url.includes('routes.googleapis.com'))).toBe(true);
@@ -102,14 +107,22 @@ describe('출발 시각 (두 장소 소요 시간)', () => {
     expect(calls).toHaveLength(0);
   });
 
-  it('Geoapify가 멈추면 Google로', async () => {
-    used('geoapify', 2850, 'UTC');
-    expect((await eta({ from, to, google: false })).json().source).toBe('google');
+  it('Google이 실패(키 제한 403 등)하면 Google 좌표가 아닐 때 Geoapify로, Google 좌표면 503', async () => {
+    vi.stubGlobal('fetch', async (input: string | URL, init?: RequestInit) => {
+      const url = String(input);
+      calls.push({ url, body: String(init?.body ?? ''), headers: {} });
+      if (url.includes('routes.googleapis.com')) return new Response('blocked', { status: 403 });
+      return Response.json({ features: [{ properties: { time: 1800 } }] });
+    });
+    expect((await eta({ from, to, google: false })).json().source).toBe('osm');
+    clearRouteCache();
+    expect((await eta({ from, to, google: true })).statusCode).toBe(503);
   });
 
   it('내 위치에서 출발(live)이면 서버 메모리에도 남기지 않는다 — 같은 요청도 다시 묻는다', async () => {
     await eta({ from, to, google: false, live: true });
     await eta({ from, to, google: false, live: true });
+    // Google 걷기·대중교통 2건씩
     expect(calls).toHaveLength(4);
   });
 });

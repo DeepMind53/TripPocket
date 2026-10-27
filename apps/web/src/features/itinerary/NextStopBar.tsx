@@ -2,7 +2,7 @@ import { distanceKm, walkMinutes, type ItineraryItem, type RouteEta } from '@tri
 import { LocateFixed } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { routeEta } from '../../data/api/routes';
-import { departurePlan } from '../../domain/dayTools';
+import { LEAVE_MARGIN_MIN, departurePlan } from '../../domain/dayTools';
 import { useTranslation } from '../../i18n';
 import { useCurrentPosition } from '../../shared/hooks/useCurrentPosition';
 
@@ -66,21 +66,28 @@ export function NextStopBar({ next, now }: { next: ItineraryItem; now: string })
         <span className="text-fg-muted">{t('nextStop.loading')}</span>
       ) : (
         <>
-          {plan.walkLeave && (
-            <span className={plan.walkLate ? 'font-semibold text-warning' : 'text-fg-sub'}>
-              {plan.walkLate
-                ? t('nextStop.walkLate', { min: shown.walk!, left: Math.max(0, plan.left) })
-                : t('nextStop.walk', { min: shown.walk!, time: plan.walkLeave })}
+          {/* 2줄: 도보 nn분 · 대중교통 mm분 (사용자 요청 2026-10-27 — 짧게) */}
+          <span className="truncate text-fg-sub">
+            {[
+              shown.walk !== undefined ? t('nextStop.walkMin', { min: shown.walk }) : null,
+              shown.transit !== undefined ? t('nextStop.transitMin', { min: shown.transit }) : null,
+            ]
+              .filter(Boolean)
+              .join(' · ')}
+            {rough ? ` ${t('nextStop.roughShort')}` : ''}
+          </span>
+          {/* 3줄: 여유를 두고 몇 시까지 나가야 하는지 */}
+          {plan.leaveBy && (
+            <span
+              className={
+                plan.leaveNow ? 'font-semibold text-warning' : 'font-semibold text-primary'
+              }
+            >
+              {plan.leaveNow
+                ? t('nextStop.leaveNow')
+                : t('nextStop.leaveBy', { time: plan.leaveBy, margin: LEAVE_MARGIN_MIN })}
             </span>
           )}
-          {plan.transitLeave && (
-            <span className={plan.transitLate ? 'font-semibold text-warning' : 'text-fg-sub'}>
-              {plan.transitLate
-                ? t('nextStop.transitLate', { min: shown.transit!, left: Math.max(0, plan.left) })
-                : t('nextStop.transit', { min: shown.transit!, time: plan.transitLeave })}
-            </span>
-          )}
-          {rough && <span className="text-fg-muted">{t('nextStop.rough')}</span>}
         </>
       )}
     </div>

@@ -162,11 +162,19 @@ describe('nextStop · departurePlan', () => {
       transitLeave: '13:10',
       walkLate: true,
       transitLate: false,
+      // 더 빠른 대중교통 20분 + 여유 10분 → 13:00까지 출발 = 지금
+      leaveBy: '13:00',
+      leaveNow: true,
+    });
+    expect(departurePlan('13:30', '12:00', { walk: 40 })).toMatchObject({
+      leaveBy: '12:40',
+      leaveNow: false,
     });
     expect(departurePlan('13:30', '13:00', {})).toEqual({
       left: 30,
       walkLate: false,
       transitLate: false,
+      leaveNow: false,
     });
   });
 });
