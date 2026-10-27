@@ -26,6 +26,8 @@ import {
   Footprints,
   Route,
   MapPinned,
+  Moon,
+  Sun,
 } from 'lucide-react';
 import { currentItemId, dayText, isFlightLeg, nextStop, pastItemIds } from '../../domain/dayTools';
 import { NextStopBar } from './NextStopBar';
@@ -1011,10 +1013,10 @@ function DaySection({
         {items.map((item, i) => (
           <Fragment key={item.id}>
             {sun && sunSlot(items, sun.rise) === i && (
-              <SunLine label={t('plan.sunrise')} time={sun.rise} />
+              <SunLine kind="rise" label={t('plan.sunrise')} time={sun.rise} />
             )}
             {sun && sunSlot(items, sun.set) === i && (
-              <SunLine label={t('plan.sunset')} time={sun.set} />
+              <SunLine kind="set" label={t('plan.sunset')} time={sun.set} />
             )}
             <ItemRow
               item={item}
@@ -1036,10 +1038,10 @@ function DaySection({
           </Fragment>
         ))}
         {sun && items.length > 0 && sunSlot(items, sun.rise) === items.length && (
-          <SunLine label={t('plan.sunrise')} time={sun.rise} />
+          <SunLine kind="rise" label={t('plan.sunrise')} time={sun.rise} />
         )}
         {sun && items.length > 0 && sunSlot(items, sun.set) === items.length && (
-          <SunLine label={t('plan.sunset')} time={sun.set} />
+          <SunLine kind="set" label={t('plan.sunset')} time={sun.set} />
         )}
         {/* 실험실: 마지막 장소에서 숙소까지 */}
         {lodging &&
@@ -1591,12 +1593,15 @@ function EmptyRun({ from, to, onOpen }: { from: Section; to: Section; onOpen: ()
 }
 
 /** "------ 일몰 17:40 ------" — 좌우 '-'는 화면 폭만큼 채우고 넘치면 잘린다. 일정이 아니라 옮기거나 지울 수 없음 */
-function SunLine({ label, time }: { label: string; time: string }) {
+function SunLine({ kind, label, time }: { kind: 'rise' | 'set'; label: string; time: string }) {
   const dashes = '-'.repeat(120);
+  // 글자 앞뒤 해·달 (사용자 요청 2026-10-27): 일출 = 달 → 해, 일몰 = 해 → 달
+  const sun = <Sun aria-hidden="true" className="size-3.5 shrink-0 text-warning" />;
+  const moon = <Moon aria-hidden="true" className="size-3.5 shrink-0 text-primary" />;
   return (
     <li
       aria-label={`${label} ${time}`}
-      className="tabular flex items-center gap-2 px-1 text-micro text-fg-muted select-none"
+      className="tabular flex items-center gap-1.5 px-1 text-micro text-fg-muted select-none"
     >
       <span
         aria-hidden="true"
@@ -1604,9 +1609,11 @@ function SunLine({ label, time }: { label: string; time: string }) {
       >
         {dashes}
       </span>
+      {kind === 'rise' ? moon : sun}
       <span className="shrink-0">
         {label} {time}
       </span>
+      {kind === 'rise' ? sun : moon}
       <span aria-hidden="true" className="min-w-0 flex-1 overflow-hidden whitespace-nowrap">
         {dashes}
       </span>
