@@ -7,6 +7,7 @@ import { openDb } from '../../../server/src/db/database';
 import { useAuth } from '../../src/data/authStore';
 import { db } from '../../src/data/db';
 import { resetLocalDb } from '../../src/data/dev';
+import { checklistRepo } from '../../src/data/repositories/checklistRepo';
 import { tripRepo } from '../../src/data/repositories/tripRepo';
 import {
   chooseAccountData,
@@ -120,5 +121,32 @@ describe('기기 사이 동기화', () => {
     await newDevice();
     await syncNow();
     expect((await tripRepo.listActive())[0]?.title).toBe('B');
+  });
+
+  it('개인별 준비 목록 전에 받은 준비물: 한 번 다시 받아 만든 사람을 채우고, 받을 수 없는 일행 것은 지운다', async () => {
+    await newDevice();
+    await syncNow();
+    const [trip] = await tripRepo.listActive();
+    const mine = await checklistRepo.add(trip!.id, 'packing', { text: '여권' });
+    await syncNow();
+    // 업데이트 전 상태 흉내: 내 행에 만든 사람이 없고, 예전에 받은 일행 행(서버에선 이제 안 내려옴)이 남아 있음
+    await db.checklistItems.update(mine.id, { ownerId: undefined });
+    await db.checklistItems.add({
+      id: 'old-friend',
+      tripId: trip!.id,
+      list: 'packing',
+      text: '일행 것',
+      checked: false,
+      order: 'z0',
+      createdAt: '2026-10-20T00:00:00.000Z',
+      updatedAt: '2026-10-20T00:00:00.000Z',
+      rev: 1,
+      dirty: 0,
+    });
+    await db.syncState.delete('ownerFill1');
+    await syncNow();
+    expect((await db.checklistItems.get(mine.id))?.ownerId).toBe('u1');
+    expect(await db.checklistItems.get('old-friend')).toBeUndefined();
+    expect((await db.syncState.get('ownerFill1'))?.value).toBe(true);
   });
 });

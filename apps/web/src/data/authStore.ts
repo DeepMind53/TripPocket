@@ -42,10 +42,26 @@ export function wasSignedIn(): boolean {
     return false;
   }
 }
+/** 이 기기에서 마지막으로 로그인한 계정 id — 오프라인·시작 직후에도 내 준비물을 가려내려고 (비밀값 아님) */
+const USER_KEY = 'tp-user-id';
+export function myUserId(): string | undefined {
+  const me = useAuth.getState().me?.id;
+  if (me) return me;
+  try {
+    return localStorage.getItem(USER_KEY) ?? undefined;
+  } catch {
+    return undefined;
+  }
+}
 useAuth.subscribe((s) => {
   try {
-    if (s.status === 'user') localStorage.setItem(SIGNED_IN_KEY, '1');
-    else if (s.status === 'anon') localStorage.removeItem(SIGNED_IN_KEY);
+    if (s.status === 'user') {
+      localStorage.setItem(SIGNED_IN_KEY, '1');
+      if (s.me) localStorage.setItem(USER_KEY, s.me.id);
+    } else if (s.status === 'anon') {
+      localStorage.removeItem(SIGNED_IN_KEY);
+      localStorage.removeItem(USER_KEY);
+    }
   } catch {
     // 저장 못 하면 오프라인일 때 로그인 화면이 보일 뿐
   }

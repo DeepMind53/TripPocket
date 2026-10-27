@@ -258,4 +258,30 @@ describe('준비물 개인별 · 일행과 공유 (2026-10-27)', () => {
     await user.click(within(others).getByRole('button', { name: '보조배터리 내 목록에 담기' }));
     expect(await screen.findByText(/보조배터리 넣었어요/)).toBeInTheDocument();
   });
+
+  it('오프라인(계정 확인 전)에도 기기에 기억한 계정으로 일행 준비물을 내 것과 나눈다', async () => {
+    // 로그인했던 기기: 계정 id가 기기에 남는다
+    useAuth.setState({
+      status: 'user',
+      me: { id: 'u-me', nickname: 'n', createdAt: '', providers: [] },
+    });
+    useAuth.setState({ status: 'offline', me: null });
+    await checklistRepo.add(tripId, 'packing', { text: '여권' });
+    await db.checklistItems.add({
+      id: 'f1',
+      tripId,
+      list: 'packing',
+      text: '보조배터리',
+      checked: false,
+      order: 'a0',
+      ownerId: 'u-friend',
+      shared: true,
+      sharedAt: '2026-10-27T00:00:00.000Z',
+      createdAt: '2026-10-27T00:00:00.000Z',
+      updatedAt: '2026-10-27T00:00:00.000Z',
+      dirty: 0,
+    });
+    expect((await checklistRepo.list(tripId, 'packing')).map((i) => i.text)).toEqual(['여권']);
+    expect((await checklistRepo.listShared(tripId)).map((i) => i.text)).toEqual(['보조배터리']);
+  });
 });

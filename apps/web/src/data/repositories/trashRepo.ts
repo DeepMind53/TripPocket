@@ -8,7 +8,7 @@ import type {
 import { db } from '../db';
 import { canEditTrip } from '../tripRoles';
 import { bookingRepo } from './bookingRepo';
-import { checklistRepo } from './checklistRepo';
+import { checklistRepo, isMyChecklistItem } from './checklistRepo';
 import { itemRepo } from './itemRepo';
 import { savedPlaceRepo } from './savedPlaceRepo';
 import { templateRepo } from './templateRepo';
@@ -71,13 +71,16 @@ export const trashRepo = {
         deletedAt: b.deletedAt!,
         tripId: b.tripId,
       })),
-      ...checklist.filter(inLiveTrip).map((c: ChecklistItem) => ({
-        kind: 'checklist' as const,
-        id: c.id,
-        title: c.text,
-        deletedAt: c.deletedAt!,
-        tripId: c.tripId,
-      })),
+      // 준비물은 사람별 — 내 것만 (일행 것은 그 사람만 되살린다. 보기 전용 멤버도 자기 것은 됨)
+      ...checklist
+        .filter((c) => !deletedTrips.has(c.tripId) && isMyChecklistItem(c))
+        .map((c: ChecklistItem) => ({
+          kind: 'checklist' as const,
+          id: c.id,
+          title: c.text,
+          deletedAt: c.deletedAt!,
+          tripId: c.tripId,
+        })),
       ...saved.map((s: SavedPlace) => ({
         kind: 'saved' as const,
         id: s.id,
@@ -108,7 +111,7 @@ export const trashRepo = {
         for (const b of await db.bookings.where('tripId').equals(e.id).toArray())
           if (near(b.deletedAt)) await bookingRepo.restore(b.id);
         for (const c of await db.checklistItems.where('tripId').equals(e.id).toArray())
-          if (near(c.deletedAt)) await checklistRepo.restore(c.id);
+          if (near(c.deletedAt) && isMyChecklistItem(c)) await checklistRepo.restore(c.id);
         return;
       }
       case 'item':

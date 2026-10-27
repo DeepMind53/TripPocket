@@ -22,6 +22,11 @@ import { useSync } from './syncStore';
 
 const LAST_REV = 'lastRev';
 const USER_ID = 'userId';
+/**
+ * 개인별 준비 목록(Dexie v8) 전에 받은 준비물에는 만든 사람(ownerId)이 없다 → 한 번 처음부터 다시 받아 채우고,
+ * 그래도 비어 있는 서버 행(= 일행이 공유하지 않은 것)은 기기에서 지운다
+ */
+const OWNER_FILL = 'ownerFill1';
 
 interface Row {
   id: string;
@@ -129,7 +134,8 @@ async function push(): Promise<Step> {
 }
 
 async function pull(): Promise<Step> {
-  let since = (await getSyncValue<number>(LAST_REV)) ?? 0;
+  const fill = !(await getSyncValue<boolean>(OWNER_FILL));
+  let since = fill ? 0 : ((await getSyncValue<number>(LAST_REV)) ?? 0);
   for (;;) {
     const res = await api<PullResult>(`/api/sync/pull?since=${since}&limit=${SYNC_BATCH}`);
     if (!res.ok) return fail(res.reason);
@@ -149,8 +155,21 @@ async function pull(): Promise<Step> {
       since = res.data.nextRev;
       await setSyncValue(LAST_REV, since);
     });
-    if (!res.data.hasMore) return true;
+    if (!res.data.hasMore) {
+      if (fill) await dropUnownedChecklist();
+      return true;
+    }
   }
+}
+
+/** 처음부터 다시 받은 뒤에도 만든 사람이 없는 서버 준비물 = 받을 수 없게 된 일행 것 → 지운다 */
+async function dropUnownedChecklist(): Promise<void> {
+  await db.transaction('rw', [db.checklistItems, db.syncState], async () => {
+    await db.checklistItems
+      .filter((r) => r.rev !== undefined && r.dirty === 0 && !r.ownerId)
+      .delete();
+    await setSyncValue(OWNER_FILL, true);
+  });
 }
 
 /** 같은 이름의 기본 템플릿이 계정에서 오면, 이 기기에서 손대지 않은 기본 템플릿은 지운다 (중복 방지) */

@@ -7,7 +7,7 @@ import {
   type ChecklistItem,
 } from '@trippocket/shared';
 import { nowIso } from '../clock';
-import { useAuth } from '../authStore';
+import { myUserId } from '../authStore';
 import { db, toDomain } from '../db';
 
 export type ListKind = ChecklistItem['list'];
@@ -26,11 +26,15 @@ export interface DraftEntry extends NewChecklistEntry {
 
 const normalize = (s: string) => s.replace(/\s+/g, '').toLowerCase();
 
-/** 내 것인가: 만든 사람이 없으면(이 기기에서 만듦·예전 행) 내 것 (2026-10-27 개인별 준비 목록) */
-const mine = (r: { ownerId?: string | undefined }) => {
-  const me = useAuth.getState().me?.id;
+/**
+ * 내 것인가: 만든 사람이 없으면(이 기기에서 만들고 아직 안 올림) 내 것 (2026-10-27 개인별 준비 목록).
+ * 계정 id는 기기에 기억한 값도 쓴다 — 오프라인·시작 직후에도 일행 것을 내 것으로 보지 않게
+ */
+export const isMyChecklistItem = (r: { ownerId?: string | undefined }) => {
+  const me = myUserId();
   return !r.ownerId || !me || r.ownerId === me;
 };
+const mine = isMyChecklistItem;
 
 async function listRows(tripId: string, list: ListKind) {
   const rows = await db.checklistItems
