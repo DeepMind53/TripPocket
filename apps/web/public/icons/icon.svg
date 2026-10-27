@@ -3,7 +3,7 @@
   <g transform="translate(30.72 30.72) scale(0.88)">
     <path d="M70 330 C 130 120, 330 70, 440 150" fill="none" stroke="#ffffff" stroke-opacity=".75"
       stroke-width="16" stroke-linecap="round" stroke-dasharray="2 34"/>
-    <path d="M452 138 l-58 -12 l20 26 l-12 30 z" fill="#ffffff"/>
+    <path d="M36 0C36-4 30-6 24-6H12L-6-34H-16L-4-6H-20L-28-18H-36L-30 0L-36 18H-28L-20 6H-4L-16 34H-6L12 6H24C30 6 36 4 36 0Z" transform="translate(446 150) rotate(35) scale(1.25)" fill="#ffffff"/>
     <path d="M256 112c-62 0-112 50-112 112 0 86 112 196 112 196s112-110 112-196c0-62-50-112-112-112z" fill="#ffffff"/>
     <circle cx="256" cy="224" r="46" fill="#2f6bff"/>
   </g>

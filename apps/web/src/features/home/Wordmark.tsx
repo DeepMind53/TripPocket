@@ -27,8 +27,12 @@ export function Wordmark({ label }: { label: string }) {
           strokeDasharray="3 4"
           strokeLinecap="round"
         />
-        {/* 비행기 */}
-        <path d="M150 13 l-9 -3 l3 4 l-3 4 z" className="fill-primary" />
+        {/* 점선 끝 작은 비행기 (2026-10-27 화살표 → 비행기) */}
+        <path
+          d="M36 0C36-4 30-6 24-6H12L-6-34H-16L-4-6H-20L-28-18H-36L-30 0L-36 18H-28L-20 6H-4L-16 34H-6L12 6H24C30 6 36 4 36 0Z"
+          transform="translate(150 12.5) rotate(25) scale(0.2)"
+          className="fill-primary"
+        />
       </svg>
       {letters.map((ch, i) => (
         <span
