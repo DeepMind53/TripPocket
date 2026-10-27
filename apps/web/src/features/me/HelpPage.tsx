@@ -16,6 +16,8 @@ const TIPS = [
   'pinned',
   'trash',
   'alerts',
+  'localNow',
+  'profile',
 ] as const;
 
 /**
