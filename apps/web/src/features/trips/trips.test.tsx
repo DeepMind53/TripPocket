@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { routes } from '../../app/router';
@@ -168,4 +168,24 @@ describe('내 여행 목록', () => {
       await screen.findByText('삭제됐거나 다른 기기에서 만든 여행일 수 있어요'),
     ).toBeInTheDocument();
   });
+});
+
+it('내 여행 카드마다 오른쪽 [날씨] — 날씨 정보로, 끝난 여행은 없음 (2026-10-27)', async () => {
+  const mk = (title: string, start: string, end: string) =>
+    tripRepo.create({
+      title,
+      destinations: [{ name: '도쿄', kind: 'city', countryCode: 'JP' }],
+      startDate: start,
+      endDate: end,
+      timezone: 'Asia/Tokyo',
+      cover: {},
+    });
+  const soon = await mk('도쿄 가을', '2026-11-01', '2026-11-03');
+  await mk('지난 오사카', '2026-01-01', '2026-01-03');
+  const user = userEvent.setup();
+  const router = renderAt('/trips');
+  const link = await screen.findByRole('link', { name: '도쿄 가을 날씨 정보' });
+  expect(screen.queryByRole('link', { name: '지난 오사카 날씨 정보' })).toBeNull();
+  await user.click(link);
+  await waitFor(() => expect(router.state.location.pathname).toBe(`/trips/${soon.id}/weather`));
 });

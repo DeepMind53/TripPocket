@@ -1,5 +1,5 @@
 import { getTripStatus, todayIn, type Trip, type TripStatus, flagEmoji } from '@trippocket/shared';
-import { ChevronDown, Ellipsis, Plus, Trash2 } from 'lucide-react';
+import { ChevronDown, CloudSun, Ellipsis, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from '../../i18n';
 import { Link, useNavigate } from 'react-router';
@@ -227,6 +227,17 @@ function TripCard({ trip, onMenu }: { trip: Trip; onMenu: (trip: Trip) => void }
           </span>
         </span>
       </Link>
+      {/* 여행마다 날씨 정보 바로가기 (사용자 요청 2026-10-27) — 끝난 여행은 빼고 */}
+      {!isPast && (
+        <Link
+          to={`/trips/${trip.id}/weather`}
+          aria-label={t('trips.weatherOf', { title: trip.title })}
+          className="flex size-12 shrink-0 flex-col items-center justify-center gap-0.5 rounded-btn text-fg-sub active:bg-bg-subtle"
+        >
+          <CloudSun aria-hidden="true" className="size-5 text-primary" />
+          <span className="text-micro">{t('trips.weather')}</span>
+        </Link>
+      )}
       <IconButton
         label={t('trips.openMenu', { title: trip.title })}
         icon={<Ellipsis />}

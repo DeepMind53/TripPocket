@@ -186,7 +186,17 @@ export function SettingsPage() {
 
         <Group
           title={t('settings.plan')}
-          onReset={() => resetSettings(['timeStepMin', 'dimPastItems', 'planMapOpen', 'sunTimes'])}
+          onReset={() =>
+            resetSettings([
+              'timeStepMin',
+              'dimPastItems',
+              'planMapOpen',
+              'sunTimes',
+              'legDistance',
+              'busyDay',
+              'compactList',
+            ])
+          }
         >
           <Field label={t('settings.timeStep')}>
             <SegmentedControl
@@ -215,6 +225,17 @@ export function SettingsPage() {
             label={t('settings.sunTimes')}
             checked={s.sunTimes}
             onChange={set('sunTimes')}
+          />
+          <SwitchRow
+            label={t('settings.legDistance')}
+            checked={s.legDistance}
+            onChange={set('legDistance')}
+          />
+          <SwitchRow label={t('settings.busyDay')} checked={s.busyDay} onChange={set('busyDay')} />
+          <SwitchRow
+            label={t('settings.compactList')}
+            checked={s.compactList}
+            onChange={set('compactList')}
           />
         </Group>
 

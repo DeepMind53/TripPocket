@@ -1,6 +1,6 @@
 import { distanceKm, type ItineraryItem } from '@trippocket/shared';
 
-/** 실험실 "빠듯한 하루" (2026-10-27): 이만큼 넘으면 날짜 머리에 표시 */
+/** "빠듯한 하루" (설정, 2026-10-27): 이만큼 넘으면 날짜 머리에 표시 */
 export const BUSY_ITEMS = 7;
 export const BUSY_KM = 15;
 /** 이보다 먼 구간은 걷거나 대중교통으로 가는 거리가 아니다 (비행기·다른 나라) — 거리 표시·합계에서 뺀다 */

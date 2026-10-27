@@ -1,17 +1,16 @@
 import { COUNTRY_CURRENCY, type FxSnapshot } from '@trippocket/shared';
 import { useEffect, useState } from 'react';
-import { useLab } from '../../data/labsStore';
 import { cachedFx } from '../../data/services/fxService';
 import { memoAmounts } from '../../domain/memoFx';
 import { useTranslation } from '../../i18n';
 
 /**
- * 실험실 "메모 속 외화 → 원화" (2026-10-27): 일정 상세 메모 아래에 "¥1,200 ≈ 11,040원".
+ * 메모 속 외화 → 원화 (2026-10-27, 같은 날 실험실에서 정식): 일정 상세 메모 아래에 "¥1,200 ≈ 11,040원".
  * 저장해 둔 환율(기기)만 쓰고 새로 부르지 않는다. 금액은 저장하지 않는다 (계산만)
  */
 export function MemoFx({ memo, countryCode }: { memo: string; countryCode?: string | undefined }) {
   const { t } = useTranslation();
-  const on = useLab('memoFx');
+  const on = true;
   const [fx, setFx] = useState<FxSnapshot | null>(null);
   useEffect(() => {
     if (on) void cachedFx().then(setFx);

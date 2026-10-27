@@ -96,6 +96,7 @@ import { isDomesticTrip } from '../../domain/tripPlace';
 import { dayRouteUrl } from '../../domain/dayRoute';
 import { sunSlot, sunTimes } from '../../domain/sun';
 import { busyDay, FAR_LEG_KM } from '../../domain/busyDay';
+import { checkoutsOn, dayRecap, freeGaps, nearbyWishes } from '../../domain/dayExtras';
 import { distanceKm, formatDistance, walkMinutes } from '@trippocket/shared';
 import { useLab } from '../../data/labsStore';
 import { DayWeatherBadge } from '../common/DayWeatherBadge';
@@ -156,11 +157,13 @@ function PlanView({
   const dayRouteOn = true;
   // 설정 "일정 사이 일출·일몰"(목적지 좌표로 계산)
   const sunOn = useSettings((st) => st.sunTimes);
-  // 실험실: 하루 마지막 일정 → 숙소까지 거리 (일정표에 들어간 숙소 좌표)
-  const lodgingReturnOn = useLab('lodgingReturn');
+  // 하루 마지막 일정 → 숙소까지 거리 (일정표에 들어간 숙소 좌표, 2026-10-27 정식)
+  const lodgingReturnOn = true;
   const coordsOfBooking = (id: string | undefined) =>
     id ? items.find((i) => i.bookingId === id && i.place?.coords)?.place?.coords : undefined;
   const sunCoords = trip.destinations.find((d) => d.coords)?.coords;
+  // 날짜 없는 가고 싶은 곳 (실험실 "근처 가고 싶은 곳")
+  const wishItems = items.filter((i) => i.date === null);
   const { time: timeText } = useTimeText();
   // 지도는 누를 때만 (지도 불러오기도 무료 사용량에 포함)
   // 설정 "일정 화면 지도 기본 펼침"
@@ -173,6 +176,18 @@ function PlanView({
   const [openRuns, setOpenRuns] = useState<ReadonlySet<string>>(new Set());
   const dayIndexOf = useCallback((d: LocalDate) => days.indexOf(d), [days]);
   const ongoing = getTripStatus(trip.startDate, trip.endDate, today) === 'ongoing';
+  // 실험실 "지금 일정으로 이동": 여행 중 일정 화면을 열면 진행 중 일정(없으면 오늘 칸)으로 한 번 스크롤
+  const nowScroll = useLab('nowScroll');
+  useEffect(() => {
+    if (!nowScroll || !ongoing) return;
+    const id = window.setTimeout(() => {
+      const el =
+        document.querySelector<HTMLElement>('main [aria-current="time"]') ??
+        document.querySelector<HTMLElement>(`main [data-day="${today}"]`);
+      el?.scrollIntoView?.({ block: 'center', behavior: 'smooth' });
+    }, 300);
+    return () => window.clearTimeout(id);
+  }, [nowScroll, ongoing]); // eslint-disable-line react-hooks/exhaustive-deps -- 화면을 열 때 한 번
   // 여행 당일 지금 시각 (1분마다) — "다음 일정" 줄
   const clock = useMinuteClock(ongoing);
   const nowTime = ongoing ? timeIn(trip.timezone, clock) : null;
@@ -614,6 +629,8 @@ function PlanView({
                       }
                       isPast={dimPast && date !== null && date < today}
                       lodging={date ? lodgingForNight(bookings, date) : null}
+                      wishes={date ? wishItems : undefined}
+                      checkouts={date ? checkoutsOn(bookings, date) : undefined}
                       lodgingCoords={
                         lodgingReturnOn && date
                           ? coordsOfBooking(lodgingForNight(bookings, date)?.booking.id)
@@ -840,13 +857,19 @@ function DaySection({
   historyOf,
   sun,
   lodgingCoords,
+  wishes,
+  checkouts,
 }: {
   /** 지난 일정 방문·미방문 (미방문이면 저장 탭에도 담는다) */
   onVisitItem: (item: ItineraryItem, visit: Visit) => void;
   /** 이 일정 장소를 예전에 방문한 날 */
   historyOf: (item: ItineraryItem) => { date: string; trip: string }[];
   weather?: TripDayWeather | undefined;
-  /** 실험실 "숙소까지 거리": 그날 밤 숙소 좌표 */
+  /** 실험실 "근처 가고 싶은 곳": 날짜 없는 가고 싶은 곳 */
+  wishes?: ItineraryItem[] | undefined;
+  /** 실험실 "오늘 체크아웃": 그날 체크아웃하는 숙소 */
+  checkouts?: { title: string; time?: string | undefined }[] | undefined;
+  /** 그날 밤 숙소 좌표 (마지막 장소 → 숙소 거리) */
   lodgingCoords?: { lat: number; lng: number } | undefined;
   /** 일출·일몰 (현지 시각) — 일정 사이 시간 순서 자리에 한 줄씩 */
   sun?: { rise: string; set: string } | null;
@@ -873,13 +896,18 @@ function DaySection({
   hideWhenEmpty: boolean;
 }) {
   const { t } = useTranslation();
-  const legs = useLab('legDistance');
+  // 설정 "일정" (2026-10-27 실험실에서 정식)
+  const legs = useSettings((st) => st.legDistance);
   // 2026-10-27 정식: 하루 일정 글로 복사·하루 동선 지도
   const copyDayOn = true;
   const dayRouteOn = true;
-  // 실험실: 촘촘히 보기 · 빠듯한 하루
-  const compact = useLab('compactList');
-  const busyOn = useLab('busyDay');
+  const compact = useSettings((st) => st.compactList);
+  // 실험실 (2026-10-27 새 실험)
+  const freeOn = useLab('freeTime');
+  const nearbyOn = useLab('nearbyWish');
+  const checkoutOn = useLab('checkout');
+  const recapOn = useLab('dayRecap');
+  const busyOn = useSettings((st) => st.busyDay);
   const dupOn = true;
   // 여행 당일: 현지 시각으로 지금 진행 중인 일정 (1분마다 다시 계산)
   const now = useMinuteClock(isToday);
@@ -898,6 +926,10 @@ function DaySection({
   // 오늘 진행률 (2026-10-27 정식): 메모는 빼고, 방문(파랑)·미방문(빨강)을 칸에 채운다
   const tracked = items.filter((i) => i.kind !== 'note');
   const busy = busyOn && date ? busyDay(items) : null;
+  const gaps = freeOn ? freeGaps(items) : [];
+  const nearby = nearbyOn && wishes ? nearbyWishes(items, wishes) : [];
+  const outs = checkoutOn ? (checkouts ?? []) : [];
+  const recap = recapOn && date && date <= todayIn(timezone) ? dayRecap(items) : null;
   // 그날 마지막 장소 → 숙소 (직선거리)
   const lastCoords = [...tracked].reverse().find((i) => i.place?.coords)?.place?.coords;
   const visited = tracked.filter((i) => i.visit === 'visited' || i.done).length;
@@ -940,7 +972,7 @@ function DaySection({
               {t('date.today')}
             </span>
           )}
-          {/* 실험실: 일정이 많거나 이동이 긴 날 */}
+          {/* 일정이 많거나 이동이 긴 날 (설정) */}
           {busy && (
             <span
               className="rounded-full bg-warning/15 px-2 py-0.5 text-micro font-semibold text-warning"
@@ -984,6 +1016,30 @@ function DaySection({
             {skipped > 0 && <span className="text-danger"> · {skipped}</span>}/{tracked.length}
           </span>
         </div>
+      )}
+      {/* 실험실: 오늘 체크아웃 */}
+      {outs.map((o) => (
+        <p
+          key={o.title}
+          className="mx-3 mt-2 flex items-center gap-2 rounded-btn bg-warning/10 px-3 py-2 text-caption text-fg-sub"
+        >
+          <span aria-hidden="true">🧳</span>
+          {o.time
+            ? t('labs.checkoutAt', { time: o.time, name: o.title })
+            : t('labs.checkout', { name: o.title })}
+        </p>
+      ))}
+      {/* 실험실: 그날 장소 1km 안의 가고 싶은 곳 */}
+      {nearby.length > 0 && (
+        <p className="mx-3 mt-2 truncate rounded-btn bg-primary-weak px-3 py-2 text-caption text-primary">
+          {t('labs.nearbyWish', {
+            names: nearby
+              .slice(0, 3)
+              .map((w) => w.title)
+              .join(', '),
+            more: nearby.length > 3 ? ` +${nearby.length - 3}` : '',
+          })}
+        </p>
       )}
       {/* 그날 아침 숙소 조식 (사용자 요청 2026-10-26) */}
       {breakfast && (
@@ -1035,6 +1091,15 @@ function DaySection({
               })()}
             />
             {legs && <LegLine from={item} to={items[i + 1]} />}
+            {gaps.some((g) => g.afterId === item.id) && (
+              <li className="flex items-center gap-1.5 py-1 pl-9 text-micro text-fg-muted">
+                <span aria-hidden="true">⏳</span>
+                {t('labs.freeTime', {
+                  h: Math.floor(gaps.find((g) => g.afterId === item.id)!.minutes / 60),
+                  m: gaps.find((g) => g.afterId === item.id)!.minutes % 60,
+                })}
+              </li>
+            )}
           </Fragment>
         ))}
         {sun && items.length > 0 && sunSlot(items, sun.rise) === items.length && (
@@ -1043,7 +1108,13 @@ function DaySection({
         {sun && items.length > 0 && sunSlot(items, sun.set) === items.length && (
           <SunLine kind="set" label={t('plan.sunset')} time={sun.set} />
         )}
-        {/* 실험실: 마지막 장소에서 숙소까지 */}
+        {/* 실험실: 하루 돌아보기 (오늘·지난 날, 방문한 곳이 있을 때) */}
+        {recap && recap.visited > 0 && (
+          <li className="mt-1 rounded-btn bg-bg-subtle px-3 py-2 text-caption text-fg-sub">
+            {t('labs.recap', { n: recap.visited, km: recap.km })}
+          </li>
+        )}
+        {/* 마지막 장소에서 숙소까지 */}
         {lodging &&
           lodgingCoords &&
           lastCoords &&

@@ -5,6 +5,7 @@ import { createMemoryRouter, RouterProvider } from 'react-router';
 import { routes } from '../../app/router';
 import { resetLocalDb } from '../../data/dev';
 import { LABS, setLab } from '../../data/labsStore';
+import { updateSettings } from '../../data/settingsStore';
 import { bookingRepo } from '../../data/repositories/bookingRepo';
 import { itemRepo } from '../../data/repositories/itemRepo';
 import { trashRepo } from '../../data/repositories/trashRepo';
@@ -23,11 +24,11 @@ describe('실험실', () => {
     const user = userEvent.setup();
     render(<RouterProvider router={createMemoryRouter(routes, { initialEntries: ['/me'] })} />);
     await user.click(await screen.findByRole('link', { name: '실험실' }));
-    const sw = await screen.findByRole('switch', { name: /다음 장소까지 거리/ });
+    const sw = await screen.findByRole('switch', { name: /빈 시간 보기/ });
     expect(sw).toHaveAttribute('aria-checked', 'false');
     await user.click(sw);
     expect(sw).toHaveAttribute('aria-checked', 'true');
-    expect(JSON.parse(localStorage.getItem('tp-labs')!)).toEqual({ legDistance: true });
+    expect(JSON.parse(localStorage.getItem('tp-labs')!)).toEqual({ freeTime: true });
     // 실험실 목록(LABS)마다 스위치 하나
     expect(
       screen.getAllByRole('switch').map((s) => s.getAttribute('aria-label') ?? s.id),
@@ -42,9 +43,20 @@ describe('실험실', () => {
       /여행 회고/,
       /오늘 일정 진행률/,
       /일출/,
+      /다음 장소까지 거리/,
+      /메모 속 외화/,
+      /촘촘히/,
+      /숙소까지 거리/,
+      /빠듯한 하루/,
     ])
       expect(screen.queryByRole('switch', { name })).toBeNull();
-    for (const name of [/메모 속 외화/, /촘촘히/, /숙소까지 거리/, /빠듯한 하루/])
+    for (const name of [
+      /빈 시간/,
+      /근처 가고 싶은 곳/,
+      /오늘 체크아웃/,
+      /하루 돌아보기/,
+      /지금 일정으로/,
+    ])
       expect(screen.getByRole('switch', { name })).toBeInTheDocument();
   });
 
@@ -212,7 +224,7 @@ describe('실험실', () => {
     }
   });
 
-  it('새 실험 (2026-10-27): 메모 외화 → 원화 · 빠듯한 하루 · 촘촘히 보기 · 숙소까지 거리', async () => {
+  it('정식 (2026-10-27): 메모 외화 → 원화 · 빠듯한 하루 · 촘촘히 보기(설정) · 숙소까지 거리', async () => {
     vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(new Date('2026-10-22T03:00:00Z'));
     try {
@@ -261,8 +273,8 @@ describe('실험실', () => {
         title: '요코하마',
         place: at(35.45, 139.63),
       });
-      for (const id of ['memoFx', 'busyDay', 'compactList', 'lodgingReturn'] as const)
-        setLab(id, true);
+      // 정식(2026-10-27): 메모 외화·숙소까지 거리는 늘, 빠듯한 하루는 기본 켬, 촘촘히 보기는 설정에서 켠다
+      updateSettings({ compactList: true });
       const user = userEvent.setup();
       render(
         <>
@@ -287,7 +299,79 @@ describe('실험실', () => {
       await user.click(within(day).getByRole('button', { name: /센소지/ }));
       expect(await screen.findByText('💱 ¥200 ≈ 1,840원')).toBeInTheDocument();
     } finally {
-      for (const id of ['memoFx', 'busyDay', 'compactList', 'lodgingReturn'] as const)
+      updateSettings({ compactList: false });
+      vi.useRealTimers();
+    }
+  });
+
+  it('새 실험 (2026-10-27): 빈 시간 · 근처 가고 싶은 곳 · 오늘 체크아웃 · 하루 돌아보기', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-10-25T09:00:00Z')); // 도쿄 10.25 18:00 = 2일차
+    try {
+      const trip = await tripRepo.create({
+        title: '도쿄',
+        destinations: [{ name: '도쿄', kind: 'city', countryCode: 'JP' }],
+        startDate: '2026-10-24',
+        endDate: '2026-10-25',
+        timezone: 'Asia/Tokyo',
+        cover: {},
+      });
+      await bookingRepo.create({
+        tripId: trip.id,
+        kind: 'lodging',
+        title: '신주쿠 호텔',
+        start: { date: '2026-10-24', time: '15:00' },
+        end: { date: '2026-10-25', time: '11:00' },
+      });
+      const at = (lat: number, lng: number) => ({ name: 'p', coords: { lat, lng } });
+      const a = await itemRepo.create({
+        tripId: trip.id,
+        date: '2026-10-25',
+        kind: 'place',
+        title: '센소지',
+        startTime: '09:00',
+        endTime: '10:00',
+        place: at(35.7148, 139.7967),
+      });
+      const b = await itemRepo.create({
+        tripId: trip.id,
+        date: '2026-10-25',
+        kind: 'shopping',
+        title: '스카이트리',
+        startTime: '13:00',
+        place: at(35.7101, 139.8107),
+      });
+      await itemRepo.setVisit(a.id, 'visited');
+      await itemRepo.setVisit(b.id, 'visited');
+      await itemRepo.create({
+        tripId: trip.id,
+        date: null,
+        kind: 'food',
+        title: '아사쿠사 멘치',
+        place: at(35.7128, 139.7951),
+      });
+      for (const id of ['freeTime', 'nearbyWish', 'checkout', 'dayRecap'] as const)
+        setLab(id, true);
+      render(
+        <RouterProvider
+          router={createMemoryRouter(routes, { initialEntries: [`/trips/${trip.id}/plan?day=2`] })}
+        />,
+      );
+      const day = await screen.findByRole('region', { name: /^2일차/ });
+      await waitFor(() =>
+        expect(
+          within(screen.getByRole('region', { name: /^2일차/ })).getByText('빈 시간 3시간 0분'),
+        ).toBeInTheDocument(),
+      );
+      const now = screen.getByRole('region', { name: /^2일차/ });
+      expect(within(now).getByText(/근처 가고 싶은 곳: 아사쿠사 멘치/)).toBeInTheDocument();
+      expect(within(now).getByText('오늘 11:00 체크아웃 · 신주쿠 호텔')).toBeInTheDocument();
+      expect(
+        within(now).getByText(/^오늘 돌아보기 · 방문 2곳 · 약 1\.4km 이동$/),
+      ).toBeInTheDocument();
+      expect(day).toBeDefined();
+    } finally {
+      for (const id of ['freeTime', 'nearbyWish', 'checkout', 'dayRecap'] as const)
         setLab(id, false);
       vi.useRealTimers();
     }
@@ -435,7 +519,7 @@ describe('실험실', () => {
     useAuth.setState({ status: 'user', me: { ...me, isAdmin: false } });
     const router = createMemoryRouter(routes, { initialEntries: ['/labs'] });
     const { unmount } = render(<RouterProvider router={router} />);
-    await screen.findByRole('switch', { name: /다음 장소까지 거리/ });
+    await screen.findByRole('switch', { name: /빈 시간 보기/ });
     expect(screen.queryByRole('button', { name: '샘플 테스트' })).not.toBeInTheDocument();
     unmount();
 
@@ -458,11 +542,11 @@ describe('실험실', () => {
       new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Tokyo' }).format(new Date()),
     );
     expect(JSON.parse(localStorage.getItem('tp-labs')!)).toMatchObject({
-      legDistance: true,
-      memoFx: true,
-      compactList: true,
-      lodgingReturn: true,
-      busyDay: true,
+      freeTime: true,
+      nearbyWish: true,
+      checkout: true,
+      dayRecap: true,
+      nowScroll: true,
     });
 
     await act(() => admin.navigate('/labs'));
