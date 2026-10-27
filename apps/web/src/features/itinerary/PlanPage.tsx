@@ -301,7 +301,11 @@ function PlanView({
   useEffect(() => {
     const el = stickyRef.current;
     if (!el || typeof ResizeObserver === 'undefined') return;
-    const ro = new ResizeObserver(() => setStickyH(el.offsetHeight));
+    // 고정 영역의 실제 고정 위치(top) + 높이 = 날짜 머리가 붙을 자리 (화면마다 위 여백이 달라 직접 잰다)
+    const measure = () =>
+      setStickyH(Math.round((parseFloat(getComputedStyle(el).top) || 0) + el.offsetHeight));
+    measure();
+    const ro = new ResizeObserver(measure);
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
@@ -469,6 +473,7 @@ function PlanView({
           전체 화면 지도는 이 상자 안에서 fixed라 위 머리(z-20)보다 위로 올라오게 상자를 올린다 */}
       <div
         ref={stickyRef}
+        data-plan-sticky=""
         className={cn(
           'sticky top-[calc(var(--safe-top)+56px)] bg-bg pb-1',
           mapFull ? 'z-50' : 'z-10',
@@ -570,7 +575,7 @@ function PlanView({
       <div
         {...gestures}
         className={cn('flex flex-col px-5 pt-2', editing ? 'gap-6' : 'gap-4 pb-4')}
-        style={{ '--day-top': `calc(var(--safe-top) + 56px + ${stickyH}px)` } as CSSProperties}
+        style={{ '--day-top': `${stickyH}px` } as CSSProperties}
       >
         {/* 막 만든 여행: 무엇부터 할지 (docs/20 U5) */}
         {items.length === 0 && canEdit && !editing && (
