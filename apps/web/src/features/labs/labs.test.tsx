@@ -210,7 +210,7 @@ describe('실험실', () => {
       );
       const box = await screen.findByRole('region', { name: '날씨 보고 챙길 것' });
       await user.click(within(box).getByRole('button', { name: '우산 추가' }));
-      expect(await screen.findByText(/우산을 넣었어요/)).toBeInTheDocument();
+      expect(await screen.findByText(/우산 넣었어요/)).toBeInTheDocument();
       expect(screen.queryByRole('region', { name: '날씨 보고 챙길 것' })).not.toBeInTheDocument();
     } finally {
       vi.useRealTimers();

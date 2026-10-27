@@ -64,6 +64,12 @@ export function syncRepo(db: Db) {
       if (record.deletedAt && role !== 'owner') return { ok: false };
       return canEdit(role) ? { ok: true, tripId: record.id } : { ok: false };
     }
+    if (table === 'checklistItems') {
+      // 준비물·할 일·필수 항목은 사람마다 따로 (2026-10-27): 여행 멤버면(보기 전용도) 자기 것만 쓴다
+      if (!record.tripId || !roleOf(userId, record.tripId)) return { ok: false };
+      if (existing && existing.owner_user_id !== userId) return { ok: false };
+      return { ok: true, tripId: record.tripId };
+    }
     if (TRIP_SCOPED.includes(table)) {
       if (!record.tripId || !canEdit(roleOf(userId, record.tripId))) return { ok: false };
       // 다른 여행으로 옮기는 경우 원래 여행에도 권한이 있어야
@@ -150,21 +156,29 @@ export function syncRepo(db: Db) {
     return result;
   }
 
-  /** 내가 볼 수 있는 것만: 내 여행(멤버)과 그 하위 행, 내 개인 행 */
+  /**
+   * 내가 볼 수 있는 것만: 내 여행(멤버)과 그 하위 행, 내 개인 행.
+   * 준비 목록(checklistItems)은 내 것 + 일행이 한 번이라도 공유한 준비물(sharedAt — 공유를 끈 것도 숨기라고 내려준다)
+   */
   function pull(userId: string, since: number, limit: number): PullResult {
     const rows = db
       .prepare(
-        `SELECT table_name, data_json, rev FROM records
+        `SELECT table_name, data_json, rev, owner_user_id FROM records
          WHERE rev > ? AND (
            (trip_id IS NOT NULL AND trip_id IN (SELECT trip_id FROM trip_members WHERE user_id = ?))
            OR (trip_id IS NULL AND owner_user_id = ?)
          )
+         AND NOT (
+           table_name = 'checklistItems' AND owner_user_id != ?
+           AND json_extract(data_json, '$.sharedAt') IS NULL
+         )
          ORDER BY rev LIMIT ?`,
       )
-      .all(since, userId, userId, limit + 1) as {
+      .all(since, userId, userId, userId, limit + 1) as {
       table_name: SyncTable;
       data_json: string;
       rev: number;
+      owner_user_id: string | null;
     }[];
     const page = rows.slice(0, limit);
     // 내가 멤버인 여행: 내 역할 + 멤버 수
@@ -177,7 +191,14 @@ export function syncRepo(db: Db) {
     return {
       changes: page.map((r) => ({
         table: r.table_name,
-        record: { ...(JSON.parse(r.data_json) as { id: string; updatedAt: string }), rev: r.rev },
+        record: {
+          ...(JSON.parse(r.data_json) as { id: string; updatedAt: string }),
+          // 준비 목록: 누구 것인지 (기기에서 내 것·일행 공유를 나눈다)
+          ...(r.table_name === 'checklistItems' && r.owner_user_id
+            ? { ownerId: r.owner_user_id }
+            : {}),
+          rev: r.rev,
+        },
         rev: r.rev,
       })),
       nextRev: page.at(-1)?.rev ?? since,

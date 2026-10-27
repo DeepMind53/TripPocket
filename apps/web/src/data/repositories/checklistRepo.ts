@@ -7,6 +7,7 @@ import {
   type ChecklistItem,
 } from '@trippocket/shared';
 import { nowIso } from '../clock';
+import { useAuth } from '../authStore';
 import { db, toDomain } from '../db';
 
 export type ListKind = ChecklistItem['list'];
@@ -25,11 +26,17 @@ export interface DraftEntry extends NewChecklistEntry {
 
 const normalize = (s: string) => s.replace(/\s+/g, '').toLowerCase();
 
+/** 내 것인가: 만든 사람이 없으면(이 기기에서 만듦·예전 행) 내 것 (2026-10-27 개인별 준비 목록) */
+const mine = (r: { ownerId?: string | undefined }) => {
+  const me = useAuth.getState().me?.id;
+  return !r.ownerId || !me || r.ownerId === me;
+};
+
 async function listRows(tripId: string, list: ListKind) {
   const rows = await db.checklistItems
     .where('[tripId+list]')
     .equals([tripId, list])
-    .filter((r) => !r.deletedAt)
+    .filter((r) => !r.deletedAt && mine(r))
     .toArray();
   return rows.sort((a, b) => compareKeys(a.order, b.order) || compareKeys(a.id, b.id));
 }
@@ -37,6 +44,39 @@ async function listRows(tripId: string, list: ListKind) {
 export const checklistRepo = {
   async list(tripId: string, list: ListKind): Promise<ChecklistItem[]> {
     return (await listRows(tripId, list)).map(toDomain);
+  },
+
+  /** 일행이 공유한 준비물 (읽기 전용) */
+  async listShared(tripId: string): Promise<ChecklistItem[]> {
+    const rows = await db.checklistItems
+      .where('[tripId+list]')
+      .equals([tripId, 'packing'])
+      .filter((r) => !r.deletedAt && !mine(r) && r.shared === true)
+      .toArray();
+    return rows.sort((a, b) => compareKeys(a.order, b.order)).map(toDomain);
+  },
+
+  /**
+   * 내 준비물 중 공유할 것 정하기: ids에 있는 것만 공유, 나머지는 공유 끔. 바뀐 행만 고친다
+   * (처음 공유하면 sharedAt을 남긴다 — 끈 것도 일행 기기에 내려가 숨겨지도록)
+   */
+  async setShared(tripId: string, ids: ReadonlySet<string>): Promise<number> {
+    return db.transaction('rw', db.checklistItems, async () => {
+      const now = nowIso();
+      let changed = 0;
+      for (const r of await listRows(tripId, 'packing')) {
+        const on = ids.has(r.id);
+        if ((r.shared === true) === on) continue;
+        changed++;
+        await db.checklistItems.update(r.id, {
+          shared: on,
+          ...(on && !r.sharedAt ? { sharedAt: now } : {}),
+          updatedAt: now,
+          dirty: 1,
+        });
+      }
+      return changed;
+    });
   },
 
   /** 맨 뒤에 추가 */

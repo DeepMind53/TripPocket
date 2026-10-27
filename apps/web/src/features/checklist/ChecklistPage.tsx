@@ -1,10 +1,10 @@
 import type { ChecklistTemplate } from '@trippocket/shared';
-import { useTrip } from '../../data/hooks';
+import { useChecklist, useSharedPacking, useTrip } from '../../data/hooks';
 import { useEssentials } from '../essentials/useEssentials';
-import { Check, ListPlus, Plus, X } from 'lucide-react';
+import { Check, ListPlus, Plus, Share2, X } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useBeforeUnload, useBlocker, useParams } from 'react-router';
-import { useCanEdit } from '../../data/tripRoles';
+import { useMemberCount } from '../../data/tripRoles';
 import type { PrepList as ListKind } from '../../data/repositories/checklistRepo';
 import { useTranslation } from '../../i18n';
 import { useBottomInset } from '../../shared/hooks/useBottomInset';
@@ -24,6 +24,8 @@ import { ChecklistBoard } from './ChecklistBoard';
 import { TemplateSheet } from './TemplateSheet';
 import { useChecklistDraft, type Draft } from './useChecklistDraft';
 import { WeatherPackingTips } from './WeatherPackingTips';
+import { SharePackingSheet } from './SharePackingSheet';
+import { SharedPacking } from './SharedPacking';
 
 /**
  * S-18 준비: 준비물 / 할 일.
@@ -34,8 +36,13 @@ export function ChecklistPage() {
   const { tripId = '' } = useParams();
   const [list, setList] = useState<ListKind>('packing');
   const { draft, dirty, actions, save, cancel } = useChecklistDraft(tripId);
-  // 보기 전용으로 공유받은 여행: 보기만 (data/tripRoles.ts)
-  const canEdit = useCanEdit(tripId);
+  // 준비 목록은 사람마다 따로라 보기 전용으로 받은 여행도 내 목록은 고친다 (2026-10-27)
+  const canEdit = true;
+  // 일행과 공유: 함께 쓰는 사람이 있을 때만
+  const members = useMemberCount(tripId);
+  const savedPacking = useChecklist(tripId, 'packing') ?? [];
+  const sharedFromOthers = useSharedPacking(tripId) ?? [];
+  const [shareOpen, setShareOpen] = useRouteSheet('checklist-share');
   const [templateOpen, setTemplateOpen] = useRouteSheet('checklist-template');
   const [saving, setSaving] = useState(false);
   // 해외 여행이면 맨 위에 나라별 필수 항목 바로가기 (docs/19)
@@ -125,6 +132,36 @@ export function ChecklistPage() {
           }}
         />
       )}
+
+      {/* 일행과 공유 (준비물만) */}
+      {list === 'packing' && members > 1 && (
+        <Button
+          variant="secondary"
+          fullWidth
+          leading={<Share2 aria-hidden="true" className="size-4" />}
+          onClick={() => setShareOpen(true)}
+        >
+          {savedPacking.some((i) => i.shared)
+            ? t('checklist.share.buttonOn', { n: savedPacking.filter((i) => i.shared).length })
+            : t('checklist.share.button')}
+        </Button>
+      )}
+      {list === 'packing' && (
+        <SharedPacking
+          items={sharedFromOthers}
+          have={draft.packing.map((i) => i.text)}
+          onAdd={(i) => {
+            actions.add('packing', { text: i.text, category: i.category });
+            toast(t('labs.packAdded', { text: i.text }));
+          }}
+        />
+      )}
+      <SharePackingSheet
+        open={shareOpen}
+        onOpenChange={setShareOpen}
+        tripId={tripId}
+        items={savedPacking}
+      />
 
       {total === 0 && list === 'todo' && (
         <p className="py-6 text-center text-body-2 text-fg-muted">{t('checklist.emptyTodo')}</p>

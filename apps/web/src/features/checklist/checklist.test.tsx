@@ -3,7 +3,10 @@ import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { routes } from '../../app/router';
 import { resetLocalDb } from '../../data/dev';
+import { useAuth } from '../../data/authStore';
+import { db } from '../../data/db';
 import { checklistRepo } from '../../data/repositories/checklistRepo';
+import { setMemberCounts } from '../../data/tripRoles';
 import { templateRepo } from '../../data/repositories/templateRepo';
 import { tripRepo } from '../../data/repositories/tripRepo';
 import { Toaster } from '../../shared/ui';
@@ -180,5 +183,79 @@ describe('템플릿 관리', () => {
     await user.click(await screen.findByRole('button', { name: '빠른 메뉴' }));
     await user.click(screen.getByRole('button', { name: '준비물' }));
     await waitFor(() => expect(router.state.location.pathname).toBe(`/trips/${tripId}/checklist`));
+  });
+});
+
+describe('준비물 개인별 · 일행과 공유 (2026-10-27)', () => {
+  afterEach(() => {
+    useAuth.setState({ status: 'unknown', me: null });
+    setMemberCounts({});
+  });
+
+  it('그룹 전체 체크로 공유, 일행이 공유한 것은 따로 보이고 [담기]로 내 목록에', async () => {
+    useAuth.setState({
+      status: 'user',
+      me: { id: 'u-me', nickname: 'n', createdAt: '', providers: [] },
+    });
+    setMemberCounts({ [tripId]: 2 });
+    await checklistRepo.add(tripId, 'packing', { text: '여권', category: '서류' });
+    await checklistRepo.add(tripId, 'packing', { text: '항공권', category: '서류' });
+    await checklistRepo.add(tripId, 'packing', { text: '충전기', category: '전자기기' });
+    // 일행(u-friend)이 공유한 준비물 (동기화로 받은 행)
+    await db.checklistItems.add({
+      id: 'f1',
+      tripId,
+      list: 'packing',
+      text: '보조배터리',
+      category: '전자기기',
+      checked: false,
+      order: 'a0',
+      ownerId: 'u-friend',
+      shared: true,
+      sharedAt: '2026-10-27T00:00:00.000Z',
+      createdAt: '2026-10-27T00:00:00.000Z',
+      updatedAt: '2026-10-27T00:00:00.000Z',
+      dirty: 0,
+    });
+    // 일행의 공유 안 한 준비물은 안 보인다
+    await db.checklistItems.add({
+      id: 'f2',
+      tripId,
+      list: 'packing',
+      text: '비밀 메모',
+      checked: false,
+      order: 'a1',
+      ownerId: 'u-friend',
+      createdAt: '2026-10-27T00:00:00.000Z',
+      updatedAt: '2026-10-27T00:00:00.000Z',
+      dirty: 0,
+    });
+    const user = userEvent.setup();
+    renderAt(`/trips/${tripId}/checklist`);
+    const others = await screen.findByRole('region', { name: '일행이 공유한 준비물' });
+    expect(within(others).getByText('보조배터리')).toBeInTheDocument();
+    expect(screen.queryByText('비밀 메모')).toBeNull();
+    // 내 목록에는 일행 것이 섞이지 않는다
+    expect((await checklistRepo.list(tripId, 'packing')).map((i) => i.text)).toEqual([
+      '여권',
+      '항공권',
+      '충전기',
+    ]);
+
+    await user.click(screen.getByRole('button', { name: '일행과 준비물 공유' }));
+    const sheet = await screen.findByRole('dialog', { name: '일행과 공유할 준비물' });
+    await user.click(within(sheet).getByRole('checkbox', { name: '서류 전체' }));
+    await user.click(within(sheet).getByRole('button', { name: '2개 공유하기' }));
+    await waitFor(async () =>
+      expect(
+        (await checklistRepo.list(tripId, 'packing')).filter((i) => i.shared).map((i) => i.text),
+      ).toEqual(['여권', '항공권']),
+    );
+    expect(
+      await screen.findByRole('button', { name: '일행과 공유 중 2개 · 바꾸기' }),
+    ).toBeInTheDocument();
+
+    await user.click(within(others).getByRole('button', { name: '보조배터리 내 목록에 담기' }));
+    expect(await screen.findByText(/보조배터리 넣었어요/)).toBeInTheDocument();
   });
 });

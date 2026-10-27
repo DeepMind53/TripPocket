@@ -225,3 +225,87 @@ describe('저장한 장소 200곳 제한', () => {
     expect(other.applied).toHaveLength(1);
   });
 });
+
+describe('준비 목록은 사람마다 (2026-10-27)', () => {
+  const check = (id: string, tripId: string, extra: object = {}) => ({
+    id,
+    tripId,
+    list: 'packing',
+    text: '여권',
+    checked: false,
+    order: 'a0',
+    createdAt: T,
+    updatedAt: T,
+    ...extra,
+  });
+  const T1 = U('t1');
+  const changesOf = async (sid: string) =>
+    (await pull(sid))
+      .json<{ changes: { table: string; record: Record<string, unknown> }[] }>()
+      .changes.filter((c) => c.table === 'checklistItems')
+      .map((c) => c.record);
+
+  beforeEach(async () => {
+    await push(A, [{ table: 'trips', record: trip(T1), baseRev: null }]);
+    db.prepare(
+      "INSERT INTO trip_members (trip_id, user_id, role, created_at) VALUES (?, 'u-B', 'viewer', ?)",
+    ).run(T1, T);
+  });
+
+  it('내 것만 내려받고, 보기 전용 멤버도 자기 목록은 쓴다', async () => {
+    await push(A, [{ table: 'checklistItems', record: check(U('ca'), T1), baseRev: null }]);
+    const r = await push(B, [
+      { table: 'checklistItems', record: check(U('cb'), T1, { text: '충전기' }), baseRev: null },
+    ]);
+    expect(r.json().applied).toHaveLength(1);
+    const a = await changesOf(A);
+    expect(a.map((x) => [x.text, x.ownerId])).toEqual([['여권', 'u-A']]);
+    expect((await changesOf(B)).map((x) => x.text)).toEqual(['충전기']);
+  });
+
+  it('공유한 준비물만 일행에게, 공유를 끄면 끈 것도 내려가 숨기게, 남의 것은 못 고친다', async () => {
+    await push(A, [{ table: 'checklistItems', record: check(U('ca'), T1), baseRev: null }]);
+    await push(A, [
+      {
+        table: 'checklistItems',
+        record: check(U('ca'), T1, {
+          shared: true,
+          sharedAt: T,
+          updatedAt: '2026-10-24T00:00:00.000Z',
+        }),
+        baseRev: 1,
+      },
+    ]);
+    const seen = await changesOf(B);
+    expect(seen).toHaveLength(1);
+    expect(seen[0]).toMatchObject({ text: '여권', shared: true, ownerId: 'u-A' });
+    // B가 A의 항목을 고치려 하면 거부
+    const r = await push(B, [
+      { table: 'checklistItems', record: check(U('ca'), T1, { checked: true }), baseRev: null },
+    ]);
+    expect(r.json().rejected).toEqual([
+      { table: 'checklistItems', id: U('ca'), reason: 'forbidden' },
+    ]);
+    // 공유 끔 → B에게도 내려간다 (shared: false)
+    await push(A, [
+      {
+        table: 'checklistItems',
+        record: check(U('ca'), T1, {
+          shared: false,
+          sharedAt: T,
+          updatedAt: '2026-10-25T00:00:00.000Z',
+        }),
+        baseRev: null,
+      },
+    ]);
+    expect((await changesOf(B))[0]).toMatchObject({ shared: false });
+  });
+
+  it('멤버가 아니면 못 쓴다', async () => {
+    const C = userWithSession('C');
+    const r = await push(C, [
+      { table: 'checklistItems', record: check(U('cc'), T1), baseRev: null },
+    ]);
+    expect(r.json().rejected).toHaveLength(1);
+  });
+});

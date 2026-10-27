@@ -318,6 +318,21 @@
     "noBreakfast": "조식 없음"
   },
   "checklist": {
+    "share": {
+      "button": "일행과 준비물 공유",
+      "buttonOn": "일행과 공유 중 {{n}}개 · 바꾸기",
+      "title": "일행과 공유할 준비물",
+      "desc": "체크한 것만 일행에게 보여요\n일행은 보기·담기만 할 수 있어요",
+      "empty": "저장한 준비물이 아직 없어요",
+      "noGroup": "분류 없음",
+      "group": "{{name}} 전체",
+      "save": "{{n}}개 공유하기",
+      "saved": "준비물 {{n}}개를 공유했어요",
+      "fromOthers": "일행이 공유한 준비물",
+      "add": "담기",
+      "addOf": "{{name}} 내 목록에 담기",
+      "have": "이미 있어요"
+    },
     "emptyTitle": "준비물을 챙겨볼까요?",
     "emptyDesc": "템플릿으로 준비물과 할 일을 빠르게 만들 수 있어요",
     "packing": "준비물",
@@ -1075,7 +1090,7 @@
     "dayRouteDesc": "장소 순서대로 Google 지도 길찾기",
     "packTitle": "날씨 보고 챙길 것",
     "packAdd": "{{text}} 추가",
-    "packAdded": "{{text}}을 넣었어요\n저장해야 반영돼요",
+    "packAdded": "{{text}} 넣었어요\n저장해야 반영돼요",
     "packReason": {
       "rain": "비 예보",
       "snow": "눈 예보",

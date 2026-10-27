@@ -77,6 +77,8 @@ export class TripPocketDB extends Dexie {
     this.version(6).stores({}).upgrade(upgradeToV6);
     // v7 (2026-10-26): 저장한 장소에 나라 코드(countryCode) — 인덱스 없음, 예전 행은 저장 탭을 열 때 도시 이름으로 채운다
     this.version(7).stores({});
+    // v8 (2026-10-27): 준비 목록 개인별 — 만든 사람(ownerId)·공유(shared·sharedAt). 인덱스 없음, 예전 행은 내 것으로 본다
+    this.version(8).stores({});
   }
 }
 
@@ -90,7 +92,6 @@ const tripScoped = {
   trips: (key: unknown) => String(key),
   items: (_: unknown, row?: { tripId?: string }) => row?.tripId,
   bookings: (_: unknown, row?: { tripId?: string }) => row?.tripId,
-  checklistItems: (_: unknown, row?: { tripId?: string }) => row?.tripId,
 } as const;
 for (const [name, tripOf] of Object.entries(tripScoped)) {
   const table = db.table(name);

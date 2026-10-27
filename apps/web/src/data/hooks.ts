@@ -75,6 +75,11 @@ export function useChecklist(
   return useLiveQuery(async () => (tripId ? checklistRepo.list(tripId, list) : []), [tripId, list]);
 }
 
+/** 일행이 공유한 준비물 (2026-10-27) */
+export function useSharedPacking(tripId: string | undefined): ChecklistItem[] | undefined {
+  return useLiveQuery(async () => (tripId ? checklistRepo.listShared(tripId) : []), [tripId]);
+}
+
 export function useTemplates(list: PrepList): ChecklistTemplate[] | undefined {
   return useLiveQuery(() => templateRepo.list(list), [list]);
 }

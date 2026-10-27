@@ -179,6 +179,13 @@ export const ChecklistItemSchema = z.object({
   text: nonEmpty(100),
   checked: z.boolean(),
   order: z.string().check(z.minLength(1)),
+  // ── 2026-10-27 개인별 준비 목록 (사용자 요청) ──
+  /** 만든 사람 (서버가 동기화로 내려줄 때 채움 — 기기에서 보내도 무시) */
+  ownerId: z.optional(z.string().check(z.maxLength(64))),
+  /** 준비물만: 일행에게 공유 중 */
+  shared: z.optional(z.boolean()),
+  /** 처음 공유한 시각 — 공유를 끄면 일행 기기에서도 숨기도록 계속 내려준다 */
+  sharedAt: z.optional(IsoDateTimeSchema),
 });
 export type ChecklistItem = z.infer<typeof ChecklistItemSchema>;
 

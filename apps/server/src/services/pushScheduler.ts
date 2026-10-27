@@ -88,9 +88,9 @@ export function planPushes(db: Db, now: Date): PlannedPush[] {
           (
             db
               .prepare(
-                `SELECT data_json FROM records WHERE table_name = 'checklistItems' AND trip_id = ? AND deleted_at IS NULL`,
+                `SELECT data_json FROM records WHERE table_name = 'checklistItems' AND trip_id = ? AND owner_user_id = ? AND deleted_at IS NULL`,
               )
-              .all(trip.id) as { data_json: string }[]
+              .all(trip.id, userId) as { data_json: string }[]
           )
             .map((r) => JSON.parse(r.data_json) as { list: string; text: string; checked: boolean })
             .filter((c) => c.list === 'essentials' && c.checked)
