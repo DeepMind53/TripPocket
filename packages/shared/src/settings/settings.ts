@@ -33,6 +33,14 @@ export interface Settings {
   legDistance: boolean;
   /** 일정 줄 간격 좁게 (2026-10-27 실험실에서 정식, 기본 끔) */
   compactList: boolean;
+  /** 그날 장소 1km 안의 가고 싶은 곳 알림 (2026-10-27 실험실에서 정식) */
+  nearbyWish: boolean;
+  /** 숙소 체크아웃 날 일정 맨 위에 체크아웃 시각 (2026-10-27 실험실에서 정식) */
+  checkoutNotice: boolean;
+  /** 오늘·지난 날 끝에 방문한 곳 수·이동 거리 (2026-10-27 실험실에서 정식) */
+  dayRecap: boolean;
+  /** 여행 중 일정 화면을 열면 진행 중인 일정으로 이동 (2026-10-27 실험실에서 정식) */
+  nowScroll: boolean;
   /** ⚡ 빠른 메뉴 버튼 보이기 */
   quickButton: boolean;
   /** AI 추천을 열 때 처음 골라 둘 카테고리 */
@@ -61,6 +69,10 @@ export const SETTINGS_DEFAULTS: Settings = {
   sunTimes: true,
   legDistance: true,
   compactList: false,
+  nearbyWish: true,
+  checkoutNotice: true,
+  dayRecap: true,
+  nowScroll: true,
   quickButton: true,
   aiCats: ['food', 'cafe'],
   aiAnchor: 'text',
@@ -91,6 +103,10 @@ const VALID: { [K in keyof Settings]: (v: unknown) => v is Settings[K] } = {
   sunTimes: (v): v is boolean => typeof v === 'boolean',
   legDistance: (v): v is boolean => typeof v === 'boolean',
   compactList: (v): v is boolean => typeof v === 'boolean',
+  nearbyWish: (v): v is boolean => typeof v === 'boolean',
+  checkoutNotice: (v): v is boolean => typeof v === 'boolean',
+  dayRecap: (v): v is boolean => typeof v === 'boolean',
+  nowScroll: (v): v is boolean => typeof v === 'boolean',
   quickButton: (v): v is boolean => typeof v === 'boolean',
   aiCats: (v): v is Settings['aiCats'] =>
     Array.isArray(v) &&

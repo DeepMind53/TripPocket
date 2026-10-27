@@ -104,7 +104,6 @@ import { dayRouteUrl } from '../../domain/dayRoute';
 import { sunSlot, sunTimes } from '../../domain/sun';
 import { checkoutsOn, dayRecap, nearbyWishes } from '../../domain/dayExtras';
 import { distanceKm, formatDistance, walkMinutes } from '@trippocket/shared';
-import { useLab } from '../../data/labsStore';
 import { DayWeatherBadge } from '../common/DayWeatherBadge';
 import { useTripWeather, type TripDayWeather } from '../common/useTripWeather';
 import { confirmDelete } from '../../shared/ui';
@@ -182,8 +181,8 @@ function PlanView({
   const [openRuns, setOpenRuns] = useState<ReadonlySet<string>>(new Set());
   const dayIndexOf = useCallback((d: LocalDate) => days.indexOf(d), [days]);
   const ongoing = getTripStatus(trip.startDate, trip.endDate, today) === 'ongoing';
-  // 실험실 "지금 일정으로 이동": 여행 중 일정 화면을 열면 진행 중 일정(없으면 오늘 칸)으로 한 번 스크롤
-  const nowScroll = useLab('nowScroll');
+  // 설정 "지금 일정으로 이동": 여행 중 일정 화면을 열면 진행 중 일정(없으면 오늘 칸)으로 한 번 스크롤
+  const nowScroll = useSettings((st) => st.nowScroll);
   useEffect(() => {
     if (!nowScroll || !ongoing) return;
     const id = window.setTimeout(() => {
@@ -923,10 +922,10 @@ function DaySection({
   const copyDayOn = true;
   const dayRouteOn = true;
   const compact = useSettings((st) => st.compactList);
-  // 실험실 (2026-10-27 새 실험)
-  const nearbyOn = useLab('nearbyWish');
-  const checkoutOn = useLab('checkout');
-  const recapOn = useLab('dayRecap');
+  // 설정 "일정" (2026-10-27 실험실에서 정식)
+  const nearbyOn = useSettings((st) => st.nearbyWish);
+  const checkoutOn = useSettings((st) => st.checkoutNotice);
+  const recapOn = useSettings((st) => st.dayRecap);
   const dupOn = true;
   // 여행 당일: 현지 시각으로 지금 진행 중인 일정 (1분마다 다시 계산)
   const now = useMinuteClock(isToday);

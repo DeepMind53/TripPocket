@@ -4,10 +4,12 @@ import { NotificationGroup } from './NotificationGroup';
 import { DeviceDataGroup } from './DeviceDataGroup';
 import { reviewsApi } from '../../data/api/reviews';
 import { maskedName } from '@trippocket/shared';
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { resetSettings, updateSettings, useSettings } from '../../data/settingsStore';
 import { useTranslation } from '../../i18n';
 import {
+  BottomSheet,
+  Button,
   Chip,
   RadioList,
   SegmentedControl,
@@ -19,6 +21,8 @@ import {
 } from '../../shared/ui';
 import { resetQuickButtonPosition } from '../common/FloatingQuickButton';
 import { MapAppMark } from '../common/MapAppMark';
+import { FeaturePreview } from '../common/FeaturePreview';
+import type { PreviewId } from '../common/previewIds';
 
 const FONT_SCALES = [0.9, 1, 1.15, 1.3] as const;
 
@@ -194,6 +198,10 @@ export function SettingsPage() {
               'sunTimes',
               'legDistance',
               'compactList',
+              'nearbyWish',
+              'checkoutNotice',
+              'dayRecap',
+              'nowScroll',
             ])
           }
         >
@@ -210,31 +218,28 @@ export function SettingsPage() {
               }))}
             />
           </Field>
-          <SwitchRow
-            label={t('settings.dimPast')}
-            checked={s.dimPastItems}
-            onChange={set('dimPastItems')}
-          />
-          <SwitchRow
-            label={t('settings.planMapOpen')}
-            checked={s.planMapOpen}
-            onChange={set('planMapOpen')}
-          />
-          <SwitchRow
-            label={t('settings.sunTimes')}
-            checked={s.sunTimes}
-            onChange={set('sunTimes')}
-          />
-          <SwitchRow
-            label={t('settings.legDistance')}
-            checked={s.legDistance}
-            onChange={set('legDistance')}
-          />
-          <SwitchRow
-            label={t('settings.compactList')}
-            checked={s.compactList}
-            onChange={set('compactList')}
-          />
+          {/* 일정 화면 표시 — 항목마다 [샘플] 미리보기 (사용자 요청 2026-10-27) */}
+          {(
+            [
+              ['dimPastItems', 'settings.dimPast'],
+              ['planMapOpen', 'settings.planMapOpen'],
+              ['sunTimes', 'settings.sunTimes'],
+              ['legDistance', 'settings.legDistance'],
+              ['compactList', 'settings.compactList'],
+              ['nearbyWish', 'settings.nearbyWish'],
+              ['checkoutNotice', 'settings.checkoutNotice'],
+              ['dayRecap', 'settings.dayRecap'],
+              ['nowScroll', 'settings.nowScroll'],
+            ] as const
+          ).map(([key, label]) => (
+            <SwitchRow
+              key={key}
+              label={t(label)}
+              checked={s[key]}
+              onChange={set(key)}
+              preview={key}
+            />
+          ))}
         </Group>
 
         <Group title={t('settings.ai')} onReset={() => resetSettings(['aiCats', 'aiAnchor'])}>
@@ -435,15 +440,51 @@ function SwitchRow({
   label,
   checked,
   onChange,
+  preview,
 }: {
   label: string;
   checked: boolean;
   onChange: (v: boolean) => void;
+  /** 있으면 [샘플] — 켜면 어떻게 보이는지 미리보기 */
+  preview?: PreviewId;
 }) {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
   return (
-    <div className="flex items-center justify-between gap-3">
-      <span className="text-body-2 font-medium">{label}</span>
+    <div className="flex items-center justify-between gap-2">
+      <span className="min-w-0 flex-1 text-body-2 font-medium">{label}</span>
+      {preview && (
+        <Button
+          size="sm"
+          variant="secondary"
+          onClick={() => setOpen(true)}
+          aria-label={t('labs.previewOf', { name: label })}
+        >
+          {t('labs.preview')}
+        </Button>
+      )}
       <Switch label={label} checked={checked} onCheckedChange={onChange} />
+      {preview && (
+        <BottomSheet
+          open={open}
+          onOpenChange={setOpen}
+          title={t('labs.previewOf', { name: label })}
+        >
+          <div className="flex flex-col gap-3 pb-2">
+            <FeaturePreview id={preview} />
+            <Button
+              fullWidth
+              variant={checked ? 'secondary' : 'primary'}
+              onClick={() => {
+                onChange(!checked);
+                setOpen(false);
+              }}
+            >
+              {checked ? t('labs.turnOff') : t('labs.turnOn')}
+            </Button>
+          </div>
+        </BottomSheet>
+      )}
     </div>
   );
 }

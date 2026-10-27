@@ -5,7 +5,8 @@ import { useAuth } from '../../data/authStore';
 import { LABS, setLab, useLab, type LabId } from '../../data/labsStore';
 import { useTranslation } from '../../i18n';
 import { BottomSheet, Button, Switch, toast, TopBar } from '../../shared/ui';
-import { LabPreview } from './LabPreview';
+import { FeaturePreview } from '../common/FeaturePreview';
+import { hasPreview } from '../common/previewIds';
 
 /** 마이 → 실험실: 정식 기능 전에 시험해 보는 기능 켜기/끄기 (이 기기에만 저장) */
 export function LabsPage() {
@@ -18,11 +19,17 @@ export function LabsPage() {
           <FlaskConical aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-primary" />
           {t('labs.desc')}
         </p>
-        <ul className="flex flex-col divide-y divide-line overflow-hidden rounded-card border border-line">
-          {LABS.map((id) => (
-            <LabRow key={id} id={id} />
-          ))}
-        </ul>
+        {LABS.length === 0 ? (
+          <p className="rounded-card border border-line px-4 py-6 text-center text-body-2 whitespace-pre-line text-fg-muted">
+            {t('labs.none')}
+          </p>
+        ) : (
+          <ul className="flex flex-col divide-y divide-line overflow-hidden rounded-card border border-line">
+            {LABS.map((id) => (
+              <LabRow key={id} id={id} />
+            ))}
+          </ul>
+        )}
         <SampleTest />
       </div>
     </div>
@@ -42,18 +49,20 @@ function LabRow({ id }: { id: LabId }) {
         <span className="text-caption text-fg-muted">{t(`labs.item.${id}.desc`)}</span>
       </label>
       {/* 켜기 전에 바로 보는 미리보기 (사용자 요청 2026-10-27) */}
-      <Button
-        size="sm"
-        variant="secondary"
-        onClick={() => setPreview(true)}
-        aria-label={t('labs.previewOf', { name })}
-      >
-        {t('labs.preview')}
-      </Button>
+      {hasPreview(id) && (
+        <Button
+          size="sm"
+          variant="secondary"
+          onClick={() => setPreview(true)}
+          aria-label={t('labs.previewOf', { name })}
+        >
+          {t('labs.preview')}
+        </Button>
+      )}
       <Switch id={inputId} checked={on} onCheckedChange={(v) => setLab(id, v)} />
       <BottomSheet open={preview} onOpenChange={setPreview} title={t('labs.previewOf', { name })}>
         <div className="flex flex-col gap-3 pb-2">
-          <LabPreview id={id} />
+          {hasPreview(id) && <FeaturePreview id={id} />}
           <Button
             fullWidth
             variant={on ? 'secondary' : 'primary'}

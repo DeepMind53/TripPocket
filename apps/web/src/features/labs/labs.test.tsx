@@ -4,8 +4,8 @@ import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { routes } from '../../app/router';
 import { resetLocalDb } from '../../data/dev';
-import { LABS, setLab } from '../../data/labsStore';
-import { updateSettings } from '../../data/settingsStore';
+import { LABS } from '../../data/labsStore';
+import { updateSettings, useSettings } from '../../data/settingsStore';
 import { bookingRepo } from '../../data/repositories/bookingRepo';
 import { itemRepo } from '../../data/repositories/itemRepo';
 import { trashRepo } from '../../data/repositories/trashRepo';
@@ -20,38 +20,13 @@ beforeEach(async () => {
 });
 
 describe('실험실', () => {
-  it('마이 → 실험실에서 켜고 끄면 이 기기에 저장', async () => {
+  it('마이 → 실험실: 지금은 시험 중인 기능이 없다는 안내, 정식이 된 것은 없음 (2026-10-27)', async () => {
     const user = userEvent.setup();
     render(<RouterProvider router={createMemoryRouter(routes, { initialEntries: ['/me'] })} />);
     await user.click(await screen.findByRole('link', { name: '실험실' }));
-    const sw = await screen.findByRole('switch', { name: /근처 가고 싶은 곳/ });
-    expect(sw).toHaveAttribute('aria-checked', 'false');
-    await user.click(sw);
-    expect(sw).toHaveAttribute('aria-checked', 'true');
-    expect(JSON.parse(localStorage.getItem('tp-labs')!)).toEqual({ nearbyWish: true });
-    // 실험실 목록(LABS)마다 스위치 하나
-    expect(
-      screen.getAllByRole('switch').map((s) => s.getAttribute('aria-label') ?? s.id),
-    ).toHaveLength(LABS.length);
-    expect(screen.queryByRole('switch', { name: /현지 시각 표시/ })).toBeNull();
-    expect(screen.queryByRole('switch', { name: /당겨서 동기화/ })).toBeNull();
-    // 2026-10-27 정식이 되거나 빠진 것
-    for (const name of [
-      /화면 켜짐 유지/,
-      /방문 기록/,
-      /긴급 연락처/,
-      /여행 회고/,
-      /오늘 일정 진행률/,
-      /일출/,
-      /다음 장소까지 거리/,
-      /메모 속 외화/,
-      /촘촘히/,
-      /숙소까지 거리/,
-      /빠듯한 하루/,
-    ])
-      expect(screen.queryByRole('switch', { name })).toBeNull();
-    for (const name of [/근처 가고 싶은 곳/, /오늘 체크아웃/, /하루 돌아보기/, /지금 일정으로/])
-      expect(screen.getByRole('switch', { name })).toBeInTheDocument();
+    expect(await screen.findByText(/지금 시험 중인 기능이 없어요/)).toBeInTheDocument();
+    expect(LABS).toHaveLength(0);
+    expect(screen.queryAllByRole('switch')).toHaveLength(0);
   });
 
   it('실험: 오늘 진행률 · 하루 일정 글로 복사 (2026-10-26)', async () => {
@@ -298,7 +273,7 @@ describe('실험실', () => {
     }
   });
 
-  it('새 실험 (2026-10-27): 근처 가고 싶은 곳 · 오늘 체크아웃 · 하루 돌아보기', async () => {
+  it('정식(설정 기본 켬, 2026-10-27): 근처 가고 싶은 곳 · 오늘 체크아웃 · 하루 돌아보기', async () => {
     vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(new Date('2026-10-25T09:00:00Z')); // 도쿄 10.25 18:00 = 2일차
     try {
@@ -344,7 +319,6 @@ describe('실험실', () => {
         title: '아사쿠사 멘치',
         place: at(35.7128, 139.7951),
       });
-      for (const id of ['nearbyWish', 'checkout', 'dayRecap'] as const) setLab(id, true);
       render(
         <RouterProvider
           router={createMemoryRouter(routes, { initialEntries: [`/trips/${trip.id}/plan?day=2`] })}
@@ -365,22 +339,25 @@ describe('실험실', () => {
       ).toBeInTheDocument();
       expect(day).toBeDefined();
     } finally {
-      for (const id of ['nearbyWish', 'checkout', 'dayRecap'] as const) setLab(id, false);
       vi.useRealTimers();
     }
   });
 
-  it('실험 옆 [샘플]: 켜기 전에 미리보기, 시트에서 바로 켜기 (2026-10-27)', async () => {
+  it('설정 → 일정 항목마다 [샘플]: 미리보기, 시트에서 바로 끄기 (2026-10-27)', async () => {
     const user = userEvent.setup();
-    render(<RouterProvider router={createMemoryRouter(routes, { initialEntries: ['/labs'] })} />);
-    await user.click(await screen.findByRole('button', { name: '오늘 체크아웃 알림 샘플' }));
-    const sheet = await screen.findByRole('dialog', { name: '오늘 체크아웃 알림 샘플' });
+    render(
+      <RouterProvider router={createMemoryRouter(routes, { initialEntries: ['/settings'] })} />,
+    );
+    await user.click(
+      await screen.findByRole('button', { name: '체크아웃 날 시각 보여 주기 샘플' }),
+    );
+    const sheet = await screen.findByRole('dialog', { name: '체크아웃 날 시각 보여 주기 샘플' });
     expect(within(sheet).getByText('오늘 11:00 체크아웃 · 신주쿠 호텔')).toBeInTheDocument();
-    await user.click(within(sheet).getByRole('button', { name: '이 기능 켜기' }));
-    expect(JSON.parse(localStorage.getItem('tp-labs')!)).toMatchObject({ checkout: true });
-    // 실험마다 샘플 버튼 하나
-    expect(screen.getAllByRole('button', { name: / 샘플$/ })).toHaveLength(LABS.length);
-    setLab('checkout', false);
+    await user.click(within(sheet).getByRole('button', { name: '이 기능 끄기' }));
+    expect(useSettings.getState().checkoutNotice).toBe(false);
+    // 일정 표시 항목 9개 모두 샘플 버튼
+    expect(screen.getAllByRole('button', { name: / 샘플$/ })).toHaveLength(9);
+    updateSettings({ checkoutNotice: true });
   });
 
   it('현지 시각: 시간대가 기기와 다를 때만', () => {
@@ -525,7 +502,7 @@ describe('실험실', () => {
     useAuth.setState({ status: 'user', me: { ...me, isAdmin: false } });
     const router = createMemoryRouter(routes, { initialEntries: ['/labs'] });
     const { unmount } = render(<RouterProvider router={router} />);
-    await screen.findByRole('switch', { name: /근처 가고 싶은 곳/ });
+    await screen.findByText(/지금 시험 중인 기능이 없어요/);
     expect(screen.queryByRole('button', { name: '샘플 테스트' })).not.toBeInTheDocument();
     unmount();
 
@@ -547,12 +524,6 @@ describe('실험실', () => {
     expect(tokyo.startDate).toBe(
       new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Tokyo' }).format(new Date()),
     );
-    expect(JSON.parse(localStorage.getItem('tp-labs')!)).toMatchObject({
-      nearbyWish: true,
-      checkout: true,
-      dayRecap: true,
-      nowScroll: true,
-    });
 
     await act(() => admin.navigate('/labs'));
     await user.click(await screen.findByRole('button', { name: '샘플 지우기' }));
