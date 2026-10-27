@@ -677,7 +677,7 @@ function PlanView({
                         const stay = items.find((i) => i.bookingId === b.id);
                         if (stay) return openDetail(stay);
                         const d = { name: b.title, address: b.details?.address };
-                        if (openDirectionsDirect(d)) return;
+                        if (openDirectionsDirect(d, isDomestic)) return;
                         setDirDest(d);
                         setDirOpen(true);
                       }}
@@ -815,7 +815,7 @@ function PlanView({
             address: selected.place?.address,
             coords: selected.place?.coords,
           };
-          if (openDirectionsDirect(d)) return;
+          if (openDirectionsDirect(d, isDomestic)) return;
           setDirDest(d);
           setDirOpen(true);
         }}
@@ -1072,9 +1072,10 @@ function DaySection({
         </p>
       )}
       {/* 실험실: 체크인 */}
-      {ins.map((o) => (
+      {ins.map((o, i) => (
         <p
-          key={`in-${o.title}`}
+          // 같은 숙소 방 두 개처럼 이름이 겹칠 수 있다
+          key={`in-${i}-${o.title}`}
           className="mx-3 mt-2 flex items-center gap-2 rounded-btn bg-bg-subtle px-3 py-2 text-caption text-fg-sub"
         >
           <span aria-hidden="true">🛎️</span>
@@ -1088,9 +1089,9 @@ function DaySection({
         <p className="mx-4 mt-2 text-micro text-fg-muted">{t('labs.dayWalk', { km: walkKm })}</p>
       )}
       {/* 실험실: 오늘 체크아웃 */}
-      {outs.map((o) => (
+      {outs.map((o, i) => (
         <p
-          key={o.title}
+          key={`out-${i}-${o.title}`}
           className="mx-3 mt-2 flex items-center gap-2 rounded-btn bg-warning/10 px-3 py-2 text-caption text-fg-sub"
         >
           <span aria-hidden="true">🧳</span>

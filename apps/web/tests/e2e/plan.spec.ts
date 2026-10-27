@@ -22,15 +22,12 @@ test('일정: 추가 → 상세 → 길찾기 → 삭제·실행 취소', async 
   const detail = page.getByRole('dialog', { name: '이치란 라멘' });
   await expect(detail).toContainText('신주쿠 3-34-11');
 
+  // 해외 여행은 묻지 않고 Google 지도 길찾기를 새 창으로 (2026-10-27)
+  const popup = page.waitForEvent('popup');
   await detail.getByRole('button', { name: '길찾기' }).click();
-  const dir = page.getByRole('dialog', { name: '이치란 라멘까지' });
-  await expect(dir.getByRole('link', { name: 'Google 지도로 열기' })).toHaveAttribute(
-    'href',
-    /google\.com\/maps\/dir\/\?api=1&destination=/,
-  );
-
-  // 뒤로가기: 길찾기 → 상세로
-  await page.goBack();
+  const map = await popup;
+  expect(map.url()).toMatch(/google\.com\/maps\/dir\/\?api=1&destination=/);
+  await map.close();
   await expect(detail).toBeVisible();
   await detail.getByRole('button', { name: '삭제' }).click();
   // 한 번 더 묻는다 (2026-10-27)

@@ -28,9 +28,19 @@ describe('길찾기 링크', () => {
   });
 
   it('Google 지도 보기: 좌표 숫자 대신 장소 이름(+주소)으로 찾는다 (2026-10-27)', () => {
-    const { web } = placeLink('google', { ...withCoords, address: '도쿄 다이토구' }, 'x');
+    // id가 있으면 이름 + 그 장소 id
+    const { web } = placeLink(
+      'google',
+      { ...withCoords, address: '도쿄 다이토구', googlePlaceId: 'pid' },
+      'x',
+    );
     expect(decodeURIComponent(web)).toContain('query=센소지 도쿄 다이토구');
+    expect(web).toContain('query_place_id=pid');
     expect(web).not.toContain('35.7148');
+    // id 없이 좌표만 있으면 그 좌표 근처에서 이름으로 (다른 지점으로 가지 않게)
+    expect(decodeURIComponent(placeLink('google', withCoords, 'x').web)).toBe(
+      'https://www.google.com/maps/search/센소지/@35.7148,139.7967,17z',
+    );
     expect(placeLink('google', { name: ' ', coords: { lat: 1, lng: 2 } }, 'x').web).toContain(
       'query=1%2C2',
     );

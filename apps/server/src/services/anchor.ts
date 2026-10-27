@@ -1,3 +1,4 @@
+import { inKorea as inKoreaBox } from '@trippocket/shared';
 import { guardApi, trackApi } from './apiUsage';
 
 /**
@@ -12,7 +13,7 @@ export type Anchor =
   | { type: 'lodging'; name: string };
 
 const round3 = (n: number) => Math.round(n * 1000) / 1000;
-const inKorea = (lat: number, lng: number) => lat > 33 && lat < 38.7 && lng > 124.5 && lng < 131.9;
+const inKorea = (lat: number, lng: number) => inKoreaBox({ lat, lng });
 
 async function nearestKakao(lat: number, lng: number, kakaoKey: string): Promise<string | null> {
   const url = `https://dapi.kakao.com/v2/local/search/category.json?category_group_code=SW8&x=${lng}&y=${lat}&radius=3000&sort=distance&size=1`;

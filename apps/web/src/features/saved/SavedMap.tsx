@@ -1,7 +1,6 @@
 import { inKorea, type SavedPlace } from '@trippocket/shared';
 import { useEffect, useRef, useState } from 'react';
 import { mapAllowed, reportMapLoad } from '../../data/api/usage';
-import { useSettings } from '../../data/settingsStore';
 import { useTranslation } from '../../i18n';
 import { chooseProvider, mountMap } from '../../shared/maps';
 import { OfflineNote } from '../common/OfflineNote';
@@ -22,10 +21,9 @@ export function SavedMap({
   const { t } = useTranslation();
   const el = useRef<HTMLDivElement>(null);
   const [status, setStatus] = useState<'loading' | 'ready' | 'error' | 'paused'>('loading');
-  const pref = useSettings((s) => s.inAppMap);
   const withCoords = places.filter((p) => p.coords);
   const domestic = withCoords.length > 0 && withCoords.every((p) => inKorea(p.coords!));
-  const provider = chooseProvider(pref, domestic);
+  const provider = chooseProvider(domestic);
   const visible = withCoords.filter((p) => !(provider === 'naver' && p.coordsSource === 'google'));
   const online = typeof navigator === 'undefined' || navigator.onLine;
 

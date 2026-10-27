@@ -28,6 +28,14 @@ export const walkMinutes = (km: number): number => Math.ceil(((km * DETOUR) / WA
 export const formatDistance = (km: number): string =>
   km < 1 ? `${Math.max(10, Math.round((km * 1000) / 10) * 10)}m` : `${km.toFixed(1)}km`;
 
-/** 대한민국 안(제주·울릉도 포함 대략의 경계 상자)인가 — 국내 지도·길찾기 앱 고르기용 */
+/**
+ * 대한민국 안(제주·울릉도·독도 포함 대략의 경계 상자)인가 — 국내 지도·길찾기 앱 고르기용.
+ * 상자에 걸치는 일본(쓰시마·이키·후쿠오카 등 규슈 북부·야마구치·고토)은 뺀다
+ */
 export const inKorea = (c: LatLng): boolean =>
-  c.lat > 33 && c.lat < 38.7 && c.lng > 124.5 && c.lng < 131.9;
+  c.lat > 33 &&
+  c.lat < 38.7 &&
+  c.lng > 124.5 &&
+  c.lng < 131.9 &&
+  !(c.lat < 34.85 && c.lng > 128.9) &&
+  !(c.lat < 33.4 && c.lng > 128.3);

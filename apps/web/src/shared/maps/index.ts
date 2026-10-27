@@ -9,16 +9,10 @@ export const MAP_KEYS: Record<MapProviderId, string | undefined> = {
 };
 
 /**
- * 어떤 지도를 쓸까 (docs/10 §3): 여행 설정 > 앱 설정 > 자동(국내=네이버, 해외=구글).
- * 고른 제공자 키가 없으면 다른 쪽, 둘 다 없으면 null
+ * 어떤 지도를 쓸까: 해외는 늘 Google, 국내는 네이버 (2026-10-27 — 앱 안 국내 지도는 지금 네이버뿐,
+ * 카카오 지도는 JavaScript 키가 있어야 한다). 그 키가 없으면 다른 쪽, 둘 다 없으면 null
  */
-export function chooseProvider(
-  pref: 'auto' | MapProviderId,
-  domestic: boolean,
-  keys = MAP_KEYS,
-): MapProviderId | null {
-  // 해외는 늘 Google, 국내는 네이버 (2026-10-27 — 국내 지도만 고르게 했고, 지금 앱 안 국내 지도는 네이버뿐)
-  void pref;
+export function chooseProvider(domestic: boolean, keys = MAP_KEYS): MapProviderId | null {
   const wanted: MapProviderId = domestic ? 'naver' : 'google';
   if (keys[wanted]) return wanted;
   const other: MapProviderId = wanted === 'google' ? 'naver' : 'google';

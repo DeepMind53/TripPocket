@@ -10,8 +10,7 @@ export interface Settings {
   /** 국내 길찾기 앱 — 해외는 늘 Google 지도 (2026-10-27). 예전 값 'google'은 기본값으로 */
   directionsApp: 'naver' | 'kakao' | 'ask';
   travelMode: 'transit' | 'walk' | 'car';
-  /** 앱 안 지도: 자동(국내=네이버, 해외=구글) */
-  inAppMap: 'auto' | 'naver' | 'google';
+  // 앱 안 지도는 고르지 않는다 — 국내 네이버·해외 Google (2026-10-28, 예전 inAppMap 값은 parseSettings가 버림)
   timeStepMin: 5 | 10 | 15 | 30;
   dimPastItems: boolean;
   /** 0 = 끄기 */
@@ -57,7 +56,6 @@ export const SETTINGS_DEFAULTS: Settings = {
   haptics: true,
   directionsApp: 'ask',
   travelMode: 'transit',
-  inAppMap: 'auto',
   timeStepMin: 15,
   dimPastItems: true,
   backupReminderDays: 14,
@@ -92,7 +90,6 @@ const VALID: { [K in keyof Settings]: (v: unknown) => v is Settings[K] } = {
   haptics: (v): v is boolean => typeof v === 'boolean',
   directionsApp: oneOf('naver', 'kakao', 'ask'),
   travelMode: oneOf('transit', 'walk', 'car'),
-  inAppMap: oneOf('auto', 'naver', 'google'),
   timeStepMin: oneOf(5, 10, 15, 30),
   dimPastItems: (v): v is boolean => typeof v === 'boolean',
   backupReminderDays: (v): v is number =>

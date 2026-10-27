@@ -304,25 +304,20 @@ describe('일정 화면', () => {
     expect(item).not.toHaveProperty('startTime');
   });
 
-  it('길찾기: 해외 여행은 Google이 먼저, 이동수단을 바꾸면 링크가 바뀐다', async () => {
+  it('길찾기: 해외 여행은 좌표가 없어도 묻지 않고 Google 지도로 바로 연다', async () => {
     const user = userEvent.setup();
+    window.matchMedia = vi
+      .fn()
+      .mockReturnValue({ matches: false }) as unknown as typeof window.matchMedia;
+    const open = vi.spyOn(window, 'open').mockReturnValue(null);
     await itemRepo.create({ tripId, date: '2026-10-24', kind: 'place', title: '센소지' });
     await renderPlan();
     await user.click(await screen.findByRole('button', { name: '1번째 일정, 센소지' }));
     await user.click(screen.getByRole('button', { name: '길찾기' }));
 
-    const sheet = screen.getByRole('dialog', { name: '센소지까지' });
-    const links = within(sheet).getAllByRole('link');
-    expect(links[0]).toHaveTextContent('Google 지도로 열기');
-    expect(links[0]).toHaveAttribute('href', expect.stringContaining('travelmode=transit'));
-
-    await user.click(within(sheet).getByRole('radio', { name: '도보' }));
-    await waitFor(() =>
-      expect(within(sheet).getByRole('link', { name: 'Google 지도로 열기' })).toHaveAttribute(
-        'href',
-        expect.stringContaining('travelmode=walking'),
-      ),
-    );
+    expect(screen.queryByRole('dialog', { name: '센소지까지' })).toBeNull();
+    expect(open.mock.calls[0]?.[0]).toMatch(/google\.com\/maps\/dir.*travelmode=transit/);
+    open.mockRestore();
   });
 
   it('일차 메뉴: 시간순 정렬 (시간 없는 일정은 제자리)', async () => {

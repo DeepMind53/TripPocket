@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { distanceKm, formatDistance, walkMinutes } from './distance';
+import { distanceKm, formatDistance, inKorea, walkMinutes } from './distance';
 
 describe('다음 장소까지 거리 (실험실)', () => {
   it('서울역 → 시청역 약 1km, 도쿄역 → 신주쿠역 약 6km', () => {
@@ -17,5 +17,26 @@ describe('다음 장소까지 거리 (실험실)', () => {
     expect(formatDistance(0.004)).toBe('10m');
     expect(formatDistance(0.456)).toBe('460m');
     expect(formatDistance(2.345)).toBe('2.3km');
+  });
+
+  it('국내 판단: 부산·울산·제주·울릉·독도는 국내, 후쿠오카·쓰시마·이키·시모노세키·고토는 해외', () => {
+    const k = (lat: number, lng: number) => inKorea({ lat, lng });
+    expect([
+      k(37.57, 126.98),
+      k(35.1, 129.04),
+      k(35.54, 129.31),
+      k(33.5, 126.53),
+      k(37.48, 130.9),
+      k(37.24, 131.87),
+      k(34.88, 128.62),
+    ]).toEqual([true, true, true, true, true, true, true]);
+    expect([
+      k(33.59, 130.4),
+      k(34.2, 129.29),
+      k(33.77, 129.72),
+      k(33.96, 130.94),
+      k(33.2, 129.05),
+      k(35.68, 139.77),
+    ]).toEqual([false, false, false, false, false, false]);
   });
 });

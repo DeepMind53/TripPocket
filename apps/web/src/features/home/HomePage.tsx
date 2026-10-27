@@ -220,7 +220,7 @@ function OngoingTrip({ trip }: { trip: Trip }) {
   const planUrl = `/trips/${trip.id}/plan?day=${day}`;
 
   function directions(d: Destination) {
-    if (openDirectionsDirect(d)) return;
+    if (openDirectionsDirect(d, isDomesticTrip(trip))) return;
     setDest(d);
     setDirOpen(true);
   }

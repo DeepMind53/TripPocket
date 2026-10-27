@@ -87,7 +87,12 @@ export function placeLink(app: MapApp, dest: Destination, appName: string): MapL
   switch (app) {
     case 'google': {
       // 이름(+주소)으로 찾게 해 Google 지도에 좌표 숫자 대신 장소 이름이 보이게 (사용자 요청 2026-10-27).
-      // Google 장소 id가 있으면 그 장소로 바로, 이름이 없을 때만 좌표
+      // Google 장소 id가 있으면 그 장소로 바로, 이름이 없을 때만 좌표.
+      // id 없이 이름·좌표만 있으면 그 좌표 근처에서 이름으로 찾는다 ("스타벅스"가 다른 지점으로 가지 않게)
+      if (dest.name.trim() && dest.coords && !dest.googlePlaceId)
+        return {
+          web: `https://www.google.com/maps/search/${enc(q)}/@${dest.coords.lat},${dest.coords.lng},17z`,
+        };
       const target = dest.name.trim()
         ? q
         : dest.coords

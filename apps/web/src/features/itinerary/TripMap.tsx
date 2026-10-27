@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { fitPoints } from '../../domain/bookingPlan';
 import { cn } from '../../shared/lib/cn';
 import { IconButton } from '../../shared/ui';
-import { useSettings } from '../../data/settingsStore';
 import { isDomesticTrip } from '../../domain/tripPlace';
 import { useTranslation } from '../../i18n';
 import {
@@ -72,8 +71,7 @@ export function TripMap({
   const el = useRef<HTMLDivElement>(null);
   const handle = useRef<MapHandle | null>(null);
   const [status, setStatus] = useState<'loading' | 'ready' | 'error' | 'paused'>('loading');
-  const pref = useSettings((s) => s.inAppMap);
-  const chosen = chooseProvider(trip.mapProvider ?? pref, isDomesticTrip(trip));
+  const chosen = chooseProvider(isDomesticTrip(trip));
   // 고른 지도가 무료 사용량으로 멈췄거나 못 불러오면 무료 지도(MapLibre + OpenFreeMap)로 (docs/23 §4)
   const [fallback, setFallback] = useState(false);
   const provider: ActiveMapId | null = fallback ? 'osm' : (chosen ?? 'osm');
