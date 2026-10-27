@@ -93,7 +93,7 @@ import { FlightTicket } from '../bookings/BookingCard';
 import { isDomesticTrip } from '../../domain/tripPlace';
 import { dayRouteUrl } from '../../domain/dayRoute';
 import { sunSlot, sunTimes } from '../../domain/sun';
-import { busyDay } from '../../domain/busyDay';
+import { busyDay, FAR_LEG_KM } from '../../domain/busyDay';
 import { distanceKm, formatDistance, walkMinutes } from '@trippocket/shared';
 import { useLab } from '../../data/labsStore';
 import { DayWeatherBadge } from '../common/DayWeatherBadge';
@@ -1042,15 +1042,19 @@ function DaySection({
           <SunLine label={t('plan.sunset')} time={sun.set} />
         )}
         {/* 실험실: 마지막 장소에서 숙소까지 */}
-        {lodging && lodgingCoords && lastCoords && distanceKm(lastCoords, lodgingCoords) > 0.05 && (
-          <li className="flex items-center gap-1.5 py-1 pl-9 text-micro text-fg-muted">
-            <BedDouble aria-hidden="true" className="size-3" />
-            {t('labs.toLodging', {
-              distance: formatDistance(distanceKm(lastCoords, lodgingCoords)),
-              min: walkMinutes(distanceKm(lastCoords, lodgingCoords)),
-            })}
-          </li>
-        )}
+        {lodging &&
+          lodgingCoords &&
+          lastCoords &&
+          distanceKm(lastCoords, lodgingCoords) > 0.05 &&
+          distanceKm(lastCoords, lodgingCoords) <= FAR_LEG_KM && (
+            <li className="flex items-center gap-1.5 py-1 pl-9 text-micro text-fg-muted">
+              <BedDouble aria-hidden="true" className="size-3" />
+              {t('labs.toLodging', {
+                distance: formatDistance(distanceKm(lastCoords, lodgingCoords)),
+                min: walkMinutes(distanceKm(lastCoords, lodgingCoords)),
+              })}
+            </li>
+          )}
       </ol>
       {canEdit && (
         <button
@@ -1161,6 +1165,8 @@ function LegLine({ from, to }: { from: ItineraryItem; to: ItineraryItem | undefi
   const b = to?.place?.coords;
   if (!a || !b || isFlightLeg(from)) return null;
   const km = distanceKm(a, b);
+  // 비행기로 건너갈 거리(다른 나라 등)는 걷는 시간을 적지 않는다 (2026-10-27)
+  if (km > FAR_LEG_KM) return null;
   return (
     <li className="flex items-center gap-1.5 py-1 pl-9 text-micro text-fg-muted">
       <Footprints aria-hidden="true" className="size-3" />

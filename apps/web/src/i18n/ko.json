@@ -1604,9 +1604,12 @@
     "walkMin": "도보 {{min}}분",
     "transitMin": "대중교통 {{min}}분",
     "roughShort": "(어림)",
-    "transitInApp": "대중교통은 지도 앱에서 보기",
-    "leaveBy": "{{time}} 전 출발 (여유 {{margin}}분)",
-    "leaveNow": "지금 바로 출발하세요"
+    "walkNone": "도보 검색 불가",
+    "transitNone": "대중교통 검색 불가",
+    "map": "지도",
+    "leaveBy": "{{time}} 전 출발\n여유 {{margin}}분",
+    "leaveNow": "지금 바로\n출발하세요",
+    "far": "멀리 있어요 · 이동 시간은 계산하지 않아요"
   },
   "confirm": {
     "title": "삭제할까요?",
