@@ -48,11 +48,14 @@ const SUFFIX: [string, string][] = [
   ['달러', 'USD'],
 ];
 
+/** $·"달러"를 쓰는 통화 (VND·KWD처럼 D로 끝나도 달러가 아닌 것이 있다) */
+const DOLLARS = new Set(['USD', 'TWD', 'HKD', 'SGD', 'AUD', 'CAD', 'NZD']);
+
 /**
  * tripCurrency = 여행 나라 통화 — 기호가 겹칠 때(¥ = 엔/위안, $·달러 = 여러 달러) 그 나라 것으로 본다
  */
 export function memoAmounts(text: string, tripCurrency?: string): MemoAmount[] {
-  const dollar = tripCurrency && /D$/.test(tripCurrency) ? tripCurrency : 'USD';
+  const dollar = tripCurrency && DOLLARS.has(tripCurrency) ? tripCurrency : 'USD';
   const yen = tripCurrency === 'CNY' ? 'CNY' : 'JPY';
   const found: (MemoAmount & { at: number })[] = [];
   const taken: [number, number][] = [];
@@ -70,9 +73,13 @@ export function memoAmounts(text: string, tripCurrency?: string): MemoAmount[] {
   for (const [sym, code] of PREFIX) scan(`${sym}\\s?${N}`, code);
   scan(`¥\\s?${N}`, yen);
   scan(`(?<![A-Za-z])\\$\\s?${N}`, dollar);
-  for (const [word, code] of SUFFIX)
+  for (const [word, code] of SUFFIX) {
+    // "동"은 아파트·건물 동(101동)과 겹친다 → 베트남 여행일 때만
+    if (word === '동' && tripCurrency !== 'VND') continue;
     scan(`${N}\\s?${word}(?![가-힣])`, word === '달러' ? dollar : code);
+  }
   return found
+    .filter((f) => !(f.text.endsWith('동') && f.amount < 1000))
     .sort((a, b) => a.at - b.at)
     .map(({ text: t, code, amount }) => ({ text: t, code, amount }));
 }

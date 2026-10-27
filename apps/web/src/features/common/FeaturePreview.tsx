@@ -6,7 +6,7 @@ import type { PreviewId } from './previewIds';
 
 /**
  * 켜면 어떻게 보이는지 [샘플] 미리보기 (사용자 요청 2026-10-27 — 실험실·설정 "일정").
- * 실제 일정 화면 모양을 본뜬 그림 — 샘플 이름은 그림용 예시라 문구 키 대신 그대로 둔다 (소개 카드와 같은 방식)
+ * 실제 일정 화면 모양을 본뜬 그림 — 샘플 이름·날짜도 문구 키(sample.*)로
  */
 export function FeaturePreview({ id }: { id: PreviewId }) {
   const { t } = useTranslation();
@@ -24,7 +24,7 @@ export function FeaturePreview({ id }: { id: PreviewId }) {
         <span className="rounded-full bg-[#2F6BFF] px-2.5 py-0.5 text-caption font-bold text-white">
           {t('plan.dayN', { n: 2 })}
         </span>
-        <span className="text-body-2 font-bold">10.28 (수)</span>
+        <span className="text-body-2 font-bold">{t('sample.date')}</span>
       </div>
       <div className={cn('flex flex-col p-3', opts.gap ?? 'gap-1.5')}>{children}</div>
     </div>
@@ -88,7 +88,7 @@ export function FeaturePreview({ id }: { id: PreviewId }) {
     case 'dimPastItems':
       return (
         <div className="flex flex-col gap-2">
-          {day(<>{row(1, '10:00', '센소지', { done: true })}</>, { dim: true })}
+          {day(<>{row(1, '10:00', t('sample.sensoji'), { done: true })}</>, { dim: true })}
           <p className="text-center text-caption text-fg-muted">{t('preview.dimPast')}</p>
         </div>
       );
@@ -98,37 +98,37 @@ export function FeaturePreview({ id }: { id: PreviewId }) {
           <div className="grid h-24 place-items-center rounded-2xl bg-[#E8F0E6] text-caption text-fg-sub dark:bg-[#1f2a22]">
             🗺 1 · 2 · 3
           </div>
-          {day(<>{row(1, '10:00', '센소지')}</>)}
+          {day(<>{row(1, '10:00', t('sample.sensoji'))}</>)}
         </div>
       );
     case 'sunTimes':
       return day(
         <>
           {sunLine('rise', '06:12')}
-          {row(1, '10:00', '센소지')}
-          {row(2, '13:00', '스카이트리')}
+          {row(1, '10:00', t('sample.sensoji'))}
+          {row(2, '13:00', t('sample.skytree'))}
           {sunLine('set', '17:40')}
-          {row(3, '18:30', '이치란 라멘')}
+          {row(3, '18:30', t('sample.ichiran'))}
         </>,
       );
     case 'legDistance':
       return day(
         <>
-          {row(1, '10:00', '센소지')}
+          {row(1, '10:00', t('sample.sensoji'))}
           <p className="flex items-center gap-1.5 pl-9 text-micro text-fg-muted">
             <Footprints aria-hidden="true" className="size-3" />
             {t('labs.leg', { distance: '1.3km', min: 17 })}
           </p>
-          {row(2, '13:00', '스카이트리')}
+          {row(2, '13:00', t('sample.skytree'))}
         </>,
       );
     case 'compactList':
       return day(
         <>
-          {row(1, '10:00', '센소지', { tight: true })}
-          {row(2, '13:00', '스카이트리', { tight: true })}
-          {row(3, '15:00', '아메요코 시장', { tight: true })}
-          {row(4, '18:30', '이치란 라멘', { tight: true })}
+          {row(1, '10:00', t('sample.sensoji'), { tight: true })}
+          {row(2, '13:00', t('sample.skytree'), { tight: true })}
+          {row(3, '15:00', t('sample.ameyoko'), { tight: true })}
+          {row(4, '18:30', t('sample.ichiran'), { tight: true })}
         </>,
         { gap: 'gap-0.5' },
       );
@@ -136,10 +136,10 @@ export function FeaturePreview({ id }: { id: PreviewId }) {
       return day(
         <>
           <p className="rounded-btn bg-primary-weak px-3 py-2 text-caption text-primary">
-            {t('labs.nearbyWish', { names: '아사쿠사 멘치, 사루타히코 커피', more: '' })}
+            {t('labs.nearbyWish', { names: t('sample.nearby'), more: '' })}
           </p>
-          {row(1, '10:00', '센소지')}
-          {row(2, '13:00', '스카이트리')}
+          {row(1, '10:00', t('sample.sensoji'))}
+          {row(2, '13:00', t('sample.skytree'))}
         </>,
       );
     case 'checkoutNotice':
@@ -147,18 +147,18 @@ export function FeaturePreview({ id }: { id: PreviewId }) {
         <>
           <p className="flex items-center gap-2 rounded-btn bg-warning/10 px-3 py-2 text-caption text-fg-sub">
             <span aria-hidden="true">🧳</span>
-            {t('labs.checkoutAt', { time: '11:00', name: '신주쿠 호텔' })}
+            {t('labs.checkoutAt', { time: '11:00', name: t('sample.shinjukuHotel') })}
           </p>
-          {row(1, '09:00', '호텔 조식')}
-          {row(2, '12:00', '츠키지 장외시장')}
+          {row(1, '09:00', t('sample.breakfast'))}
+          {row(2, '12:00', t('sample.tsukiji'))}
         </>,
       );
     case 'dayRecap':
       return day(
         <>
-          {row(1, '10:00', '센소지', { done: true })}
-          {row(2, '13:00', '스카이트리', { done: true })}
-          {row(3, '18:00', '이치란 라멘', { done: true })}
+          {row(1, '10:00', t('sample.sensoji'), { done: true })}
+          {row(2, '13:00', t('sample.skytree'), { done: true })}
+          {row(3, '18:00', t('sample.ichiran'), { done: true })}
           <p className="rounded-btn bg-bg-subtle px-3 py-2 text-caption text-fg-sub">
             {t('labs.recap', { n: 3, km: 6.4 })}
           </p>
@@ -167,49 +167,49 @@ export function FeaturePreview({ id }: { id: PreviewId }) {
     case 'nowScroll':
       return day(
         <>
-          {row(1, '10:00', '센소지', { done: true })}
-          {row(2, '13:00', '스카이트리', { now: true })}
-          {row(3, '18:00', '이치란 라멘')}
+          {row(1, '10:00', t('sample.sensoji'), { done: true })}
+          {row(2, '13:00', t('sample.skytree'), { now: true })}
+          {row(3, '18:00', t('sample.ichiran'))}
           <p className="text-center text-caption text-fg-muted">{t('labs.previewNow')}</p>
         </>,
       );
     case 'homeTime':
       return day(
         <>
-          {row(1, '10:00', '왓 아룬', { home: '12:00' })}
-          {row(2, '13:00', '짜뚜짝 시장', { home: '15:00' })}
+          {row(1, '10:00', t('sample.watArun'), { home: '12:00' })}
+          {row(2, '13:00', t('sample.chatuchak'), { home: '15:00' })}
         </>,
       );
     case 'rainMark':
       return day(
         <>
-          {row(1, '10:00', '센소지', { rain: true })}
-          {row(2, '12:00', '이치란 라멘')}
+          {row(1, '10:00', t('sample.sensoji'), { rain: true })}
+          {row(2, '12:00', t('sample.ichiran'))}
         </>,
       );
     case 'checkinNotice':
       return day(
         <>
-          {note(`🛎️ ${t('labs.checkinAt', { time: '15:00', name: '신주쿠 호텔' })}`)}
-          {row(1, '17:00', '신주쿠 산책')}
+          {note(`🛎️ ${t('labs.checkinAt', { time: '15:00', name: t('sample.shinjukuHotel') })}`)}
+          {row(1, '17:00', t('sample.shinjukuWalk'))}
         </>,
       );
     case 'returnNotice':
       return day(
         <>
           {note(
-            `🛫 ${t('labs.returnAt', { time: '18:30', name: '대한항공 KE704' })}`,
+            `🛫 ${t('labs.returnAt', { time: '18:30', name: t('sample.flight') })}`,
             'bg-primary-weak text-primary',
           )}
-          {row(1, '10:00', '긴자 쇼핑')}
+          {row(1, '10:00', t('sample.ginza'))}
         </>,
       );
     case 'dayWalk':
       return day(
         <>
           <p className="text-micro text-fg-muted">{t('labs.dayWalk', { km: 6.4 })}</p>
-          {row(1, '10:00', '센소지')}
-          {row(2, '13:00', '스카이트리')}
+          {row(1, '10:00', t('sample.sensoji'))}
+          {row(2, '13:00', t('sample.skytree'))}
         </>,
       );
     case 'flightProgress':

@@ -51,12 +51,13 @@ export function dayRecap(
   let prev: { lat: number; lng: number } | undefined;
   for (const i of visited) {
     const c = i.place?.coords;
-    if (!c || i.transport?.mode === 'flight') continue;
+    if (!c) continue;
+    // 공항까지는 땅길로 더하고, 항공편 다음 구간(비행)은 잇지 않는다
     if (prev) {
       const d = distanceKm(prev, c);
       if (d <= FAR_LEG_KM) km += d;
     }
-    prev = c;
+    prev = i.transport?.mode === 'flight' ? undefined : c;
   }
   return { visited: visited.length, km: Math.round(km * 10) / 10 };
 }

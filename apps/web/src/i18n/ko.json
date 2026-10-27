@@ -425,9 +425,7 @@
     "fxFee": "환전 수수료 반영",
     "fxFeePercent": "수수료율",
     "fxFeeDesc": "현찰 살 때 추정 = 매매기준율 × (1 + 수수료)",
-    "inAppMap": "앱 안 지도",
     "mapRule": "해외는 늘 Google 지도로 열어요\n국내 길찾기만 아래에서 골라요",
-    "mapAuto": "자동",
     "start": "시작",
     "startScreen": "앱을 열면",
     "startHome": "홈",
@@ -1700,6 +1698,7 @@
     "search": "이동 시간 검색",
     "again": "이동 시간 다시 검색",
     "denied": "위치를 허용하면 이동 시간이 보여요",
+    "noFix": "위치를 못 찾았어요 · 다시 눌러 주세요",
     "title": "다음 {{time}} {{title}}",
     "loading": "길 찾는 중",
     "walkMin": "도보 {{min}}분",
@@ -1751,5 +1750,21 @@
     "desc": "한 달에 한 번 정보를 다시 확인해요\n복사해서 Claude에게 보내 주세요",
     "copy": "요청문 복사",
     "copied": "복사했어요\nClaude에게 붙여 넣어 주세요"
+  },
+  "sample": {
+    "sensoji": "센소지",
+    "skytree": "스카이트리",
+    "ichiran": "이치란 라멘",
+    "ameyoko": "아메요코 시장",
+    "shinjukuHotel": "신주쿠 호텔",
+    "shinjukuWalk": "신주쿠 산책",
+    "ginza": "긴자 쇼핑",
+    "flight": "대한항공 KE704",
+    "nearby": "아사쿠사 멘치, 사루타히코 커피",
+    "watArun": "왓 아룬",
+    "chatuchak": "짜뚜짝 시장",
+    "tsukiji": "츠키지 장외시장",
+    "breakfast": "호텔 조식",
+    "date": "10.28 (수)"
   }
 }

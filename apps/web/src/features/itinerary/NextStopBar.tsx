@@ -8,7 +8,7 @@ import {
 import { LocateFixed, RotateCw } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { routeEta } from '../../data/api/routes';
-import { FAR_LEG_KM, LEAVE_MARGIN_MIN, departurePlan, isFlightLeg } from '../../domain/dayTools';
+import { FAR_LEG_KM, LEAVE_MARGIN_MIN, departurePlan } from '../../domain/dayTools';
 import { useTranslation } from '../../i18n';
 import { useCurrentPosition } from '../../shared/hooks/useCurrentPosition';
 import { cn } from '../../shared/lib/cn';
@@ -47,9 +47,10 @@ export function NextStopBar({ next, now }: { next: ItineraryItem; now: string })
     if (found && found.press === press && found.nextId === next.id) return;
     const here = state.coords;
     let alive = true;
-    // 비행기로 건너가야 할 만큼 멀거나(다른 나라 등) 다음 일정이 항공편이면 묻지 않는다
-    // (2026-10-27: 한국에서 일본 샘플을 보면 도보 19909분이 떴음)
-    const far = isFlightLeg(next) || distanceKm(here, to) > FAR_LEG_KM;
+    // 비행기로 건너가야 할 만큼 멀면(다른 나라 등) 묻지 않는다
+    // (2026-10-27: 한국에서 일본 샘플을 보면 도보 19909분이 떴음).
+    // 다음 일정이 항공편이어도 공항까지는 땅길 — 그대로 찾는다
+    const far = distanceKm(here, to) > FAR_LEG_KM;
     const done = (eta: RouteEta | null) =>
       alive && setFound({ nextId: next.id, press, here, eta, far });
     void (far ? Promise.resolve(null) : routeEta(here, to, google, true)).then(done);
@@ -69,7 +70,9 @@ export function NextStopBar({ next, now }: { next: ItineraryItem; now: string })
     </span>
   );
   const current = found && found.nextId === next.id ? found : null;
-  const searching = press > 0 && (!current || current.press !== press) && state.status !== 'denied';
+  // 위치를 못 받으면(거부·시간 초과) 멈추고 다시 누를 수 있게
+  const failed = state.status === 'denied' || state.status === 'unavailable';
+  const searching = press > 0 && (!current || current.press !== press) && !failed;
 
   // 아직 안 눌렀거나 다음 일정이 바뀜: 제목 + [이동 시간 검색]
   if (!current)
@@ -79,6 +82,9 @@ export function NextStopBar({ next, now }: { next: ItineraryItem; now: string })
           {title}
           {state.status === 'denied' && (
             <span className="truncate text-fg-muted">{t('nextStop.denied')}</span>
+          )}
+          {press > 0 && state.status === 'unavailable' && (
+            <span className="truncate text-fg-muted">{t('nextStop.noFix')}</span>
           )}
         </span>
         <button

@@ -19,4 +19,12 @@ describe('메모 속 외화', () => {
     expect(memoAmounts('NT$500')).toHaveLength(1);
     expect(memoAmounts('엔화 환전, 동네 산책')).toEqual([]);
   });
+  it('베트남(VND)에서도 $·달러는 미국 달러, "동"은 베트남 여행의 1,000 이상만', () => {
+    expect(memoAmounts('Grab $20, 20달러', 'VND').map((a) => a.code)).toEqual(['USD', 'USD']);
+    expect(memoAmounts('쌀국수 50,000동', 'VND')).toEqual([
+      { text: '50,000동', code: 'VND', amount: 50000 },
+    ]);
+    expect(memoAmounts('숙소 101동 1203호', 'VND')).toEqual([]);
+    expect(memoAmounts('아파트 3000동 앞', 'KRW')).toEqual([]);
+  });
 });

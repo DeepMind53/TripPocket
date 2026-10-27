@@ -26,7 +26,8 @@ export function useCurrentPosition(enabled: boolean): {
       setState({ status: 'unavailable' });
       return;
     }
-    setState((s) => (s.status === 'ok' ? s : { status: 'asking' }));
+    // 이전 위치를 지운다 — 다시 누르면 새 위치로만 찾게 (옛 위치로 API를 부르지 않게)
+    setState({ status: 'asking' });
     navigator.geolocation.getCurrentPosition(
       (p) =>
         setState({ status: 'ok', coords: { lat: p.coords.latitude, lng: p.coords.longitude } }),

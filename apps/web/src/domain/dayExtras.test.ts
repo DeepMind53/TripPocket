@@ -43,4 +43,23 @@ describe('하루 덧붙임 (실험실)', () => {
     ];
     expect(dayRecap(items)).toEqual({ visited: 2, km: 1.1 });
   });
+
+  it('오늘 돌아보기: 공항까지는 더하고 비행 다음 구간은 잇지 않는다', () => {
+    const v = 'visited' as const;
+    const items = [
+      { kind: 'lodging' as const, visit: v, place: at(37.5, 127.0) },
+      // 약 50km 떨어진 공항에서 출발
+      {
+        kind: 'transport' as const,
+        visit: v,
+        transport: { mode: 'flight' as const },
+        place: at(37.46, 126.44),
+      },
+      // 도착 도시 (150km — 비행 구간이라 빼야 함)
+      { kind: 'place' as const, visit: v, place: at(36.2, 126.0) },
+    ];
+    const r = dayRecap(items);
+    expect(r.km).toBeGreaterThan(45);
+    expect(r.km).toBeLessThan(55);
+  });
 });

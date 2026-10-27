@@ -22,8 +22,8 @@ export function MemoFx({ memo, countryCode }: { memo: string; countryCode?: stri
   if (!amounts.length) return null;
   return (
     <ul aria-label={t('labs.memoFxLabel')} className="mt-1 flex flex-col gap-0.5">
-      {amounts.map((a) => (
-        <li key={a.text} className="tabular text-caption text-fg-sub">
+      {amounts.map((a, i) => (
+        <li key={`${i}-${a.text}`} className="tabular text-caption text-fg-sub">
           💱 {a.text} ≈{' '}
           {t('labs.memoFxWon', {
             won: Math.round(a.amount * a.rate).toLocaleString('ko-KR'),
