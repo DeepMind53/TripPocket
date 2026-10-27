@@ -858,7 +858,6 @@ function DaySection({
 }) {
   const { t } = useTranslation();
   const legs = useLab('legDistance');
-  const progressOn = useLab('dayProgress');
   const copyDayOn = useLab('copyDay');
   const dayRouteOn = useLab('dayRoute');
   const dupOn = true;
@@ -876,7 +875,10 @@ function DaySection({
   const today = todayIn(timezone);
   const past = visitOn ? pastItemIds(items, today, timeIn(timezone, now) ?? '00:00') : null;
   if (hideWhenEmpty && items.length === 0) return null;
-  const done = items.filter((i) => i.done).length;
+  // 오늘 진행률 (2026-10-27 정식): 메모는 빼고, 방문(파랑)·미방문(빨강)을 칸에 채운다
+  const tracked = items.filter((i) => i.kind !== 'note');
+  const visited = tracked.filter((i) => i.visit === 'visited' || i.done).length;
+  const skipped = tracked.filter((i) => i.visit === 'skipped').length;
   const color = date ? dayColor(index) : 'var(--tp-fg-muted)';
   const title = date
     ? t('plan.dayHeader', { n: index + 1, date: formatMonthDay(date) })
@@ -926,23 +928,28 @@ function DaySection({
           />
         )}
       </div>
-      {/* 실험실: 여행 중 오늘 일정 진행률 */}
-      {progressOn && isToday && items.length > 0 && (
+      {/* 여행 중 오늘 일정 진행률: 방문 파랑 · 미방문 빨강 */}
+      {isToday && tracked.length > 0 && (
         <div
           className="mx-4 mt-2 flex items-center gap-2"
-          aria-label={t('labs.progress', { done, total: items.length })}
+          aria-label={t('plan.progress', { total: tracked.length, visited, skipped })}
         >
           <span
             aria-hidden="true"
-            className="h-1.5 flex-1 overflow-hidden rounded-full bg-bg-subtle"
+            className="flex h-2 flex-1 overflow-hidden rounded-full bg-bg-subtle"
           >
             <span
-              className="block h-full rounded-full transition-[width]"
-              style={{ width: `${(done / items.length) * 100}%`, background: color }}
+              className="h-full bg-primary transition-[width]"
+              style={{ width: `${(visited / tracked.length) * 100}%` }}
+            />
+            <span
+              className="h-full bg-danger transition-[width]"
+              style={{ width: `${(skipped / tracked.length) * 100}%` }}
             />
           </span>
           <span className="tabular text-micro text-fg-muted" aria-hidden="true">
-            {done}/{items.length}
+            <span className="text-primary">{visited}</span>
+            {skipped > 0 && <span className="text-danger"> · {skipped}</span>}/{tracked.length}
           </span>
         </div>
       )}

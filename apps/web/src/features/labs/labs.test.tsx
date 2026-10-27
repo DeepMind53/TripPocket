@@ -33,9 +33,16 @@ describe('실험실', () => {
     expect(screen.queryByRole('switch', { name: /현지 시각 표시/ })).toBeNull();
     expect(screen.queryByRole('switch', { name: /당겨서 동기화/ })).toBeNull();
     // 2026-10-27 정식이 되거나 빠진 것
-    for (const name of [/화면 켜짐 유지/, /방문 기록/, /긴급 연락처/, /여행 회고/])
+    for (const name of [
+      /화면 켜짐 유지/,
+      /방문 기록/,
+      /긴급 연락처/,
+      /여행 회고/,
+      /오늘 일정 진행률/,
+      /일출/,
+    ])
       expect(screen.queryByRole('switch', { name })).toBeNull();
-    for (const name of [/오늘 일정 진행률/, /하루 일정 글로 복사/])
+    for (const name of [/하루 일정 글로 복사/, /날씨 맞춤 준비물/, /하루 동선/])
       expect(screen.getByRole('switch', { name })).toBeInTheDocument();
   });
 
@@ -61,7 +68,7 @@ describe('실험실', () => {
         place: at(35.68),
       });
       await itemRepo.update(a.id, { done: true });
-      await itemRepo.create({
+      const b = await itemRepo.create({
         tripId: trip.id,
         date: '2026-10-24',
         kind: 'food',
@@ -69,7 +76,7 @@ describe('실험실', () => {
         startTime: '10:10',
         place: at(35.7),
       });
-      setLab('dayProgress', true);
+      await itemRepo.setVisit(b.id, 'skipped');
       setLab('copyDay', true);
       const user = userEvent.setup();
       render(
@@ -83,9 +90,10 @@ describe('실험실', () => {
         </>,
       );
       const day = await screen.findByRole('region', { name: /^1일차/ });
-      expect(
-        await within(day).findByLabelText('오늘 일정 2개 중 1개 다녀왔어요'),
-      ).toBeInTheDocument();
+      // 진행률(정식): 방문 1(파랑) · 미방문 1(빨강) / 2
+      const bar = await within(day).findByLabelText(/^오늘 일정 2개 중\s방문 1 · 미방문 1$/);
+      expect(bar.querySelector('.bg-primary')).toHaveStyle({ width: '50%' });
+      expect(bar.querySelector('.bg-danger')).toHaveStyle({ width: '50%' });
       await user.click(within(day).getByRole('button', { name: /날짜 메뉴|메뉴/ }));
       await user.click(await screen.findByRole('button', { name: /일정 글로 복사/ }));
       // userEvent.setup()이 클립보드 흉내를 넣는다
@@ -94,7 +102,7 @@ describe('실험실', () => {
         /^1일차 · 10\.24 \(토\)\n1\. 10:00 센소지 \(도쿄\)\n2\. 10:10 이치란/,
       );
     } finally {
-      for (const id of ['dayProgress', 'copyDay'] as const) setLab(id, false);
+      setLab('copyDay', false);
       vi.useRealTimers();
     }
   });
@@ -374,7 +382,6 @@ describe('실험실', () => {
     );
     expect(JSON.parse(localStorage.getItem('tp-labs')!)).toMatchObject({
       legDistance: true,
-      dayProgress: true,
       weatherPacking: true,
       dayRoute: true,
     });

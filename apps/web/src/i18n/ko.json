@@ -158,6 +158,7 @@
   },
   "plan": {
     "dayChipsLabel": "날짜 선택",
+    "progress": "오늘 일정 {{total}}개 중\n방문 {{visited}} · 미방문 {{skipped}}",
     "sunrise": "일출",
     "sunset": "일몰",
     "all": "전체",
@@ -1040,10 +1041,6 @@
         "name": "다음 장소까지 거리",
         "desc": "일정 사이 거리와 걸어서 걸리는 시간 (검색해 고른 장소만)"
       },
-      "dayProgress": {
-        "name": "오늘 일정 진행률",
-        "desc": "여행 중 오늘 날짜 위에\n다녀온 일정 수를 막대로 보여 줘요"
-      },
       "copyDay": {
         "name": "하루 일정 글로 복사",
         "desc": "날짜 메뉴(⋯)에서 그날 일정을\n카톡 등에 붙여 넣을 글로 복사해요"
@@ -1081,7 +1078,6 @@
     "synced": "동기화했어요",
     "syncOffline": "오프라인이에요\n이 기기에 저장돼 있어요",
     "syncFailed": "동기화하지 못했어요\n잠시 뒤 다시 해 볼게요",
-    "progress": "오늘 일정 {{total}}개 중 {{done}}개 다녀왔어요",
     "copyDay": "일정 글로 복사",
     "copyDayDesc": "카톡 등에 붙여 넣을 수 있어요",
     "dayCopied": "하루 일정을 복사했어요"

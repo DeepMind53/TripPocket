@@ -47,7 +47,10 @@ it('필수 항목: 태국 TDAC·비자(자동)·공식 링크, 체크하면 저�
       (await checklistRepo.list(tripId, 'essentials')).map((i) => [i.text, i.checked]),
     ).toEqual([['TH:arrival', true]]),
   );
-  expect(tdac).toBeChecked();
+  // 저장 → 화면 갱신은 비동기 (CPU가 바쁠 때 늦음) — 다시 찾아 기다린다
+  await waitFor(() =>
+    expect(within(th).getByRole('checkbox', { name: '디지털 입국카드 (TDAC)' })).toBeChecked(),
+  );
 
   // 여권: 귀국일 + 6개월보다 짧으면 경고
   await user.click(within(th).getByRole('button', { name: /여권 만료일 넣고/ }));
