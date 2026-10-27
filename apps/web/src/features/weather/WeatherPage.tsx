@@ -201,6 +201,15 @@ function AirportDay({
         <span className="tabular text-micro text-fg-muted">
           {formatMonthDay(date)}
           {time ? ` ${time}` : ''}
+          {/* 예보(2주 안)인지, 작년 같은 날 기록(과거 날씨)인지 (사용자 요청 2026-10-27) */}
+          {weather &&
+            ` · ${
+              weather.year
+                ? t('weather.pastShort')
+                : weather.past
+                  ? t('weatherPage.observed')
+                  : t('weatherPage.forecast')
+            }`}
         </span>
       </span>
       {weather && look ? (

@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { routes } from '../../app/router';
 import { resetLocalDb } from '../../data/dev';
@@ -65,6 +65,8 @@ it('날씨 정보: 여행 앞뒤 하루까지 목적지 날씨, 항공편 출발
   expect(within(air).getByText(/\(NRT\)/)).toBeInTheDocument();
   expect(await within(air).findByText('10°/18°')).toBeInTheDocument();
   expect(await within(air).findByText('10°/22°')).toBeInTheDocument();
+  // 2주 안이라 예보
+  expect(within(air).getAllByText(/· 예보$/).length).toBeGreaterThan(0);
 });
 
 it('여행지 특이사항: 나라 코드만 보내고, 특보와 그 나라 기상청 링크를 보여 준다', async () => {
@@ -182,4 +184,46 @@ it('오늘 출발이면 여행 전날(어제)은 지난 날씨로 보인다 (202
   expect(await within(before).findByText('지난 날씨')).toBeInTheDocument();
   expect(before).toHaveTextContent('11°/21°');
   expect(urls.some((u) => u.includes('past_days=7'))).toBe(true);
+});
+
+it('공항 날씨도 2주보다 먼 날은 "과거 날씨"(작년 같은 날)로 표시 (2026-10-27)', async () => {
+  vi.stubGlobal('fetch', async (url: string) => {
+    if (url.includes('/api/alerts'))
+      return Response.json({ alerts: [], checkedAt: 'x', missing: [] });
+    // 작년 같은 날 기록 (archive)
+    const days = ['2025-12-01', '2025-12-02', '2025-12-03', '2025-12-04'];
+    return Response.json({
+      daily: {
+        time: days,
+        weather_code: days.map(() => 3),
+        temperature_2m_max: days.map(() => 9),
+        temperature_2m_min: days.map(() => 1),
+      },
+    });
+  });
+  const trip = await tripRepo.create({
+    title: '도쿄 겨울',
+    destinations: [
+      { name: '도쿄', kind: 'city', countryCode: 'JP', coords: { lat: 35.68, lng: 139.69 } },
+    ],
+    startDate: '2026-12-02',
+    endDate: '2026-12-03',
+    timezone: 'Asia/Tokyo',
+    cover: {},
+  });
+  await bookingRepo.create({
+    tripId: trip.id,
+    kind: 'flight',
+    title: 'KE703',
+    start: { date: '2026-12-02', time: '09:10', place: 'ICN' },
+    end: { date: '2026-12-02', time: '11:30', place: 'NRT' },
+  });
+  render(
+    <RouterProvider
+      router={createMemoryRouter(routes, { initialEntries: [`/trips/${trip.id}/weather`] })}
+    />,
+  );
+  const air = await screen.findByRole('region', { name: '공항 날씨' });
+  // 출발·도착 공항 날씨는 따로 받아 하나씩 그려진다 → 둘 다 나올 때까지 기다린다
+  await waitFor(() => expect(within(air).getAllByText(/· 과거 날씨$/)).toHaveLength(2));
 });
