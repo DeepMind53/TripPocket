@@ -1300,13 +1300,13 @@
     "stale": "확인한 지 오래됐어요\n공식 사이트에서 최신 내용을 꼭 확인하세요",
     "domesticTitle": "국내 여행이에요",
     "domesticDesc": "해외 여행에서 입국 준비 항목을 보여 드려요",
-    "progress": "{{done}}/{{total}} 완료",
+    "progress": "필수 체크리스트 {{total}}개 중 {{done}}개 완료",
     "unknown": "{{codes}} 정보는 아직 없어요",
     "mofa": "외교부 해외안전여행에서 보기",
     "common": "모든 나라 공통",
     "level": {
-      "must": "꼭",
-      "recommend": "권장",
+      "must": "필수 항목",
+      "recommend": "권장 항목",
       "tip": "알아 두면 좋아요"
     },
     "sources": "출처 · {{date}} 확인",

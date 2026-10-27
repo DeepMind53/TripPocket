@@ -48,23 +48,28 @@ describe('AI 추천 정리', () => {
   });
 });
 
-describe('가까운 곳부터 (5 → 10 → 50km)', () => {
+describe('가까운 곳부터 (5 → 10km)', () => {
   const at = (name: string, km: number | null) => ({ name, km });
   const km = (x: { km: number | null }) => x.km;
-  it('5km 안에 3곳 이상이면 5km, 아니면 10km, 그래도 모자라면 50km (밖은 버림)', () => {
+  it('5km 안에 3곳 이상이면 5km, 아니면 10km (10km 밖은 버림)', () => {
     expect(pickRadius([at('a', 1), at('b', 2), at('c', 4), at('d', 8)], km)).toEqual({
       radiusKm: 5,
       items: [at('a', 1), at('b', 2), at('c', 4)],
     });
     expect(pickRadius([at('a', 1), at('d', 8), at('e', 9)], km).radiusKm).toBe(10);
-    expect(pickRadius([at('a', 30), at('b', 70)], km)).toEqual({
-      radiusKm: 50,
-      items: [at('a', 30)],
+    expect(pickRadius([at('a', 9), at('b', 11), at('c', 30)], km)).toEqual({
+      radiusKm: 10,
+      items: [at('a', 9)],
     });
   });
   it('위치를 모르는 곳은 뒤에 붙인다', () => {
     expect(
       pickRadius([at('x', null), at('a', 1), at('b', 2), at('c', 3)], km).items.map((x) => x.name),
     ).toEqual(['a', 'b', 'c', 'x']);
+  });
+  it('기준점 위치를 알면 10km 안인지 확인 안 되는 곳은 뺀다 (2026-10-27)', () => {
+    expect(
+      pickRadius([at('x', null), at('a', 1)], km, 3, undefined, false).items.map((x) => x.name),
+    ).toEqual(['a']);
   });
 });

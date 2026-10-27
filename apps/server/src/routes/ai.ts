@@ -63,7 +63,7 @@ const DAILY_LIMIT = 20;
 const CACHE_HOURS = 6;
 /** 점수 계산에 쓰는 글 수 (카테고리마다, 최신순). AI에는 이 중 각 AI가 받을 수 있는 만큼만 (llm.ts) */
 const AI_POSTS = 200;
-/** 보여 줄 장소 수, 거르기 전 후보 수. 거리는 기준점에서 5 → 10 → 50km (shared pickRadius) */
+/** 보여 줄 장소 수, 거르기 전 후보 수. 거리는 기준점에서 5 → 10km, 10km 밖·위치 모르는 곳은 뺀다 (shared pickRadius) */
 const TOP = 5;
 const CANDIDATES = 15;
 /** 이만큼 모이면 더 먼 단계로 넓히지 않는다 */
@@ -247,7 +247,7 @@ export function aiRoutes(app: FastifyInstance, config: Config, db: Db): void {
         : (await google(p.anchor))[0]?.coords) ??
       undefined;
 
-    // 카테고리끼리 동시에: 블로그 수집·AI 정리 + 지도 후보 → 합치기 → 가까운 순 단계(5·10·50km)
+    // 카테고리끼리 동시에: 블로그 수집·AI 정리 + 지도 후보 → 합치기 → 가까운 순 단계(5·10km)
     const done = await Promise.all(
       p.categories.map(async (c) => {
         const posts = (await collect(p.anchor, c, p.keyword))
@@ -292,6 +292,9 @@ export function aiRoutes(app: FastifyInstance, config: Config, db: Db): void {
           recs,
           (r) => (anchorAt && r.place?.coords ? distanceKm(anchorAt, r.place.coords) : null),
           ENOUGH,
+          undefined,
+          // 기준점 위치를 알면 10km 안인지 확인된 곳만 (사용자 요청 2026-10-27)
+          !anchorAt,
         );
         return [
           c,

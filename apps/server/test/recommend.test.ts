@@ -168,7 +168,7 @@ describe('AI 추천 ② (Groq)', () => {
     expect(JSON.parse(groqBodies[1]!)).toMatchObject({ max_completion_tokens: 1500 });
   });
 
-  it('국내: 가까운 곳이 없으면 넓혀서(5 → 10 → 50km) — 약 35km면 50km 안으로 보여 준다', async () => {
+  it('국내: 10km 넘게 떨어진 곳(약 35km)은 보여 주지 않는다 (2026-10-27 최대 10km)', async () => {
     const base = globalThis.fetch;
     vi.stubGlobal('fetch', async (input: string | URL, init?: RequestInit) => {
       const url = String(input);
@@ -196,11 +196,11 @@ describe('AI 추천 ② (Groq)', () => {
       domestic: true,
     });
     const cafe = res.json().categories.cafe;
-    expect(cafe.radiusKm).toBe(50);
-    expect(cafe.places.map((x: { name: string }) => x.name)).toEqual(['어니언 성수']);
+    expect(cafe.radiusKm).toBe(10);
+    expect(cafe.places).toEqual([]);
   });
 
-  it('국내: 50km 넘게 떨어진 곳(블로그가 함께 소개한 다른 지역)은 뺀다', async () => {
+  it('국내: 멀리 떨어진 곳(블로그가 함께 소개한 다른 지역)은 뺀다', async () => {
     const base = globalThis.fetch;
     vi.stubGlobal('fetch', async (input: string | URL, init?: RequestInit) => {
       const url = String(input);

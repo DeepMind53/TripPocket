@@ -7,21 +7,23 @@ import { choosePeriod, withinMonths, type PeriodMonths } from './periods';
 export type AiCategory = 'food' | 'cafe' | 'play' | 'custom';
 export const AI_CATEGORIES: readonly AiCategory[] = ['food', 'cafe', 'play', 'custom'];
 
-/** 가까운 곳부터: 5km 안에 충분하면 5km, 아니면 10km, 그래도 없으면 50km (사용자 요청 2026-10-24) */
-export const RADIUS_TIERS_KM = [5, 10, 50] as const;
+/** 가까운 곳부터: 5km 안에 충분하면 5km, 아니면 10km. 10km 밖은 보여 주지 않는다 (사용자 요청 2026-10-24, 2026-10-27 최대 10km) */
+export const RADIUS_TIERS_KM = [5, 10] as const;
 
 /**
  * 거리 단계 고르기: 가장 작은 반경에 min곳 이상이면 그 반경, 아니면 다음 반경. 마지막 반경 밖은 버린다.
- * km = 기준점까지 거리 (모르면 null — 위치를 모르는 곳은 맨 뒤에 붙인다)
+ * km = 기준점까지 거리 (모르면 null). keepUnknown = 위치를 모르는 곳을 맨 뒤에 붙일지
+ * (기준점 위치를 알면 false — 10km 안인지 확인할 수 없는 곳은 보여 주지 않는다, 2026-10-27)
  */
 export function pickRadius<T>(
   list: readonly T[],
   km: (item: T) => number | null,
   min = 3,
   tiers: readonly number[] = RADIUS_TIERS_KM,
+  keepUnknown = true,
 ): { radiusKm: number; items: T[] } {
   const known = list.filter((x) => km(x) !== null);
-  const unknown = list.filter((x) => km(x) === null);
+  const unknown = keepUnknown ? list.filter((x) => km(x) === null) : [];
   const last = tiers[tiers.length - 1]!;
   for (const r of tiers) {
     const inside = known.filter((x) => km(x)! <= r);

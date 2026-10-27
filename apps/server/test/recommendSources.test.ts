@@ -129,8 +129,7 @@ describe('AI 추천 — 정보 출처와 거리', () => {
       ['이치란', 'both'],
       ['츠루톤탄', 'google'],
       ['후운지', 'google'],
-      // 위치를 모르는 블로그만의 곳은 뒤에, 20km 떨어진 곳은 5km 단계라 빠짐
-      ['블로그에만 있는 집', 'blog'],
+      // 위치를 몰라 10km 안인지 확인 안 되는 블로그만의 곳·20km 떨어진 곳은 빠짐 (2026-10-27)
     ]);
     expect(food.places[0]).toMatchObject({ mentions: 2, summary: '진한 국물' });
     // Google 정보는 AI에 보내지 않는다 (블로그 글만)
