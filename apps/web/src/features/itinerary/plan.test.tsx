@@ -183,7 +183,8 @@ describe('일정 화면', () => {
     await user.click(within(sheet).getByRole('button', { name: '일정에 추가' }));
 
     expect(await screen.findByText('일정을 추가했어요')).toBeInTheDocument();
-    const row = within(await dayAfterSheet('1일차 · 10.24 (토)')).getByRole('button', {
+    // 저장 → 목록 갱신은 비동기라 줄이 그려질 때까지 기다린다 (CI에서 가끔 늦음)
+    const row = await within(await dayAfterSheet('1일차 · 10.24 (토)')).findByRole('button', {
       name: '1번째 일정, 이치란 라멘',
     });
     expect(row).toHaveTextContent('11:30');
