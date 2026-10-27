@@ -142,7 +142,7 @@ export async function createLabSample(): Promise<string> {
     date: today,
     kind: 'note',
     title: '메모',
-    memo: `${SAMPLE_MARK} 스이카 충전하기\n교통패스 챙기기`,
+    memo: `${SAMPLE_MARK} 스이카 충전 ¥3,000\n교통패스 챙기기`,
   });
   for (const [n, spots] of TOKYO.slice(1).entries()) {
     let t = 9 * 60;
