@@ -12,19 +12,45 @@ import { useSearchParams } from 'react-router';
 import { useTrip, useTrips } from '../../data/hooks';
 import { cachedFx, getFx, type FxResult } from '../../data/services/fxService';
 import { useSettings } from '../../data/settingsStore';
-import { useTranslation } from '../../i18n';
+import { t, useTranslation, type TKey } from '../../i18n';
 import { copyText } from '../../shared/lib/clipboard';
 import { cn } from '../../shared/lib/cn';
 import { useRouteSheet } from '../../shared/hooks/useRouteSheet';
 import { BottomSheet, Chip, TopBar } from '../../shared/ui';
 
-const currencyName = (code: string) => {
+/**
+ * 통화 한국어 이름 (2026-10-28): 문구 파일의 이름표 → 없으면 브라우저 이름. 기기에 따라 브라우저가 약어만 돌려줘
+ * "TWD TWD"처럼 보이거나 "신 타이완 달러"처럼 낯선 이름이 나와 이름표를 먼저 쓴다. 이름이 없으면 ''
+ */
+const currencyName = (code: string): string => {
+  const key = `currencyName.${code}` as TKey;
+  const named = t(key);
+  if (named !== key) return named;
   try {
-    return new Intl.DisplayNames(['ko'], { type: 'currency' }).of(code) ?? code;
+    const intl = new Intl.DisplayNames(['ko'], { type: 'currency' }).of(code);
+    return intl && intl !== code ? intl : '';
   } catch {
-    return code;
+    return '';
   }
 };
+/** "대만 달러 TWD" — 이름이 없으면 약어 한 번만 */
+const currencyLabel = (code: string) => {
+  const name = currencyName(code);
+  return name ? `${name} ${code}` : code;
+};
+/**
+ * 네이버 환율 검색어: 네이버 환율 계산기가 있는 통화는 "TWD 환율"처럼 약어로 (2026-10-28 47개 통화 확인 —
+ * 칠레 페소만 약어로는 안 떠 이름으로). 계산기에 없는 통화는 이름으로 검색
+ */
+const NAVER_FX = new Set(
+  'AED AUD BDT BHD BND BRL CAD CHF CNY CZK DKK EGP EUR GBP HKD HUF IDR ILS INR JOD JPY KWD KZT MNT MOP MXN MYR NOK NPR NZD OMR PHP PKR PLN QAR RUB SAR SEK SGD THB TRY TWD USD VND ZAR'.split(
+    ' ',
+  ),
+);
+const naverQuery = (code: string) =>
+  `${NAVER_FX.has(code) ? code : currencyName(code) || code} 환율`;
+/** 이보다 오래된 환율이면 그 통화를 고를 때 바로 새로 받는다 (주말 고시 공백은 넘김) */
+const OLD_MS = 3 * 24 * 3600 * 1000;
 const symbol = (code: string) =>
   new Intl.NumberFormat('ko', {
     style: 'currency',
@@ -60,6 +86,8 @@ export function FxPage() {
   const [picked, setCurrency] = useState<string | null>(params.get('currency'));
   const currency = picked ?? tripCurrencies[0] ?? 'JPY';
   const [fx, setFx] = useState<FxResult | null>(null);
+  /** 처음 받아 오기가 끝났나 (그 전엔 저장해 둔 값이라 오래됐어도 다시 받지 않는다) */
+  const [loaded, setLoaded] = useState(false);
   const [input, setInput] = useState('');
   const [krwFirst, setKrwFirst] = useState(false);
   const [pickerOpen, setPickerOpen] = useRouteSheet('currency');
@@ -68,8 +96,24 @@ export function FxPage() {
 
   useEffect(() => {
     void cachedFx().then((c) => c && setFx((cur) => cur ?? { ...c, stale: true }));
-    void getFx().then(setFx);
+    void getFx().then((r) => {
+      setFx(r);
+      setLoaded(true);
+    });
   }, []);
+
+  // 고른 통화 환율이 오래됐으면(예: 국제 시세가 며칠 전 값) 그 자리에서 한 번 새로 받는다 (사용자 요청 2026-10-28)
+  const refreshed = useRef(new Set<string>());
+  useEffect(() => {
+    if (!loaded || !fx || refreshed.current.has(currency)) return;
+    const date =
+      fx.source === 'koreaexim' && fx.fallback?.codes.includes(currency)
+        ? fx.fallback.date
+        : fx.date;
+    if (!fx.stale && Date.now() - Date.parse(date) < OLD_MS) return;
+    refreshed.current.add(currency);
+    void getFx({ force: true }).then((r) => r && setFx(r));
+  }, [currency, fx, loaded]);
 
   const rate = fx?.rates[currency];
   const amount = Number(input || '0');
@@ -117,7 +161,7 @@ export function FxPage() {
           </div>
         )}
         <AmountRow
-          label={topCode === 'KRW' ? t('fx.krw') : `${currencyName(currency)} ${currency}`}
+          label={topCode === 'KRW' ? t('fx.krw') : currencyLabel(currency)}
           value={`${symbol(topCode)} ${input ? fmt(Number(input), digits(topCode)) : '0'}`}
           active
           onPick={topCode === 'KRW' ? undefined : () => setPickerOpen(true)}
@@ -134,7 +178,7 @@ export function FxPage() {
           <ArrowUpDown aria-hidden="true" className="size-5" />
         </button>
         <AmountRow
-          label={bottomCode === 'KRW' ? t('fx.krw') : `${currencyName(currency)} ${currency}`}
+          label={bottomCode === 'KRW' ? t('fx.krw') : currencyLabel(currency)}
           value={result === null ? '—' : `${symbol(bottomCode)} ${fmt(result, digits(bottomCode))}`}
           onCopy={
             result === null
@@ -173,7 +217,7 @@ export function FxPage() {
           {fee > 0 && <span>{t('fx.feeApplied', { fee })}</span>}
           <span className="text-fg-muted">{t('fx.notRealtime')}</span>
           <a
-            href={`https://search.naver.com/search.naver?query=${encodeURIComponent(`${currencyName(currency)} 환율`)}`}
+            href={`https://search.naver.com/search.naver?query=${encodeURIComponent(naverQuery(currency))}`}
             target="_blank"
             rel="noopener noreferrer"
             className="mt-1 inline-flex items-center gap-1 self-start font-semibold text-primary"
@@ -281,8 +325,9 @@ function CurrencyPicker(props: {
   const { t } = useTranslation();
   const [q, setQ] = useState('');
   const all = Object.keys(props.rates).filter((c) => c !== 'KRW');
+  // 이름 없는 코드(가상화폐 등)는 빼고
   const ordered = [...new Set([...props.first, ...POPULAR_CURRENCIES, ...all.sort()])].filter(
-    (c) => c in props.rates,
+    (c) => c in props.rates && !!currencyName(c),
   );
   const list = ordered.filter(
     (c) => !q || c.toLowerCase().includes(q.toLowerCase()) || currencyName(c).includes(q),

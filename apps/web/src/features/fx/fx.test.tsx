@@ -13,7 +13,7 @@ function mockFallback(ok = true) {
     if (url.startsWith('/api/'))
       return new Response('<html>', { headers: { 'content-type': 'text/html' } });
     if (ok && url.includes('currency-api'))
-      return Response.json({ date: '2026-10-22', krw: { jpy: 0.1, usd: 0.0008 } });
+      return Response.json({ date: '2026-10-22', krw: { jpy: 0.1, usd: 0.0008, twd: 0.0232 } });
     return Promise.reject(new Error('offline'));
   });
 }
@@ -39,6 +39,23 @@ describe('환율', () => {
     vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(Date.now() + 86_400_000);
     expect(await getFx()).toMatchObject({ stale: true, rates: { JPY: 10 } });
+    vi.useRealTimers();
+  });
+
+  it('보조 출처 값이 며칠 전 날짜면 같은 날이어도 한 시간 뒤 다시 받는다', async () => {
+    mockFallback();
+    await getFx(); // 2026-10-22 값 (오래됨)
+    vi.stubGlobal('fetch', async (url: string) =>
+      url.startsWith('/api/')
+        ? new Response('<html>', { headers: { 'content-type': 'text/html' } })
+        : Response.json({ date: new Date().toISOString().slice(0, 10), krw: { jpy: 0.2 } }),
+    );
+    // 한 시간 안에는 그대로
+    expect((await getFx())?.rates.JPY).toBe(10);
+    // 통화를 골라 바로 새로 받기(force)는 1분만 지나면 새 값
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(Date.now() + 61_000);
+    expect((await getFx({ force: true }))?.rates.JPY).toBe(5);
     vi.useRealTimers();
   });
 
@@ -103,5 +120,11 @@ describe('환율 처음 통화', () => {
     render(<RouterProvider router={createMemoryRouter(routes, { initialEntries: ['/fx'] })} />);
     expect((await screen.findAllByText(/TWD/)).length).toBeGreaterThan(0);
     expect(screen.queryByText(/JPY/)).not.toBeInTheDocument();
+    // 이름은 "대만 달러" (약어 두 번·"신 타이완 달러" 아님), 네이버는 약어로 검색해야 환율 계산기가 뜬다
+    expect((await screen.findAllByText('대만 달러 TWD')).length).toBeGreaterThan(0);
+    expect(screen.getByRole('link', { name: /네이버 환율/ })).toHaveAttribute(
+      'href',
+      expect.stringContaining(`query=${encodeURIComponent('TWD 환율')}`),
+    );
   });
 });
