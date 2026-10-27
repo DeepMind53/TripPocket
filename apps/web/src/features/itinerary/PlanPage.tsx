@@ -1232,7 +1232,8 @@ function ItemRow({
         </div>
       )}
       <div className="flex items-stretch gap-1.5">
-        <div className="relative min-w-0 flex-1">
+        {/* 방문·미방문 버튼(세로 2개) 높이만큼 일정 줄도 늘어난다 (사용자 요청 2026-10-27) */}
+        <div className="relative flex min-w-0 flex-1 [&>[data-item-row]]:h-auto">
           {row}
           {marked && (
             <span
@@ -1381,6 +1382,12 @@ function ItemRow({
         )}
         {item.kind !== 'note' && item.place?.address && (
           <span className="truncate text-caption text-fg-muted">{item.place.address}</span>
+        )}
+        {/* 메모가 있으면 첫 줄만 (사용자 요청 2026-10-27) */}
+        {item.kind !== 'note' && item.memo?.trim() && (
+          <span className="truncate text-caption text-fg-sub">
+            📝 {item.memo.trim().split('\n')[0]}
+          </span>
         )}
       </span>
       <span className="flex h-6 shrink-0 items-center gap-1 rounded-md bg-bg-subtle px-1.5 text-micro text-fg-sub">

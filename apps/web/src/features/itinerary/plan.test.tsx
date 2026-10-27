@@ -516,3 +516,17 @@ it('일정이 하나도 없는 여행: 장소 찾기·AI 추천 버튼 (docs/20 
   // 장소 화면은 지연 로딩 — 다 불러온 뒤 주소가 바뀐다
   await waitFor(() => expect(router.state.location.pathname).toBe(`/trips/${tripId}/places`));
 });
+
+it('일정에 메모가 있으면 첫 줄을 일정 줄에 보여 준다 (2026-10-27)', async () => {
+  await itemRepo.create({
+    tripId,
+    date: '2026-10-24',
+    kind: 'food',
+    title: '이치란',
+    memo: '줄 서기 전에 식권 사기\n현금만',
+  });
+  await renderPlan('?day=1');
+  const row = await screen.findByRole('button', { name: '1번째 일정, 이치란' });
+  expect(row).toHaveTextContent('📝 줄 서기 전에 식권 사기');
+  expect(row).not.toHaveTextContent('현금만');
+});
