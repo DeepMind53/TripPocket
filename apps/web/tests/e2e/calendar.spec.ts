@@ -43,7 +43,8 @@ test('여행 날짜 달력에 공휴일·날씨가 보이고 칩으로 끈다', 
   await expect(chuseok).toBeVisible();
   await expect(page.getByRole('button', { name: `${dayLabel(4)} · 추석 (Chuseok)` })).toBeVisible();
   await expect(page.getByRole('button', { name: `${dayLabel(1)} · 비 9°/15°` })).toBeVisible();
-  await expect(page.getByText(`${dayLabel(3)}–${dayLabel(4)}`)).toBeVisible();
+  // 달이 바뀌는 날(10.31–11.01)이면 두 달 칸에 모두 보일 수 있어 첫 번째만
+  await expect(page.getByText(`${dayLabel(3)}–${dayLabel(4)}`).first()).toBeVisible();
 
   // 정보를 꺼도 날짜 칸 위치는 그대로
   const before = await chuseok.boundingBox();
