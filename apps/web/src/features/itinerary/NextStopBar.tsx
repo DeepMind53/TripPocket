@@ -52,10 +52,13 @@ export function NextStopBar({ next, now }: { next: ItineraryItem; now: string })
       </button>
     );
 
-  // 길 정보를 못 받으면(무료량 끝·오프라인) 직선거리로 어림한 걷는 시간으로 대신 (대체 기능)
-  const rough: { walk: number; transit?: number } | undefined =
-    eta === null && here ? { walk: walkMinutes(distanceKm(here, to)) } : undefined;
-  const shown = eta ?? rough;
+  // 길 정보를 못 받았거나(무료량 끝·오프라인) 도보가 빠졌으면(한국은 Google 도보 없음) 직선거리 어림으로 대신
+  const roughWalk = here ? walkMinutes(distanceKm(here, to)) : undefined;
+  const rough = eta !== undefined && eta?.walk === undefined && roughWalk !== undefined;
+  const shown: { walk?: number | undefined; transit?: number | undefined } | undefined =
+    eta === undefined ? undefined : { walk: eta?.walk ?? roughWalk, transit: eta?.transit };
+  // 대중교통이 없으면(일본은 Google 대중교통 없음) 지도 앱 길찾기로 — 출발지는 넣지 않는다(지도 앱이 현재 위치를 씀)
+  const transitUrl = `https://www.google.com/maps/dir/?api=1&destination=${to.lat},${to.lng}&travelmode=transit`;
   const plan = departurePlan(next.startTime!, now, shown ?? {});
   return (
     <div role="status" className="flex min-w-0 flex-1 flex-col text-micro leading-tight">
@@ -69,13 +72,25 @@ export function NextStopBar({ next, now }: { next: ItineraryItem; now: string })
           {/* 2줄: 도보 nn분 · 대중교통 mm분 (사용자 요청 2026-10-27 — 짧게) */}
           <span className="truncate text-fg-sub">
             {[
-              shown.walk !== undefined ? t('nextStop.walkMin', { min: shown.walk }) : null,
+              shown.walk !== undefined
+                ? t('nextStop.walkMin', { min: shown.walk }) +
+                  (rough ? ` ${t('nextStop.roughShort')}` : '')
+                : null,
               shown.transit !== undefined ? t('nextStop.transitMin', { min: shown.transit }) : null,
             ]
               .filter(Boolean)
               .join(' · ')}
-            {rough ? ` ${t('nextStop.roughShort')}` : ''}
           </span>
+          {shown.transit === undefined && (
+            <a
+              href={transitUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="text-primary underline underline-offset-2"
+            >
+              {t('nextStop.transitInApp')}
+            </a>
+          )}
           {/* 3줄: 여유를 두고 몇 시까지 나가야 하는지 */}
           {plan.leaveBy && (
             <span

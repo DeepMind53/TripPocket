@@ -1598,7 +1598,8 @@
     "loading": "길 찾는 중",
     "walkMin": "도보 {{min}}분",
     "transitMin": "대중교통 {{min}}분",
-    "roughShort": "(직선거리 어림)",
+    "roughShort": "(어림)",
+    "transitInApp": "대중교통은 지도 앱에서 보기",
     "leaveBy": "{{time}} 전 출발 (여유 {{margin}}분)",
     "leaveNow": "지금 바로 출발하세요"
   },

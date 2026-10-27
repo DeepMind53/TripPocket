@@ -64,7 +64,41 @@ it('길 정보를 못 받으면 직선거리 어림으로 대신하고 한도 �
     },
   });
   render(<NextStopBar next={next} now="12:00" />);
-  expect(await screen.findByText(/^도보 \d+분 \(직선거리 어림\)$/)).toBeInTheDocument();
+  expect(await screen.findByText(/^도보 \d+분 \(어림\)$/)).toBeInTheDocument();
   expect(screen.getByText(/^\d{2}:\d{2} 전 출발 \(여유 10분\)$/)).toBeInTheDocument();
   expect(useLimitNotice.getState().notice).toBeNull();
+});
+
+it('대중교통이 없으면(일본) 지도 앱 링크, 도보가 없으면(한국) 직선거리 어림', async () => {
+  let reply: object = { walk: 150, source: 'google' };
+  vi.stubGlobal('fetch', async () => Response.json(reply));
+  Object.defineProperty(navigator, 'permissions', {
+    configurable: true,
+    value: { query: () => Promise.resolve({ state: 'granted' }) },
+  });
+  Object.defineProperty(navigator, 'geolocation', {
+    configurable: true,
+    value: {
+      getCurrentPosition: (ok: (p: { coords: { latitude: number; longitude: number } }) => void) =>
+        ok({ coords: { latitude: 35.6905, longitude: 139.7005 } }),
+    },
+  });
+  const { unmount } = render(<NextStopBar next={next} now="10:00" />);
+  expect(await screen.findByText('도보 150분')).toBeInTheDocument();
+  const link = screen.getByRole('link', { name: '대중교통은 지도 앱에서 보기' });
+  expect(link.getAttribute('href')).toContain('travelmode=transit');
+  expect(link.getAttribute('href')).not.toContain('origin');
+  unmount();
+
+  reply = { transit: 28, source: 'google' };
+  render(
+    <NextStopBar
+      next={{ ...next, id: 'k', place: { ...next.place!, coords: { lat: 35.7, lng: 139.71 } } }}
+      now="10:00"
+    />,
+  );
+  expect(await screen.findByText(/^도보 \d+분 \(어림\) · 대중교통 28분$/)).toBeInTheDocument();
+  expect(
+    screen.queryByRole('link', { name: '대중교통은 지도 앱에서 보기' }),
+  ).not.toBeInTheDocument();
 });

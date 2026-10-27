@@ -79,11 +79,15 @@ export async function googleEta(
   const k = key(from, to, 'g');
   const hit = live ? undefined : cached(k);
   if (hit) return hit;
-  const [walk, transit] = await Promise.all([
+  // 한 쪽만 실패해도 다른 쪽은 쓴다. 둘 다 실패면 오류 (키 제한·장애)
+  const [w, tr] = await Promise.allSettled([
     googleOne(from, to, 'WALK', apiKey),
-    // 대중교통 노선이 없는 곳(가까운 거리 등)은 빈 결과 — 실패로 보지 않는다
-    googleOne(from, to, 'TRANSIT', apiKey).catch(() => undefined),
+    // 대중교통 노선이 없는 곳(가까운 거리, 일본 등)은 빈 결과
+    googleOne(from, to, 'TRANSIT', apiKey),
   ]);
+  if (w.status === 'rejected' && tr.status === 'rejected') throw w.reason;
+  const walk = w.status === 'fulfilled' ? w.value : undefined;
+  const transit = tr.status === 'fulfilled' ? tr.value : undefined;
   const eta: RouteEta = { walk, transit, source: 'google' };
   // 내 위치에서 출발하는 요청은 메모리에도 남기지 않는다
   return live ? eta : remember(k, eta);

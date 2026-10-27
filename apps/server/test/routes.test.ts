@@ -119,6 +119,28 @@ describe('출발 시각 (두 장소 소요 시간)', () => {
     expect((await eta({ from, to, google: true })).statusCode).toBe(503);
   });
 
+  it('Google이 한쪽만 주면(한국 도보·일본 대중교통 없음) Google 좌표가 아닐 때 Geoapify로 빈 쪽만 채운다', async () => {
+    vi.stubGlobal('fetch', async (input: string | URL, init?: RequestInit) => {
+      const url = String(input);
+      const body = String(init?.body ?? '');
+      calls.push({ url, body, headers: {} });
+      if (url.includes('routes.googleapis.com'))
+        return Response.json(body.includes('TRANSIT') ? { routes: [{ duration: '1680s' }] } : {});
+      return Response.json({ features: [{ properties: { time: 7920 } }] });
+    });
+    expect((await eta({ from, to, google: false })).json()).toEqual({
+      walk: 132,
+      transit: 28,
+      source: 'google',
+    });
+    clearRouteCache();
+    // Google 좌표면 채우지 않고 Google 것만
+    expect((await eta({ from, to, google: true })).json()).toEqual({
+      transit: 28,
+      source: 'google',
+    });
+  });
+
   it('내 위치에서 출발(live)이면 서버 메모리에도 남기지 않는다 — 같은 요청도 다시 묻는다', async () => {
     await eta({ from, to, google: false, live: true });
     await eta({ from, to, google: false, live: true });

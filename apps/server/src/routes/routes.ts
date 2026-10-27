@@ -1,4 +1,4 @@
-import { RouteEtaBody } from '@trippocket/shared';
+import { RouteEtaBody, type RouteEta } from '@trippocket/shared';
 import type { FastifyInstance } from 'fastify';
 import type { Config } from '../config';
 import type { Db } from '../db/database';
@@ -22,23 +22,28 @@ export function routeEtaRoutes(app: FastifyInstance, config: Config, db: Db): vo
     reply.header('cache-control', 'no-store');
     const gkey = config.GOOGLE_PLACES_KEY;
     const okey = config.GEOAPIFY_KEY;
-    // 실제 길 기준 시간: 걷기·대중교통 모두 Google Routes가 먼저 (Geoapify 대중교통은 일본 등에서 경로를 못 찾음, 2026-10-27).
-    // Google이 멈췄거나 실패하면, Google 좌표가 아닐 때만 무료 Geoapify (Google 좌표는 다른 회사로 보내지 않는다 — 약관)
+    // 실제 길 기준 시간: 걷기·대중교통 모두 Google Routes가 먼저 (2026-10-27).
+    // Google은 나라마다 빈 곳이 있다 — 일본은 대중교통 없음, 한국은 도보 없음 (2026-10-27 실제 응답 확인).
+    // 빈 쪽은 Google 좌표가 아닐 때만 무료 Geoapify로 채운다 (Google 좌표는 다른 회사로 보내지 않는다 — 약관)
+    let eta: RouteEta | null = null;
     if (gkey && apiAllowed('google_routes')) {
       try {
-        const eta = await googleEta(from, to, gkey, live);
-        if (eta.walk !== undefined || eta.transit !== undefined) return eta;
+        const g = await googleEta(from, to, gkey, live);
+        if (g.walk !== undefined || g.transit !== undefined) eta = g;
       } catch (e) {
         req.log.warn(`google routes 실패: ${String(e)}`);
       }
     }
-    if (!google && okey && apiAllowed('geoapify')) {
+    const missing = !eta || eta.walk === undefined || eta.transit === undefined;
+    if (missing && !google && okey && apiAllowed('geoapify')) {
       try {
-        return await geoapifyEta(from, to, okey, live);
+        const o = await geoapifyEta(from, to, okey, live);
+        eta = eta ? { ...eta, walk: eta.walk ?? o.walk, transit: eta.transit ?? o.transit } : o;
       } catch (e) {
         req.log.warn(`geoapify routing 실패: ${String(e)}`);
       }
     }
+    if (eta && (eta.walk !== undefined || eta.transit !== undefined)) return eta;
     return (
       reply
         .code(503)
