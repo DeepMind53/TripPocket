@@ -1041,19 +1041,28 @@
         "name": "다음 장소까지 거리",
         "desc": "일정 사이 거리와 걸어서 걸리는 시간 (검색해 고른 장소만)"
       },
-      "copyDay": {
-        "name": "하루 일정 글로 복사",
-        "desc": "날짜 메뉴(⋯)에서 그날 일정을\n카톡 등에 붙여 넣을 글로 복사해요"
+      "memoFx": {
+        "name": "메모 속 외화를 원화로",
+        "desc": "일정 메모의 ¥1,200·300바트 등을\n저장된 환율로 원화와 함께 보여 줘요"
       },
-      "weatherPacking": {
-        "name": "날씨 맞춤 준비물",
-        "desc": "예보를 보고 우산·선크림 등을\n준비물 화면에서 제안해요"
+      "compactList": {
+        "name": "일정 촘촘히 보기",
+        "desc": "일정 줄 간격을 좁혀\n한 화면에 더 많이 보여 줘요"
       },
-      "dayRoute": {
-        "name": "하루 동선 지도로 보기",
-        "desc": "날짜 메뉴(⋯)에서 그날 장소를\n순서대로 Google 지도로 열어요"
+      "lodgingReturn": {
+        "name": "숙소까지 거리",
+        "desc": "하루 마지막 장소에서\n그날 숙소까지 거리를 보여 줘요"
+      },
+      "busyDay": {
+        "name": "빠듯한 하루 표시",
+        "desc": "일정 7개 이상이거나 이동 15km 이상인 날\n날짜 옆에 표시해요"
       }
     },
+    "memoFxLabel": "메모 속 금액 원화 환산",
+    "memoFxWon": "{{won}}원",
+    "busy": "빠듯해요",
+    "busyDetail": "일정 {{count}}개 · 이동 약 {{km}}km",
+    "toLodging": "숙소까지 {{distance}} · 걸어서 약 {{min}}분",
     "dayRoute": "하루 동선 지도로 보기",
     "dayRouteDesc": "장소 순서대로 Google 지도 길찾기",
     "packTitle": "날씨 보고 챙길 것",

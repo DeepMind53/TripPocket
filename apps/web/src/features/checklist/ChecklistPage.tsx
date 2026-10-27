@@ -24,7 +24,6 @@ import { ChecklistBoard } from './ChecklistBoard';
 import { TemplateSheet } from './TemplateSheet';
 import { useChecklistDraft, type Draft } from './useChecklistDraft';
 import { WeatherPackingTips } from './WeatherPackingTips';
-import { useLab } from '../../data/labsStore';
 
 /**
  * S-18 준비: 준비물 / 할 일.
@@ -42,7 +41,8 @@ export function ChecklistPage() {
   // 해외 여행이면 맨 위에 나라별 필수 항목 바로가기 (docs/19)
   const trip = useTrip(tripId) ?? undefined;
   const essentials = useEssentials(trip);
-  const packOn = useLab('weatherPacking');
+  // 날씨 맞춤 준비물 (2026-10-27 실험실에서 정식)
+  const packOn = true;
 
   // 저장하지 않고 다른 화면으로 가려 하면 묻는다 (같은 화면의 시트 열기는 제외)
   const blocker = useBlocker(
@@ -114,7 +114,7 @@ export function ChecklistPage() {
 
       {canEdit && <AddRow key={list} list={list} draft={draft} actions={actions} />}
 
-      {/* 실험실: 날씨 맞춤 준비물 */}
+      {/* 날씨 맞춤 준비물 */}
       {packOn && canEdit && list === 'packing' && trip && (
         <WeatherPackingTips
           trip={trip}

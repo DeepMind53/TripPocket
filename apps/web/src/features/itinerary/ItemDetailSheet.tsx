@@ -31,6 +31,7 @@ import { DirectionsPanel } from '../common/DirectionsPanel';
 import { BookingDocs } from '../bookings/BookingDocs';
 import { TaxiCard } from '../phrases/TaxiCard';
 import { KIND_ICON } from './itemKinds';
+import { MemoFx } from './MemoFx';
 
 export interface ItemDetailSheetProps {
   open: boolean;
@@ -239,7 +240,12 @@ export function ItemDetailSheet({
                 {address ?? <span className="text-fg-muted">{t('detail.noAddress')}</span>}
               </Info>
             )}
-            {item.memo && <Info label={t('form.memo')}>{item.memo}</Info>}
+            {item.memo && (
+              <Info label={t('form.memo')}>
+                {item.memo}
+                <MemoFx memo={item.memo} countryCode={countryCode} />
+              </Info>
+            )}
             {item.url && (
               <Info label={t('form.url')}>
                 <a

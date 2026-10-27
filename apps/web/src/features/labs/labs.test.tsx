@@ -5,9 +5,11 @@ import { createMemoryRouter, RouterProvider } from 'react-router';
 import { routes } from '../../app/router';
 import { resetLocalDb } from '../../data/dev';
 import { LABS, setLab } from '../../data/labsStore';
+import { bookingRepo } from '../../data/repositories/bookingRepo';
 import { itemRepo } from '../../data/repositories/itemRepo';
 import { trashRepo } from '../../data/repositories/trashRepo';
 import { tripRepo } from '../../data/repositories/tripRepo';
+import { settingsRepo } from '../../data/repositories/settingsRepo';
 import { Toaster } from '../../shared/ui';
 import { localTimeLabel } from '../../shared/hooks/useMinuteClock';
 
@@ -42,7 +44,7 @@ describe('실험실', () => {
       /일출/,
     ])
       expect(screen.queryByRole('switch', { name })).toBeNull();
-    for (const name of [/하루 일정 글로 복사/, /날씨 맞춤 준비물/, /하루 동선/])
+    for (const name of [/메모 속 외화/, /촘촘히/, /숙소까지 거리/, /빠듯한 하루/])
       expect(screen.getByRole('switch', { name })).toBeInTheDocument();
   });
 
@@ -77,7 +79,6 @@ describe('실험실', () => {
         place: at(35.7),
       });
       await itemRepo.setVisit(b.id, 'skipped');
-      setLab('copyDay', true);
       const user = userEvent.setup();
       render(
         <>
@@ -102,7 +103,6 @@ describe('실험실', () => {
         /^1일차 · 10\.24 \(토\)\n1\. 10:00 센소지 \(도쿄\)\n2\. 10:10 이치란/,
       );
     } finally {
-      setLab('copyDay', false);
       vi.useRealTimers();
     }
   });
@@ -144,7 +144,6 @@ describe('실험실', () => {
           title,
           place: at(lat),
         });
-      for (const id of ['dayRoute', 'weatherPacking'] as const) setLab(id, true);
       const user = userEvent.setup();
       render(
         <>
@@ -165,7 +164,6 @@ describe('실험실', () => {
       expect(route.getAttribute('href')).toMatch(/^https:\/\/www\.google\.com\/maps\/dir\/\?/);
       expect(route.getAttribute('target')).toBe('_blank');
     } finally {
-      for (const id of ['dayRoute', 'weatherPacking'] as const) setLab(id, false);
       vi.useRealTimers();
       vi.unstubAllGlobals();
     }
@@ -184,7 +182,6 @@ describe('실험실', () => {
         },
       }),
     );
-    setLab('weatherPacking', true);
     try {
       const trip = await tripRepo.create({
         title: '도쿄',
@@ -210,9 +207,89 @@ describe('실험실', () => {
       expect(await screen.findByText(/우산을 넣었어요/)).toBeInTheDocument();
       expect(screen.queryByRole('region', { name: '날씨 보고 챙길 것' })).not.toBeInTheDocument();
     } finally {
-      setLab('weatherPacking', false);
       vi.useRealTimers();
       vi.unstubAllGlobals();
+    }
+  });
+
+  it('새 실험 (2026-10-27): 메모 외화 → 원화 · 빠듯한 하루 · 촘촘히 보기 · 숙소까지 거리', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-10-22T03:00:00Z'));
+    try {
+      await settingsRepo.set('fxCache', {
+        source: 'koreaexim',
+        date: '2026-10-22',
+        fetchedAt: '2026-10-22T00:00:00Z',
+        rates: { JPY: 9.2 },
+      });
+      const trip = await tripRepo.create({
+        title: '도쿄',
+        destinations: [{ name: '도쿄', kind: 'city', countryCode: 'JP' }],
+        startDate: '2026-10-24',
+        endDate: '2026-10-25',
+        timezone: 'Asia/Tokyo',
+        cover: {},
+      });
+      const hotel = await bookingRepo.create({
+        tripId: trip.id,
+        kind: 'lodging',
+        title: '신주쿠 호텔',
+        start: { date: '2026-10-24', time: '15:00' },
+        end: { date: '2026-10-25', time: '11:00' },
+      });
+      const at = (lat: number, lng: number) => ({ name: 'p', coords: { lat, lng } });
+      await itemRepo.create({
+        tripId: trip.id,
+        date: '2026-10-24',
+        kind: 'lodging',
+        title: '신주쿠 호텔',
+        bookingId: hotel.id,
+        place: at(35.69, 139.7),
+      });
+      await itemRepo.create({
+        tripId: trip.id,
+        date: '2026-10-24',
+        kind: 'place',
+        title: '센소지',
+        memo: '입장 무료, 오미쿠지 ¥200',
+        place: at(35.7148, 139.7967),
+      });
+      await itemRepo.create({
+        tripId: trip.id,
+        date: '2026-10-24',
+        kind: 'place',
+        title: '요코하마',
+        place: at(35.45, 139.63),
+      });
+      for (const id of ['memoFx', 'busyDay', 'compactList', 'lodgingReturn'] as const)
+        setLab(id, true);
+      const user = userEvent.setup();
+      render(
+        <>
+          <RouterProvider
+            router={createMemoryRouter(routes, {
+              initialEntries: [`/trips/${trip.id}/plan?day=1`],
+            })}
+          />
+          <Toaster />
+        </>,
+      );
+      const day = await screen.findByRole('region', { name: /^1일차/ });
+      // 이동이 15km 넘는 날 → 빠듯해요
+      expect(within(day).getByText('빠듯해요')).toBeInTheDocument();
+      // 마지막 장소(요코하마) → 숙소
+      expect(
+        within(day).getByText(/^숙소까지 \d+(\.\d)?km · 걸어서 약 \d+분$/),
+      ).toBeInTheDocument();
+      // 촘촘히 보기
+      expect(day.querySelector('ol')?.className).toContain('gap-0.5');
+      // 메모 외화 → 원화 (상세)
+      await user.click(within(day).getByRole('button', { name: /센소지/ }));
+      expect(await screen.findByText('💱 ¥200 ≈ 1,840원')).toBeInTheDocument();
+    } finally {
+      for (const id of ['memoFx', 'busyDay', 'compactList', 'lodgingReturn'] as const)
+        setLab(id, false);
+      vi.useRealTimers();
     }
   });
 
@@ -382,8 +459,10 @@ describe('실험실', () => {
     );
     expect(JSON.parse(localStorage.getItem('tp-labs')!)).toMatchObject({
       legDistance: true,
-      weatherPacking: true,
-      dayRoute: true,
+      memoFx: true,
+      compactList: true,
+      lodgingReturn: true,
+      busyDay: true,
     });
 
     await act(() => admin.navigate('/labs'));

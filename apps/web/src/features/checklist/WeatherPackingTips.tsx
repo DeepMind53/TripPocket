@@ -5,7 +5,7 @@ import { useTranslation } from '../../i18n';
 import { useTripWeather } from '../common/useTripWeather';
 
 /**
- * 실험실 "날씨 맞춤 준비물" (2026-10-27): 여행 날씨(2주 안 예보, 그 밖은 작년 기록)로 챙길 것을 제안.
+ * 날씨 맞춤 준비물 (2026-10-27, 같은 날 실험실에서 정식): 여행 날씨(2주 안 예보, 그 밖은 작년 기록)로 챙길 것을 제안.
  * [추가]는 준비물 초안에 넣기만 — 하단 [저장]을 눌러야 저장된다 (준비 화면 규칙)
  */
 export function WeatherPackingTips({

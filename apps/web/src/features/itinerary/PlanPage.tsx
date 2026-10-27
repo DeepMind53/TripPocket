@@ -93,6 +93,7 @@ import { FlightTicket } from '../bookings/BookingCard';
 import { isDomesticTrip } from '../../domain/tripPlace';
 import { dayRouteUrl } from '../../domain/dayRoute';
 import { sunSlot, sunTimes } from '../../domain/sun';
+import { busyDay } from '../../domain/busyDay';
 import { distanceKm, formatDistance, walkMinutes } from '@trippocket/shared';
 import { useLab } from '../../data/labsStore';
 import { DayWeatherBadge } from '../common/DayWeatherBadge';
@@ -148,10 +149,15 @@ function PlanView({
   const days = getTripDays(trip.startDate, trip.endDate);
   const today = todayIn(trip.timezone);
   const dimPast = useSettings((st) => st.dimPastItems);
-  const copyDayOn = useLab('copyDay');
-  // 설정 "일정 사이 일출·일몰"(목적지 좌표로 계산) · 실험실 하루 동선 지도
+  // 2026-10-27 정식: 하루 일정 글로 복사·하루 동선 지도 (날짜 메뉴)
+  const copyDayOn = true;
+  const dayRouteOn = true;
+  // 설정 "일정 사이 일출·일몰"(목적지 좌표로 계산)
   const sunOn = useSettings((st) => st.sunTimes);
-  const dayRouteOn = useLab('dayRoute');
+  // 실험실: 하루 마지막 일정 → 숙소까지 거리 (일정표에 들어간 숙소 좌표)
+  const lodgingReturnOn = useLab('lodgingReturn');
+  const coordsOfBooking = (id: string | undefined) =>
+    id ? items.find((i) => i.bookingId === id && i.place?.coords)?.place?.coords : undefined;
   const sunCoords = trip.destinations.find((d) => d.coords)?.coords;
   const { time: timeText } = useTimeText();
   // 지도는 누를 때만 (지도 불러오기도 무료 사용량에 포함)
@@ -606,6 +612,11 @@ function PlanView({
                       }
                       isPast={dimPast && date !== null && date < today}
                       lodging={date ? lodgingForNight(bookings, date) : null}
+                      lodgingCoords={
+                        lodgingReturnOn && date
+                          ? coordsOfBooking(lodgingForNight(bookings, date)?.booking.id)
+                          : undefined
+                      }
                       breakfast={date ? breakfastOn(bookings, date) : null}
                       bookingRows={date ? bookingRowsForDay(rowBookings, date) : []}
                       bookingById={bookingById}
@@ -640,7 +651,7 @@ function PlanView({
         onOpenChange={setDayMenuOpen}
         title={t('plan.dayMenu', { day: dayTitle(menuDate) })}
       >
-        {/* 실험실: 그날 일정을 카톡 등에 붙여 넣을 글로 */}
+        {/* 그날 일정을 카톡 등에 붙여 넣을 글로 */}
         {copyDayOn && (
           <button
             type="button"
@@ -664,7 +675,7 @@ function PlanView({
             </span>
           </button>
         )}
-        {/* 실험실: 그날 장소를 순서대로 Google 지도 길찾기로 (키 없는 공식 URL) */}
+        {/* 그날 장소를 순서대로 Google 지도 길찾기로 (키 없는 공식 URL, 항공 구간 빼고) */}
         {dayRouteOn && dayRouteUrl(items.filter((i) => i.date === menuDate)) && (
           <a
             href={dayRouteUrl(items.filter((i) => i.date === menuDate))!}
@@ -826,12 +837,15 @@ function DaySection({
   onVisitItem,
   historyOf,
   sun,
+  lodgingCoords,
 }: {
   /** 지난 일정 방문·미방문 (미방문이면 저장 탭에도 담는다) */
   onVisitItem: (item: ItineraryItem, visit: Visit) => void;
   /** 이 일정 장소를 예전에 방문한 날 */
   historyOf: (item: ItineraryItem) => { date: string; trip: string }[];
   weather?: TripDayWeather | undefined;
+  /** 실험실 "숙소까지 거리": 그날 밤 숙소 좌표 */
+  lodgingCoords?: { lat: number; lng: number } | undefined;
   /** 일출·일몰 (현지 시각) — 일정 사이 시간 순서 자리에 한 줄씩 */
   sun?: { rise: string; set: string } | null;
   /** 여행지 시간대 — 당일 진행 중인 일정 계산 */
@@ -858,8 +872,12 @@ function DaySection({
 }) {
   const { t } = useTranslation();
   const legs = useLab('legDistance');
-  const copyDayOn = useLab('copyDay');
-  const dayRouteOn = useLab('dayRoute');
+  // 2026-10-27 정식: 하루 일정 글로 복사·하루 동선 지도
+  const copyDayOn = true;
+  const dayRouteOn = true;
+  // 실험실: 촘촘히 보기 · 빠듯한 하루
+  const compact = useLab('compactList');
+  const busyOn = useLab('busyDay');
   const dupOn = true;
   // 여행 당일: 현지 시각으로 지금 진행 중인 일정 (1분마다 다시 계산)
   const now = useMinuteClock(isToday);
@@ -877,6 +895,9 @@ function DaySection({
   if (hideWhenEmpty && items.length === 0) return null;
   // 오늘 진행률 (2026-10-27 정식): 메모는 빼고, 방문(파랑)·미방문(빨강)을 칸에 채운다
   const tracked = items.filter((i) => i.kind !== 'note');
+  const busy = busyOn && date ? busyDay(items) : null;
+  // 그날 마지막 장소 → 숙소 (직선거리)
+  const lastCoords = [...tracked].reverse().find((i) => i.place?.coords)?.place?.coords;
   const visited = tracked.filter((i) => i.visit === 'visited' || i.done).length;
   const skipped = tracked.filter((i) => i.visit === 'skipped').length;
   const color = date ? dayColor(index) : 'var(--tp-fg-muted)';
@@ -915,6 +936,15 @@ function DaySection({
           {isToday && (
             <span className="rounded-full bg-primary-weak px-2 py-0.5 text-micro text-primary">
               {t('date.today')}
+            </span>
+          )}
+          {/* 실험실: 일정이 많거나 이동이 긴 날 */}
+          {busy && (
+            <span
+              className="rounded-full bg-warning/15 px-2 py-0.5 text-micro font-semibold text-warning"
+              title={t('labs.busyDetail', { count: busy.count, km: busy.km })}
+            >
+              {t('labs.busy')}
             </span>
           )}
         </h2>
@@ -972,7 +1002,12 @@ function DaySection({
           {date ? t('plan.emptyDay') : t('plan.wishEmpty')}
         </p>
       )}
-      <ol className="flex flex-col gap-1.5 px-3 py-2">
+      <ol
+        className={cn(
+          'flex flex-col px-3 py-2',
+          compact ? 'gap-0.5 [&_[data-item-row]]:py-1.5' : 'gap-1.5',
+        )}
+      >
         {items.map((item, i) => (
           <Fragment key={item.id}>
             {sun && sunSlot(items, sun.rise) === i && (
@@ -1005,6 +1040,16 @@ function DaySection({
         )}
         {sun && items.length > 0 && sunSlot(items, sun.set) === items.length && (
           <SunLine label={t('plan.sunset')} time={sun.set} />
+        )}
+        {/* 실험실: 마지막 장소에서 숙소까지 */}
+        {lodging && lodgingCoords && lastCoords && distanceKm(lastCoords, lodgingCoords) > 0.05 && (
+          <li className="flex items-center gap-1.5 py-1 pl-9 text-micro text-fg-muted">
+            <BedDouble aria-hidden="true" className="size-3" />
+            {t('labs.toLodging', {
+              distance: formatDistance(distanceKm(lastCoords, lodgingCoords)),
+              min: walkMinutes(distanceKm(lastCoords, lodgingCoords)),
+            })}
+          </li>
         )}
       </ol>
       {canEdit && (
