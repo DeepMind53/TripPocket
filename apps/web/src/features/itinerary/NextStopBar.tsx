@@ -1,5 +1,11 @@
-import { distanceKm, walkMinutes, type ItineraryItem, type RouteEta } from '@trippocket/shared';
-import { LocateFixed } from 'lucide-react';
+import {
+  distanceKm,
+  walkMinutes,
+  type Coords,
+  type ItineraryItem,
+  type RouteEta,
+} from '@trippocket/shared';
+import { LocateFixed, RotateCw } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { routeEta } from '../../data/api/routes';
 import { FAR_LEG_KM } from '../../domain/busyDay';
@@ -11,117 +17,154 @@ import { cn } from '../../shared/lib/cn';
 /** 이보다 오래 걸으면 도보로 가는 길이 아니다 → "도보 검색 불가" */
 const MAX_WALK_MIN = 200;
 
+interface Found {
+  /** 어느 다음 일정의 결과인지 (다음 일정이 바뀌면 다시 눌러야 한다) */
+  nextId: string;
+  /** 몇 번째 누름의 결과인지 */
+  press: number;
+  here: Coords;
+  eta: RouteEta | null;
+  /** 비행기로 건너갈 만큼 멀거나 다음 일정이 항공편 → 시간을 묻지 않았다 */
+  far: boolean;
+}
+
 /**
  * 일정 화면 지도·편집 사이 "다음 일정" 줄 (사용자 요청 2026-10-27): 여행 당일 지금 위치에서
- * 다음 일정까지 실제 걷는 길·대중교통 시간과 각각 몇 시에 나가면 되는지, 늦을 것 같으면 알림.
- * 위치를 아직 허락하지 않았으면 버튼 하나 — 누르면 묻고 계산한다. 위치는 화면에서만 쓴다
+ * 다음 일정까지 실제 걷는 길·대중교통 시간과 몇 시까지 나가면 되는지.
+ * 길 찾기는 [이동 시간 검색]을 누를 때만 한 번 (자동·반복 검색은 API 낭비 — 사용자 요청 2026-10-27).
+ * 위치는 누를 때만 읽고 화면에서만 쓴다
  */
 export function NextStopBar({ next, now }: { next: ItineraryItem; now: string }) {
   const { t } = useTranslation();
-  const { state, request } = useCurrentPosition(true);
-  const [result, setResult] = useState<{ key: string; eta: RouteEta | null } | null>(null);
+  const { state, request } = useCurrentPosition(false);
+  const [press, setPress] = useState(0);
+  const [found, setFound] = useState<Found | null>(null);
   const to = next.place?.coords;
   const google = next.place?.coordsSource === 'google';
-  const here = state.status === 'ok' ? state.coords : undefined;
-  // 비행기로 건너가야 할 만큼 멀거나(다른 나라 등) 다음 일정이 항공편이면 도보·대중교통 시간을 묻지도 보이지도 않는다
-  // (2026-10-27: 한국에서 일본 샘플을 보면 도보 19909분이 떴음)
-  const far = !!here && !!to && (isFlightLeg(next) || distanceKm(here, to) > FAR_LEG_KM);
-  // 위치가 100m 넘게 바뀌었을 때만 다시 묻는다 (routeEta도 100m로 줄여 보낸다)
-  const key =
-    here && to && !far
-      ? `${Math.round(here.lat * 1000)},${Math.round(here.lng * 1000)}>${to.lat},${to.lng},${google}`
-      : '';
 
+  // 누른 뒤 위치를 받으면 그 위치로 한 번만 길을 찾는다
   useEffect(() => {
-    if (!key || !here || !to) return;
+    if (press === 0 || state.status !== 'ok' || !to) return;
+    if (found && found.press === press && found.nextId === next.id) return;
+    const here = state.coords;
     let alive = true;
-    void routeEta(here, to, google, true).then((eta) => alive && setResult({ key, eta }));
+    // 비행기로 건너가야 할 만큼 멀거나(다른 나라 등) 다음 일정이 항공편이면 묻지 않는다
+    // (2026-10-27: 한국에서 일본 샘플을 보면 도보 19909분이 떴음)
+    const far = isFlightLeg(next) || distanceKm(here, to) > FAR_LEG_KM;
+    const done = (eta: RouteEta | null) =>
+      alive && setFound({ nextId: next.id, press, here, eta, far });
+    void (far ? Promise.resolve(null) : routeEta(here, to, google, true)).then(done);
     return () => {
       alive = false;
     };
-  }, [key]); // eslint-disable-line react-hooks/exhaustive-deps -- key에 here·to·google이 담겨 있다
-
-  // 지금 위치에 맞는 결과가 올 때까지는 "길 찾는 중"
-  const eta = result && result.key === key ? result.eta : undefined;
+  }, [press, state]); // eslint-disable-line react-hooks/exhaustive-deps -- 누름·위치가 바뀔 때만
 
   if (!to) return null;
-  if (state.status !== 'ok')
-    return (
-      <button
-        type="button"
-        onClick={request}
-        disabled={state.status === 'asking'}
-        className="flex min-h-9 min-w-0 flex-1 items-center justify-center gap-1 rounded-full border border-primary/40 px-2 text-micro font-semibold text-primary disabled:opacity-60"
-      >
-        <LocateFixed aria-hidden="true" className="size-3.5 shrink-0" />
-        <span className="truncate">
-          {state.status === 'denied' ? t('nextStop.denied') : t('nextStop.ask')}
-        </span>
-      </button>
-    );
-
-  // 길 정보를 못 받았거나(무료량 끝·오프라인) 도보가 빠졌으면(한국은 Google 도보 없음) 직선거리 어림으로 대신
-  const roughWalk = here ? walkMinutes(distanceKm(here, to)) : undefined;
-  const rough = eta !== undefined && eta?.walk === undefined && roughWalk !== undefined;
-  // 도보 200분 이상·대중교통 결과 없음은 "검색 불가" (사용자 요청 2026-10-27) — 출발 시각 계산에서도 뺀다
-  const walk0 = eta === undefined ? undefined : (eta?.walk ?? roughWalk);
-  const shown: { walk?: number | undefined; transit?: number | undefined } | undefined =
-    eta === undefined
-      ? undefined
-      : {
-          walk: walk0 !== undefined && walk0 < MAX_WALK_MIN ? walk0 : undefined,
-          transit: eta?.transit,
-        };
-  // 대중교통이 없으면(일본은 Google 대중교통 없음) 지도 앱 길찾기로 — 출발지는 넣지 않는다(지도 앱이 현재 위치를 씀)
-  const mapUrl = `https://www.google.com/maps/dir/?api=1&destination=${to.lat},${to.lng}&travelmode=${eta?.transit === undefined ? 'transit' : 'walking'}`;
-  const plan = departurePlan(next.startTime!, now, shown ?? {});
+  const search = () => {
+    setPress((n) => n + 1);
+    request();
+  };
   const title = (
     <span className="truncate font-semibold">
       {t('nextStop.title', { time: next.startTime!, title: next.title })}
     </span>
   );
-  if (far)
+  const current = found && found.nextId === next.id ? found : null;
+  const searching = press > 0 && (!current || current.press !== press) && state.status !== 'denied';
+
+  // 아직 안 눌렀거나 다음 일정이 바뀜: 제목 + [이동 시간 검색]
+  if (!current)
     return (
-      <div role="status" className="flex min-w-0 flex-1 flex-col text-micro leading-tight">
-        {title}
-        <span className="truncate text-fg-muted">{t('nextStop.far')}</span>
+      <div className="flex min-w-0 flex-1 items-center gap-2 text-micro leading-tight">
+        <span className="flex min-w-0 flex-1 flex-col">
+          {title}
+          {state.status === 'denied' && (
+            <span className="truncate text-fg-muted">{t('nextStop.denied')}</span>
+          )}
+        </span>
+        <button
+          type="button"
+          onClick={search}
+          disabled={searching}
+          className="flex min-h-9 shrink-0 items-center gap-1 rounded-full border border-primary/40 px-3 font-semibold text-primary disabled:opacity-60"
+        >
+          <LocateFixed aria-hidden="true" className="size-3.5" />
+          {searching ? t('nextStop.loading') : t('nextStop.search')}
+        </button>
       </div>
     );
+
+  const again = (
+    <button
+      type="button"
+      onClick={search}
+      disabled={searching}
+      aria-label={t('nextStop.again')}
+      title={t('nextStop.again')}
+      className="grid size-9 shrink-0 place-items-center rounded-full text-fg-muted disabled:opacity-60"
+    >
+      <RotateCw aria-hidden="true" className={cn('size-4', searching && 'animate-spin')} />
+    </button>
+  );
+
+  if (current.far)
+    return (
+      <div
+        role="status"
+        className="flex min-w-0 flex-1 items-center gap-2 text-micro leading-tight"
+      >
+        <span className="flex min-w-0 flex-1 flex-col">
+          {title}
+          <span className="truncate text-fg-muted">{t('nextStop.far')}</span>
+        </span>
+        {again}
+      </div>
+    );
+
+  const { eta, here } = current;
+  // 길 정보를 못 받았거나(무료량 끝·오프라인) 도보가 빠졌으면(한국은 Google 도보 없음) 직선거리 어림으로 대신
+  const roughWalk = walkMinutes(distanceKm(here, to));
+  const rough = eta?.walk === undefined;
+  // 도보 200분 이상·대중교통 결과 없음은 "검색 불가" (사용자 요청 2026-10-27) — 출발 시각 계산에서도 뺀다
+  const walk0 = eta?.walk ?? roughWalk;
+  const shown = {
+    walk: walk0 < MAX_WALK_MIN ? walk0 : undefined,
+    transit: eta?.transit,
+  };
+  // 검색 불가가 있으면 지도 앱 길찾기로 — 출발지는 넣지 않는다(지도 앱이 현재 위치를 씀)
+  const mapUrl = `https://www.google.com/maps/dir/?api=1&destination=${to.lat},${to.lng}&travelmode=${shown.transit === undefined ? 'transit' : 'walking'}`;
+  const plan = departurePlan(next.startTime!, now, shown);
   // 왼쪽 2줄(다음 일정 / 시간) + 오른쪽 출발 안내 — 3줄을 넘지 않게 (사용자 요청 2026-10-27)
   return (
     <div role="status" className="flex min-w-0 flex-1 items-center gap-2 text-micro leading-tight">
       <span className="flex min-w-0 flex-1 flex-col">
         {title}
-        {shown === undefined ? (
-          <span className="text-fg-muted">{t('nextStop.loading')}</span>
-        ) : (
-          <span className="truncate text-fg-sub">
-            {[
-              shown.walk !== undefined
-                ? t('nextStop.walkMin', { min: shown.walk }) +
-                  (rough ? ` ${t('nextStop.roughShort')}` : '')
-                : t('nextStop.walkNone'),
-              shown.transit !== undefined
-                ? t('nextStop.transitMin', { min: shown.transit })
-                : t('nextStop.transitNone'),
-            ].join(' · ')}
-            {(shown.transit === undefined || shown.walk === undefined) && (
-              <>
-                {' · '}
-                <a
-                  href={mapUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-primary underline underline-offset-2"
-                >
-                  {t('nextStop.map')}
-                </a>
-              </>
-            )}
-          </span>
-        )}
+        <span className="truncate text-fg-sub">
+          {[
+            shown.walk !== undefined
+              ? t('nextStop.walkMin', { min: shown.walk }) +
+                (rough ? ` ${t('nextStop.roughShort')}` : '')
+              : t('nextStop.walkNone'),
+            shown.transit !== undefined
+              ? t('nextStop.transitMin', { min: shown.transit })
+              : t('nextStop.transitNone'),
+          ].join(' · ')}
+          {(shown.transit === undefined || shown.walk === undefined) && (
+            <>
+              {' · '}
+              <a
+                href={mapUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="text-primary underline underline-offset-2"
+              >
+                {t('nextStop.map')}
+              </a>
+            </>
+          )}
+        </span>
       </span>
-      {shown !== undefined && plan.leaveBy && (
+      {plan.leaveBy && (
         <span
           className={cn(
             'shrink-0 text-right font-semibold whitespace-pre-line',
@@ -133,6 +176,7 @@ export function NextStopBar({ next, now }: { next: ItineraryItem; now: string })
             : t('nextStop.leaveBy', { time: plan.leaveBy, margin: LEAVE_MARGIN_MIN })}
         </span>
       )}
+      {again}
     </div>
   );
 }
