@@ -21,6 +21,8 @@ import { lodgingForNight } from '../../domain/lodging';
 import { copyText } from '../../shared/lib/clipboard';
 import type { Destination } from '../../shared/lib/directions';
 import { useRouteSheet } from '../../shared/hooks/useRouteSheet';
+import { timeIn, useMinuteClock } from '../../shared/hooks/useMinuteClock';
+import { formatMonthDay } from '../../shared/lib/dateFormat';
 import { updateSettings, useSettings } from '../../data/settingsStore';
 import { BottomSheet, SegmentedControl, toast } from '../../shared/ui';
 import { DirectionsSheet } from './DirectionsSheet';
@@ -94,7 +96,7 @@ function TripQuickMenu({ open, setOpen }: { open: boolean; setOpen: (open: boole
         return;
       }
       const d = { name: lodging.title, address: lodging.details?.address };
-      if (openDirectionsDirect(d)) return;
+      if (openDirectionsDirect(d, trip ? isDomesticTrip(trip) : undefined)) return;
       setDest(d);
       setDirOpen(true);
     },
@@ -112,7 +114,13 @@ function TripQuickMenu({ open, setOpen }: { open: boolean; setOpen: (open: boole
 
   return (
     <>
-      <BottomSheet open={open} onOpenChange={setOpen} title={t('quickMenu.title')}>
+      <BottomSheet
+        open={open}
+        onOpenChange={setOpen}
+        title={t('quickMenu.title')}
+        // 여행지 현지 날짜·시각 (일정 제목 아래에서는 가려 보이지 않아 여기로, 사용자 요청 2026-10-27)
+        headerAside={trip && open ? <LocalNow timezone={trip.timezone} /> : undefined}
+      >
         <QuickMenuContent shortcuts={shortcuts} onEmergency={() => setSosOpen(true)} />
       </BottomSheet>
       <EmergencySheet open={sosOpen} onOpenChange={setSosOpen} countries={tripCountries(trip)} />
@@ -314,5 +322,18 @@ function Shortcut({
       </span>
       {label}
     </button>
+  );
+}
+
+/** 빠른 메뉴 제목 오른쪽: 여행지 현지 날짜·시각 (1분마다) */
+function LocalNow({ timezone }: { timezone: string }) {
+  const { t } = useTranslation();
+  const now = useMinuteClock(true);
+  const time = timeIn(timezone, now);
+  if (!time) return null;
+  return (
+    <span className="tabular text-caption text-fg-sub">
+      {t('quickMenu.localNow', { date: formatMonthDay(todayIn(timezone, now)), time })}
+    </span>
   );
 }

@@ -147,12 +147,16 @@ function FlightWeather({ flight }: { flight: Booking }) {
       <span className="flex flex-wrap items-center gap-x-1.5 text-body-2 font-semibold break-words">
         <Plane aria-hidden="true" className="size-4 shrink-0 text-primary" />
         {flight.title}
-        {(from || flight.start.place) && (
-          <span className="tabular font-normal text-fg-sub">
-            {from?.iata ?? flight.start.place}
-            {flight.end?.place ? ` → ${to?.iata ?? flight.end.place}` : ''}
-          </span>
-        )}
+        {/* 제목에 이미 공항 코드가 있으면(예: "IT603 ICN→TPE") 경로를 다시 쓰지 않는다 (2026-10-27) */}
+        {(from || flight.start.place) &&
+          !flight.title
+            .toUpperCase()
+            .includes((from?.iata ?? flight.start.place ?? '').toUpperCase()) && (
+            <span className="tabular font-normal text-fg-sub">
+              {from?.iata ?? flight.start.place}
+              {flight.end?.place ? ` → ${to?.iata ?? flight.end.place}` : ''}
+            </span>
+          )}
       </span>
       <AirportDay
         role={t('weatherPage.depart')}

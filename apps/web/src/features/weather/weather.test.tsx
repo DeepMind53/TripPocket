@@ -214,7 +214,7 @@ it('공항 날씨도 2주보다 먼 날은 "과거 날씨"(작년 같은 날)로
   await bookingRepo.create({
     tripId: trip.id,
     kind: 'flight',
-    title: 'KE703',
+    title: 'KE703 ICN→NRT',
     start: { date: '2026-12-02', time: '09:10', place: 'ICN' },
     end: { date: '2026-12-02', time: '11:30', place: 'NRT' },
   });
@@ -226,4 +226,6 @@ it('공항 날씨도 2주보다 먼 날은 "과거 날씨"(작년 같은 날)로
   const air = await screen.findByRole('region', { name: '공항 날씨' });
   // 출발·도착 공항 날씨는 따로 받아 하나씩 그려진다 → 둘 다 나올 때까지 기다린다
   await waitFor(() => expect(within(air).getAllByText(/· 과거 날씨$/)).toHaveLength(2));
+  // 제목에 공항 코드가 있으면 경로를 두 번 쓰지 않는다
+  expect(within(air).queryByText('ICN → NRT')).toBeNull();
 });

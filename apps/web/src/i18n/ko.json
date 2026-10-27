@@ -66,6 +66,7 @@
     "appKakao": "카카오",
     "appAsk": "묻기",
     "hint": "환율·AI 추천·길찾기 같은\n자주 쓰는 기능은 여기에 있어요",
+    "localNow": "현지 {{date}} {{time}}",
     "phrases": "번역·회화",
     "phrasesDesc": "현지어로 크게 보여 주기"
   },
