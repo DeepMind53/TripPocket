@@ -193,7 +193,6 @@ export function SettingsPage() {
               'planMapOpen',
               'sunTimes',
               'legDistance',
-              'busyDay',
               'compactList',
             ])
           }
@@ -231,7 +230,6 @@ export function SettingsPage() {
             checked={s.legDistance}
             onChange={set('legDistance')}
           />
-          <SwitchRow label={t('settings.busyDay')} checked={s.busyDay} onChange={set('busyDay')} />
           <SwitchRow
             label={t('settings.compactList')}
             checked={s.compactList}

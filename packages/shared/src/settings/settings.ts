@@ -31,8 +31,6 @@ export interface Settings {
   sunTimes: boolean;
   /** 일정 사이 다음 장소까지 거리·걷는 시간 (2026-10-27 실험실에서 정식) */
   legDistance: boolean;
-  /** 일정이 많거나 이동이 긴 날 "빠듯해요" 표시 (2026-10-27 실험실에서 정식) */
-  busyDay: boolean;
   /** 일정 줄 간격 좁게 (2026-10-27 실험실에서 정식, 기본 끔) */
   compactList: boolean;
   /** ⚡ 빠른 메뉴 버튼 보이기 */
@@ -62,7 +60,6 @@ export const SETTINGS_DEFAULTS: Settings = {
   planMapOpen: false,
   sunTimes: true,
   legDistance: true,
-  busyDay: true,
   compactList: false,
   quickButton: true,
   aiCats: ['food', 'cafe'],
@@ -93,7 +90,6 @@ const VALID: { [K in keyof Settings]: (v: unknown) => v is Settings[K] } = {
   planMapOpen: (v): v is boolean => typeof v === 'boolean',
   sunTimes: (v): v is boolean => typeof v === 'boolean',
   legDistance: (v): v is boolean => typeof v === 'boolean',
-  busyDay: (v): v is boolean => typeof v === 'boolean',
   compactList: (v): v is boolean => typeof v === 'boolean',
   quickButton: (v): v is boolean => typeof v === 'boolean',
   aiCats: (v): v is Settings['aiCats'] =>

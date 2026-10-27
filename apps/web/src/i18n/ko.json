@@ -419,7 +419,6 @@
     "planMapOpen": "일정 화면에서 지도 펼쳐 두기",
     "sunTimes": "일정 사이에 일출·일몰 보기",
     "legDistance": "다음 장소까지 거리 보기",
-    "busyDay": "빠듯한 하루 표시",
     "compactList": "일정 촘촘히 보기",
     "quickButton": "⚡ 빠른 메뉴 버튼 보이기",
     "quickButtonReset": "⚡ 버튼 위치 처음으로",
@@ -1042,10 +1041,6 @@
     "leg": "{{distance}} · 걸어서 약 {{min}}분 (직선거리 기준)",
     "localTime": "현지 {{time}}",
     "item": {
-      "freeTime": {
-        "name": "빈 시간 보기",
-        "desc": "일정 사이 2시간 이상 비면\n그 자리에 빈 시간을 보여 줘요"
-      },
       "nearbyWish": {
         "name": "근처 가고 싶은 곳",
         "desc": "그날 장소 1km 안에 있는\n가고 싶은 곳을 알려 줘요"
@@ -1066,12 +1061,14 @@
     "checkoutAt": "오늘 {{time}} 체크아웃 · {{name}}",
     "checkout": "오늘 체크아웃 · {{name}}",
     "nearbyWish": "📍 근처 가고 싶은 곳: {{names}}{{more}}",
-    "freeTime": "빈 시간 {{h}}시간 {{m}}분",
     "recap": "오늘 돌아보기 · 방문 {{n}}곳 · 약 {{km}}km 이동",
+    "preview": "샘플",
+    "previewOf": "{{name}} 샘플",
+    "previewNow": "여행 중 일정 화면을 열면 진행 중 일정으로 바로 내려가요",
+    "turnOn": "이 기능 켜기",
+    "turnOff": "이 기능 끄기",
     "memoFxLabel": "메모 속 금액 원화 환산",
     "memoFxWon": "{{won}}원",
-    "busy": "빠듯해요",
-    "busyDetail": "일정 {{count}}개 · 이동 약 {{km}}km",
     "toLodging": "숙소까지 {{distance}} · 걸어서 약 {{min}}분",
     "dayRoute": "하루 동선 지도로 보기",
     "dayRouteDesc": "장소 순서대로 Google 지도 길찾기",

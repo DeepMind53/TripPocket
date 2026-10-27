@@ -4,7 +4,8 @@ import { useNavigate } from 'react-router';
 import { useAuth } from '../../data/authStore';
 import { LABS, setLab, useLab, type LabId } from '../../data/labsStore';
 import { useTranslation } from '../../i18n';
-import { Button, Switch, toast, TopBar } from '../../shared/ui';
+import { BottomSheet, Button, Switch, toast, TopBar } from '../../shared/ui';
+import { LabPreview } from './LabPreview';
 
 /** 마이 → 실험실: 정식 기능 전에 시험해 보는 기능 켜기/끄기 (이 기기에만 저장) */
 export function LabsPage() {
@@ -32,13 +33,39 @@ function LabRow({ id }: { id: LabId }) {
   const { t } = useTranslation();
   const on = useLab(id);
   const inputId = `lab-${id}`;
+  const [preview, setPreview] = useState(false);
+  const name = t(`labs.item.${id}.name`);
   return (
-    <li className="flex items-center gap-3 bg-surface px-4 py-3">
+    <li className="flex items-center gap-2 bg-surface px-4 py-3">
       <label htmlFor={inputId} className="flex min-w-0 flex-1 flex-col">
-        <span className="text-body-2 font-medium">{t(`labs.item.${id}.name`)}</span>
+        <span className="text-body-2 font-medium">{name}</span>
         <span className="text-caption text-fg-muted">{t(`labs.item.${id}.desc`)}</span>
       </label>
+      {/* 켜기 전에 바로 보는 미리보기 (사용자 요청 2026-10-27) */}
+      <Button
+        size="sm"
+        variant="secondary"
+        onClick={() => setPreview(true)}
+        aria-label={t('labs.previewOf', { name })}
+      >
+        {t('labs.preview')}
+      </Button>
       <Switch id={inputId} checked={on} onCheckedChange={(v) => setLab(id, v)} />
+      <BottomSheet open={preview} onOpenChange={setPreview} title={t('labs.previewOf', { name })}>
+        <div className="flex flex-col gap-3 pb-2">
+          <LabPreview id={id} />
+          <Button
+            fullWidth
+            variant={on ? 'secondary' : 'primary'}
+            onClick={() => {
+              setLab(id, !on);
+              setPreview(false);
+            }}
+          >
+            {on ? t('labs.turnOff') : t('labs.turnOn')}
+          </Button>
+        </div>
+      </BottomSheet>
     </li>
   );
 }

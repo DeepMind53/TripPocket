@@ -29,7 +29,14 @@ import {
   Moon,
   Sun,
 } from 'lucide-react';
-import { currentItemId, dayText, isFlightLeg, nextStop, pastItemIds } from '../../domain/dayTools';
+import {
+  currentItemId,
+  dayText,
+  isFlightLeg,
+  nextStop,
+  pastItemIds,
+  FAR_LEG_KM,
+} from '../../domain/dayTools';
 import { NextStopBar } from './NextStopBar';
 import { earlierVisits, type Visit } from '../../domain/visit';
 import { saveSkippedPlace } from '../../data/skippedToSaved';
@@ -95,8 +102,7 @@ import { FlightTicket } from '../bookings/BookingCard';
 import { isDomesticTrip } from '../../domain/tripPlace';
 import { dayRouteUrl } from '../../domain/dayRoute';
 import { sunSlot, sunTimes } from '../../domain/sun';
-import { busyDay, FAR_LEG_KM } from '../../domain/busyDay';
-import { checkoutsOn, dayRecap, freeGaps, nearbyWishes } from '../../domain/dayExtras';
+import { checkoutsOn, dayRecap, nearbyWishes } from '../../domain/dayExtras';
 import { distanceKm, formatDistance, walkMinutes } from '@trippocket/shared';
 import { useLab } from '../../data/labsStore';
 import { DayWeatherBadge } from '../common/DayWeatherBadge';
@@ -290,6 +296,15 @@ function PlanView({
   // 전체 보기: 지금 화면 위쪽에 있는 날의 칩을 테두리로 표시하고 칩 줄을 그 칩으로 (docs/16 C2)
   const chipsRef = useRef<HTMLDivElement>(null);
   const stickyRef = useRef<HTMLDivElement>(null);
+  // 위 고정 영역(칩 줄·지도/편집 줄·펼친 지도) 높이 — 날짜 머리가 그 바로 아래에 붙는다 (사용자 요청 2026-10-27)
+  const [stickyH, setStickyH] = useState(0);
+  useEffect(() => {
+    const el = stickyRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(() => setStickyH(el.offsetHeight));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
   const [seenDay, setInView] = useState<string | null>(null);
   const inView = filter === 'all' ? seenDay : null;
   useEffect(() => {
@@ -555,6 +570,7 @@ function PlanView({
       <div
         {...gestures}
         className={cn('flex flex-col px-5 pt-2', editing ? 'gap-6' : 'gap-4 pb-4')}
+        style={{ '--day-top': `calc(var(--safe-top) + 56px + ${stickyH}px)` } as CSSProperties}
       >
         {/* 막 만든 여행: 무엇부터 할지 (docs/20 U5) */}
         {items.length === 0 && canEdit && !editing && (
@@ -903,11 +919,9 @@ function DaySection({
   const dayRouteOn = true;
   const compact = useSettings((st) => st.compactList);
   // 실험실 (2026-10-27 새 실험)
-  const freeOn = useLab('freeTime');
   const nearbyOn = useLab('nearbyWish');
   const checkoutOn = useLab('checkout');
   const recapOn = useLab('dayRecap');
-  const busyOn = useSettings((st) => st.busyDay);
   const dupOn = true;
   // 여행 당일: 현지 시각으로 지금 진행 중인 일정 (1분마다 다시 계산)
   const now = useMinuteClock(isToday);
@@ -925,8 +939,6 @@ function DaySection({
   if (hideWhenEmpty && items.length === 0) return null;
   // 오늘 진행률 (2026-10-27 정식): 메모는 빼고, 방문(파랑)·미방문(빨강)을 칸에 채운다
   const tracked = items.filter((i) => i.kind !== 'note');
-  const busy = busyOn && date ? busyDay(items) : null;
-  const gaps = freeOn ? freeGaps(items) : [];
   const nearby = nearbyOn && wishes ? nearbyWishes(items, wishes) : [];
   const outs = checkoutOn ? (checkouts ?? []) : [];
   const recap = recapOn && date && date <= todayIn(timezone) ? dayRecap(items) : null;
@@ -944,53 +956,47 @@ function DaySection({
       aria-label={title}
       data-day={date ?? 'wish'}
       className={cn(
-        'flex flex-col overflow-hidden rounded-2xl border border-line bg-surface',
+        'flex flex-col rounded-2xl border border-line bg-surface',
         isPast && 'opacity-60',
       )}
     >
-      {/* 날짜 머리글: 날짜 색 띠 + "1일차" 알약 (일정 번호 색과 같음) */}
-      <div
-        className="flex min-h-12 items-center gap-2 border-b border-line bg-bg-subtle/60 pr-2 pl-4"
-        style={{ boxShadow: `inset 4px 0 0 ${color}` }}
-      >
-        <h2 aria-label={title} className="tabular flex flex-1 items-center gap-2 py-2">
-          {date ? (
-            <>
-              <span
-                className="rounded-full px-2.5 py-0.5 text-caption font-bold text-white"
-                style={{ background: color }}
-              >
-                {t('plan.dayN', { n: index + 1 })}
+      {/* 날짜 머리글: 날짜 색 띠 + "1일차" 알약 (일정 번호 색과 같음).
+          그날 일정이 보이는 동안 화면 위(고정 영역 아래)에 붙어 있고, 다음 날로 넘어가면 다음 날 머리로 바뀐다 (2026-10-27) */}
+      <div className="sticky top-[var(--day-top,0px)] z-[5] rounded-t-2xl bg-surface">
+        <div
+          className="flex min-h-12 items-center gap-2 rounded-t-2xl border-b border-line bg-bg-subtle/60 pr-2 pl-4"
+          style={{ boxShadow: `inset 4px 0 0 ${color}` }}
+        >
+          <h2 aria-label={title} className="tabular flex flex-1 items-center gap-2 py-2">
+            {date ? (
+              <>
+                <span
+                  className="rounded-full px-2.5 py-0.5 text-caption font-bold text-white"
+                  style={{ background: color }}
+                >
+                  {t('plan.dayN', { n: index + 1 })}
+                </span>
+                <span className="text-body-1 font-bold">{formatMonthDay(date)}</span>
+              </>
+            ) : (
+              <span className="text-body-1 font-bold">{title}</span>
+            )}
+            {isToday && (
+              <span className="rounded-full bg-primary-weak px-2 py-0.5 text-micro text-primary">
+                {t('date.today')}
               </span>
-              <span className="text-body-1 font-bold">{formatMonthDay(date)}</span>
-            </>
-          ) : (
-            <span className="text-body-1 font-bold">{title}</span>
+            )}
+          </h2>
+          <DayWeatherBadge weather={weather} />
+          {((canEdit && items.length > 1) ||
+            ((copyDayOn || dayRouteOn || (dupOn && canEdit)) && items.length > 0)) && (
+            <IconButton
+              label={t('plan.dayMenu', { day: title })}
+              icon={<Ellipsis />}
+              onClick={onMenu}
+            />
           )}
-          {isToday && (
-            <span className="rounded-full bg-primary-weak px-2 py-0.5 text-micro text-primary">
-              {t('date.today')}
-            </span>
-          )}
-          {/* 일정이 많거나 이동이 긴 날 (설정) */}
-          {busy && (
-            <span
-              className="rounded-full bg-warning/15 px-2 py-0.5 text-micro font-semibold text-warning"
-              title={t('labs.busyDetail', { count: busy.count, km: busy.km })}
-            >
-              {t('labs.busy')}
-            </span>
-          )}
-        </h2>
-        <DayWeatherBadge weather={weather} />
-        {((canEdit && items.length > 1) ||
-          ((copyDayOn || dayRouteOn || (dupOn && canEdit)) && items.length > 0)) && (
-          <IconButton
-            label={t('plan.dayMenu', { day: title })}
-            icon={<Ellipsis />}
-            onClick={onMenu}
-          />
-        )}
+        </div>
       </div>
       {/* 여행 중 오늘 일정 진행률: 방문 파랑 · 미방문 빨강 */}
       {isToday && tracked.length > 0 && (
@@ -1091,15 +1097,6 @@ function DaySection({
               })()}
             />
             {legs && <LegLine from={item} to={items[i + 1]} />}
-            {gaps.some((g) => g.afterId === item.id) && (
-              <li className="flex items-center gap-1.5 py-1 pl-9 text-micro text-fg-muted">
-                <span aria-hidden="true">⏳</span>
-                {t('labs.freeTime', {
-                  h: Math.floor(gaps.find((g) => g.afterId === item.id)!.minutes / 60),
-                  m: gaps.find((g) => g.afterId === item.id)!.minutes % 60,
-                })}
-              </li>
-            )}
           </Fragment>
         ))}
         {sun && items.length > 0 && sunSlot(items, sun.rise) === items.length && (
@@ -1666,9 +1663,13 @@ function EmptyRun({ from, to, onOpen }: { from: Section; to: Section; onOpen: ()
 /** "------ 일몰 17:40 ------" — 좌우 '-'는 화면 폭만큼 채우고 넘치면 잘린다. 일정이 아니라 옮기거나 지울 수 없음 */
 function SunLine({ kind, label, time }: { kind: 'rise' | 'set'; label: string; time: string }) {
   const dashes = '-'.repeat(120);
-  // 글자 앞뒤 해·달 (사용자 요청 2026-10-27): 일출 = 달 → 해, 일몰 = 해 → 달
-  const sun = <Sun aria-hidden="true" className="size-3.5 shrink-0 text-warning" />;
-  const moon = <Moon aria-hidden="true" className="size-3.5 shrink-0 text-primary" />;
+  // 글자 양옆에 일출 = 해, 일몰 = 달 (사용자 요청 2026-10-27)
+  const icon =
+    kind === 'rise' ? (
+      <Sun aria-hidden="true" className="size-3.5 shrink-0 text-warning" />
+    ) : (
+      <Moon aria-hidden="true" className="size-3.5 shrink-0 text-primary" />
+    );
   return (
     <li
       aria-label={`${label} ${time}`}
@@ -1680,11 +1681,11 @@ function SunLine({ kind, label, time }: { kind: 'rise' | 'set'; label: string; t
       >
         {dashes}
       </span>
-      {kind === 'rise' ? moon : sun}
+      {icon}
       <span className="shrink-0">
         {label} {time}
       </span>
-      {kind === 'rise' ? sun : moon}
+      {icon}
       <span aria-hidden="true" className="min-w-0 flex-1 overflow-hidden whitespace-nowrap">
         {dashes}
       </span>

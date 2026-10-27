@@ -1,25 +1,10 @@
 import type { Booking } from '@trippocket/shared';
 import { describe, expect, it } from 'vitest';
-import { checkoutsOn, dayRecap, freeGaps, nearbyWishes } from './dayExtras';
+import { checkoutsOn, dayRecap, nearbyWishes } from './dayExtras';
 
 const at = (lat: number, lng: number) => ({ name: 'p', coords: { lat, lng } });
 
 describe('하루 덧붙임 (실험실)', () => {
-  it('빈 시간: 앞 일정이 끝나고(없으면 시작) 다음 시작까지 2시간 이상', () => {
-    const items = [
-      { id: 'a', kind: 'place' as const, startTime: '09:00', endTime: '10:00' },
-      { id: 'm', kind: 'note' as const, startTime: '11:00' },
-      { id: 'b', kind: 'food' as const, startTime: '12:30' },
-      { id: 'c', kind: 'cafe' as const, startTime: '13:00' },
-      { id: 'x', kind: 'place' as const },
-      { id: 'd', kind: 'place' as const, startTime: '15:00' },
-    ];
-    expect(freeGaps(items)).toEqual([
-      { afterId: 'a', minutes: 150 },
-      { afterId: 'c', minutes: 120 },
-    ]);
-  });
-
   it('근처 가고 싶은 곳: 그날 장소에서 1km 안, 가까운 순', () => {
     const day = [{ kind: 'place' as const, place: at(35.71, 139.79) }];
     const wishes = [

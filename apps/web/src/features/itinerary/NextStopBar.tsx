@@ -8,8 +8,7 @@ import {
 import { LocateFixed, RotateCw } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { routeEta } from '../../data/api/routes';
-import { FAR_LEG_KM } from '../../domain/busyDay';
-import { LEAVE_MARGIN_MIN, departurePlan, isFlightLeg } from '../../domain/dayTools';
+import { FAR_LEG_KM, LEAVE_MARGIN_MIN, departurePlan, isFlightLeg } from '../../domain/dayTools';
 import { useTranslation } from '../../i18n';
 import { useCurrentPosition } from '../../shared/hooks/useCurrentPosition';
 import { cn } from '../../shared/lib/cn';

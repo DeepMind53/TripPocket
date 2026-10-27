@@ -24,11 +24,11 @@ describe('실험실', () => {
     const user = userEvent.setup();
     render(<RouterProvider router={createMemoryRouter(routes, { initialEntries: ['/me'] })} />);
     await user.click(await screen.findByRole('link', { name: '실험실' }));
-    const sw = await screen.findByRole('switch', { name: /빈 시간 보기/ });
+    const sw = await screen.findByRole('switch', { name: /근처 가고 싶은 곳/ });
     expect(sw).toHaveAttribute('aria-checked', 'false');
     await user.click(sw);
     expect(sw).toHaveAttribute('aria-checked', 'true');
-    expect(JSON.parse(localStorage.getItem('tp-labs')!)).toEqual({ freeTime: true });
+    expect(JSON.parse(localStorage.getItem('tp-labs')!)).toEqual({ nearbyWish: true });
     // 실험실 목록(LABS)마다 스위치 하나
     expect(
       screen.getAllByRole('switch').map((s) => s.getAttribute('aria-label') ?? s.id),
@@ -50,13 +50,7 @@ describe('실험실', () => {
       /빠듯한 하루/,
     ])
       expect(screen.queryByRole('switch', { name })).toBeNull();
-    for (const name of [
-      /빈 시간/,
-      /근처 가고 싶은 곳/,
-      /오늘 체크아웃/,
-      /하루 돌아보기/,
-      /지금 일정으로/,
-    ])
+    for (const name of [/근처 가고 싶은 곳/, /오늘 체크아웃/, /하루 돌아보기/, /지금 일정으로/])
       expect(screen.getByRole('switch', { name })).toBeInTheDocument();
   });
 
@@ -224,7 +218,7 @@ describe('실험실', () => {
     }
   });
 
-  it('정식 (2026-10-27): 메모 외화 → 원화 · 빠듯한 하루 · 촘촘히 보기(설정) · 숙소까지 거리', async () => {
+  it('정식 (2026-10-27): 메모 외화 → 원화 · 촘촘히 보기(설정) · 숙소까지 거리', async () => {
     vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(new Date('2026-10-22T03:00:00Z'));
     try {
@@ -273,7 +267,7 @@ describe('실험실', () => {
         title: '요코하마',
         place: at(35.45, 139.63),
       });
-      // 정식(2026-10-27): 메모 외화·숙소까지 거리는 늘, 빠듯한 하루는 기본 켬, 촘촘히 보기는 설정에서 켠다
+      // 정식(2026-10-27): 메모 외화·숙소까지 거리는 늘, 촘촘히 보기는 설정에서 켠다
       updateSettings({ compactList: true });
       const user = userEvent.setup();
       render(
@@ -287,8 +281,8 @@ describe('실험실', () => {
         </>,
       );
       const day = await screen.findByRole('region', { name: /^1일차/ });
-      // 이동이 15km 넘는 날 → 빠듯해요
-      expect(within(day).getByText('빠듯해요')).toBeInTheDocument();
+      // "빠듯해요" 표시는 뺐다 (사용자 요청 2026-10-27)
+      expect(within(day).queryByText('빠듯해요')).toBeNull();
       // 마지막 장소(요코하마) → 숙소
       expect(
         within(day).getByText(/^숙소까지 \d+(\.\d)?km · 걸어서 약 \d+분$/),
@@ -304,7 +298,7 @@ describe('실험실', () => {
     }
   });
 
-  it('새 실험 (2026-10-27): 빈 시간 · 근처 가고 싶은 곳 · 오늘 체크아웃 · 하루 돌아보기', async () => {
+  it('새 실험 (2026-10-27): 근처 가고 싶은 곳 · 오늘 체크아웃 · 하루 돌아보기', async () => {
     vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(new Date('2026-10-25T09:00:00Z')); // 도쿄 10.25 18:00 = 2일차
     try {
@@ -350,8 +344,7 @@ describe('실험실', () => {
         title: '아사쿠사 멘치',
         place: at(35.7128, 139.7951),
       });
-      for (const id of ['freeTime', 'nearbyWish', 'checkout', 'dayRecap'] as const)
-        setLab(id, true);
+      for (const id of ['nearbyWish', 'checkout', 'dayRecap'] as const) setLab(id, true);
       render(
         <RouterProvider
           router={createMemoryRouter(routes, { initialEntries: [`/trips/${trip.id}/plan?day=2`] })}
@@ -360,9 +353,10 @@ describe('실험실', () => {
       const day = await screen.findByRole('region', { name: /^2일차/ });
       await waitFor(() =>
         expect(
-          within(screen.getByRole('region', { name: /^2일차/ })).getByText('빈 시간 3시간 0분'),
+          within(screen.getByRole('region', { name: /^2일차/ })).getByText(/근처 가고 싶은 곳/),
         ).toBeInTheDocument(),
       );
+      expect(screen.queryByText(/빈 시간/)).toBeNull();
       const now = screen.getByRole('region', { name: /^2일차/ });
       expect(within(now).getByText(/근처 가고 싶은 곳: 아사쿠사 멘치/)).toBeInTheDocument();
       expect(within(now).getByText('오늘 11:00 체크아웃 · 신주쿠 호텔')).toBeInTheDocument();
@@ -371,10 +365,22 @@ describe('실험실', () => {
       ).toBeInTheDocument();
       expect(day).toBeDefined();
     } finally {
-      for (const id of ['freeTime', 'nearbyWish', 'checkout', 'dayRecap'] as const)
-        setLab(id, false);
+      for (const id of ['nearbyWish', 'checkout', 'dayRecap'] as const) setLab(id, false);
       vi.useRealTimers();
     }
+  });
+
+  it('실험 옆 [샘플]: 켜기 전에 미리보기, 시트에서 바로 켜기 (2026-10-27)', async () => {
+    const user = userEvent.setup();
+    render(<RouterProvider router={createMemoryRouter(routes, { initialEntries: ['/labs'] })} />);
+    await user.click(await screen.findByRole('button', { name: '오늘 체크아웃 알림 샘플' }));
+    const sheet = await screen.findByRole('dialog', { name: '오늘 체크아웃 알림 샘플' });
+    expect(within(sheet).getByText('오늘 11:00 체크아웃 · 신주쿠 호텔')).toBeInTheDocument();
+    await user.click(within(sheet).getByRole('button', { name: '이 기능 켜기' }));
+    expect(JSON.parse(localStorage.getItem('tp-labs')!)).toMatchObject({ checkout: true });
+    // 실험마다 샘플 버튼 하나
+    expect(screen.getAllByRole('button', { name: / 샘플$/ })).toHaveLength(LABS.length);
+    setLab('checkout', false);
   });
 
   it('현지 시각: 시간대가 기기와 다를 때만', () => {
@@ -519,7 +525,7 @@ describe('실험실', () => {
     useAuth.setState({ status: 'user', me: { ...me, isAdmin: false } });
     const router = createMemoryRouter(routes, { initialEntries: ['/labs'] });
     const { unmount } = render(<RouterProvider router={router} />);
-    await screen.findByRole('switch', { name: /빈 시간 보기/ });
+    await screen.findByRole('switch', { name: /근처 가고 싶은 곳/ });
     expect(screen.queryByRole('button', { name: '샘플 테스트' })).not.toBeInTheDocument();
     unmount();
 
@@ -542,7 +548,6 @@ describe('실험실', () => {
       new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Tokyo' }).format(new Date()),
     );
     expect(JSON.parse(localStorage.getItem('tp-labs')!)).toMatchObject({
-      freeTime: true,
       nearbyWish: true,
       checkout: true,
       dayRecap: true,

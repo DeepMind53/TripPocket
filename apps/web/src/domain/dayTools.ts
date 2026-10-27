@@ -1,6 +1,9 @@
 import { distanceKm, walkMinutes, type ItineraryItem } from '@trippocket/shared';
 
 /** 항공 출발 일정 다음 구간은 비행 — 걷는 거리·빠듯함·출발 시각을 따지지 않는다 (2026-10-26) */
+/** 이보다 먼 구간은 걷거나 대중교통으로 가는 거리가 아니다 (비행기·다른 나라) — 거리·이동 시간 표시에서 뺀다 (km) */
+export const FAR_LEG_KM = 200;
+
 export const isFlightLeg = (from: Pick<ItineraryItem, 'transport'>) =>
   from.transport?.mode === 'flight';
 
