@@ -51,7 +51,8 @@ export function directionsLink(
   const c = dest.coords;
   switch (app) {
     case 'google': {
-      const target = c ? `${c.lat},${c.lng}` : queryOf(dest);
+      // Google 장소 id가 있으면 이름으로(id가 정확한 장소를 고정), 없으면 길 정확도를 위해 좌표
+      const target = dest.googlePlaceId || !c ? queryOf(dest) : `${c.lat},${c.lng}`;
       const placeId = dest.googlePlaceId ? `&destination_place_id=${enc(dest.googlePlaceId)}` : '';
       return {
         web: `https://www.google.com/maps/dir/?api=1&destination=${enc(target)}${placeId}&travelmode=${GOOGLE_MODE[mode]}`,
@@ -85,7 +86,13 @@ export function placeLink(app: MapApp, dest: Destination, appName: string): MapL
   const q = queryOf(dest);
   switch (app) {
     case 'google': {
-      const target = dest.coords ? `${dest.coords.lat},${dest.coords.lng}` : q;
+      // 이름(+주소)으로 찾게 해 Google 지도에 좌표 숫자 대신 장소 이름이 보이게 (사용자 요청 2026-10-27).
+      // Google 장소 id가 있으면 그 장소로 바로, 이름이 없을 때만 좌표
+      const target = dest.name.trim()
+        ? q
+        : dest.coords
+          ? `${dest.coords.lat},${dest.coords.lng}`
+          : q;
       const placeId = dest.googlePlaceId ? `&query_place_id=${enc(dest.googlePlaceId)}` : '';
       return { web: `https://www.google.com/maps/search/?api=1&query=${enc(target)}${placeId}` };
     }

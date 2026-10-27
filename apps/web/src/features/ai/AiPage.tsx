@@ -57,10 +57,11 @@ export function AiPage() {
   const trip = useTrip(tripId);
   const bookings = useTripBookings(tripId) ?? [];
   const loggedIn = useAuth((s) => s.status === 'user');
-  const lodging = trip
-    ? (lodgingForNight(bookings, todayIn(trip.timezone))?.booking ??
-      bookings.find((b) => b.kind === 'lodging'))
-    : undefined;
+  // 숙소가 여러 곳이면 하나를 골라 조회 (사용자 요청 2026-10-27). 기본은 오늘 밤 숙소, 없으면 첫 숙소
+  const lodgings = bookings.filter((b) => b.kind === 'lodging' && !b.deletedAt);
+  const tonight = trip ? lodgingForNight(bookings, todayIn(trip.timezone))?.booking : undefined;
+  const [lodgingId, setLodgingId] = useState<string | null>(null);
+  const lodging = lodgings.find((b) => b.id === lodgingId) ?? tonight ?? lodgings[0] ?? undefined;
   // 설정 "AI 추천 기본값": 기준 위치·카테고리
   const [mode, setMode] = useState<'coords' | 'lodging' | 'text'>(
     () => useSettings.getState().aiAnchor,
@@ -203,9 +204,20 @@ export function AiPage() {
             />
           </>
         )}
-        {mode === 'lodging' && (
-          <p className="text-caption text-fg-sub">{lodging ? lodging.title : t('ai.noLodging')}</p>
-        )}
+        {mode === 'lodging' &&
+          (lodgings.length > 1 ? (
+            <div role="group" aria-label={t('ai.pickLodging')} className="flex flex-wrap gap-2">
+              {lodgings.map((b) => (
+                <Chip key={b.id} selected={b.id === lodging?.id} onClick={() => setLodgingId(b.id)}>
+                  🛏 {b.title}
+                </Chip>
+              ))}
+            </div>
+          ) : (
+            <p className="text-caption text-fg-sub">
+              {lodging ? lodging.title : t('ai.noLodging')}
+            </p>
+          ))}
         <div className="flex flex-wrap gap-2">
           {CATS.map((c) => (
             <Chip

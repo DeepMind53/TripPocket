@@ -12,16 +12,28 @@ describe('길찾기 링크', () => {
     );
   });
 
-  it('Google: 좌표와 place_id가 있으면 함께 보낸다', () => {
+  it('Google 길찾기: place_id가 있으면 이름으로(장소 고정), 없으면 좌표', () => {
     const { web } = directionsLink(
       'google',
       'transit',
       { ...withCoords, googlePlaceId: 'abc' },
       'x',
     );
-    expect(web).toContain('destination=35.7148%2C139.7967');
+    expect(web).toContain('destination=%EC%84%BC%EC%86%8C%EC%A7%80');
     expect(web).toContain('destination_place_id=abc');
     expect(web).toContain('travelmode=transit');
+    expect(directionsLink('google', 'walk', withCoords, 'x').web).toContain(
+      'destination=35.7148%2C139.7967',
+    );
+  });
+
+  it('Google 지도 보기: 좌표 숫자 대신 장소 이름(+주소)으로 찾는다 (2026-10-27)', () => {
+    const { web } = placeLink('google', { ...withCoords, address: '도쿄 다이토구' }, 'x');
+    expect(decodeURIComponent(web)).toContain('query=센소지 도쿄 다이토구');
+    expect(web).not.toContain('35.7148');
+    expect(placeLink('google', { name: ' ', coords: { lat: 1, lng: 2 } }, 'x').web).toContain(
+      'query=1%2C2',
+    );
   });
 
   it('네이버: 좌표가 있으면 길찾기, 없으면 장소 검색', () => {

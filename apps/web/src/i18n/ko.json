@@ -872,6 +872,7 @@
     "anchorName": "역·지역 이름",
     "anchorPlaceholder": "예: 신주쿠역, 성수동",
     "noLodging": "이 여행에 등록한 숙소가 없어요",
+    "pickLodging": "기준 숙소 고르기",
     "cat": {
       "food": "맛집",
       "cafe": "카페·핫플",

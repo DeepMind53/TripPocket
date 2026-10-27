@@ -4,7 +4,9 @@ import { createMemoryRouter, RouterProvider } from 'react-router';
 import { routes } from '../../app/router';
 import { useAuth } from '../../data/authStore';
 import { resetLocalDb, seedSampleTrip } from '../../data/dev';
+import { bookingRepo } from '../../data/repositories/bookingRepo';
 import { itemRepo } from '../../data/repositories/itemRepo';
+import { tripRepo } from '../../data/repositories/tripRepo';
 import { Toaster } from '../../shared/ui';
 
 afterEach(() => {
@@ -174,4 +176,52 @@ it('지역 입력 드롭다운에서 고르면 그 장소 위치로, 키워드�
   expect(within(results).getByText('"라멘" 추천')).toBeInTheDocument();
   expect(within(results).getByText(/5km 안/)).toBeInTheDocument();
   expect(within(results).getByText(/Google 장소 검색/)).toBeInTheDocument();
+});
+
+it('AI 추천: 숙소가 여러 곳이면 하나를 골라 그 숙소 기준으로 (2026-10-27)', async () => {
+  await resetLocalDb();
+  const trip = await tripRepo.create({
+    title: '도쿄',
+    destinations: [{ name: '도쿄', kind: 'city', countryCode: 'JP' }],
+    startDate: '2099-01-01',
+    endDate: '2099-01-04',
+    timezone: 'Asia/Tokyo',
+    cover: {},
+  });
+  for (const [title, s, e] of [
+    ['신주쿠 호텔', '2099-01-01', '2099-01-03'],
+    ['아사쿠사 료칸', '2099-01-03', '2099-01-04'],
+  ] as const)
+    await bookingRepo.create({
+      tripId: trip.id,
+      kind: 'lodging',
+      title,
+      start: { date: s },
+      end: { date: e },
+    });
+  useAuth.setState({
+    status: 'user',
+    me: { id: 'u', nickname: 'n', createdAt: '', providers: [] },
+  });
+  const bodies: string[] = [];
+  vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
+    if (url === '/api/v1/ai/recommend') bodies.push(String(init?.body));
+    return Response.json({}, { status: 500 });
+  });
+  const user = userEvent.setup();
+  render(
+    <RouterProvider
+      router={createMemoryRouter(routes, { initialEntries: [`/ai?trip=${trip.id}`] })}
+    />,
+  );
+  await user.click(await screen.findByRole('radio', { name: '숙소' }));
+  const group = screen.getByRole('group', { name: '기준 숙소 고르기' });
+  expect(within(group).getAllByRole('button')).toHaveLength(2);
+  await user.click(within(group).getByRole('button', { name: /아사쿠사 료칸/ }));
+  expect(within(group).getByRole('button', { name: /아사쿠사 료칸/ })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await user.click(screen.getByRole('button', { name: /추천 받기|찾기/ }));
+  expect(JSON.parse(bodies[0]!).anchor).toEqual({ type: 'lodging', name: '아사쿠사 료칸' });
 });
