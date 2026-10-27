@@ -144,7 +144,7 @@
 | | 진동(햅틱) | 토글 | 켬/끔 | 켬 | |
 | **지도·길찾기** | 기본 길찾기 앱 | 라디오 목록(아이콘) | 네이버 지도 / Google 지도 / 카카오맵 / Apple 지도(iOS만) / 매번 묻기 | 매번 묻기 | ✅(상위 3개 세그먼트) |
 | | 기본 이동수단 | 세그먼트 | 대중교통 / 도보 / 자동차 | 대중교통 | ✅ |
-| | 앱 안 지도 | 세그먼트 | 자동(국내=네이버) / 네이버 / Google | 자동 | |
+| | ~~앱 안 지도~~ | — | 2026-10-28 삭제: 국내 네이버·해외 Google 고정 | — | |
 | | 내 위치 표시 | 토글 | 켬/끔 (켤 때 위치 권한 요청) | 끔 | |
 | **장소 찾기** | 기본 최소 평점 | 세그먼트 | 전체 / 3.5+ / 4.0+ / 4.5+ | 4.0+ | |
 | | 기본 최소 리뷰 수 | 세그먼트 | 전체 / 50+ / 100+ / 500+ | 100+ | |
@@ -227,7 +227,6 @@ type Settings = {
   haptics: boolean;
   directionsApp: "naver" | "google" | "kakao" | "apple" | "ask";
   travelMode: "transit" | "walk" | "car";
-  inAppMap: "auto" | "naver" | "google";
   showMyLocation: boolean;
   placeMinRating: 0 | 3.5 | 4 | 4.5;
   placeMinReviews: 0 | 50 | 100 | 500;
