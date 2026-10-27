@@ -7,12 +7,19 @@ import { api } from './client';
  * 서버에 닿지 않으면(오프라인·홈 PC 꺼짐) 허용: 각 서비스 콘솔의 할당량이 마지막 안전장치
  */
 export type BrowserApi =
-  'google_maps_js' | 'naver_maps_js' | 'openfreemap' | 'open_meteo' | 'nager_date' | 'jsdelivr';
+  | 'google_maps_js'
+  | 'naver_maps_js'
+  | 'kakao_maps_js'
+  | 'openfreemap'
+  | 'open_meteo'
+  | 'nager_date'
+  | 'jsdelivr';
 
 const FLAGS_TTL = 5 * 60_000;
 const DENY_ALL: Record<BrowserApi, boolean> = {
   google_maps_js: false,
   naver_maps_js: false,
+  kakao_maps_js: false,
   openfreemap: false,
   open_meteo: false,
   nager_date: false,
@@ -53,6 +60,7 @@ export function reportExternal(id: BrowserApi): void {
 const MAP_API: Record<ActiveMapId, BrowserApi> = {
   google: 'google_maps_js',
   naver: 'naver_maps_js',
+  kakao: 'kakao_maps_js',
   osm: 'openfreemap',
 };
 export const mapAllowed = (provider: ActiveMapId) => externalAllowed(MAP_API[provider]);

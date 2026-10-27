@@ -1,4 +1,5 @@
 import type { ItineraryItem, LocalDate, Trip } from '@trippocket/shared';
+import { useSettings } from '../../data/settingsStore';
 import { Minimize2, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { fitPoints } from '../../domain/bookingPlan';
@@ -71,7 +72,8 @@ export function TripMap({
   const el = useRef<HTMLDivElement>(null);
   const handle = useRef<MapHandle | null>(null);
   const [status, setStatus] = useState<'loading' | 'ready' | 'error' | 'paused'>('loading');
-  const chosen = chooseProvider(isDomesticTrip(trip));
+  const domesticMap = useSettings((s) => s.domesticMap);
+  const chosen = chooseProvider(isDomesticTrip(trip), domesticMap);
   // 고른 지도가 무료 사용량으로 멈췄거나 못 불러오면 무료 지도(MapLibre + OpenFreeMap)로 (docs/23 §4)
   const [fallback, setFallback] = useState(false);
   const provider: ActiveMapId | null = fallback ? 'osm' : (chosen ?? 'osm');

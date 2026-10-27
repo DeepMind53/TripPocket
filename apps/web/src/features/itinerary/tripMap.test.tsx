@@ -18,8 +18,9 @@ vi.mock('../../shared/maps', async (orig) => {
   const real = await orig<typeof Maps>();
   return {
     ...real,
-    MAP_KEYS: { google: 'g-key', naver: undefined },
-    chooseProvider: (d: boolean) => real.chooseProvider(d, { google: 'g-key', naver: undefined }),
+    MAP_KEYS: { google: 'g-key', naver: undefined, kakao: undefined },
+    chooseProvider: (d: boolean, pref?: 'naver' | 'kakao') =>
+      real.chooseProvider(d, pref, { google: 'g-key', naver: undefined, kakao: undefined }),
     mountMap: async (): Promise<MapHandle> => ({
       setMarkers: (m) => void (calls.markers = [...m]),
       drawPaths: (p) => void (calls.paths = p.filter((x) => x.points.length > 1).length),
@@ -66,12 +67,19 @@ const item = (
   }) as ItineraryItem;
 
 describe('일정 지도', () => {
-  it('키 선택: 국내=네이버, 해외=구글, 키 없으면 다른 쪽, 둘 다 없으면 없음', async () => {
+  it('키 선택: 해외=구글, 국내=설정(네이버·카카오), 키 없으면 다른 국내 → 구글, 다 없으면 없음', async () => {
     const { chooseProvider } = await vi.importActual<typeof Maps>('../../shared/maps');
-    expect(chooseProvider(true, { google: 'g', naver: 'n' })).toBe('naver');
-    expect(chooseProvider(false, { google: 'g', naver: 'n' })).toBe('google');
-    expect(chooseProvider(true, { google: 'g', naver: undefined })).toBe('google');
-    expect(chooseProvider(false, { google: undefined, naver: undefined })).toBeNull();
+    const all = { google: 'g', naver: 'n', kakao: 'k' };
+    expect(chooseProvider(true, 'naver', all)).toBe('naver');
+    expect(chooseProvider(true, 'kakao', all)).toBe('kakao');
+    expect(chooseProvider(false, 'kakao', all)).toBe('google');
+    expect(chooseProvider(true, 'kakao', { ...all, kakao: undefined })).toBe('naver');
+    expect(chooseProvider(true, 'naver', { google: 'g', naver: undefined, kakao: undefined })).toBe(
+      'google',
+    );
+    expect(
+      chooseProvider(false, 'naver', { google: undefined, naver: undefined, kakao: undefined }),
+    ).toBeNull();
   });
 
   it('좌표 있는 일정만 일차별 번호 핀 + 순서선, 핀을 누르면 그 일정', async () => {

@@ -25,6 +25,10 @@ export const test = base.extend<{ offlineApis: void }>({
           ? r.fulfill({ json: { date: '2026-10-22', krw: { jpy: 0.1, usd: 0.0008, eur: 0.0007 } } })
           : r.fulfill({ status: 404, body: '' }),
       );
+      // 환율 보조 출처 Cloudflare 주소 (먼저 부른다, 2026-10-28) — jsDelivr와 같은 고정 값
+      await page.route('https://latest.currency-api.pages.dev/**', (r) =>
+        r.fulfill({ json: { date: '2026-10-22', krw: { jpy: 0.1, usd: 0.0008, eur: 0.0007 } } }),
+      );
       await use();
     },
     { auto: true },

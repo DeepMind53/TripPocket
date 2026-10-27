@@ -147,7 +147,7 @@ export function SettingsPage() {
 
         <Group
           title={t('settings.maps')}
-          onReset={() => resetSettings(['directionsApp', 'travelMode'])}
+          onReset={() => resetSettings(['directionsApp', 'travelMode', 'domesticMap'])}
         >
           {/* 해외는 늘 Google 지도 — 국내만 고른다 (사용자 요청 2026-10-27) */}
           <p className="text-caption whitespace-pre-line text-fg-muted">{t('settings.mapRule')}</p>
@@ -160,6 +160,17 @@ export function SettingsPage() {
                 { value: 'naver', label: t('dir.naver'), icon: <MapAppMark app="naver" /> },
                 { value: 'kakao', label: t('dir.kakao'), icon: <MapAppMark app="kakao" /> },
                 { value: 'ask', label: t('settings.askEveryTime') },
+              ]}
+            />
+          </Field>
+          <Field label={t('settings.domesticMap')}>
+            <SegmentedControl
+              label={t('settings.domesticMap')}
+              value={s.domesticMap}
+              onChange={set('domesticMap')}
+              options={[
+                { value: 'naver', label: t('dir.naver') },
+                { value: 'kakao', label: t('dir.kakao') },
               ]}
             />
           </Field>

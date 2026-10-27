@@ -6,17 +6,22 @@ export type { ActiveMapId, LatLng, MapHandle, MapMarker, MapProviderId } from '.
 export const MAP_KEYS: Record<MapProviderId, string | undefined> = {
   google: import.meta.env.VITE_GOOGLE_MAPS_KEY as string | undefined,
   naver: import.meta.env.VITE_NAVER_MAP_CLIENT_ID as string | undefined,
+  kakao: import.meta.env.VITE_KAKAO_MAP_KEY as string | undefined,
 };
 
 /**
- * 어떤 지도를 쓸까: 해외는 늘 Google, 국내는 네이버 (2026-10-27 — 앱 안 국내 지도는 지금 네이버뿐,
- * 카카오 지도는 JavaScript 키가 있어야 한다). 그 키가 없으면 다른 쪽, 둘 다 없으면 null
+ * 어떤 지도를 쓸까: 해외는 늘 Google, 국내는 설정에서 고른 네이버·카카오 (2026-10-28).
+ * 고른 지도의 키가 없으면 다른 국내 지도 → Google 순, 다 없으면 null
  */
-export function chooseProvider(domestic: boolean, keys = MAP_KEYS): MapProviderId | null {
-  const wanted: MapProviderId = domestic ? 'naver' : 'google';
-  if (keys[wanted]) return wanted;
-  const other: MapProviderId = wanted === 'google' ? 'naver' : 'google';
-  return keys[other] ? other : null;
+export function chooseProvider(
+  domestic: boolean,
+  pref: 'naver' | 'kakao' = 'naver',
+  keys = MAP_KEYS,
+): MapProviderId | null {
+  const order: MapProviderId[] = domestic
+    ? [pref, pref === 'naver' ? 'kakao' : 'naver', 'google']
+    : ['google', 'naver', 'kakao'];
+  return order.find((id) => keys[id]) ?? null;
 }
 
 /** 지도 SDK는 지도를 열 때만 불러온다 */
@@ -30,5 +35,6 @@ export async function mountMap(
   const key = MAP_KEYS[id];
   if (!key) throw new Error('no key');
   if (id === 'google') return (await import('./googleMap')).mountGoogle(el, opts, key);
+  if (id === 'kakao') return (await import('./kakaoMap')).mountKakao(el, opts, key);
   return (await import('./naverMap')).mountNaver(el, opts, key);
 }

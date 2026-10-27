@@ -126,7 +126,17 @@
 2. Web 서비스 URL: `https://trippocket.pages.dev` (개발: `http://localhost:5173`)
 3. **요금 확인**: Maps 요금 안내에서 Web Dynamic Map 무료 이용량 확인 (2025년 정책 변경 — 무료 범위를 넘으면 과금되니 사용량 알림 설정)
 4. Client ID → Pages 환경 변수 `VITE_NAVER_MAP_CLIENT_ID` → 다시 배포
-- 네이버 키가 없으면 국내 여행도 Google 지도로 보여 준다 (앱 안 지도는 국내 네이버·해외 Google 고정, 2026-10-28)
+- 네이버 키가 없으면 국내 여행도 Google 지도로 보여 준다
+
+### 카카오 지도 (국내 여행, 선택 — 2026-10-28)
+설정 → 지도·길찾기 → **앱 안 국내 지도**에서 카카오를 고른 사람에게만 쓰인다 (해외는 늘 Google)
+1. https://developers.kakao.com → 내 애플리케이션 → 로그인에 쓰는 그 앱 (카카오맵 무료 쿼터는 계정의 첫 앱에만)
+2. 앱 설정 → 플랫폼 → **Web 플랫폼 등록** → 사이트 도메인 `https://trippocket.day` (개발: `http://localhost:5173`)
+3. 제품 설정 → **카카오맵** → 사용 설정 ON (지도 Web SDK)
+4. 앱 설정 → 앱 키 → **JavaScript 키** 복사 (REST 키와 다름 — JavaScript 키는 도메인 제한으로 보호되므로 번들에 들어가도 됨)
+5. Cloudflare Pages → 설정 → 환경 변수(빌드, Production) `VITE_KAKAO_MAP_KEY` = JavaScript 키 → 다시 배포
+- 요금: 지도 Web SDK 하루 30만 건 무료, 월은 카카오맵 API 합산 300만 건. 유료 API를 켜지 않으면 과금되지 않고, 관리자 API 사용량(`kakao_maps_js`)이 95%에서 자동 중지
+- 키가 없으면 카카오를 골라도 네이버 지도 → Google 지도 순으로 대신 보여 준다
 
 - 지도는 일정 화면의 [지도] 버튼을 눌렀을 때만 불러온다 (무료 사용량 아끼기). 오프라인이면 안내만 보인다
 

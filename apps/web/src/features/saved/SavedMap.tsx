@@ -2,6 +2,7 @@ import { inKorea, type SavedPlace } from '@trippocket/shared';
 import { useEffect, useRef, useState } from 'react';
 import { mapAllowed, reportMapLoad } from '../../data/api/usage';
 import { useTranslation } from '../../i18n';
+import { useSettings } from '../../data/settingsStore';
 import { chooseProvider, mountMap } from '../../shared/maps';
 import { OfflineNote } from '../common/OfflineNote';
 
@@ -23,8 +24,10 @@ export function SavedMap({
   const [status, setStatus] = useState<'loading' | 'ready' | 'error' | 'paused'>('loading');
   const withCoords = places.filter((p) => p.coords);
   const domestic = withCoords.length > 0 && withCoords.every((p) => inKorea(p.coords!));
-  const provider = chooseProvider(domestic);
-  const visible = withCoords.filter((p) => !(provider === 'naver' && p.coordsSource === 'google'));
+  const domesticMap = useSettings((s) => s.domesticMap);
+  const provider = chooseProvider(domestic, domesticMap);
+  // Google에서 받은 좌표는 Google 지도에만 (docs/10 §2.1)
+  const visible = withCoords.filter((p) => !(provider !== 'google' && p.coordsSource === 'google'));
   const online = typeof navigator === 'undefined' || navigator.onLine;
 
   const latest = useRef({ visible, onSelect });

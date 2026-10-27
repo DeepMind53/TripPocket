@@ -20,6 +20,7 @@ export type ApiId =
   | 'openfreemap'
   | 'google_maps_js'
   | 'naver_maps_js'
+  | 'kakao_maps_js'
   | 'kakao_map'
   | 'kakao_keyword'
   | 'kakao_category'
@@ -103,6 +104,16 @@ export const APIS: readonly ApiDef[] = [
   // 카카오맵 REST API (developers.kakao.com 쿼터 문서, 2026-10-24 확인): API마다 하루 무료 쿼터, 넘으면 건당 요금.
   // 모든 카카오맵 API 합산 월 300만 건 무료. 무료 쿼터는 개발자 계정에서 처음 활성화한 앱에만 (이 앱 = 제공받음)
   { id: 'kakao_map', group: 'paid', freeMonthly: 3_000_000, tz: 'Asia/Seoul', poolOnly: true },
+  // 카카오 지도 Web(JavaScript) SDK (쿼터 문서 2026-10-28 확인): 하루 30만 건 무료, 월은 카카오맵 합산,
+  // 넘으면 0.1원/건 (유료 API를 켰을 때만). 국내 앱 안 지도를 카카오로 고른 경우
+  {
+    id: 'kakao_maps_js',
+    group: 'paid',
+    freeDaily: 300_000,
+    tz: 'Asia/Seoul',
+    pool: 'kakao_map',
+    browser: true,
+  },
   // 키워드로 장소 검색 (장소 검색·AI 추천): 하루 10만, 넘으면 2원/건
   { id: 'kakao_keyword', group: 'paid', freeDaily: 100000, tz: 'Asia/Seoul', pool: 'kakao_map' },
   // 카테고리로 장소 검색 (가까운 지하철역): 하루 10만, 넘으면 2원/건

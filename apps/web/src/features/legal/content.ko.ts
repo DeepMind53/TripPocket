@@ -40,7 +40,7 @@ export const PRIVACY: Section[] = [
       '날씨: 여행지 도시의 좌표와 날짜 (Open-Meteo 예보·과거 기록) — 내 현재 위치가 아닙니다',
       '환율: 요청만 보냄, 개인정보 없음 (한국수출입은행은 서버가 받음, 보조로 currency-api)',
       '장소 검색: 입력한 검색어와 여행지 도시 좌표를 서버가 대신 보냅니다. 국내는 카카오·네이버, 해외는 Google로 찾고, Google 무료 사용량이 끝나면 Geoapify(OpenStreetMap)로 찾습니다',
-      '지도: 일정 화면 지도는 Google 지도·네이버 지도를 쓰고, 둘 다 못 쓰면 OpenFreeMap 지도를 씁니다. 지도를 그리려고 그 지도 서비스가 화면에 보이는 지역의 지도 조각을 받아 갑니다',
+      '지도: 일정 화면 지도는 해외는 Google 지도, 국내는 설정에서 고른 네이버 지도·카카오맵을 쓰고, 둘 다 못 쓰면 OpenFreeMap 지도를 씁니다. 지도를 그리려고 그 지도 서비스가 화면에 보이는 지역의 지도 조각을 받아 갑니다',
       '택시 카드 현지어 이름: 장소 좌표를 서버가 Google(무료 사용량이 끝나면 Geoapify)로 보내 현지어 이름을 받습니다',
       '다음 일정까지 시간: 여행 당일 위치 사용을 허락하면, 지금 위치(약 100m 단위로 줄임)와 다음 일정 장소 좌표를 서버가 Google Routes(Google에서 찾은 장소) 또는 Geoapify로 보내 걷는·대중교통 시간을 받습니다. 지금 위치는 기기·서버 어디에도 저장하거나 기록하지 않습니다',
       '항공편 불러오기: 편명과 날짜만 AviationStack으로 보냅니다',
@@ -148,6 +148,12 @@ export const DATA_SOURCES: { name: string; use: string; license: string; url: st
     use: '국내 지도',
     license: '네이버 클라우드 이용약관',
     url: 'https://www.ncloud.com',
+  },
+  {
+    name: '카카오맵 (지도 Web SDK)',
+    use: '국내 지도 (설정에서 카카오를 고른 경우)',
+    license: '카카오 개발자 이용약관',
+    url: 'https://developers.kakao.com',
   },
   {
     name: '카카오 로컬 API',
@@ -330,6 +336,7 @@ export const HELP: Section[] = [
     title: '길찾기 앱을 매번 고르기 귀찮아요',
     body: [
       '해외 여행은 늘 Google 지도로 바로 열려요. 국내는 마이 → 설정 → 지도·길찾기에서 네이버·카카오 중 고르면 바로 열리고, "매번 묻기"면 그때 골라요.',
+      '앱 안 일정 지도도 해외는 Google, 국내는 같은 곳의 [앱 안 국내 지도]에서 네이버·카카오 중 골라요.',
     ],
   },
   {

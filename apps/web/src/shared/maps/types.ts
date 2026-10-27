@@ -1,5 +1,5 @@
 /** 지도 제공자 공통 인터페이스 (docs/10 §3) — 화면은 구글·네이버를 몰라도 된다 */
-export type MapProviderId = 'google' | 'naver';
+export type MapProviderId = 'google' | 'naver' | 'kakao';
 /** 실제로 그린 지도 — osm = MapLibre + OpenFreeMap 백업 (설정에서 고르지는 않음, docs/23 §4) */
 export type ActiveMapId = MapProviderId | 'osm';
 

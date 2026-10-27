@@ -454,7 +454,7 @@
     "fxFee": "환전 수수료 반영",
     "fxFeePercent": "수수료율",
     "fxFeeDesc": "현찰 살 때 추정 = 매매기준율 × (1 + 수수료)",
-    "mapRule": "해외는 늘 Google 지도로 열어요\n국내 길찾기만 아래에서 골라요",
+    "mapRule": "해외는 늘 Google 지도로 열어요\n국내 지도·길찾기만 아래에서 골라요",
     "start": "시작",
     "startScreen": "앱을 열면",
     "startHome": "홈",
@@ -481,7 +481,8 @@
     "privacy": "개인정보",
     "hideNickname": "후기에서 닉네임 가리기",
     "hideNicknameDesc": "다른 사람에게 \"{{masked}}\"로 보여요\n이미 쓴 후기에도 바로 적용돼요",
-    "hideNicknameFailed": "바꾸지 못했어요\n연결된 뒤 다시 해 주세요"
+    "hideNicknameFailed": "바꾸지 못했어요\n연결된 뒤 다시 해 주세요",
+    "domesticMap": "앱 안 국내 지도"
   },
   "notFound": {
     "title": "페이지를 찾을 수 없어요",
@@ -1043,7 +1044,8 @@
       "google_details_basic": "Google 장소 주소·좌표 (검색 백업)",
       "google_routes": "Google 길 소요 시간 (출발 시각)",
       "geoapify": "Geoapify (검색·택시 카드 백업)",
-      "openfreemap": "OpenFreeMap 지도 (지도 백업)"
+      "openfreemap": "OpenFreeMap 지도 (지도 백업)",
+      "kakao_maps_js": "카카오 지도 (지도 로드)"
     },
     "note": {
       "google_places_search": "해외 장소 검색 · 월 5,000회 무료",
@@ -1081,7 +1083,8 @@
       "google_details_basic": "자동완성에서 고른 장소 · Essentials · 월 10,000회 무료",
       "google_routes": "걷기·대중교통 1번에 2건 · Essentials · 월 10,000회 무료",
       "geoapify": "Google 백업까지 멈추면 · 하루 3,000회 무료 (요금 없음)",
-      "openfreemap": "Google·네이버 지도를 못 쓸 때 · 무료·한도 없음"
+      "openfreemap": "Google·네이버 지도를 못 쓸 때 · 무료·한도 없음",
+      "kakao_maps_js": "국내 일정 지도(카카오 선택 시)\n하루 30만 건 무료 · 월은 카카오 합산"
     },
     "autoStoppedDay": "오늘 자동 중지",
     "monthMeter": "이번 달",
