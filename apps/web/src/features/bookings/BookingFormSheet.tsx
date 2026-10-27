@@ -781,7 +781,8 @@ function BookingForm({
               </Field>
             </>
           )}
-          {more && kind !== 'transfer' && (
+          {/* 예약처: 기차·버스·렌터카·투어·티켓·기타는 늘 보이게 (사용자 요청 2026-10-27), 숙소·식당은 [더 입력하기] */}
+          {(more || (kind !== 'lodging' && kind !== 'restaurant')) && kind !== 'transfer' && (
             <Field label={t('bookings.reseller')}>
               <input
                 id="bk-provider"

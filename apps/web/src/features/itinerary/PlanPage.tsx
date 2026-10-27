@@ -1215,6 +1215,10 @@ function BookingLine({ row, onOpen }: { row: BookingRow; onOpen: () => void }) {
           <span className="truncate text-body-2 font-medium">
             {row.part === 'arrive' && `${t('plan.arrive')} · `}
             {b.title}
+            {/* 공항 픽업·드랍은 예약처를 제목 옆에 (사용자 요청 2026-10-27) */}
+            {b.kind === 'transfer' && b.provider && (
+              <span className="font-normal text-fg-sub"> ({b.provider})</span>
+            )}
           </span>
           {(route || b.confirmationNo) && (
             <span className="tabular truncate text-caption text-fg-muted">
@@ -1425,6 +1429,10 @@ function ItemRow({
               )}
             >
               {item.title}
+              {/* 공항 픽업·드랍은 예약처를 제목 옆에 (사용자 요청 2026-10-27) */}
+              {booking?.kind === 'transfer' && booking.provider && (
+                <span className="text-body-2 font-normal text-fg-sub"> ({booking.provider})</span>
+              )}
             </span>
             {history && history.length > 0 && (
               // 줄 전체가 버튼이라 안쪽은 span — 누르면 방문한 날짜만 펼치고 상세는 열지 않는다

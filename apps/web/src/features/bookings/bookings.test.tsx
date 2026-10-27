@@ -529,3 +529,29 @@ it('숙소: 조식 포함 → 날짜별로 빼고, 일정 화면 그날 아침�
     breakfastDates: ['2026-10-25', '2026-10-27'],
   });
 });
+
+describe('예약처 (2026-10-27)', () => {
+  it('공항 픽업은 일정에서 제목 옆에 (예약처)', async () => {
+    await bookingRepo.create({
+      tripId,
+      kind: 'transfer',
+      title: '공항 픽업',
+      provider: 'KKday',
+      details: { direction: 'pickup' },
+      start: { date: '2026-10-24', time: '12:00' },
+    });
+    renderAt([`/trips/${tripId}/plan?day=all`]);
+    await waitFor(() =>
+      expect(within(region('1일차 · 10.24 (토)')).getByText('(KKday)')).toBeInTheDocument(),
+    );
+  });
+
+  it('투어·티켓 등은 [더 입력하기] 없이 예약처 칸이 보인다', async () => {
+    const user = userEvent.setup();
+    renderAt([`/trips/${tripId}/bookings`]);
+    await user.click(await screen.findByRole('button', { name: '예약 추가' }));
+    const sheet = await screen.findByRole('dialog', { name: '예약 추가' });
+    await user.click(within(sheet).getByRole('button', { name: /투어/ }));
+    expect(within(sheet).getByLabelText('예약처')).toBeInTheDocument();
+  });
+});
