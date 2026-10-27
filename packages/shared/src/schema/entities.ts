@@ -160,6 +160,19 @@ export const BookingSchema = z.object({
       partySize: z.optional(z.number().check(z.gte(1), z.lte(99))),
       /** 픽업(공항 → 숙소) / 드랍(숙소 → 공항) */
       direction: z.optional(z.enum(['pickup', 'drop'])),
+      // ── 2026-10-28 종류별 추가 칸 (사용자 요청 — 종류에 필요한 칸만 화면에 보인다) ──
+      /** 항공: 수하물 허용량 ("위탁 23kg · 기내 7kg") */
+      baggage: z.optional(z.string().check(z.maxLength(60))),
+      /** 무료 취소 마감일 */
+      cancelBy: z.optional(LocalDateSchema),
+      /** 결제 상태 — 금액은 저장하지 않는다 (가계부 제외) */
+      payment: z.optional(z.enum(['paid', 'onsite'])),
+      /** 투어·픽업: 만나는 곳 */
+      meetingPoint: z.optional(z.string().check(z.maxLength(100))),
+      /** 바우처·확인서 링크 (https만) */
+      voucherUrl: z.optional(z.string().check(z.maxLength(500), z.regex(/^https:\/\/[^\s]+$/))),
+      /** 렌터카: 보험 메모 ("완전자차") */
+      insurance: z.optional(z.string().check(z.maxLength(60))),
     }),
   ),
   /** "결제 완료 ₩320,000" 같은 자유 메모 (금액 계산 없음) */

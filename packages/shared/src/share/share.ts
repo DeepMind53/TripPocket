@@ -29,7 +29,8 @@ export function toPublicTrip(
     bookings: live(bookings).map((b) => {
       if (includeSensitive) return b;
       const { confirmationNo: _c, memo: _m, priceNote: _p, details, ...rest } = b;
-      const { phone: _ph, ...publicDetails } = details ?? {};
+      // 바우처 링크는 예약 확인 토큰이 들어 있을 수 있어 예약번호처럼 뺀다 (2026-10-28)
+      const { phone: _ph, voucherUrl: _v, ...publicDetails } = details ?? {};
       return details ? { ...rest, details: publicDetails } : rest;
     }),
     includeSensitive,

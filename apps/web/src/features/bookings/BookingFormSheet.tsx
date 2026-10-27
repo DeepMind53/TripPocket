@@ -21,6 +21,22 @@ import { confirmDelete } from '../../shared/ui';
 /** 픽업·드랍을 많이 예약하는 곳 (고르면 예약 사이트 칸에 들어감, 직접 입력도 됨) */
 const TRANSFER_SITES = ['KKday', 'Klook', '아고다', '마이리얼트립', '네이버'] as const;
 
+/**
+ * 종류별 추가 칸 (사용자 요청 2026-10-28 — 종류에 필요한 칸만). 항공 수하물·렌터카 반납·보험·기차 호차는 그 종류 화면에서만
+ */
+const CANCEL_KINDS = new Set<Booking['kind']>([
+  'lodging',
+  'train',
+  'car',
+  'transfer',
+  'tour',
+  'ticket',
+  'other',
+]);
+const PAYMENT_KINDS = new Set<Booking['kind']>(['lodging', 'car', 'transfer', 'tour']);
+const VOUCHER_KINDS = new Set<Booking['kind']>(['transfer', 'tour', 'ticket', 'other']);
+const PARTY_KINDS = new Set<Booking['kind']>(['tour', 'ticket']);
+
 const KINDS: Booking['kind'][] = [
   'flight',
   'lodging',
@@ -113,11 +129,32 @@ function BookingForm({
     /** null = 모든 아침 */
     breakfastDates: (b?.details?.breakfastDates ?? null) as string[] | null,
     memo: b?.memo ?? '',
+    roomType: b?.details?.roomType ?? '',
+    baggage: b?.details?.baggage ?? '',
+    cancelBy: b?.details?.cancelBy ?? '',
+    payment: (b?.details?.payment ?? '') as '' | 'paid' | 'onsite',
+    meetingPoint: b?.details?.meetingPoint ?? '',
+    voucherUrl: b?.details?.voucherUrl ?? '',
+    insurance: b?.details?.insurance ?? '',
   });
   const [saving, setSaving] = useState(false);
   const [stayOpen, setStayOpen] = useState(false);
   // 덜 쓰는 칸은 접어 둔다 (docs/20 U4) — 고칠 때 값이 있으면 펼쳐서
-  const [more, setMore] = useState(!!(b?.details?.seat || b?.provider || b?.priceNote || b?.memo));
+  const d0 = b?.details;
+  const [more, setMore] = useState(
+    !!(
+      d0?.seat ||
+      b?.provider ||
+      b?.priceNote ||
+      b?.memo ||
+      d0?.baggage ||
+      d0?.cancelBy ||
+      d0?.payment ||
+      d0?.voucherUrl ||
+      d0?.insurance ||
+      d0?.roomType
+    ),
+  );
   // 편명으로 불러오기 (AviationStack 무료 — 최근 운항 기준이라 날짜는 그대로, 시간·공항·터미널만 채움)
   const [looking, setLooking] = useState(false);
   const [lookedUp, setLookedUp] = useState(false);
@@ -168,6 +205,17 @@ function BookingForm({
 
   /** 종류별 입력값 → 저장할 예약. 문제가 있으면 안내 문구 */
   function build(): NewBooking | string {
+    const voucher = v(f.voucherUrl);
+    if (voucher && VOUCHER_KINDS.has(kind) && !/^https:\/\/\S+$/.test(voucher))
+      return t('bookings.voucherBad');
+    // 여러 종류가 함께 쓰는 추가 칸 (그 종류에 있는 칸만)
+    const extras = {
+      cancelBy: CANCEL_KINDS.has(kind) ? v(f.cancelBy) : undefined,
+      payment: PAYMENT_KINDS.has(kind) && f.payment ? f.payment : undefined,
+      voucherUrl: VOUCHER_KINDS.has(kind) ? voucher : undefined,
+    };
+    const partyNo = Number(f.partySize);
+    const party = Number.isInteger(partyNo) && partyNo >= 1 && partyNo <= 99 ? partyNo : undefined;
     const common = {
       tripId: trip.id,
       kind,
@@ -194,11 +242,11 @@ function BookingForm({
           seat: v(f.seat),
           terminal: v(f.terminal),
           arrivalTerminal: v(f.arrivalTerminal),
+          baggage: v(f.baggage),
         }),
       });
     }
     if (kind === 'transfer') {
-      const party = Number(f.partySize);
       return clean({
         ...common,
         // 이름을 비우면 "공항 픽업" / "공항 드랍"
@@ -210,14 +258,15 @@ function BookingForm({
           direction: f.direction,
           flightNo: v(f.flightNo)?.toUpperCase(),
           phone: v(f.phone),
-          partySize: Number.isInteger(party) && party >= 1 && party <= 99 ? party : undefined,
+          partySize: party,
+          meetingPoint: v(f.meetingPoint),
+          ...extras,
         }),
         priceNote: v(f.priceNote),
       });
     }
     if (!v(f.title)) return t('bookings.needName');
     if (kind === 'restaurant') {
-      const party = Number(f.partySize);
       return clean({
         ...common,
         title: f.title.trim(),
@@ -226,7 +275,7 @@ function BookingForm({
         details: cleanOrUndefined({
           address: v(f.address),
           phone: v(f.phone),
-          partySize: Number.isInteger(party) && party >= 1 && party <= 99 ? party : undefined,
+          partySize: party,
         }),
         priceNote: v(f.priceNote),
       });
@@ -242,6 +291,9 @@ function BookingForm({
         details: cleanOrUndefined({
           address: v(f.address),
           phone: v(f.phone),
+          roomType: v(f.roomType),
+          partySize: party,
+          ...extras,
           breakfast: f.breakfast || undefined,
           // 모든 아침이면 날짜 목록은 저장하지 않는다 (날짜를 바꿔도 그대로 "모두")
           breakfastDates:
@@ -252,11 +304,25 @@ function BookingForm({
         priceNote: v(f.priceNote),
       });
     }
+    // 기차·렌터카·투어·티켓·기타
+    const carReturn =
+      kind === 'car' && (v(f.to) || f.endDate || v(f.endTime))
+        ? clean({ date: f.endDate || f.startDate, time: v(f.endTime), place: v(f.to) })
+        : undefined;
     return clean({
       ...common,
       title: f.title.trim(),
       provider: v(f.provider),
       start: clean({ date: f.startDate, time: v(f.startTime), place: v(f.from) }),
+      end: carReturn,
+      details: cleanOrUndefined({
+        seat: kind === 'train' ? v(f.seat) : undefined,
+        partySize: PARTY_KINDS.has(kind) ? party : undefined,
+        phone: kind === 'tour' || kind === 'car' ? v(f.phone) : undefined,
+        meetingPoint: kind === 'tour' ? v(f.meetingPoint) : undefined,
+        insurance: kind === 'car' ? v(f.insurance) : undefined,
+        ...extras,
+      }),
       priceNote: v(f.priceNote),
     });
   }
@@ -436,15 +502,27 @@ function BookingForm({
             </Field>
           </Row>
           {more && (
-            <Field label={t('bookings.seat')}>
-              <input
-                id="bk-seat"
-                value={f.seat}
-                maxLength={20}
-                onChange={set('seat')}
-                className={inputClass}
-              />
-            </Field>
+            <>
+              <Field label={t('bookings.seat')}>
+                <input
+                  id="bk-seat"
+                  value={f.seat}
+                  maxLength={20}
+                  onChange={set('seat')}
+                  className={inputClass}
+                />
+              </Field>
+              <Field label={t('bookings.baggage')}>
+                <input
+                  id="bk-baggage"
+                  value={f.baggage}
+                  maxLength={60}
+                  placeholder={t('bookings.baggagePlaceholder')}
+                  onChange={set('baggage')}
+                  className={inputClass}
+                />
+              </Field>
+            </>
           )}
         </>
       ) : (
@@ -593,6 +671,21 @@ function BookingForm({
                   className={inputClass}
                 />
               </Field>
+              {more && (
+                <Row>
+                  <Field label={t('bookings.roomType')}>
+                    <input
+                      id="bk-room"
+                      value={f.roomType}
+                      maxLength={60}
+                      placeholder={t('bookings.roomPlaceholder')}
+                      onChange={set('roomType')}
+                      className={inputClass}
+                    />
+                  </Field>
+                  <PartyField value={f.partySize} onChange={set('partySize')} />
+                </Row>
+              )}
             </>
           ) : kind === 'transfer' ? (
             <>
@@ -713,6 +806,7 @@ function BookingForm({
                   className={inputClass}
                 />
               </Field>
+              <MeetingField value={f.meetingPoint} onChange={set('meetingPoint')} />
             </>
           ) : kind === 'restaurant' ? (
             <>
@@ -770,7 +864,7 @@ function BookingForm({
                 onTime={set('startTime')}
                 idPrefix="bk-start"
               />
-              <Field label={t('bookings.place')}>
+              <Field label={kind === 'car' ? t('bookings.carPickup') : t('bookings.place')}>
                 <input
                   id="bk-place"
                   value={f.from}
@@ -779,6 +873,84 @@ function BookingForm({
                   className={inputClass}
                 />
               </Field>
+              {kind === 'car' && (
+                <>
+                  <DateTimeRow
+                    dateLabel={t('bookings.returnDate')}
+                    timeLabel={t('bookings.returnTime')}
+                    date={f.endDate || f.startDate}
+                    time={f.endTime}
+                    onDate={set('endDate')}
+                    onTime={set('endTime')}
+                    idPrefix="bk-return"
+                  />
+                  <Field label={t('bookings.carReturn')}>
+                    <input
+                      id="bk-return-place"
+                      value={f.to}
+                      maxLength={100}
+                      onChange={set('to')}
+                      className={inputClass}
+                    />
+                  </Field>
+                </>
+              )}
+              {kind === 'train' && (
+                <Field label={t('bookings.trainSeat')}>
+                  <input
+                    id="bk-train-seat"
+                    value={f.seat}
+                    maxLength={20}
+                    placeholder={t('bookings.trainSeatPlaceholder')}
+                    onChange={set('seat')}
+                    className={inputClass}
+                  />
+                </Field>
+              )}
+              {kind === 'tour' && (
+                <MeetingField value={f.meetingPoint} onChange={set('meetingPoint')} />
+              )}
+              {PARTY_KINDS.has(kind) && (
+                <Row>
+                  <PartyField value={f.partySize} onChange={set('partySize')} />
+                  {kind === 'tour' && (
+                    <Field label={t('bookings.phone')}>
+                      <input
+                        id="bk-phone"
+                        type="tel"
+                        value={f.phone}
+                        maxLength={40}
+                        onChange={set('phone')}
+                        className={inputClass}
+                      />
+                    </Field>
+                  )}
+                </Row>
+              )}
+              {kind === 'car' && more && (
+                <Row>
+                  <Field label={t('bookings.insurance')}>
+                    <input
+                      id="bk-insurance"
+                      value={f.insurance}
+                      maxLength={60}
+                      placeholder={t('bookings.insurancePlaceholder')}
+                      onChange={set('insurance')}
+                      className={inputClass}
+                    />
+                  </Field>
+                  <Field label={t('bookings.phone')}>
+                    <input
+                      id="bk-phone"
+                      type="tel"
+                      value={f.phone}
+                      maxLength={40}
+                      onChange={set('phone')}
+                      className={inputClass}
+                    />
+                  </Field>
+                </Row>
+              )}
             </>
           )}
           {/* 예약처: 기차·버스·렌터카·투어·티켓·기타는 늘 보이게 (사용자 요청 2026-10-27), 숙소·식당은 [더 입력하기] */}
@@ -789,6 +961,50 @@ function BookingForm({
                 value={f.provider}
                 maxLength={60}
                 onChange={set('provider')}
+                className={inputClass}
+              />
+            </Field>
+          )}
+          {more && CANCEL_KINDS.has(kind) && (
+            <Field label={t('bookings.cancelBy')}>
+              <input
+                id="bk-cancel"
+                type="date"
+                value={f.cancelBy}
+                onChange={set('cancelBy')}
+                className={`${inputClass} tabular`}
+              />
+            </Field>
+          )}
+          {more && PAYMENT_KINDS.has(kind) && (
+            <fieldset>
+              <legend className="mb-1.5 text-caption font-semibold text-fg-sub">
+                {t('bookings.payment')}
+              </legend>
+              <div className="flex gap-2">
+                {(['paid', 'onsite'] as const).map((p) => (
+                  <Chip
+                    key={p}
+                    selected={f.payment === p}
+                    // 한 번 더 누르면 해제
+                    onClick={() => setF((cur) => ({ ...cur, payment: cur.payment === p ? '' : p }))}
+                  >
+                    {t(`bookings.paymentValue.${p}`)}
+                  </Chip>
+                ))}
+              </div>
+            </fieldset>
+          )}
+          {more && VOUCHER_KINDS.has(kind) && (
+            <Field label={t('bookings.voucherUrl')}>
+              <input
+                id="bk-voucher"
+                type="url"
+                inputMode="url"
+                value={f.voucherUrl}
+                maxLength={500}
+                placeholder="https://"
+                onChange={set('voucherUrl')}
                 className={inputClass}
               />
             </Field>
@@ -874,6 +1090,42 @@ function clean<T extends object>(obj: T): { [K in keyof T]: Exclude<T[K], undefi
 function cleanOrUndefined<T extends object>(obj: T) {
   const c = clean(obj);
   return Object.keys(c).length ? c : undefined;
+}
+
+type OnText = (e: { target: { value: string } }) => void;
+
+function PartyField(props: { value: string; onChange: OnText }) {
+  const { t } = useTranslation();
+  return (
+    <Field label={t('bookings.partySize')}>
+      <input
+        id="bk-party"
+        type="number"
+        inputMode="numeric"
+        min={1}
+        max={99}
+        value={props.value}
+        onChange={props.onChange}
+        className={`${inputClass} tabular`}
+      />
+    </Field>
+  );
+}
+
+function MeetingField(props: { value: string; onChange: OnText }) {
+  const { t } = useTranslation();
+  return (
+    <Field label={t('bookings.meetingPoint')}>
+      <input
+        id="bk-meeting"
+        value={props.value}
+        maxLength={100}
+        placeholder={t('bookings.meetingPlaceholder')}
+        onChange={props.onChange}
+        className={inputClass}
+      />
+    </Field>
+  );
 }
 
 function Row({ children }: { children: ReactNode }) {

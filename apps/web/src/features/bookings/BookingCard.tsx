@@ -1,6 +1,6 @@
 import { useTimeText } from '../../shared/hooks/useTimeText';
-import { nightsBetween, type Booking } from '@trippocket/shared';
-import { BedDouble, Copy, Plane } from 'lucide-react';
+import { nightsBetween, todayIn, type Booking } from '@trippocket/shared';
+import { BedDouble, Copy, ExternalLink, Plane } from 'lucide-react';
 import { useTranslation } from '../../i18n';
 import { copyText } from '../../shared/lib/clipboard';
 import { formatMonthDay } from '../../shared/lib/dateFormat';
@@ -33,6 +33,19 @@ export function BookingCard({ booking, onOpen }: { booking: Booking; onOpen: () 
       {bigOn && b.kind === 'flight' && (
         <div className="flex justify-end border-t border-dashed border-line px-4">
           <BigTicket booking={b} />
+        </div>
+      )}
+      {b.details?.voucherUrl && (
+        <div className="flex justify-end border-t border-dashed border-line px-4">
+          <a
+            href={b.details.voucherUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex h-10 items-center gap-1 text-caption font-semibold text-primary"
+          >
+            {t('bookings.voucherOpen')}
+            <ExternalLink aria-hidden="true" className="size-3.5" />
+          </a>
         </div>
       )}
       {b.confirmationNo && (
@@ -79,9 +92,14 @@ export function FlightTicket({ booking: b }: { booking: Booking }) {
           align="end"
         />
       </div>
-      {b.details?.seat && (
+      {(b.details?.seat || b.details?.baggage) && (
         <p className="text-caption text-fg-sub">
-          {t('bookings.seatValue', { seat: b.details.seat })}
+          {[
+            b.details.seat && t('bookings.seatValue', { seat: b.details.seat }),
+            b.details.baggage && t('bookings.baggageValue', { v: b.details.baggage }),
+          ]
+            .filter(Boolean)
+            .join(' · ')}
         </p>
       )}
     </div>
@@ -155,9 +173,20 @@ export function LodgingBody({ booking: b }: { booking: Booking }) {
           {t('bookings.noBreakfast')}
         </p>
       )}
+      {(b.details?.roomType || b.details?.partySize) && (
+        <p className="truncate text-caption text-fg-sub">
+          {[
+            b.details.roomType,
+            b.details.partySize && t('bookings.partySizeValue', { n: b.details.partySize }),
+          ]
+            .filter(Boolean)
+            .join(' · ')}
+        </p>
+      )}
       {b.details?.address && (
         <p className="truncate text-caption text-fg-muted">{b.details.address}</p>
       )}
+      <BookingExtras booking={b} />
     </div>
   );
 }
@@ -178,10 +207,64 @@ function BasicBody({ booking: b }: { booking: Booking }) {
             ? ` · ${t('bookings.partySizeValue', { n: b.details.partySize })}`
             : ''}
         </span>
+        {b.kind === 'train' && b.details?.seat && (
+          <span className="text-caption text-fg-sub">{b.details.seat}</span>
+        )}
+        {b.kind === 'car' && b.end && (
+          <span className="tabular truncate text-caption text-fg-sub">
+            {t('bookings.returnValue', {
+              when: [formatMonthDay(b.end.date), time(b.end.time), b.end.place]
+                .filter(Boolean)
+                .join(' '),
+            })}
+          </span>
+        )}
         {b.details?.address && (
           <span className="truncate text-caption text-fg-muted">{b.details.address}</span>
         )}
+        {b.details?.meetingPoint && (
+          <span className="truncate text-caption text-fg-sub">
+            {t('bookings.meetingValue', { v: b.details.meetingPoint })}
+          </span>
+        )}
+        {b.details?.insurance && (
+          <span className="truncate text-caption text-fg-sub">
+            {t('bookings.insuranceValue', { v: b.details.insurance })}
+          </span>
+        )}
+        <BookingExtras booking={b} />
       </span>
     </div>
+  );
+}
+
+/** 결제 상태·무료 취소 마감 (2026-10-28) — 마감이 지나면 흐리게 */
+function BookingExtras({ booking: b }: { booking: Booking }) {
+  const { t } = useTranslation();
+  const d = b.details;
+  if (!d?.payment && !d?.cancelBy) return null;
+  const passed =
+    !!d.cancelBy && d.cancelBy < todayIn(Intl.DateTimeFormat().resolvedOptions().timeZone);
+  return (
+    <span className="mt-1 flex flex-wrap gap-1.5">
+      {d.payment && (
+        <span className="rounded-full bg-bg-subtle px-2 py-0.5 text-micro text-fg-sub">
+          {t(`bookings.paymentValue.${d.payment}`)}
+        </span>
+      )}
+      {d.cancelBy && (
+        <span
+          className={
+            passed
+              ? 'rounded-full bg-bg-subtle px-2 py-0.5 text-micro text-fg-muted'
+              : 'tabular rounded-full bg-success/10 px-2 py-0.5 text-micro text-success'
+          }
+        >
+          {passed
+            ? t('bookings.cancelPassed')
+            : t('bookings.cancelByValue', { date: formatMonthDay(d.cancelBy) })}
+        </span>
+      )}
+    </span>
   );
 }

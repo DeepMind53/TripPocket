@@ -46,6 +46,80 @@ function renderAt(entries: string[]) {
 }
 
 describe('예약', () => {
+  it('종류마다 필요한 칸만: 항공은 수하물, 렌터카는 반납·보험·결제·무료 취소 (2026-10-28)', async () => {
+    const user = userEvent.setup();
+    renderAt([`/trips/${tripId}/bookings`]);
+    await user.click(await screen.findByRole('button', { name: '예약 추가' }));
+    const sheet = screen.getByRole('dialog', { name: '예약 추가' });
+    await user.click(within(sheet).getByRole('button', { name: '+ 더 입력하기' }));
+    // 항공: 수하물 있음, 취소 마감·결제·바우처 없음
+    expect(within(sheet).getByLabelText('수하물 허용량')).toBeInTheDocument();
+    expect(within(sheet).queryByLabelText('무료 취소 마감일')).toBeNull();
+    expect(within(sheet).queryByLabelText('바우처·확인서 링크')).toBeNull();
+    // 음식점: 새 칸 없음
+    await user.click(within(sheet).getByRole('button', { name: '음식점' }));
+    expect(within(sheet).queryByLabelText('수하물 허용량')).toBeNull();
+    expect(within(sheet).queryByLabelText('무료 취소 마감일')).toBeNull();
+    expect(within(sheet).queryByRole('group', { name: '결제' })).toBeNull();
+    // 렌터카
+    await user.click(within(sheet).getByRole('button', { name: '렌터카' }));
+    expect(within(sheet).queryByLabelText('수하물 허용량')).toBeNull();
+    expect(within(sheet).queryByLabelText('바우처·확인서 링크')).toBeNull();
+    await user.type(within(sheet).getByLabelText('이름'), '제주 렌터카');
+    await user.type(within(sheet).getByLabelText('인수 장소'), '김해공항');
+    fireEvent.change(within(sheet).getByLabelText('반납 날짜'), {
+      target: { value: '2026-10-27' },
+    });
+    await user.type(within(sheet).getByLabelText('반납 장소'), '부산역');
+    await user.type(within(sheet).getByLabelText('보험'), '완전자차');
+    fireEvent.change(within(sheet).getByLabelText('무료 취소 마감일'), {
+      target: { value: '2026-10-23' },
+    });
+    await user.click(within(sheet).getByRole('button', { name: '현장 결제' }));
+    await user.click(within(sheet).getByRole('button', { name: '예약 추가' }));
+
+    const card = await screen.findByRole('button', { name: '제주 렌터카 편집' });
+    expect(card).toHaveTextContent(/반납 10\.27.*부산역/);
+    expect(card).toHaveTextContent('완전자차');
+    expect(card).toHaveTextContent('현장 결제');
+    // 마감(10.23)이 지났다 (오늘 10.25)
+    expect(card).toHaveTextContent('무료 취소 기간 지남');
+    const [saved] = await bookingRepo.listByTrip(tripId);
+    expect(saved?.end).toMatchObject({ date: '2026-10-27', place: '부산역' });
+    expect(saved?.details).toMatchObject({
+      insurance: '완전자차',
+      payment: 'onsite',
+      cancelBy: '2026-10-23',
+    });
+    expect(saved?.details?.baggage).toBeUndefined();
+  });
+
+  it('투어: 만나는 곳·인원·바우처 링크, 바우처는 https만', async () => {
+    const user = userEvent.setup();
+    renderAt([`/trips/${tripId}/bookings`]);
+    await user.click(await screen.findByRole('button', { name: '예약 추가' }));
+    const sheet = screen.getByRole('dialog', { name: '예약 추가' });
+    await user.click(within(sheet).getByRole('button', { name: '투어' }));
+    await user.type(within(sheet).getByLabelText('이름'), '감천마을 투어');
+    await user.type(within(sheet).getByLabelText('만나는 곳'), '토성역 6번 출구');
+    await user.type(within(sheet).getByLabelText('인원'), '2');
+    await user.click(within(sheet).getByRole('button', { name: '+ 더 입력하기' }));
+    await user.type(within(sheet).getByLabelText('바우처·확인서 링크'), 'http://x.example');
+    await user.click(within(sheet).getByRole('button', { name: '예약 추가' }));
+    expect(await screen.findByText('링크는 https://로 시작해야 해요')).toBeInTheDocument();
+    await user.clear(within(sheet).getByLabelText('바우처·확인서 링크'));
+    await user.type(within(sheet).getByLabelText('바우처·확인서 링크'), 'https://x.example/v');
+    await user.click(within(sheet).getByRole('button', { name: '예약 추가' }));
+
+    const card = await screen.findByRole('button', { name: '감천마을 투어 편집' });
+    expect(card).toHaveTextContent('토성역 6번 출구');
+    expect(card).toHaveTextContent('2명');
+    expect(screen.getByRole('link', { name: '바우처 열기' })).toHaveAttribute(
+      'href',
+      'https://x.example/v',
+    );
+  });
+
   it('공항은 도시·공항 이름으로 찾아 고르고, 출발·도착 터미널을 따로 넣는다 · 시간은 숫자로 친다', async () => {
     const user = userEvent.setup();
     renderAt([`/trips/${tripId}/bookings`]);

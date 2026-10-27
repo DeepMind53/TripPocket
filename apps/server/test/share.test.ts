@@ -84,7 +84,12 @@ beforeEach(async () => {
           title: '호텔',
           confirmationNo: 'ABC123',
           start: { date: '2026-11-01' },
-          details: { phone: '010-1234', address: '신주쿠' },
+          details: {
+            phone: '010-1234',
+            address: '신주쿠',
+            voucherUrl: 'https://voucher.example/secret-token',
+            cancelBy: '2026-10-30',
+          },
           createdAt: T,
           updatedAt: T,
         },
@@ -106,7 +111,7 @@ describe('보기 전용 링크', () => {
     expect(share.id).toMatch(/^[\w-]{20,}$/);
     const view = (await call(null, 'GET', `/api/public/shares/${share.id}`)).json();
     expect(view.trip.title).toBe('도쿄');
-    expect(JSON.stringify(view)).not.toMatch(/ABC123|010-1234|개인 메모|비밀/);
+    expect(JSON.stringify(view)).not.toMatch(/ABC123|010-1234|개인 메모|비밀|secret-token/);
     expect(view.bookings[0].details.address).toBe('신주쿠');
   });
 
