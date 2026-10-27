@@ -26,6 +26,8 @@ import { formatMonthDay } from '../../shared/lib/dateFormat';
 import { updateSettings, useSettings } from '../../data/settingsStore';
 import { BottomSheet, SegmentedControl, toast } from '../../shared/ui';
 import { DirectionsSheet } from './DirectionsSheet';
+import { TipCalc } from './TipCalc';
+import { useLab } from '../../data/labsStore';
 import { openDirectionsDirect } from './openDirections';
 import { isDomesticTrip } from '../../domain/tripPlace';
 
@@ -178,6 +180,7 @@ function QuickMenuContent({
   const theme = useSettings((st) => st.theme);
   const app = useSettings((st) => st.directionsApp);
   const mode = useSettings((st) => st.travelMode);
+  const tipOn = useLab('tipCalc');
 
   return (
     <div className="flex flex-col gap-5">
@@ -218,6 +221,9 @@ function QuickMenuContent({
           <span className="text-micro text-fg-muted">{t('quickMenu.phrasesDesc')}</span>
         </Link>
       </div>
+
+      {/* 실험실: 팁 계산기 */}
+      {tipOn && <TipCalc />}
 
       {inTrip && shortcuts && (
         <section className="flex flex-col gap-2">

@@ -24,6 +24,7 @@ import {
 import { useTripWeather } from '../common/useTripWeather';
 import { useEssentials } from '../essentials/useEssentials';
 import { useTripAlerts } from '../weather/useTripAlerts';
+import { HomeLabs } from './HomeLabs';
 import { useTranslation } from '../../i18n';
 import { WeatherIcon } from '../../shared/ui';
 
@@ -85,6 +86,8 @@ export function PrepCards({ trip }: { trip: Trip }) {
 
   return (
     <section aria-label={t('prep.title')} className="flex flex-col gap-2">
+      {/* 실험실: 시차·비행 중 */}
+      <HomeLabs trip={trip} bookings={bookings} items={[]} ongoing={false} />
       {/* 기본은 한 줄 요약, 누르면 펼침 (docs/20 U3) — 펼침 상태는 이 기기에 기억 */}
       <button
         type="button"

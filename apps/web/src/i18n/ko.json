@@ -1068,7 +1068,52 @@
     "leg": "{{distance}} · 걸어서 약 {{min}}분 (직선거리 기준)",
     "localTime": "현지 {{time}}",
     "none": "지금 시험 중인 기능이 없어요\n새 기능이 생기면 여기에 먼저 보여요",
-    "item": {},
+    "item": {
+      "homeTime": {
+        "name": "한국 시각 같이 보기",
+        "desc": "일정 시간 아래에\n한국 시각을 함께 보여 줘요"
+      },
+      "rainMark": {
+        "name": "비 오는 날 야외 일정",
+        "desc": "비 예보가 있는 날\n관광·액티비티 일정에 ☔ 표시"
+      },
+      "checkinNotice": {
+        "name": "체크인 안내",
+        "desc": "숙소 체크인 날\n그날 일정 위에 체크인 시각"
+      },
+      "returnNotice": {
+        "name": "귀국 전날 안내",
+        "desc": "귀국 전날 일정 위에\n내일 귀국 항공편을 보여 줘요"
+      },
+      "dayWalk": {
+        "name": "하루 걷는 거리",
+        "desc": "그날 장소 사이 거리를 더해\n날짜 위에 보여 줘요"
+      },
+      "flightProgress": {
+        "name": "비행 중 남은 시간",
+        "desc": "비행기를 타고 있으면\n홈에 도착까지 남은 시간"
+      },
+      "morningBrief": {
+        "name": "오늘 요약",
+        "desc": "여행 중 홈에\n오늘 일정 수와 첫 일정 시각"
+      },
+      "jetLag": {
+        "name": "시차 안내",
+        "desc": "출발 전 홈에\n여행지와 한국의 시차"
+      },
+      "emptyDayWish": {
+        "name": "빈 날에 가고 싶은 곳",
+        "desc": "일정이 없는 날에\n가고 싶은 곳에서 고르기 버튼"
+      },
+      "tipCalc": {
+        "name": "팁 계산기",
+        "desc": "빠른 메뉴에서\n금액·비율로 팁과 합계 계산"
+      },
+      "bigTicket": {
+        "name": "항공권 크게 보기",
+        "desc": "예약 탭 항공권에서\n예약번호·편명을 크게 보여 줘요"
+      }
+    },
     "checkoutAt": "오늘 {{time}} 체크아웃 · {{name}}",
     "checkout": "오늘 체크아웃 · {{name}}",
     "nearbyWish": "📍 근처 가고 싶은 곳: {{names}}{{more}}",
@@ -1107,7 +1152,27 @@
     "syncFailed": "동기화하지 못했어요\n잠시 뒤 다시 해 볼게요",
     "copyDay": "일정 글로 복사",
     "copyDayDesc": "카톡 등에 붙여 넣을 수 있어요",
-    "dayCopied": "하루 일정을 복사했어요"
+    "dayCopied": "하루 일정을 복사했어요",
+    "homeTime": "한국 {{time}}",
+    "rainLabel": "비 예보",
+    "checkinAt": "오늘 {{time}} 체크인 · {{name}}",
+    "checkin": "오늘 체크인 · {{name}}",
+    "returnAt": "내일 {{time}} 귀국 · {{name}}",
+    "return": "내일 귀국 · {{name}}",
+    "dayWalk": "🚶 오늘 이동 약 {{km}}km (직선거리)",
+    "pickWish": "가고 싶은 곳 {{n}}곳에서 골라 넣기",
+    "inAir": "✈️ {{name}} 비행 중 · 도착까지 {{h}}시간 {{m}}분",
+    "brief": "☀️ 오늘 일정 {{n}}개",
+    "briefFirst": "☀️ 오늘 일정 {{n}}개 · 첫 일정 {{time}}",
+    "jetLagSame": "🕒 여행지는 한국과 같은 시간이에요",
+    "jetLagAhead": "🕒 여행지는 한국보다 {{h}}시간 빨라요",
+    "jetLagBehind": "🕒 여행지는 한국보다 {{h}}시간 느려요",
+    "homeLabel": "여행 도움 정보",
+    "tipTitle": "팁 계산",
+    "tipAmount": "금액",
+    "tipResult": "팁 {{tip}} · 합계 {{total}}",
+    "bigTicket": "크게 보기",
+    "bigTicketOf": "{{name}} 크게 보기"
   },
   "profile": {
     "title": "개인정보",

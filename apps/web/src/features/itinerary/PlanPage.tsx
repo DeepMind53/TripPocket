@@ -103,6 +103,14 @@ import { isDomesticTrip } from '../../domain/tripPlace';
 import { dayRouteUrl } from '../../domain/dayRoute';
 import { sunSlot, sunTimes } from '../../domain/sun';
 import { checkoutsOn, dayRecap, nearbyWishes } from '../../domain/dayExtras';
+import {
+  checkinsOn,
+  homeTimeOf,
+  isOutdoor,
+  isRainCode,
+  returnFlightFor,
+} from '../../domain/travelExtras';
+import { useLab } from '../../data/labsStore';
 import { distanceKm, formatDistance, walkMinutes } from '@trippocket/shared';
 import { DayWeatherBadge } from '../common/DayWeatherBadge';
 import { useTripWeather, type TripDayWeather } from '../common/useTripWeather';
@@ -651,6 +659,10 @@ function PlanView({
                       lodging={date ? lodgingForNight(bookings, date) : null}
                       wishes={date ? wishItems : undefined}
                       checkouts={date ? checkoutsOn(bookings, date) : undefined}
+                      checkins={date ? checkinsOn(bookings, date) : undefined}
+                      returnFlight={date ? returnFlightFor(bookings, trip.endDate, date) : null}
+                      wishCount={wishItems.length}
+                      onWish={() => setFilter('wish')}
                       lodgingCoords={
                         lodgingReturnOn && date
                           ? coordsOfBooking(lodgingForNight(bookings, date)?.booking.id)
@@ -879,6 +891,10 @@ function DaySection({
   lodgingCoords,
   wishes,
   checkouts,
+  checkins,
+  returnFlight,
+  wishCount = 0,
+  onWish,
 }: {
   /** 지난 일정 방문·미방문 (미방문이면 저장 탭에도 담는다) */
   onVisitItem: (item: ItineraryItem, visit: Visit) => void;
@@ -887,6 +903,13 @@ function DaySection({
   weather?: TripDayWeather | undefined;
   /** 실험실 "근처 가고 싶은 곳": 날짜 없는 가고 싶은 곳 */
   wishes?: ItineraryItem[] | undefined;
+  /** 실험실 "체크인 안내": 그날 체크인하는 숙소 */
+  checkins?: { title: string; time?: string | undefined }[] | undefined;
+  /** 실험실 "귀국 전날 안내": 내일 귀국 항공편 */
+  returnFlight?: { title: string; time?: string | undefined } | null;
+  /** 실험실 "빈 날 가고 싶은 곳": 날짜 없는 가고 싶은 곳 수, 누르면 그 목록으로 */
+  wishCount?: number;
+  onWish?: (() => void) | undefined;
   /** 실험실 "오늘 체크아웃": 그날 체크아웃하는 숙소 */
   checkouts?: { title: string; time?: string | undefined }[] | undefined;
   /** 그날 밤 숙소 좌표 (마지막 장소 → 숙소 거리) */
@@ -926,6 +949,13 @@ function DaySection({
   const nearbyOn = useSettings((st) => st.nearbyWish);
   const checkoutOn = useSettings((st) => st.checkoutNotice);
   const recapOn = useSettings((st) => st.dayRecap);
+  // 실험실 (2026-10-27, 다른 여행 앱 참고)
+  const homeOn = useLab('homeTime');
+  const rainOn = useLab('rainMark');
+  const checkinOn = useLab('checkinNotice');
+  const returnOn = useLab('returnNotice');
+  const walkOn = useLab('dayWalk');
+  const wishOn = useLab('emptyDayWish');
   const dupOn = true;
   // 여행 당일: 현지 시각으로 지금 진행 중인 일정 (1분마다 다시 계산)
   const now = useMinuteClock(isToday);
@@ -946,6 +976,11 @@ function DaySection({
   const nearby = nearbyOn && wishes ? nearbyWishes(items, wishes) : [];
   const outs = checkoutOn ? (checkouts ?? []) : [];
   const recap = recapOn && date && date <= todayIn(timezone) ? dayRecap(items) : null;
+  const ins = checkinOn ? (checkins ?? []) : [];
+  const rainy = rainOn && weather ? isRainCode(weather.code) : false;
+  // 하루 걷는 거리(일정 사이 직선거리 합, 항공·먼 구간 빼고)
+  const walkKm =
+    walkOn && date ? dayRecap(items.map((i) => ({ ...i, visit: 'visited' as const }))).km : 0;
   // 그날 마지막 장소 → 숙소 (직선거리)
   const lastCoords = [...tracked].reverse().find((i) => i.place?.coords)?.place?.coords;
   const visited = tracked.filter((i) => i.visit === 'visited' || i.done).length;
@@ -1027,6 +1062,31 @@ function DaySection({
           </span>
         </div>
       )}
+      {/* 실험실: 귀국 전날 */}
+      {returnOn && returnFlight && (
+        <p className="mx-3 mt-2 flex items-center gap-2 rounded-btn bg-primary-weak px-3 py-2 text-caption text-primary">
+          <span aria-hidden="true">🛫</span>
+          {returnFlight.time
+            ? t('labs.returnAt', { time: returnFlight.time, name: returnFlight.title })
+            : t('labs.return', { name: returnFlight.title })}
+        </p>
+      )}
+      {/* 실험실: 체크인 */}
+      {ins.map((o) => (
+        <p
+          key={`in-${o.title}`}
+          className="mx-3 mt-2 flex items-center gap-2 rounded-btn bg-bg-subtle px-3 py-2 text-caption text-fg-sub"
+        >
+          <span aria-hidden="true">🛎️</span>
+          {o.time
+            ? t('labs.checkinAt', { time: o.time, name: o.title })
+            : t('labs.checkin', { name: o.title })}
+        </p>
+      ))}
+      {/* 실험실: 하루 걷는 거리 */}
+      {walkKm >= 0.5 && (
+        <p className="mx-4 mt-2 text-micro text-fg-muted">{t('labs.dayWalk', { km: walkKm })}</p>
+      )}
       {/* 실험실: 오늘 체크아웃 */}
       {outs.map((o) => (
         <p
@@ -1070,6 +1130,16 @@ function DaySection({
           {date ? t('plan.emptyDay') : t('plan.wishEmpty')}
         </p>
       )}
+      {/* 실험실: 빈 날이면 가고 싶은 곳에서 골라 넣기 */}
+      {wishOn && date && items.length === 0 && wishCount > 0 && onWish && (
+        <button
+          type="button"
+          onClick={onWish}
+          className="mx-3 mb-2 flex min-h-11 items-center justify-center rounded-btn bg-primary-weak px-3 text-caption font-semibold text-primary"
+        >
+          {t('labs.pickWish', { n: wishCount })}
+        </button>
+      )}
       <ol
         className={cn(
           'flex flex-col px-3 py-2',
@@ -1086,6 +1156,10 @@ function DaySection({
             )}
             <ItemRow
               item={item}
+              homeTime={
+                homeOn && date && item.startTime ? homeTimeOf(date, item.startTime, timezone) : null
+              }
+              rain={rainy && isOutdoor(item.kind)}
               n={i + 1}
               color={color}
               now={item.id === nowId}
@@ -1263,9 +1337,15 @@ function ItemRow({
   onVisit,
   onConfirmFlight,
   history,
+  homeTime,
+  rain = false,
 }: {
   item: ItineraryItem;
   n: number;
+  /** 실험실 "한국 시각 같이 보기": 시작 시각을 한국 시간으로 */
+  homeTime?: string | null | undefined;
+  /** 실험실 "비 오는 날 야외 일정": 그날 비 예보 + 야외 일정 */
+  rain?: boolean;
   color: string;
   /** 여행 당일 지금 진행 중: 진한 테두리·굵은 글자·바탕 깜빡임 (사용자 요청 2026-10-26) */
   now: boolean;
@@ -1405,6 +1485,11 @@ function ItemRow({
         )}
       >
         {time(item.startTime) ?? <span className="text-fg-muted/60">--:--</span>}
+        {homeTime && (
+          <span className="block text-micro leading-tight font-normal text-fg-muted">
+            {t('labs.homeTime', { time: homeTime })}
+          </span>
+        )}
       </span>
       <span
         className={cn('flex min-w-0 flex-1 flex-col', item.done && !visitedLook && 'opacity-50')}
@@ -1428,6 +1513,11 @@ function ItemRow({
                 now && 'font-bold',
               )}
             >
+              {rain && (
+                <span role="img" aria-label={t('labs.rainLabel')} className="mr-1">
+                  ☔
+                </span>
+              )}
               {item.title}
               {/* 공항 픽업·드랍은 예약처를 제목 옆에 (사용자 요청 2026-10-27) */}
               {booking?.kind === 'transfer' && booking.provider && (

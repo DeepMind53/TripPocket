@@ -33,7 +33,7 @@ export function FeaturePreview({ id }: { id: PreviewId }) {
     n: number,
     time: string,
     title: string,
-    opts: { now?: boolean; done?: boolean; tight?: boolean } = {},
+    opts: { now?: boolean; done?: boolean; tight?: boolean; home?: string; rain?: boolean } = {},
   ) => (
     <div
       className={cn(
@@ -45,9 +45,22 @@ export function FeaturePreview({ id }: { id: PreviewId }) {
       <span className="grid size-6 place-items-center rounded-full bg-[#2F6BFF] text-micro font-bold text-white">
         {opts.done ? '✓' : n}
       </span>
-      <span className="tabular w-11 text-caption text-fg-sub">{time}</span>
-      <span className="flex-1">{title}</span>
+      <span className="tabular w-11 text-caption text-fg-sub">
+        {time}
+        {opts.home && (
+          <span className="block text-micro text-fg-muted">
+            {t('labs.homeTime', { time: opts.home })}
+          </span>
+        )}
+      </span>
+      <span className="flex-1">
+        {opts.rain && '☔ '}
+        {title}
+      </span>
     </div>
+  );
+  const note = (text: string, tone = 'bg-bg-subtle text-fg-sub') => (
+    <p className={cn('rounded-btn px-3 py-2 text-caption', tone)}>{text}</p>
   );
   const sunLine = (kind: 'rise' | 'set', time: string) => {
     const icon =
@@ -159,6 +172,72 @@ export function FeaturePreview({ id }: { id: PreviewId }) {
           {row(3, '18:00', '이치란 라멘')}
           <p className="text-center text-caption text-fg-muted">{t('labs.previewNow')}</p>
         </>,
+      );
+    case 'homeTime':
+      return day(
+        <>
+          {row(1, '10:00', '왓 아룬', { home: '12:00' })}
+          {row(2, '13:00', '짜뚜짝 시장', { home: '15:00' })}
+        </>,
+      );
+    case 'rainMark':
+      return day(
+        <>
+          {row(1, '10:00', '센소지', { rain: true })}
+          {row(2, '12:00', '이치란 라멘')}
+        </>,
+      );
+    case 'checkinNotice':
+      return day(
+        <>
+          {note(`🛎️ ${t('labs.checkinAt', { time: '15:00', name: '신주쿠 호텔' })}`)}
+          {row(1, '17:00', '신주쿠 산책')}
+        </>,
+      );
+    case 'returnNotice':
+      return day(
+        <>
+          {note(
+            `🛫 ${t('labs.returnAt', { time: '18:30', name: '대한항공 KE704' })}`,
+            'bg-primary-weak text-primary',
+          )}
+          {row(1, '10:00', '긴자 쇼핑')}
+        </>,
+      );
+    case 'dayWalk':
+      return day(
+        <>
+          <p className="text-micro text-fg-muted">{t('labs.dayWalk', { km: 6.4 })}</p>
+          {row(1, '10:00', '센소지')}
+          {row(2, '13:00', '스카이트리')}
+        </>,
+      );
+    case 'flightProgress':
+      return note(t('labs.inAir', { name: 'KE703', h: 1, m: 20 }));
+    case 'morningBrief':
+      return note(t('labs.briefFirst', { n: 5, time: '09:30' }));
+    case 'jetLag':
+      return note(t('labs.jetLagBehind', { h: 2 }));
+    case 'emptyDayWish':
+      return day(
+        <>
+          <p className="text-body-2 text-fg-muted">{t('plan.emptyDay')}</p>
+          <p className="flex min-h-11 items-center justify-center rounded-btn bg-primary-weak text-caption font-semibold text-primary">
+            {t('labs.pickWish', { n: 4 })}
+          </p>
+        </>,
+      );
+    case 'tipCalc':
+      return note(
+        `💵 ${t('labs.tipTitle')} · $42.50 × 18% → ${t('labs.tipResult', { tip: '7.65', total: '50.15' })}`,
+      );
+    case 'bigTicket':
+      return (
+        <div className="flex flex-col items-center gap-2 rounded-card border border-line p-4 text-center">
+          <p className="tabular text-[34px] leading-none font-black">KE703</p>
+          <p className="tabular text-body-1">ICN → NRT</p>
+          <p className="tabular text-[28px] leading-none font-black tracking-[0.12em]">AB12CD</p>
+        </div>
       );
   }
 }

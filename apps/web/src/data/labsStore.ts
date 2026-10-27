@@ -6,7 +6,18 @@ import { create } from 'zustand';
  * 정식 기능이 되면 LABS에서 빼고 useLab 호출을 지운다 (docs/code-map.md §3)
  */
 export const LABS = [
-  // 지금 시험 중인 기능 없음.
+  // 2026-10-27 새 실험 11개 (TripIt·Wanderlog·Google 여행·Polarsteps·트리플 참고)
+  'homeTime',
+  'rainMark',
+  'checkinNotice',
+  'returnNotice',
+  'dayWalk',
+  'flightProgress',
+  'morningBrief',
+  'jetLag',
+  'emptyDayWish',
+  'tipCalc',
+  'bigTicket',
   // 2026-10-27 정식으로: 근처 가고 싶은 곳·오늘 체크아웃·하루 돌아보기·지금 일정으로 이동(설정 "일정"),
   // 2026-10-27 정식으로: 다음 장소까지 거리·촘촘히 보기(설정 "일정"), 빠듯한 하루는 뺐다(사용자 요청), 메모 속 외화 → 원화, 숙소까지 거리,
   // 하루 일정 글로 복사·날씨 맞춤 준비물·하루 동선 지도·오늘 일정 진행률·일출·일몰(설정),

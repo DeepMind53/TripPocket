@@ -19,7 +19,7 @@ export function LabsPage() {
           <FlaskConical aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-primary" />
           {t('labs.desc')}
         </p>
-        {LABS.length === 0 ? (
+        {(LABS as readonly string[]).length === 0 ? (
           <p className="rounded-card border border-line px-4 py-6 text-center text-body-2 whitespace-pre-line text-fg-muted">
             {t('labs.none')}
           </p>

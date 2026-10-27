@@ -33,6 +33,8 @@ import { TripList } from '../trips/TripsPage';
 
 const PrepCards = lazy(async () => ({ default: (await import('./PrepCards')).PrepCards }));
 // 여행 중 특보 한 줄 — 첫 화면에 넣지 않고 따로 받는다
+// 실험실 한 줄들 — 첫 화면에 넣지 않고 따로 받는다
+const HomeLabs = lazy(async () => ({ default: (await import('./HomeLabs')).HomeLabs }));
 const TripAlertBanner = lazy(async () => ({
   default: (await import('../weather/TripAlertBanner')).TripAlertBanner,
 }));
@@ -244,6 +246,10 @@ function OngoingTrip({ trip }: { trip: Trip }) {
       </Link>
       <Suspense fallback={null}>
         <TripAlertBanner trip={trip} />
+      </Suspense>
+      {/* 실험실: 비행 중 남은 시간·오늘 요약 */}
+      <Suspense fallback={null}>
+        <HomeLabs trip={trip} bookings={bookings} items={items ?? []} ongoing />
       </Suspense>
 
       {current && current.id !== next?.id && (

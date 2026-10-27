@@ -5,11 +5,14 @@ import { useTranslation } from '../../i18n';
 import { copyText } from '../../shared/lib/clipboard';
 import { formatMonthDay } from '../../shared/lib/dateFormat';
 import { BOOKING_ICON } from '../common/bookingKinds';
+import { useLab } from '../../data/labsStore';
+import { BigTicket } from './BigTicket';
 
 /** S-16 예약 카드. 항공 = 탑승권 모양, 숙소 = 체크인·체크아웃 (docs/05 §3 S-09) */
 export function BookingCard({ booking, onOpen }: { booking: Booking; onOpen: () => void }) {
   const { t } = useTranslation();
   const b = booking;
+  const bigOn = useLab('bigTicket');
   return (
     <li className="overflow-hidden rounded-card border border-line bg-surface shadow-card">
       <button
@@ -26,6 +29,12 @@ export function BookingCard({ booking, onOpen }: { booking: Booking; onOpen: () 
           <BasicBody booking={b} />
         )}
       </button>
+      {/* 실험실: 항공권 크게 보기 */}
+      {bigOn && b.kind === 'flight' && (
+        <div className="flex justify-end border-t border-dashed border-line px-4">
+          <BigTicket booking={b} />
+        </div>
+      )}
       {b.confirmationNo && (
         <div className="flex items-center justify-between gap-2 border-t border-dashed border-line px-4 py-1.5">
           <span className="tabular text-caption text-fg-sub">

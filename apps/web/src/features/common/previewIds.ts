@@ -8,7 +8,18 @@ export type PreviewId =
   | 'nearbyWish'
   | 'checkoutNotice'
   | 'dayRecap'
-  | 'nowScroll';
+  | 'nowScroll'
+  | 'homeTime'
+  | 'rainMark'
+  | 'checkinNotice'
+  | 'returnNotice'
+  | 'dayWalk'
+  | 'flightProgress'
+  | 'morningBrief'
+  | 'jetLag'
+  | 'emptyDayWish'
+  | 'tipCalc'
+  | 'bigTicket';
 
 export const hasPreview = (id: string): id is PreviewId =>
   [
@@ -21,4 +32,15 @@ export const hasPreview = (id: string): id is PreviewId =>
     'checkoutNotice',
     'dayRecap',
     'nowScroll',
+    'homeTime',
+    'rainMark',
+    'checkinNotice',
+    'returnNotice',
+    'dayWalk',
+    'flightProgress',
+    'morningBrief',
+    'jetLag',
+    'emptyDayWish',
+    'tipCalc',
+    'bigTicket',
   ].includes(id);
