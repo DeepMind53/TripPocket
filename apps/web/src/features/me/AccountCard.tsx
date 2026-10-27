@@ -1,3 +1,4 @@
+import { Link } from 'react-router';
 import { LogOut, MonitorSmartphone, Pencil, UserX } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import {
@@ -74,6 +75,13 @@ export function AccountCard() {
             icon={<Pencil />}
             onClick={() => setNicknameOpen(true)}
           />
+          {/* 이름 옆 "개인정보" — 여권 만료일 등 여행에 필요한 정보 (사용자 요청 2026-10-27) */}
+          <Link
+            to="/me/profile"
+            className="flex h-8 shrink-0 items-center rounded-full border border-line bg-surface px-2.5 text-caption font-semibold text-fg-sub"
+          >
+            {t('profile.title')}
+          </Link>
         </span>
         <span className="flex shrink-0 flex-col items-end gap-0.5 pt-1">
           <span className="text-caption text-fg-muted">

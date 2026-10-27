@@ -162,6 +162,13 @@ const allRoutes: RouteObject[] = [
       Component: (await import('../features/labs/LabsPage')).LabsPage,
     }),
   },
+  // 마이 → 개인정보 (여권 만료일 등, 이 기기에만)
+  {
+    path: 'me/profile',
+    lazy: async () => ({
+      Component: (await import('../features/me/ProfilePage')).ProfilePage,
+    }),
+  },
   // 마이 → 삭제 기록 복원 (7일)
   {
     path: 'me/trash',

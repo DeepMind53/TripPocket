@@ -1109,6 +1109,21 @@
     "copyDayDesc": "카톡 등에 붙여 넣을 수 있어요",
     "dayCopied": "하루 일정을 복사했어요"
   },
+  "profile": {
+    "title": "개인정보",
+    "desc": "여행 때 필요한 정보를 적어 두세요\n이 기기에만 저장되고 서버로 보내지 않아요\n여권 번호 같은 민감한 정보는 적지 마세요",
+    "passport": "여권 만료일",
+    "passportHint": "필수 항목에서 남은 기간을 자동으로 확인해요",
+    "license": "국제운전면허증 만료일",
+    "seat": "비행기 선호 좌석",
+    "seatWindow": "창가",
+    "seatAisle": "통로",
+    "seatAny": "상관없음",
+    "food": "못 먹는 음식·알레르기",
+    "foodPlaceholder": "예: 땅콩, 갑각류, 고수",
+    "memo": "여행 메모",
+    "memoPlaceholder": "예: 여행자 보험 고객센터, 자주 쓰는 카드"
+  },
   "nickname": {
     "title": "닉네임 바꾸기",
     "firstTitle": "닉네임을 정해 주세요",
