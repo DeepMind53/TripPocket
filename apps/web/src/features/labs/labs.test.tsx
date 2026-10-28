@@ -20,45 +20,37 @@ beforeEach(async () => {
 });
 
 describe('실험실', () => {
-  it('마이 → 실험실: 새 실험 10개, 켜면 이 기기에 저장, 실험마다 [샘플] (2026-10-28)', async () => {
+  it('마이 → 실험실: 새 실험 10개(3차), 켜면 이 기기에 저장, 실험마다 [샘플] (2026-10-28)', async () => {
     const user = userEvent.setup();
     render(<RouterProvider router={createMemoryRouter(routes, { initialEntries: ['/me'] })} />);
     await user.click(await screen.findByRole('link', { name: '실험실' }));
-    const sw = await screen.findByRole('switch', { name: /공항 도착 권장 시각/ });
+    const sw = await screen.findByRole('switch', { name: /좌측 통행 안내/ });
     expect(sw).toHaveAttribute('aria-checked', 'false');
     await user.click(sw);
-    expect(JSON.parse(localStorage.getItem('tp-labs')!)).toEqual({ airportArrive: true });
+    expect(JSON.parse(localStorage.getItem('tp-labs')!)).toEqual({ leftDrive: true });
     expect(LABS).toHaveLength(10);
     expect(screen.getAllByRole('switch')).toHaveLength(10);
     expect(screen.getAllByRole('button', { name: / 샘플$/ })).toHaveLength(10);
     // 정식이 됐거나 뺀 것은 실험실에 없다
-    for (const name of [/비 오는 날/, /시차 안내/, /한국 시각/, /팁 계산기/, /항공권 크게/])
+    for (const name of [/현지 공휴일/, /늦은 귀가/, /공항 도착/, /골든아워/, /메모 체크박스/])
       expect(screen.queryByRole('switch', { name })).toBeNull();
-    setLab('airportArrive', false);
+    setLab('leftDrive', false);
   });
 
-  it('날씨 주의(정식) + 실험: 공항 도착·시간 겹침·늦은 귀가·짐 보관·현지 공휴일·골든아워', async () => {
+  it('정식: 날씨 주의 그림·현지 공휴일·늦은 귀가 + 실험: 이른 출발', async () => {
     vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(new Date('2026-10-22T03:00:00Z'));
     vi.stubGlobal('fetch', async () =>
       Response.json({
         daily: {
-          time: ['2026-10-23', '2026-10-24', '2026-10-25', '2026-10-26'],
-          weather_code: [61, 0, 0, 0],
-          temperature_2m_max: [14, 31, 25, 25],
-          temperature_2m_min: [8, 24, 18, 18],
+          time: ['2026-10-23', '2026-10-24'],
+          weather_code: [61, 0],
+          temperature_2m_max: [14, 31],
+          temperature_2m_min: [8, 24],
         },
       }),
     );
-    const ids = [
-      'airportArrive',
-      'overlapWarn',
-      'lateNight',
-      'luggageGap',
-      'localHoliday',
-      'goldenHour',
-    ] as const;
-    for (const id of ids) setLab(id, true);
+    setLab('earlyStart', true);
     try {
       const trip = await tripRepo.create({
         title: '방콕',
@@ -66,63 +58,42 @@ describe('실험실', () => {
           { name: '방콕', kind: 'city', countryCode: 'TH', coords: { lat: 13.75, lng: 100.5 } },
         ],
         startDate: '2026-10-23',
-        endDate: '2026-10-26',
+        endDate: '2026-10-24',
         timezone: 'Asia/Bangkok',
         cover: {},
       });
-      await bookingRepo.create({
-        tripId: trip.id,
-        kind: 'flight',
-        title: 'TG657',
-        start: { date: '2026-10-23', time: '05:00', place: 'ICN' },
-        end: { date: '2026-10-23', time: '09:30', place: 'BKK' },
-      });
-      await bookingRepo.create({
-        tripId: trip.id,
-        kind: 'lodging',
-        title: '방콕 호텔',
-        start: { date: '2026-10-23', time: '15:00' },
-        end: { date: '2026-10-26', time: '11:00' },
-      });
-      const add = (date: string, title: string, startTime: string, extra = {}) =>
-        itemRepo.create({ tripId: trip.id, date, kind: 'place', title, startTime, ...extra });
-      await add('2026-10-23', '왓 아룬', '10:00', { endTime: '12:00' });
-      await add('2026-10-23', '짜뚜짝 국수', '11:30', { kind: 'food' });
+      const add = (date: string, title: string, startTime: string) =>
+        itemRepo.create({ tripId: trip.id, date, kind: 'place', title, startTime });
+      await add('2026-10-23', '새벽 사원', '05:40');
+      await add('2026-10-23', '왓 아룬', '10:00');
       await add('2026-10-23', '야시장', '22:30');
-      await add('2026-10-26', 'BKK 출발', '23:00', {
-        kind: 'transport',
-        transport: { mode: 'flight' },
-      });
+      await add('2026-10-24', '짜뚜짝 시장', '10:00');
       render(
         <RouterProvider
           router={createMemoryRouter(routes, { initialEntries: [`/trips/${trip.id}/plan`] })}
         />,
       );
-      const day1 = () => screen.getByRole('region', { name: /^1일차/ });
+      const day = (n: number) => screen.getByRole('region', { name: new RegExp(`^${n}일차`) });
       await screen.findByRole('region', { name: /^1일차/ });
-      // 비 + 최저 8° → ☔🧥 (시간 아래, 일정마다)
+      // 비 + 최저 8° → 우산·셔츠 그림 (일정마다), 2일차 최고 31° → 온도계
       await waitFor(() =>
         expect(
-          within(day1()).getAllByRole('img', { name: '날씨 주의: 비, 쌀쌀함(겉옷)' }),
+          within(day(1)).getAllByRole('img', { name: '날씨 주의: 비, 쌀쌀함(겉옷)' }),
         ).toHaveLength(3),
       );
-      // 2일차 최고 31° → 🔥 (일정 없는 날은 표시할 줄 없음)
-      expect(within(day1()).getByText('⚠️ 앞 일정과 시간이 겹쳐요')).toBeInTheDocument();
-      expect(within(day1()).getByText(/🌙 22:30까지 일정이 있어요/)).toBeInTheDocument();
-      expect(within(day1()).getByText(/🧳 체크인 15:00까지 약 4시간/)).toBeInTheDocument();
-      await waitFor(() => expect(within(day1()).getByText(/🎌 현지 공휴일/)).toBeInTheDocument());
-      expect(within(day1()).getByText(/📸 골든아워/)).toBeInTheDocument();
-      // 항공 출발 일정: 국제선 3시간 전
-      const day4 = screen.getByRole('region', { name: /^4일차/ });
-      expect(within(day4).getByText(/🛄 공항 도착 권장 20:00/)).toBeInTheDocument();
+      expect(within(day(2)).getByRole('img', { name: '날씨 주의: 더움' })).toBeInTheDocument();
+      // 현지 공휴일(태국 10.23 쭐랄롱꼰 대왕 기념일)은 날짜 아래 작은 한 줄
+      await waitFor(() => expect(within(day(1)).getByText(/^현지 공휴일 · /)).toBeInTheDocument());
+      expect(within(day(1)).getByText(/22:30까지 일정이 있어요/)).toBeInTheDocument();
+      expect(within(day(1)).getByText(/05:40에 하루를 시작해요/)).toBeInTheDocument();
     } finally {
-      for (const id of ids) setLab(id, false);
+      setLab('earlyStart', false);
       vi.useRealTimers();
       vi.unstubAllGlobals();
     }
   });
 
-  it('설정에서 날씨 주의를 끄면 이모지가 사라진다', async () => {
+  it('설정에서 날씨 주의를 끄면 그림이 사라진다', async () => {
     vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(new Date('2026-10-22T03:00:00Z'));
     vi.stubGlobal('fetch', async () =>
@@ -495,35 +466,60 @@ describe('실험실', () => {
     await user.click(within(sheet).getByRole('button', { name: '이 기능 끄기' }));
     expect(useSettings.getState().checkoutNotice).toBe(false);
     // 일정 표시 항목 9개 모두 샘플 버튼
-    expect(screen.getAllByRole('button', { name: / 샘플$/ })).toHaveLength(11);
+    expect(screen.getAllByRole('button', { name: / 샘플$/ })).toHaveLength(13);
     updateSettings({ checkoutNotice: true });
   });
 
-  it('시차 안내(정식, 출발 전 홈) · 실험: 오늘 환율 한 줄 · 콘센트·전압 · 메모 체크박스', async () => {
-    setLab('fxLine', true);
-    setLab('plugInfo', true);
-    setLab('memoChecklist', true);
+  it('시차(정식) · 실험: 연차·처음 가는 나라·무료 취소 마감·좌측 통행·현장 결제·수돗물·교통카드·결제 팁·바우처', async () => {
+    const ids = [
+      'leaveDays',
+      'firstCountry',
+      'cancelReminder',
+      'leftDrive',
+      'onsitePay',
+      'tapWater',
+      'transitCard',
+      'payTips',
+      'voucherList',
+    ] as const;
+    for (const id of ids) setLab(id, true);
+    // 공휴일은 빈 목록, 서버는 없음(HTML)
+    vi.stubGlobal('fetch', async (url: string) =>
+      String(url).includes('nager')
+        ? Response.json([])
+        : new Response('<html>', { headers: { 'content-type': 'text/html' } }),
+    );
     try {
-      await settingsRepo.set('fxCache', {
-        source: 'koreaexim',
-        date: '2026-10-28',
-        fetchedAt: '2026-10-28T02:00:00.000Z',
-        rates: { THB: 42.5 },
-      });
+      const day = (n: number) =>
+        new Intl.DateTimeFormat('en-CA').format(Date.now() + n * 86_400_000);
       const trip = await tripRepo.create({
-        title: '방콕',
-        destinations: [{ name: '방콕', kind: 'city', countryCode: 'TH' }],
-        startDate: new Intl.DateTimeFormat('en-CA').format(Date.now() + 3 * 86_400_000),
-        endDate: new Intl.DateTimeFormat('en-CA').format(Date.now() + 5 * 86_400_000),
-        timezone: 'Asia/Bangkok',
+        title: '도쿄',
+        destinations: [{ name: '도쿄', kind: 'city', countryCode: 'JP' }],
+        startDate: day(10),
+        endDate: day(12),
+        timezone: 'Asia/Tokyo',
         cover: {},
       });
-      const item = await itemRepo.create({
+      await bookingRepo.create({
         tripId: trip.id,
-        date: trip.startDate,
-        kind: 'place',
-        title: '왓 아룬',
-        memo: '준비\n- 여권\n- [x] 우산',
+        kind: 'lodging',
+        title: '신주쿠 호텔',
+        start: { date: day(10) },
+        end: { date: day(12) },
+        details: { cancelBy: day(2), payment: 'onsite' },
+      });
+      await bookingRepo.create({
+        tripId: trip.id,
+        kind: 'car',
+        title: '도쿄 렌터카',
+        start: { date: day(11) },
+      });
+      await bookingRepo.create({
+        tripId: trip.id,
+        kind: 'tour',
+        title: '후지산 투어',
+        start: { date: day(11) },
+        details: { voucherUrl: 'https://v.example/fuji' },
       });
       const user = userEvent.setup();
       const router = createMemoryRouter(routes, { initialEntries: ['/'] });
@@ -533,52 +529,31 @@ describe('실험실', () => {
           <Toaster />
         </>,
       );
-      expect(await screen.findByText('🕒 여행지는 한국보다 2시간 느려요')).toBeInTheDocument();
-      expect(await screen.findByText('💱 1 THB = 42.5원 · 10.28 기준')).toBeInTheDocument();
-      // 준비 탭: 태국 콘센트
+      expect(await screen.findByText('🕒 여행지는 한국과 같은 시간이에요')).toBeInTheDocument();
+      expect(
+        await screen.findByText(/연차 \d일이 필요해요|연차 없이 다녀올 수 있어요/),
+      ).toBeInTheDocument();
+      expect(await screen.findByText(/🌏 처음 가는 나라예요 · 일본/)).toBeInTheDocument();
+      expect(await screen.findByText(/⏰ 무료 취소 마감 D-[12] · 신주쿠 호텔/)).toBeInTheDocument();
+      // 예약 탭: 좌측 통행·현장 결제
+      await act(() => router.navigate(`/trips/${trip.id}/bookings`));
+      expect(await screen.findByText(/🚗 일본 · 좌측 통행이에요/)).toBeInTheDocument();
+      expect(screen.getByText(/💵 현장 결제 예약 1건/)).toBeInTheDocument();
+      // 준비 탭: 수돗물
       await act(() => router.navigate(`/trips/${trip.id}/checklist`));
-      expect(await screen.findByText(/🔌 .+ 콘센트 A·B·C·O형 · 220V/)).toBeInTheDocument();
-      expect(screen.getByText('한국 플러그 그대로 써요')).toBeInTheDocument();
-      // 일정 상세: 메모 줄을 눌러 체크
+      expect(await screen.findByText('🚰 일본 수돗물은 마셔도 돼요')).toBeInTheDocument();
+      // 빠른 메뉴: 교통카드·결제·바우처
       await act(() => router.navigate(`/trips/${trip.id}/plan`));
-      await user.click(await screen.findByRole('button', { name: '1번째 일정, 왓 아룬' }));
-      const box = await screen.findByRole('checkbox', { name: '여권' });
-      expect(box).toHaveAttribute('aria-checked', 'false');
-      await user.click(box);
-      await waitFor(async () =>
-        expect((await itemRepo.get(item.id))?.memo).toBe('준비\n- [x] 여권\n- [x] 우산'),
+      await user.click(await screen.findByRole('button', { name: '빠른 메뉴' }));
+      expect(await screen.findByText(/Suica·PASMO·ICOCA/)).toBeInTheDocument();
+      expect(screen.getByText(/작은 가게·신사는 현금/)).toBeInTheDocument();
+      expect(await screen.findByRole('link', { name: /후지산 투어/ })).toHaveAttribute(
+        'href',
+        'https://v.example/fuji',
       );
     } finally {
-      setLab('fxLine', false);
-      setLab('plugInfo', false);
-      setLab('memoChecklist', false);
-    }
-  });
-
-  it('여행 진행률: 여행 중 홈에 며칠째와 다녀온 일정', async () => {
-    setLab('tripProgress', true);
-    try {
-      const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul' }).format(Date.now());
-      const trip = await tripRepo.create({
-        title: '부산',
-        destinations: [{ name: '부산', kind: 'city', countryCode: 'KR' }],
-        startDate: new Intl.DateTimeFormat('en-CA').format(Date.parse(today) - 86_400_000),
-        endDate: new Intl.DateTimeFormat('en-CA').format(Date.parse(today) + 2 * 86_400_000),
-        timezone: 'Asia/Seoul',
-        cover: {},
-      });
-      const a = await itemRepo.create({
-        tripId: trip.id,
-        date: trip.startDate,
-        kind: 'place',
-        title: '해운대',
-      });
-      await itemRepo.update(a.id, { done: true });
-      await itemRepo.create({ tripId: trip.id, date: today, kind: 'food', title: '돼지국밥' });
-      render(<RouterProvider router={createMemoryRouter(routes, { initialEntries: ['/'] })} />);
-      expect(await screen.findByText(/🧭 2\/4일차 · 일정 1\/2 다녀옴/)).toBeInTheDocument();
-    } finally {
-      setLab('tripProgress', false);
+      for (const id of ids) setLab(id, false);
+      vi.unstubAllGlobals();
     }
   });
 
@@ -724,7 +699,7 @@ describe('실험실', () => {
     useAuth.setState({ status: 'user', me: { ...me, isAdmin: false } });
     const router = createMemoryRouter(routes, { initialEntries: ['/labs'] });
     const { unmount } = render(<RouterProvider router={router} />);
-    await screen.findByRole('switch', { name: /공항 도착 권장 시각/ });
+    await screen.findByRole('switch', { name: /좌측 통행 안내/ });
     expect(screen.queryByRole('button', { name: '샘플 테스트' })).not.toBeInTheDocument();
     unmount();
 

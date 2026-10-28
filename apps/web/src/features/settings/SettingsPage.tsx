@@ -204,6 +204,8 @@ export function SettingsPage() {
               'nowScroll',
               'weatherMark',
               'jetLag',
+              'localHoliday',
+              'lateNight',
             ])
           }
         >
@@ -234,6 +236,8 @@ export function SettingsPage() {
               ['nowScroll', 'settings.nowScroll'],
               ['weatherMark', 'settings.weatherMark'],
               ['jetLag', 'settings.jetLag'],
+              ['localHoliday', 'settings.localHoliday'],
+              ['lateNight', 'settings.lateNight'],
             ] as const
           ).map(([key, label]) => (
             <SwitchRow

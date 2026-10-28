@@ -17,6 +17,7 @@ import { useTranslation } from '../../i18n';
 import { Link, useNavigate, useParams } from 'react-router';
 import { useTrip, useTripBookings, useTrips } from '../../data/hooks';
 import { EmergencySheet } from './EmergencySheet';
+import { LocalInfoSection } from './LocalInfoSection';
 import { lodgingForNight } from '../../domain/lodging';
 import { copyText } from '../../shared/lib/clipboard';
 import type { Destination } from '../../shared/lib/directions';
@@ -246,6 +247,9 @@ function QuickMenuContent({
           </div>
         </section>
       )}
+
+      {/* 실험실: 교통카드·결제 팁·바우처 */}
+      {inTrip && tripId && <LocalInfoSection tripId={tripId} />}
 
       <section className="flex flex-col gap-2">
         <h3 className="text-caption font-bold text-fg-muted">{t('quickMenu.quickSettings')}</h3>

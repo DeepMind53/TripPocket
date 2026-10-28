@@ -1,7 +1,9 @@
-import { Footprints, Moon, Sun } from 'lucide-react';
+import { AlarmClock, Footprints, Moon, MoonStar, Sun } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useTranslation } from '../../i18n';
 import { cn } from '../../shared/lib/cn';
+import type { WeatherCaution } from '../../domain/weather';
+import { CautionIcons } from './CautionIcons';
 import type { PreviewId } from './previewIds';
 
 /**
@@ -37,10 +39,8 @@ export function FeaturePreview({ id }: { id: PreviewId }) {
       now?: boolean;
       done?: boolean;
       tight?: boolean;
-      /** 날씨 주의 이모지 (시간 아래) */
-      caution?: string;
-      /** 시간 겹침 경고 줄 */
-      overlap?: boolean;
+      /** 날씨 주의 그림 (시간 아래) */
+      caution?: readonly WeatherCaution[];
     } = {},
   ) => (
     <div
@@ -55,16 +55,19 @@ export function FeaturePreview({ id }: { id: PreviewId }) {
       </span>
       <span className="tabular w-11 text-caption text-fg-sub">
         {time}
-        {opts.caution && <span className="block text-caption leading-tight">{opts.caution}</span>}
+        <CautionIcons cautions={opts.caution} />
       </span>
-      <span className="flex flex-1 flex-col">
-        {title}
-        {opts.overlap && <span className="text-caption text-warning">{t('labs.overlap')}</span>}
-      </span>
+      <span className="flex flex-1 flex-col">{title}</span>
     </div>
   );
   const note = (text: string, tone = 'bg-bg-subtle text-fg-sub') => (
     <p className={cn('rounded-btn px-3 py-2 text-caption', tone)}>{text}</p>
+  );
+  const info = (label: string, text: string) => (
+    <p className="flex flex-col rounded-card bg-bg-subtle px-3 py-2.5 text-caption text-fg-sub">
+      <span className="font-semibold text-fg">{label}</span>
+      {text}
+    </p>
   );
   const sunLine = (kind: 'rise' | 'set', time: string) => {
     const icon =
@@ -181,114 +184,90 @@ export function FeaturePreview({ id }: { id: PreviewId }) {
     case 'weatherMark':
       return day(
         <>
-          {row(1, '10:00', t('sample.sensoji'), { caution: '☔🧥' })}
-          {row(2, '12:00', t('sample.ichiran'), { caution: '☔🧥' })}
+          {row(1, '10:00', t('sample.sensoji'), { caution: ['rain', 'cold'] })}
+          {row(2, '12:00', t('sample.ichiran'), { caution: ['rain', 'cold'] })}
         </>,
       );
     case 'jetLag':
       return note(t('labs.jetLagBehind', { h: 2 }));
-    // ── 실험실 2026-10-28 ──
-    case 'airportArrive':
-      return (
-        <div className="flex flex-col gap-2 rounded-btn border border-dashed border-fg-muted/60 p-3">
-          <p className="tabular text-body-1 font-bold">ICN 18:30 ✈ NRT 20:55</p>
-          <p className="tabular text-caption font-semibold text-primary">
-            {t('labs.airportArrive', { time: '15:30' })}{' '}
-            <span className="font-normal text-fg-muted">({t('labs.airportBefore', { h: 3 })})</span>
-          </p>
-        </div>
-      );
+    // ── 2026-10-28 정식: 현지 공휴일·늦은 귀가 ──
     case 'localHoliday':
       return day(
         <>
-          {note(
-            t('labs.localHoliday', { name: t('sample.holiday') }),
-            'bg-danger/10 text-danger whitespace-pre-line',
-          )}
+          <p className="flex items-center gap-1.5 text-caption text-danger">
+            <span className="size-1.5 rounded-full bg-danger" />
+            {t('plan.localHoliday', { name: t('sample.holiday') })}
+          </p>
           {row(1, '10:00', t('sample.sensoji'))}
         </>,
-      );
-    case 'overlapWarn':
-      return day(
-        <>
-          {row(1, '11:00', t('sample.sensoji'))}
-          {row(2, '11:30', t('sample.skytree'), { overlap: true })}
-        </>,
-      );
-    case 'goldenHour':
-      return day(
-        <>
-          {row(1, '15:00', t('sample.skytree'))}
-          {sunLine('set', '17:20')}
-          <p className="tabular text-center text-micro text-warning">
-            {t('labs.goldenHour', { start: '16:20', end: '17:20' })}
-          </p>
-          {row(2, '18:30', t('sample.ichiran'))}
-        </>,
-      );
-    case 'plugInfo':
-      return (
-        <div className="flex flex-col rounded-card bg-bg-subtle px-4 py-2.5 text-caption text-fg-sub">
-          <span className="font-semibold text-fg">
-            {t('labs.plug', { country: t('sample.japan'), types: 'A·B', volt: 100 })}
-          </span>
-          <span className="text-warning">{t('labs.plugAdapter')}</span>
-          <span className="text-warning">{t('labs.plugLowVolt')}</span>
-        </div>
-      );
-    case 'tripProgress':
-      return (
-        <div className="flex flex-col gap-1 rounded-btn bg-bg-subtle px-3 py-2 text-caption text-fg-sub">
-          {t('labs.tripProgress', { day: 3, days: 5, done: 7, total: 9 })}
-          <span className="h-1.5 overflow-hidden rounded-full bg-line">
-            <span className="block h-full w-3/5 rounded-full bg-primary" />
-          </span>
-        </div>
-      );
-    case 'memoChecklist':
-      return (
-        <div className="flex flex-col gap-1.5 rounded-card border border-line p-3 text-body-2">
-          {(
-            [
-              [t('sample.memoPassport'), true],
-              [t('sample.memoTicket'), false],
-            ] as const
-          ).map(([text, on]) => (
-            <span key={text} className="flex items-center gap-2">
-              <span
-                className={cn(
-                  'grid size-5 place-items-center rounded border text-micro',
-                  on ? 'border-primary bg-primary text-white' : 'border-line',
-                )}
-              >
-                {on ? '✓' : ''}
-              </span>
-              <span className={cn(on && 'text-fg-muted line-through')}>{text}</span>
-            </span>
-          ))}
-        </div>
       );
     case 'lateNight':
       return day(
         <>
           {row(1, '20:00', t('sample.ichiran'))}
           {row(2, '22:30', t('sample.shinjukuWalk'))}
-          {note(
-            t('labs.lateNight', { time: '22:30' }),
-            'bg-primary-weak text-primary whitespace-pre-line',
-          )}
+          <p className="flex items-start gap-2 rounded-btn bg-primary-weak px-3 py-2 text-caption whitespace-pre-line text-primary">
+            <MoonStar aria-hidden="true" className="mt-0.5 size-3.5 shrink-0" />
+            {t('plan.lateNight', { time: '22:30' })}
+          </p>
         </>,
       );
-    case 'fxLine':
-      return note(t('labs.fxLine', { unit: 100, code: 'JPY', won: '912', date: '10.28' }));
-    case 'luggageGap':
+    // ── 실험실 3차 2026-10-28 ──
+    case 'leftDrive':
+      return note(
+        t('labs.leftDrive', { country: t('sample.japan') }),
+        'bg-warning/10 text-fg-sub whitespace-pre-line',
+      );
+    case 'tapWater':
+      return (
+        <div className="flex flex-col gap-1">
+          {note(t('labs.tapWaterOk', { country: t('sample.japan') }))}
+          {note(
+            t('labs.tapWaterNo', { country: t('sample.vietnam') }),
+            'bg-warning/10 text-fg-sub whitespace-pre-line',
+          )}
+        </div>
+      );
+    case 'transitCard':
+      return info(t('labs.transitLabel'), t('localInfo.transit.JP'));
+    case 'payTips':
+      return info(t('labs.payLabel'), t('localInfo.pay.JP'));
+    case 'leaveDays':
+      return note(t('labs.leaveDays', { n: 3 }), 'bg-bg-subtle text-fg-sub whitespace-pre-line');
+    case 'firstCountry':
+      return note(
+        t('labs.firstCountry', { country: t('sample.japan') }),
+        'bg-bg-subtle text-fg-sub whitespace-pre-line',
+      );
+    case 'cancelReminder':
+      return note(t('labs.cancelSoon', { d: 2, name: t('sample.shinjukuHotel') }));
+    case 'onsitePay':
+      return (
+        <p className="flex flex-col rounded-btn bg-bg-subtle px-3 py-2 text-caption text-fg-sub">
+          <span className="whitespace-pre-line">{t('labs.onsitePay', { n: 2 })}</span>
+          <span className="text-fg-muted">
+            {t('sample.shinjukuHotel')}, {t('sample.tour')}
+          </span>
+        </p>
+      );
+    case 'voucherList':
+      return (
+        <div className="flex flex-col rounded-card bg-bg-subtle px-3 py-2">
+          <span className="text-caption font-semibold">{t('labs.voucherTitle')}</span>
+          <span className="tabular flex min-h-10 items-center gap-2 text-body-2 text-primary">
+            <span className="text-caption text-fg-muted">10.29</span>
+            {t('sample.tour')}
+          </span>
+        </div>
+      );
+    case 'earlyStart':
       return day(
         <>
-          {note(
-            t('labs.luggageGap', { checkIn: '15:00', h: 4, name: t('sample.shinjukuHotel') }),
-            'bg-bg-subtle text-fg-sub whitespace-pre-line',
-          )}
-          {row(1, '09:30', t('sample.arrive'))}
+          <p className="flex items-start gap-2 rounded-btn bg-warning/10 px-3 py-2 text-caption whitespace-pre-line text-fg-sub">
+            <AlarmClock aria-hidden="true" className="mt-0.5 size-3.5 shrink-0 text-warning" />
+            {t('labs.earlyStart', { time: '05:40' })}
+          </p>
+          {row(1, '05:40', t('sample.arrive'))}
         </>,
       );
   }

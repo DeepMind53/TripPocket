@@ -46,6 +46,10 @@ export interface Settings {
   weatherMark: boolean;
   /** 출발 전 홈에 여행지 시차 (2026-10-28 실험실에서 정식) */
   jetLag: boolean;
+  /** 일정 날짜 아래 현지 공휴일 (2026-10-28 실험실에서 정식) */
+  localHoliday: boolean;
+  /** 마지막 일정이 22시 이후면 늦은 귀가 안내 (2026-10-28 실험실에서 정식) */
+  lateNight: boolean;
   /** ⚡ 빠른 메뉴 버튼 보이기 */
   quickButton: boolean;
   /** AI 추천을 열 때 처음 골라 둘 카테고리 */
@@ -80,6 +84,8 @@ export const SETTINGS_DEFAULTS: Settings = {
   nowScroll: true,
   weatherMark: true,
   jetLag: true,
+  localHoliday: true,
+  lateNight: true,
   quickButton: true,
   aiCats: ['food', 'cafe'],
   aiAnchor: 'text',
@@ -116,6 +122,8 @@ const VALID: { [K in keyof Settings]: (v: unknown) => v is Settings[K] } = {
   nowScroll: (v): v is boolean => typeof v === 'boolean',
   weatherMark: (v): v is boolean => typeof v === 'boolean',
   jetLag: (v): v is boolean => typeof v === 'boolean',
+  localHoliday: (v): v is boolean => typeof v === 'boolean',
+  lateNight: (v): v is boolean => typeof v === 'boolean',
   quickButton: (v): v is boolean => typeof v === 'boolean',
   aiCats: (v): v is Settings['aiCats'] =>
     Array.isArray(v) &&

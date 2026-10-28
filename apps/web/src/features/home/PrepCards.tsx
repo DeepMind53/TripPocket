@@ -86,8 +86,8 @@ export function PrepCards({ trip }: { trip: Trip }) {
 
   return (
     <section aria-label={t('prep.title')} className="flex flex-col gap-2">
-      {/* 시차(설정)·오늘 환율(실험실) */}
-      <HomeLabs trip={trip} items={[]} ongoing={false} />
+      {/* 시차(설정)·연차·처음 가는 나라·무료 취소 마감(실험실) */}
+      <HomeLabs trip={trip} bookings={bookings} ongoing={false} />
       {/* 기본은 한 줄 요약, 누르면 펼침 (docs/20 U3) — 펼침 상태는 이 기기에 기억 */}
       <button
         type="button"

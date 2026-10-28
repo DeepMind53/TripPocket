@@ -27,6 +27,8 @@ import {
   Route,
   MapPinned,
   Moon,
+  MoonStar,
+  AlarmClock,
   Sun,
 } from 'lucide-react';
 import {
@@ -103,14 +105,10 @@ import { isDomesticTrip } from '../../domain/tripPlace';
 import { dayRouteUrl } from '../../domain/dayRoute';
 import { sunSlot, sunTimes } from '../../domain/sun';
 import { checkoutsOn, dayRecap, nearbyWishes } from '../../domain/dayExtras';
-import {
-  airportArriveBy,
-  goldenHourStart,
-  lateNightAt,
-  luggageGap,
-  overlappingIds,
-} from '../../domain/travelExtras';
-import { CAUTION_EMOJI, weatherCautions, type WeatherCaution } from '../../domain/weather';
+import { lateNightAt } from '../../domain/travelExtras';
+import { earlyStartAt } from '../../domain/localInfo';
+import { weatherCautions, type WeatherCaution } from '../../domain/weather';
+import { CautionIcons } from '../common/CautionIcons';
 import { useLab } from '../../data/labsStore';
 import { useTripHolidays } from './useTripHolidays';
 import { distanceKm, formatDistance, walkMinutes } from '@trippocket/shared';
@@ -213,9 +211,11 @@ function PlanView({
       )
     : null;
   const isDomestic = isDomesticTrip(trip);
-  // 실험실 "현지 공휴일 표시"
-  const holidays = useTripHolidays(trip, useLab('localHoliday'));
-  const luggageOn = useLab('luggageGap');
+  // 현지 공휴일 (설정 "일정" — 2026-10-28 실험실에서 정식)
+  const holidays = useTripHolidays(
+    trip,
+    useSettings((st) => st.localHoliday),
+  );
   const weather = useTripWeather(trip);
 
   // 기본: 여행 중이면 오늘, 아니면 전체
@@ -665,8 +665,6 @@ function PlanView({
                       wishes={date ? wishItems : undefined}
                       checkouts={date ? checkoutsOn(bookings, date) : undefined}
                       holiday={date ? holidays[date] : undefined}
-                      luggage={luggageOn && date ? luggageGap(bookings, date) : null}
-                      domestic={isDomestic}
                       lodgingCoords={
                         lodgingReturnOn && date
                           ? coordsOfBooking(lodgingForNight(bookings, date)?.booking.id)
@@ -896,8 +894,6 @@ function DaySection({
   wishes,
   checkouts,
   holiday,
-  luggage,
-  domestic,
 }: {
   /** 지난 일정 방문·미방문 (미방문이면 저장 탭에도 담는다) */
   onVisitItem: (item: ItineraryItem, visit: Visit) => void;
@@ -906,12 +902,8 @@ function DaySection({
   weather?: TripDayWeather | undefined;
   /** 실험실 "근처 가고 싶은 곳": 날짜 없는 가고 싶은 곳 */
   wishes?: ItineraryItem[] | undefined;
-  /** 실험실 "현지 공휴일 표시": 그날 현지 공휴일 이름 */
+  /** 현지 공휴일 이름 (설정 "일정") */
   holiday?: string | undefined;
-  /** 실험실 "체크인 전 짐 보관" */
-  luggage?: { hours: number; checkIn: string; name: string } | null;
-  /** 국내 여행 (공항 도착 권장 시각: 국내선 1시간 30분 전) */
-  domestic: boolean;
   /** 실험실 "오늘 체크아웃": 그날 체크아웃하는 숙소 */
   checkouts?: { title: string; time?: string | undefined }[] | undefined;
   /** 그날 밤 숙소 좌표 (마지막 장소 → 숙소 거리) */
@@ -953,11 +945,10 @@ function DaySection({
   const recapOn = useSettings((st) => st.dayRecap);
   // 날씨 주의 (2026-10-28 실험실에서 정식, 설정 "일정")
   const weatherOn = useSettings((st) => st.weatherMark);
-  // 실험실 (2026-10-28, 다른 여행 앱 참고)
-  const airportOn = useLab('airportArrive');
-  const overlapOn = useLab('overlapWarn');
-  const goldenOn = useLab('goldenHour');
-  const lateOn = useLab('lateNight');
+  // 늦은 귀가 안내 (설정 "일정" — 2026-10-28 실험실에서 정식)
+  const lateOn = useSettings((st) => st.lateNight);
+  // 실험실 3차 (2026-10-28): 이른 출발
+  const earlyOn = useLab('earlyStart');
   const dupOn = true;
   // 여행 당일: 현지 시각으로 지금 진행 중인 일정 (1분마다 다시 계산)
   const now = useMinuteClock(isToday);
@@ -980,8 +971,8 @@ function DaySection({
   const recap = recapOn && date && date <= todayIn(timezone) ? dayRecap(items) : null;
   // 날씨 주의: 예보(작년 기록 아님)가 있는 날만
   const cautions = weatherOn && date && weather && !weather.year ? weatherCautions(weather) : [];
-  const overlaps = overlapOn && date ? overlappingIds(items) : null;
   const lateAt = lateOn && date ? lateNightAt(items) : null;
+  const earlyAt = earlyOn && date ? earlyStartAt(items) : null;
   // 그날 마지막 장소 → 숙소 (직선거리)
   const lastCoords = [...tracked].reverse().find((i) => i.place?.coords)?.place?.coords;
   const visited = tracked.filter((i) => i.visit === 'visited' || i.done).length;
@@ -1063,16 +1054,18 @@ function DaySection({
           </span>
         </div>
       )}
-      {/* 실험실: 현지 공휴일 */}
-      {holiday && (
-        <p className="mx-3 mt-2 rounded-btn bg-danger/10 px-3 py-2 text-caption whitespace-pre-line text-danger">
-          {t('labs.localHoliday', { name: holiday })}
+      {/* 실험실: 이른 출발 */}
+      {earlyAt && (
+        <p className="mx-3 mt-2 flex items-start gap-2 rounded-btn bg-warning/10 px-3 py-2 text-caption whitespace-pre-line text-fg-sub">
+          <AlarmClock aria-hidden="true" className="mt-0.5 size-3.5 shrink-0 text-warning" />
+          {t('labs.earlyStart', { time: earlyAt })}
         </p>
       )}
-      {/* 실험실: 체크인 전 짐 보관 */}
-      {luggage && (
-        <p className="mx-3 mt-2 rounded-btn bg-bg-subtle px-3 py-2 text-caption whitespace-pre-line text-fg-sub">
-          {t('labs.luggageGap', { checkIn: luggage.checkIn, h: luggage.hours, name: luggage.name })}
+      {/* 현지 공휴일: 날짜 아래 작은 한 줄 (간단하게, 사용자 요청 2026-10-28) */}
+      {holiday && (
+        <p className="mx-4 mt-2 flex items-center gap-1.5 text-caption text-danger">
+          <span aria-hidden="true" className="size-1.5 shrink-0 rounded-full bg-danger" />
+          <span className="truncate">{t('plan.localHoliday', { name: holiday })}</span>
         </p>
       )}
       {/* 실험실: 오늘 체크아웃 */}
@@ -1130,22 +1123,11 @@ function DaySection({
               <SunLine kind="rise" label={t('plan.sunrise')} time={sun.rise} />
             )}
             {sun && sunSlot(items, sun.set) === i && (
-              <SunLine
-                kind="set"
-                label={t('plan.sunset')}
-                time={sun.set}
-                golden={goldenOn ? goldenHourStart(sun.set) : undefined}
-              />
+              <SunLine kind="set" label={t('plan.sunset')} time={sun.set} />
             )}
             <ItemRow
               item={item}
               cautions={item.kind === 'note' ? undefined : cautions}
-              overlap={overlaps?.has(item.id) ?? false}
-              arriveBy={
-                airportOn && item.transport?.mode === 'flight' && item.startTime
-                  ? airportArriveBy(item.startTime, domestic)
-                  : undefined
-              }
               n={i + 1}
               color={color}
               now={item.id === nowId}
@@ -1167,17 +1149,13 @@ function DaySection({
           <SunLine kind="rise" label={t('plan.sunrise')} time={sun.rise} />
         )}
         {sun && items.length > 0 && sunSlot(items, sun.set) === items.length && (
-          <SunLine
-            kind="set"
-            label={t('plan.sunset')}
-            time={sun.set}
-            golden={goldenOn ? goldenHourStart(sun.set) : undefined}
-          />
+          <SunLine kind="set" label={t('plan.sunset')} time={sun.set} />
         )}
-        {/* 실험실: 늦은 귀가 */}
+        {/* 늦은 귀가 안내 (설정 "일정") */}
         {lateAt && (
-          <li className="mt-1 rounded-btn bg-primary-weak px-3 py-2 text-caption whitespace-pre-line text-primary">
-            {t('labs.lateNight', { time: lateAt })}
+          <li className="mt-1 flex items-start gap-2 rounded-btn bg-primary-weak px-3 py-2 text-caption whitespace-pre-line text-primary">
+            <MoonStar aria-hidden="true" className="mt-0.5 size-3.5 shrink-0" />
+            {t('plan.lateNight', { time: lateAt })}
           </li>
         )}
         {/* 실험실: 하루 돌아보기 (오늘·지난 날, 방문한 곳이 있을 때) */}
@@ -1335,17 +1313,12 @@ function ItemRow({
   onConfirmFlight,
   history,
   cautions,
-  overlap = false,
-  arriveBy,
 }: {
   item: ItineraryItem;
   n: number;
-  /** 날씨 주의 (설정 "일정"): 시간 아래 이모지 — 여러 개면 모두 (사용자 요청 2026-10-28) */
+  /** 날씨 주의 (설정 "일정"): 시간 아래 작은 선 그림 — 여러 개면 모두 (사용자 요청 2026-10-28) */
   cautions?: readonly WeatherCaution[] | undefined;
-  /** 실험실 "시간 겹침 경고" */
-  overlap?: boolean;
-  /** 실험실 "공항 도착 권장 시각" (항공 출발 일정) */
-  arriveBy?: { time: string; prevDay: boolean; before: number } | undefined;
+
   color: string;
   /** 여행 당일 지금 진행 중: 진한 테두리·굵은 글자·바탕 깜빡임 (사용자 요청 2026-10-26) */
   now: boolean;
@@ -1453,17 +1426,7 @@ function ItemRow({
           <FlightTicket booking={booking} />
           {cautions && cautions.length > 0 && (
             <span className="flex">
-              <CautionMarks cautions={cautions} />
-            </span>
-          )}
-          {arriveBy && (
-            <span className="tabular text-caption font-semibold text-primary">
-              {t(arriveBy.prevDay ? 'labs.airportArrivePrev' : 'labs.airportArrive', {
-                time: arriveBy.time,
-              })}{' '}
-              <span className="font-normal text-fg-muted">
-                ({t('labs.airportBefore', { h: arriveBy.before / 60 })})
-              </span>
+              <CautionIcons cautions={cautions} />
             </span>
           )}
           {booking.confirmationNo && (
@@ -1500,7 +1463,7 @@ function ItemRow({
         )}
       >
         {time(item.startTime) ?? <span className="text-fg-muted/60">--:--</span>}
-        <CautionMarks cautions={cautions} />
+        <CautionIcons cautions={cautions} />
       </span>
       <span
         className={cn('flex min-w-0 flex-1 flex-col', item.done && !visitedLook && 'opacity-50')}
@@ -1556,17 +1519,6 @@ function ItemRow({
         {item.transport && (item.transport.from || item.transport.to) && (
           <span className="tabular truncate text-caption text-fg-muted">
             {item.transport.from ?? ''} → {item.transport.to ?? ''}
-          </span>
-        )}
-        {overlap && <span className="text-caption text-warning">{t('labs.overlap')}</span>}
-        {arriveBy && (
-          <span className="tabular text-caption font-semibold text-primary">
-            {t(arriveBy.prevDay ? 'labs.airportArrivePrev' : 'labs.airportArrive', {
-              time: arriveBy.time,
-            })}{' '}
-            <span className="font-normal text-fg-muted">
-              ({t('labs.airportBefore', { h: arriveBy.before / 60 })})
-            </span>
           </span>
         )}
         {item.kind !== 'note' && item.place?.address && (
@@ -1780,34 +1732,7 @@ function EmptyRun({ from, to, onOpen }: { from: Section; to: Section; onOpen: ()
 }
 
 /** "------ 일몰 17:40 ------" — 좌우 '-'는 화면 폭만큼 채우고 넘치면 잘린다. 일정이 아니라 옮기거나 지울 수 없음 */
-/** 날씨 주의 이모지 (시간 아래, 여러 개면 모두) — 그림 대신 이모지 (사용자 요청 2026-10-28) */
-function CautionMarks({ cautions }: { cautions?: readonly WeatherCaution[] | undefined }) {
-  const { t } = useTranslation();
-  if (!cautions?.length) return null;
-  return (
-    <span
-      role="img"
-      aria-label={`${t('weatherCaution.label')}: ${cautions.map((c) => t(`weatherCaution.${c}`)).join(', ')}`}
-      className="block text-caption leading-tight font-normal tracking-tight"
-    >
-      {cautions.map((c) => CAUTION_EMOJI[c]).join('')}
-    </span>
-  );
-}
-
-function SunLine({
-  kind,
-  label,
-  time,
-  golden,
-}: {
-  kind: 'rise' | 'set';
-  label: string;
-  time: string;
-  /** 실험실 "골든아워": 시작 시각 (일몰 줄만) */
-  golden?: string | undefined;
-}) {
-  const { t } = useTranslation();
+function SunLine({ kind, label, time }: { kind: 'rise' | 'set'; label: string; time: string }) {
   const dashes = '-'.repeat(120);
   // 글자 양옆에 일출 = 해, 일몰 = 달 (사용자 요청 2026-10-27)
   const icon =
@@ -1816,7 +1741,7 @@ function SunLine({
     ) : (
       <Moon aria-hidden="true" className="size-3.5 shrink-0 text-primary" />
     );
-  const line = (
+  return (
     <li
       aria-label={`${label} ${time}`}
       className="tabular flex items-center gap-1.5 px-1 text-micro text-fg-muted select-none"
@@ -1836,15 +1761,5 @@ function SunLine({
         {dashes}
       </span>
     </li>
-  );
-  // 실험실 "골든아워": 일몰 줄 바로 아래 한 줄
-  if (!golden) return line;
-  return (
-    <>
-      {line}
-      <li className="tabular text-center text-micro text-warning">
-        {t('labs.goldenHour', { start: golden, end: time })}
-      </li>
-    </>
   );
 }
