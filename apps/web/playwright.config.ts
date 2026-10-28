@@ -1,6 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
 
-// E2E는 모바일 뷰포트 기준 (docs/conventions/testing.md). iPhone(WebKit)은 실기기 테스트 단계에서 추가.
+// E2E는 모바일 뷰포트 기준 (docs/conventions/testing.md). 배포 빌드 시험은 갤럭시(Chromium)·아이폰(WebKit) 둘 다.
 export default defineConfig({
   testDir: './tests/e2e',
   fullyParallel: true,
@@ -18,6 +18,12 @@ export default defineConfig({
     {
       name: 'prod',
       use: { ...devices['Pixel 7'], baseURL: 'http://localhost:4173', timezoneId: 'Asia/Seoul' },
+      testMatch: /\.prod\.spec\.ts$/,
+    },
+    // 아이폰(사파리와 같은 WebKit 엔진) — 오프라인·서비스 워커 확인 (사용자 요청 2026-10-28)
+    {
+      name: 'prod-iphone',
+      use: { ...devices['iPhone 13'], baseURL: 'http://localhost:4173', timezoneId: 'Asia/Seoul' },
       testMatch: /\.prod\.spec\.ts$/,
     },
   ],
