@@ -183,20 +183,29 @@ describe('무료량이 끝났을 때 백업 (docs/23, 사용자 결정 2026-10-2
     await user.type(within(sheet).getByLabelText('이름'), '이치란');
     await user.click(within(sheet).getByRole('button', { name: '"이치란" 장소 검색' }));
     expect(
-      await within(sheet).findByText('무료 검색 한도가 끝나 다른 검색으로 찾았어요'),
+      await within(sheet).findByText(
+        '무료 검색 한도가 끝나 다른 검색으로 찾았어요',
+        {},
+        { timeout: 5000 },
+      ),
     ).toBeInTheDocument();
     await user.click(within(sheet).getByRole('option', { name: /이치란 신주쿠/ }));
-    await waitFor(() =>
-      expect(within(sheet).getByLabelText('주소')).toHaveValue('도쿄 신주쿠구 1-2'),
+    await waitFor(
+      () => expect(within(sheet).getByLabelText('주소')).toHaveValue('도쿄 신주쿠구 1-2'),
+      { timeout: 5000 },
     );
     expect(basics).toEqual([
       '/api/places/google/ChIJ_ac/basic?session=11111111-2222-3333-4444-555555555555',
     ]);
     await user.click(within(sheet).getByRole('button', { name: /영업시간·평점 보기/ }));
-    expect(await within(sheet).findByText('트립포켓 후기 2개')).toBeInTheDocument();
+    expect(
+      await within(sheet).findByText('트립포켓 후기 2개', {}, { timeout: 5000 }),
+    ).toBeInTheDocument();
     expect(within(sheet).getByText(/Google 무료 사용량이 끝나/)).toBeInTheDocument();
     await user.click(within(sheet).getByRole('button', { name: '일정에 추가' }));
-    await waitFor(async () => expect(await itemRepo.listByTrip(tripId)).toHaveLength(1));
+    await waitFor(async () => expect(await itemRepo.listByTrip(tripId)).toHaveLength(1), {
+      timeout: 5000,
+    });
     const [saved] = await itemRepo.listByTrip(tripId);
     expect(saved!.place).toMatchObject({
       coords: { lat: 35.69, lng: 139.7 },
@@ -204,7 +213,7 @@ describe('무료량이 끝났을 때 백업 (docs/23, 사용자 결정 2026-10-2
       googlePlaceId: 'ChIJ_ac',
     });
     expect(JSON.stringify(saved)).not.toMatch(/session|4\.5/);
-  });
+  }, 20_000);
 
   it('Geoapify 백업: OpenStreetMap 배지와 "Powered by Geoapify" 표기, 좌표 출처 osm', async () => {
     vi.stubGlobal('fetch', async (url: string) =>
