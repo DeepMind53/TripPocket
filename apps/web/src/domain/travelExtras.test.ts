@@ -10,6 +10,8 @@ describe('날씨 주의 (2026-10-28 정식)', () => {
     expect(weatherCautions({ code: 95, min: 22, max: 28 })).toEqual(['storm']);
     expect(weatherCautions({ code: 45, min: 15, max: 24 })).toEqual(['fog']);
     expect(weatherCautions({ code: 2, min: 15, max: 24 })).toEqual([]);
+    // 머리에 보이는 반올림 온도 기준: 10.4° → "10°" → 겉옷, 29.6° → "30°" → 더위
+    expect(weatherCautions({ code: 2, min: 10.4, max: 29.6 })).toEqual(['cold', 'hot']);
   });
 
   it('시차: 방콕은 한국보다 2시간 느리다', () => {

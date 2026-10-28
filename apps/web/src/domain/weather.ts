@@ -63,8 +63,11 @@ export function weatherCautions(w: DayWeather): WeatherCaution[] {
   if (kind === 'storm') out.push('storm');
   if (kind === 'snow') out.push('snow');
   if (kind === 'fog') out.push('fog');
-  if (w.min <= 10) out.push('cold');
-  if (w.min <= 0) out.push('freezing');
-  if (w.max >= 30) out.push('hot');
+  // 날짜 머리에 보이는 반올림 온도로 판단한다 (머리엔 10°인데 그림이 없던 문제, 2026-10-28)
+  const min = Math.round(w.min);
+  const max = Math.round(w.max);
+  if (min <= 10) out.push('cold');
+  if (min <= 0) out.push('freezing');
+  if (max >= 30) out.push('hot');
   return out;
 }

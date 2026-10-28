@@ -30,12 +30,12 @@ export function CautionIcons({ cautions }: { cautions?: readonly WeatherCaution[
     <span
       role="img"
       aria-label={`${t('weatherCaution.label')}: ${cautions.map((c) => t(`weatherCaution.${c}`)).join(', ')}`}
-      className="mt-0.5 flex items-center gap-0.5"
+      className="mt-1 flex flex-wrap items-center gap-1"
     >
       {cautions.map((c) => {
         const { Icon, color } = ICON[c];
         return (
-          <Icon key={c} aria-hidden="true" strokeWidth={2.2} className={`size-3.5 ${color}`} />
+          <Icon key={c} aria-hidden="true" strokeWidth={2.4} className={`size-[18px] ${color}`} />
         );
       })}
     </span>
