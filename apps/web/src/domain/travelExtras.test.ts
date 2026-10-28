@@ -19,12 +19,12 @@ const booking = (b: Partial<Booking> & Pick<Booking, 'kind' | 'start'>): Booking
   ({ id: b.title ?? 'b', tripId: 't', title: 'b', createdAt: T, updatedAt: T, ...b }) as Booking;
 
 describe('날씨 주의 (2026-10-28 정식)', () => {
-  it('비·추위·더위를 모두 모은다', () => {
+  it('비·눈·쌀쌀함·더위 네 가지를 모두 모은다 (뇌우·이슬비는 비로)', () => {
     expect(weatherCautions({ code: 61, min: 8, max: 14 })).toEqual(['rain', 'cold']);
     expect(weatherCautions({ code: 0, min: 24, max: 33 })).toEqual(['hot']);
-    expect(weatherCautions({ code: 73, min: -3, max: 2 })).toEqual(['snow', 'cold', 'freezing']);
-    expect(weatherCautions({ code: 95, min: 22, max: 28 })).toEqual(['storm']);
-    expect(weatherCautions({ code: 2, min: 15, max: 24 })).toEqual([]);
+    expect(weatherCautions({ code: 73, min: -3, max: 2 })).toEqual(['snow', 'cold']);
+    expect(weatherCautions({ code: 95, min: 22, max: 28 })).toEqual(['rain']);
+    expect(weatherCautions({ code: 45, min: 15, max: 24 })).toEqual([]);
   });
 
   it('시차: 방콕은 한국보다 2시간 느리다', () => {

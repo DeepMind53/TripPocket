@@ -1912,11 +1912,8 @@
   "weatherCaution": {
     "label": "날씨 주의",
     "rain": "비",
-    "storm": "뇌우",
     "snow": "눈",
-    "fog": "안개",
     "cold": "쌀쌀함(겉옷)",
-    "freezing": "영하(장갑)",
     "hot": "더움"
   }
 }

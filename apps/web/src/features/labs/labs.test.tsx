@@ -106,7 +106,7 @@ describe('실험실', () => {
           within(day1()).getAllByRole('img', { name: '날씨 주의: 비, 쌀쌀함(겉옷)' }),
         ).toHaveLength(3),
       );
-      // 2일차 최고 31° → 🥵 (일정 없는 날은 표시할 줄 없음)
+      // 2일차 최고 31° → 🔥 (일정 없는 날은 표시할 줄 없음)
       expect(within(day1()).getByText('⚠️ 앞 일정과 시간이 겹쳐요')).toBeInTheDocument();
       expect(within(day1()).getByText(/🌙 22:30까지 일정이 있어요/)).toBeInTheDocument();
       expect(within(day1()).getByText(/🧳 체크인 15:00까지 약 4시간/)).toBeInTheDocument();

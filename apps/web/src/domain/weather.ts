@@ -51,27 +51,23 @@ export function formatForecastDate(date: string): string {
   return `${date.slice(2, 4)}.${date.slice(5, 7)}/${date.slice(8, 10)}`;
 }
 
-/** 날씨 주의 (2026-10-28 정식, 사용자 요청): 일정 시간 아래 이모지. 여러 개면 모두 */
-export type WeatherCaution = 'rain' | 'storm' | 'snow' | 'fog' | 'cold' | 'freezing' | 'hot';
+/**
+ * 날씨 주의 (2026-10-28 정식, 사용자 요청): 일정 시간 아래 이모지. 여러 개면 모두.
+ * 간단하게 네 가지만 (사용자 요청 2026-10-28): 비(이슬비·뇌우 포함)·눈·쌀쌀함(최저 10° 이하)·더위(최고 30° 이상)
+ */
+export type WeatherCaution = 'rain' | 'snow' | 'cold' | 'hot';
 export const CAUTION_EMOJI: Record<WeatherCaution, string> = {
   rain: '☔',
-  storm: '⛈️',
   snow: '❄️',
-  fog: '🌫️',
   cold: '🧥',
-  freezing: '🧤',
-  hot: '🥵',
+  hot: '🔥',
 };
-/** 비·뇌우·눈·안개 + 최저 10° 이하(겉옷)·0° 이하(장갑)·최고 30° 이상(더위) */
 export function weatherCautions(w: DayWeather): WeatherCaution[] {
   const out: WeatherCaution[] = [];
   const kind = weatherLook(w.code).kind;
-  if (kind === 'rain' || kind === 'drizzle') out.push('rain');
-  if (kind === 'storm') out.push('storm');
+  if (kind === 'rain' || kind === 'drizzle' || kind === 'storm') out.push('rain');
   if (kind === 'snow') out.push('snow');
-  if (kind === 'fog') out.push('fog');
   if (w.min <= 10) out.push('cold');
-  if (w.min <= 0) out.push('freezing');
   if (w.max >= 30) out.push('hot');
   return out;
 }
