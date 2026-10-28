@@ -33,7 +33,15 @@ export function FeaturePreview({ id }: { id: PreviewId }) {
     n: number,
     time: string,
     title: string,
-    opts: { now?: boolean; done?: boolean; tight?: boolean; home?: string; rain?: boolean } = {},
+    opts: {
+      now?: boolean;
+      done?: boolean;
+      tight?: boolean;
+      /** 날씨 주의 이모지 (시간 아래) */
+      caution?: string;
+      /** 시간 겹침 경고 줄 */
+      overlap?: boolean;
+    } = {},
   ) => (
     <div
       className={cn(
@@ -47,15 +55,11 @@ export function FeaturePreview({ id }: { id: PreviewId }) {
       </span>
       <span className="tabular w-11 text-caption text-fg-sub">
         {time}
-        {opts.home && (
-          <span className="block text-micro text-fg-muted">
-            {t('labs.homeTime', { time: opts.home })}
-          </span>
-        )}
+        {opts.caution && <span className="block text-caption leading-tight">{opts.caution}</span>}
       </span>
-      <span className="flex-1">
-        {opts.rain && '☔ '}
+      <span className="flex flex-1 flex-col">
         {title}
+        {opts.overlap && <span className="text-caption text-warning">{t('labs.overlap')}</span>}
       </span>
     </div>
   );
@@ -173,71 +177,119 @@ export function FeaturePreview({ id }: { id: PreviewId }) {
           <p className="text-center text-caption text-fg-muted">{t('labs.previewNow')}</p>
         </>,
       );
-    case 'homeTime':
+    // ── 2026-10-28 정식: 날씨 주의·시차 안내 ──
+    case 'weatherMark':
       return day(
         <>
-          {row(1, '10:00', t('sample.watArun'), { home: '12:00' })}
-          {row(2, '13:00', t('sample.chatuchak'), { home: '15:00' })}
+          {row(1, '10:00', t('sample.sensoji'), { caution: '☔🧥' })}
+          {row(2, '12:00', t('sample.ichiran'), { caution: '☔🧥' })}
         </>,
       );
-    case 'rainMark':
-      return day(
-        <>
-          {row(1, '10:00', t('sample.sensoji'), { rain: true })}
-          {row(2, '12:00', t('sample.ichiran'))}
-        </>,
+    case 'jetLag':
+      return note(t('labs.jetLagBehind', { h: 2 }));
+    // ── 실험실 2026-10-28 ──
+    case 'airportArrive':
+      return (
+        <div className="flex flex-col gap-2 rounded-btn border border-dashed border-fg-muted/60 p-3">
+          <p className="tabular text-body-1 font-bold">ICN 18:30 ✈ NRT 20:55</p>
+          <p className="tabular text-caption font-semibold text-primary">
+            {t('labs.airportArrive', { time: '15:30' })}{' '}
+            <span className="font-normal text-fg-muted">({t('labs.airportBefore', { h: 3 })})</span>
+          </p>
+        </div>
       );
-    case 'checkinNotice':
-      return day(
-        <>
-          {note(`🛎️ ${t('labs.checkinAt', { time: '15:00', name: t('sample.shinjukuHotel') })}`)}
-          {row(1, '17:00', t('sample.shinjukuWalk'))}
-        </>,
-      );
-    case 'returnNotice':
+    case 'localHoliday':
       return day(
         <>
           {note(
-            `🛫 ${t('labs.returnAt', { time: '18:30', name: t('sample.flight') })}`,
-            'bg-primary-weak text-primary',
+            t('labs.localHoliday', { name: t('sample.holiday') }),
+            'bg-danger/10 text-danger whitespace-pre-line',
           )}
-          {row(1, '10:00', t('sample.ginza'))}
-        </>,
-      );
-    case 'dayWalk':
-      return day(
-        <>
-          <p className="text-micro text-fg-muted">{t('labs.dayWalk', { km: 6.4 })}</p>
           {row(1, '10:00', t('sample.sensoji'))}
-          {row(2, '13:00', t('sample.skytree'))}
         </>,
       );
-    case 'flightProgress':
-      return note(t('labs.inAir', { name: 'KE703', h: 1, m: 20 }));
-    case 'morningBrief':
-      return note(t('labs.briefFirst', { n: 5, time: '09:30' }));
-    case 'jetLag':
-      return note(t('labs.jetLagBehind', { h: 2 }));
-    case 'emptyDayWish':
+    case 'overlapWarn':
       return day(
         <>
-          <p className="text-body-2 text-fg-muted">{t('plan.emptyDay')}</p>
-          <p className="flex min-h-11 items-center justify-center rounded-btn bg-primary-weak text-caption font-semibold text-primary">
-            {t('labs.pickWish', { n: 4 })}
-          </p>
+          {row(1, '11:00', t('sample.sensoji'))}
+          {row(2, '11:30', t('sample.skytree'), { overlap: true })}
         </>,
       );
-    case 'tipCalc':
-      return note(
-        `💵 ${t('labs.tipTitle')} · $42.50 × 18% → ${t('labs.tipResult', { tip: '7.65', total: '50.15' })}`,
+    case 'goldenHour':
+      return day(
+        <>
+          {row(1, '15:00', t('sample.skytree'))}
+          {sunLine('set', '17:20')}
+          <p className="tabular text-center text-micro text-warning">
+            {t('labs.goldenHour', { start: '16:20', end: '17:20' })}
+          </p>
+          {row(2, '18:30', t('sample.ichiran'))}
+        </>,
       );
-    case 'bigTicket':
+    case 'plugInfo':
       return (
-        <div className="flex flex-col items-center gap-2 rounded-card border border-line p-4 text-center">
-          <p className="tabular text-[34px] leading-none font-black">KE703</p>
-          <p className="tabular text-body-1">ICN → NRT</p>
-          <p className="tabular text-[28px] leading-none font-black tracking-[0.12em]">AB12CD</p>
+        <div className="flex flex-col rounded-card bg-bg-subtle px-4 py-2.5 text-caption text-fg-sub">
+          <span className="font-semibold text-fg">
+            {t('labs.plug', { country: t('sample.japan'), types: 'A·B', volt: 100 })}
+          </span>
+          <span className="text-warning">{t('labs.plugAdapter')}</span>
+          <span className="text-warning">{t('labs.plugLowVolt')}</span>
         </div>
+      );
+    case 'tripProgress':
+      return (
+        <div className="flex flex-col gap-1 rounded-btn bg-bg-subtle px-3 py-2 text-caption text-fg-sub">
+          {t('labs.tripProgress', { day: 3, days: 5, done: 7, total: 9 })}
+          <span className="h-1.5 overflow-hidden rounded-full bg-line">
+            <span className="block h-full w-3/5 rounded-full bg-primary" />
+          </span>
+        </div>
+      );
+    case 'memoChecklist':
+      return (
+        <div className="flex flex-col gap-1.5 rounded-card border border-line p-3 text-body-2">
+          {(
+            [
+              [t('sample.memoPassport'), true],
+              [t('sample.memoTicket'), false],
+            ] as const
+          ).map(([text, on]) => (
+            <span key={text} className="flex items-center gap-2">
+              <span
+                className={cn(
+                  'grid size-5 place-items-center rounded border text-micro',
+                  on ? 'border-primary bg-primary text-white' : 'border-line',
+                )}
+              >
+                {on ? '✓' : ''}
+              </span>
+              <span className={cn(on && 'text-fg-muted line-through')}>{text}</span>
+            </span>
+          ))}
+        </div>
+      );
+    case 'lateNight':
+      return day(
+        <>
+          {row(1, '20:00', t('sample.ichiran'))}
+          {row(2, '22:30', t('sample.shinjukuWalk'))}
+          {note(
+            t('labs.lateNight', { time: '22:30' }),
+            'bg-primary-weak text-primary whitespace-pre-line',
+          )}
+        </>,
+      );
+    case 'fxLine':
+      return note(t('labs.fxLine', { unit: 100, code: 'JPY', won: '912', date: '10.28' }));
+    case 'luggageGap':
+      return day(
+        <>
+          {note(
+            t('labs.luggageGap', { checkIn: '15:00', h: 4, name: t('sample.shinjukuHotel') }),
+            'bg-bg-subtle text-fg-sub whitespace-pre-line',
+          )}
+          {row(1, '09:30', t('sample.arrive'))}
+        </>,
       );
   }
 }

@@ -202,6 +202,8 @@ export function SettingsPage() {
               'checkoutNotice',
               'dayRecap',
               'nowScroll',
+              'weatherMark',
+              'jetLag',
             ])
           }
         >
@@ -230,6 +232,8 @@ export function SettingsPage() {
               ['checkoutNotice', 'settings.checkoutNotice'],
               ['dayRecap', 'settings.dayRecap'],
               ['nowScroll', 'settings.nowScroll'],
+              ['weatherMark', 'settings.weatherMark'],
+              ['jetLag', 'settings.jetLag'],
             ] as const
           ).map(([key, label]) => (
             <SwitchRow

@@ -247,9 +247,9 @@ function OngoingTrip({ trip }: { trip: Trip }) {
       <Suspense fallback={null}>
         <TripAlertBanner trip={trip} />
       </Suspense>
-      {/* 실험실: 비행 중 남은 시간·오늘 요약 */}
+      {/* 여행 진행률·오늘 환율 (실험실) */}
       <Suspense fallback={null}>
-        <HomeLabs trip={trip} bookings={bookings} items={items ?? []} ongoing />
+        <HomeLabs trip={trip} items={items ?? []} ongoing />
       </Suspense>
 
       {current && current.id !== next?.id && (

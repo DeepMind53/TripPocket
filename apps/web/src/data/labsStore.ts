@@ -6,18 +6,20 @@ import { create } from 'zustand';
  * 정식 기능이 되면 LABS에서 빼고 useLab 호출을 지운다 (docs/code-map.md §3)
  */
 export const LABS = [
-  // 2026-10-27 새 실험 11개 (TripIt·Wanderlog·Google 여행·Polarsteps·트리플 참고)
-  'homeTime',
-  'rainMark',
-  'checkinNotice',
-  'returnNotice',
-  'dayWalk',
-  'flightProgress',
-  'morningBrief',
-  'jetLag',
-  'emptyDayWish',
-  'tipCalc',
-  'bigTicket',
+  // 2026-10-28 새 실험 10개 (TripIt·Kayak·Google 여행·Wanderlog·Polarsteps·트리플·Citymapper 참고)
+  'airportArrive',
+  'localHoliday',
+  'overlapWarn',
+  'goldenHour',
+  'plugInfo',
+  'tripProgress',
+  'memoChecklist',
+  'lateNight',
+  'fxLine',
+  'luggageGap',
+  // 2026-10-28 정식: 날씨 주의(예전 '비 오는 날 야외 일정')·시차 안내(설정 "일정").
+  // 2026-10-28 뺐다(사용자 결정): 한국 시각 같이 보기·체크인 안내·귀국 전날 안내·하루 걷는 거리·비행 중 남은 시간·
+  // 오늘 요약·빈 날에 가고 싶은 곳·팁 계산기·항공권 크게 보기.
   // 2026-10-27 정식으로: 근처 가고 싶은 곳·오늘 체크아웃·하루 돌아보기·지금 일정으로 이동(설정 "일정"),
   // 2026-10-27 정식으로: 다음 장소까지 거리·촘촘히 보기(설정 "일정"), 빠듯한 하루는 뺐다(사용자 요청), 메모 속 외화 → 원화, 숙소까지 거리,
   // 하루 일정 글로 복사·날씨 맞춤 준비물·하루 동선 지도·오늘 일정 진행률·일출·일몰(설정),

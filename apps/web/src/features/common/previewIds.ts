@@ -9,38 +9,41 @@ export type PreviewId =
   | 'checkoutNotice'
   | 'dayRecap'
   | 'nowScroll'
-  | 'homeTime'
-  | 'rainMark'
-  | 'checkinNotice'
-  | 'returnNotice'
-  | 'dayWalk'
-  | 'flightProgress'
-  | 'morningBrief'
+  | 'weatherMark'
   | 'jetLag'
-  | 'emptyDayWish'
-  | 'tipCalc'
-  | 'bigTicket';
+  | 'airportArrive'
+  | 'localHoliday'
+  | 'overlapWarn'
+  | 'goldenHour'
+  | 'plugInfo'
+  | 'tripProgress'
+  | 'memoChecklist'
+  | 'lateNight'
+  | 'fxLine'
+  | 'luggageGap';
 
-export const hasPreview = (id: string): id is PreviewId =>
-  [
-    'dimPastItems',
-    'planMapOpen',
-    'sunTimes',
-    'legDistance',
-    'compactList',
-    'nearbyWish',
-    'checkoutNotice',
-    'dayRecap',
-    'nowScroll',
-    'homeTime',
-    'rainMark',
-    'checkinNotice',
-    'returnNotice',
-    'dayWalk',
-    'flightProgress',
-    'morningBrief',
-    'jetLag',
-    'emptyDayWish',
-    'tipCalc',
-    'bigTicket',
-  ].includes(id);
+const IDS: readonly string[] = [
+  'dimPastItems',
+  'planMapOpen',
+  'sunTimes',
+  'legDistance',
+  'compactList',
+  'nearbyWish',
+  'checkoutNotice',
+  'dayRecap',
+  'nowScroll',
+  'weatherMark',
+  'jetLag',
+  'airportArrive',
+  'localHoliday',
+  'overlapWarn',
+  'goldenHour',
+  'plugInfo',
+  'tripProgress',
+  'memoChecklist',
+  'lateNight',
+  'fxLine',
+  'luggageGap',
+];
+
+export const hasPreview = (id: string): id is PreviewId => IDS.includes(id);

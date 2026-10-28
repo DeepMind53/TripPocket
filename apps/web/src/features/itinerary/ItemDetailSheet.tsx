@@ -32,6 +32,7 @@ import { BookingDocs } from '../bookings/BookingDocs';
 import { TaxiCard } from '../phrases/TaxiCard';
 import { KIND_ICON } from './itemKinds';
 import { MemoFx } from './MemoFx';
+import { MemoText } from './MemoText';
 
 export interface ItemDetailSheetProps {
   open: boolean;
@@ -242,7 +243,7 @@ export function ItemDetailSheet({
             )}
             {item.memo && (
               <Info label={t('form.memo')}>
-                {item.memo}
+                <MemoText itemId={item.id} memo={item.memo} readOnly={!!readOnly} />
                 <MemoFx memo={item.memo} countryCode={countryCode} />
               </Info>
             )}

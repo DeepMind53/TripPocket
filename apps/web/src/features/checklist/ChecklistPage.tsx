@@ -24,6 +24,7 @@ import { ChecklistBoard } from './ChecklistBoard';
 import { TemplateSheet } from './TemplateSheet';
 import { useChecklistDraft, type Draft } from './useChecklistDraft';
 import { WeatherPackingTips } from './WeatherPackingTips';
+import { PlugInfoLine } from './PlugInfoLine';
 import { SharePackingSheet } from './SharePackingSheet';
 import { SharedPacking } from './SharedPacking';
 
@@ -96,6 +97,8 @@ export function ChecklistPage() {
           </span>
         </Link>
       )}
+      {/* 실험실: 콘센트·전압 */}
+      {trip && <PlugInfoLine trip={trip} />}
       {canEdit && (
         <Button
           variant="secondary"

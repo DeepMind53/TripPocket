@@ -42,6 +42,10 @@ export interface Settings {
   dayRecap: boolean;
   /** 여행 중 일정 화면을 열면 진행 중인 일정으로 이동 (2026-10-27 실험실에서 정식) */
   nowScroll: boolean;
+  /** 일정 시간 아래 날씨 주의 이모지 (2026-10-28 실험실에서 정식) */
+  weatherMark: boolean;
+  /** 출발 전 홈에 여행지 시차 (2026-10-28 실험실에서 정식) */
+  jetLag: boolean;
   /** ⚡ 빠른 메뉴 버튼 보이기 */
   quickButton: boolean;
   /** AI 추천을 열 때 처음 골라 둘 카테고리 */
@@ -74,6 +78,8 @@ export const SETTINGS_DEFAULTS: Settings = {
   checkoutNotice: true,
   dayRecap: true,
   nowScroll: true,
+  weatherMark: true,
+  jetLag: true,
   quickButton: true,
   aiCats: ['food', 'cafe'],
   aiAnchor: 'text',
@@ -108,6 +114,8 @@ const VALID: { [K in keyof Settings]: (v: unknown) => v is Settings[K] } = {
   checkoutNotice: (v): v is boolean => typeof v === 'boolean',
   dayRecap: (v): v is boolean => typeof v === 'boolean',
   nowScroll: (v): v is boolean => typeof v === 'boolean',
+  weatherMark: (v): v is boolean => typeof v === 'boolean',
+  jetLag: (v): v is boolean => typeof v === 'boolean',
   quickButton: (v): v is boolean => typeof v === 'boolean',
   aiCats: (v): v is Settings['aiCats'] =>
     Array.isArray(v) &&

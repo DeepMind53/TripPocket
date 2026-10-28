@@ -104,13 +104,15 @@ import { dayRouteUrl } from '../../domain/dayRoute';
 import { sunSlot, sunTimes } from '../../domain/sun';
 import { checkoutsOn, dayRecap, nearbyWishes } from '../../domain/dayExtras';
 import {
-  checkinsOn,
-  homeTimeOf,
-  isOutdoor,
-  isRainCode,
-  returnFlightFor,
+  airportArriveBy,
+  goldenHourStart,
+  lateNightAt,
+  luggageGap,
+  overlappingIds,
 } from '../../domain/travelExtras';
+import { CAUTION_EMOJI, weatherCautions, type WeatherCaution } from '../../domain/weather';
 import { useLab } from '../../data/labsStore';
+import { useTripHolidays } from './useTripHolidays';
 import { distanceKm, formatDistance, walkMinutes } from '@trippocket/shared';
 import { DayWeatherBadge } from '../common/DayWeatherBadge';
 import { useTripWeather, type TripDayWeather } from '../common/useTripWeather';
@@ -211,6 +213,9 @@ function PlanView({
       )
     : null;
   const isDomestic = isDomesticTrip(trip);
+  // 실험실 "현지 공휴일 표시"
+  const holidays = useTripHolidays(trip, useLab('localHoliday'));
+  const luggageOn = useLab('luggageGap');
   const weather = useTripWeather(trip);
 
   // 기본: 여행 중이면 오늘, 아니면 전체
@@ -659,10 +664,9 @@ function PlanView({
                       lodging={date ? lodgingForNight(bookings, date) : null}
                       wishes={date ? wishItems : undefined}
                       checkouts={date ? checkoutsOn(bookings, date) : undefined}
-                      checkins={date ? checkinsOn(bookings, date) : undefined}
-                      returnFlight={date ? returnFlightFor(bookings, trip.endDate, date) : null}
-                      wishCount={wishItems.length}
-                      onWish={() => setFilter('wish')}
+                      holiday={date ? holidays[date] : undefined}
+                      luggage={luggageOn && date ? luggageGap(bookings, date) : null}
+                      domestic={isDomestic}
                       lodgingCoords={
                         lodgingReturnOn && date
                           ? coordsOfBooking(lodgingForNight(bookings, date)?.booking.id)
@@ -891,10 +895,9 @@ function DaySection({
   lodgingCoords,
   wishes,
   checkouts,
-  checkins,
-  returnFlight,
-  wishCount = 0,
-  onWish,
+  holiday,
+  luggage,
+  domestic,
 }: {
   /** 지난 일정 방문·미방문 (미방문이면 저장 탭에도 담는다) */
   onVisitItem: (item: ItineraryItem, visit: Visit) => void;
@@ -903,13 +906,12 @@ function DaySection({
   weather?: TripDayWeather | undefined;
   /** 실험실 "근처 가고 싶은 곳": 날짜 없는 가고 싶은 곳 */
   wishes?: ItineraryItem[] | undefined;
-  /** 실험실 "체크인 안내": 그날 체크인하는 숙소 */
-  checkins?: { title: string; time?: string | undefined }[] | undefined;
-  /** 실험실 "귀국 전날 안내": 내일 귀국 항공편 */
-  returnFlight?: { title: string; time?: string | undefined } | null;
-  /** 실험실 "빈 날 가고 싶은 곳": 날짜 없는 가고 싶은 곳 수, 누르면 그 목록으로 */
-  wishCount?: number;
-  onWish?: (() => void) | undefined;
+  /** 실험실 "현지 공휴일 표시": 그날 현지 공휴일 이름 */
+  holiday?: string | undefined;
+  /** 실험실 "체크인 전 짐 보관" */
+  luggage?: { hours: number; checkIn: string; name: string } | null;
+  /** 국내 여행 (공항 도착 권장 시각: 국내선 1시간 30분 전) */
+  domestic: boolean;
   /** 실험실 "오늘 체크아웃": 그날 체크아웃하는 숙소 */
   checkouts?: { title: string; time?: string | undefined }[] | undefined;
   /** 그날 밤 숙소 좌표 (마지막 장소 → 숙소 거리) */
@@ -949,13 +951,13 @@ function DaySection({
   const nearbyOn = useSettings((st) => st.nearbyWish);
   const checkoutOn = useSettings((st) => st.checkoutNotice);
   const recapOn = useSettings((st) => st.dayRecap);
-  // 실험실 (2026-10-27, 다른 여행 앱 참고)
-  const homeOn = useLab('homeTime');
-  const rainOn = useLab('rainMark');
-  const checkinOn = useLab('checkinNotice');
-  const returnOn = useLab('returnNotice');
-  const walkOn = useLab('dayWalk');
-  const wishOn = useLab('emptyDayWish');
+  // 날씨 주의 (2026-10-28 실험실에서 정식, 설정 "일정")
+  const weatherOn = useSettings((st) => st.weatherMark);
+  // 실험실 (2026-10-28, 다른 여행 앱 참고)
+  const airportOn = useLab('airportArrive');
+  const overlapOn = useLab('overlapWarn');
+  const goldenOn = useLab('goldenHour');
+  const lateOn = useLab('lateNight');
   const dupOn = true;
   // 여행 당일: 현지 시각으로 지금 진행 중인 일정 (1분마다 다시 계산)
   const now = useMinuteClock(isToday);
@@ -976,11 +978,10 @@ function DaySection({
   const nearby = nearbyOn && wishes ? nearbyWishes(items, wishes) : [];
   const outs = checkoutOn ? (checkouts ?? []) : [];
   const recap = recapOn && date && date <= todayIn(timezone) ? dayRecap(items) : null;
-  const ins = checkinOn ? (checkins ?? []) : [];
-  const rainy = rainOn && weather ? isRainCode(weather.code) : false;
-  // 하루 걷는 거리(일정 사이 직선거리 합, 항공·먼 구간 빼고)
-  const walkKm =
-    walkOn && date ? dayRecap(items.map((i) => ({ ...i, visit: 'visited' as const }))).km : 0;
+  // 날씨 주의: 예보(작년 기록 아님)가 있는 날만
+  const cautions = weatherOn && date && weather && !weather.year ? weatherCautions(weather) : [];
+  const overlaps = overlapOn && date ? overlappingIds(items) : null;
+  const lateAt = lateOn && date ? lateNightAt(items) : null;
   // 그날 마지막 장소 → 숙소 (직선거리)
   const lastCoords = [...tracked].reverse().find((i) => i.place?.coords)?.place?.coords;
   const visited = tracked.filter((i) => i.visit === 'visited' || i.done).length;
@@ -1062,31 +1063,17 @@ function DaySection({
           </span>
         </div>
       )}
-      {/* 실험실: 귀국 전날 */}
-      {returnOn && returnFlight && (
-        <p className="mx-3 mt-2 flex items-center gap-2 rounded-btn bg-primary-weak px-3 py-2 text-caption text-primary">
-          <span aria-hidden="true">🛫</span>
-          {returnFlight.time
-            ? t('labs.returnAt', { time: returnFlight.time, name: returnFlight.title })
-            : t('labs.return', { name: returnFlight.title })}
+      {/* 실험실: 현지 공휴일 */}
+      {holiday && (
+        <p className="mx-3 mt-2 rounded-btn bg-danger/10 px-3 py-2 text-caption whitespace-pre-line text-danger">
+          {t('labs.localHoliday', { name: holiday })}
         </p>
       )}
-      {/* 실험실: 체크인 */}
-      {ins.map((o, i) => (
-        <p
-          // 같은 숙소 방 두 개처럼 이름이 겹칠 수 있다
-          key={`in-${i}-${o.title}`}
-          className="mx-3 mt-2 flex items-center gap-2 rounded-btn bg-bg-subtle px-3 py-2 text-caption text-fg-sub"
-        >
-          <span aria-hidden="true">🛎️</span>
-          {o.time
-            ? t('labs.checkinAt', { time: o.time, name: o.title })
-            : t('labs.checkin', { name: o.title })}
+      {/* 실험실: 체크인 전 짐 보관 */}
+      {luggage && (
+        <p className="mx-3 mt-2 rounded-btn bg-bg-subtle px-3 py-2 text-caption whitespace-pre-line text-fg-sub">
+          {t('labs.luggageGap', { checkIn: luggage.checkIn, h: luggage.hours, name: luggage.name })}
         </p>
-      ))}
-      {/* 실험실: 하루 걷는 거리 */}
-      {walkKm >= 0.5 && (
-        <p className="mx-4 mt-2 text-micro text-fg-muted">{t('labs.dayWalk', { km: walkKm })}</p>
       )}
       {/* 실험실: 오늘 체크아웃 */}
       {outs.map((o, i) => (
@@ -1131,16 +1118,6 @@ function DaySection({
           {date ? t('plan.emptyDay') : t('plan.wishEmpty')}
         </p>
       )}
-      {/* 실험실: 빈 날이면 가고 싶은 곳에서 골라 넣기 */}
-      {wishOn && date && items.length === 0 && wishCount > 0 && onWish && (
-        <button
-          type="button"
-          onClick={onWish}
-          className="mx-3 mb-2 flex min-h-11 items-center justify-center rounded-btn bg-primary-weak px-3 text-caption font-semibold text-primary"
-        >
-          {t('labs.pickWish', { n: wishCount })}
-        </button>
-      )}
       <ol
         className={cn(
           'flex flex-col px-3 py-2',
@@ -1153,14 +1130,22 @@ function DaySection({
               <SunLine kind="rise" label={t('plan.sunrise')} time={sun.rise} />
             )}
             {sun && sunSlot(items, sun.set) === i && (
-              <SunLine kind="set" label={t('plan.sunset')} time={sun.set} />
+              <SunLine
+                kind="set"
+                label={t('plan.sunset')}
+                time={sun.set}
+                golden={goldenOn ? goldenHourStart(sun.set) : undefined}
+              />
             )}
             <ItemRow
               item={item}
-              homeTime={
-                homeOn && date && item.startTime ? homeTimeOf(date, item.startTime, timezone) : null
+              cautions={item.kind === 'note' ? undefined : cautions}
+              overlap={overlaps?.has(item.id) ?? false}
+              arriveBy={
+                airportOn && item.transport?.mode === 'flight' && item.startTime
+                  ? airportArriveBy(item.startTime, domestic)
+                  : undefined
               }
-              rain={rainy && isOutdoor(item.kind)}
               n={i + 1}
               color={color}
               now={item.id === nowId}
@@ -1182,7 +1167,18 @@ function DaySection({
           <SunLine kind="rise" label={t('plan.sunrise')} time={sun.rise} />
         )}
         {sun && items.length > 0 && sunSlot(items, sun.set) === items.length && (
-          <SunLine kind="set" label={t('plan.sunset')} time={sun.set} />
+          <SunLine
+            kind="set"
+            label={t('plan.sunset')}
+            time={sun.set}
+            golden={goldenOn ? goldenHourStart(sun.set) : undefined}
+          />
+        )}
+        {/* 실험실: 늦은 귀가 */}
+        {lateAt && (
+          <li className="mt-1 rounded-btn bg-primary-weak px-3 py-2 text-caption whitespace-pre-line text-primary">
+            {t('labs.lateNight', { time: lateAt })}
+          </li>
         )}
         {/* 실험실: 하루 돌아보기 (오늘·지난 날, 방문한 곳이 있을 때) */}
         {recap && recap.visited > 0 && (
@@ -1338,15 +1334,18 @@ function ItemRow({
   onVisit,
   onConfirmFlight,
   history,
-  homeTime,
-  rain = false,
+  cautions,
+  overlap = false,
+  arriveBy,
 }: {
   item: ItineraryItem;
   n: number;
-  /** 실험실 "한국 시각 같이 보기": 시작 시각을 한국 시간으로 */
-  homeTime?: string | null | undefined;
-  /** 실험실 "비 오는 날 야외 일정": 그날 비 예보 + 야외 일정 */
-  rain?: boolean;
+  /** 날씨 주의 (설정 "일정"): 시간 아래 이모지 — 여러 개면 모두 (사용자 요청 2026-10-28) */
+  cautions?: readonly WeatherCaution[] | undefined;
+  /** 실험실 "시간 겹침 경고" */
+  overlap?: boolean;
+  /** 실험실 "공항 도착 권장 시각" (항공 출발 일정) */
+  arriveBy?: { time: string; prevDay: boolean; before: number } | undefined;
   color: string;
   /** 여행 당일 지금 진행 중: 진한 테두리·굵은 글자·바탕 깜빡임 (사용자 요청 2026-10-26) */
   now: boolean;
@@ -1452,6 +1451,21 @@ function ItemRow({
         {badge}
         <span className="flex min-w-0 flex-1 flex-col gap-2">
           <FlightTicket booking={booking} />
+          {cautions && cautions.length > 0 && (
+            <span className="flex">
+              <CautionMarks cautions={cautions} />
+            </span>
+          )}
+          {arriveBy && (
+            <span className="tabular text-caption font-semibold text-primary">
+              {t(arriveBy.prevDay ? 'labs.airportArrivePrev' : 'labs.airportArrive', {
+                time: arriveBy.time,
+              })}{' '}
+              <span className="font-normal text-fg-muted">
+                ({t('labs.airportBefore', { h: arriveBy.before / 60 })})
+              </span>
+            </span>
+          )}
           {booking.confirmationNo && (
             <span className="tabular border-t border-dashed border-line pt-1.5 text-caption text-fg-sub">
               {t('bookings.confirmationNo')}{' '}
@@ -1486,11 +1500,7 @@ function ItemRow({
         )}
       >
         {time(item.startTime) ?? <span className="text-fg-muted/60">--:--</span>}
-        {homeTime && (
-          <span className="block text-micro leading-tight font-normal text-fg-muted">
-            {t('labs.homeTime', { time: homeTime })}
-          </span>
-        )}
+        <CautionMarks cautions={cautions} />
       </span>
       <span
         className={cn('flex min-w-0 flex-1 flex-col', item.done && !visitedLook && 'opacity-50')}
@@ -1514,11 +1524,6 @@ function ItemRow({
                 now && 'font-bold',
               )}
             >
-              {rain && (
-                <span role="img" aria-label={t('labs.rainLabel')} className="mr-1">
-                  ☔
-                </span>
-              )}
               {item.title}
               {/* 공항 픽업·드랍은 예약처를 제목 옆에 (사용자 요청 2026-10-27) */}
               {booking?.kind === 'transfer' && booking.provider && (
@@ -1551,6 +1556,17 @@ function ItemRow({
         {item.transport && (item.transport.from || item.transport.to) && (
           <span className="tabular truncate text-caption text-fg-muted">
             {item.transport.from ?? ''} → {item.transport.to ?? ''}
+          </span>
+        )}
+        {overlap && <span className="text-caption text-warning">{t('labs.overlap')}</span>}
+        {arriveBy && (
+          <span className="tabular text-caption font-semibold text-primary">
+            {t(arriveBy.prevDay ? 'labs.airportArrivePrev' : 'labs.airportArrive', {
+              time: arriveBy.time,
+            })}{' '}
+            <span className="font-normal text-fg-muted">
+              ({t('labs.airportBefore', { h: arriveBy.before / 60 })})
+            </span>
           </span>
         )}
         {item.kind !== 'note' && item.place?.address && (
@@ -1764,7 +1780,34 @@ function EmptyRun({ from, to, onOpen }: { from: Section; to: Section; onOpen: ()
 }
 
 /** "------ 일몰 17:40 ------" — 좌우 '-'는 화면 폭만큼 채우고 넘치면 잘린다. 일정이 아니라 옮기거나 지울 수 없음 */
-function SunLine({ kind, label, time }: { kind: 'rise' | 'set'; label: string; time: string }) {
+/** 날씨 주의 이모지 (시간 아래, 여러 개면 모두) — 그림 대신 이모지 (사용자 요청 2026-10-28) */
+function CautionMarks({ cautions }: { cautions?: readonly WeatherCaution[] | undefined }) {
+  const { t } = useTranslation();
+  if (!cautions?.length) return null;
+  return (
+    <span
+      role="img"
+      aria-label={`${t('weatherCaution.label')}: ${cautions.map((c) => t(`weatherCaution.${c}`)).join(', ')}`}
+      className="block text-caption leading-tight font-normal tracking-tight"
+    >
+      {cautions.map((c) => CAUTION_EMOJI[c]).join('')}
+    </span>
+  );
+}
+
+function SunLine({
+  kind,
+  label,
+  time,
+  golden,
+}: {
+  kind: 'rise' | 'set';
+  label: string;
+  time: string;
+  /** 실험실 "골든아워": 시작 시각 (일몰 줄만) */
+  golden?: string | undefined;
+}) {
+  const { t } = useTranslation();
   const dashes = '-'.repeat(120);
   // 글자 양옆에 일출 = 해, 일몰 = 달 (사용자 요청 2026-10-27)
   const icon =
@@ -1773,7 +1816,7 @@ function SunLine({ kind, label, time }: { kind: 'rise' | 'set'; label: string; t
     ) : (
       <Moon aria-hidden="true" className="size-3.5 shrink-0 text-primary" />
     );
-  return (
+  const line = (
     <li
       aria-label={`${label} ${time}`}
       className="tabular flex items-center gap-1.5 px-1 text-micro text-fg-muted select-none"
@@ -1793,5 +1836,15 @@ function SunLine({ kind, label, time }: { kind: 'rise' | 'set'; label: string; t
         {dashes}
       </span>
     </li>
+  );
+  // 실험실 "골든아워": 일몰 줄 바로 아래 한 줄
+  if (!golden) return line;
+  return (
+    <>
+      {line}
+      <li className="tabular text-center text-micro text-warning">
+        {t('labs.goldenHour', { start: golden, end: time })}
+      </li>
+    </>
   );
 }
