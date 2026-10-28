@@ -9,13 +9,14 @@ log="$(mktemp)"
 if "$@" 2>&1 | tee "$log"; then
   exit 0
 fi
-# 색 코드 빼고, 오류처럼 보이는 줄 위주로 최대 30줄
-sed 's/\x1b\[[0-9;]*m//g' "$log" \
-  | grep -E -i 'error|fail|×|✗|✖|expected|received|TS[0-9]{4}|warn' \
-  | tail -n 30 \
-  | while IFS= read -r line; do
-      # 주석 한 줄 형식: 줄바꿈·% 는 이스케이프
-      esc="${line//'%'/'%25'}"
-      echo "::error title=${name}::${esc}"
-    done
+# 색 코드 빼고, 실패한 시험 이름(›)과 오류처럼 보이는 줄 위주로 최대 40줄을 주석 하나로 모은다
+# (GitHub은 단계마다 주석을 10개까지만 보여 줘서, 줄마다 따로 남기면 뒤쪽 실패가 잘린다 — 2026-10-28)
+body="$(sed 's/\x1b\[[0-9;]*m//g' "$log" \
+  | grep -E -i '›|error|fail|×|✗|✖|expected|received|TS[0-9]{4}' \
+  | grep -v -E '^\[WebServer\]|chunkSizeWarningLimit' \
+  | tail -n 40)"
+esc="${body//'%'/'%25'}"
+esc="${esc//$'\r'/}"
+esc="${esc//$'\n'/'%0A'}"
+echo "::error title=${name}::${esc}"
 exit 1

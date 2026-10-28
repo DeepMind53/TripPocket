@@ -78,16 +78,18 @@ test('비행기 모드: 설치 후 인터넷 없이 앱을 새로 열어도 모�
   await expect(page.getByText(/오프라인/).first()).toBeVisible();
   await visitAll(page, trip, '비행기 모드 여행');
 
-  // 오프라인에서 일정 추가·다녀옴 표시
+  // 오프라인에서 일정 추가, 상세 열기
   await addItem(page, trip, '스카이트리');
   await page.getByRole('button', { name: /일정, 센소지/ }).click();
+  await expect(page.getByRole('dialog', { name: '센소지' })).toBeVisible();
+
+  // 상세를 연 채로 앱을 다시 열면 같은 일정 상세가 다시 열린다 (빈 시트가 일정을 가리지 않게)
+  await page.reload();
   const detail = page.getByRole('dialog', { name: '센소지' });
   await expect(detail).toBeVisible();
-  await page.goBack();
+  await page.keyboard.press('Escape');
   await expect(detail).toBeHidden();
-
   // 다시 열어도 남아 있다 (기기 DB)
-  await page.reload();
   await expect(page.getByRole('button', { name: /일정, 스카이트리/ })).toBeVisible();
   await expect(page.getByRole('button', { name: /일정, 센소지/ })).toBeVisible();
 });

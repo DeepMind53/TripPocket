@@ -93,6 +93,69 @@ describe('실험실', () => {
     }
   });
 
+  it('날씨 주의는 일정 시각마다 시간별 예보로: 11시 비 → 우산, 12시 맑음 → 없음', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-10-22T03:00:00Z'));
+    const hours = Array.from(
+      { length: 24 },
+      (_, h) => `2026-10-23T${String(h).padStart(2, '0')}:00`,
+    );
+    vi.stubGlobal('fetch', async () =>
+      Response.json({
+        daily: {
+          time: ['2026-10-23'],
+          weather_code: [61],
+          temperature_2m_max: [24],
+          temperature_2m_min: [18],
+        },
+        hourly: {
+          time: hours,
+          weather_code: hours.map((_, h) => (h === 11 ? 61 : 0)),
+          temperature_2m: hours.map(() => 20),
+        },
+      }),
+    );
+    try {
+      const trip = await tripRepo.create({
+        title: '방콕',
+        destinations: [
+          { name: '방콕', kind: 'city', countryCode: 'TH', coords: { lat: 13.75, lng: 100.5 } },
+        ],
+        startDate: '2026-10-23',
+        endDate: '2026-10-23',
+        timezone: 'Asia/Bangkok',
+        cover: {},
+      });
+      for (const [title, startTime] of [
+        ['왓 아룬', '11:00'],
+        ['점심', '12:00'],
+      ] as const)
+        await itemRepo.create({
+          tripId: trip.id,
+          date: '2026-10-23',
+          kind: 'place',
+          title,
+          startTime,
+        });
+      render(
+        <RouterProvider
+          router={createMemoryRouter(routes, { initialEntries: [`/trips/${trip.id}/plan`] })}
+        />,
+      );
+      const row = (name: string) =>
+        screen.getByRole('button', { name: new RegExp(`일정, ${name}`) });
+      await waitFor(() =>
+        expect(
+          within(row('왓 아룬')).getByRole('img', { name: '날씨 주의: 비' }),
+        ).toBeInTheDocument(),
+      );
+      expect(within(row('점심')).queryByRole('img', { name: /날씨 주의/ })).toBeNull();
+    } finally {
+      vi.useRealTimers();
+      vi.unstubAllGlobals();
+    }
+  });
+
   it('설정에서 날씨 주의를 끄면 그림이 사라진다', async () => {
     vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(new Date('2026-10-22T03:00:00Z'));

@@ -27,6 +27,8 @@ export interface DayWeather {
   code: number;
   min: number;
   max: number;
+  /** 시간별 예보 (0~23시, 예보가 있는 날만) — 일정 시각마다 날씨 주의를 따로 (2026-10-28) */
+  hours?: { code: number[]; temp: number[] } | undefined;
 }
 
 /** "12°/20°" (반올림) */
@@ -70,4 +72,34 @@ export function weatherCautions(w: DayWeather): WeatherCaution[] {
   if (min <= 0) out.push('freezing');
   if (max >= 30) out.push('hot');
   return out;
+}
+
+/**
+ * 일정 시각의 날씨 주의 (사용자 요청 2026-10-28: 11시·12시 일정이면 시각마다 따로).
+ * 시간별 예보가 있으면 일정이 걸친 시간(시작 시각 ~ 끝 시각, 끝이 없으면 시작 후 1시간)의 날씨·기온으로,
+ * 시간별이 없거나 시각이 없는 일정은 하루 예보로
+ */
+export function weatherCautionsAt(
+  w: DayWeather,
+  time?: string,
+  endTime?: string,
+): WeatherCaution[] {
+  if (!time || !w.hours) return weatherCautions(w);
+  const start = Number(time.slice(0, 2));
+  const mins = Number(time.slice(3, 5));
+  let end = endTime ? Number(endTime.slice(0, 2)) : start + (mins > 0 ? 1 : 0);
+  if (end < start) end = 23; // 자정을 넘기면 그날 끝까지
+  const out = new Set<WeatherCaution>();
+  let any = false;
+  for (let h = start; h <= Math.min(end, 23); h++) {
+    const code = w.hours.code[h];
+    const temp = w.hours.temp[h];
+    if (code === undefined || temp === undefined) continue;
+    any = true;
+    for (const c of weatherCautions({ code, min: temp, max: temp })) out.add(c);
+  }
+  if (!any) return weatherCautions(w);
+  // 같은 순서로 (비·뇌우·눈·안개·쌀쌀함·영하·더위)
+  const order: WeatherCaution[] = ['rain', 'storm', 'snow', 'fog', 'cold', 'freezing', 'hot'];
+  return order.filter((c) => out.has(c));
 }

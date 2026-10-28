@@ -152,7 +152,8 @@ export function getForecast(
   timezone: string,
 ): Promise<Record<LocalDate, DayWeather>> {
   // 지난 7일을 더하면서 저장 키를 바꿨다 (예전 저장본에는 지난 날이 없음)
-  const key = `weather2:${lat.toFixed(2)},${lng.toFixed(2)}`;
+  // 시간별 예보를 더하면서 저장 키를 바꿨다 (2026-10-28, 예전 저장본에는 시간별이 없음)
+  const key = `weather3:${lat.toFixed(2)},${lng.toFixed(2)}`;
   return cached(
     key,
     WEATHER_TTL,
@@ -160,6 +161,7 @@ export function getForecast(
       const url =
         `https://api.open-meteo.com/v1/forecast?latitude=${lat.toFixed(2)}&longitude=${lng.toFixed(2)}` +
         `&daily=weather_code,temperature_2m_max,temperature_2m_min&forecast_days=16&past_days=7` +
+        `&hourly=weather_code,temperature_2m` +
         `&timezone=${encodeURIComponent(timezone)}`;
       const res = await fetchCounted('open_meteo', url);
       if (!res.ok) throw new Error(`weather ${res.status}`);
@@ -169,6 +171,26 @@ export function getForecast(
       const maxs = arr(daily.temperature_2m_max);
       const mins = arr(daily.temperature_2m_min);
       const out: Record<LocalDate, DayWeather> = {};
+      // 시간별: "2026-10-30T11:00" → 그날 11번째 칸
+      const hourly = isObj(body) && isObj(body.hourly) ? body.hourly : {};
+      const hCodes = arr(hourly.weather_code);
+      const hTemps = arr(hourly.temperature_2m);
+      const hours: Record<string, { code: number[]; temp: number[] }> = {};
+      arr(hourly.time).forEach((at, i) => {
+        const code = num(hCodes[i]);
+        const temp = num(hTemps[i]);
+        if (
+          typeof at !== 'string' ||
+          !/^\d{4}-\d{2}-\d{2}T\d{2}/.test(at) ||
+          code === null ||
+          temp === null
+        )
+          return;
+        const day = (hours[at.slice(0, 10)] ??= { code: [], temp: [] });
+        const h = Number(at.slice(11, 13));
+        day.code[h] = code;
+        day.temp[h] = temp;
+      });
       arr(daily.time).forEach((date, i) => {
         const code = num(codes[i]);
         const max = num(maxs[i]);
@@ -180,7 +202,7 @@ export function getForecast(
           max !== null &&
           min !== null
         )
-          out[date] = { code, min, max };
+          out[date] = { code, min, max, ...(hours[date] ? { hours: hours[date] } : {}) };
       });
       return out;
     },

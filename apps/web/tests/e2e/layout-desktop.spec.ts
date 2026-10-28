@@ -34,6 +34,8 @@ test('PC 화면: 도시 검색 결과가 길어져도(스크롤바 생김) 검�
 test('PC 화면: 내용 길이가 달라도(스크롤바 생김) 화면이 옆으로 밀리지 않는다', async ({
   browser,
 }) => {
+  // 템플릿 불러오기·저장까지 해서 느린 CI(2코어)에서는 30초를 넘기기도 한다
+  test.setTimeout(90_000);
   const context = await browser.newContext({ viewport: { width: 1280, height: 720 } });
   // 새 창은 공통 준비(fixtures)를 거치지 않으므로 직접 "로그인한 적 있는 기기"로
   await context.addInitScript(() => {

@@ -107,7 +107,7 @@ import { sunSlot, sunTimes } from '../../domain/sun';
 import { checkoutsOn, dayRecap, nearbyWishes } from '../../domain/dayExtras';
 import { lateNightAt } from '../../domain/travelExtras';
 import { earlyStartAt } from '../../domain/localInfo';
-import { weatherCautions, type WeatherCaution } from '../../domain/weather';
+import { weatherCautionsAt, type WeatherCaution } from '../../domain/weather';
 import { CautionIcons } from '../common/CautionIcons';
 import { useLab } from '../../data/labsStore';
 import { useTripHolidays } from './useTripHolidays';
@@ -128,6 +128,9 @@ type DayFilter = 'all' | 'wish' | number;
  * S-10 일정 (목록). 지도는 17단계에서 위쪽에 붙는다.
  * Day 칩은 주소(?day=)에 반영하되 히스토리는 쌓지 않는다.
  */
+/** 일정 상세에서 보던 일정 id (이 탭에만, sessionStorage) */
+const SELECTED_KEY = 'tp-plan-selected';
+
 export function PlanPage() {
   const { tripId = '' } = useParams();
   const trip = useTrip(tripId);
@@ -257,13 +260,34 @@ function PlanView({
   const dupOn = true;
   const [menuDate, setMenuDate] = useState<LocalDate | null>(null);
   const [dirDest, setDirDest] = useState<Destination | null>(null);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  // 고른 일정은 이 탭에 기억한다 — 상세 시트는 새로고침(앱 다시 열기)해도 다시 열리는데,
+  // 무엇을 보던 중인지 모르면 빈 시트가 일정을 가렸다 (2026-10-28, 아이폰 오프라인 확인 중 발견)
+  const [selectedId, setSelectedIdState] = useState<string | null>(() => {
+    try {
+      return sessionStorage.getItem(SELECTED_KEY);
+    } catch {
+      return null;
+    }
+  });
+  const setSelectedId = (id: string | null) => {
+    setSelectedIdState(id);
+    try {
+      if (id) sessionStorage.setItem(SELECTED_KEY, id);
+      else sessionStorage.removeItem(SELECTED_KEY);
+    } catch {
+      // 기억 못 해도 이번 화면에서는 그대로
+    }
+  };
   const [formTarget, setFormTarget] = useState<{ date: LocalDate | null; editing: boolean }>({
     date: null,
     editing: false,
   });
 
   const selected = items.find((i) => i.id === selectedId);
+  // 다시 열었는데 보던 일정이 없으면(지워짐·다른 여행) 빈 상세 시트를 닫는다
+  useEffect(() => {
+    if (detailOpen && !selected) setDetailOpen(false);
+  }, [detailOpen, selected]); // eslint-disable-line react-hooks/exhaustive-deps -- 열림·고른 일정이 바뀔 때만
   // 상세에서 방문 기록을 고칠 수 있는 지난 일정 (여행지 지금 시각 기준)
   const selectedPast =
     !!selected &&
@@ -969,8 +993,8 @@ function DaySection({
   const nearby = nearbyOn && wishes ? nearbyWishes(items, wishes) : [];
   const outs = checkoutOn ? (checkouts ?? []) : [];
   const recap = recapOn && date && date <= todayIn(timezone) ? dayRecap(items) : null;
-  // 날씨 주의: 예보(작년 기록 아님)가 있는 날만
-  const cautions = weatherOn && date && weather && !weather.year ? weatherCautions(weather) : [];
+  // 날씨 주의: 예보(작년 기록 아님)가 있는 날만, 일정 시각마다 시간별 예보로 (2026-10-28)
+  const forecast = weatherOn && date && weather && !weather.year ? weather : null;
   const lateAt = lateOn && date ? lateNightAt(items) : null;
   const earlyAt = earlyOn && date ? earlyStartAt(items) : null;
   // 그날 마지막 장소 → 숙소 (직선거리)
@@ -1127,7 +1151,11 @@ function DaySection({
             )}
             <ItemRow
               item={item}
-              cautions={item.kind === 'note' ? undefined : cautions}
+              cautions={
+                item.kind === 'note' || !forecast
+                  ? undefined
+                  : weatherCautionsAt(forecast, item.startTime, item.endTime)
+              }
               n={i + 1}
               color={color}
               now={item.id === nowId}
