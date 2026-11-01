@@ -37,30 +37,34 @@ beforeEach(async () => {
     });
     if (url.includes('dapi.kakao.com'))
       return Response.json({
-        documents: [
-          {
-            id: '1',
-            place_name: '성수 카페 어니언',
-            address_name: '서울 성동구',
-            road_address_name: '서울 성동구 아차산로 9길 8',
-            x: '127.05',
-            y: '37.54',
-            category_name: '음식점 > 카페',
-            place_url: 'https://place.map.kakao.com/1',
-          },
-        ],
+        documents: url.includes('query=nowhere')
+          ? []
+          : [
+              {
+                id: '1',
+                place_name: '성수 카페 어니언',
+                address_name: '서울 성동구',
+                road_address_name: '서울 성동구 아차산로 9길 8',
+                x: '127.05',
+                y: '37.54',
+                category_name: '음식점 > 카페',
+                place_url: 'https://place.map.kakao.com/1',
+              },
+            ],
       });
     if (url.includes('openapi.naver.com'))
       return Response.json({
-        items: [
-          {
-            title: '<b>어니언</b> 성수',
-            roadAddress: '서울 성동구 아차산로9길 8',
-            mapx: '1270500000',
-            mapy: '375400000',
-            category: '카페>디저트',
-          },
-        ],
+        items: /query=(nonaver|nowhere)/.test(url)
+          ? []
+          : [
+              {
+                title: '<b>어니언</b> 성수',
+                roadAddress: '서울 성동구 아차산로9길 8',
+                mapx: '1270500000',
+                mapy: '375400000',
+                category: '카페>디저트',
+              },
+            ],
       });
     if (url.includes('places:searchText'))
       return Response.json({
@@ -103,12 +107,20 @@ const search = (body: object, cookie = `__Host-sid=${sid}`) =>
   });
 
 describe('장소 검색', () => {
-  it('국내: 카카오·네이버를 합쳐 비슷한 순, Google은 부르지 않는다', async () => {
+  it('국내: 네이버 결과가 있으면 네이버만 (카카오·Google은 부르지 않는다)', async () => {
     const res = (await search({ q: '어니언', scope: 'domestic' })).json();
     expect(
       res.places.map((p: { source: string; name: string }) => `${p.source}:${p.name}`),
-    ).toEqual(['naver:어니언 성수', 'kakao:성수 카페 어니언']);
+    ).toEqual(['naver:어니언 성수']);
     expect(res.places[0].coords).toEqual({ lat: 37.54, lng: 127.05 });
+    expect(calls.some((c) => c.url.includes('kakao'))).toBe(false);
+    expect(calls.some((c) => c.url.includes('googleapis'))).toBe(false);
+  });
+
+  it('국내: 네이버에 없으면 카카오, 둘 다 없어도 Google은 부르지 않는다', async () => {
+    const res = (await search({ q: 'nonaver', scope: 'domestic' })).json();
+    expect(res.places.map((p: { source: string }) => p.source)).toEqual(['kakao']);
+    expect((await search({ q: 'nowhere', scope: 'domestic' })).json().places).toEqual([]);
     expect(calls.some((c) => c.url.includes('googleapis'))).toBe(false);
   });
 

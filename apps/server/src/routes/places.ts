@@ -77,27 +77,17 @@ export function placesRoutes(app: FastifyInstance, config: Config, db: Db): void
     let fallback: 'google_autocomplete' | 'geoapify' | undefined;
     /** Google을 써야 했는데 한도·중지로 못 씀 → 결과가 없으면 이유를 알려 준다 (빈 목록으로 조용히 끝내지 않게) */
     let googleBlocked: 'api_paused' | null = null;
-    const tasks: Promise<void>[] = [];
+    // 국내: 네이버 먼저, 결과가 없거나 실패하면 카카오. Google은 쓰지 않는다 (사용자 결정 2026-11-02)
     if (scope === 'domestic') {
-      if (config.KAKAO_CLIENT_ID)
-        tasks.push(
-          searchKakao(q, config.KAKAO_CLIENT_ID, near).then(
-            (r) => void found.push(...r),
-            () => {},
-          ),
-        );
-      if (naverKeys)
-        tasks.push(
-          searchNaver(q, naverKeys).then(
-            (r) => void found.push(...r),
-            () => {},
-          ),
-        );
+      if (naverKeys) found.push(...(await searchNaver(q, naverKeys).catch(() => [])));
+      if (found.length === 0 && config.KAKAO_CLIENT_ID)
+        found.push(...(await searchKakao(q, config.KAKAO_CLIENT_ID, near).catch(() => [])));
+      if (found.length === 0 && !apiAllowed('naver_search') && !apiAllowed('kakao_keyword'))
+        return reply.code(503).send({ error: 'api_paused', api: 'naver_search' });
     }
-    await Promise.all(tasks);
-    // 해외이거나 국내 결과가 없으면 Google (무료 한도 안에서만).
+    // 해외는 Google (무료 한도 안에서만).
     // 이번 달 무료량을 다 쓰면 남은 기간은 백업으로: Google 자동완성(무료 1만) → Geoapify(하루 3,000) (사용자 결정 2026-10-26)
-    const needGoogle = scope === 'overseas' || found.length === 0;
+    const needGoogle = scope === 'overseas';
     const gkey = config.GOOGLE_PLACES_KEY;
     if (needGoogle && gkey && apiAllowed('google_places_search')) {
       try {
