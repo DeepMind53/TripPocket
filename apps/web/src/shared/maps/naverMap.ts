@@ -45,6 +45,8 @@ export async function mountNaver(
     scaleControl: false,
     mapDataControl: false,
   });
+  // 네이버 지도가 칸에 position: relative를 직접 넣는다 → 높이 없는 absolute 칸은 높이가 0이 되어 지도가 안 보인다
+  el.style.position = 'absolute';
   let markers: { setMap(m: unknown): void }[] = [];
   let lines: { setMap(m: unknown): void }[] = [];
   let onClick: (id: string) => void = () => {};
@@ -99,7 +101,9 @@ export async function mountNaver(
     },
     resize() {
       // 네이버 지도는 상자 크기를 직접 알려 줘야 빈 곳 없이 다시 그린다
-      map.setSize(new n.Size(el.clientWidth, el.clientHeight));
+      // 칸에는 네이버가 넣은 고정 크기가 남아 있으므로 바깥 상자 크기를 잰다
+      const box = el.parentElement ?? el;
+      map.setSize(new n.Size(box.clientWidth, box.clientHeight));
     },
     onMarkerClick(cb) {
       onClick = cb;

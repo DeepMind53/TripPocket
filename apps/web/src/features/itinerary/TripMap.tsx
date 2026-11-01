@@ -198,6 +198,24 @@ export function TripMap({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [size, status]);
 
+  // 높이 전환 애니메이션 중에는 위에서 잰 크기가 틀리다 → 상자 크기가 실제로 바뀔 때마다 다시 그린다
+  const focusRef = useRef(focus);
+  useEffect(() => {
+    focusRef.current = focus;
+  });
+  useEffect(() => {
+    const box = el.current?.parentElement;
+    const h = handle.current;
+    if (!box || !h || status !== 'ready' || typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(() => {
+      h.resize();
+      if (!focusRef.current?.place?.coords)
+        h.fitBounds(fitPoints(latest.current.visible).map((i) => i.place!.coords!));
+    });
+    observer.observe(box);
+    return () => observer.disconnect();
+  }, [status]);
+
   // 크게 보기에서 일정을 넘기면 그 핀으로
   const focusCoords = focus?.place?.coords;
   useEffect(() => {
