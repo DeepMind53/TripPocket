@@ -1,3 +1,4 @@
+import { addDays, todayIn } from '@trippocket/shared';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
@@ -18,8 +19,9 @@ beforeEach(async () => {
   const trip = await tripRepo.create({
     title: '도쿄 가을여행',
     destinations: [{ name: '도쿄', kind: 'city', countryCode: 'JP' }],
-    startDate: '2026-10-24',
-    endDate: '2026-10-28',
+    // 진행 중인 여행: 지난 여행이 되면 오늘 날짜 보기가 아니라 빈 날을 접어 문구가 달라진다
+    startDate: addDays(todayIn('Asia/Tokyo'), -1),
+    endDate: addDays(todayIn('Asia/Tokyo'), 3),
     timezone: 'Asia/Tokyo',
     cover: { emoji: '🗼' },
   });

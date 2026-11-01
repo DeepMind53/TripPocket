@@ -43,6 +43,7 @@ async function audit(page: Page) {
 }
 
 test('주요 화면 접근성 기본 점검', async ({ page }) => {
+  test.slow(); // 화면을 많이 돌아 기본 30초에 걸린다
   await page.goto('/dev/db');
   await page.getByRole('button', { name: '샘플 여행 만들기' }).click();
   await expect(page.getByText('샘플 여행을 만들었어요')).toBeVisible();

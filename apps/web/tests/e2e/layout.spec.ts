@@ -38,6 +38,7 @@ async function seedTrip(page: Page) {
 
 for (const width of [320, 360, 412]) {
   test(`${width}px: 주요 화면에 가로 넘침이 없다`, async ({ page }) => {
+    test.slow(); // 화면을 많이 돌아 기본 30초에 걸린다
     await page.setViewportSize({ width, height: 760 });
     const trip = await seedTrip(page);
     const pages = [
