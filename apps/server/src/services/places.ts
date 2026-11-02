@@ -79,6 +79,8 @@ export async function searchGoogle(
   q: string,
   key: string,
   near?: { lat: number; lng: number },
+  /** near 주변을 우선할 반경(m) — 그 밖을 막지는 않는다 */
+  radius = 30000,
 ): Promise<PlaceSummary[]> {
   guardApi('google_places_search');
   trackApi('google_places_search');
@@ -97,7 +99,7 @@ export async function searchGoogle(
       ...(near
         ? {
             locationBias: {
-              circle: { center: { latitude: near.lat, longitude: near.lng }, radius: 30000 },
+              circle: { center: { latitude: near.lat, longitude: near.lng }, radius },
             },
           }
         : {}),

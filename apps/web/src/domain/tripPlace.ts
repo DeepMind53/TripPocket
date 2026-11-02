@@ -17,6 +17,21 @@ export function tripCenter(trip: Pick<Trip, 'destinations'>): { lat: number; lng
   return trip.destinations.find((d) => d.coords)?.coords ?? null;
 }
 
+/**
+ * 숙소가 있는 도시 (AI 추천에서 호텔 위치·블로그 검색에 함께 쓴다).
+ * 목적지가 하나면 그곳, 여럿이면 주소에 이름이 나오는 곳, 모르면 null.
+ * 좌표는 도시일 때만 — 나라 중심 좌표는 숙소와 멀 수 있다
+ */
+export function lodgingArea(
+  trip: Pick<Trip, 'destinations'>,
+  address?: string,
+): { area: string; areaAt?: { lat: number; lng: number } } | null {
+  const list = trip.destinations;
+  const d = list.length === 1 ? list[0] : list.find((x) => address?.includes(x.name));
+  if (!d) return null;
+  return { area: d.name, ...(d.kind === 'city' && d.coords ? { areaAt: d.coords } : {}) };
+}
+
 /** 여행 국가 코드 목록 (중복 없이) */
 export function tripCountries(trip: Pick<Trip, 'destinations'>): string[] {
   return [...new Set(trip.destinations.flatMap((d) => (d.countryCode ? [d.countryCode] : [])))];

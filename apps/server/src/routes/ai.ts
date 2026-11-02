@@ -3,7 +3,9 @@ import {
   countByPeriod,
   distanceKm,
   cleanShortText,
+  inKorea,
   pickRadius,
+  RADIUS_TIERS_KM,
   type AiCategory,
   type CategoryResult,
   type PlaceSummary,
@@ -16,7 +18,7 @@ import type { Db } from '../db/database';
 import { requireUser } from '../auth/session';
 import { requireAdmin } from './admin';
 import { resolveAnchor } from '../services/anchor';
-import { basicExtract, namesOf, WORD } from '../services/basicRecommend';
+import { basicExtract, namesOf, norm, WORD } from '../services/basicRecommend';
 import { extractPlaces, llmProviders, type LlmEngine } from '../services/llm';
 import { naverSearchKeys, searchBlog, type BlogPost } from '../services/naverBlog';
 import { searchGoogle, searchKakao } from '../services/places';
@@ -31,6 +33,17 @@ const QUERIES: Record<Exclude<AiCategory, 'custom'>, readonly string[]> = {
 const queriesFor = (c: AiCategory, keyword?: string) =>
   c === 'custom' ? (keyword ? [keyword] : []) : QUERIES[c];
 const mapWord = (c: AiCategory, keyword?: string) => (c === 'custom' ? (keyword ?? '') : WORD[c]);
+/** 해외 지도 후보가 모자랄 때 기준점 좌표 주변을 이 말로 더 찾는다 */
+const GOOGLE_NEARBY: Record<Exclude<AiCategory, 'custom'>, string> = {
+  food: 'restaurant',
+  cafe: 'cafe',
+  play: 'tourist attraction',
+};
+
+const LatLng = z.object({
+  lat: z.number().check(z.gte(-90), z.lte(90)),
+  lng: z.number().check(z.gte(-180), z.lte(180)),
+});
 
 const Body = z.object({
   anchor: z.union([
@@ -43,6 +56,10 @@ const Body = z.object({
     z.object({
       type: z.literal('lodging'),
       name: z.string().check(z.minLength(1), z.maxLength(60)),
+      // 호텔 이름만으로는 다른 나라 장소가 잡히므로 주소·여행 도시를 함께 받는다 (없어도 됨 — 구버전 앱)
+      address: z.optional(z.string().check(z.maxLength(200))),
+      area: z.optional(z.string().check(z.maxLength(60))),
+      areaAt: z.optional(LatLng),
     }),
     // 지역 입력 드롭다운에서 고른 장소 (이름 + 그 장소 좌표 — 사용자 위치 아님)
     z.object({
@@ -68,6 +85,10 @@ const TOP = 5;
 const CANDIDATES = 15;
 /** 이만큼 모이면 더 먼 단계로 넓히지 않는다 */
 const ENOUGH = 3;
+/** 찾은 숙소가 여행 도시에서 이보다 멀면 다른 곳으로 본다 */
+const AREA_MAX_KM = 300;
+/** 정확도순으로 받을 글 수 (검색어마다). 최신순에 묻히는 소개 글을 함께 본다 */
+const SIM_POSTS = 100;
 
 export interface RecommendResult {
   anchor: string;
@@ -88,8 +109,8 @@ export interface RecommendResult {
   keyword?: string;
 }
 
-/** 어디서 찾았나: blog = 네이버 블로그(AI 정리), google = Google 장소 검색, both = 둘 다 */
-type Origin = 'blog' | 'google' | 'both';
+/** 어디서 찾았나: blog = 네이버 블로그(AI 정리), google = Google 장소 검색, both = 둘 다, map = 카카오 장소 검색(국내) */
+type Origin = 'blog' | 'google' | 'both' | 'map';
 type Rec = Recommendation & { place?: PlaceSummary; origin: Origin };
 
 /**
@@ -157,34 +178,48 @@ export function aiRoutes(app: FastifyInstance, config: Config, db: Db): void {
       a.type === 'place' || a.type === 'coords'
         ? { lat: Math.round(a.lat * 1000) / 1000, lng: Math.round(a.lng * 1000) / 1000 }
         : undefined;
+    // 숙소: 주소·여행 도시 (위치 찾기·블로그 검색에만, 주소는 AI에 보내지 않는다)
+    const lodging =
+      a.type === 'lodging'
+        ? {
+            address: a.address?.trim() || undefined,
+            area: (a.area && cleanShortText(a.area.trim(), 40)) || undefined,
+            areaAt: a.areaAt,
+          }
+        : undefined;
     return {
       anchor,
       categories,
       domestic: parsed.data.domestic,
       keyword: keyword ?? undefined,
       at,
+      lodging,
     };
   }
 
-  /** 네이버 블로그 최신 글 (12개월 안, 링크로 중복 제거) */
+  /** 네이버 블로그 글 (12개월 안, 링크로 중복 제거): 정확도순과 최신순을 번갈아 — AI에는 앞쪽만 간다 */
   async function collect(
-    anchor: string,
+    anchors: readonly string[],
     category: AiCategory,
     keyword?: string,
   ): Promise<BlogPost[]> {
     const since = new Date();
     since.setMonth(since.getMonth() - 12);
     const sinceYmd = since.toISOString().slice(0, 10).replace(/-/g, '');
-    const posts = (
-      await Promise.all(
-        queriesFor(category, keyword).map((q) =>
-          searchBlog(`${anchor} ${q}`, naver!, { max: 300, sinceYmd }),
-        ),
-      )
-    ).flat();
-    return [...new Map(posts.map((p) => [p.link, p])).values()].sort((a, b) =>
-      b.postdate.localeCompare(a.postdate),
-    );
+    const queries = anchors.flatMap((a) => queriesFor(category, keyword).map((q) => `${a} ${q}`));
+    const [bySim, byDate] = await Promise.all([
+      Promise.all(
+        queries.map((q) => searchBlog(q, naver!, { max: SIM_POSTS, sinceYmd, sort: 'sim' })),
+      ),
+      Promise.all(queries.map((q) => searchBlog(q, naver!, { max: 300, sinceYmd }))),
+    ]);
+    const sim = bySim.flat();
+    const date = byDate.flat().sort((a, b) => b.postdate.localeCompare(a.postdate));
+    const mixed = Array.from({ length: Math.max(sim.length, date.length) }, (_, i) => [
+      ...(sim[i] ? [sim[i]] : []),
+      ...(date[i] ? [date[i]] : []),
+    ]).flat();
+    return [...new Map(mixed.map((p) => [p.link, p])).values()];
   }
 
   // ① 수집 원자료 (관리자 점검용 — 블로그 사용량·하루 한도를 쓰므로 관리자만)
@@ -201,7 +236,7 @@ export function aiRoutes(app: FastifyInstance, config: Config, db: Db): void {
       categories: {},
     };
     for (const c of p.categories) {
-      const posts = await collect(p.anchor, c, p.keyword);
+      const posts = await collect([p.anchor], c, p.keyword);
       result.categories[c] = {
         queries: queriesFor(c, p.keyword).map((q) => `${p.anchor} ${q}`),
         byPeriod: countByPeriod(
@@ -221,7 +256,8 @@ export function aiRoutes(app: FastifyInstance, config: Config, db: Db): void {
     const p = await prepare(req, reply);
     if (!p) return;
     const where = p.at ? `${p.at.lat},${p.at.lng}` : '';
-    const key = `rec|${p.anchor}|${where}|${p.categories.join(',')}|${p.keyword ?? ''}|${p.domestic}|${today()}`;
+    const stay = p.lodging ? `${p.lodging.address ?? ''}|${p.lodging.area ?? ''}` : '';
+    const key = `rec|${p.anchor}|${where}|${stay}|${p.categories.join(',')}|${p.keyword ?? ''}|${p.domestic}|${today()}`;
     const hit = getCache(key);
     if (hit) return JSON.parse(hit);
 
@@ -235,55 +271,112 @@ export function aiRoutes(app: FastifyInstance, config: Config, db: Db): void {
     const kakao = config.KAKAO_CLIENT_ID;
     const gkey = config.GOOGLE_PLACES_KEY;
     // Google 장소 검색(과금 가능 — 무료 사용량 안에서만, API 사용량 자동 중지)
-    const google = (q: string, near?: { lat: number; lng: number }): Promise<PlaceSummary[]> =>
+    const google = (
+      q: string,
+      near?: { lat: number; lng: number },
+      radius?: number,
+    ): Promise<PlaceSummary[]> =>
       gkey && apiAllowed('google_places_search')
-        ? searchGoogle(q, gkey, near).catch(() => [])
+        ? searchGoogle(q, gkey, near, radius).catch(() => [])
         : Promise.resolve([]);
-    // 기준점 위치: 고른 장소·현재 위치 > 국내는 카카오(무료) > 해외는 Google(1회)
-    // 국내에는 Google을 쓰지 않는다 (사용자 결정 2026-11-02)
-    const anchorAt =
-      p.at ??
-      (p.domestic
-        ? kakao
-          ? (await searchKakao(p.anchor, kakao).catch(() => []))[0]?.coords
-          : undefined
-        : (await google(p.anchor))[0]?.coords) ??
-      undefined;
+    const find = (q: string, near?: { lat: number; lng: number }) =>
+      kakao ? searchKakao(q, kakao, near).catch(() => []) : Promise.resolve([]);
+    const stayAt = p.lodging;
+    /** 숙소는 도시를 붙여 찾는다 ("Vignette 리조트"만으로는 다른 나라 장소가 잡힌다) */
+    const nameInArea = stayAt?.area ? `${stayAt.area} ${p.anchor}` : p.anchor;
+
+    /** 해외: 찾은 곳이 한국이거나 여행 도시에서 너무 멀면 잘못 찾은 것으로 보고 버린다 */
+    const locateOverseas = async (): Promise<PlaceSummary | undefined> => {
+      const q = stayAt?.address ? `${p.anchor} ${stayAt.address}` : nameInArea;
+      const found = (await google(q, stayAt?.areaAt))[0];
+      if (!found?.coords || inKorea(found.coords)) return undefined;
+      if (stayAt?.areaAt && distanceKm(stayAt.areaAt, found.coords) > AREA_MAX_KM) return undefined;
+      return found;
+    };
+    /** 국내: 도시 + 이름 → 이름 → 주소 순서로 카카오(무료). Google은 쓰지 않는다 (사용자 결정 2026-11-02) */
+    const locateDomestic = async (): Promise<PlaceSummary | undefined> =>
+      (await find(nameInArea))[0] ??
+      (stayAt
+        ? ((await find(p.anchor))[0] ??
+          (stayAt.address ? (await find(stayAt.address))[0] : undefined))
+        : undefined);
+
+    // 기준점 위치: 고른 장소·현재 위치 > 국내는 카카오 > 해외는 Google(1회)
+    const located = p.at ? undefined : await (p.domestic ? locateDomestic() : locateOverseas());
+    const anchorAt = p.at ?? located?.coords ?? undefined;
+    const isAnchor = (g: PlaceSummary) => g.id === located?.id || norm(g.name) === norm(p.anchor);
+    // 숙소면 호텔 이름 글이 적으므로 도시 이름으로도 블로그를 찾는다
+    const blogAnchors = stayAt?.area ? [p.anchor, stayAt.area] : [p.anchor];
+    // AI에는 이름만 (주소·좌표 없음). 어느 도시인지 알아야 근처 장소를 고른다
+    const aiAnchor = nameInArea;
+    // 지도 검색어의 지역: 숙소는 도시, 그 밖은 기준점 이름
+    const mapArea = stayAt?.area ?? p.anchor;
 
     // 카테고리끼리 동시에: 블로그 수집·AI 정리 + 지도 후보 → 합치기 → 가까운 순 단계(5·10km)
     const done = await Promise.all(
       p.categories.map(async (c) => {
-        const posts = (await collect(p.anchor, c, p.keyword))
+        const posts = (await collect(blogAnchors, c, p.keyword))
           .slice(0, AI_POSTS)
           .map((x, i) => ({ ...x, id: `p${i}` }));
         const ai = await extractPlaces(
           providers,
-          p.anchor,
+          aiAnchor,
           c,
           posts,
           (engine, err) => req.log.warn({ engine, err: String(err) }, 'ai engine failed'),
           p.keyword,
         );
-        const engine = ai?.engine ?? 'basic';
-        const extracted =
-          ai?.places ?? (await basicExtract(p.anchor, c, posts, { kakao, naver }, p.keyword));
-        const built = buildRecommendations(extracted, posts, now, CANDIDATES)[c];
+        let engine: LlmEngine | 'basic' = ai?.engine ?? 'basic';
+        let built = buildRecommendations(ai?.places ?? [], posts, now, CANDIDATES)[c];
+        // AI가 실패했거나 근거 있는 곳을 하나도 못 찾으면 AI 없는 집계로
+        if (built.places.length === 0) {
+          const basic = buildRecommendations(
+            await basicExtract(mapArea, c, posts, { kakao, naver }, p.keyword),
+            posts,
+            now,
+            CANDIDATES,
+          )[c];
+          if (basic.places.length > 0 || !ai) {
+            built = basic;
+            engine = 'basic';
+          }
+        }
 
         let recs: Rec[];
         if (p.domestic) {
-          // 국내: 네이버 블로그(AI 정리) 먼저 → 카카오로 위치 확인 → 가까운 곳이 모자라면 Google 장소로 채움
-          const find = (q: string, near?: { lat: number; lng: number }) =>
-            kakao ? searchKakao(q, kakao, near).catch(() => []) : Promise.resolve([]);
+          // 국내: 네이버 블로그(AI 정리) 먼저 → 카카오로 위치 확인 → 10km 안이 모자라면 카카오 장소로 채움
           recs = await Promise.all(
             built.places.map(async (r): Promise<Rec> => {
               const place =
-                (await find(`${p.anchor} ${r.name}`))[0] ?? (await find(r.name, anchorAt))[0];
+                (await find(`${mapArea} ${r.name}`))[0] ?? (await find(r.name, anchorAt))[0];
               return place ? { ...r, place, origin: 'blog' } : { ...r, origin: 'blog' };
             }),
           );
+          const nearby = recs.filter(
+            (r) =>
+              anchorAt &&
+              r.place?.coords &&
+              distanceKm(anchorAt, r.place.coords) <= RADIUS_TIERS_KM.at(-1)!,
+          );
+          if (anchorAt && nearby.length < TOP) {
+            const fill = (await find(`${mapArea} ${mapWord(c, p.keyword)}`, anchorAt)).filter(
+              (g) => !isAnchor(g) && !recs.some((r) => sameName(g.name, r.name)),
+            );
+            recs = [...recs, ...fill.map((g) => fromMapSearch(g, c, 'map'))];
+          }
         } else {
           // 해외: Google 장소 검색 먼저(위치 정확) → 네이버 블로그 언급·요약을 이름으로 붙임 → 블로그에만 있는 곳은 뒤에
-          const candidates = await google(`${p.anchor} ${mapWord(c, p.keyword)}`, anchorAt);
+          // 지역 이름 + 한국어 검색어를 기준점 주변으로 찾고, 모자라면 그 주변을 종류로 더 찾는다
+          const byName = (await google(`${mapArea} ${mapWord(c, p.keyword)}`, anchorAt)).filter(
+            (g) => !isAnchor(g),
+          );
+          const byKind =
+            anchorAt && c !== 'custom' && byName.length < ENOUGH
+              ? (await google(GOOGLE_NEARBY[c], anchorAt, RADIUS_TIERS_KM[0] * 1000)).filter(
+                  (g) => !isAnchor(g) && !byName.some((x) => x.id === g.id),
+                )
+              : [];
+          const candidates = [...byName, ...byKind];
           recs = candidates.length
             ? mergeGoogleFirst(candidates, built.places, c)
             : built.places.map((r): Rec => ({ ...r, origin: 'blog' }));
@@ -303,8 +396,11 @@ export function aiRoutes(app: FastifyInstance, config: Config, db: Db): void {
       }),
     );
     for (const [c, value] of done) result.categories[c] = value;
-    countUse(req.user!.userId);
-    putCache(key, result);
+    // 한 곳도 못 찾았으면 하루 횟수를 쓰지 않고, 빈 결과가 6시간 남지 않게 저장도 하지 않는다
+    if (done.some(([, value]) => value.places.length > 0)) {
+      countUse(req.user!.userId);
+      putCache(key, result);
+    }
     return result;
   });
 
@@ -321,8 +417,8 @@ function sameName(a: string, b: string): boolean {
   return na.some((x) => nb.some((y) => x.includes(y) || y.includes(x)));
 }
 
-/** Google 결과를 근거 글 없는 추천으로 (언급 0, 요약 없음 — Google 정보는 AI에 보내지 않는다) */
-const fromGoogle = (g: PlaceSummary, category: AiCategory): Rec => ({
+/** 지도 검색 결과를 근거 글 없는 추천으로 (언급 0, 요약 없음 — 지도 정보는 AI에 보내지 않는다) */
+const fromMapSearch = (g: PlaceSummary, category: AiCategory, origin: Origin): Rec => ({
   name: g.name,
   category,
   mentions: 0,
@@ -332,7 +428,7 @@ const fromGoogle = (g: PlaceSummary, category: AiCategory): Rec => ({
   summary: '',
   sources: [],
   place: g,
-  origin: 'google',
+  origin,
 });
 
 /** 해외: Google 후보 순서를 기본으로, 블로그에서 언급된 곳은 언급·요약을 붙여 앞으로. 블로그에만 있는 곳은 뒤에 */
@@ -349,7 +445,7 @@ function mergeGoogleFirst(
     if (i >= 0) {
       used.add(i);
       matched.push({ ...blog[i]!, name: g.name, place: g, origin: 'both' });
-    } else rest.push(fromGoogle(g, category));
+    } else rest.push(fromMapSearch(g, category, 'google'));
   }
   matched.sort((x, y) => y.score - x.score);
   const blogOnly = blog.filter((_, j) => !used.has(j)).map((b): Rec => ({ ...b, origin: 'blog' }));

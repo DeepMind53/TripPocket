@@ -20,15 +20,15 @@ import { itemRepo } from '../../data/repositories/itemRepo';
 import { savedPlaceRepo } from '../../data/repositories/savedPlaceRepo';
 import { settingsRepo } from '../../data/repositories/settingsRepo';
 import { lodgingForNight } from '../../domain/lodging';
-import { isDomesticTrip } from '../../domain/tripPlace';
+import { isDomesticTrip, lodgingArea } from '../../domain/tripPlace';
 import { PlaceAutocomplete } from '../common/PlaceAutocomplete';
 import { ServerOfflineNotice } from '../common/ServerOfflineNotice';
 import { useTranslation } from '../../i18n';
 import { openMapLink, placeLink } from '../../shared/lib/directions';
 import { Button, Chip, IconButton, SegmentedControl, TopBar, toast } from '../../shared/ui';
 
-/** origin: blog = 네이버 블로그(AI 정리), google = Google 장소 검색, both = 둘 다 */
-type Rec = Recommendation & { place?: PlaceSummary; origin?: 'blog' | 'google' | 'both' };
+/** origin: blog = 네이버 블로그(AI 정리), google = Google 장소 검색, both = 둘 다, map = 카카오 장소 검색 */
+type Rec = Recommendation & { place?: PlaceSummary; origin?: 'blog' | 'google' | 'both' | 'map' };
 interface Result {
   anchor: string;
   createdAt: string;
@@ -88,8 +88,18 @@ export function AiPage() {
 
   /** 기준점 + 국내 여부 (현재 위치면 그 위치가 국내인지로) */
   async function anchor(): Promise<{ anchor: object; domestic: boolean }> {
-    if (mode === 'lodging' && lodging)
-      return { anchor: { type: 'lodging', name: lodging.title }, domestic };
+    if (mode === 'lodging' && lodging) {
+      const address = lodging.details?.address;
+      return {
+        anchor: {
+          type: 'lodging',
+          name: lodging.title,
+          ...(address ? { address } : {}),
+          ...(trip ? lodgingArea(trip, address) : {}),
+        },
+        domestic,
+      };
+    }
     if (mode === 'coords') {
       const pos = await new Promise<GeolocationPosition>((ok, fail) =>
         navigator.geolocation.getCurrentPosition(ok, fail, { timeout: 10_000 }),
@@ -358,7 +368,7 @@ function RecCard({
                   n: rec.mentions,
                   date: `${rec.lastMentioned.slice(4, 6)}.${rec.lastMentioned.slice(6, 8)}`,
                 })
-              : t('ai.fromGoogle')}
+              : t(rec.origin === 'map' ? 'ai.fromMap' : 'ai.fromGoogle')}
             {rec.origin === 'both' && ` · ${t('ai.alsoGoogle')}`}
             {!place && ` · ${t('ai.unverified')}`}
           </span>

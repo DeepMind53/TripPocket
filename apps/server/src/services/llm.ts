@@ -48,6 +48,9 @@ interface Provider {
   model: string;
   /** 한 번에 보낼 글 수 — Groq 무료는 분당 8,000토큰이라 적게 */
   maxPosts: number;
+  /** 글마다 보낼 제목·요약 길이 — 토큰 한도가 넉넉한 AI에는 길게 */
+  titleMax: number;
+  snippetMax: number;
   /** 응답 대기 (초) — 막히면 빨리 다음 AI로 */
   timeout: number;
   extra: Record<string, unknown>;
@@ -62,7 +65,9 @@ export function llmProviders(config: Config): Provider[] {
       url: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
       key: config.GEMINI_API_KEY,
       model: config.GEMINI_MODEL,
-      maxPosts: 60,
+      maxPosts: 100,
+      titleMax: 70,
+      snippetMax: 100,
       timeout: 45,
       // 생각(thinking)은 짧게 — 장소 이름 뽑기에는 충분하고 빠르다
       extra: { max_tokens: 4000, reasoning_effort: 'low' },
@@ -74,6 +79,8 @@ export function llmProviders(config: Config): Provider[] {
       key: config.CF_AI_TOKEN,
       model: config.CF_AI_MODEL,
       maxPosts: 80,
+      titleMax: 70,
+      snippetMax: 80,
       timeout: 60,
       // gpt-oss는 기본으로 오래 생각해서 출력 상한을 다 써 버린다 → 짧게
       extra: {
@@ -88,6 +95,8 @@ export function llmProviders(config: Config): Provider[] {
       key: config.GROQ_API_KEY,
       model: config.GROQ_MODEL,
       maxPosts: 40,
+      titleMax: 50,
+      snippetMax: 40,
       timeout: 30,
       extra: {
         // 분당 토큰 한도 안에 머물게 출력 상한 + (gpt-oss) 생각은 짧게
@@ -146,6 +155,7 @@ async function call(p: Provider, user: string): Promise<unknown> {
 }
 
 const userMessage = (
+  p: Provider,
   anchor: string,
   category: AiCategory,
   posts: readonly (SourcePost & { description?: string })[],
@@ -157,10 +167,10 @@ const userMessage = (
     // 키워드는 사용자가 입력한 값 — posts처럼 데이터로만 다룬다 (SYSTEM)
     ...(category === 'custom' && keyword ? { keyword } : {}),
     // 토큰 절약: 가게 이름은 대개 제목·요약 앞쪽에 있다. 날짜는 서버가 따로 계산하므로 보내지 않음
-    posts: posts.map((p) => ({
-      id: p.id,
-      title: p.title.slice(0, 50),
-      snippet: (p.description ?? '').slice(0, 40),
+    posts: posts.slice(0, p.maxPosts).map((x) => ({
+      id: x.id,
+      title: x.title.slice(0, p.titleMax),
+      snippet: (x.description ?? '').slice(0, p.snippetMax),
     })),
   });
 
@@ -172,7 +182,7 @@ async function tryProvider(
   posts: readonly (SourcePost & { description?: string })[],
   keyword?: string,
 ): Promise<ExtractedPlace[]> {
-  const user = userMessage(anchor, category, posts.slice(0, p.maxPosts), keyword);
+  const user = userMessage(p, anchor, category, posts, keyword);
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
       const parsed = Output.safeParse(await call(p, user));
@@ -199,7 +209,7 @@ async function tryProvider(
 
 /**
  * 카테고리 하나: 설정된 AI를 순서대로 시도. 성공한 AI 이름과 결과, 모두 실패하면 null
- * (posts는 최신순 — AI마다 보낼 수 있는 만큼 앞에서부터)
+ * (posts는 정확도순·최신순이 번갈아 — AI마다 보낼 수 있는 만큼 앞에서부터)
  */
 export async function extractPlaces(
   providers: readonly Provider[],

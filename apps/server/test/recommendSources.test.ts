@@ -34,6 +34,8 @@ let app: FastifyInstance;
 let sid: string;
 let googleQueries: string[];
 let groqUser: string[];
+let naverQueries: string[];
+let naverSorts: string[];
 let aiPlaces: { name: string; category: string; sourceIds: string[] }[];
 
 beforeEach(async () => {
@@ -44,6 +46,8 @@ beforeEach(async () => {
   sid = createSession(db, 'u1', 't');
   googleQueries = [];
   groqUser = [];
+  naverQueries = [];
+  naverSorts = [];
   aiPlaces = [
     { name: '이치란 신주쿠점', category: 'food', sourceIds: ['p0', 'p1'] },
     { name: '블로그에만 있는 집', category: 'food', sourceIds: ['p0'] },
@@ -64,7 +68,10 @@ beforeEach(async () => {
       return Response.json({ places });
     }
     if (url.includes('openapi.naver.com')) {
-      const start = Number(new URL(url).searchParams.get('start'));
+      const params = new URL(url).searchParams;
+      const start = Number(params.get('start'));
+      naverQueries.push(params.get('query') ?? '');
+      naverSorts.push(params.get('sort') ?? '');
       return Response.json({
         items:
           start === 1
@@ -135,6 +142,7 @@ describe('AI 추천 — 정보 출처와 거리', () => {
     });
     expect(res.statusCode).toBe(200);
     const food = res.json().categories.food as { radiusKm: number; places: Place[] };
+    // 후보가 충분하면 종류 검색은 하지 않는다
     expect(googleQueries).toEqual(['신주쿠역', '신주쿠역 맛집']);
     expect(food.radiusKm).toBe(5);
     expect(food.places.map((p) => [p.name, p.origin])).toEqual([
@@ -163,6 +171,73 @@ describe('AI 추천 — 정보 출처와 거리', () => {
     expect(googleQueries).toEqual(['신주쿠역 라멘']);
     expect(JSON.parse(groqUser[0]!)).toMatchObject({ keyword: '라멘' });
     expect(body.categories.custom.places[0]).toMatchObject({ name: '이치란', category: 'custom' });
+  });
+
+  it('해외 숙소: 주소로 위치를 찾고, 도시로도 블로그를 찾고, AI에는 주소를 보내지 않는다', async () => {
+    const res = await recommend({
+      anchor: {
+        type: 'lodging',
+        name: '신주쿠역',
+        address: '도쿄도 신주쿠구 1-1',
+        area: '도쿄',
+        areaAt: { lat: 35.68, lng: 139.76 },
+      },
+      categories: ['food'],
+      domestic: false,
+    });
+    expect(res.statusCode).toBe(200);
+    expect(googleQueries[0]).toBe('신주쿠역 도쿄도 신주쿠구 1-1');
+    expect(naverQueries).toContain('도쿄 맛집');
+    expect(naverQueries).toContain('신주쿠역 맛집');
+    expect(groqUser.join()).not.toContain('신주쿠구');
+    expect(JSON.parse(groqUser[0]!).anchor).toBe('도쿄 신주쿠역');
+    // 숙소 자신은 추천에 넣지 않는다
+    const food = res.json().categories.food as { radiusKm?: number; places: Place[] };
+    // 이 시험에서는 주소 검색의 첫 결과(츠루톤탄)가 숙소다
+    expect(food.radiusKm).toBe(10);
+    expect(food.places.map((p) => p.name)).not.toContain('츠루톤탄');
+  });
+
+  it('해외인데 한국 장소가 잡히면 기준 위치로 쓰지 않는다', async () => {
+    const base = globalThis.fetch;
+    vi.stubGlobal('fetch', async (input: string | URL, init?: RequestInit) => {
+      if (String(input).includes('places.googleapis.com')) {
+        const q = (JSON.parse(String(init?.body)) as { textQuery: string }).textQuery;
+        googleQueries.push(q);
+        return Response.json({
+          places: q.endsWith('리조트')
+            ? [
+                {
+                  id: 'kr',
+                  displayName: { text: '소담행궁' },
+                  location: { latitude: 37.5, longitude: 127 },
+                },
+              ]
+            : [{ id: 'g2', displayName: { text: '이치란' }, location: NEAR }],
+        });
+      }
+      return base(input, init);
+    });
+    const res = await recommend({
+      anchor: { type: 'lodging', name: '리조트', area: '푸껫' },
+      categories: ['food'],
+      domestic: false,
+    });
+    const food = res.json().categories.food as { radiusKm?: number; places: Place[] };
+    // 잘못 잡힌 위치로 10km 거르기를 하지 않고, 도시 이름으로 찾는다
+    expect(googleQueries).toEqual(['푸껫 리조트', '푸껫 맛집']);
+    expect(food.radiusKm).toBeUndefined();
+    expect(food.places.map((p) => p.name)).toContain('이치란');
+  });
+
+  it('블로그는 정확도순과 최신순을 함께 받는다', async () => {
+    await recommend({
+      anchor: { type: 'text', name: '신주쿠역' },
+      categories: ['food'],
+      domestic: false,
+    });
+    expect(naverSorts).toContain('sim');
+    expect(naverSorts).toContain('date');
   });
 
   it('카테고리도 키워드도 없으면 400', async () => {

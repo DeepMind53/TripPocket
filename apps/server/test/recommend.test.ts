@@ -163,7 +163,9 @@ describe('AI 추천 ② (Groq)', () => {
       ++calls === 1 ? new Response('{}', { status: 429, headers: { 'retry-after': '0' } }) : ok();
     const res = await recommend({ anchor: { type: 'text', name: '성수역' }, categories: ['food'] });
     expect(res.statusCode).toBe(200);
-    expect(res.json().categories.food.places).toEqual([]); // 응답은 모두 cafe
+    // 응답은 모두 cafe → AI가 맛집을 못 찾은 것으로 보고 AI 없는 집계로
+    expect(res.json().categories.food).toMatchObject({ engine: 'basic' });
+    expect(res.json().categories.food.places[0]).toMatchObject({ summary: '' });
     expect(groqBodies).toHaveLength(2);
     expect(JSON.parse(groqBodies[1]!)).toMatchObject({ max_completion_tokens: 1500 });
   });
@@ -228,6 +230,65 @@ describe('AI 추천 ② (Groq)', () => {
       domestic: true,
     });
     expect(res.json().categories.cafe.places).toEqual([]);
+  });
+
+  it('국내: 10km 안 추천이 모자라면 카카오 장소로 채우고, 기준점 자신은 뺀다', async () => {
+    const base = globalThis.fetch;
+    vi.stubGlobal('fetch', async (input: string | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.includes('dapi.kakao.com/v2/local/search/keyword')) {
+        const q = new URL(url).searchParams.get('query') ?? '';
+        const doc = (id: string, place_name: string) => ({
+          id,
+          place_name,
+          road_address_name: '',
+          x: '127.05',
+          y: '37.54',
+        });
+        return Response.json({
+          documents: q.endsWith('카페')
+            ? [doc('st', '성수역'), doc('9', '어니언 성수'), doc('10', '대림창고')]
+            : q.includes('어니언')
+              ? [doc('9', '어니언 성수')]
+              : [doc('st', '성수역')],
+        });
+      }
+      return base(input, init);
+    });
+    const res = await recommend({
+      anchor: { type: 'text', name: '성수역' },
+      categories: ['cafe'],
+      domestic: true,
+    });
+    const places = res.json().categories.cafe.places as { name: string; origin: string }[];
+    expect(places.map((p) => [p.name, p.origin])).toEqual([
+      ['어니언 성수', 'blog'],
+      ['대림창고', 'map'],
+    ]);
+  });
+
+  it('한 곳도 못 찾으면 하루 횟수를 쓰지 않고 저장도 하지 않는다', async () => {
+    groqReply = () => Response.json({ choices: [{ message: { content: '{"places":[]}' } }] });
+    const base = globalThis.fetch;
+    vi.stubGlobal('fetch', async (input: string | URL, init?: RequestInit) =>
+      String(input).includes('dapi.kakao.com')
+        ? Response.json({ documents: [] })
+        : base(input, init),
+    );
+    const body = {
+      anchor: { type: 'text', name: '없는동네' },
+      categories: ['cafe'],
+      domestic: true,
+    };
+    expect((await recommend(body)).json().categories.cafe.places).toEqual([]);
+    await recommend(body);
+    expect(groqBodies).toHaveLength(2); // 저장되지 않아 다시 찾는다
+    const usage = await app.inject({
+      method: 'GET',
+      url: '/api/v1/ai/recommend/usage',
+      headers: { [PROXY_HEADER]: SECRET, origin: ORIGIN, cookie: `__Host-sid=${sid}` },
+    });
+    expect(usage.json().used).toBe(0);
   });
 
   it('AI 출력 형식이 틀리면 한 번 더, 그래도 틀리면 AI 없이 지도 검색 + 언급 수로', async () => {

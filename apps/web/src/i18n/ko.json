@@ -972,6 +972,7 @@
     "keywordTitle": "\"{{keyword}}\" 추천",
     "radius": "{{km}}km 안",
     "fromGoogle": "Google 장소 검색",
+    "fromMap": "지도 장소 검색",
     "alsoGoogle": "Google에서도 찾음"
   },
   "admin": {

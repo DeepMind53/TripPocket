@@ -56,19 +56,23 @@ const strip = (s: unknown) =>
     .replace(/&#39;/g, "'")
     .trim();
 
-/** 최신순으로 최대 max개 (100개씩, sinceYmd보다 오래된 글이 나오면 멈춤) */
+/**
+ * 최대 max개 (100개씩). sort: date = 최신순(sinceYmd보다 오래된 글이 나오면 멈춤),
+ * sim = 정확도순(날짜가 섞여 있어 오래된 글만 건너뜀)
+ */
 export async function searchBlog(
   query: string,
   keys: NaverKeys,
-  opts: { max?: number; sinceYmd?: string } = {},
+  opts: { max?: number; sinceYmd?: string; sort?: 'date' | 'sim' } = {},
 ): Promise<BlogPost[]> {
   const max = Math.min(opts.max ?? 300, 1000);
+  const sort = opts.sort ?? 'date';
   const out: BlogPost[] = [];
   for (let start = 1; start <= max && start <= 1000; start += 100) {
     const [url, headers] = naverSearchRequest(
       keys,
       'blog',
-      new URLSearchParams({ query, display: '100', start: String(start), sort: 'date' }),
+      new URLSearchParams({ query, display: '100', start: String(start), sort }),
     );
     guardApi('naver_search');
     trackApi('naver_search');
@@ -87,7 +91,10 @@ export async function searchBlog(
         postdate: String(it.postdate ?? ''),
         blogger: strip(it.bloggername),
       };
-      if (opts.sinceYmd && post.postdate < opts.sinceYmd) return out;
+      if (opts.sinceYmd && post.postdate < opts.sinceYmd) {
+        if (sort === 'date') return out;
+        continue;
+      }
       // 원문 링크는 https만 (화면에서 바로 여는 주소)
       if (post.link.startsWith('https://')) out.push(post);
     }

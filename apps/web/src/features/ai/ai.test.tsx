@@ -223,5 +223,9 @@ it('AI 추천: 숙소가 여러 곳이면 하나를 골라 그 숙소 기준으�
     'true',
   );
   await user.click(screen.getByRole('button', { name: /추천 받기|찾기/ }));
-  expect(JSON.parse(bodies[0]!).anchor).toEqual({ type: 'lodging', name: '아사쿠사 료칸' });
+  expect(JSON.parse(bodies[0]!).anchor).toMatchObject({
+    type: 'lodging',
+    name: '아사쿠사 료칸',
+    area: '도쿄',
+  });
 });
