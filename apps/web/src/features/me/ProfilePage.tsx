@@ -14,6 +14,7 @@ import {
   useTravelProfile,
 } from '../../data/travelProfile';
 import { useTranslation } from '../../i18n';
+import { CustomFoodsField } from './CustomFoodsField';
 import { Chip, IconButton, SegmentedControl, TopBar } from '../../shared/ui';
 
 const field = 'h-12 w-full min-w-0 rounded-btn bg-bg-subtle px-3 text-body-1';
@@ -257,16 +258,8 @@ export function ProfilePage() {
               </Chip>
             ))}
           </div>
-          <label className="flex flex-col gap-1.5">
-            <span className="text-caption font-semibold text-fg-sub">{t('profile.food')}</span>
-            <input
-              className={field}
-              value={p.food}
-              maxLength={200}
-              placeholder={t('profile.foodPlaceholder')}
-              onChange={(e) => updateTravelProfile({ food: e.target.value })}
-            />
-          </label>
+          {/* "그 밖에 못 먹는 음식" 대신 알레르기·비선호 음식을 한글·영어로 직접 추가 (2026-11-02) */}
+          <CustomFoodsField />
           <p className="text-caption font-semibold text-fg-sub">{t('profile.blood')}</p>
           <div role="group" aria-label={t('profile.blood')} className="flex flex-wrap gap-2">
             {BLOOD_TYPES.map((b) => (

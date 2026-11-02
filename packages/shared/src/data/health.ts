@@ -16,6 +16,17 @@ export const ALLERGENS = [
   'pork',
   'beef',
   'alcohol',
+  'buckwheat',
+  'chicken',
+  'mollusc',
+  'clam',
+  'peach',
+  'tomato',
+  'kiwi',
+  'mango',
+  'celery',
+  'mustard',
+  'sulfite',
 ] as const;
 export type Allergen = (typeof ALLERGENS)[number];
 
@@ -32,6 +43,17 @@ export const ALLERGEN_KO: Record<Allergen, string> = {
   pork: '돼지고기',
   beef: '소고기',
   alcohol: '술',
+  buckwheat: '메밀',
+  chicken: '닭고기',
+  mollusc: '오징어·문어',
+  clam: '조개·굴',
+  peach: '복숭아',
+  tomato: '토마토',
+  kiwi: '키위',
+  mango: '망고',
+  celery: '셀러리',
+  mustard: '겨자',
+  sulfite: '아황산류(와인·말린 과일)',
 };
 
 export const BLOOD_TYPES = ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'] as const;
@@ -40,6 +62,8 @@ export type BloodType = (typeof BLOOD_TYPES)[number];
 interface HealthLang {
   /** {list} 자리에 알레르기 목록 */
   allergy: string;
+  /** 비선호 음식 — {list} 자리에 목록 (2026-11-02) */
+  dislike: string;
   /** 목록 구분 */
   sep: string;
   blood: string;
@@ -54,6 +78,7 @@ const W = (w: string[]): Record<Allergen, string> =>
 export const HEALTH_LANGS: Record<string, HealthLang> = {
   ko: {
     allergy: '저는 다음 음식에 알레르기가 있어요: {list}\n이 음식에 들어 있나요?',
+    dislike: '이 음식은 빼 주세요: {list}',
     sep: ', ',
     blood: '혈액형',
     meds: '복용 중인 약',
@@ -61,6 +86,7 @@ export const HEALTH_LANGS: Record<string, HealthLang> = {
   },
   ja: {
     allergy: '私は次の食べ物にアレルギーがあります：{list}\nこの料理に入っていますか？',
+    dislike: '次のものは入れないでください：{list}',
     sep: '、',
     blood: '血液型',
     meds: '服用中の薬',
@@ -77,10 +103,22 @@ export const HEALTH_LANGS: Record<string, HealthLang> = {
       '豚肉',
       '牛肉',
       'アルコール',
+      'そば',
+      '鶏肉',
+      'イカ・タコ',
+      '貝類（カキ・アサリ）',
+      '桃',
+      'トマト',
+      'キウイ',
+      'マンゴー',
+      'セロリ',
+      'マスタード',
+      '亜硫酸塩',
     ]),
   },
   'zh-CN': {
     allergy: '我对以下食物过敏：{list}\n这道菜里有吗？',
+    dislike: '请不要放以下食物：{list}',
     sep: '、',
     blood: '血型',
     meds: '正在服用的药物',
@@ -97,10 +135,22 @@ export const HEALTH_LANGS: Record<string, HealthLang> = {
       '猪肉',
       '牛肉',
       '酒精',
+      '荞麦',
+      '鸡肉',
+      '鱿鱼、章鱼',
+      '贝类（牡蛎、蛤蜊）',
+      '桃子',
+      '番茄',
+      '猕猴桃',
+      '芒果',
+      '芹菜',
+      '芥末',
+      '亚硫酸盐',
     ]),
   },
   'zh-TW': {
     allergy: '我對以下食物過敏：{list}\n這道菜裡有嗎？',
+    dislike: '請不要放以下食物：{list}',
     sep: '、',
     blood: '血型',
     meds: '正在服用的藥物',
@@ -117,10 +167,22 @@ export const HEALTH_LANGS: Record<string, HealthLang> = {
       '豬肉',
       '牛肉',
       '酒精',
+      '蕎麥',
+      '雞肉',
+      '魷魚、章魚',
+      '貝類（牡蠣、蛤蜊）',
+      '桃子',
+      '番茄',
+      '奇異果',
+      '芒果',
+      '芹菜',
+      '芥末',
+      '亞硫酸鹽',
     ]),
   },
   'zh-HK': {
     allergy: '我對以下食物敏感：{list}\n呢道菜有冇？',
+    dislike: '唔該唔好落以下食物：{list}',
     sep: '、',
     blood: '血型',
     meds: '正在服用嘅藥物',
@@ -137,10 +199,22 @@ export const HEALTH_LANGS: Record<string, HealthLang> = {
       '豬肉',
       '牛肉',
       '酒精',
+      '蕎麥',
+      '雞肉',
+      '魷魚、八爪魚',
+      '貝類（蠔、蜆）',
+      '桃',
+      '番茄',
+      '奇異果',
+      '芒果',
+      '西芹',
+      '芥辣',
+      '亞硫酸鹽',
     ]),
   },
   th: {
     allergy: 'ฉันแพ้อาหารต่อไปนี้: {list}\nอาหารนี้มีส่วนผสมเหล่านี้ไหม',
+    dislike: 'กรุณาไม่ใส่: {list}',
     sep: ', ',
     blood: 'กรุ๊ปเลือด',
     meds: 'ยาที่ใช้อยู่',
@@ -157,10 +231,22 @@ export const HEALTH_LANGS: Record<string, HealthLang> = {
       'เนื้อหมู',
       'เนื้อวัว',
       'แอลกอฮอล์',
+      'บัควีท (โซบะ)',
+      'เนื้อไก่',
+      'ปลาหมึก',
+      'หอย (หอยนางรม)',
+      'ลูกพีช',
+      'มะเขือเทศ',
+      'กีวี',
+      'มะม่วง',
+      'ขึ้นฉ่าย',
+      'มัสตาร์ด',
+      'ซัลไฟต์',
     ]),
   },
   vi: {
     allergy: 'Tôi bị dị ứng với: {list}\nMón này có những thứ đó không?',
+    dislike: 'Xin đừng cho: {list}',
     sep: ', ',
     blood: 'Nhóm máu',
     meds: 'Thuốc đang dùng',
@@ -177,10 +263,22 @@ export const HEALTH_LANGS: Record<string, HealthLang> = {
       'thịt heo',
       'thịt bò',
       'rượu bia',
+      'kiều mạch',
+      'thịt gà',
+      'mực, bạch tuộc',
+      'nghêu sò, hàu',
+      'đào',
+      'cà chua',
+      'kiwi',
+      'xoài',
+      'cần tây',
+      'mù tạt',
+      'sulfit',
     ]),
   },
   id: {
     allergy: 'Saya alergi terhadap: {list}\nApakah makanan ini mengandungnya?',
+    dislike: 'Tolong jangan pakai: {list}',
     sep: ', ',
     blood: 'Golongan darah',
     meds: 'Obat yang sedang diminum',
@@ -197,10 +295,22 @@ export const HEALTH_LANGS: Record<string, HealthLang> = {
       'daging babi',
       'daging sapi',
       'alkohol',
+      'soba (buckwheat)',
+      'daging ayam',
+      'cumi-cumi, gurita',
+      'kerang, tiram',
+      'persik',
+      'tomat',
+      'kiwi',
+      'mangga',
+      'seledri',
+      'mustard',
+      'sulfit',
     ]),
   },
   en: {
     allergy: 'I am allergic to: {list}\nDoes this dish contain any of these?',
+    dislike: 'Please do not include: {list}',
     sep: ', ',
     blood: 'Blood type',
     meds: 'Current medication',
@@ -217,10 +327,22 @@ export const HEALTH_LANGS: Record<string, HealthLang> = {
       'pork',
       'beef',
       'alcohol',
+      'buckwheat',
+      'chicken',
+      'squid, octopus',
+      'clams, oysters',
+      'peach',
+      'tomato',
+      'kiwi',
+      'mango',
+      'celery',
+      'mustard',
+      'sulfites',
     ]),
   },
   fr: {
     allergy: 'Je suis allergique à : {list}\nCe plat en contient-il ?',
+    dislike: 'Merci de ne pas mettre : {list}',
     sep: ', ',
     blood: 'Groupe sanguin',
     meds: 'Médicaments en cours',
@@ -237,10 +359,22 @@ export const HEALTH_LANGS: Record<string, HealthLang> = {
       'porc',
       'bœuf',
       'alcool',
+      'sarrasin',
+      'poulet',
+      'calmar, poulpe',
+      'coquillages (huîtres, moules)',
+      'pêche',
+      'tomate',
+      'kiwi',
+      'mangue',
+      'céleri',
+      'moutarde',
+      'sulfites',
     ]),
   },
   it: {
     allergy: 'Sono allergico a: {list}\nQuesto piatto li contiene?',
+    dislike: 'Per favore non mettere: {list}',
     sep: ', ',
     blood: 'Gruppo sanguigno',
     meds: 'Farmaci in uso',
@@ -257,10 +391,22 @@ export const HEALTH_LANGS: Record<string, HealthLang> = {
       'maiale',
       'manzo',
       'alcol',
+      'grano saraceno',
+      'pollo',
+      'calamari, polpo',
+      'molluschi (ostriche, cozze)',
+      'pesca',
+      'pomodoro',
+      'kiwi',
+      'mango',
+      'sedano',
+      'senape',
+      'solfiti',
     ]),
   },
   es: {
     allergy: 'Tengo alergia a: {list}\n¿Este plato los contiene?',
+    dislike: 'Por favor, no incluya: {list}',
     sep: ', ',
     blood: 'Grupo sanguíneo',
     meds: 'Medicamentos actuales',
@@ -277,10 +423,22 @@ export const HEALTH_LANGS: Record<string, HealthLang> = {
       'cerdo',
       'ternera',
       'alcohol',
+      'trigo sarraceno',
+      'pollo',
+      'calamar, pulpo',
+      'moluscos (ostras, almejas)',
+      'melocotón',
+      'tomate',
+      'kiwi',
+      'mango',
+      'apio',
+      'mostaza',
+      'sulfitos',
     ]),
   },
   mn: {
     allergy: 'Би дараах хүнсэнд харшилтай: {list}\nЭнэ хоолонд орсон уу?',
+    dislike: 'Дараахыг битгий хийгээрэй: {list}',
     sep: ', ',
     blood: 'Цусны бүлэг',
     meds: 'Хэрэглэж буй эм',
@@ -297,19 +455,51 @@ export const HEALTH_LANGS: Record<string, HealthLang> = {
       'гахайн мах',
       'үхрийн мах',
       'согтууруулах ундаа',
+      'сагаг',
+      'тахианы мах',
+      'наймаалж, далайн амьтан',
+      'хясаа, дун',
+      'тоор',
+      'улаан лооль',
+      'киви',
+      'манго',
+      'селери',
+      'гич',
+      'сульфит',
     ]),
   },
 };
 
-/** 카드 문장 (언어 코드가 없으면 영어). 알레르기가 없으면 빈 문장 */
+/** 직접 입력한 알레르기·비선호 음식 (한글·영어, 사용자 요청 2026-11-02) */
+export interface CustomFood {
+  ko: string;
+  en: string;
+  kind: 'allergy' | 'dislike';
+}
+
+/**
+ * 카드 문장 (언어 코드가 없으면 영어). 직접 입력한 음식은 한국어 카드엔 한글, 다른 언어엔 영어로 (번역이 없어서)
+ * 목록이 비면 빈 문장
+ */
 export function healthCardText(
   langCode: string,
-  input: { allergens: readonly Allergen[]; bloodType?: BloodType | null; meds?: string },
-): { allergy: string; blood: string | null; medsLabel: string } {
+  input: {
+    allergens: readonly Allergen[];
+    custom?: readonly CustomFood[];
+    bloodType?: BloodType | null;
+  },
+): { allergy: string; dislike: string; blood: string | null; medsLabel: string } {
   const l = HEALTH_LANGS[langCode] ?? HEALTH_LANGS.en!;
-  const list = input.allergens.map((a) => l.words[a]).join(l.sep);
+  const own = (kind: CustomFood['kind']) =>
+    (input.custom ?? [])
+      .filter((c) => c.kind === kind)
+      .map((c) => (langCode === 'ko' ? c.ko || c.en : c.en || c.ko).trim())
+      .filter(Boolean);
+  const allergies = [...input.allergens.map((a) => l.words[a]), ...own('allergy')].join(l.sep);
+  const dislikes = own('dislike').join(l.sep);
   return {
-    allergy: list ? l.allergy.replace('{list}', list) : '',
+    allergy: allergies ? l.allergy.replace('{list}', allergies) : '',
+    dislike: dislikes ? l.dislike.replace('{list}', dislikes) : '',
     blood: input.bloodType ? `${l.blood}: ${input.bloodType}` : null,
     medsLabel: l.meds,
   };

@@ -4,6 +4,7 @@ import {
   ENTRY_PERMITS,
   type Allergen,
   type BloodType,
+  type CustomFood,
   type EntryPermit,
   type LocalDate,
 } from '@trippocket/shared';
@@ -31,8 +32,6 @@ export interface TravelProfile {
   licenseExpiry: LocalDate | null;
   /** 비행기 선호 좌석 */
   seat: 'window' | 'aisle' | 'any';
-  /** 못 먹는 음식·알레르기 (식당 예약·주문 때 보기) */
-  food: string;
   /** 그 밖에 여행 때 자주 보는 메모 */
   memo: string;
   /** 전자여행허가 만료일 (ESTA 등) — 필수 항목 "비자" 줄 자동 판단 */
@@ -45,6 +44,8 @@ export interface TravelProfile {
   contacts: EmergencyContact[];
   /** 알레르기·혈액형·복용약 — 현지어 건강 카드 (회화 화면) */
   allergens: Allergen[];
+  /** 직접 입력한 알레르기·비선호 음식 (한글·영어) — 건강 카드에 그대로 (2026-11-02, 예전 "그 밖에 못 먹는 음식"은 여기로 옮김) */
+  customFoods: CustomFood[];
   bloodType: BloodType | null;
   meds: string;
 }
@@ -55,18 +56,19 @@ const OLD_PASSPORT_KEY = 'tp-passport-expiry';
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 export const MEMBERSHIPS_MAX = 10;
 export const CONTACTS_MAX = 3;
+export const CUSTOM_FOODS_MAX = 20;
 
 const EMPTY: TravelProfile = {
   passportExpiry: null,
   licenseExpiry: null,
   seat: 'any',
-  food: '',
   memo: '',
   permits: {},
   memberships: [],
   insurance: { company: '', policyNo: '', phone: '' },
   contacts: [],
   allergens: [],
+  customFoods: [],
   bloodType: null,
   meds: '',
 };
@@ -84,7 +86,6 @@ export function parseProfile(raw: unknown): TravelProfile {
     passportExpiry: date(o.passportExpiry),
     licenseExpiry: date(o.licenseExpiry),
     seat: o.seat === 'window' || o.seat === 'aisle' ? o.seat : 'any',
-    food: text(o.food, 200),
     memo: text(o.memo, 500),
     permits: Object.fromEntries(
       ENTRY_PERMITS.flatMap((k) => {
@@ -110,6 +111,19 @@ export function parseProfile(raw: unknown): TravelProfile {
     allergens: arr(o.allergens).filter((a): a is Allergen =>
       (ALLERGENS as readonly unknown[]).includes(a),
     ),
+    customFoods: [
+      ...arr(o.customFoods).map((c) => ({
+        ko: text(obj(c).ko, 40),
+        en: text(obj(c).en, 40),
+        kind: obj(c).kind === 'allergy' ? ('allergy' as const) : ('dislike' as const),
+      })),
+      // 예전 "그 밖에 못 먹는 음식" 글은 비선호 음식 한 줄로 옮긴다
+      ...(text(o.food, 40).trim()
+        ? [{ ko: text(o.food, 40).trim(), en: '', kind: 'dislike' as const }]
+        : []),
+    ]
+      .filter((c) => c.ko.trim() || c.en.trim())
+      .slice(0, CUSTOM_FOODS_MAX),
     bloodType: (BLOOD_TYPES as readonly unknown[]).includes(o.bloodType)
       ? (o.bloodType as BloodType)
       : null,

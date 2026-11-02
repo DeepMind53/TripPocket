@@ -1415,8 +1415,6 @@
     "seatWindow": "창가",
     "seatAisle": "통로",
     "seatAny": "상관없음",
-    "food": "그 밖에 못 먹는 음식",
-    "foodPlaceholder": "예: 고수, 날음식",
     "memo": "여행 메모",
     "memoPlaceholder": "예: 자주 쓰는 카드, 숙소 와이파이",
     "groupDocs": "여권·입국 허가",
@@ -1453,7 +1451,15 @@
     "blood": "혈액형",
     "meds": "복용 중인 약",
     "medsPlaceholder": "예: 혈압약(아침 1알)",
-    "healthHint": "회화 화면의 건강 카드에 현지어로 보여 줘요\n약 이름은 번역기로 바꿔 보여 주세요"
+    "healthHint": "회화 화면의 건강 카드에 현지어로 보여 줘요\n약 이름은 번역기로 바꿔 보여 주세요",
+    "customFoods": "직접 추가한 음식",
+    "customKind": "종류",
+    "kindAllergy": "알레르기",
+    "kindDislike": "비선호",
+    "customKo": "한글 (예: 고수)",
+    "customEn": "영어 (예: coriander)",
+    "addCustom": "음식 추가",
+    "customHint": "목록에 없는 음식을 적어요\n한국어 카드엔 한글, 다른 언어 카드엔 영어로 보여요"
   },
   "nickname": {
     "title": "닉네임 바꾸기",
@@ -1761,7 +1767,8 @@
     "taxiSub": "기사님께 이 화면을 보여 주세요",
     "cardAllergy": "알레르기 카드",
     "cardBlood": "혈액형 카드",
-    "cardMeds": "복용약·못 먹는 음식 카드"
+    "cardMeds": "복용약 카드",
+    "cardDislike": "비선호 음식 카드"
   },
   "suggest": {
     "title": "개선 제안",

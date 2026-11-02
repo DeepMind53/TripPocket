@@ -5,13 +5,13 @@ import {
   papagoUrl,
   type PhraseLang,
 } from '@trippocket/shared';
-import { Droplet, ExternalLink, HeartPulse, Pill } from 'lucide-react';
+import { Ban, Droplet, ExternalLink, HeartPulse, Pill } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { useTravelProfile } from '../../data/travelProfile';
 import { useTranslation } from '../../i18n';
 import { ShowCard } from './ShowCard';
 
-type Kind = 'allergy' | 'blood' | 'meds';
+type Kind = 'allergy' | 'dislike' | 'blood' | 'meds';
 
 /**
  * 회화 화면의 건강 카드 (사용자 요청 2026-11-02): 마이 → 개인정보의 알레르기·혈액형·복용약을
@@ -22,10 +22,13 @@ export function HealthCardButton({ lang }: { lang: PhraseLang }) {
   const { t } = useTranslation();
   const p = useTravelProfile();
   const [open, setOpen] = useState<Kind | null>(null);
-  const extra = [p.food.trim(), p.meds.trim()].filter(Boolean).join('\n');
-  const local = healthCardText(lang.code, p);
-  const en = healthCardText('en', p);
-  const ko = healthCardText('ko', p);
+  const extra = p.meds.trim();
+  const input = { allergens: p.allergens, custom: p.customFoods, bloodType: p.bloodType };
+  const local = healthCardText(lang.code, input);
+  const en = healthCardText('en', input);
+  const ko = healthCardText('ko', input);
+  const own = (kind: 'allergy' | 'dislike') =>
+    p.customFoods.filter((c) => c.kind === kind).map((c) => c.ko || c.en);
   const withEn = lang.code !== 'en';
   const cards: { kind: Kind; icon: ReactNode; title: string; preview: string }[] = [
     ...(local.allergy
@@ -34,7 +37,17 @@ export function HealthCardButton({ lang }: { lang: PhraseLang }) {
             kind: 'allergy' as const,
             icon: <HeartPulse aria-hidden="true" className="size-5 shrink-0 text-danger" />,
             title: t('phrases.cardAllergy'),
-            preview: p.allergens.map((a) => ALLERGEN_KO[a]).join(', '),
+            preview: [...p.allergens.map((a) => ALLERGEN_KO[a]), ...own('allergy')].join(', '),
+          },
+        ]
+      : []),
+    ...(local.dislike
+      ? [
+          {
+            kind: 'dislike' as const,
+            icon: <Ban aria-hidden="true" className="size-5 shrink-0 text-danger" />,
+            title: t('phrases.cardDislike'),
+            preview: own('dislike').join(', '),
           },
         ]
       : []),
@@ -63,6 +76,7 @@ export function HealthCardButton({ lang }: { lang: PhraseLang }) {
   const translate = papagoUrl(lang, extra) ?? googleTranslateUrl(lang, extra);
   const show = {
     allergy: { big: local.allergy, en: en.allergy, ko: ko.allergy },
+    dislike: { big: local.dislike, en: en.dislike, ko: ko.dislike },
     blood: { big: local.blood ?? '', en: en.blood ?? '', ko: ko.blood ?? '' },
     meds: { big: extra, en: '', ko: `${ko.medsLabel} · ${t('phrases.healthExtra')}` },
   };
