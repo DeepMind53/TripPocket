@@ -2,10 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { COUNTRY_ESSENTIALS, essentialsFor, passportNeededUntil } from './essentials';
 
 describe('나라별 필수 항목 (docs/19)', () => {
-  it('20개국: 나라 코드 중복 없음, 항목 id 고유, 링크는 https(또는 공식 http)', () => {
+  it('22개국: 나라 코드 중복 없음, 항목 id 고유, 링크는 https(또는 공식 http)', () => {
     const codes = COUNTRY_ESSENTIALS.flatMap((c) => c.codes);
     expect(new Set(codes).size).toBe(codes.length);
-    expect(COUNTRY_ESSENTIALS).toHaveLength(20);
+    expect(COUNTRY_ESSENTIALS).toHaveLength(22);
     for (const c of COUNTRY_ESSENTIALS) {
       const ids = c.items.map((i) => i.id);
       expect(new Set(ids).size, c.name).toBe(ids.length);

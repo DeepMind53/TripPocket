@@ -654,6 +654,41 @@ export const COUNTRY_ESSENTIALS: readonly CountryEssentials[] = [
       MOFA,
     ],
   },
+  // 2026-11-02 공식 사이트 확인 (사용자 요청: 전자여행허가가 필요한 나라 더)
+  {
+    codes: ['LK'],
+    name: '스리랑카',
+    passportMonths: 6,
+    items: [
+      passportItem('6개월 이상 남아야 해요'),
+      {
+        id: 'visa',
+        level: 'must',
+        title: '전자여행허가 (ETA)',
+        desc: '도착 전 공식 사이트에서 신청 (한국인 무료, 30일).\n공식 사이트만 이용하세요',
+        url: 'https://www.eta.gov.lk/slvisa/',
+      },
+      plug('230V, 각진 3구(G형)·둥근 3구(D형)가 섞여 있어 어댑터를 챙기세요'),
+    ],
+    sources: [{ label: '스리랑카 ETA', url: 'https://www.eta.gov.lk/slvisa/' }, MOFA],
+  },
+  {
+    codes: ['KE'],
+    name: '케냐',
+    passportMonths: 6,
+    items: [
+      passportItem('6개월 이상 남아야 해요'),
+      {
+        id: 'visa',
+        level: 'must',
+        title: '전자여행허가 (eTA)',
+        desc: '출발 전 공식 사이트에서 신청 (US$30~, 보통 3일).\n승인 뒤에만 출발할 수 있어요',
+        url: 'https://www.etakenya.go.ke/',
+      },
+      plug('240V, 각진 3구(G형) — 어댑터가 필요해요'),
+    ],
+    sources: [{ label: '케냐 eTA', url: 'https://www.etakenya.go.ke/' }, MOFA],
+  },
 ];
 
 export const essentialsFor = (countryCode: string | undefined): CountryEssentials | undefined =>

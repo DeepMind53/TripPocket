@@ -1436,7 +1436,9 @@
       "etaCa": "캐나다 eTA",
       "etaUk": "영국 ETA",
       "etaAu": "호주 ETA",
-      "nzeta": "뉴질랜드 NZeTA"
+      "nzeta": "뉴질랜드 NZeTA",
+      "etaLk": "스리랑카 ETA",
+      "etaKe": "케냐 eTA"
     },
     "memberships": "항공사 회원번호",
     "membershipsHint": "예약한 항공사와 같으면 예약 카드에 보여 줘요",

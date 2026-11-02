@@ -509,7 +509,15 @@ export function healthCardText(
  * 전자여행허가(입국 허가) — 개인정보에 만료일을 적어 두면 필수 항목 "비자" 줄을 자동 판단한다.
  * 나라 코드 → 허가 종류 (괌·사이판은 ESTA로도 들어간다)
  */
-export const ENTRY_PERMITS = ['esta', 'etaCa', 'etaUk', 'etaAu', 'nzeta'] as const;
+export const ENTRY_PERMITS = [
+  'esta',
+  'etaCa',
+  'etaUk',
+  'etaAu',
+  'nzeta',
+  'etaLk',
+  'etaKe',
+] as const;
 export type EntryPermit = (typeof ENTRY_PERMITS)[number];
 export const PERMIT_FOR_COUNTRY: Record<string, EntryPermit> = {
   US: 'esta',
@@ -519,4 +527,7 @@ export const PERMIT_FOR_COUNTRY: Record<string, EntryPermit> = {
   GB: 'etaUk',
   AU: 'etaAu',
   NZ: 'nzeta',
+  // 2026-11-02 공식 사이트 확인
+  LK: 'etaLk',
+  KE: 'etaKe',
 };

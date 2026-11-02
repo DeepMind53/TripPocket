@@ -67,6 +67,8 @@ export const WEATHER_WARNING_LINKS: Readonly<Record<string, { name: string; url:
   MO: { name: '마카오 기상국', url: 'https://www.smg.gov.mo/en' },
   VN: { name: '베트남 국립수문기상예보센터', url: 'https://nchmf.gov.vn/' },
   TH: { name: '태국 기상청', url: 'https://www.tmd.go.th/en' },
+  LK: { name: '스리랑카 기상청', url: 'https://www.meteo.gov.lk/' },
+  KE: { name: '케냐 기상청', url: 'https://meteo.go.ke/' },
   PH: { name: '필리핀 기상청(PAGASA)', url: 'https://www.pagasa.dost.gov.ph/' },
   SG: { name: '싱가포르 기상청', url: 'https://www.weather.gov.sg/home/' },
   MY: { name: '말레이시아 기상청', url: 'https://www.met.gov.my/' },
