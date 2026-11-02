@@ -57,6 +57,14 @@ Tailscale Funnel https://jin-server.tail0844c0.ts.net ─▶ 홈 PC 127.0.0.1:87
 - **서버 DB 표 추가**: `db/migrations.ts` 끝에 새 항목 + 테스트
 - **웹 DB 표 추가**: `data/db.ts` 버전 올림 + `data/migrations` + 마이그레이션 테스트 (CLAUDE.md)
 - **국내 공항 정보 (2026-11-02)**: 서버 `services/airportInfo.ts`(인천 `B551177/statusOfAllFltDeOdp` = 체크인 카운터·터미널·게이트·수하물, 3일 전~6일 후 / 한국공항공사 `B551178/flight-search/info` = 게이트, 당일만) + `routes/flights.ts` `GET /api/flights/:no/airport`. 키는 `DATA_GO_KR_KEY`, 사용량 `icn_flights`·`kac_flights`. 웹 `features/bookings/FlightAirportInfo.tsx`(확인 시각은 기기에만, `data/flightAirportStore.ts`)
+- **빠른 메뉴 (2026-11-02)**: `features/common/QuickMenuSheets.tsx`. 바로가기 4칸은 `quickShortcuts.ts`(목록·주소·기기 저장) + `ShortcutEditSheet.tsx`,
+  이동 정보 카드 `TravelLegCard.tsx`(규칙 `domain/travelLeg.ts`: 출국편 → 렌터카 반납 전 → 귀국편), 렌터카 `CarCard.tsx`,
+  위치 저장 `SavedSpotsButtons.tsx` + `data/savedSpots.ts`(이 기기·이번 여행만), 바우처 `LocalInfoSection.tsx`
+- **개인정보 (마이)**: `data/travelProfile.ts`(기기에만) — 전자여행허가(`shared data/health.ts` PERMIT_FOR_COUNTRY), 회원번호(`membershipFor`, 등급 `shared data/airlineTiers.ts`),
+  보험·비상 연락처(`MySafetyInfo.tsx`), 알레르기 23종·직접 추가(`CustomFoodsField.tsx`)·번역(`TranslateCardsButton.tsx` → 서버 `routes/translate.ts`)
+- **건강 카드**: `features/phrases/HealthCardButton.tsx` + `shared data/health.ts`(12개 언어 문장). 모든 보여 주기 카드는 `ShowCard.tsx`(영어 함께)
+- **예약 입력**: 교통수단 칩 `shared data/transit.ts`, 역·렌터카 지점 검색(좌표 `start/end.coords`, Dexie v10), 차종·차량번호(`details.carModel/plate`)
+- **자판·취소**: 입력칸 자판 위로 `shared/hooks/useKeyboardScroll.ts`(App 공통) + 시트 `useKeyboardInset.ts`, 빨간 취소 `shared/ui/CancelSaveRow.tsx`
 - **사용 통계 (ADR-0009)**: 서버 `repositories/statsRepo.ts`(저장·요약) + `routes/stats.ts`(앱이 보낸 횟수 받기·관리자 조회),
   요청·로그인 사용자는 `app.ts`의 `onResponse` 훅, 입력·삭제는 `syncRepo`의 `onApplied`. 웹은 `shared/lib/usageCount.ts`의 `countUse('이름')`로 세고
   `data/usageStats.ts`가 동기화 뒤 보낸다. 화면 `features/me/AdminStatsPage.tsx`. 이름에 입력값·id를 넣지 않는다

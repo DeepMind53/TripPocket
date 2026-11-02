@@ -88,14 +88,16 @@ Travel_Planner/
 │  │  └─ tests/e2e/
 │  └─ server/
 │     ├─ src/
-│     │  ├─ index.ts           # Fastify 부트스트랩 (helmet, cors, rate-limit, cookie)
+│     │  ├─ index.ts · app.ts  # Fastify 조립 (helmet, rate-limit, cookie, 프록시 비밀 헤더, Origin 검사, 사용 통계 훅)
 │     │  ├─ config.ts          # .env 로드 + Zod 검증 (누락 시 기동 실패)
-│     │  ├─ db/                # schema.ts, migrations/
-│     │  ├─ auth/              # oauth(naver, kakao, google), session, requireUser
-│     │  ├─ routes/            # sync, trips(members, invites), files, places, me, health
-│     │  ├─ repositories/      # 모든 쿼리에 userId/멤버십 조건 강제
-│     │  ├─ services/          # placesGoogle, placesNaver, quota, fx, aiRecommend(Claude API)
-│     │  └─ lib/               # logger(마스킹), errors, crypto
+│     │  ├─ db/                # database.ts, migrations.ts (SQLite 마이그레이션 19개)
+│     │  ├─ auth/              # providers(naver, kakao, google), session(requireUser), admins
+│     │  ├─ routes/            # auth, me, sync, share, places, routes(이동 시간), flights(편명·국내 공항 정보),
+│     │  │                     # ai(추천), translate(건강 카드 번역), stats(사용 통계), reviews, push, alerts,
+│     │  │                     # attachments, suggestions, usage, admin
+│     │  ├─ repositories/      # syncRepo(멤버십 조건 강제), statsRepo(사람 구분 없는 합계)
+│     │  └─ services/          # places(Google·네이버·카카오·Geoapify), llm(Gemini→Workers AI→Groq), naverBlog,
+│     │                        # airportInfo(인천·한국공항공사), flights(AviationStack), alerts, fx, apiUsage(한도·자동 중지)
 │     ├─ test/
 │     └─ .env.example
 └─ ops/                        # 홈 PC 운영
@@ -110,29 +112,23 @@ Travel_Planner/
 - **전역 UI 상태**(현재 선택된 Day, 시트 열림 등)만 Zustand / URL 파라미터. 서버 상태 캐시 라이브러리 불필요.
 - **URL이 상태**: `/trips/:tripId/day/:dayIndex` 처럼 화면 위치는 URL로 표현 → 새로고침/공유/뒤로가기 일관성.
 
-## 6. 라우트 (초안)
+## 6. 라우트 (실제, `app/router.tsx`)
 | 경로 | 화면 |
 |---|---|
-| `/` | 홈: 진행 중 여행 있으면 "오늘", 없으면 여행 목록 |
-| `/trips` | 여행 목록 |
-| `/trips/new` | 여행 생성 |
-| `/trips/:tripId` | 여행 개요 → 기본 일정 탭으로 리다이렉트 |
-| `/trips/:tripId/plan?day=N` | 일정 (Day 탭) |
-| `/trips/:tripId/map?day=N` | 지도 뷰 (P1) |
-| `/trips/:tripId/bookings` | 예약 |
-| `/trips/:tripId/checklist` | 준비물 |
-| `/trips/:tripId/settings` | 여행 설정 (기간, 타임존, 멤버) |
-| `/saved` | 저장한 장소 |
-| `/tools/fx` | 환율 계산기 (빠른 메뉴에서 진입) |
-| `/tools/ai` | AI 추천 (빠른 메뉴에서 진입) |
-| `/s/:shareId` | 로그인 없이 보는 공유 일정 (읽기 전용) |
-| `/import?d=...` | 공유 링크 가져오기 |
-| `/trips/:tripId/places` | 장소 찾기 (카테고리·평점 필터) |
-| `/places/:placeId` | 장소 상세 (시트로도 열림) |
-| `/login`, `/auth/done` | 로그인 / OAuth 완료 처리 |
-| `/invite/:token` | 여행 초대 수락 |
-| `/settings/account` | 계정·동기화·기기 관리 |
-| `/settings` | 앱 설정, 백업/복원 |
+| `/` | 홈: 여행 목록·오늘 여행·날씨 카드 |
+| `/trips`, `/trips/new` | 여행 목록·만들기 |
+| `/trips/:tripId/plan?day=N` | 일정 (일차 칩·지도·날씨 주의·이동 정보) |
+| `/trips/:tripId/bookings?focus=id` | 예약 (항공 공항 정보·회원번호·문서) — focus = 그 예약으로 스크롤 |
+| `/trips/:tripId/checklist` | 준비물·할 일 |
+| `/trips/:tripId/essentials` | 나라별 필수 항목 (여권·전자여행허가 자동 확인) |
+| `/trips/:tripId/weather` | 날씨 정보 (지난 날씨·예보·작년 기록, ? 설명) |
+| `/trips/:tripId/places`, `/print`, `/settings` | 가고 싶은 곳, 인쇄용 일정표, 여행 설정 |
+| `/records`, `/saved`, `/me` | 기록, 저장한 장소, 마이 |
+| `/me/profile`, `/me/reviews`, `/me/trash`, `/me/suggestions` | 개인정보, 내 후기, 삭제 기록 복원, 개선 제안 |
+| `/ai`, `/fx`, `/phrases` | AI 추천, 환율, 번역·회화(건강 카드) — 빠른 메뉴에서 |
+| `/settings`, `/backup`, `/labs`, `/help`, `/legal/:doc` | 설정, 백업·복원, 실험실, 도움말, 법적 고지 |
+| `/admin/users`, `/admin/api-usage`, `/admin/stats`, `/admin/suggestions`, `/admin/ai` | 관리자 |
+| `/s/:shareId`, `/invite/:token`, `/login` | 보기 전용 공유, 초대 수락, 로그인 (로그인 없이 여는 화면) |
 
 ## 7. PWA / 오프라인 전략
 - 직접 만든 서비스 워커(`src/sw/sw-template.js`): 앱 파일 미리 저장, 글꼴은 쓸 때 저장. `/api`·`/auth`는 가로채지 않는다
