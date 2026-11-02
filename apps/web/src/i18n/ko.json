@@ -94,7 +94,13 @@
     "edit": "편집",
     "editTitle": "바로가기 고르기",
     "editDesc": "{{n}}개까지 고른 순서대로 보여요",
-    "editReset": "처음대로"
+    "editReset": "처음대로",
+    "leg": {
+      "outbound": "출국 비행기",
+      "car": "렌터카",
+      "return": "귀국 비행기",
+      "carReturn": "반납 {{date}} {{time}} {{place}}"
+    }
   },
   "home": {
     "emptyTitle": "어디로 떠나볼까요?",

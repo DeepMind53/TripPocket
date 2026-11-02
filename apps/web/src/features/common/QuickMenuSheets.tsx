@@ -1,5 +1,4 @@
 import {
-  Car,
   Copy,
   ChevronDown,
   ChevronRight,
@@ -27,6 +26,9 @@ import { updateSettings, useSettings } from '../../data/settingsStore';
 import { BottomSheet, SegmentedControl, toast } from '../../shared/ui';
 import { DirectionsSheet } from './DirectionsSheet';
 import { CarCard } from './CarCard';
+import { TravelLegCard } from './TravelLegCard';
+import { travelLegNow, type TravelLeg } from '../../domain/travelLeg';
+import { nowTimeIn } from '../../domain/lodging';
 import { SavedSpotsButtons } from './SavedSpotsButtons';
 import { ShortcutEditSheet } from './ShortcutEditSheet';
 import { SHORTCUT_ICON, shortcutPath, useQuickShortcuts, type ShortcutId } from './quickShortcuts';
@@ -92,8 +94,12 @@ function TripQuickMenu({ open, setOpen }: { open: boolean; setOpen: (open: boole
   const today = trip ? todayIn(trip.timezone) : '';
   const withNo = bookings.filter((b) => b.confirmationNo);
   // 렌터카: 오늘 쓰는 차 → 아직 반납 전인 차 → 첫 차 (사용자 요청 2026-11-02)
+  // 지금 필요한 이동 정보 (여행지 시각 기준, 1분마다 다시 계산)
+  const clock = useMinuteClock(open);
+  const leg = trip ? travelLegNow(bookings, today, nowTimeIn(trip.timezone, clock)) : null;
   const cars = bookings.filter((b) => b.kind === 'car' && !b.deletedAt);
   const car =
+    (leg?.kind === 'car' ? leg.booking : undefined) ??
     cars.find((b) => b.start.date <= today && (b.end?.date ?? b.start.date) >= today) ??
     cars.find((b) => (b.end?.date ?? b.start.date) >= today) ??
     cars[0];
@@ -136,6 +142,7 @@ function TripQuickMenu({ open, setOpen }: { open: boolean; setOpen: (open: boole
         <QuickMenuContent
           shortcuts={shortcuts}
           trip={trip ?? undefined}
+          leg={leg}
           onEmergency={() => setSosOpen(true)}
         />
       </BottomSheet>
@@ -203,10 +210,12 @@ interface Shortcuts {
 function QuickMenuContent({
   shortcuts,
   trip,
+  leg,
   onEmergency,
 }: {
   shortcuts?: Shortcuts;
   trip?: Trip | undefined;
+  leg?: TravelLeg | undefined;
   onEmergency: () => void;
 }) {
   const inTrip = shortcuts !== undefined;
@@ -297,24 +306,12 @@ function QuickMenuContent({
             );
           })}
         </div>
-        {/* 렌터카(있을 때) + 현재 위치 저장·저장한 위치 (이 기기·이번 여행만, 사용자 요청 2026-11-02) */}
-        {trip &&
-          shortcuts &&
-          (shortcuts.car ? (
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={shortcuts.car}
-                className="flex min-h-[6.5rem] flex-col items-start justify-center gap-1 rounded-card border border-line px-3 text-left"
-              >
-                <Car aria-hidden="true" className="size-5 text-primary" />
-                <span className="text-body-2 font-semibold">{t('quickMenu.shortcut.car')}</span>
-              </button>
-              <SavedSpotsButtons trip={trip} />
-            </div>
-          ) : (
-            <SavedSpotsButtons trip={trip} horizontal />
-          ))}
+        {/* 지금 이동 정보: 출국편 → 렌터카(반납 전까지) → 귀국편 (사용자 요청 2026-11-02) */}
+        {trip && leg && (
+          <TravelLegCard leg={leg} tripId={trip.id} onCar={() => shortcuts?.car?.()} />
+        )}
+        {/* 현재 위치 저장·저장한 위치 (이 기기·이번 여행만) */}
+        {trip && shortcuts && <SavedSpotsButtons trip={trip} horizontal />}
       </section>
       <ShortcutEditSheet open={editOpen} onOpenChange={setEditOpen} />
 
