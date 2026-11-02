@@ -212,7 +212,8 @@ describe('무료량이 끝났을 때 백업 (docs/23, 사용자 결정 2026-10-2
       coordsSource: 'google',
       googlePlaceId: 'ChIJ_ac',
     });
-    expect(JSON.stringify(saved)).not.toMatch(/session|4\.5/);
+    // 세션·평점은 저장하지 않는다 (시각·id에 "4.5"가 우연히 들어가도 틀리지 않게 칸 이름으로 본다)
+    expect(JSON.stringify(saved)).not.toMatch(/"session"|"rating"|"userRatingCount"/);
   }, 20_000);
 
   it('Geoapify 백업: OpenStreetMap 배지와 "Powered by Geoapify" 표기, 좌표 출처 osm', async () => {
