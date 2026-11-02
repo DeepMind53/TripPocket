@@ -81,7 +81,7 @@ export function HomePage() {
         {/* 앱 소개 다시 보기 (사용자 요청 2026-10-26) */}
         <Link
           to="/help"
-          className="flex min-h-11 items-center justify-center gap-1 justify-self-end rounded-btn px-2 text-caption font-semibold text-fg-sub active:bg-bg-subtle"
+          className="flex min-h-11 items-center justify-center gap-1 justify-self-end rounded-btn px-2 whitespace-nowrap text-caption font-semibold text-fg-sub active:bg-bg-subtle"
         >
           <CircleHelp aria-hidden="true" className="size-4" />
           {t('help.title')}
@@ -175,7 +175,7 @@ function UpcomingTrip({ trip }: { trip: Trip }) {
           {trip.cover.emoji ?? '🧳'}
         </span>
         <span className="flex min-w-0 flex-col">
-          <span className="truncate text-title-1">{trip.title}</span>
+          <span className="line-clamp-2 text-title-1">{trip.title}</span>
           <span className="tabular text-body-2 opacity-90">
             {t('home.upcomingDesc', {
               period: formatPeriod(trip.startDate, trip.endDate),
@@ -239,7 +239,7 @@ function OngoingTrip({ trip }: { trip: Trip }) {
         <span aria-hidden="true" className="text-[22px]">
           {trip.cover.emoji ?? '🧳'}
         </span>
-        <span className="min-w-0 flex-1 truncate text-body-1">{trip.title}</span>
+        <span className="line-clamp-2 min-w-0 flex-1 text-body-1">{trip.title}</span>
         <span className="tabular shrink-0 rounded-full bg-primary-weak px-2 py-0.5 text-micro text-primary">
           {formatTripBadge(trip.startDate, trip.endDate, today)}
         </span>
@@ -261,7 +261,7 @@ function OngoingTrip({ trip }: { trip: Trip }) {
             <span className="tabular text-caption font-semibold text-primary">
               {t('home.currentItem')} · {time(current.startTime)}
             </span>
-            <span className="truncate text-body-1 font-semibold">{current.title}</span>
+            <span className="line-clamp-2 text-body-1 font-semibold">{current.title}</span>
           </span>
           <button
             type="button"

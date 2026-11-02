@@ -30,7 +30,7 @@ export function SegmentedControl<T extends string>({
       orientation="horizontal"
       aria-label={label}
       className={cn(
-        'grid auto-cols-fr grid-flow-col gap-[3px] rounded-[10px] bg-bg-subtle p-[3px]',
+        'grid auto-cols-fr grid-flow-col gap-[3px] rounded-[10px] bg-bg-subtle p-[3px] tight:grid-flow-row',
         className,
       )}
     >

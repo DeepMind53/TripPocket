@@ -1,5 +1,5 @@
 import { ArrowLeft, House } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import { useTranslation } from '../../i18n';
 import { useNavigate } from 'react-router';
 import { IconButton } from './IconButton';
@@ -21,6 +21,22 @@ export interface TopBarProps {
 export function TopBar({ title, subtitle, backTo, actions }: TopBarProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const header = useRef<HTMLElement>(null);
+
+  // 제목이 2줄이면 머리가 높아진다 → 그 아래 고정되는 줄이 가려지지 않게 실제 높이를 알린다
+  useEffect(() => {
+    const el = header.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const root = document.documentElement;
+    const observer = new ResizeObserver(() =>
+      root.style.setProperty('--topbar-h', `${el.offsetHeight}px`),
+    );
+    observer.observe(el);
+    return () => {
+      observer.disconnect();
+      root.style.removeProperty('--topbar-h');
+    };
+  }, []);
 
   function goBack() {
     // 공유 링크 등으로 바로 들어온 경우 뒤로 갈 곳이 없으므로 지정 경로로
@@ -30,7 +46,10 @@ export function TopBar({ title, subtitle, backTo, actions }: TopBarProps) {
   }
 
   return (
-    <header className="sticky top-0 z-20 flex min-h-[calc(56px+var(--safe-top))] pt-[var(--safe-top)] items-center gap-1 bg-bg/95 px-1 backdrop-blur">
+    <header
+      ref={header}
+      className="sticky top-0 z-20 flex min-h-[calc(56px+var(--safe-top))] pt-[var(--safe-top)] items-center gap-1 bg-bg/95 px-1 backdrop-blur tight:flex-wrap"
+    >
       {backTo !== undefined ? (
         <div className="flex shrink-0 items-center">
           <IconButton
@@ -43,11 +62,11 @@ export function TopBar({ title, subtitle, backTo, actions }: TopBarProps) {
       ) : (
         <span className="w-3" />
       )}
-      <div className="min-w-0 flex-1">
-        <h1 className="truncate text-title-2">{title}</h1>
+      <div className="min-w-0 flex-1 tight:order-last tight:basis-full tight:px-3 tight:pb-1">
+        <h1 className="line-clamp-2 text-title-2">{title}</h1>
         {subtitle && <p className="tabular truncate text-caption text-fg-muted">{subtitle}</p>}
       </div>
-      {actions && <div className="flex shrink-0 items-center">{actions}</div>}
+      {actions && <div className="ml-auto flex shrink-0 items-center">{actions}</div>}
     </header>
   );
 }

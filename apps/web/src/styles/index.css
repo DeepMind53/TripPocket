@@ -2,6 +2,16 @@
 @import 'pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css';
 @import './tokens.css';
 
+/* 칸이 좁을 때 배치를 바꾼다: 폭 340px 이하 또는 글자 크기 115% 이상 (data-big-text: settingsStore·boot.js) */
+@custom-variant tight {
+  @media (max-width: 340px) {
+    @slot;
+  }
+  html[data-big-text] & {
+    @slot;
+  }
+}
+
 /* 토큰 → Tailwind 유틸리티 연결 (bg-primary, text-fg-sub, border-line …) */
 @theme inline {
   --color-primary: var(--tp-primary);
@@ -95,6 +105,9 @@
   }
   body {
     @apply bg-bg text-fg font-sans text-body-2 antialiased;
+    /* 한글은 단어 단위로 줄바꿈 (글자 중간에서 끊지 않기). 칸보다 긴 단어만 예외 */
+    word-break: keep-all;
+    overflow-wrap: break-word;
     margin: 0;
     word-break: keep-all;
     overflow-wrap: anywhere;

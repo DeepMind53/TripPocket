@@ -511,7 +511,7 @@ function PlanView({
         ref={stickyRef}
         data-plan-sticky=""
         className={cn(
-          'sticky top-[calc(var(--safe-top)+56px)] bg-bg pb-1',
+          'sticky top-[var(--topbar-h,calc(var(--safe-top)+56px))] bg-bg pb-1',
           mapFull ? 'z-50' : 'z-10',
         )}
       >
@@ -557,7 +557,7 @@ function PlanView({
           </Chip>
         </ScrollRow>
 
-        <div className="flex items-center justify-between gap-2 px-5 pt-1">
+        <div className="flex items-center justify-between gap-2 px-5 pt-1 tight:flex-wrap">
           {editing ? (
             <p className="flex-1 text-caption text-fg-muted">{t('plan.editHint')}</p>
           ) : (
@@ -573,7 +573,11 @@ function PlanView({
             </Chip>
           )}
           {/* 여행 당일: 지금 위치에서 다음 일정까지 (사용자 요청 2026-10-27) */}
-          {!editing && nextStopItem && nowTime && <NextStopBar next={nextStopItem} now={nowTime} />}
+          {!editing && nextStopItem && nowTime && (
+            <div className="flex min-w-0 flex-1 justify-center tight:order-last tight:basis-full">
+              <NextStopBar next={nextStopItem} now={nowTime} />
+            </div>
+          )}
           {canEdit && (
             <Button
               size="sm"
@@ -1022,22 +1026,24 @@ function DaySection({
           className="flex min-h-12 items-center gap-2 rounded-t-2xl border-b border-line bg-bg-subtle/60 pr-2 pl-4"
           style={{ boxShadow: `inset 4px 0 0 ${color}` }}
         >
-          <h2 aria-label={title} className="tabular flex flex-1 items-center gap-2 py-2">
+          <h2 aria-label={title} className="tabular flex flex-1 flex-wrap items-center gap-2 py-2">
             {date ? (
               <>
                 <span
-                  className="rounded-full px-2.5 py-0.5 text-caption font-bold text-white"
+                  className="rounded-full px-2.5 py-0.5 text-caption font-bold whitespace-nowrap text-white"
                   style={{ background: color }}
                 >
                   {t('plan.dayN', { n: index + 1 })}
                 </span>
-                <span className="text-body-1 font-bold">{formatMonthDay(date)}</span>
+                <span className="text-body-1 font-bold whitespace-nowrap">
+                  {formatMonthDay(date)}
+                </span>
               </>
             ) : (
               <span className="text-body-1 font-bold">{title}</span>
             )}
             {isToday && (
-              <span className="rounded-full bg-primary-weak px-2 py-0.5 text-micro text-primary">
+              <span className="rounded-full bg-primary-weak px-2 py-0.5 text-micro whitespace-nowrap text-primary">
                 {t('date.today')}
               </span>
             )}
@@ -1476,7 +1482,7 @@ function ItemRow({
       aria-current={now ? 'time' : undefined}
       style={kindStyle}
       className={cn(
-        'kind-tint flex w-full items-start gap-3 rounded-btn px-2 py-3 text-left active:bg-bg-subtle',
+        'kind-tint flex w-full items-start gap-3 rounded-btn px-2 py-3 text-left active:bg-bg-subtle tight:flex-wrap tight:gap-y-1',
         booking && 'border border-dashed border-fg-muted/60',
         now && 'kind-now border-transparent',
         marked && 'visit-mark',
@@ -1486,7 +1492,7 @@ function ItemRow({
       {badge}
       <span
         className={cn(
-          'tabular shrink-0 text-caption leading-6 font-semibold text-fg-sub',
+          'tabular shrink-0 text-caption leading-6 font-semibold text-fg-sub tight:w-auto tight:flex-1',
           wide ? 'w-16' : 'w-11',
         )}
       >
@@ -1494,7 +1500,10 @@ function ItemRow({
         <CautionIcons cautions={cautions} />
       </span>
       <span
-        className={cn('flex min-w-0 flex-1 flex-col', item.done && !visitedLook && 'opacity-50')}
+        className={cn(
+          'flex min-w-0 flex-1 flex-col tight:order-last tight:basis-full',
+          item.done && !visitedLook && 'opacity-50',
+        )}
       >
         {item.kind === 'note' ? (
           <span
@@ -1559,7 +1568,7 @@ function ItemRow({
           </span>
         )}
       </span>
-      <span className="flex h-6 shrink-0 items-center gap-1 rounded-md bg-bg-subtle px-1.5 text-micro text-fg-sub">
+      <span className="flex h-6 shrink-0 items-center gap-1 rounded-md bg-bg-subtle px-1.5 text-micro whitespace-nowrap text-fg-sub">
         <Icon aria-hidden="true" className="size-3" />
         {t(`kind.${item.kind}`)}
       </span>
@@ -1708,7 +1717,7 @@ function EmptyDayRow({
     >
       <h2 aria-label={title} className="tabular flex flex-1 items-center gap-2">
         <span
-          className="rounded-full px-2.5 py-0.5 text-caption font-bold text-white"
+          className="rounded-full px-2.5 py-0.5 text-caption font-bold whitespace-nowrap text-white"
           style={{ background: color }}
         >
           {t('plan.dayN', { n: index + 1 })}
@@ -1754,7 +1763,7 @@ function EmptyRun({ from, to, onOpen }: { from: Section; to: Section; onOpen: ()
           range: `${formatMonthDay(from.date!)} – ${formatMonthDay(to.date!)}`,
         })}
       </span>
-      <span className="text-caption text-primary">{t('plan.showDays')}</span>
+      <span className="text-caption whitespace-nowrap text-primary">{t('plan.showDays')}</span>
     </button>
   );
 }

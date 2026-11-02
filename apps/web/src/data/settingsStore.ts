@@ -25,6 +25,7 @@ function applyDevice(s: Settings) {
   applyTheme(s.theme);
   document.documentElement.style.fontSize =
     s.fontScale === 1 ? '' : `${Math.round(s.fontScale * 100)}%`;
+  document.documentElement.toggleAttribute('data-big-text', s.fontScale >= 1.15);
   try {
     localStorage.setItem(BOOT_KEY, JSON.stringify({ theme: s.theme, fontScale: s.fontScale }));
   } catch {

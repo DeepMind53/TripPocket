@@ -178,7 +178,7 @@ export function ItemDetailSheet({
                   label={t('detail.visitTime')}
                   value={item.startTime ?? ''}
                   onChange={onVisitTime}
-                  className="w-[104px]"
+                  className="w-[6.5rem]"
                 />
                 {item.endTime && (
                   <span className="text-caption text-fg-muted">~ {fmt(item.endTime)}</span>

@@ -43,7 +43,7 @@ export function BookingCard({ booking, onOpen }: { booking: Booking; onOpen: () 
         <div className="flex items-center justify-between gap-2 border-t border-dashed border-line px-4 py-1.5">
           <span className="tabular text-caption text-fg-sub">
             {t('bookings.confirmationNo')}{' '}
-            <strong className="font-bold text-fg">{b.confirmationNo}</strong>
+            <strong className="font-bold whitespace-nowrap text-fg">{b.confirmationNo}</strong>
           </span>
           <button
             type="button"
@@ -126,7 +126,7 @@ export function LodgingBody({ booking: b }: { booking: Booking }) {
     <div className="flex flex-col gap-2">
       <p className="flex items-center gap-1.5 text-body-1">
         <BedDouble aria-hidden="true" className="size-4 shrink-0 text-primary" />
-        <span className="truncate">{b.title}</span>
+        <span className="line-clamp-2">{b.title}</span>
         {nights > 0 && (
           <span className="ml-auto shrink-0 rounded-full bg-primary-weak px-2 py-0.5 text-micro text-primary">
             {t('bookings.nights', { n: nights })}

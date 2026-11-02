@@ -332,7 +332,7 @@ export function SettingsPage() {
         <DeviceDataGroup />
 
         <Group title={t('settings.data')} onReset={() => resetSettings(['backupReminderDays'])}>
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center justify-between gap-3 tight:flex-wrap">
             <span className="flex flex-col">
               <span className="text-body-2 font-medium">{t('settings.backupReminder')}</span>
               <span className="text-caption text-fg-muted">{t('settings.backupReminderDesc')}</span>
@@ -459,8 +459,8 @@ function SwitchRow({
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   return (
-    <div className="flex items-center justify-between gap-2">
-      <span className="min-w-0 flex-1 text-body-2 font-medium">{label}</span>
+    <div className="flex items-center justify-between gap-2 tight:flex-wrap">
+      <span className="min-w-0 flex-1 text-body-2 font-medium tight:basis-full">{label}</span>
       {preview && (
         <Button
           size="sm"

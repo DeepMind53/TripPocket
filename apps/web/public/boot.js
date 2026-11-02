@@ -5,6 +5,8 @@ try {
   if (b.theme === 'light' || b.theme === 'dark') document.documentElement.dataset.theme = b.theme;
   if (typeof b.fontScale === 'number' && b.fontScale !== 1)
     document.documentElement.style.fontSize = Math.round(b.fontScale * 100) + '%';
+  if (typeof b.fontScale === 'number' && b.fontScale >= 1.15)
+    document.documentElement.toggleAttribute('data-big-text', true);
 } catch {
   // 저장소를 못 읽어도 기본 테마로 동작
 }

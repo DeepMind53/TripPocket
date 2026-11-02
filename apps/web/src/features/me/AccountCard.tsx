@@ -57,9 +57,9 @@ export function AccountCard() {
 
   return (
     <section className="flex flex-col gap-3 rounded-card bg-bg-subtle p-4">
-      {/* 이름 왼쪽, 로그인 수단·동기화는 오른쪽 (사용자 요청 2026-10-25) */}
-      <div className="flex items-start justify-between gap-2">
-        <span className="flex min-w-0 items-center gap-1.5">
+      {/* 첫 줄 포인트·이름, 다음 줄 로그인 수단·동기화 (좁으면 카드 밖으로 나가서 2026-11-02 분리) */}
+      <div className="flex flex-col gap-1">
+        <span className="flex min-w-0 flex-wrap items-center gap-1.5">
           {/* 후기 포인트는 닉네임 왼쪽 (사용자 요청 2026-10-25) — 누르면 적립 내역 */}
           <button
             type="button"
@@ -83,7 +83,7 @@ export function AccountCard() {
             {t('profile.title')}
           </Link>
         </span>
-        <span className="flex shrink-0 flex-col items-end gap-0.5 pt-1">
+        <span className="flex flex-wrap items-center justify-between gap-x-2 gap-y-0.5">
           <span className="text-caption text-fg-muted">
             {me.providers.map((p) => t(`login.name.${p}` as 'login.name.kakao')).join(' · ')}
           </span>
@@ -91,16 +91,31 @@ export function AccountCard() {
         </span>
       </div>
       <div className="grid grid-cols-3 gap-2">
-        <Button size="sm" variant="ghost" onClick={() => open('devices')}>
-          <MonitorSmartphone aria-hidden="true" className="size-4" />
+        <Button
+          size="sm"
+          variant="ghost"
+          className="px-1 whitespace-nowrap"
+          onClick={() => open('devices')}
+        >
+          <MonitorSmartphone aria-hidden="true" className="size-4 tight:hidden" />
           {t('account.devices')}
         </Button>
-        <Button size="sm" variant="ghost" onClick={() => open('logout')}>
-          <LogOut aria-hidden="true" className="size-4" />
+        <Button
+          size="sm"
+          variant="ghost"
+          className="px-1 whitespace-nowrap"
+          onClick={() => open('logout')}
+        >
+          <LogOut aria-hidden="true" className="size-4 tight:hidden" />
           {t('account.logout')}
         </Button>
-        <Button size="sm" variant="ghost" onClick={() => open('delete')}>
-          <UserX aria-hidden="true" className="size-4" />
+        <Button
+          size="sm"
+          variant="ghost"
+          className="px-1 whitespace-nowrap"
+          onClick={() => open('delete')}
+        >
+          <UserX aria-hidden="true" className="size-4 tight:hidden" />
           {t('account.delete')}
         </Button>
       </div>
@@ -267,7 +282,10 @@ function SyncStatus() {
             ? t('sync.pending', { n: pending })
             : t('sync.done');
   return (
-    <span role="status" className="flex items-center gap-1 text-caption text-fg-sub">
+    <span
+      role="status"
+      className="flex min-w-0 flex-wrap items-center gap-1 text-caption text-fg-sub"
+    >
       <span
         aria-hidden="true"
         className={cn(
