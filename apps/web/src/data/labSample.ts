@@ -1,5 +1,4 @@
 import { addDays, todayIn, type ItemKind, type LocalDate } from '@trippocket/shared';
-import { LABS, setLab } from './labsStore';
 import { bookingRepo } from './repositories/bookingRepo';
 import { itemRepo } from './repositories/itemRepo';
 import { savedPlaceRepo, SavedLimitError } from './repositories/savedPlaceRepo';
@@ -270,8 +269,7 @@ export async function createLabSample(): Promise<string> {
     }
   }
 
-  // 샘플이 켠 실험은 사용 통계에 세지 않는다
-  for (const id of LABS) setLab(id, true, { silent: true });
+  // 실험실 기능은 켜지 않는다 — 기본은 모두 꺼짐, 사용자가 직접 켠다 (사용자 요청 2026-11-03)
   return trip.id;
 }
 

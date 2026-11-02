@@ -10,13 +10,10 @@ export const LABS = [
   // 2026-10-28 새 실험 10개 (3차 — Google 여행·트리플·마이리얼트립·Kayak·TripIt 참고)
   'leftDrive',
   'tapWater',
-  'transitCard',
-  'payTips',
   'leaveDays',
   'firstCountry',
   'cancelReminder',
   'onsitePay',
-  'voucherList',
   'earlyStart',
   // 2026-10-28 정식: 현지 공휴일 표시·늦은 귀가 안내(설정 "일정"). 뺐다(사용자 결정): 공항 도착 권장 시각·시간 겹침 경고·
   // 골든아워·콘센트·전압·여행 진행률·메모 체크박스·오늘 환율 한 줄·체크인 전 짐 보관.
@@ -28,13 +25,22 @@ export const LABS = [
   // 하루 일정 글로 복사·날씨 맞춤 준비물·하루 동선 지도·오늘 일정 진행률·일출·일몰(설정),
   // 방문 기록·긴급 연락처·여행 안 검색·하루 일정 복제·인쇄용 일정표·여행 회고.
   // 출발 시각·빠듯한 일정은 일정 화면 위 "다음 일정" 줄로 합쳐 정식. 화면 켜짐 유지는 뺐다 (사용자 요청)
+  // 2026-11-03 정식(빠른 메뉴 "현지 정보"): 교통카드·결제 팁·바우처 모아보기 (사용자 요청)
 ] as const;
 export type LabId = (typeof LABS)[number];
 
 const KEY = 'tp-labs';
+/** 한 번 모두 끄기 (사용자 요청 2026-11-03: 샘플 테스트가 전부 켠 것을 모든 기기에서 되돌림) — 값을 바꾸면 다시 한 번 */
+const RESET_KEY = 'tp-labs-reset';
+const RESET_VERSION = '2026-11-03';
 
 function load(): Partial<Record<LabId, boolean>> {
   try {
+    if (localStorage.getItem(RESET_KEY) !== RESET_VERSION) {
+      localStorage.removeItem(KEY);
+      localStorage.setItem(RESET_KEY, RESET_VERSION);
+      return {};
+    }
     const v = JSON.parse(localStorage.getItem(KEY) ?? '{}') as Record<string, unknown>;
     return Object.fromEntries(LABS.filter((id) => v[id] === true).map((id) => [id, true]));
   } catch {
