@@ -4,8 +4,9 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router';
 import { useAuth } from '../../data/authStore';
 import { resetLocalDb } from '../../data/dev';
-import { loadSettings, useSettings } from '../../data/settingsStore';
-import { resetSettingsConfirmed } from '../../data/settingsSync';
+import { settingsRepo } from '../../data/repositories/settingsRepo';
+import { loadSettings, SETTINGS_META_KEY, useSettings } from '../../data/settingsStore';
+import { resetSettingsConfirmed, syncSettings } from '../../data/settingsSync';
 import { PlanFeaturePrompt } from './PlanFeaturePrompt';
 import { planPromptRun } from './planPromptRun';
 
@@ -32,7 +33,14 @@ beforeEach(async () => {
     return Response.json(server);
   });
 });
-afterEach(() => {
+afterEach(async () => {
+  // 고른 값을 다 올린 뒤에 다음 테스트로 — 남은 저장이 DB 초기화와 겹치지 않게
+  await waitFor(async () =>
+    expect(await settingsRepo.get(SETTINGS_META_KEY, { dirty: false })).toMatchObject({
+      dirty: false,
+    }),
+  );
+  await syncSettings();
   vi.unstubAllGlobals();
   useAuth.setState({ status: 'unknown', me: null });
 });
