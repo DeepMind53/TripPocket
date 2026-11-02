@@ -11,7 +11,14 @@ import { COVER_COLORS, DEFAULT_EMOJIS } from '../../shared/lib/coverColors';
 import { EmojiPicker } from './EmojiPicker';
 import { formatPeriod, formatTripLength } from '../../shared/lib/dateFormat';
 import type { DateRange } from '../../shared/lib/dateRange';
-import { BottomSheet, Button, SegmentedControl, TopBar, toast } from '../../shared/ui';
+import {
+  BottomSheet,
+  Button,
+  CancelSaveRow,
+  SegmentedControl,
+  TopBar,
+  toast,
+} from '../../shared/ui';
 import { deleteTripWithUndo } from './tripActions';
 import { TripCalendar } from './TripCalendar';
 
@@ -199,9 +206,12 @@ function TripSettingsForm({ trip, items }: { trip: Trip; items: ItineraryItem[] 
       </div>
 
       <div className="sticky bottom-0 border-t border-line bg-bg px-5 pt-3 pb-[max(16px,env(safe-area-inset-bottom))]">
-        <Button size="lg" fullWidth loading={saving} onClick={() => void save()}>
-          {t('form.save')}
-        </Button>
+        {/* 저장하지 않고 나가기 (사용자 요청 2026-11-02) */}
+        <CancelSaveRow onCancel={() => void navigate(`/trips/${trip.id}/plan`, { replace: true })}>
+          <Button size="lg" fullWidth loading={saving} onClick={() => void save()}>
+            {t('form.save')}
+          </Button>
+        </CancelSaveRow>
       </div>
 
       <BottomSheet

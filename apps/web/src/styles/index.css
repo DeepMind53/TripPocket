@@ -275,3 +275,9 @@
     background: color-mix(in srgb, var(--tp-danger) 16%, var(--tp-surface));
   }
 }
+
+/* 입력칸을 자판 위로 올릴 때(useKeyboardScroll) 위쪽 머리·이름표가 가리지 않게 */
+input,
+textarea {
+  scroll-margin-top: calc(var(--topbar-h, 56px) + 2rem);
+}

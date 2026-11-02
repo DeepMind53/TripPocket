@@ -12,7 +12,7 @@ import {
 import { useSettings } from '../../data/settingsStore';
 import { useTranslation } from '../../i18n';
 import { openMapLink, placeLink } from '../../shared/lib/directions';
-import { BottomSheet, Button, IconButton, toast } from '../../shared/ui';
+import { BottomSheet, Button, CancelSaveRow, IconButton, toast } from '../../shared/ui';
 
 /** 다른 여행 목록일 때 — 매번 새 배열을 만들면 화면이 끝없이 다시 그려진다 */
 const NO_SPOTS: SavedSpot[] = [];
@@ -110,9 +110,11 @@ export function SavedSpotsButtons({ trip }: { trip: Trip }) {
         onOpenChange={setSaveOpen}
         title={t('spots.save')}
         footer={
-          <Button size="lg" fullWidth loading={busy} disabled={!name.trim()} onClick={save}>
-            {t('spots.saveHere')}
-          </Button>
+          <CancelSaveRow onCancel={() => setSaveOpen(false)}>
+            <Button size="lg" fullWidth loading={busy} disabled={!name.trim()} onClick={save}>
+              {t('spots.saveHere')}
+            </Button>
+          </CancelSaveRow>
         }
       >
         <div className="flex flex-col gap-3 pb-2">

@@ -8,7 +8,7 @@ import { ITEM_KINDS, type ItemKind, type ItineraryItem, type LocalDate } from '@
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from '../../i18n';
 import { itemRepo } from '../../data/repositories/itemRepo';
-import { BottomSheet, Button, Chip, TimeInput, toast } from '../../shared/ui';
+import { BottomSheet, Button, CancelSaveRow, Chip, TimeInput, toast } from '../../shared/ui';
 import { KIND_ICON } from './itemKinds';
 
 export interface ItemFormSheetProps {
@@ -264,9 +264,12 @@ function ItemForm({
         />
       </Field>
 
-      <Button type="submit" size="lg" fullWidth loading={saving}>
-        {t(item ? 'form.save' : 'form.add')}
-      </Button>
+      {/* 저장하지 않고 나가기 — 왼쪽 1/5 빨간 [취소] (사용자 요청 2026-11-02) */}
+      <CancelSaveRow onCancel={onDone}>
+        <Button type="submit" size="lg" fullWidth loading={saving}>
+          {t(item ? 'form.save' : 'form.add')}
+        </Button>
+      </CancelSaveRow>
     </form>
   );
 }

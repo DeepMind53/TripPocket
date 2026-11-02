@@ -24,6 +24,7 @@ import { bookingRepo, type NewBooking } from '../../data/repositories/bookingRep
 import {
   BottomSheet,
   Button,
+  CancelSaveRow,
   Chip,
   ScrollRow,
   snackbar,
@@ -1194,9 +1195,11 @@ function BookingForm({
 
       {/* [저장]은 아래에 붙어 있게 — 칸이 많아도 바로 누를 수 있게 */}
       <div className="sticky bottom-0 -mx-5 bg-surface px-5 pt-2 pb-1">
-        <Button type="submit" size="lg" fullWidth loading={saving}>
-          {t(b ? 'form.save' : 'bookings.add')}
-        </Button>
+        <CancelSaveRow onCancel={onDone}>
+          <Button type="submit" size="lg" fullWidth loading={saving}>
+            {t(b ? 'form.save' : 'bookings.add')}
+          </Button>
+        </CancelSaveRow>
       </div>
       {b && (
         <Button

@@ -2,7 +2,7 @@ import { NICKNAME_MAX, normalizeNickname } from '@trippocket/shared';
 import { useState } from 'react';
 import { updateNickname, useAuth } from '../../data/authStore';
 import { useTranslation } from '../../i18n';
-import { BottomSheet, Button, toast } from '../../shared/ui';
+import { BottomSheet, Button, CancelSaveRow, toast } from '../../shared/ui';
 
 /**
  * 닉네임 정하기·바꾸기. 공유한 여행의 멤버 목록·관리자 화면에서 서로를 알아보는 이름.
@@ -43,9 +43,11 @@ export function NicknameSheet({
       title={t(first ? 'nickname.firstTitle' : 'nickname.title')}
       description={t('nickname.desc')}
       footer={
-        <Button size="lg" fullWidth loading={busy} disabled={!valid} onClick={() => void save()}>
-          {t('form.save')}
-        </Button>
+        <CancelSaveRow onCancel={() => onOpenChange(false)}>
+          <Button size="lg" fullWidth loading={busy} disabled={!valid} onClick={() => void save()}>
+            {t('form.save')}
+          </Button>
+        </CancelSaveRow>
       }
     >
       <form

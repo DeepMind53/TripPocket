@@ -6,6 +6,7 @@ import { useTranslation } from '../i18n';
 import { RouterProvider } from 'react-router';
 import { Toaster, toast } from '../shared/ui';
 import { createAppRouter } from './router';
+import { useKeyboardScroll } from '../shared/hooks/useKeyboardScroll';
 import { countUse, screenName } from '../data/usageStats';
 import { useInstall } from './pwa';
 import { InAppBanner } from '../features/common/InAppBanner';
@@ -48,6 +49,8 @@ function installOffered(): boolean {
 
 export function App() {
   const [router] = useState(createAppRouter);
+  // 입력칸을 누르면 자판 위로 올리기 (모든 화면·시트 공통)
+  useKeyboardScroll();
   // 앱 열기(오프라인 여부)·화면 오류 횟수 (ADR-0009) — 오류 내용은 보내지 않는다
   useEffect(() => {
     countUse(navigator.onLine ? 'app.open' : 'app.open.offline');

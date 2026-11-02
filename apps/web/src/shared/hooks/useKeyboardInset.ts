@@ -19,11 +19,7 @@ export function useKeyboardInset(active: boolean): { inset: number; height: numb
       const next =
         inset > 80 ? { inset, height: Math.round(vv.height) } : { inset: 0, height: null };
       setState((cur) => (cur.inset === next.inset && cur.height === next.height ? cur : next));
-      // 올라간 뒤 지금 입력 중인 칸이 보이게
-      if (next.inset > 0)
-        requestAnimationFrame(() =>
-          (document.activeElement as HTMLElement | null)?.scrollIntoView?.({ block: 'nearest' }),
-        );
+      // 입력칸을 보이는 곳으로 올리는 일은 useKeyboardScroll이 한다 (위쪽으로 — 아래 검색 결과·버튼 자리)
     };
     update();
     vv.addEventListener('resize', update);
