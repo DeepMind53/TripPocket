@@ -475,6 +475,8 @@ export interface CustomFood {
   ko: string;
   en: string;
   kind: 'allergy' | 'dislike';
+  /** 무료 AI로 만든 번역 (언어 코드 → 이름, 기기에만) — 없으면 영어로 */
+  tr?: Record<string, string> | undefined;
 }
 
 /**
@@ -493,7 +495,7 @@ export function healthCardText(
   const own = (kind: CustomFood['kind']) =>
     (input.custom ?? [])
       .filter((c) => c.kind === kind)
-      .map((c) => (langCode === 'ko' ? c.ko || c.en : c.en || c.ko).trim())
+      .map((c) => (langCode === 'ko' ? c.ko || c.en : c.tr?.[langCode] || c.en || c.ko).trim())
       .filter(Boolean);
   const allergies = [...input.allergens.map((a) => l.words[a]), ...own('allergy')].join(l.sep);
   const dislikes = own('dislike').join(l.sep);

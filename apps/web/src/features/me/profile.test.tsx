@@ -54,5 +54,6 @@ it('예전 여권 만료일은 개인정보로 옮겨 읽고, 틀린 값은 버�
     customFoods: [],
     bloodType: null,
     meds: '',
+    medsTr: {},
   });
 });

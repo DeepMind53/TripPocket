@@ -48,6 +48,8 @@ export interface TravelProfile {
   customFoods: CustomFood[];
   bloodType: BloodType | null;
   meds: string;
+  /** 복용약 번역 (언어 코드 → 문장, 무료 AI, 기기에만) — 약을 고치면 지운다 */
+  medsTr: Record<string, string>;
 }
 
 const KEY = 'tp-travel-profile';
@@ -71,6 +73,7 @@ const EMPTY: TravelProfile = {
   customFoods: [],
   bloodType: null,
   meds: '',
+  medsTr: {},
 };
 
 /** 저장된 값(무엇이든) → 올바른 개인정보. 틀린 항목은 빈 값 */
@@ -81,6 +84,14 @@ export function parseProfile(raw: unknown): TravelProfile {
   const obj = (v: unknown) => (v && typeof v === 'object' ? v : {}) as Record<string, unknown>;
   const arr = (v: unknown) => (Array.isArray(v) ? (v as unknown[]) : []);
   const permitsRaw = obj(o.permits);
+  /** 번역: 짧은 언어 코드 → 글자 (그 밖은 버림) */
+  const trOf = (v: unknown): Record<string, string> =>
+    Object.fromEntries(
+      Object.entries(obj(v)).filter(
+        (e): e is [string, string] =>
+          /^[a-z]{2}(-[A-Z]{2})?$/.test(e[0]) && typeof e[1] === 'string' && e[1].length <= 80,
+      ),
+    );
   const ins = obj(o.insurance);
   return {
     passportExpiry: date(o.passportExpiry),
@@ -116,6 +127,7 @@ export function parseProfile(raw: unknown): TravelProfile {
         ko: text(obj(c).ko, 40),
         en: text(obj(c).en, 40),
         kind: obj(c).kind === 'allergy' ? ('allergy' as const) : ('dislike' as const),
+        ...(Object.keys(trOf(obj(c).tr)).length ? { tr: trOf(obj(c).tr) } : {}),
       })),
       // 예전 "그 밖에 못 먹는 음식" 글은 비선호 음식 한 줄로 옮긴다
       ...(text(o.food, 40).trim()
@@ -128,6 +140,7 @@ export function parseProfile(raw: unknown): TravelProfile {
       ? (o.bloodType as BloodType)
       : null,
     meds: text(o.meds, 200),
+    medsTr: trOf(o.medsTr),
   };
 }
 

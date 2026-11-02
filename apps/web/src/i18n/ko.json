@@ -1469,7 +1469,12 @@
     "customKo": "한글 (예: 고수)",
     "customEn": "영어 (예: coriander)",
     "addCustom": "음식 추가",
-    "customHint": "목록에 없는 음식을 적어요\n한국어 카드엔 한글, 다른 언어 카드엔 영어로 보여요"
+    "customHint": "목록에 없는 음식을 적어요\n한국어 카드엔 한글, 다른 언어 카드엔 영어로 보여요",
+    "translateN": "카드용 번역 만들기 ({{n}}개)",
+    "translateAgain": "카드용 번역 다시 만들기",
+    "translateNote": "누르면 음식·약 이름만 무료 AI(Google Gemini 등)로 보내 12개 언어로 번역해요\n이름·계정·위치는 보내지 않고, 번역은 이 기기에만 저장해요\n안 되면 카드에서 번역기 바로가기를 써 주세요",
+    "translated": "카드용 번역을 만들었어요",
+    "translateFailed": "지금은 번역하지 못했어요\n카드에서 번역기 바로가기를 써 주세요"
   },
   "nickname": {
     "title": "닉네임 바꾸기",

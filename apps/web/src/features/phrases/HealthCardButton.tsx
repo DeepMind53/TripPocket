@@ -78,7 +78,12 @@ export function HealthCardButton({ lang }: { lang: PhraseLang }) {
     allergy: { big: local.allergy, en: en.allergy, ko: ko.allergy },
     dislike: { big: local.dislike, en: en.dislike, ko: ko.dislike },
     blood: { big: local.blood ?? '', en: en.blood ?? '', ko: ko.blood ?? '' },
-    meds: { big: extra, en: '', ko: `${ko.medsLabel} · ${t('phrases.healthExtra')}` },
+    // 번역이 있으면 그 나라 말 + 영어 + 한국어, 없으면 적은 글 + 번역기 바로가기
+    meds: {
+      big: p.medsTr[lang.code] ?? extra,
+      en: p.medsTr.en ?? '',
+      ko: `${ko.medsLabel}: ${extra}`,
+    },
   };
   const cur = open ? show[open] : null;
   return (
@@ -108,7 +113,7 @@ export function HealthCardButton({ lang }: { lang: PhraseLang }) {
         {...(withEn && cur?.en ? { en: cur.en } : {})}
         sub={cur?.ko}
       >
-        {open === 'meds' && (
+        {open === 'meds' && !p.medsTr[lang.code] && (
           <a
             href={translate}
             target="_blank"

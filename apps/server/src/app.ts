@@ -24,6 +24,7 @@ import { routeEtaRoutes } from './routes/routes';
 import { shareRoutes } from './routes/share';
 import { syncRoutes } from './routes/sync';
 import { statsRoutes } from './routes/stats';
+import { translateRoutes } from './routes/translate';
 import { statsRepo } from './repositories/statsRepo';
 import { latestFx } from './services/fx';
 
@@ -116,6 +117,7 @@ export async function buildApp(config: Config, db: Db): Promise<FastifyInstance>
   usageRoutes(app, db);
   syncRoutes(app, db);
   statsRoutes(app, db);
+  translateRoutes(app, config, db);
   aiRoutes(app, config, db);
   shareRoutes(app, db);
   placesRoutes(app, config, db);

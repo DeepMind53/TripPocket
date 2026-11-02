@@ -21,5 +21,11 @@ describe('건강 카드 문장 (2026-11-02)', () => {
     const ko = healthCardText('ko', { ...input, allergens: [...input.allergens] });
     expect(ko.dislike).toBe('이 음식은 빼 주세요: 고수');
     expect(healthCardText('en', { allergens: [] }).dislike).toBe('');
+    // 무료 AI로 만든 번역이 있으면 그 나라 말로 (2026-11-02)
+    const tr = healthCardText('ja', {
+      allergens: [],
+      custom: [{ ko: '고수', en: 'coriander', kind: 'dislike', tr: { ja: 'パクチー' } }],
+    });
+    expect(tr.dislike).toBe('次のものは入れないでください：パクチー');
   });
 });

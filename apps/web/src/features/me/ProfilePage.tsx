@@ -15,6 +15,7 @@ import {
 } from '../../data/travelProfile';
 import { useTranslation } from '../../i18n';
 import { CustomFoodsField } from './CustomFoodsField';
+import { TranslateCardsButton } from './TranslateCardsButton';
 import { Chip, IconButton, SegmentedControl, TopBar } from '../../shared/ui';
 
 const field = 'h-12 w-full min-w-0 rounded-btn bg-bg-subtle px-3 text-body-1';
@@ -280,12 +281,14 @@ export function ProfilePage() {
               value={p.meds}
               maxLength={200}
               placeholder={t('profile.medsPlaceholder')}
-              onChange={(e) => updateTravelProfile({ meds: e.target.value })}
+              // 약을 고치면 예전 번역은 맞지 않으므로 지운다
+              onChange={(e) => updateTravelProfile({ meds: e.target.value, medsTr: {} })}
             />
           </label>
           <p className="-mt-2 text-micro whitespace-pre-line text-fg-muted">
             {t('profile.healthHint')}
           </p>
+          <TranslateCardsButton />
         </Group>
 
         <label className="flex flex-col gap-1.5">
