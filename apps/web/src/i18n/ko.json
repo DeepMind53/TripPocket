@@ -49,7 +49,8 @@
       "lodging": "숙소로 길찾기",
       "bookingNo": "예약번호",
       "nextItem": "다음 일정",
-      "checklist": "준비물"
+      "checklist": "준비물",
+      "car": "렌터카"
     },
     "quickSettings": "빠른 설정",
     "theme": "화면",
@@ -68,7 +69,8 @@
     "hint": "환율·AI 추천·길찾기 같은\n자주 쓰는 기능은 여기에 있어요",
     "localNow": "현지 {{date}} {{time}}",
     "phrases": "번역·회화",
-    "phrasesDesc": "현지어로 크게 보여 주기"
+    "phrasesDesc": "현지어로 크게 보여 주기",
+    "noCar": "렌터카 예약이 없어요"
   },
   "home": {
     "emptyTitle": "어디로 떠나볼까요?",
@@ -353,7 +355,13 @@
     "trainSeat": "호차·좌석",
     "trainSeatPlaceholder": "예: 5호차 12A",
     "roomType": "객실",
-    "roomPlaceholder": "예: 디럭스 더블"
+    "roomPlaceholder": "예: 디럭스 더블",
+    "transitChips": "교통수단 고르기",
+    "carModel": "차종",
+    "carModelPlaceholder": "예: 아쿠아",
+    "plate": "차량번호",
+    "platePlaceholder": "예: 12가 3456",
+    "stationPlaceholder": "역·터미널 이름으로 찾기"
   },
   "checklist": {
     "share": {
@@ -2251,5 +2259,23 @@
     "none": "아직 정보가 없어요",
     "checkedAt": "{{at}} 확인 · 바뀔 수 있어요\n출발 전날과 당일에 다시 확인하세요",
     "failed": "공항 정보를 불러오지 못했어요"
+  },
+  "car": {
+    "return": "반납 {{date}} {{time}}\n{{place}}"
+  },
+  "spots": {
+    "save": "현재 위치 저장",
+    "saveHere": "지금 위치로 저장",
+    "list": "저장한 위치 {{n}}",
+    "listTitle": "저장한 위치",
+    "name": "이름",
+    "namePlaceholder": "예: 주차한 곳, 호텔 앞 골목",
+    "notice": "이번 여행에만 쓰는 목록이에요\n다음 여행이 시작되면 자동으로 지워져요\n이 기기에만 저장되고 서버로 보내지 않아요",
+    "saved": "위치를 저장했어요",
+    "empty": "저장한 위치가 없어요",
+    "directions": "누르면 길찾기",
+    "remove": "{{name}} 지우기",
+    "gpsTitle": "위치를 찾지 못했어요",
+    "gpsDesc": "GPS나 위치 권한이 꺼져 있으면 저장할 수 없어요\n위치를 켜고 하늘이 보이는 곳에서 다시 해 주세요"
   }
 }

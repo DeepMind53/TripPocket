@@ -1,5 +1,6 @@
 import {
   Bed,
+  Car,
   Copy,
   CalendarClock,
   ChevronRight,
@@ -27,6 +28,8 @@ import { formatMonthDay } from '../../shared/lib/dateFormat';
 import { updateSettings, useSettings } from '../../data/settingsStore';
 import { BottomSheet, SegmentedControl, toast } from '../../shared/ui';
 import { DirectionsSheet } from './DirectionsSheet';
+import { CarCard } from './CarCard';
+import { SavedSpotsButtons } from './SavedSpotsButtons';
 import { openDirectionsDirect } from './openDirections';
 import { isDomesticTrip } from '../../domain/tripPlace';
 
@@ -84,9 +87,16 @@ function TripQuickMenu({ open, setOpen }: { open: boolean; setOpen: (open: boole
   const [numbersOpen, setNumbersOpen] = useRouteSheet('quick-booking-numbers');
   const [sosOpen, setSosOpen] = useRouteSheet('quick-emergency');
   const [dest, setDest] = useState<Destination | null>(null);
+  const [carOpen, setCarOpen] = useState(false);
 
   const today = trip ? todayIn(trip.timezone) : '';
   const withNo = bookings.filter((b) => b.confirmationNo);
+  // 렌터카: 오늘 쓰는 차 → 아직 반납 전인 차 → 첫 차 (사용자 요청 2026-11-02)
+  const cars = bookings.filter((b) => b.kind === 'car' && !b.deletedAt);
+  const car =
+    cars.find((b) => b.start.date <= today && (b.end?.date ?? b.start.date) >= today) ??
+    cars.find((b) => (b.end?.date ?? b.start.date) >= today) ??
+    cars[0];
 
   const shortcuts: Shortcuts = {
     lodging: () => {
@@ -111,6 +121,7 @@ function TripQuickMenu({ open, setOpen }: { open: boolean; setOpen: (open: boole
       void navigate(`/trips/${tripId}/plan?day=${day}`, { replace: true });
     },
     checklist: () => void navigate(`/trips/${tripId}/checklist`, { replace: true }),
+    ...(car ? { car: () => setCarOpen(true) } : {}),
   };
 
   return (
@@ -122,8 +133,13 @@ function TripQuickMenu({ open, setOpen }: { open: boolean; setOpen: (open: boole
         // 여행지 현지 날짜·시각 (일정 제목 아래에서는 가려 보이지 않아 여기로, 사용자 요청 2026-10-27)
         headerAside={trip && open ? <LocalNow timezone={trip.timezone} /> : undefined}
       >
-        <QuickMenuContent shortcuts={shortcuts} onEmergency={() => setSosOpen(true)} />
+        <QuickMenuContent
+          shortcuts={shortcuts}
+          trip={trip ?? undefined}
+          onEmergency={() => setSosOpen(true)}
+        />
       </BottomSheet>
+      <CarCard car={car} open={carOpen} onClose={() => setCarOpen(false)} />
       <EmergencySheet open={sosOpen} onOpenChange={setSosOpen} countries={tripCountries(trip)} />
       <DirectionsSheet
         open={dirOpen}
@@ -164,13 +180,17 @@ interface Shortcuts {
   bookingNo: () => void;
   nextItem: () => void;
   checklist: () => void;
+  /** 렌터카 예약이 있을 때만 */
+  car?: () => void;
 }
 
 function QuickMenuContent({
   shortcuts,
+  trip,
   onEmergency,
 }: {
   shortcuts?: Shortcuts;
+  trip?: Trip | undefined;
   onEmergency: () => void;
 }) {
   const inTrip = shortcuts !== undefined;
@@ -245,6 +265,24 @@ function QuickMenuContent({
               onClick={shortcuts.checklist}
             />
           </div>
+          {/* 렌터카(있을 때) + 현재 위치 저장·저장한 위치 (이 기기·이번 여행만, 사용자 요청 2026-11-02) */}
+          {trip && (
+            <div className="grid grid-cols-2 gap-2">
+              {shortcuts.car ? (
+                <button
+                  type="button"
+                  onClick={shortcuts.car}
+                  className="flex min-h-[6.5rem] flex-col items-start justify-center gap-1 rounded-card border border-line px-3 text-left"
+                >
+                  <Car aria-hidden="true" className="size-5 text-primary" />
+                  <span className="text-body-2 font-semibold">{t('quickMenu.shortcut.car')}</span>
+                </button>
+              ) : (
+                <span aria-hidden="true" />
+              )}
+              <SavedSpotsButtons trip={trip} />
+            </div>
+          )}
         </section>
       )}
 

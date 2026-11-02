@@ -12,7 +12,7 @@ it('저장소 v8 → v9: 예전 여행(샘플 표시 없음)도 그대로 읽히
   await old.table('trips').add({ id: 't', title: '도쿄', startDate: '2026-11-01', dirty: 0 });
   old.close();
   const db = new TripPocketDB(NAME);
-  expect(db.verno).toBe(9);
+  expect(db.verno).toBeGreaterThanOrEqual(9);
   const row = await db.trips.get('t');
   expect(row).toMatchObject({ title: '도쿄' });
   expect(row?.sample).toBeUndefined();

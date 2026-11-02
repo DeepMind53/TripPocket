@@ -81,6 +81,8 @@ export class TripPocketDB extends Dexie {
     this.version(8).stores({});
     // v9 (2026-11-02): 샘플로 만든 여행·저장 장소 표시(sample) — 인덱스 없음, 예전 행은 사용자가 만든 것으로 본다
     this.version(9).stores({});
+    // v10 (2026-11-02): 예약 장소 좌표(start·end.coords)·렌터카 차종·차량번호 — 인덱스 없음, 예전 행은 그대로
+    this.version(10).stores({});
   }
 }
 

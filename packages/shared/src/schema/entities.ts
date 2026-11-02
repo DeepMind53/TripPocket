@@ -121,6 +121,8 @@ const BookingPointSchema = z.object({
   time: z.optional(LocalTimeSchema),
   timezone: z.optional(z.string()),
   place: z.optional(z.string().check(z.maxLength(100))),
+  /** 장소 검색으로 고른 역·터미널·렌터카 지점 좌표 (2026-11-02) — 길찾기·지도 */
+  coords: z.optional(CoordsSchema),
 });
 
 export const BookingSchema = z.object({
@@ -175,6 +177,9 @@ export const BookingSchema = z.object({
       voucherUrl: z.optional(z.string().check(z.maxLength(500), z.regex(/^https:\/\/[^\s]+$/))),
       /** 렌터카: 보험 메모 ("완전자차") */
       insurance: z.optional(z.string().check(z.maxLength(60))),
+      /** 렌터카: 차종·차량번호 (2026-11-02 — 빠른 메뉴에 크게) */
+      carModel: z.optional(z.string().check(z.maxLength(40))),
+      plate: z.optional(z.string().check(z.maxLength(20))),
     }),
   ),
   /** "결제 완료 ₩320,000" 같은 자유 메모 (금액 계산 없음) */

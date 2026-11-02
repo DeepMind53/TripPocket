@@ -65,7 +65,10 @@ describe('예약', () => {
     await user.click(within(sheet).getByRole('button', { name: '렌터카' }));
     expect(within(sheet).queryByLabelText('수하물 허용량')).toBeNull();
     expect(within(sheet).queryByLabelText('바우처·확인서 링크')).toBeNull();
-    await user.type(within(sheet).getByLabelText('이름'), '제주 렌터카');
+    // 렌터카는 이름 대신 차종·차량번호 (2026-11-02)
+    expect(within(sheet).queryByLabelText('이름')).toBeNull();
+    await user.type(within(sheet).getByLabelText('차종'), '아쿠아');
+    await user.type(within(sheet).getByLabelText('차량번호'), '12가3456');
     await user.type(within(sheet).getByLabelText('인수 장소'), '김해공항');
     fireEvent.change(within(sheet).getByLabelText('반납 날짜'), {
       target: { value: '2026-10-27' },
@@ -78,7 +81,7 @@ describe('예약', () => {
     await user.click(within(sheet).getByRole('button', { name: '현장 결제' }));
     await user.click(within(sheet).getByRole('button', { name: '예약 추가' }));
 
-    const card = await screen.findByRole('button', { name: '제주 렌터카 편집' });
+    const card = await screen.findByRole('button', { name: '아쿠아 12가3456 편집' });
     expect(card).toHaveTextContent(/반납 10\.27.*부산역/);
     expect(card).toHaveTextContent('완전자차');
     expect(card).toHaveTextContent('현장 결제');
@@ -87,6 +90,8 @@ describe('예약', () => {
     const [saved] = await bookingRepo.listByTrip(tripId);
     expect(saved?.end).toMatchObject({ date: '2026-10-27', place: '부산역' });
     expect(saved?.details).toMatchObject({
+      carModel: '아쿠아',
+      plate: '12가3456',
       insurance: '완전자차',
       payment: 'onsite',
       cancelBy: '2026-10-23',

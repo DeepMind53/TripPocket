@@ -3,9 +3,16 @@ import { attachFallback } from '../../data/limitNotice';
 import { flightLink } from '../../shared/lib/fallbackLinks';
 import { flightsApi } from '../../data/api/flights';
 import { AirportField } from './AirportField';
-import { isDomesticTrip } from '../../domain/tripPlace';
+import { isDomesticTrip, tripCountries } from '../../domain/tripPlace';
 import { PlaceAutocomplete } from '../common/PlaceAutocomplete';
-import { addDays, diffDays, nightsBetween, type Booking, type Trip } from '@trippocket/shared';
+import {
+  addDays,
+  diffDays,
+  nightsBetween,
+  transitNames,
+  type Booking,
+  type Trip,
+} from '@trippocket/shared';
 import { CalendarRange, Trash2 } from 'lucide-react';
 import { StayRangeSheet } from './StayRangeSheet';
 import { BookingDocs } from './BookingDocs';
@@ -14,7 +21,16 @@ import { useState, type ReactNode } from 'react';
 import { useTranslation } from '../../i18n';
 import { syncBookingToPlan } from '../../data/bookingPlanner';
 import { bookingRepo, type NewBooking } from '../../data/repositories/bookingRepo';
-import { BottomSheet, Button, Chip, snackbar, Switch, TimeInput, toast } from '../../shared/ui';
+import {
+  BottomSheet,
+  Button,
+  Chip,
+  ScrollRow,
+  snackbar,
+  Switch,
+  TimeInput,
+  toast,
+} from '../../shared/ui';
 import { BOOKING_ICON } from '../common/bookingKinds';
 import { confirmDelete } from '../../shared/ui';
 
@@ -112,6 +128,11 @@ function BookingForm({
     flightNo: b?.details?.flightNo ?? '',
     from: b?.start.place ?? '',
     to: b?.end?.place ?? '',
+    // 장소 검색으로 고른 좌표 (이름을 고치면 지운다)
+    fromCoords: b?.start.coords as { lat: number; lng: number } | undefined,
+    toCoords: b?.end?.coords as { lat: number; lng: number } | undefined,
+    carModel: b?.details?.carModel ?? '',
+    plate: b?.details?.plate ?? '',
     startDate: b?.start.date ?? trip.startDate,
     startTime: b?.start.time ?? '',
     endDate: b?.end?.date ?? '',
@@ -137,6 +158,7 @@ function BookingForm({
     voucherUrl: b?.details?.voucherUrl ?? '',
     insurance: b?.details?.insurance ?? '',
   });
+  const transit = transitNames(tripCountries(trip));
   const [saving, setSaving] = useState(false);
   const [stayOpen, setStayOpen] = useState(false);
   // 덜 쓰는 칸은 접어 둔다 (docs/20 U4) — 고칠 때 값이 있으면 펼쳐서
@@ -265,7 +287,13 @@ function BookingForm({
         priceNote: v(f.priceNote),
       });
     }
-    if (!v(f.title)) return t('bookings.needName');
+    // 렌터카: 이름 대신 차종·차량번호 (사용자 요청 2026-11-02) — 둘 다 비면 "렌터카"
+    const carTitle =
+      kind === 'car'
+        ? [v(f.carModel), v(f.plate)?.toUpperCase()].filter(Boolean).join(' ') ||
+          t('bookingKind.car')
+        : undefined;
+    if (!carTitle && !v(f.title)) return t('bookings.needName');
     if (kind === 'restaurant') {
       return clean({
         ...common,
@@ -305,15 +333,26 @@ function BookingForm({
       });
     }
     // 기차·렌터카·투어·티켓·기타
+    const placed = kind === 'train' || kind === 'car';
     const carReturn =
       kind === 'car' && (v(f.to) || f.endDate || v(f.endTime))
-        ? clean({ date: f.endDate || f.startDate, time: v(f.endTime), place: v(f.to) })
+        ? clean({
+            date: f.endDate || f.startDate,
+            time: v(f.endTime),
+            place: v(f.to),
+            coords: v(f.to) ? f.toCoords : undefined,
+          })
         : undefined;
     return clean({
       ...common,
-      title: f.title.trim(),
+      title: carTitle ?? f.title.trim(),
       provider: v(f.provider),
-      start: clean({ date: f.startDate, time: v(f.startTime), place: v(f.from) }),
+      start: clean({
+        date: f.startDate,
+        time: v(f.startTime),
+        place: v(f.from),
+        coords: placed && v(f.from) ? f.fromCoords : undefined,
+      }),
       end: carReturn,
       details: cleanOrUndefined({
         seat: kind === 'train' ? v(f.seat) : undefined,
@@ -321,6 +360,8 @@ function BookingForm({
         phone: kind === 'tour' || kind === 'car' ? v(f.phone) : undefined,
         meetingPoint: kind === 'tour' ? v(f.meetingPoint) : undefined,
         insurance: kind === 'car' ? v(f.insurance) : undefined,
+        carModel: kind === 'car' ? v(f.carModel) : undefined,
+        plate: kind === 'car' ? v(f.plate)?.toUpperCase() : undefined,
         ...extras,
       }),
       priceNote: v(f.priceNote),
@@ -542,25 +583,69 @@ function BookingForm({
         </>
       ) : (
         <>
-          <Field
-            label={
-              kind === 'lodging'
-                ? t('bookings.lodgingName')
-                : kind === 'restaurant'
-                  ? t('bookings.restaurantName')
-                  : kind === 'transfer'
-                    ? t('bookings.transferName')
-                    : t('bookings.name')
-            }
-          >
-            <input
-              id="bk-title"
-              value={f.title}
-              maxLength={100}
-              onChange={set('title')}
-              className={inputClass}
-            />
-          </Field>
+          {/* 기차·버스: 여행 나라의 교통수단 이름 칩 — 누르면 이름 칸에 (사용자 요청 2026-11-02) */}
+          {kind === 'train' && transit.length > 0 && (
+            <ScrollRow
+              role="group"
+              aria-label={t('bookings.transitChips')}
+              className="-mb-2 flex gap-2 pb-1"
+            >
+              {transit.map((name) => (
+                <Chip
+                  key={name}
+                  selected={f.title === name}
+                  onClick={() => setF((cur) => ({ ...cur, title: name }))}
+                >
+                  {name}
+                </Chip>
+              ))}
+            </ScrollRow>
+          )}
+          {kind === 'car' ? (
+            // 렌터카: 이름 대신 차종·차량번호 (빠른 메뉴에 차량번호를 크게, 사용자 요청 2026-11-02)
+            <Row>
+              <Field label={t('bookings.carModel')}>
+                <input
+                  id="bk-car-model"
+                  value={f.carModel}
+                  maxLength={40}
+                  placeholder={t('bookings.carModelPlaceholder')}
+                  onChange={set('carModel')}
+                  className={inputClass}
+                />
+              </Field>
+              <Field label={t('bookings.plate')}>
+                <input
+                  id="bk-plate"
+                  value={f.plate}
+                  maxLength={20}
+                  placeholder={t('bookings.platePlaceholder')}
+                  onChange={set('plate')}
+                  className={`${inputClass} uppercase`}
+                />
+              </Field>
+            </Row>
+          ) : (
+            <Field
+              label={
+                kind === 'lodging'
+                  ? t('bookings.lodgingName')
+                  : kind === 'restaurant'
+                    ? t('bookings.restaurantName')
+                    : kind === 'transfer'
+                      ? t('bookings.transferName')
+                      : t('bookings.name')
+              }
+            >
+              <input
+                id="bk-title"
+                value={f.title}
+                maxLength={100}
+                onChange={set('title')}
+                className={inputClass}
+              />
+            </Field>
+          )}
           {/* 숙소·음식점: 이름을 치면 추천 3개 + 더보기, 고르면 주소·전화 채움 (사용자 요청 2026-10-25) */}
           {(kind === 'lodging' || kind === 'restaurant') && (
             <PlaceAutocomplete
@@ -884,10 +969,28 @@ function BookingForm({
                   id="bk-place"
                   value={f.from}
                   maxLength={100}
-                  onChange={set('from')}
+                  placeholder={kind === 'train' ? t('bookings.stationPlaceholder') : undefined}
+                  onChange={(e) =>
+                    setF((cur) => ({ ...cur, from: e.target.value, fromCoords: undefined }))
+                  }
                   className={inputClass}
                 />
               </Field>
+              {/* 역·터미널·렌터카 지점: 검색해서 고르면 좌표도 저장 (길찾기, 사용자 요청 2026-11-02) */}
+              {(kind === 'train' || kind === 'car') && (
+                <PlaceAutocomplete
+                  query={f.from}
+                  domestic={isDomesticTrip(trip)}
+                  near={trip.destinations.find((d) => d.coords)?.coords}
+                  onPick={(p) =>
+                    setF((cur) => ({
+                      ...cur,
+                      from: p.name.slice(0, 100),
+                      fromCoords: p.coords ?? undefined,
+                    }))
+                  }
+                />
+              )}
               {kind === 'car' && (
                 <>
                   <DateTimeRow
@@ -904,10 +1007,24 @@ function BookingForm({
                       id="bk-return-place"
                       value={f.to}
                       maxLength={100}
-                      onChange={set('to')}
+                      onChange={(e) =>
+                        setF((cur) => ({ ...cur, to: e.target.value, toCoords: undefined }))
+                      }
                       className={inputClass}
                     />
                   </Field>
+                  <PlaceAutocomplete
+                    query={f.to}
+                    domestic={isDomesticTrip(trip)}
+                    near={trip.destinations.find((d) => d.coords)?.coords}
+                    onPick={(p) =>
+                      setF((cur) => ({
+                        ...cur,
+                        to: p.name.slice(0, 100),
+                        toCoords: p.coords ?? undefined,
+                      }))
+                    }
+                  />
                 </>
               )}
               {kind === 'train' && (
