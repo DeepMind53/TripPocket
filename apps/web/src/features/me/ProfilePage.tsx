@@ -14,6 +14,7 @@ import {
   useTravelProfile,
 } from '../../data/travelProfile';
 import { useTranslation } from '../../i18n';
+import { AirlineTierChips } from './AirlineTierChips';
 import { CustomFoodsField } from './CustomFoodsField';
 import { TranslateCardsButton } from './TranslateCardsButton';
 import { Chip, IconButton, SegmentedControl, TopBar } from '../../shared/ui';
@@ -145,6 +146,13 @@ export function ProfilePage() {
                     onChange={(e) => set({ tier: e.target.value })}
                   />
                 </div>
+                {/* 항공사·등급 칩 — 누르면 바로 채움 (사용자 요청 2026-11-02) */}
+                <AirlineTierChips
+                  airline={m.airline}
+                  tier={m.tier}
+                  onAirline={(name) => set({ airline: name })}
+                  onTier={(tier) => set({ tier })}
+                />
               </div>
             );
           })}

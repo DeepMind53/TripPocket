@@ -1500,7 +1500,10 @@
     "translateAgain": "카드용 번역 다시 만들기",
     "translateNote": "누르면 음식·약 이름만 무료 AI(Google Gemini 등)로 보내 12개 언어로 번역해요\n이름·계정·위치는 보내지 않고, 번역은 이 기기에만 저장해요\n안 되면 카드에서 번역기 바로가기를 써 주세요",
     "translated": "카드용 번역을 만들었어요",
-    "translateFailed": "지금은 번역하지 못했어요\n카드에서 번역기 바로가기를 써 주세요"
+    "translateFailed": "지금은 번역하지 못했어요\n카드에서 번역기 바로가기를 써 주세요",
+    "pickAirline": "항공사 고르기",
+    "pickTier": "{{program}} 등급",
+    "pickTierLabel": "등급 고르기"
   },
   "nickname": {
     "title": "닉네임 바꾸기",
