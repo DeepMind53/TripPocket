@@ -66,7 +66,7 @@ it('날씨 정보: 여행 앞뒤 하루까지 목적지 날씨, 항공편 출발
   expect(await within(air).findByText('10°/18°')).toBeInTheDocument();
   expect(await within(air).findByText('10°/22°')).toBeInTheDocument();
   // 2주 안이라 예보
-  expect(within(air).getAllByText(/· 예보$/).length).toBeGreaterThan(0);
+  expect(within(air).getAllByText('예보').length).toBeGreaterThan(0);
 });
 
 it('여행지 특이사항: 나라 코드만 보내고, 특보와 그 나라 기상청 링크를 보여 준다', async () => {
@@ -225,7 +225,7 @@ it('공항 날씨도 2주보다 먼 날은 "과거 날씨"(작년 같은 날)로
   );
   const air = await screen.findByRole('region', { name: '공항 날씨' });
   // 출발·도착 공항 날씨는 따로 받아 하나씩 그려진다 → 둘 다 나올 때까지 기다린다
-  await waitFor(() => expect(within(air).getAllByText(/· 과거 날씨$/)).toHaveLength(2));
+  await waitFor(() => expect(within(air).getAllByText('작년 기록')).toHaveLength(2));
   // 제목에 공항 코드가 있으면 경로를 두 번 쓰지 않는다
   expect(within(air).queryByText('ICN → NRT')).toBeNull();
 });

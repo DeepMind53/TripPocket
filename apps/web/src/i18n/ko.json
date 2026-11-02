@@ -1794,7 +1794,18 @@
     "airports": "공항 날씨",
     "depart": "출발",
     "arrive": "도착",
-    "note": "7일전~오늘 : 지난 날씨\n오늘~2주 후 : 실제 예보\n2주 후~ : 과거 날씨\n날씨 출처 : Open-Meteo"
+    "help": "날씨 표시 설명",
+    "kind": {
+      "observed": "지난 날씨",
+      "forecast": "예보",
+      "lastYear": "작년 기록"
+    },
+    "kindDesc": {
+      "observed": "오늘까지 지난 날이에요\n실제로 관측된 날씨예요",
+      "forecast": "오늘부터 2주 안이에요\n일기예보라 바뀔 수 있어요",
+      "lastYear": "2주보다 먼 날이에요\n작년 같은 날 날씨로 미리 짐작해요"
+    },
+    "source": "날씨 출처: Open-Meteo"
   },
   "alerts": {
     "title": "여행지 특이사항",

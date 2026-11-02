@@ -6,13 +6,16 @@ import {
   type Booking,
   type LocalDate,
 } from '@trippocket/shared';
-import { Plane } from 'lucide-react';
+import { CircleHelp, Plane } from 'lucide-react';
+import { useState } from 'react';
 import { useParams } from 'react-router';
 import { useTrip, useTripBookings } from '../../data/hooks';
 import { formatTemps, weatherLook } from '../../domain/weather';
 import { useTranslation } from '../../i18n';
 import { formatMonthDay } from '../../shared/lib/dateFormat';
-import { TopBar, WeatherIcon } from '../../shared/ui';
+import { BottomSheet, IconButton, TopBar, WeatherIcon } from '../../shared/ui';
+import { WeatherKindBadge } from './WeatherKindBadge';
+import { KIND_ICON, weatherKind, type WeatherKind } from './weatherKind';
 import { useWeatherDays, type TripDayWeather } from '../common/useTripWeather';
 import { DestinationAlerts } from './DestinationAlerts';
 
@@ -37,6 +40,7 @@ export function WeatherPage() {
   const weather = useWeatherDays(dest?.coords, trip?.timezone ?? 'Asia/Seoul', dates);
   const flights = bookings.filter((b) => b.kind === 'flight' && b.start.place);
   const { countries, points } = alertQuery(trip ?? { destinations: [] });
+  const [help, setHelp] = useState(false);
   if (!trip) return null;
 
   const label = (i: number) =>
@@ -48,7 +52,18 @@ export function WeatherPage() {
 
   return (
     <div className="mx-auto min-h-dvh max-w-[560px] pb-10">
-      <TopBar title={t('weatherPage.title')} backTo="/" />
+      {/* 날씨 종류 설명은 제목 옆 ? 버튼으로 (사용자 요청 2026-11-02) */}
+      <TopBar
+        title={t('weatherPage.title')}
+        backTo="/"
+        actions={
+          <IconButton
+            label={t('weatherPage.help')}
+            icon={<CircleHelp />}
+            onClick={() => setHelp(true)}
+          />
+        }
+      />
       <div className="flex flex-col gap-5 px-5 pt-2">
         <DestinationAlerts countries={countries} points={points} />
         <section
@@ -81,8 +96,31 @@ export function WeatherPage() {
             </ul>
           </section>
         )}
-        <p className="text-micro whitespace-pre-line text-fg-muted">{t('weatherPage.note')}</p>
       </div>
+      <BottomSheet
+        open={help}
+        onOpenChange={setHelp}
+        title={t('weatherPage.help')}
+        autoFocusInput={false}
+      >
+        <ul className="flex flex-col gap-3 pb-2">
+          {(['observed', 'forecast', 'lastYear'] as WeatherKind[]).map((k) => {
+            const { Icon, color } = KIND_ICON[k];
+            return (
+              <li key={k} className="flex items-start gap-3">
+                <Icon aria-hidden="true" className={`mt-0.5 size-5 shrink-0 ${color}`} />
+                <span className="flex flex-col">
+                  <span className="text-body-2 font-semibold">{t(`weatherPage.kind.${k}`)}</span>
+                  <span className="text-caption whitespace-pre-line text-fg-sub">
+                    {t(`weatherPage.kindDesc.${k}`)}
+                  </span>
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+        <p className="text-micro text-fg-muted">{t('weatherPage.source')}</p>
+      </BottomSheet>
     </div>
   );
 }
@@ -117,13 +155,7 @@ function DayRow({
           <WeatherIcon kind={look.kind} className="size-7" />
           <span className="flex min-w-0 flex-1 flex-col">
             <span className="text-body-2">{look.label}</span>
-            <span className="text-micro text-fg-muted">
-              {weather.year
-                ? t('weather.pastShort')
-                : weather.past
-                  ? t('weatherPage.observed')
-                  : t('weatherPage.forecast')}
-            </span>
+            <WeatherKindBadge kind={weatherKind(weather)} />
           </span>
           <span className="tabular text-body-1 font-semibold">{formatTemps(weather)}</span>
         </>
@@ -205,16 +237,9 @@ function AirportDay({
         <span className="tabular text-micro text-fg-muted">
           {formatMonthDay(date)}
           {time ? ` ${time}` : ''}
-          {/* 예보(2주 안)인지, 작년 같은 날 기록(과거 날씨)인지 (사용자 요청 2026-10-27) */}
-          {weather &&
-            ` · ${
-              weather.year
-                ? t('weather.pastShort')
-                : weather.past
-                  ? t('weatherPage.observed')
-                  : t('weatherPage.forecast')
-            }`}
         </span>
+        {/* 예보인지, 지난 기록인지, 작년 같은 날 기록인지 — 달력 그림으로 (2026-11-02) */}
+        {weather && <WeatherKindBadge kind={weatherKind(weather)} />}
       </span>
       {weather && look ? (
         <span className="flex shrink-0 items-center gap-1.5">
