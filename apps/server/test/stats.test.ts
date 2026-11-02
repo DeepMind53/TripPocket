@@ -158,6 +158,42 @@ describe('사용 통계', () => {
     expect(sum.events).toEqual([{ name: 'screen:/trips', n: 4 }]);
   });
 
+  it('샘플로 만든 여행과 그 안의 일정은 입력 통계·여행 현황에 넣지 않는다', async () => {
+    const trip = {
+      id: '0192f000-0000-7000-8000-000000000009',
+      title: '[샘플] 도쿄 5일',
+      destinations: [{ name: '도쿄', kind: 'city', countryCode: 'JP' }],
+      startDate: '2026-12-01',
+      endDate: '2026-12-03',
+      timezone: 'Asia/Tokyo',
+      cover: {},
+      sample: true,
+      createdAt: '2026-11-01T00:00:00.000Z',
+      updatedAt: '2026-11-01T00:00:00.000Z',
+    };
+    const item = {
+      id: '0192f000-0000-7000-8000-00000000000a',
+      tripId: trip.id,
+      date: '2026-12-01',
+      order: 'a0',
+      kind: 'place',
+      title: '센소지',
+      createdAt: '2026-11-01T00:00:00.000Z',
+      updatedAt: '2026-11-01T00:00:00.000Z',
+    };
+    const res = await call('POST', '/api/sync/push', user, {
+      changes: [
+        { table: 'trips', record: trip, baseRev: null },
+        { table: 'items', record: item, baseRev: null },
+      ],
+    });
+    expect(res.json().applied).toHaveLength(2);
+    expect(rows().filter((r) => r.kind === 'data')).toEqual([]);
+    const sum = (await call('GET', '/api/admin/stats', admin)).json();
+    expect(sum.trips.total).toBe(0);
+    expect(sum.trips.perTrip.items).toBe(0);
+  });
+
   it('3년 지난 통계는 지운다', () => {
     const stats = statsRepo(db);
     const old = statDate(new Date(Date.now() - (STATS_KEEP_DAYS + 2) * 86_400_000));

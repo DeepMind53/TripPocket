@@ -44,6 +44,8 @@ export const TripSchema = z
     mapProvider: z.optional(z.enum(['auto', 'naver', 'google'])),
     memo: z.optional(z.string().check(z.maxLength(2000))),
     archivedAt: z.optional(IsoDateTimeSchema),
+    /** 앱이 샘플로 만든 여행 (홈 "샘플로 둘러보기"·실험실 샘플) — 사용 통계에서 뺀다 (2026-11-02) */
+    sample: z.optional(z.boolean()),
   })
   .check(
     // 날짜 형식 오류는 각 필드에서 따로 알리므로 여기서는 둘 다 올바를 때만 비교
@@ -216,6 +218,8 @@ export const SavedPlaceSchema = z.object({
   /** 나라 코드 (2026-10-26): 저장 탭 나라별 칸, 일정 세울 때 그 나라 장소만 보여 주기 */
   countryCode: z.optional(z.string().check(z.regex(/^[A-Z]{2}$/))),
   memo: z.optional(z.string().check(z.maxLength(2000))),
+  /** 샘플로 만든 장소 — 사용 통계에서 뺀다 (2026-11-02) */
+  sample: z.optional(z.boolean()),
 });
 export type SavedPlace = z.infer<typeof SavedPlaceSchema>;
 /** 한 사람이 저장할 수 있는 장소 수 (사용자 결정 2026-10-26) — 기기와 서버가 같이 지킨다 */

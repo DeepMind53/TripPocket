@@ -46,9 +46,10 @@ export const useLabs = create<Partial<Record<LabId, boolean>>>(load);
 
 export const useLab = (id: LabId): boolean => useLabs((s) => s[id] === true);
 
-export function setLab(id: LabId, on: boolean): void {
+export function setLab(id: LabId, on: boolean, opts: { silent?: boolean } = {}): void {
   useLabs.setState({ [id]: on });
-  countUse(`lab.${id}.${on ? 'on' : 'off'}`);
+  // 사용자가 직접 켜고 끈 것만 사용 통계로 (샘플이 켠 것은 빼기, 2026-11-02)
+  if (!opts.silent) countUse(`lab.${id}.${on ? 'on' : 'off'}`);
   try {
     localStorage.setItem(KEY, JSON.stringify(useLabs.getState()));
   } catch {

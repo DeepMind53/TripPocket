@@ -1747,7 +1747,7 @@
   },
   "phrases": {
     "title": "번역·회화",
-    "health": "알레르기·건강 카드",
+    "health": "건강 카드",
     "healthSub": "식당·병원에서 보여 주세요",
     "healthExtra": "직접 적은 내용",
     "healthTranslate": "이 내용 번역해서 보기",
@@ -1758,7 +1758,10 @@
     "google": "Google 번역",
     "hint": "누르면 크게 보여요\n현지인에게 화면을 보여 주세요",
     "takeMeHereEn": "Please take me here",
-    "taxiSub": "기사님께 이 화면을 보여 주세요"
+    "taxiSub": "기사님께 이 화면을 보여 주세요",
+    "cardAllergy": "알레르기 카드",
+    "cardBlood": "혈액형 카드",
+    "cardMeds": "복용약·못 먹는 음식 카드"
   },
   "suggest": {
     "title": "개선 제안",

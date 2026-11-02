@@ -84,6 +84,7 @@ export async function createLabSample(): Promise<string> {
   const today = todayIn(TZ);
   const day = (n: number) => addDays(today, n);
   const trip = await tripRepo.create({
+    sample: true,
     title: `${SAMPLE_MARK} 도쿄 5일`,
     destinations: [
       {
@@ -163,6 +164,7 @@ export async function createLabSample(): Promise<string> {
 
   // 6일 뒤 타이베이 3일 (다가오는 여행: 준비 현황·여행지 특보·대만 입국 항목)
   const taipei = await tripRepo.create({
+    sample: true,
     title: `${SAMPLE_MARK} 타이베이 3일`,
     destinations: [
       {
@@ -196,6 +198,7 @@ export async function createLabSample(): Promise<string> {
 
   // 지난 여행 (기록 탭: 방문 기록·여행 회고)
   const past = await tripRepo.create({
+    sample: true,
     title: `${SAMPLE_MARK} 지난 오사카 여행`,
     destinations: [
       {
@@ -231,6 +234,7 @@ export async function createLabSample(): Promise<string> {
 
   // 1년 전 도쿄 여행 — 오늘 센소지에 "방문기록 1회"
   const lastYear = await tripRepo.create({
+    sample: true,
     title: `${SAMPLE_MARK} 작년 도쿄 여행`,
     destinations: [
       {
@@ -260,13 +264,14 @@ export async function createLabSample(): Promise<string> {
   ] as const;
   for (const s of saved) {
     try {
-      await savedPlaceRepo.create({ ...s, memo: SAMPLE_MARK });
+      await savedPlaceRepo.create({ ...s, memo: SAMPLE_MARK, sample: true });
     } catch (e) {
       if (!(e instanceof SavedLimitError)) throw e;
     }
   }
 
-  for (const id of LABS) setLab(id, true);
+  // 샘플이 켠 실험은 사용 통계에 세지 않는다
+  for (const id of LABS) setLab(id, true, { silent: true });
   return trip.id;
 }
 

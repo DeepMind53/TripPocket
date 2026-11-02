@@ -172,7 +172,8 @@ export function statsRepo(db: Db) {
     // 여행 현황 (지금 있는 여행, 지운 것 제외)
     const trips = db
       .prepare(
-        "SELECT id, data_json FROM records WHERE table_name = 'trips' AND deleted_at IS NULL",
+        // 샘플로 만든 여행은 빼고 (2026-11-02)
+        "SELECT id, data_json FROM records WHERE table_name = 'trips' AND deleted_at IS NULL AND json_extract(data_json, '$.sample') IS NOT 1",
       )
       .all() as unknown as { id: string; data_json: string }[];
     const countries = new Map<string, number>();
@@ -199,7 +200,8 @@ export function statsRepo(db: Db) {
       trips.length
         ? Math.round(
             (one(
-              'SELECT COUNT(*) AS n FROM records WHERE table_name = ? AND deleted_at IS NULL AND trip_id IS NOT NULL',
+              `SELECT COUNT(*) AS n FROM records r WHERE r.table_name = ? AND r.deleted_at IS NULL AND r.trip_id IS NOT NULL
+               AND NOT EXISTS (SELECT 1 FROM records t WHERE t.table_name = 'trips' AND t.id = r.trip_id AND json_extract(t.data_json, '$.sample') = 1)`,
               table,
             ) /
               trips.length) *

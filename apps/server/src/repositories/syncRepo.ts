@@ -151,16 +151,25 @@ export function syncRepo(db: Db, onApplied: (table: SyncTable, op: SyncOp) => vo
             "INSERT INTO trip_members (trip_id, user_id, role, created_at) VALUES (?, ?, 'owner', ?)",
           ).run(record.id, userId, new Date().toISOString());
         }
-        onApplied(
-          c.table,
-          !existing
-            ? 'create'
-            : record.deletedAt && !existing.deleted_at
-              ? 'delete'
-              : !record.deletedAt && existing.deleted_at
-                ? 'restore'
-                : 'update',
-        );
+        // 샘플로 만든 여행·장소와 그 여행 안의 기록은 사용 통계에서 뺀다 (2026-11-02)
+        const sampleTrip = (id: string | null) =>
+          !!id &&
+          !!db
+            .prepare(
+              "SELECT 1 FROM records WHERE table_name = 'trips' AND id = ? AND json_extract(data_json, '$.sample') = 1",
+            )
+            .get(id);
+        if (!(record as { sample?: boolean }).sample && !sampleTrip(auth.tripId))
+          onApplied(
+            c.table,
+            !existing
+              ? 'create'
+              : record.deletedAt && !existing.deleted_at
+                ? 'delete'
+                : !record.deletedAt && existing.deleted_at
+                  ? 'restore'
+                  : 'update',
+          );
         result.applied.push({ table: c.table, id: record.id, rev });
       }
       db.exec('COMMIT');

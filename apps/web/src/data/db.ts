@@ -79,6 +79,8 @@ export class TripPocketDB extends Dexie {
     this.version(7).stores({});
     // v8 (2026-10-27): 준비 목록 개인별 — 만든 사람(ownerId)·공유(shared·sharedAt). 인덱스 없음, 예전 행은 내 것으로 본다
     this.version(8).stores({});
+    // v9 (2026-11-02): 샘플로 만든 여행·저장 장소 표시(sample) — 인덱스 없음, 예전 행은 사용자가 만든 것으로 본다
+    this.version(9).stores({});
   }
 }
 
