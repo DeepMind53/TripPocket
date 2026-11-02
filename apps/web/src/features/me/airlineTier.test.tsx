@@ -8,7 +8,8 @@ it('항공사 이름·코드·영문으로 회원 프로그램을 찾는다', ()
   expect(airlineProgramFor('대한항공')?.code).toBe('KE');
   expect(airlineProgramFor('KE')?.code).toBe('KE');
   expect(airlineProgramFor('Asiana Airlines')?.code).toBe('OZ');
-  expect(airlineProgramFor('진에어')).toBeUndefined();
+  // LCC는 등급 없음 (tiers = [])
+  expect(airlineProgramFor('진에어')?.tiers).toEqual([]);
 });
 
 it('항공사를 모르면 항공사 칩, 고르면 그 항공사 등급 칩', async () => {
@@ -23,4 +24,12 @@ it('항공사를 모르면 항공사 칩, 고르면 그 항공사 등급 칩', a
   rerender(<AirlineTierChips airline="대한항공" tier="" onAirline={onAirline} onTier={onTier} />);
   await user.click(screen.getByRole('button', { name: '모닝캄' }));
   expect(onTier).toHaveBeenCalledWith('모닝캄');
+});
+
+it('등급이 없는 항공사는 "등급 없음" 하나', async () => {
+  const onTier = vi.fn();
+  const user = userEvent.setup();
+  render(<AirlineTierChips airline="제주항공" tier="" onAirline={() => {}} onTier={onTier} />);
+  await user.click(screen.getByRole('button', { name: '등급 없음' }));
+  expect(onTier).toHaveBeenCalledWith('등급 없음');
 });

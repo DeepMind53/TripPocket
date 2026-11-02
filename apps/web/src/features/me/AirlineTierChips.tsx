@@ -34,6 +34,14 @@ export function AirlineTierChips({
       <span className="text-micro text-fg-muted">
         {t('profile.pickTier', { program: program.program })}
       </span>
+      {/* 우수 등급이 없는 항공사(LCC 등)는 "등급 없음" 하나 (사용자 요청 2026-11-03) */}
+      {program.tiers.length === 0 && (
+        <div className="flex gap-2 pb-1">
+          <Chip selected={tier === t('profile.noTier')} onClick={() => onTier(t('profile.noTier'))}>
+            {t('profile.noTier')}
+          </Chip>
+        </div>
+      )}
       <ScrollRow role="group" aria-label={t('profile.pickTierLabel')} className="flex gap-2 pb-1">
         {program.tiers.map((x) => (
           <Chip key={x} selected={tier === x} onClick={() => onTier(x)}>

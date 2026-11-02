@@ -136,6 +136,58 @@ export const AIRLINE_PROGRAMS: readonly AirlineProgram[] = [
     program: '마일스앤모어',
     tiers: ['일반', '프리퀀트 트래블러', '세너터', 'HON 서클'],
   },
+  // LCC (2026-11-03): 우수 등급 제도가 없는 곳은 tiers = [] → 화면에 "등급 없음".
+  // 공식 확인 전이라 월간 갱신에서 확인 (진에어·에어부산·에어서울은 통합 진에어 출범 예정, 티웨이는 브랜드 변경 보도)
+  {
+    code: '7C',
+    name: '제주항공',
+    aliases: ['제주항공', 'jejuair'],
+    program: '리프레시 포인트',
+    tiers: [],
+  },
+  { code: 'LJ', name: '진에어', aliases: ['진에어', 'jinair'], program: '나비포인트', tiers: [] },
+  {
+    code: 'TW',
+    name: '티웨이항공',
+    aliases: ['티웨이', 'tway'],
+    program: '티웨이플러스(구독)',
+    tiers: [],
+  },
+  {
+    code: 'BX',
+    name: '에어부산',
+    aliases: ['에어부산', 'airbusan'],
+    program: '아시아나클럽 적립',
+    tiers: [],
+  },
+  {
+    code: 'RS',
+    name: '에어서울',
+    aliases: ['에어서울', 'airseoul'],
+    program: '민트포인트',
+    tiers: [],
+  },
+  {
+    code: 'ZE',
+    name: '이스타항공',
+    aliases: ['이스타', 'eastar'],
+    program: '이스타 멤버십',
+    tiers: [],
+  },
+  {
+    code: 'RF',
+    name: '에어로케이',
+    aliases: ['에어로케이', 'aerok'],
+    program: '에어로케이 회원',
+    tiers: [],
+  },
+  {
+    code: 'YP',
+    name: '에어프레미아',
+    aliases: ['에어프레미아', 'airpremia'],
+    program: '에어프레미아 회원',
+    tiers: [],
+  },
 ];
 
 const norm = (s: string) => s.replace(/\s+/g, '').toLowerCase();
