@@ -65,6 +65,8 @@ describe('실험실 3차 (2026-10-28)', () => {
     ]);
     expect(onsiteBookings(list).map((b) => b.title)).toEqual(['호텔']);
     expect(voucherBookings(list).map((b) => b.title)).toEqual(['투어']);
+    // 문서를 붙인 예약도 (2026-11-02) — 날짜·시각 순
+    expect(voucherBookings(list, new Set(['호텔'])).map((b) => b.title)).toEqual(['호텔', '투어']);
   });
 
   it('이른 출발: 첫 일정이 7시 전', () => {

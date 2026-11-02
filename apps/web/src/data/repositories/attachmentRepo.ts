@@ -41,6 +41,11 @@ async function uploadRow(row: AttachmentRow): Promise<boolean> {
  * 여행이 끝나면 서버는 지우고(services/attachments.ts) 기기에 받아 둔 것만 남는다
  */
 export const attachmentRepo = {
+  /** 여행의 모든 예약 문서 (빠른 메뉴 바우처 목록) */
+  listByTrip(tripId: string): Promise<AttachmentRow[]> {
+    return db.attachments.where('tripId').equals(tripId).sortBy('createdAt');
+  },
+
   listByBooking(bookingId: string): Promise<AttachmentRow[]> {
     return db.attachments.where('bookingId').equals(bookingId).sortBy('createdAt');
   },

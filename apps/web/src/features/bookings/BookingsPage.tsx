@@ -3,7 +3,7 @@ import { BookingNotices } from './BookingNotices';
 import { Plus, BedDouble, Plane } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useTranslation } from '../../i18n';
-import { useParams } from 'react-router';
+import { useParams, useSearchParams } from 'react-router';
 import { useCanEdit } from '../../data/tripRoles';
 import { useTrip, useTripBookings } from '../../data/hooks';
 import { useRouteSheet } from '../../shared/hooks/useRouteSheet';
@@ -32,6 +32,16 @@ export function BookingsPage() {
   const [formOpen, setFormOpen] = useRouteSheet('booking-form');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [newKind, setNewKind] = useState<Booking['kind'] | undefined>(undefined);
+  // 빠른 메뉴 바우처에서 이름을 누르면 ?focus=예약id — 그 예약으로 스크롤 (사용자 요청 2026-11-02)
+  const [params] = useSearchParams();
+  const focus = params.get('focus');
+  const ready = !!bookings;
+  useEffect(() => {
+    if (!focus || !ready) return;
+    document
+      .getElementById(`booking-${focus}`)
+      ?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }, [focus, ready]);
 
   // 문서: 서버에만 있는 것은 기기로 받아 두고, 기기에만 있는 것은 올린다 (docs/20 G2)
   useEffect(() => {
@@ -115,7 +125,12 @@ export function BookingsPage() {
                 <h2 className="text-caption font-bold text-fg-muted">{t(`bookings.${g.key}`)}</h2>
                 <ul className="flex flex-col gap-2">
                   {list.map((b) => (
-                    <BookingCard key={b.id} booking={b} onOpen={() => canEdit && openForm(b)} />
+                    <BookingCard
+                      key={b.id}
+                      booking={b}
+                      highlight={b.id === focus}
+                      onOpen={() => canEdit && openForm(b)}
+                    />
                   ))}
                 </ul>
               </section>

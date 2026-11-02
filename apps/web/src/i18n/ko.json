@@ -1435,7 +1435,9 @@
     "cancelToday": "⏰ 오늘 무료 취소 마감 · {{name}}",
     "onsitePay": "💵 현장 결제 예약 {{n}}건\n현금·카드를 준비하세요",
     "voucherTitle": "🎫 바우처",
-    "earlyStart": "{{time}}에 하루를 시작해요\n알람을 맞춰 두세요"
+    "earlyStart": "{{time}}에 하루를 시작해요\n알람을 맞춰 두세요",
+    "voucherDoc": "{{name}} 문서 보기",
+    "voucherLink": "{{name}} 바우처 링크 열기"
   },
   "profile": {
     "title": "개인정보",

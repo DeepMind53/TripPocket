@@ -130,10 +130,18 @@ export const onsiteBookings = (bookings: readonly Booking[]) =>
   bookings.filter((b) => !b.deletedAt && b.details?.payment === 'onsite');
 
 /** 바우처 링크가 있는 예약 (날짜 순) */
-export const voucherBookings = (bookings: readonly Booking[]) =>
+/** 바우처: 링크가 있거나 문서를 붙인 예약 (2026-11-02 문서도), 날짜·시각 순 */
+export const voucherBookings = (
+  bookings: readonly Booking[],
+  withDocs: ReadonlySet<string> = new Set(),
+) =>
   bookings
-    .filter((b) => !b.deletedAt && b.details?.voucherUrl)
-    .sort((a, b) => a.start.date.localeCompare(b.start.date));
+    .filter((b) => !b.deletedAt && (b.details?.voucherUrl || withDocs.has(b.id)))
+    .sort((a, b) =>
+      `${a.start.date} ${a.start.time ?? ''}`.localeCompare(
+        `${b.start.date} ${b.start.time ?? ''}`,
+      ),
+    );
 
 /** 그날 첫 일정이 7시 전이면 그 시각 (메모 빼고) */
 export function earlyStartAt(

@@ -9,7 +9,16 @@ import { membershipFor, useTravelProfile } from '../../data/travelProfile';
 import { FlightAirportInfo } from './FlightAirportInfo';
 
 /** S-16 예약 카드. 항공 = 탑승권 모양, 숙소 = 체크인·체크아웃 (docs/05 §3 S-09) */
-export function BookingCard({ booking, onOpen }: { booking: Booking; onOpen: () => void }) {
+export function BookingCard({
+  booking,
+  onOpen,
+  highlight = false,
+}: {
+  booking: Booking;
+  onOpen: () => void;
+  /** 빠른 메뉴 바우처에서 눌러 온 예약 — 테두리로 표시 */
+  highlight?: boolean;
+}) {
   const { t } = useTranslation();
   const b = booking;
   // 마이 → 개인정보의 항공사 회원번호 (예약 항공사·편명과 맞을 때, 2026-11-02)
@@ -19,7 +28,10 @@ export function BookingCard({ booking, onOpen }: { booking: Booking; onOpen: () 
       : undefined,
   );
   return (
-    <li className="overflow-hidden rounded-card border border-line bg-surface shadow-card">
+    <li
+      id={`booking-${b.id}`}
+      className={`overflow-hidden rounded-card border bg-surface shadow-card ${highlight ? 'border-primary ring-2 ring-primary' : 'border-line'}`}
+    >
       <button
         type="button"
         onClick={onOpen}

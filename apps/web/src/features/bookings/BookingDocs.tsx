@@ -5,18 +5,13 @@ import { useRef, useState } from 'react';
 import type { AttachmentRow } from '../../data/db';
 import { attachmentRepo } from '../../data/repositories/attachmentRepo';
 import { useTranslation } from '../../i18n';
+import { openBlob } from '../../shared/lib/openBlob';
 import { IconButton, toast } from '../../shared/ui';
 import { confirmDelete } from '../../shared/ui';
 
 const mb = (n: number) => `${(n / 1024 / 1024).toFixed(n < 1024 * 1024 ? 2 : 1)}MB`;
 
-/** 기기에 저장한 파일 열기 (오프라인에서도) */
-function openDoc(row: AttachmentRow) {
-  if (!row.blob) return;
-  const url = URL.createObjectURL(row.blob);
-  window.open(url, '_blank', 'noopener');
-  window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
-}
+const openDoc = (row: AttachmentRow) => openBlob(row.blob);
 
 /**
  * 예약 문서 — 이티켓·바우처 PDF·사진 (docs/20 G2, 1개 10MB).
