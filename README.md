@@ -30,7 +30,7 @@
 | [docs/01-product-requirements.md](docs/01-product-requirements.md)       | PRD: 목표, 페르소나, 기능 목록, 우선순위                           |
 | [docs/02-benchmark.md](docs/02-benchmark.md)                             | 유사 앱 분석 및 차용할 기능                                        |
 | [docs/code-map.md](docs/code-map.md)                                     | **지금 코드 구조·자주 하는 수정 위치 (고칠 때 먼저 보기)**         |
-| [docs/03-architecture.md](docs/03-architecture.md)                       | 설계 초안: 기술 스택, 레이어 구조 (실제 구조는 code-map)           |
+| [docs/03-architecture.md](docs/03-architecture.md)                       | 운영 중인 구조: 기술 스택, 레이어 구조 (실제 구조는 code-map)      |
 | [docs/deploy.md](docs/deploy.md)                                         | 배포·도메인·키 발급 절차                                           |
 | [docs/04-data-model.md](docs/04-data-model.md)                           | 엔티티, 스키마, 마이그레이션                                       |
 | [docs/05-screens-ux.md](docs/05-screens-ux.md)                           | 화면 목록, 플로우, 와이어프레임                                    |

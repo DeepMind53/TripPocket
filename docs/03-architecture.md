@@ -1,61 +1,48 @@
 # 03. 아키텍처
 
-- 문서 상태: **설계 초안** (구현 전). 실제로 만든 구조·호스팅은 [`code-map.md`](code-map.md)가 기준이다
-  (예: Cloudflare Tunnel → Pages 프록시 + Tailscale Funnel(ADR-0006), vite-plugin-pwa → 직접 만든 서비스 워커, i18next → 자체 경량 i18n)
+- 문서 상태: **운영 중인 구조 기준** (2026-11-02 갱신). §1·§2·§5·§7~§9는 실제 구조, §4·§6은 처음 설계안이라 폴더·라우트는 [`code-map.md`](code-map.md)가 기준이다
 
 ## 1. 전체 구조
-> v0.2 변경: 홈 PC 동기화 서버(ADR-0003), 구글·네이버 지도(ADR-0004) 반영. 서버 상세는 `09-server-auth-security.md`.
 
 ```
-┌──────────────── 사용자 휴대폰 (브라우저 / PWA) ────────────────┐
-│ UI (React) ─ features: trips, itinerary, bookings, checklist,  │
-│              places(지도·검색·길찾기), saved, account          │
-│     │ hooks                                                    │
-│ data/repositories ──▶ IndexedDB (1차 저장, 오프라인 동작)       │
-│ sync engine ── dirty 레코드 push / 변경 pull ──┐               │
-│ Service Worker (앱 셸 캐시)                    │               │
-└────────────────────────────────────────────────┼───────────────┘
-           ▲ 정적 파일                            │ HTTPS (쿠키 세션)
-┌──────────┴──────────┐                ┌──────────▼──────────┐
-│ Cloudflare Pages    │                │ Cloudflare (TLS·WAF) │
-│ (웹앱 호스팅)        │                └──────────┬──────────┘
-└─────────────────────┘                           │ Tunnel (아웃바운드, 인바운드 포트 0)
-                                       ┌──────────▼──────────────────────┐
-  지도 SDK (브라우저 키, 도메인 제한)    │ 홈 PC: Node.js API (127.0.0.1)  │
-  Google Maps JS / Naver Maps JS        │  auth · sync · files · places   │
-  길찾기 = 지도 앱 딥링크 (무료)         │  SQLite + files/ + 암호화 백업   │
-                                       │  ──▶ Google Places API (서버 키) │
-                                       │  ──▶ 네이버 검색 API             │
-                                       └─────────────────────────────────┘
+휴대폰·PC 브라우저 (PWA)
+  UI (React) ─ features ─ data/repositories ─▶ IndexedDB (1차 저장, 오프라인 동작)
+  동기화 엔진 ─ 고친 행 올리기 / 바뀐 행 받기 (시작·복귀·고친 뒤·30초마다)
+  서비스 워커 (직접 작성, 앱 파일 미리 저장)
+  지도 SDK ─ 지도를 열 때만 불러옴
+    해외: Google / 국내: 설정값(네이버·카카오·매번 묻기) / 멈추면: MapLibre + OpenFreeMap
+  길찾기 ─ 지도 앱 딥링크
+       │ 같은 주소 https://trippocket.day (쿠키 세션)
+       ▼
+Cloudflare Pages ─ 웹앱 + Functions가 /api·/auth를 전달 (비밀 헤더, ADR-0006)
+       │ Tailscale Funnel
+       ▼
+홈 PC: Node.js + Fastify (127.0.0.1, 비밀 헤더 없으면 404)
+  인증·동기화·공유·후기·알림 ─ SQLite(node:sqlite) + 첨부 파일 + 암호화 백업(매일 03:00)
+  외부 API는 services/apiUsage.ts로 사용량 측정·자동 중지 (무료량 95%)
+    장소: 국내 네이버 → 카카오 / 해외 Google → 자동완성 → Geoapify
+    AI 추천: Gemini → Workers AI → Groq → AI 없이 / 환율: 수출입은행
+    특보: GDACS·USGS·외교부·나라별 기상청 / 항공편: AviationStack / 길 시간: Google Routes·Geoapify
 ```
-- **로컬 모드**(비로그인): 서버 호출 없이 모든 핵심 기능 동작 (장소 검색만 비활성, 길찾기 딥링크는 가능).
-- **로그인 모드**: 로컬 DB에 먼저 쓰고, sync 엔진이 백그라운드로 서버와 맞춘다.
 
-## 2. 기술 스택 (제안)
-| 영역 | 제안 | 이유 | 대안 |
-|---|---|---|---|
-| 언어 | **TypeScript (strict)** | 데이터 모델이 복잡 → 타입 안정성 | — |
-| 빌드 | **Vite** | 빠름, PWA 플러그인 성숙 | — |
-| UI | **React 19** ⚠️ | 생태계·자료 최다, AI 도움 받기 쉬움 | Svelte 5(번들 작음), Vue 3 |
-| 라우팅 | **React Router** (또는 TanStack Router) ⚠️ | 표준적 | — |
-| 스타일 | **Tailwind CSS v4** ⚠️ | 모바일 UI 빠른 구현, 일관된 토큰 | CSS Modules |
-| UI 프리미티브 | **Radix UI / shadcn/ui** (필요한 것만) | 접근성 갖춘 시트·다이얼로그 | — |
-| 로컬 DB | **Dexie.js** (IndexedDB 래퍼) | 스키마 버전/마이그레이션, `useLiveQuery`로 반응형 | idb, RxDB(과함) |
-| 상태 | DB = 단일 진실 원천. UI 임시 상태만 **Zustand** | 상태 중복 방지 | — |
-| 폼/검증 | **React Hook Form + Zod** | Zod 스키마를 가져오기(import) 검증에도 재사용 | Valibot(더 가벼움) |
-| 날짜 | **date-fns** + `Intl` (타임존) | 트리셰이킹, 가벼움 | Temporal API(지원 확대 시 전환) |
-| 드래그 | **dnd-kit** | 터치 지원, 접근성 | — |
-| 지도 | **Google Maps JS + Naver Maps JS v3** (`MapProvider` 추상화) | 국내=네이버, 해외=구글 (ADR-0004) | Leaflet+OSM(보조) |
-| 장소/평점 | **Google Places API (New)** via 홈 서버 프록시 | 평점·리뷰 제공 유일 | — |
-| 서버 | **Node.js 24 + Fastify + SQLite(Drizzle)** on 홈 PC | `09` 문서 참조 | Hono |
-| 인증 | **소셜 OAuth(네이버/카카오/구글) + 서버 세션 쿠키** | 비밀번호 미저장 | — |
-| PWA | **vite-plugin-pwa (Workbox)** | 매니페스트+SW 자동 생성 | — |
-| i18n | **i18next** 또는 경량 자체 구현 ⚠️ | 한국어 우선, 영어 추가 | — |
-| 아이콘 | **lucide-react** | 트리셰이킹 | — |
-| 테스트 | **Vitest + Testing Library + fake-indexeddb**, **Playwright** | Vite 통합, 모바일 뷰포트 E2E | — |
-| 품질 | **ESLint (flat) + Prettier + typescript-eslint**, Husky + lint-staged | — | Biome |
-| 호스팅 | 웹: **Cloudflare Pages**, API: **홈 PC + Cloudflare Tunnel** ⚠️ | 같은 도메인 계열 → 쿠키 세션, PC 꺼져도 앱 열림 | — |
-| 모노레포 | **pnpm workspaces** ⚠️ | web/server/shared 타입 공유 | npm workspaces |
+- 로그인한 사람만 앱을 쓴다 (`app/AuthGate.tsx`). 이 기기에서 로그인한 적 있으면 서버 없이도 동작한다
+- 사용자 위치는 저장·기록하지 않는다. 사용자 데이터는 홈 서버로만 보낸다
+
+## 2. 기술 스택 (실제)
+
+| 영역 | 사용 | 메모 |
+|---|---|---|
+| 언어·빌드 | TypeScript strict, Vite, pnpm workspaces | ADR-0005 |
+| UI | React 19, React Router, Tailwind CSS 4, Radix(필요한 것만), lucide-react, dnd-kit(편집 때만) | 시트 등은 처음 열 때 불러옴 |
+| 로컬 DB·상태 | Dexie(IndexedDB), Zustand | UI는 항상 로컬 DB에서 읽는다 |
+| 검증 | `zod/mini` (`packages/shared`) | 웹·서버 공용 |
+| 날짜·문구 | 자체 유틸, 자체 경량 i18n | 번들 절약 |
+| 지도 | Google·네이버·카카오 공식 스크립트, 대체 MapLibre | ADR-0004, ADR-0007 |
+| PWA | 직접 만든 서비스 워커 + vite 플러그인 | 라이브러리 없음 |
+| 서버 | Node.js, Fastify, node:sqlite, web-push | 마이그레이션은 `db/migrations.ts` |
+| 인증 | 카카오·네이버·Google OAuth + 서버 세션 쿠키 | `docs/09` |
+| 테스트 | Vitest, Testing Library, fake-indexeddb, Playwright(Chromium·WebKit) | `pnpm check`, `pnpm e2e` |
+| 호스팅 | Cloudflare Pages + Functions, 홈 PC + Tailscale Funnel | ADR-0006, 작업 스케줄러로 자동 시작 |
 
 ## 3. 레이어 & 의존 규칙
 ```
@@ -148,15 +135,15 @@ Travel_Planner/
 | `/settings` | 앱 설정, 백업/복원 |
 
 ## 7. PWA / 오프라인 전략
-- `vite-plugin-pwa` `generateSW`, 앱 셸 + 모든 빌드 산출물 precache.
-- 업데이트 방식: `registerType: 'prompt'` → "새 버전이 있어요 [업데이트]" 토스트 (편집 중 강제 새로고침 방지).
-- 지도 타일: runtime cache (StaleWhileRevalidate, 최대 개수 제한). 오프라인 지도 완전 지원은 P2.
-- 외부 API 실패 시 UI는 항상 **degrade gracefully** (예: 지도 대신 주소 텍스트 + 지도 앱 열기 버튼).
+- 직접 만든 서비스 워커(`src/sw/sw-template.js`): 앱 파일 미리 저장, 글꼴은 쓸 때 저장. `/api`·`/auth`는 가로채지 않는다
+- 새 버전이 있으면 [업데이트] 안내 (편집 중 강제 새로고침 없음)
+- 지도는 온라인에서만. 오프라인에서는 안내 + 지도 앱 오프라인 지도 팁·택시 카드
+- 외부 API가 실패하거나 한도면 대체 API → 대체 기능 → 안내 팝업 순서 (`docs/23`)
 
 ## 8. 보안 / 개인정보
 > 서버·인증·동기화 보안 전체 체크리스트는 `09-server-auth-security.md` §7.
-- 사용자 데이터 전송은 홈 서버로만. CSP: `default-src 'self'` + API 도메인 + Google/Naver 지도 도메인만 허용.
-- 공유 링크는 데이터가 URL **fragment(#)** 에 들어가도록 → 호스팅 서버 로그에 남지 않음.
+- 사용자 데이터 전송은 홈 서버로만. CSP: `default-src 'self'` + API 도메인 + Google·네이버·카카오 지도 도메인만 허용.
+- 공유 링크는 서버의 보기 전용 링크(128bit id, 언제든 끄기). 예약번호·연락처·메모는 기본 제외.
 - 가져오기 데이터는 Zod로 전량 검증, HTML 렌더 시 `dangerouslySetInnerHTML` 금지 (XSS).
 - 예약번호 등 민감 정보는 공유 내보내기 시 "포함/제외" 옵션 제공.
 

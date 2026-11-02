@@ -44,7 +44,7 @@
 
 | # | 무엇 | 어떻게 |
 |---|---|---|
-| D1 | 백업 파일이 매일 생기는지 | `E:\TripPocketBackup` 최근 날짜 확인 |
+| D1 | 백업 파일이 매일 생기는지 | `D:\TripPocketBackup` (서버 `.env`의 `BACKUP_DIRS`, OneDrive에도 저장) 최근 날짜 확인 |
 | D2 | 복구 리허설 (분기 1회) | `ops/README.md` §3 |
 | D3 | 디스크·문서 용량 | `pnpm admin:data list` (apps/server) |
 | D4 | Windows 업데이트 후 서버 자동 시작 | 바탕화면 "TripPocket 서버 재시작.bat" |
@@ -53,7 +53,7 @@
 
 | # | 무엇 | 어디 |
 |---|---|---|
-| E1 | 신고·숨김된 후기 확인 | 관리자 후기 API (`/api/admin/reviews`) |
+| E1 | 숨긴 후기 확인 (신고 기능은 없음) | 관리자 후기 API (`/api/admin/reviews`) |
 | E2 | 개선 제안 읽고 답하기 | 마이 → 관리자 → 개선 제안 |
 | E3 | 문구 규칙 (한 줄 = 한 문장) | `pnpm --filter @trippocket/web test` (copy.test.ts) |
 | E4 | 실험실 기능 중 정식으로 넣거나 뺄 것 | 마이 → 실험실 (`data/labsStore.ts`) |

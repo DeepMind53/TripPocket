@@ -45,6 +45,9 @@ Tailscale Funnel https://jin-server.tail0844c0.ts.net ─▶ 홈 PC 127.0.0.1:87
 - **화면 문구**: `apps/web/src/i18n/ko.json` (키는 타입 검사됨 — 없는 키는 빌드 실패)
 - **새 화면**: `features/<기능>/XxxPage.tsx` + `app/router.tsx`에 `lazy` 경로. 첫 화면 예산 300KB(`pnpm size`)
 - **새 설정 항목**: shared `settings/settings.ts`(검사·기본값) → `SettingsPage`
+- **일정 표시 기능 (설정 "일정")**: shared `PLAN_FEATURES`에 추가 + `features/settings/planLabels.ts` + `FeaturePreview` 샘플. 처음엔 끔, `features/me/PlanFeaturePrompt.tsx`가 접속마다 하나씩 묻고 `planPromptSeen`(계정 설정, 서버가 합침)에 남긴다. `planPromptV`가 없는 옛 설정은 모두 끄고 다시 묻는다
+- **앱 안 국내 지도**: 설정 `domesticMap` → `data/mapChoice.ts`(매번 묻기는 메모리에만) → `shared/maps` `chooseProvider`
+- **좁은 화면·큰 글씨**: Tailwind `tight:` 변형(폭 340px 이하 또는 글자 115% 이상, `html[data-big-text]`). 검사 `tests/e2e/text-fit.spec.ts`
 - **새 실험 기능**: `data/labsStore.ts`의 `LABS`에 id 추가 → `ko.json` `labs.item.<id>.name/desc` → 기능 코드에서 `useLab('<id>')`.
   정식 기능이 되면 `LABS`에서 빼고 `useLab` 분기를 지운다
 - **새 외부 API (서버)**: `services/apiUsage.ts`의 `APIS`에 id·분류(`paid`=과금 가능 / `free`)·무료 월 사용량 추가 →

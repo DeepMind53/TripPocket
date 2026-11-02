@@ -134,7 +134,7 @@
 | Google 현지어 이름(택시 카드) | Geoapify 역지오코딩 | 한국어 이름 + 주소 복사 |
 | Google Routes · Geoapify 길 (다음 일정) | 서로 대신 (Google 좌표는 Google만) | 직선거리 어림 — 한도 팝업 없음 (`no_route`) |
 | Google 지도 JS · 네이버 지도 | 서로 대신 → MapLibre + OpenFreeMap | 목록 + 지도 앱 링크 |
-| 카카오 검색 ↔ 네이버 검색 | 서로 대신 | 한도 팝업 + 직접 입력 |
+| 네이버 검색 → 카카오 검색 (국내, 2026-11-02 네이버 우선) | 네이버에 없거나 멈추면 카카오. Google로 넘기지 않음 | 둘 다 멈추면 한도 팝업 + 직접 입력 |
 | Gemini → Workers AI → Groq | 차례로 | AI 없이 블로그 언급 수로 목록 |
 | 수출입은행 환율 | jsDelivr currency-api | 저장해 둔 환율 |
 | AviationStack (편명 불러오기) | — | 한도 팝업 + 직접 입력 |
