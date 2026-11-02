@@ -6,7 +6,7 @@ import { openDb, type Db } from '../src/db/database';
 import { resetLlmCooldown } from '../src/services/llm';
 
 /**
- * AI 추천 — 해외는 Google 장소 먼저 + 네이버 블로그, 국내는 블로그 먼저 + Google로 채움,
+ * AI 추천 — 해외는 Google 장소 먼저 + 네이버 블로그, 국내는 블로그 + 카카오 위치 확인(Google 안 씀, 2026-11-02),
  * 직접 입력 키워드, 드롭다운에서 고른 장소를 기준점으로
  */
 const SECRET = 's'.repeat(40);
@@ -115,6 +115,18 @@ const recommend = (body: object) =>
 type Place = { name: string; origin: string; mentions: number; place?: { source: string } };
 
 describe('AI 추천 — 정보 출처와 거리', () => {
+  it('국내: 추천이 적어도 Google을 부르지 않는다 (2026-11-02)', async () => {
+    const res = await recommend({
+      anchor: { type: 'text', name: '성수역' },
+      categories: ['food'],
+      domestic: true,
+    });
+    expect(res.statusCode).toBe(200);
+    expect(googleQueries).toEqual([]);
+    const food = res.json().categories.food as { places: Place[] };
+    expect(food.places.every((p) => p.origin === 'blog')).toBe(true);
+  });
+
   it('해외: Google 장소가 먼저, 블로그에서 언급된 곳은 언급·요약을 붙여 맨 앞, 5km 안에 3곳이면 5km', async () => {
     const res = await recommend({
       anchor: { type: 'text', name: '신주쿠역' },

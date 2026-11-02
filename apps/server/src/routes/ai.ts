@@ -16,7 +16,7 @@ import type { Db } from '../db/database';
 import { requireUser } from '../auth/session';
 import { requireAdmin } from './admin';
 import { resolveAnchor } from '../services/anchor';
-import { basicExtract, namesOf, norm, WORD } from '../services/basicRecommend';
+import { basicExtract, namesOf, WORD } from '../services/basicRecommend';
 import { extractPlaces, llmProviders, type LlmEngine } from '../services/llm';
 import { naverSearchKeys, searchBlog, type BlogPost } from '../services/naverBlog';
 import { searchGoogle, searchKakao } from '../services/places';
@@ -240,10 +240,13 @@ export function aiRoutes(app: FastifyInstance, config: Config, db: Db): void {
         ? searchGoogle(q, gkey, near).catch(() => [])
         : Promise.resolve([]);
     // 기준점 위치: 고른 장소·현재 위치 > 국내는 카카오(무료) > 해외는 Google(1회)
+    // 국내에는 Google을 쓰지 않는다 (사용자 결정 2026-11-02)
     const anchorAt =
       p.at ??
-      (p.domestic && kakao
-        ? (await searchKakao(p.anchor, kakao).catch(() => []))[0]?.coords
+      (p.domestic
+        ? kakao
+          ? (await searchKakao(p.anchor, kakao).catch(() => []))[0]?.coords
+          : undefined
         : (await google(p.anchor))[0]?.coords) ??
       undefined;
 
@@ -265,7 +268,6 @@ export function aiRoutes(app: FastifyInstance, config: Config, db: Db): void {
         const extracted =
           ai?.places ?? (await basicExtract(p.anchor, c, posts, { kakao, naver }, p.keyword));
         const built = buildRecommendations(extracted, posts, now, CANDIDATES)[c];
-        const word = mapWord(c, p.keyword);
 
         let recs: Rec[];
         if (p.domestic) {
@@ -279,11 +281,9 @@ export function aiRoutes(app: FastifyInstance, config: Config, db: Db): void {
               return place ? { ...r, place, origin: 'blog' } : { ...r, origin: 'blog' };
             }),
           );
-          if (recs.filter((r) => nearOk(r, anchorAt, 10)).length < TOP)
-            recs = addGoogle(recs, await google(`${p.anchor} ${word}`, anchorAt), c);
         } else {
           // 해외: Google 장소 검색 먼저(위치 정확) → 네이버 블로그 언급·요약을 이름으로 붙임 → 블로그에만 있는 곳은 뒤에
-          const candidates = await google(`${p.anchor} ${word}`, anchorAt);
+          const candidates = await google(`${p.anchor} ${mapWord(c, p.keyword)}`, anchorAt);
           recs = candidates.length
             ? mergeGoogleFirst(candidates, built.places, c)
             : built.places.map((r): Rec => ({ ...r, origin: 'blog' }));
@@ -312,11 +312,6 @@ export function aiRoutes(app: FastifyInstance, config: Config, db: Db): void {
     const used = usedToday(req.user!.userId);
     return { used, limit: DAILY_LIMIT, remaining: Math.max(0, DAILY_LIMIT - used) };
   });
-}
-
-/** 기준점에서 km 안 (위치를 모르면 일단 통과) */
-function nearOk(r: Rec, at: { lat: number; lng: number } | undefined, km: number): boolean {
-  return !at || !r.place?.coords || distanceKm(at, r.place.coords) <= km;
 }
 
 /** 이름이 같은 장소인가 ("이치란 신주쿠점" ≈ "이치란") — basicRecommend와 같은 규칙 */
@@ -359,17 +354,4 @@ function mergeGoogleFirst(
   matched.sort((x, y) => y.score - x.score);
   const blogOnly = blog.filter((_, j) => !used.has(j)).map((b): Rec => ({ ...b, origin: 'blog' }));
   return [...matched, ...rest, ...blogOnly];
-}
-
-/** 국내: 블로그 추천 뒤에 Google 후보 중 아직 없는 곳을 붙인다 (이미 있으면 Google도 함께 찾았다고 표시) */
-function addGoogle(recs: Rec[], google: PlaceSummary[], category: AiCategory): Rec[] {
-  const out = [...recs];
-  for (const g of google) {
-    const i = out.findIndex(
-      (r) => sameName(r.name, g.name) || norm(r.place?.name ?? '') === norm(g.name),
-    );
-    if (i >= 0) out[i] = { ...out[i]!, origin: 'both' };
-    else out.push(fromGoogle(g, category));
-  }
-  return out;
 }
