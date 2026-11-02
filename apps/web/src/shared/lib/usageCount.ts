@@ -36,6 +36,9 @@ export function countUse(name: string, n = 1): void {
   if (!/^[a-z][a-zA-Z0-9_.:/-]{0,59}$/.test(name)) return;
   const c = loadUsage();
   const d = (c[usageToday()] ??= {});
+  // 그날 처음 쓴 기능이면 "쓴 기기 수"도 하나 (몇 명이 쓰는지 — 횟수와 따로, 2026-11-02)
+  const reach = `reach.${name}`.slice(0, 60);
+  if (!d[name] && !d[reach]) d[reach] = 1;
   d[name] = (d[name] ?? 0) + n;
   saveUsage(c);
 }

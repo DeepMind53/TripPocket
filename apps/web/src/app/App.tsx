@@ -48,6 +48,13 @@ function installOffered(): boolean {
 
 export function App() {
   const [router] = useState(createAppRouter);
+  // 앱 열기(오프라인 여부)·화면 오류 횟수 (ADR-0009) — 오류 내용은 보내지 않는다
+  useEffect(() => {
+    countUse(navigator.onLine ? 'app.open' : 'app.open.offline');
+    const onError = () => countUse('error.screen');
+    window.addEventListener('error', onError);
+    return () => window.removeEventListener('error', onError);
+  }, []);
   // 화면·시트 열기 횟수 (ADR-0009): 경로의 id는 :id로, 시트는 이름만
   useEffect(() => {
     let last = '';

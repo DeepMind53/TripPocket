@@ -16,6 +16,7 @@ import { useSearchParams } from 'react-router';
 import { api } from '../../data/api/client';
 import { useAuth } from '../../data/authStore';
 import { useSettings } from '../../data/settingsStore';
+import { countUse } from '../../shared/lib/usageCount';
 import { useTrip, useTripBookings } from '../../data/hooks';
 import { itemRepo } from '../../data/repositories/itemRepo';
 import { savedPlaceRepo } from '../../data/repositories/savedPlaceRepo';
@@ -128,6 +129,7 @@ export function AiPage() {
   }
 
   async function run() {
+    countUse(`ai.run.${mode}`);
     setBusy(true);
     try {
       const where = await anchor();
@@ -407,20 +409,22 @@ function RecCard({
         <IconButton
           label={t('placeSearch.openMap', { name: rec.name })}
           icon={<MapPin />}
-          onClick={() =>
+          onClick={() => {
+            countUse('ai.openMap');
             openMapLink(
               placeLink(
                 mapApp,
                 { ...dest, ...(place?.source === 'google' ? { googlePlaceId: place.id } : {}) },
                 window.location.hostname,
               ),
-            )
-          }
+            );
+          }}
         />
         <IconButton
           label={t('places.save', { name: rec.name })}
           icon={<Heart />}
-          onClick={() =>
+          onClick={() => {
+            countUse('ai.save');
             void savedPlaceRepo
               .create({
                 name: rec.name,
@@ -428,15 +432,16 @@ function RecCard({
                 ...(place?.address ? { address: place.address } : {}),
                 ...(place?.coords ? { coords: place.coords, coordsSource: place.source } : {}),
               })
-              .then(() => toast(t('places.saved')))
-          }
+              .then(() => toast(t('places.saved')));
+          }}
         />
         {tripId && (
           <IconButton
             label={t('places.addToTrip', { name: rec.name })}
             icon={<Plus />}
             tone="tint"
-            onClick={() =>
+            onClick={() => {
+              countUse('ai.addToTrip');
               void itemRepo
                 .create({
                   tripId,
@@ -455,8 +460,8 @@ function RecCard({
                       }
                     : {}),
                 })
-                .then(() => toast(t('places.added')))
-            }
+                .then(() => toast(t('places.added')));
+            }}
           />
         )}
       </div>

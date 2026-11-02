@@ -3,6 +3,7 @@ import { ExternalLink } from 'lucide-react';
 import { useTranslation } from '../../i18n';
 import { openMapLink, placeLink } from '../../shared/lib/directions';
 import { IconButton } from '../../shared/ui';
+import { countUse } from '../../shared/lib/usageCount';
 
 export interface KeywordPick {
   keyword: string;
@@ -37,7 +38,8 @@ export function KeywordPicks({ picks }: { picks: KeywordPick[] }) {
                 <IconButton
                   label={t('placeSearch.openMap', { name: p.name })}
                   icon={<ExternalLink />}
-                  onClick={() =>
+                  onClick={() => {
+                    countUse('ai.keywordMap');
                     openMapLink(
                       placeLink(
                         'google',
@@ -49,8 +51,8 @@ export function KeywordPicks({ picks }: { picks: KeywordPick[] }) {
                         },
                         window.location.hostname,
                       ),
-                    )
-                  }
+                    );
+                  }}
                 />
               </li>
             ))}

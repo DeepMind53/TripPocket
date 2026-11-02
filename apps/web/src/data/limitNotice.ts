@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { countUse } from '../shared/lib/usageCount';
 import type { FallbackLink } from '../shared/lib/fallbackLinks';
 
 /**
@@ -34,6 +35,8 @@ export function reportLimit(body: unknown): boolean {
     };
   if (!notice) return false;
   const key = notice.kind === 'api_paused' ? `p:${notice.api}` : `d:${notice.feature}`;
+  // 한도에 걸린 횟수 — 유료로 더 쓰고 싶은 기능이 무엇인지 (ADR-0009)
+  countUse(`limit.${key.replace(':', '.')}`);
   if (!shown.has(key)) {
     shown.add(key);
     useLimitNotice.setState({ notice, links: [] });

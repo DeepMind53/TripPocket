@@ -18,6 +18,7 @@ import {
 } from '../services/places';
 import { naverSearchKeys } from '../services/naverBlog';
 import { apiAllowed } from '../services/apiUsage';
+import { statsRepo } from '../repositories/statsRepo';
 
 /**
  * 사람마다 하루 검색 수 (카카오·네이버는 하루 무료량이 있어서).
@@ -36,6 +37,7 @@ const cache = new Map<string, { exp: number; value: PlaceSummary[] }>();
  */
 export function placesRoutes(app: FastifyInstance, config: Config, db: Db): void {
   const auth = { preHandler: requireUser(db) };
+  const stats = statsRepo(db);
   const naverKeys = naverSearchKeys(config);
   const today = () => new Date().toISOString().slice(0, 10);
   const used = (userId: string, kind: Kind | `all-${Kind}`) =>
@@ -69,7 +71,10 @@ export function placesRoutes(app: FastifyInstance, config: Config, db: Db): void
       return reply.code(429).send({ error: 'daily_limit', feature: 'places_search' });
     const key = `${scope}|${q.trim().toLowerCase()}|${near ? `${near.lat.toFixed(1)},${near.lng.toFixed(1)}` : ''}`;
     const hit = cache.get(key);
-    if (hit && hit.exp > Date.now()) return { places: hit.value, google: false };
+    if (hit && hit.exp > Date.now()) {
+      stats.bump('search', `${scope}.cache`);
+      return { places: hit.value, google: false };
+    }
 
     const found: PlaceSummary[] = [];
     let usedGoogle = false;
@@ -118,6 +123,9 @@ export function placesRoutes(app: FastifyInstance, config: Config, db: Db): void
     if (found.length === 0 && googleBlocked === 'api_paused' && !fallback)
       return reply.code(503).send({ error: 'api_paused', api: 'google_places_search' });
     const places = rankPlaces(q, found);
+    // 검색 결과가 없었던 비율 (검색어는 남기지 않음, ADR-0009)
+    stats.bump('search', `${scope}.${places.length ? 'found' : 'empty'}`);
+    if (fallback) stats.bump('search', `${scope}.${fallback}`);
     // 자동완성 결과는 세션이 한 번 쓰고 끝나므로 캐시하지 않는다
     if (fallback !== 'google_autocomplete') {
       cache.set(key, { exp: Date.now() + 600_000, value: places });

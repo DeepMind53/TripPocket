@@ -86,8 +86,15 @@ export interface StatsReport {
     daily: { date: string; n: number }[];
     signups: { date: string; n: number }[];
     providers: StatRow[];
+    retention7: { base: number; back: number };
+    retention30: { base: number; back: number };
+    activeDays: StatRow[];
+    hours: StatRow[];
   };
   events: StatRow[];
+  /** 기능을 쓴 기기 수 (기기마다 하루 한 번) */
+  reach: StatRow[];
+  search: StatRow[];
   env: StatRow[];
   data: StatRow[];
   sync: StatRow[];

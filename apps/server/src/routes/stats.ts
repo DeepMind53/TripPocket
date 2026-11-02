@@ -51,8 +51,9 @@ export function statsRoutes(app: FastifyInstance, db: Db): void {
           if (budget <= 0) break;
           const n = Math.min(Math.floor(raw), 500, budget);
           if (!NAME.test(key) || !(n > 0)) continue;
-          // env.* = 기기 환경(하루 한 번), 그 밖 = 기능 사용
-          stats.bump(key.startsWith('env.') ? 'env' : 'event', key, n, date);
+          // env.* = 기기 환경(하루 한 번), reach.* = 기능을 쓴 기기(하루 한 번), 그 밖 = 기능 사용 횟수
+          if (key.startsWith('reach.')) stats.bump('reach', key.slice(6), n, date);
+          else stats.bump(key.startsWith('env.') ? 'env' : 'event', key, n, date);
           budget -= n;
           taken += n;
         }

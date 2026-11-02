@@ -18,7 +18,8 @@ it('정해진 형식이 아닌 이름(입력 내용 등)은 세지 않는다', (
   countUse('신주쿠 라멘');
   countUse('<b>');
   const days = Object.values(loadUsage());
-  expect(days).toEqual([{ 'map.open.app': 2 }]);
+  // 그날 처음 쓴 기능은 "쓴 기기 수"(reach.)도 한 번
+  expect(days).toEqual([{ 'map.open.app': 2, 'reach.map.open.app': 1 }]);
 });
 
 it('보내고 나면 보낸 만큼 지우고, 실패하면 남긴다', async () => {

@@ -45,15 +45,17 @@ export function statsRepo(db: Db) {
     const today = statDate();
     const changed = db
       .prepare(
-        'UPDATE users SET last_active_date = ? WHERE id = ? AND (last_active_date IS NULL OR last_active_date != ?)',
+        'UPDATE users SET last_active_date = ?, active_days = active_days + 1 WHERE id = ? AND (last_active_date IS NULL OR last_active_date != ?)',
       )
       .run(today, userId, today);
     if (Number(changed.changes) > 0) bump('active', 'users', 1, today);
   }
 
-  /** 서버 요청 한 번: 경로 패턴(값 없음)·결과·걸린 시간 */
-  function request(route: string, status: number, ms: number): void {
+  /** 서버 요청 한 번: 경로 패턴(값 없음)·결과·걸린 시간. 로그인한 요청은 한국 시각 시간대도 */
+  function request(route: string, status: number, ms: number, signedIn = false): void {
     bump('api', route);
+    if (signedIn)
+      bump('hour', String(new Date(Date.now() + 9 * 3_600_000).getUTCHours()).padStart(2, '0'));
     if (status >= 500) bump('api_5xx', route);
     else if (status >= 400) bump('api_4xx', route);
     if (status === 429) bump('limit', route);
@@ -75,6 +77,7 @@ export function statsRepo(db: Db) {
       (db.prepare(sql).get(...args) as { n: number | null }).n ?? 0;
 
     // 사용자
+    const hours = new Map(sum('hour', since).map((r) => [r.name, r.n]));
     const activeSince = (d: number) =>
       one('SELECT COUNT(*) AS n FROM users WHERE last_active_date >= ?', daysAgo(d - 1));
     const daily = db
@@ -88,8 +91,38 @@ export function statsRepo(db: Db) {
         "SELECT date(created_at, '+9 hours') AS date, COUNT(*) AS n FROM users WHERE date(created_at, '+9 hours') >= ? GROUP BY 1 ORDER BY 1",
       )
       .all(since) as unknown as { date: string; n: number }[];
+    // 재방문: 가입 N일이 지난 사람 중 N일 뒤에도 다시 쓴 사람 (마지막 사용 날짜로 판단)
+    const retention = (d: number) => ({
+      base: one(
+        "SELECT COUNT(*) AS n FROM users WHERE date(created_at, '+9 hours') <= ?",
+        daysAgo(d),
+      ),
+      back: one(
+        "SELECT COUNT(*) AS n FROM users WHERE date(created_at, '+9 hours') <= ? AND last_active_date >= date(created_at, '+9 hours', ?)",
+        daysAgo(d),
+        `+${d} days`,
+      ),
+    });
+    const activeDays = db
+      .prepare(
+        `SELECT CASE WHEN active_days <= 1 THEN '1' WHEN active_days <= 3 THEN '2-3'
+           WHEN active_days <= 7 THEN '4-7' WHEN active_days <= 30 THEN '8-30' ELSE '31+' END AS name,
+           COUNT(*) AS n FROM users GROUP BY 1`,
+      )
+      .all() as unknown as Row[];
+    const order = ['1', '2-3', '4-7', '8-30', '31+'];
     const users = {
       total: one('SELECT COUNT(*) AS n FROM users'),
+      retention7: retention(7),
+      retention30: retention(30),
+      activeDays: order.map((name) => ({
+        name,
+        n: activeDays.find((r) => r.name === name)?.n ?? 0,
+      })),
+      hours: Array.from({ length: 24 }, (_, h) => {
+        const name = String(h).padStart(2, '0');
+        return { name, n: hours.get(name) ?? 0 };
+      }),
       active1: activeSince(1),
       active7: activeSince(7),
       active30: activeSince(30),
@@ -264,6 +297,9 @@ export function statsRepo(db: Db) {
       today,
       users,
       events: sum('event', since),
+      // 기능을 쓴 기기 수 (기기마다 하루 한 번만 셈)
+      reach: sum('reach', since),
+      search: sum('search', since),
       env: sum('env', since),
       data: sum('data', since),
       sync: sum('sync', since),

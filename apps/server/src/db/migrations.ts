@@ -300,4 +300,8 @@ export const MIGRATIONS: readonly string[] = [
   );
   ALTER TABLE users ADD COLUMN last_active_date TEXT;
   `,
+  // 19: 사용 통계 보강 — 쓴 날 수(재방문 분포용, 숫자 하나만 늘림). 누가 언제 썼는지는 남기지 않음
+  `
+  ALTER TABLE users ADD COLUMN active_days INTEGER NOT NULL DEFAULT 0;
+  `,
 ];

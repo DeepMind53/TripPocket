@@ -3,12 +3,13 @@ import { statsApi, type StatRow, type StatsReport } from '../../data/api/admin';
 import { useAuth } from '../../data/authStore';
 import { useTranslation } from '../../i18n';
 import { EmptyState, SegmentedControl, Spinner, TopBar } from '../../shared/ui';
+import { aiLabel, dataLabel, searchLabel, statLabel } from './statLabels';
 
 type Range = '1' | '7' | '30' | '365';
 
 /**
  * 사용 통계 (관리자만, ADR-0009): 누가 썼는지 구분하지 않은 합계·비율.
- * 기능 이름(화면 경로·동작 이름)은 관리자용이라 영문 이름 그대로 보여 준다
+ * 칸마다 무엇을 알 수 있는지 설명을 붙이고, 영문 기능 이름은 한국어로 보여 준다 (사용자 요청 2026-11-02)
  */
 export function AdminStatsPage() {
   const { t } = useTranslation();
@@ -24,17 +25,26 @@ export function AdminStatsPage() {
   const shell = (body: ReactNode) => (
     <div className="mx-auto min-h-dvh max-w-[560px] pb-10">
       <TopBar title={t('stats.title')} backTo="/me" />
-      <div className="flex flex-col gap-6 px-5 pt-2">{body}</div>
+      <div className="flex flex-col gap-7 px-5 pt-2">{body}</div>
     </div>
   );
   if (!isAdmin) return shell(<EmptyState emoji="🔒" title={t('admin.onlyAdmin')} />);
 
   const pct = (a: number, b: number) => (b > 0 ? Math.round((a / b) * 100) : 0);
   const ms = (v: number | null) => (v === null ? t('stats.over') : t('stats.under', { ms: v }));
+  const named = (rows: StatRow[], label: (n: string) => string) =>
+    rows.map((r) => ({ name: label(r.name), n: r.n }));
+  // 수요: 한도 도달·AI 추천을 실제로 쓴 동작
+  const demand = (rows: StatRow[]) =>
+    rows.filter(
+      (r) => r.name.startsWith('limit.') || /^ai\.(save|addToTrip|openMap|keywordMap)/.test(r.name),
+    );
 
   return shell(
     <>
-      <p className="text-caption whitespace-pre-line text-fg-muted">{t('stats.desc')}</p>
+      <p className="rounded-card bg-bg-subtle p-3 text-caption whitespace-pre-line text-fg-sub">
+        {t('stats.guide')}
+      </p>
       <SegmentedControl
         label={t('stats.range')}
         value={range}
@@ -53,7 +63,7 @@ export function AdminStatsPage() {
         <p className="text-body-2 text-fg-sub">{t('admin.offline')}</p>
       ) : (
         <>
-          <Section title={t('stats.users')}>
+          <Section title={t('stats.users')} desc={t('stats.help.users')}>
             <Numbers
               rows={[
                 [t('stats.total'), data.users.total],
@@ -61,6 +71,32 @@ export function AdminStatsPage() {
                 [t('stats.active7'), data.users.active7],
                 [t('stats.active30'), data.users.active30],
               ]}
+            />
+            <div className="flex flex-col gap-1">
+              <h3 className="text-body-2 font-semibold">{t('stats.retention')}</h3>
+              {(
+                [
+                  [7, data.users.retention7],
+                  [30, data.users.retention30],
+                ] as const
+              ).map(([d, r]) => (
+                <p key={d} className="tabular text-body-2">
+                  {t('stats.retentionRow', {
+                    d,
+                    pct: pct(r.back, r.base),
+                    back: r.back,
+                    base: r.base,
+                  })}
+                </p>
+              ))}
+            </div>
+            <Bars
+              title={t('stats.activeDays')}
+              rows={data.users.activeDays.map((r) => ({
+                name: t('stats.activeDaysUnit', { days: r.name }),
+                n: r.n,
+              }))}
+              total={data.users.total}
             />
             <Bars
               title={t('stats.daily')}
@@ -73,16 +109,26 @@ export function AdminStatsPage() {
             <Bars title={t('stats.providers')} rows={data.users.providers} />
           </Section>
 
-          <Section title={t('stats.features')} desc={t('stats.featuresDesc')}>
-            <Bars rows={data.events} limit={40} />
+          <Section title={t('stats.reach')} desc={t('stats.help.reach')}>
+            <Bars rows={named(data.reach, statLabel)} limit={40} />
           </Section>
 
-          <Section title={t('stats.data')}>
-            <Bars rows={data.data} limit={40} />
-            {data.sync.length > 0 && <Bars title={t('stats.sync')} rows={data.sync} />}
+          <Section title={t('stats.features')} desc={t('stats.help.events')}>
+            <Bars rows={named(data.events, statLabel)} limit={40} />
           </Section>
 
-          <Section title={t('stats.trips')}>
+          <Section title={t('stats.demand')} desc={t('stats.help.demand')}>
+            <Bars rows={named(demand(data.events), statLabel)} />
+          </Section>
+
+          <Section title={t('stats.data')} desc={t('stats.help.data')}>
+            <Bars rows={named(data.data, dataLabel)} limit={40} />
+            {data.sync.length > 0 && (
+              <Bars title={t('stats.sync')} rows={named(data.sync, dataLabel)} />
+            )}
+          </Section>
+
+          <Section title={t('stats.trips')} desc={t('stats.help.trips')}>
             <p className="text-body-2">
               {t('stats.tripTotal', {
                 n: data.trips.total,
@@ -105,7 +151,7 @@ export function AdminStatsPage() {
 
           <Section
             title={t('stats.settings')}
-            desc={t('stats.settingsDesc', { n: data.settings.users })}
+            desc={`${t('stats.help.settings')}\n${t('stats.settingsDesc', { n: data.settings.users })}`}
           >
             <Bars rows={data.settings.features} total={data.settings.users} />
             <p className="text-body-2">
@@ -120,7 +166,7 @@ export function AdminStatsPage() {
 
           <Section
             title={t('stats.devices')}
-            desc={t('stats.devicesDesc', { n: data.devices.sessions })}
+            desc={`${t('stats.help.devices')}\n${t('stats.devicesDesc', { n: data.devices.sessions })}`}
           >
             <Bars title={t('stats.os')} rows={data.devices.os} total={data.devices.sessions} />
             <Bars
@@ -131,11 +177,22 @@ export function AdminStatsPage() {
             <Bars title={t('stats.env')} desc={t('stats.envDesc')} rows={data.env} limit={40} />
           </Section>
 
-          <Section title={t('stats.ai')}>
-            <Bars rows={data.ai} />
+          <Section title={t('stats.hours')} desc={t('stats.help.hours')}>
+            <Bars
+              rows={data.users.hours.map((r) => ({ name: `${r.name}시`, n: r.n }))}
+              limit={24}
+            />
           </Section>
 
-          <Section title={t('stats.api')} desc={t('stats.apiDesc')}>
+          <Section title={t('stats.aiTitle')} desc={t('stats.help.quality')}>
+            <Bars rows={named(data.ai, aiLabel)} />
+            <Bars title={t('stats.search')} rows={named(data.search, searchLabel)} />
+          </Section>
+
+          <Section
+            title={t('stats.api')}
+            desc={`${t('stats.help.quality')}\n${t('stats.apiDesc')}`}
+          >
             {data.api.length === 0 ? (
               <p className="text-body-2 text-fg-muted">{t('stats.empty')}</p>
             ) : (
@@ -163,7 +220,7 @@ export function AdminStatsPage() {
 function Section({ title, desc, children }: { title: string; desc?: string; children: ReactNode }) {
   return (
     <section className="flex flex-col gap-3">
-      <h2 className="text-caption font-bold text-fg-muted">{title}</h2>
+      <h2 className="text-body-1 font-bold">{title}</h2>
       {desc && <p className="-mt-2 text-caption whitespace-pre-line text-fg-muted">{desc}</p>}
       {children}
     </section>
@@ -207,10 +264,10 @@ function Bars({
         <p className="text-caption text-fg-muted">{t('stats.empty')}</p>
       ) : (
         <ul className="flex flex-col gap-1">
-          {rows.slice(0, limit).map((r) => (
-            <li key={r.name} className="flex flex-col gap-0.5">
+          {rows.slice(0, limit).map((r, i) => (
+            <li key={`${r.name}-${i}`} className="flex flex-col gap-0.5">
               <span className="flex items-baseline justify-between gap-2 text-caption">
-                <span className="min-w-0 font-mono break-all">{r.name}</span>
+                <span className="min-w-0 break-all">{r.name}</span>
                 <span className="tabular shrink-0 text-fg-sub">
                   {r.n.toLocaleString()}
                   {total ? ` · ${Math.round((r.n / Math.max(1, total)) * 100)}%` : ''}

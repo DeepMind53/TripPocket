@@ -141,6 +141,23 @@ describe('사용 통계', () => {
     expect(sum.devices.os.map((x: { name: string }) => x.name).sort()).toEqual(['Android', 'iOS']);
   });
 
+  it('재방문·쓴 날 수·시간대·기능을 쓴 기기 수 (사람 구분 없이)', async () => {
+    // 가입 40일 전, 마지막 사용 오늘 → 7·30일 재방문 모두 포함
+    db.prepare(
+      "UPDATE users SET created_at = ?, last_active_date = ?, active_days = 12 WHERE id = 'u1'",
+    ).run(new Date(Date.now() - 40 * 86_400_000).toISOString(), statDate());
+    await call('POST', '/api/stats/events', user, {
+      days: { [statDate()]: { 'reach.screen:/trips': 1, 'screen:/trips': 4 } },
+    });
+    const sum = (await call('GET', '/api/admin/stats', admin)).json();
+    expect(sum.users.retention30).toEqual({ base: 2, back: 1 });
+    expect(sum.users.activeDays.find((r: { name: string }) => r.name === '8-30').n).toBe(1);
+    expect(sum.users.hours).toHaveLength(24);
+    expect(sum.users.hours.reduce((a: number, r: { n: number }) => a + r.n, 0)).toBeGreaterThan(0);
+    expect(sum.reach).toEqual([{ name: 'screen:/trips', n: 1 }]);
+    expect(sum.events).toEqual([{ name: 'screen:/trips', n: 4 }]);
+  });
+
   it('3년 지난 통계는 지운다', () => {
     const stats = statsRepo(db);
     const old = statDate(new Date(Date.now() - (STATS_KEEP_DAYS + 2) * 86_400_000));

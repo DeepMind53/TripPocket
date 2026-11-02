@@ -88,7 +88,7 @@ export async function buildApp(config: Config, db: Db): Promise<FastifyInstance>
     const route = req.routeOptions.url;
     if (!route || route === '/healthz') return;
     try {
-      stats.request(`${req.method} ${route}`, reply.statusCode, reply.elapsedTime);
+      stats.request(`${req.method} ${route}`, reply.statusCode, reply.elapsedTime, !!req.user);
       if (req.user) stats.markActive(req.user.userId);
     } catch (e) {
       req.log.warn({ err: String(e) }, 'stats failed');
