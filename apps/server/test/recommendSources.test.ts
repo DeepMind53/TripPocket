@@ -190,7 +190,8 @@ describe('AI 추천 — 정보 출처와 거리', () => {
     expect(naverQueries).toContain('도쿄 맛집');
     expect(naverQueries).toContain('신주쿠역 맛집');
     expect(groqUser.join()).not.toContain('신주쿠구');
-    expect(JSON.parse(groqUser[0]!).anchor).toBe('도쿄 신주쿠역');
+    // 숙소는 AI에 도시 이름만 (글이 도시 단위라 호텔 근처로 좁히면 0곳)
+    expect(JSON.parse(groqUser[0]!).anchor).toBe('도쿄');
     // 숙소 자신은 추천에 넣지 않는다
     const food = res.json().categories.food as { radiusKm?: number; places: Place[] };
     // 이 시험에서는 주소 검색의 첫 결과(츠루톤탄)가 숙소다

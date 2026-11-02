@@ -19,7 +19,7 @@ import type { Db } from '../db/database';
 import { requireUser } from '../auth/session';
 import { requireAdmin } from './admin';
 import { resolveAnchor } from '../services/anchor';
-import { basicExtract, namesOf, norm, WORD } from '../services/basicRecommend';
+import { basicExtract, namesOf, norm, widenSources, WORD } from '../services/basicRecommend';
 import { extractPlaces, llmProviders, type LlmEngine } from '../services/llm';
 import { naverSearchKeys, searchBlog, type BlogPost } from '../services/naverBlog';
 import { searchGoogle, searchKakao } from '../services/places';
@@ -330,8 +330,9 @@ export function aiRoutes(app: FastifyInstance, config: Config, db: Db): void {
     const isAnchor = (g: PlaceSummary) => g.id === located?.id || norm(g.name) === norm(p.anchor);
     // 숙소면 호텔 이름 글이 적으므로 도시 이름으로도 블로그를 찾는다
     const blogAnchors = stayAt?.area ? [p.anchor, stayAt.area] : [p.anchor];
-    // AI에는 이름만 (주소·좌표 없음). 어느 도시인지 알아야 근처 장소를 고른다
-    const aiAnchor = nameInArea;
+    // AI에는 이름만 (주소·좌표 없음). 숙소는 도시 이름만 — 글이 도시 단위라 호텔 이름을 주면 "근처"가 없다며 0곳이 된다
+    // (거리는 서버가 지도로 거른다, 2026-11-02 분석)
+    const aiAnchor = stayAt?.area ?? p.anchor;
     // 지도 검색어의 지역: 숙소는 도시, 그 밖은 기준점 이름
     const mapArea = stayAt?.area ?? p.anchor;
 
@@ -350,7 +351,13 @@ export function aiRoutes(app: FastifyInstance, config: Config, db: Db): void {
           p.keyword,
         );
         let engine: LlmEngine | 'basic' = ai?.engine ?? 'basic';
-        let built = buildRecommendations(ai?.places ?? [], posts, now, CANDIDATES)[c];
+        // 언급 수: AI가 이은 글 + 이름이 그대로 나온 글 (서버가 다시 셈)
+        let built = buildRecommendations(
+          widenSources(ai?.places ?? [], posts),
+          posts,
+          now,
+          CANDIDATES,
+        )[c];
         // AI가 실패했거나 근거 있는 곳을 하나도 못 찾으면 AI 없는 집계로
         if (built.places.length === 0) {
           const basic = buildRecommendations(

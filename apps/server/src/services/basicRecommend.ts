@@ -24,6 +24,24 @@ export function namesOf(name: string): string[] {
   return [...new Set([full, first])].filter((n) => n.length >= 2 && (n === full || n.length >= 3));
 }
 
+/**
+ * AI가 뽑은 장소의 근거 글 넓히기: AI는 같은 가게를 말한 글을 일부만 잇는 일이 많아(대부분 "글 1개"),
+ * 가게 전체 이름(또는 현지어 이름)이 제목·요약에 그대로 나온 글을 서버가 다시 찾아 더한다.
+ * 첫 단어만으로는 맞추지 않는다 ("규카츠 모토무라"의 "규카츠"가 모든 규카츠 글에 걸리지 않게)
+ */
+export function widenSources(
+  places: readonly ExtractedPlace[],
+  posts: readonly (SourcePost & { description?: string })[],
+): ExtractedPlace[] {
+  const texts = posts.map((p) => ({ id: p.id, text: norm(`${p.title} ${p.description ?? ''}`) }));
+  return places.map((x) => {
+    const names = [x.name, x.localName ?? ''].map(norm).filter((n) => n.length >= 3);
+    if (names.length === 0) return x;
+    const found = texts.filter((t) => names.some((n) => t.text.includes(n))).map((t) => t.id);
+    return { ...x, sourceIds: [...new Set([...x.sourceIds, ...found])] };
+  });
+}
+
 export async function basicExtract(
   anchor: string,
   category: AiCategory,
