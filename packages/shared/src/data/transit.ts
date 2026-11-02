@@ -2,6 +2,9 @@
  * 나라별 대중교통 이름 (기차·버스 예약 입력 칩, 사용자 요청 2026-11-02).
  * 누르면 예약 이름 칸에 그대로 들어간다 — 한국 사람이 흔히 부르는 이름으로
  */
+/** 마지막 확인 (월간 갱신) */
+export const TRANSIT_CHECKED_AT = '2026-11-02';
+
 export const TRANSIT_BY_COUNTRY: Record<string, readonly string[]> = {
   KR: ['KTX', 'SRT', 'ITX', '무궁화호', '고속버스', '시외버스', '공항버스', '공항철도'],
   JP: [

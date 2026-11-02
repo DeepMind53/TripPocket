@@ -1,4 +1,9 @@
-import { EMERGENCY_CHECKED_AT, ESSENTIALS_CHECKED_AT } from '@trippocket/shared';
+import {
+  AIRLINE_TIERS_CHECKED_AT,
+  EMERGENCY_CHECKED_AT,
+  ESSENTIALS_CHECKED_AT,
+  TRANSIT_CHECKED_AT,
+} from '@trippocket/shared';
 
 /**
  * 관리자 월간 갱신 요청문 (사용자 요청 2026-10-27): 팝업에서 [복사]해 Claude에게 그대로 붙여 넣는 글.
@@ -7,6 +12,11 @@ import { EMERGENCY_CHECKED_AT, ESSENTIALS_CHECKED_AT } from '@trippocket/shared'
  */
 export function monthlyUpdateRequest(month: string): string {
   return `트립포켓 ${month} 월간 정보 갱신을 해 줘. (D:\\Travel_Planner, docs/22-recurring-tasks.md 기준)
+
+[0. 이 요청문 먼저 점검]
+- 지난 갱신 이후 커밋(git log)과 docs/22를 보고, 주기적으로 확인해야 할 정보가 새로 생겼는데 아래에 없으면
+  이 요청문(apps/web/src/features/me/monthlyUpdate.ko.ts)과 docs/22에 항목을 추가해 줘
+- 아래 문구 중 사실과 다르거나 파일 위치·이름이 바뀐 곳이 있으면 고쳐서 반영하고, 고친 내용을 보고해 줘
 
 모든 항목은 공식 출처(정부·공관·관광청·서비스 공식 문서)로 다시 확인하고, 바뀐 것만 고쳐 줘.
 확인한 항목은 확인 날짜(checkedAt 상수)를 오늘로 바꾸고, 확인하지 못한 것은 그대로 두고 보고해 줘.
@@ -30,12 +40,20 @@ export function monthlyUpdateRequest(month: string): string {
    - packages/shared/src/alerts/alerts.ts, docs/24 §7
    - 일본 기상청 새 경보 코드표(2026-05 개편)가 공개됐는지 → 공개되면 이름 없는 코드 채우기
      (apps/server/src/services/nationalAlerts.ts JMA_CODE)
+10. 나라별 철도·지하철·버스 이름 (예약 칩): packages/shared/src/data/transit.ts (지난 확인: ${TRANSIT_CHECKED_AT})
+11. 항공사 회원 등급 이름: packages/shared/src/data/airlineTiers.ts (지난 확인: ${AIRLINE_TIERS_CHECKED_AT})
+12. 전자여행허가: 유럽 ETIAS 시행일, 이스라엘 ETA-IL(미확인), 일본 JESTA, 새로 생긴 나라
+    - packages/shared/src/data/health.ts ENTRY_PERMITS·PERMIT_FOR_COUNTRY, essentials.ts
+13. 건강 카드 번역(알레르기 23종·12개 언어 문장): packages/shared/src/data/health.ts — 어색한 번역
+14. 국내 공항 정보 API: 인천(B551177 statusOfAllFltDeOdp, 터미널 코드 P01·P02·P03),
+    한국공항공사(B551178 flight-search) 주소·응답 항목·대상 공항 14곳 (apps/server/src/services/airportInfo.ts)
+15. AI 추천 결과 품질: 성수역·서면역·신주쿠역·타이베이역·숙소 기준으로 0곳이 나오는지
 9. 도움말·소개 카드 그림이 지금 화면·기능과 맞는지 (features/me/IntroCarousel.tsx, legal/content.ko.ts HELP)
 
 [B. 무료 사용량·요금 — 과금 방지]
 1. 외부 API 무료 한도·요금 변경 (Google 지도·장소·Routes, 카카오, 네이버 지도·검색(API HUB 한시적 무료 끝나는지),
    Geoapify, Gemini·Workers AI·Groq, 수출입은행, AviationStack, Open-Meteo, OpenFreeMap, Overpass,
-   공공데이터포털(외교부·기상청), GDACS·USGS·일본·미국·대만·캐나다 기상청, 웹 푸시)
+   공공데이터포털(외교부·기상청·인천공항·한국공항공사 — 개발계정 하루 500·5,000회, 사용자가 늘면 운영계정), GDACS·USGS·일본·미국·대만·캐나다 기상청, 웹 푸시)
    - apps/server/src/services/apiUsage.ts APIS + docs/code-map.md §3 표
    - 무료로 쓰는 기반 서비스: Cloudflare Pages·Functions(하루 10만 요청), Tailscale Funnel, GitHub Actions
 2. 한도가 끝났을 때 대체 API·대체 기능이 아직 맞게 동작하는지 (docs/23-paid-api-fallbacks.md)
@@ -68,6 +86,7 @@ export function monthlyUpdateRequest(month: string): string {
 - Google 결제 카드 만료일, Cloudflare API 토큰 만료일
 - 반년 안에 Google 계정으로 로그인한 적이 있는지 (안 쓰면 Google 로그인 설정이 자동 삭제)
 - 숨긴 후기, 개선 제안 답장
+- 네이버 로그인 검수 결과 (승인되면 로그인 화면 경고 문구 지우기)
 - 실험실 기능 중 정식으로 넣거나 뺄 것 (켜 두고 써 본 느낌)
 
 끝나면 바뀐 것·출처 링크·확인 못 한 것을 표로 보고해 줘. 커밋·푸시는 보고를 보고 내가 말할게.`;
