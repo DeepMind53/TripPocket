@@ -14,7 +14,7 @@ import { ServerOfflineNotice } from '../common/ServerOfflineNotice';
 import { useTranslation } from '../../i18n';
 import { cn } from '../../shared/lib/cn';
 import { useRouteSheet } from '../../shared/hooks/useRouteSheet';
-import { BottomSheet, Button, IconButton, RadioList, toast } from '../../shared/ui';
+import { BottomSheet, Button, RadioList, toast } from '../../shared/ui';
 import { NicknameSheet } from './NicknameSheet';
 import { reviewsApi, type PointHistory } from '../../data/api/reviews';
 
@@ -56,37 +56,49 @@ export function AccountCard() {
 
   return (
     <section className="flex flex-col gap-3 rounded-card bg-bg-subtle p-4">
-      <div className="flex flex-col gap-1">
-        <span className="flex min-w-0 flex-wrap items-center gap-1.5">
-          {/* 후기 포인트는 닉네임 왼쪽 (사용자 요청 2026-10-25) — 누르면 적립 내역 */}
-          <button
-            type="button"
-            onClick={() => open('points')}
-            aria-label={t('points.label', { n: (me.points ?? 0).toLocaleString() })}
-            className="tabular flex h-8 shrink-0 items-center rounded-full bg-primary-weak px-2.5 text-caption font-bold text-primary"
-          >
-            🅟 {(me.points ?? 0).toLocaleString()}P
-          </button>
-          <span className="truncate text-title-2">{me.nickname}</span>
-          <IconButton
-            label={t('nickname.change')}
-            icon={<Pencil />}
-            onClick={() => setNicknameOpen(true)}
-          />
-          {/* 이름 옆 "개인정보" — 여권 만료일 등 여행에 필요한 정보 (사용자 요청 2026-10-27) */}
-          <Link
-            to="/me/profile"
-            className="flex h-8 shrink-0 items-center rounded-full border border-line bg-surface px-2.5 text-caption font-semibold text-fg-sub"
-          >
-            {t('profile.title')}
-          </Link>
-          {/* 로그인 수단: 개인정보 오른쪽에 조금 띄워 회사 색으로 (사용자 요청 2026-11-02) */}
-          <span className="ml-2 flex items-center gap-1.5">
-            {me.providers.map((p) => (
-              <ProviderName key={p} provider={p} />
-            ))}
-          </span>
+      {/* 닉네임 · 로그인 방법 · 개인정보 · 포인트를 4칸 같은 너비로 (사용자 요청 2026-11-02).
+          칸마다 넘치면 그 칸 안에서 말줄임 — 한 값이 길어도 다른 칸 위치는 그대로.
+          아주 좁거나 글자가 크면(tight) 2칸 × 2줄 */}
+      <div className="grid grid-cols-4 items-center gap-1 tight:grid-cols-2 tight:gap-y-2">
+        <button
+          type="button"
+          onClick={() => setNicknameOpen(true)}
+          aria-label={t('nickname.change')}
+          title={me.nickname}
+          className="flex h-10 min-w-0 items-center justify-center gap-1"
+        >
+          <span className="truncate text-body-1 font-bold">{me.nickname}</span>
+          <Pencil aria-hidden="true" className="size-3.5 shrink-0 text-fg-muted" />
+        </button>
+        <span className="flex min-w-0 items-center justify-center gap-1 overflow-hidden">
+          {/* 로그인 방법이 여럿이면 첫째만 + 나머지 수 (칸 너비를 넘지 않게) */}
+          {me.providers[0] && <ProviderName provider={me.providers[0]} />}
+          {me.providers.length > 1 && (
+            <span
+              title={me.providers
+                .slice(1)
+                .map((p) => t(`login.name.${p}` as 'login.name.kakao'))
+                .join(', ')}
+              className="shrink-0 text-caption text-fg-muted"
+            >
+              +{me.providers.length - 1}
+            </span>
+          )}
         </span>
+        <Link
+          to="/me/profile"
+          className="flex h-8 min-w-0 items-center justify-center rounded-full border border-line bg-surface px-1.5 text-caption font-semibold text-fg-sub"
+        >
+          <span className="truncate">{t('profile.title')}</span>
+        </Link>
+        <button
+          type="button"
+          onClick={() => open('points')}
+          aria-label={t('points.label', { n: (me.points ?? 0).toLocaleString() })}
+          className="tabular flex h-8 min-w-0 items-center justify-center rounded-full bg-primary-weak px-1.5 text-caption font-bold text-primary"
+        >
+          <span className="truncate">🅟 {(me.points ?? 0).toLocaleString()}P</span>
+        </button>
       </div>
       <div className="grid grid-cols-3 gap-2">
         <Button
@@ -248,7 +260,7 @@ function ProviderName({ provider }: { provider: string }) {
   const { t } = useTranslation();
   if (provider === 'google')
     return (
-      <span aria-label="Google" className="text-caption font-bold">
+      <span aria-label="Google" className="truncate text-caption font-bold whitespace-nowrap">
         {[...'Google'].map((ch, i) => (
           <span key={i} aria-hidden="true" style={{ color: GOOGLE_COLORS[i] }}>
             {ch}
@@ -258,7 +270,7 @@ function ProviderName({ provider }: { provider: string }) {
     );
   if (provider === 'kakao')
     return (
-      <span className="rounded-full bg-[#FEE500] px-2 py-0.5 text-caption font-bold text-[#191919]">
+      <span className="truncate rounded-full bg-[#FEE500] px-2 py-0.5 text-caption font-bold text-[#191919]">
         {t('login.name.kakao')}
       </span>
     );
