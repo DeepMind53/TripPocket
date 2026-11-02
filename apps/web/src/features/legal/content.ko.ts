@@ -203,6 +203,12 @@ export const DATA_SOURCES: { name: string; use: string; license: string; url: st
     url: 'https://aviationstack.com',
   },
   {
+    name: '인천국제공항공사 · 한국공항공사 운항 정보 (공공데이터포털)',
+    use: '국내 공항 터미널·체크인 카운터·게이트·수하물 수취대',
+    license: '공공데이터 (이용허락 범위 제한 없음)',
+    url: 'https://www.data.go.kr/data/15140153/openapi.do',
+  },
+  {
     name: '네이버 검색 API (NAVER API HUB)',
     use: 'AI 추천 블로그 수집',
     license: '네이버 클라우드·개발자 이용약관',
