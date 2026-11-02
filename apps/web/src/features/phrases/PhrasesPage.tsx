@@ -7,6 +7,8 @@ import {
   phraseLangFor,
   type PhraseId,
 } from '@trippocket/shared';
+
+const EN = PHRASE_LANGS.find((l) => l.code === 'en')!;
 import { ExternalLink } from 'lucide-react';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router';
@@ -101,6 +103,8 @@ export function PhrasesPage() {
         open={show !== null}
         onClose={() => setShow(null)}
         big={show ? lang.phrases[show] : ''}
+        // 영어가 아닌 말이면 영어도 함께 (사용자 요청 2026-11-02)
+        en={show && lang.code !== 'en' ? EN.phrases[show] : undefined}
         sub={show ? KO_PHRASES[show] : undefined}
       />
     </>

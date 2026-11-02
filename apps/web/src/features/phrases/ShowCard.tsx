@@ -11,6 +11,7 @@ export function ShowCard({
   open,
   onClose,
   big,
+  en,
   sub,
   children,
 }: {
@@ -18,6 +19,8 @@ export function ShowCard({
   onClose: () => void;
   /** 크게 보여 줄 현지어 */
   big: string;
+  /** 현지어 아래 영어 (현지어가 영어가 아니면 모든 카드에, 사용자 요청 2026-11-02) */
+  en?: string | undefined;
   /** 아래 작은 한국어 등 */
   sub?: string | undefined;
   children?: ReactNode;
@@ -46,9 +49,17 @@ export function ShowCard({
         <X aria-hidden="true" className="size-6" />
       </button>
       <div className="flex flex-1 flex-col items-center justify-center gap-6 text-center">
-        <p className="text-[clamp(1.75rem,8vw,3rem)] leading-tight font-bold break-words whitespace-pre-line">
+        <p className="text-[clamp(1.75rem,8vw,3rem)] leading-tight font-bold whitespace-pre-line [overflow-wrap:anywhere] [word-break:normal]">
           {big}
         </p>
+        {en && (
+          <p
+            lang="en"
+            className="text-title-2 whitespace-pre-line text-fg-sub [overflow-wrap:anywhere]"
+          >
+            {en}
+          </p>
+        )}
         {children}
         {sub && <p className="text-body-1 whitespace-pre-line text-fg-sub">{sub}</p>}
       </div>

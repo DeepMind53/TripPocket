@@ -1,4 +1,4 @@
-import { phraseLangFor, placeLangFor } from '@trippocket/shared';
+import { PHRASE_LANGS, phraseLangFor, placeLangFor } from '@trippocket/shared';
 import { useEffect, useState } from 'react';
 import { placesApi } from '../../data/api/places';
 import { useTranslation } from '../../i18n';
@@ -58,6 +58,12 @@ export function TaxiCard({
       open={open}
       onClose={onClose}
       big={lang?.phrases.takeMeHere ?? t('phrases.takeMeHereEn')}
+      // 영어가 아닌 말이면 영어도 함께 (사용자 요청 2026-11-02)
+      en={
+        lang && lang.code !== 'en'
+          ? PHRASE_LANGS.find((l) => l.code === 'en')?.phrases.takeMeHere
+          : undefined
+      }
       sub={t('phrases.taxiSub')}
     >
       <div className="flex flex-col gap-2">
