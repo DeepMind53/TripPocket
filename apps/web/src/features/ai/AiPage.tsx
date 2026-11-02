@@ -9,6 +9,7 @@ import {
 import { attachFallback } from '../../data/limitNotice';
 import { recommendLinks, type FallbackLink } from '../../shared/lib/fallbackLinks';
 import { FallbackLinks } from '../common/FallbackLinks';
+import { KeywordPicks, type KeywordPick } from './KeywordPicks';
 import { ChevronDown, Heart, MapPin, Plus, Sparkles, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router';
@@ -34,7 +35,15 @@ interface Result {
   createdAt: string;
   /** engine: 정리한 AI. basic = 무료 AI가 모두 한도라 AI 없이 언급 수로. radiusKm: 이 반경 안에서 골랐다 */
   categories: Partial<
-    Record<AiCategory, CategoryResult & { places: Rec[]; engine?: string; radiusKm?: number }>
+    Record<
+      AiCategory,
+      CategoryResult & {
+        places: Rec[];
+        engine?: string;
+        radiusKm?: number;
+        keywordPicks?: KeywordPick[];
+      }
+    >
   >;
   /** 직접 입력한 키워드 (custom) */
   keyword?: string;
@@ -314,6 +323,9 @@ export function AiPage() {
                         />
                       ))}
                     </ol>
+                  )}
+                  {r.keywordPicks && r.keywordPicks.length > 0 && (
+                    <KeywordPicks picks={r.keywordPicks} />
                   )}
                 </div>
               );

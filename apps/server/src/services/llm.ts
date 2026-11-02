@@ -18,9 +18,26 @@ const Output = z.object({
       sourceIds: z.array(z.string()).check(z.maxLength(50)),
       adSuspect: z._default(z.boolean(), false),
       summary: z._default(z.string().check(z.maxLength(120)), ''),
+      localName: z.optional(z.string().check(z.maxLength(60))),
     }),
   ),
+  // 장소 이름이 아닌 인기 키워드 (예: 규카츠) — 근거 글 id와 함께
+  keywords: z._default(
+    z.array(
+      z.object({
+        word: z.string().check(z.minLength(1), z.maxLength(20)),
+        sourceIds: z.array(z.string()).check(z.maxLength(50)),
+      }),
+    ),
+    [],
+  ),
 });
+
+/** 글에서 자주 나온 음식·체험 키워드 (장소 이름 아님) */
+export interface BlogKeyword {
+  word: string;
+  sourceIds: string[];
+}
 
 const LABEL: Record<AiCategory, string> = {
   food: '맛집(식당)',
@@ -36,8 +53,10 @@ const SYSTEM = `너는 여행 블로그 글 목록에서 장소 이름을 뽑는
 - 협찬·광고·체험단으로 보이는 글만 근거라면 adSuspect=true.
 - summary: 글들에서 공통으로 말하는 특징을 한국어 40자 이내로.
 - category는 food(식당)·cafe(카페·디저트·바·핫플)·play(관광지·체험·쇼핑) 중 하나.
+- localName: 그 장소의 현지어 또는 영어 공식 이름을 확실히 알 때만 (예: "一蘭 新宿中央東口店"). 모르면 빼라.
+- keywords: 글에서 자주 나온 음식·체험 키워드를 많이 나온 순서로 최대 3개 (예: "규카츠", "야시장"). 장소 이름·지역명은 빼고, 그 키워드가 나온 글 id를 sourceIds에.
 - 사용자 메시지에 keyword가 있으면 그 키워드에 맞는 곳만 뽑고 category는 모두 "custom".
-- 출력은 JSON 하나: {"places":[{"name":"","category":"food","sourceIds":["p1"],"adSuspect":false,"summary":""}]}`;
+- 출력은 JSON 하나: {"places":[{"name":"","localName":"","category":"food","sourceIds":["p1"],"adSuspect":false,"summary":""}],"keywords":[{"word":"","sourceIds":["p1"]}]}`;
 
 export type LlmEngine = 'gemini' | 'workers-ai' | 'groq';
 
@@ -181,7 +200,7 @@ async function tryProvider(
   category: AiCategory,
   posts: readonly (SourcePost & { description?: string })[],
   keyword?: string,
-): Promise<ExtractedPlace[]> {
+): Promise<{ places: ExtractedPlace[]; keywords: BlogKeyword[] }> {
   const user = userMessage(p, anchor, category, posts, keyword);
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
@@ -189,9 +208,13 @@ async function tryProvider(
       // 다른 카테고리로 분류한 곳은 뺀다 (맛집 글에 나온 카페가 맛집 목록에 섞이지 않게)
       // 키워드 추천은 종류를 가리지 않는다
       if (parsed.success)
-        return category === 'custom'
-          ? parsed.data.places.map((x) => ({ ...x, category: 'custom' as const }))
-          : parsed.data.places.filter((x) => x.category === category);
+        return {
+          places:
+            category === 'custom'
+              ? parsed.data.places.map((x) => ({ ...x, category: 'custom' as const }))
+              : parsed.data.places.filter((x) => x.category === category),
+          keywords: parsed.data.keywords,
+        };
     } catch (e) {
       if (e instanceof RateLimited) {
         if (e.retryAfter <= 20 && attempt === 0) {
@@ -219,12 +242,12 @@ export async function extractPlaces(
   onError: (engine: LlmEngine, err: unknown) => void = () => {},
   /** category = custom일 때 사용자 키워드 */
   keyword?: string,
-): Promise<{ engine: LlmEngine; places: ExtractedPlace[] } | null> {
+): Promise<{ engine: LlmEngine; places: ExtractedPlace[]; keywords: BlogKeyword[] } | null> {
   for (const p of providers) {
     // 한도로 잠시 쉬는 중이거나 관리자가 멈춘 AI는 건너뜀
     if ((cooldownUntil.get(p.engine) ?? 0) > Date.now() || !apiAllowed(p.engine)) continue;
     try {
-      return { engine: p.engine, places: await tryProvider(p, anchor, category, posts, keyword) };
+      return { engine: p.engine, ...(await tryProvider(p, anchor, category, posts, keyword)) };
     } catch (e) {
       onError(p.engine, e);
     }

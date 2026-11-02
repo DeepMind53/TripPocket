@@ -10,6 +10,7 @@ import {
   type CategoryResult,
   type PlaceSummary,
   type Recommendation,
+  type SourcePost,
 } from '@trippocket/shared';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import * as z from 'zod/mini';
@@ -88,6 +89,13 @@ const CANDIDATES = 15;
 const ENOUGH = 3;
 /** 찾은 숙소가 여행 도시에서 이보다 멀면 다른 곳으로 본다 */
 const AREA_MAX_KM = 300;
+/** 해외: 블로그에만 나온 곳 중 이만큼 언급된 곳은 Google로 위치를 찾아 본다 (카테고리당 최대 VERIFY_MAX번) */
+const VERIFY_MIN_MENTIONS = 3;
+const VERIFY_MAX = 5;
+/** 해외: 인기 키워드 칸 — 키워드가 나온 글이 이만큼 이상일 때, 키워드 최대 2개 · 키워드당 3곳 */
+const KEYWORD_MIN_POSTS = 3;
+const KEYWORDS_MAX = 2;
+const KEYWORD_PLACES = 3;
 /** 정확도순으로 받을 글 수 (검색어마다). 최신순에 묻히는 소개 글을 함께 본다 */
 const SIM_POSTS = 100;
 
@@ -99,6 +107,8 @@ export interface RecommendResult {
       AiCategory,
       CategoryResult & {
         places: Rec[];
+        /** 해외: 블로그 인기 키워드(장소 이름 아님)로 기준점 주변을 찾은 곳 — 장소 자체의 블로그 근거는 없다 */
+        keywordPicks?: KeywordPick[];
         /** 어느 AI가 정리했는지. basic = 모든 무료 AI가 한도 → AI 없이 언급 수로 집계 */
         engine: LlmEngine | 'basic';
         /** 이 반경(km) 안에서 골랐다. 기준점 위치를 모르면 없음 */
@@ -113,6 +123,13 @@ export interface RecommendResult {
 /** 어디서 찾았나: blog = 네이버 블로그(AI 정리), google = Google 장소 검색, both = 둘 다, map = 카카오 장소 검색(국내) */
 type Origin = 'blog' | 'google' | 'both' | 'map';
 type Rec = Recommendation & { place?: PlaceSummary; origin: Origin };
+interface KeywordPick {
+  keyword: string;
+  /** 키워드가 나온 글 수 */
+  mentions: number;
+  sources: SourcePost[];
+  places: PlaceSummary[];
+}
 
 /**
  * AI 추천 (docs/14): ① 수집(20단계, 개발 화면) ② Groq 정리 + 점수(21단계).
@@ -386,6 +403,69 @@ export function aiRoutes(app: FastifyInstance, config: Config, db: Db): void {
           recs = candidates.length
             ? mergeGoogleFirst(candidates, built.places, c)
             : built.places.map((r): Rec => ({ ...r, origin: 'blog' }));
+          // 블로그에만 나온 곳: 많이 언급된 곳만 Google로 위치 확인 (위치를 모르면 10km 거르기에서 빠진다)
+          if (anchorAt) {
+            const at = anchorAt;
+            const toVerify = recs
+              .filter((r) => r.origin === 'blog' && !r.place && r.mentions >= VERIFY_MIN_MENTIONS)
+              .slice(0, VERIFY_MAX);
+            const found = await Promise.all(
+              toVerify.map(async (r) =>
+                (await google(r.localName ?? r.name, at, RADIUS_TIERS_KM[0] * 1000)).find(
+                  (g) =>
+                    !isAnchor(g) &&
+                    !!g.coords &&
+                    distanceKm(at, g.coords) <= RADIUS_TIERS_KM.at(-1)! &&
+                    !recs.some((x) => x.place?.id === g.id),
+                ),
+              ),
+            );
+            const placed = new Map(toVerify.map((r, i) => [r, found[i]]));
+            recs = recs.map((r): Rec => {
+              const g = placed.get(r);
+              return g ? { ...r, place: g, origin: 'both' } : r;
+            });
+            // 블로그 근거가 있는 곳을 앞으로 (점수순), 지도 검색으로만 찾은 곳은 뒤로
+            recs = [
+              ...recs.filter((r) => r.origin === 'both').sort((x, y) => y.score - x.score),
+              ...recs.filter((r) => r.origin !== 'both'),
+            ];
+          }
+        }
+
+        // 해외: 블로그 인기 키워드(예: 규카츠)로 기준점 주변 찾기 — 장소 이름이 블로그와 달라도 추천이 나온다
+        const keywordPicks: KeywordPick[] = [];
+        if (!p.domestic && anchorAt && ai && c !== 'custom') {
+          const at = anchorAt;
+          const byId = new Map(posts.map((x) => [x.id, x]));
+          const words = ai.keywords
+            .map((k) => ({
+              word: k.word.trim(),
+              sources: [...new Set(k.sourceIds)]
+                .map((id) => byId.get(id))
+                .filter((x): x is (typeof posts)[number] => !!x),
+            }))
+            .filter((k) => k.word && k.sources.length >= KEYWORD_MIN_POSTS)
+            .slice(0, KEYWORDS_MAX);
+          for (const k of words) {
+            const near = (await google(k.word, at, RADIUS_TIERS_KM[0] * 1000)).filter(
+              (g) =>
+                !isAnchor(g) &&
+                !!g.coords &&
+                distanceKm(at, g.coords) <= RADIUS_TIERS_KM.at(-1)! &&
+                !recs.some((r) => r.place?.id === g.id),
+            );
+            if (near.length === 0) continue;
+            keywordPicks.push({
+              keyword: k.word,
+              mentions: k.sources.length,
+              sources: k.sources
+                .sort((a, b) => b.postdate.localeCompare(a.postdate))
+                .slice(0, 5)
+                .map(({ id, title, link, postdate }) => ({ id, title, link, postdate })),
+              places: near.slice(0, KEYWORD_PLACES),
+            });
+          }
         }
         const { radiusKm, items } = pickRadius(
           recs,
@@ -397,7 +477,13 @@ export function aiRoutes(app: FastifyInstance, config: Config, db: Db): void {
         );
         return [
           c,
-          { ...built, places: items.slice(0, TOP), engine, ...(anchorAt ? { radiusKm } : {}) },
+          {
+            ...built,
+            places: items.slice(0, TOP),
+            engine,
+            ...(anchorAt ? { radiusKm } : {}),
+            ...(keywordPicks.length ? { keywordPicks } : {}),
+          },
         ] as const;
       }),
     );
@@ -406,6 +492,7 @@ export function aiRoutes(app: FastifyInstance, config: Config, db: Db): void {
       // 추천 품질: 정리한 AI(basic = AI 없이 집계), 0곳, 블로그 근거가 있는 곳 수
       stats.bump('ai', `engine.${value.engine}`);
       if (value.places.length === 0) stats.bump('ai', 'empty');
+      stats.bump('ai', 'keywordPicks', value.keywordPicks?.length ?? 0);
       stats.bump('ai', 'places', value.places.length);
       stats.bump('ai', 'withBlog', value.places.filter((x) => x.mentions > 0).length);
     }
@@ -454,7 +541,12 @@ function mergeGoogleFirst(
   const matched: Rec[] = [];
   const rest: Rec[] = [];
   for (const g of google) {
-    const i = blog.findIndex((b, j) => !used.has(j) && sameName(g.name, b.name));
+    // 블로그 이름 또는 AI가 알려 준 현지어 이름으로 맞춘다 ("이치란" ≈ "一蘭")
+    const i = blog.findIndex(
+      (b, j) =>
+        !used.has(j) &&
+        (sameName(g.name, b.name) || (!!b.localName && sameName(g.name, b.localName))),
+    );
     if (i >= 0) {
       used.add(i);
       matched.push({ ...blog[i]!, name: g.name, place: g, origin: 'both' });

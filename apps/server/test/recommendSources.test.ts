@@ -230,6 +230,86 @@ describe('AI 추천 — 정보 출처와 거리', () => {
     expect(food.places.map((p) => p.name)).toContain('이치란');
   });
 
+  it('해외: 많이 언급된 블로그 장소는 현지어 이름으로 위치를 찾고, 인기 키워드로 주변을 찾는다', async () => {
+    const base = globalThis.fetch;
+    const posts = [0, 1, 2, 3].map((i) => ({
+      title: `신주쿠 규카츠 히든라멘 ${i}`,
+      description: '',
+      link: `https://b/k${i}`,
+      postdate: ymd(i + 1),
+    }));
+    vi.stubGlobal('fetch', async (input: string | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.includes('places.googleapis.com')) {
+        const q = (JSON.parse(String(init?.body)) as { textQuery: string }).textQuery;
+        googleQueries.push(q);
+        const at = (id: string, text: string) => ({ id, displayName: { text }, location: NEAR });
+        const places =
+          q === '신주쿠역'
+            ? [{ id: 'st', displayName: { text: '신주쿠역' }, location: SHINJUKU }]
+            : q === 'Hidden Ramen'
+              ? [at('hr', 'Hidden Ramen Shinjuku')]
+              : q === '규카츠'
+                ? [at('gk', 'Gyukatsu Motomura')]
+                : [];
+        return Response.json({ places });
+      }
+      if (url.includes('openapi.naver.com'))
+        return Response.json({
+          items: Number(new URL(url).searchParams.get('start')) === 1 ? posts : [],
+        });
+      if (url.includes('api.groq.com')) {
+        groqUser.push(
+          (JSON.parse(String(init?.body)) as { messages: { content: string }[] }).messages[1]!
+            .content,
+        );
+        return Response.json({
+          choices: [
+            {
+              message: {
+                content: JSON.stringify({
+                  places: [
+                    {
+                      name: '히든라멘',
+                      localName: 'Hidden Ramen',
+                      category: 'food',
+                      sourceIds: ['p0', 'p1', 'p2', 'p3'],
+                    },
+                  ],
+                  keywords: [
+                    { word: '규카츠', sourceIds: ['p0', 'p1', 'p2'] },
+                    { word: '적은키워드', sourceIds: ['p0'] },
+                  ],
+                }),
+              },
+            },
+          ],
+        });
+      }
+      return base(input, init);
+    });
+    const res = await recommend({
+      anchor: { type: 'text', name: '신주쿠역' },
+      categories: ['food'],
+      domestic: false,
+    });
+    const food = res.json().categories.food as {
+      places: (Place & { place?: { id: string } })[];
+      keywordPicks: { keyword: string; mentions: number; places: { id: string }[] }[];
+    };
+    expect(food.places[0]).toMatchObject({ name: '히든라멘', origin: 'both', mentions: 4 });
+    expect(food.places[0]!.place?.id).toBe('hr');
+    // 근거 글이 3개 미만인 키워드는 찾지 않는다
+    expect(food.keywordPicks).toEqual([
+      expect.objectContaining({
+        keyword: '규카츠',
+        mentions: 3,
+        places: [expect.objectContaining({ id: 'gk' })],
+      }),
+    ]);
+    expect(googleQueries).not.toContain('적은키워드');
+  });
+
   it('블로그는 정확도순과 최신순을 함께 받는다', async () => {
     await recommend({
       anchor: { type: 'text', name: '신주쿠역' },

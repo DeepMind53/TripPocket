@@ -49,6 +49,8 @@ export interface ExtractedPlace {
   sourceIds: string[];
   adSuspect: boolean;
   summary: string;
+  /** 현지어·영어 이름 (AI가 알 때만) — 지도 검색 결과와 맞추는 데 쓴다 */
+  localName?: string | undefined;
 }
 
 export interface Recommendation {
@@ -60,6 +62,7 @@ export interface Recommendation {
   adSuspect: boolean;
   summary: string;
   sources: SourcePost[];
+  localName?: string | undefined;
 }
 
 export interface CategoryResult {
@@ -130,6 +133,7 @@ export function buildRecommendations(
           adSuspect: e.adSuspect,
           summary: e.summary.slice(0, 80),
           sources: inPeriod.sort((a, b) => b.postdate.localeCompare(a.postdate)).slice(0, 5),
+          ...(e.localName?.trim() ? { localName: e.localName.trim().slice(0, 60) } : {}),
         };
       })
       .filter((r) => r.mentions > 0)
