@@ -28,7 +28,6 @@ import {
   MapPinned,
   Moon,
   MoonStar,
-  AlarmClock,
   Sun,
 } from 'lucide-react';
 import {
@@ -106,7 +105,7 @@ import { dayRouteUrl } from '../../domain/dayRoute';
 import { sunSlot, sunTimes } from '../../domain/sun';
 import { checkoutsOn, dayRecap, nearbyWishes } from '../../domain/dayExtras';
 import { lateNightAt } from '../../domain/travelExtras';
-import { earlyStartAt } from '../../domain/localInfo';
+import { placeTips } from '../../domain/localInfo';
 import { weatherCautionsAt, type WeatherCaution } from '../../domain/weather';
 import { CautionIcons } from '../common/CautionIcons';
 import { useLab } from '../../data/labsStore';
@@ -975,8 +974,8 @@ function DaySection({
   const weatherOn = useSettings((st) => st.weatherMark);
   // 늦은 귀가 안내 (설정 "일정" — 2026-10-28 실험실에서 정식)
   const lateOn = useSettings((st) => st.lateNight);
-  // 실험실 3차 (2026-10-28): 이른 출발
-  const earlyOn = useLab('earlyStart');
+  // 실험실 (2026-11-03): 장소 맞춤 팁
+  const tipsOn = useLab('placeTips');
   const dupOn = true;
   // 여행 당일: 현지 시각으로 지금 진행 중인 일정 (1분마다 다시 계산)
   const now = useMinuteClock(isToday);
@@ -1000,7 +999,7 @@ function DaySection({
   // 날씨 주의: 예보(작년 기록 아님)가 있는 날만, 일정 시각마다 시간별 예보로 (2026-10-28)
   const forecast = weatherOn && date && weather && !weather.year ? weather : null;
   const lateAt = lateOn && date ? lateNightAt(items) : null;
-  const earlyAt = earlyOn && date ? earlyStartAt(items) : null;
+  const tips = tipsOn && date ? placeTips(items) : [];
   // 그날 마지막 장소 → 숙소 (직선거리)
   const lastCoords = [...tracked].reverse().find((i) => i.place?.coords)?.place?.coords;
   const visited = tracked.filter((i) => i.visit === 'visited' || i.done).length;
@@ -1084,13 +1083,15 @@ function DaySection({
           </span>
         </div>
       )}
-      {/* 실험실: 이른 출발 */}
-      {earlyAt && (
-        <p className="mx-3 mt-2 flex items-start gap-2 rounded-btn bg-warning/10 px-3 py-2 text-caption whitespace-pre-line text-fg-sub">
-          <AlarmClock aria-hidden="true" className="mt-0.5 size-3.5 shrink-0 text-warning" />
-          {t('labs.earlyStart', { time: earlyAt })}
+      {/* 실험실: 장소 맞춤 팁 (사원 복장·온천·해변·산) */}
+      {tips.map((k) => (
+        <p
+          key={k}
+          className="mx-3 mt-2 rounded-btn bg-bg-subtle px-3 py-2 text-caption whitespace-pre-line text-fg-sub"
+        >
+          {t(`placeTips.${k}`)}
         </p>
-      )}
+      ))}
       {/* 현지 공휴일: 날짜 아래 작은 한 줄 (간단하게, 사용자 요청 2026-10-28) */}
       {holiday && (
         <p className="mx-4 mt-2 flex items-center gap-1.5 text-caption text-danger">

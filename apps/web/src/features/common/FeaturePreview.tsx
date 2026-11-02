@@ -1,9 +1,12 @@
-import { AlarmClock, Footprints, Moon, MoonStar, Sun } from 'lucide-react';
+import { Footprints, Moon, MoonStar, Sun } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useTranslation } from '../../i18n';
 import { cn } from '../../shared/lib/cn';
 import type { WeatherCaution } from '../../domain/weather';
+import { ArrivalRoute } from './ArrivalRoute';
 import { CautionIcons } from './CautionIcons';
+import { NearbyFind } from './NearbyFind';
+import { TransitGuide } from './TransitGuide';
 import type { PreviewId } from './previewIds';
 
 /**
@@ -62,12 +65,6 @@ export function FeaturePreview({ id }: { id: PreviewId }) {
   );
   const note = (text: string, tone = 'bg-bg-subtle text-fg-sub') => (
     <p className={cn('rounded-btn px-3 py-2 text-caption', tone)}>{text}</p>
-  );
-  const info = (label: string, text: string) => (
-    <p className="flex flex-col rounded-card bg-bg-subtle px-3 py-2.5 text-caption text-fg-sub">
-      <span className="font-semibold text-fg">{label}</span>
-      {text}
-    </p>
   );
   const sunLine = (kind: 'rise' | 'set', time: string) => {
     const icon =
@@ -212,62 +209,37 @@ export function FeaturePreview({ id }: { id: PreviewId }) {
           </p>
         </>,
       );
-    // ── 실험실 3차 2026-10-28 ──
-    case 'leftDrive':
+    // ── 실험실 2026-11-03 ── (실제 부품에 샘플 값)
+    case 'transitGuide':
+      return <TransitGuide country="JP" label={t('sample.japan')} />;
+    case 'nearbyFind':
+      return <NearbyFind domestic={false} />;
+    case 'arrivalRoute':
+      return (
+        <ArrivalRoute
+          route={{ from: t('sample.airport'), to: t('sample.shinjukuHotel'), date: '2026-11-12' }}
+        />
+      );
+    case 'missingStay':
       return note(
-        t('labs.leftDrive', { country: t('sample.japan') }),
+        t('missingStay.text', { dates: '11.13, 11.14' }),
         'bg-warning/10 text-fg-sub whitespace-pre-line',
       );
-    case 'tapWater':
+    case 'offlineReady':
       return (
         <div className="flex flex-col gap-1">
-          {note(t('labs.tapWaterOk', { country: t('sample.japan') }))}
           {note(
-            t('labs.tapWaterNo', { country: t('sample.vietnam') }),
-            'bg-warning/10 text-fg-sub whitespace-pre-line',
+            t('offlineReady.vouchers', { n: 2 }),
+            'bg-bg-subtle text-fg-sub whitespace-pre-line',
           )}
+          {note(t('offlineReady.maps'), 'bg-bg-subtle text-fg-sub whitespace-pre-line')}
         </div>
       );
-    case 'transitCard':
-      return info(t('labs.transitLabel'), t('localInfo.transit.JP'));
-    case 'payTips':
-      return info(t('labs.payLabel'), t('localInfo.pay.JP'));
-    case 'leaveDays':
-      return note(t('labs.leaveDays', { n: 3 }), 'bg-bg-subtle text-fg-sub whitespace-pre-line');
-    case 'firstCountry':
-      return note(
-        t('labs.firstCountry', { country: t('sample.japan') }),
-        'bg-bg-subtle text-fg-sub whitespace-pre-line',
-      );
-    case 'cancelReminder':
-      return note(t('labs.cancelSoon', { d: 2, name: t('sample.shinjukuHotel') }));
-    case 'onsitePay':
-      return (
-        <p className="flex flex-col rounded-btn bg-bg-subtle px-3 py-2 text-caption text-fg-sub">
-          <span className="whitespace-pre-line">{t('labs.onsitePay', { n: 2 })}</span>
-          <span className="text-fg-muted">
-            {t('sample.shinjukuHotel')}, {t('sample.tour')}
-          </span>
-        </p>
-      );
-    case 'voucherList':
-      return (
-        <div className="flex flex-col rounded-card bg-bg-subtle px-3 py-2">
-          <span className="text-caption font-semibold">{t('labs.voucherTitle')}</span>
-          <span className="tabular flex min-h-10 items-center gap-2 text-body-2 text-primary">
-            <span className="text-caption text-fg-muted">10.29</span>
-            {t('sample.tour')}
-          </span>
-        </div>
-      );
-    case 'earlyStart':
+    case 'placeTips':
       return day(
         <>
-          <p className="flex items-start gap-2 rounded-btn bg-warning/10 px-3 py-2 text-caption whitespace-pre-line text-fg-sub">
-            <AlarmClock aria-hidden="true" className="mt-0.5 size-3.5 shrink-0 text-warning" />
-            {t('labs.earlyStart', { time: '05:40' })}
-          </p>
-          {row(1, '05:40', t('sample.arrive'))}
+          {note(t('placeTips.dress'), 'bg-bg-subtle text-fg-sub whitespace-pre-line')}
+          {row(1, '10:00', t('sample.sensoji'))}
         </>,
       );
   }

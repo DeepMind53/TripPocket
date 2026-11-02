@@ -7,14 +7,14 @@ import { countUse } from '../shared/lib/usageCount';
  * 정식 기능이 되면 LABS에서 빼고 useLab 호출을 지운다 (docs/code-map.md §3)
  */
 export const LABS = [
-  // 2026-10-28 새 실험 10개 (3차 — Google 여행·트리플·마이리얼트립·Kayak·TripIt 참고)
-  'leftDrive',
-  'tapWater',
-  'leaveDays',
-  'firstCountry',
-  'cancelReminder',
-  'onsitePay',
-  'earlyStart',
+  // 2026-11-03 새 실험 6개 (사용자 요청 — 예전 실험은 모두 비움)
+  'transitGuide',
+  'nearbyFind',
+  'arrivalRoute',
+  'missingStay',
+  'offlineReady',
+  'placeTips',
+  // 2026-11-03 뺐다(사용자 결정): 좌측 통행·수돗물·필요한 연차·처음 가는 나라·무료 취소 마감·현장 결제·이른 출발.
   // 2026-10-28 정식: 현지 공휴일 표시·늦은 귀가 안내(설정 "일정"). 뺐다(사용자 결정): 공항 도착 권장 시각·시간 겹침 경고·
   // 골든아워·콘센트·전압·여행 진행률·메모 체크박스·오늘 환율 한 줄·체크인 전 짐 보관.
   // 2026-10-28 정식: 날씨 주의(예전 '비 오는 날 야외 일정')·시차 안내(설정 "일정").

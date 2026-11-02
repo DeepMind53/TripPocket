@@ -5,11 +5,23 @@ import { attachmentRepo } from '../../data/repositories/attachmentRepo';
 import { openBlob } from '../../shared/lib/openBlob';
 import { IconButton } from '../../shared/ui';
 import { useTrip, useTripBookings } from '../../data/hooks';
-import { voucherBookings } from '../../domain/localInfo';
+import { useLab } from '../../data/labsStore';
+import { arrivalToStay, voucherBookings } from '../../domain/localInfo';
 import { tripCountries } from '../../domain/tripPlace';
 import { t as tr, useTranslation, type TKey } from '../../i18n';
 import { formatMonthDay } from '../../shared/lib/dateFormat';
+import { ArrivalRoute } from './ArrivalRoute';
+import { NearbyFind } from './NearbyFind';
 import { TransitCardList } from './TransitCardList';
+import { TransitGuide } from './TransitGuide';
+
+const countryName = (cc: string) => {
+  try {
+    return new Intl.DisplayNames(['ko'], { type: 'region' }).of(cc) ?? cc;
+  } catch {
+    return cc;
+  }
+};
 
 /** 나라별 문구 (없으면 null) */
 const localText = (group: 'transit' | 'pay', cc: string): string | null => {
@@ -21,6 +33,7 @@ const localText = (group: 'transit' | 'pay', cc: string): string | null => {
 /**
  * 빠른 메뉴 "현지 생활 정보" (실험실 3차, 2026-10-28 — 트리플·마이리얼트립 참고):
  * 교통카드·결제 팁(여행 나라 참고 정보), 바우처 링크 모아보기
+ * + 실험실 (2026-11-03): 대중교통 안내·근처 찾기·공항 → 숙소 길찾기
  */
 export function LocalInfoSection({ tripId }: { tripId: string }) {
   const { t } = useTranslation();
@@ -32,8 +45,15 @@ export function LocalInfoSection({ tripId }: { tripId: string }) {
   const bookings = useTripBookings(tripId) ?? [];
   // 붙인 예약 문서 (기기에 있는 것)
   const docs = useLiveQuery(() => attachmentRepo.listByTrip(tripId), [tripId]) ?? [];
+  const guideOn = useLab('transitGuide');
+  const nearbyOn = useLab('nearbyFind');
+  const arrivalOn = useLab('arrivalRoute');
   if (!trip || (!transitOn && !payOn && !voucherOn)) return null;
-  const countries = tripCountries(trip).filter((c) => c !== 'KR');
+  const all = tripCountries(trip);
+  const countries = all.filter((c) => c !== 'KR');
+  // 대중교통 안내는 국내 여행도 (서울 기준)
+  const guides = guideOn ? (countries.length ? countries : all) : [];
+  const arrival = arrivalOn ? arrivalToStay(bookings) : null;
   const rows: { label: string; text: string; cards?: string }[] = [];
   for (const c of countries) {
     const transit = transitOn ? localText('transit', c) : null;
@@ -44,7 +64,7 @@ export function LocalInfoSection({ tripId }: { tripId: string }) {
   const vouchers = voucherOn
     ? voucherBookings(bookings, new Set(docs.filter((d) => d.blob).map((d) => d.bookingId)))
     : [];
-  if (!rows.length && !vouchers.length) return null;
+  if (!rows.length && !vouchers.length && !guides.length && !nearbyOn && !arrival) return null;
   return (
     <section className="flex flex-col gap-2">
       <h3 className="text-caption font-bold text-fg-muted">{t('labs.localTitle')}</h3>
@@ -58,6 +78,11 @@ export function LocalInfoSection({ tripId }: { tripId: string }) {
           {r.cards && <TransitCardList country={r.cards} />}
         </div>
       ))}
+      {guides.map((c) => (
+        <TransitGuide key={c} country={c} label={countryName(c)} />
+      ))}
+      {arrival && <ArrivalRoute route={arrival} />}
+      {nearbyOn && <NearbyFind domestic={countries.length === 0} />}
       {vouchers.length > 0 && (
         <div className="flex flex-col rounded-card bg-bg-subtle px-3 py-2">
           <span className="text-caption font-semibold">{t('labs.voucherTitle')}</span>

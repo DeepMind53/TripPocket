@@ -1,14 +1,11 @@
 import type { Booking } from '@trippocket/shared';
 import { describe, expect, it } from 'vitest';
 import {
-  cancelSoon,
-  earlyStartAt,
-  firstVisitCountries,
-  isLeftDrive,
-  leaveDaysNeeded,
-  onsiteBookings,
-  tapWater,
+  arrivalToStay,
+  nightsWithoutStay,
+  placeTips,
   voucherBookings,
+  vouchersNotSaved,
 } from './localInfo';
 
 const T = '2026-10-01T00:00:00.000Z';
@@ -24,63 +21,71 @@ const bk = (title: string, details: Booking['details'], date = '2026-11-01'): Bo
     updatedAt: T,
   }) as Booking;
 
-describe('실험실 3차 (2026-10-28)', () => {
-  it('좌측 통행·수돗물', () => {
-    expect(isLeftDrive('JP')).toBe(true);
-    expect(isLeftDrive('US')).toBe(false);
-    expect(tapWater('JP')).toBe('ok');
-    expect(tapWater('TW')).toBe('boil');
-    expect(tapWater('VN')).toBe('no');
-    expect(tapWater('ZZ')).toBeNull();
-  });
+describe('실험실 (2026-11-03)', () => {
+  const stay = (start: string, end?: string, extra: Partial<Booking> = {}): Booking =>
+    ({
+      ...bk('호텔', undefined, start),
+      kind: 'lodging',
+      end: end ? { date: end } : undefined,
+      ...extra,
+    }) as Booking;
 
-  it('필요한 연차: 주말·한국 공휴일 빼고', () => {
-    // 2026-10-01(목) ~ 10-05(월), 10-03 개천절(토)·10-05 대체공휴일 가정
-    expect(leaveDaysNeeded('2026-10-01', '2026-10-05', new Set(['2026-10-05']))).toBe(2);
-    expect(leaveDaysNeeded('2026-10-03', '2026-10-04', new Set())).toBe(0);
-  });
-
-  it('처음 가는 나라: 지난 여행에 없던 나라만 (한국 빼고)', () => {
-    const trip = {
-      id: 'now',
-      destinations: [{ countryCode: 'JP' }, { countryCode: 'TW' }, { countryCode: 'KR' }],
-    };
-    const others = [
-      { id: 'a', endDate: '2025-05-01', destinations: [{ countryCode: 'JP' }] },
-      { id: 'b', endDate: '2027-01-01', destinations: [{ countryCode: 'TW' }] }, // 아직 안 다녀옴
-    ];
-    expect(firstVisitCountries(trip, others, '2026-10-28')).toEqual(['TW']);
-  });
-
-  it('무료 취소 마감 3일 안·현장 결제·바우처', () => {
-    const list = [
-      bk('호텔', { cancelBy: '2026-10-30', payment: 'onsite' }),
-      bk('투어', { cancelBy: '2026-10-28', voucherUrl: 'https://v.example/1' }, '2026-11-02'),
-      bk('티켓', { cancelBy: '2026-11-10' }),
-      bk('지난 것', { cancelBy: '2026-10-20' }),
-    ];
-    expect(cancelSoon(list, '2026-10-28')).toEqual([
-      { name: '투어', d: 0 },
-      { name: '호텔', d: 2 },
+  it('숙소 없는 밤: 마지막 날 밤은 빼고, 지운 예약도 빼고', () => {
+    const trip = { startDate: '2026-11-10', endDate: '2026-11-14' };
+    expect(nightsWithoutStay(trip, [stay('2026-11-10', '2026-11-12')])).toEqual([
+      '2026-11-12',
+      '2026-11-13',
     ]);
-    expect(onsiteBookings(list).map((b) => b.title)).toEqual(['호텔']);
-    expect(voucherBookings(list).map((b) => b.title)).toEqual(['투어']);
-    // 문서를 붙인 예약도 (2026-11-02) — 날짜·시각 순
-    expect(voucherBookings(list, new Set(['호텔'])).map((b) => b.title)).toEqual(['호텔', '투어']);
+    expect(
+      nightsWithoutStay(trip, [stay('2026-11-10', '2026-11-14', { deletedAt: T })]),
+    ).toHaveLength(4);
+    // 체크아웃 날이 없으면 하룻밤
+    expect(
+      nightsWithoutStay({ startDate: '2026-11-10', endDate: '2026-11-11' }, [stay('2026-11-10')]),
+    ).toEqual([]);
   });
 
-  it('이른 출발: 첫 일정이 7시 전', () => {
-    expect(
-      earlyStartAt([
-        { kind: 'place', startTime: '09:00' },
-        { kind: 'transport', startTime: '05:40' },
-      ]),
-    ).toBe('05:40');
-    expect(
-      earlyStartAt([
-        { kind: 'note', startTime: '05:00' },
-        { kind: 'place', startTime: '08:00' },
-      ]),
-    ).toBeNull();
+  it('도착 공항 → 첫 숙소', () => {
+    const flight = {
+      ...bk('KE703', undefined, '2026-11-10'),
+      kind: 'flight',
+      end: { date: '2026-11-10', place: 'NRT 나리타' },
+    } as Booking;
+    const hotel = stay('2026-11-10', '2026-11-12', {
+      title: '신주쿠 호텔',
+      details: { address: '도쿄 신주쿠 3-1' },
+    });
+    expect(arrivalToStay([hotel, flight])).toEqual({
+      from: 'NRT 나리타',
+      to: '도쿄 신주쿠 3-1',
+      date: '2026-11-10',
+    });
+    expect(arrivalToStay([flight])).toBeNull();
+  });
+
+  it('장소 맞춤 팁: 이름으로 사원·온천·해변·산', () => {
+    expect(placeTips([{ title: '왓 아룬' }, { title: '하코네 온천' }])).toEqual(['dress', 'onsen']);
+    expect(placeTips([{ title: 'Wat Pho' }, { title: '이파네마 비치' }])).toEqual([
+      'dress',
+      'beach',
+    ]);
+    expect(placeTips([{ title: '신사동 가로수길' }, { title: '이치란' }])).toEqual([]);
+    expect(placeTips([{ title: '한라산 등산' }])).toEqual(['hike']);
+  });
+
+  it('바우처: 링크만 있고 기기에 문서가 없는 예약 수 · 모아보기 순서', () => {
+    const list = [
+      bk('호텔', {}),
+      bk('투어', { voucherUrl: 'https://v.example/1' }, '2026-11-02'),
+      bk('티켓', { voucherUrl: 'https://v.example/2' }),
+    ];
+    expect(vouchersNotSaved(list, new Set(['티켓']))).toBe(1);
+    expect(voucherBookings(list).map((b) => b.title)).toEqual(['티켓', '투어']);
+    // 문서를 붙인 예약도 (2026-11-02) — 날짜·시각 순
+    expect(voucherBookings(list, new Set(['호텔'])).map((b) => b.title)).toEqual([
+      '호텔',
+      '티켓',
+      '투어',
+    ]);
   });
 });

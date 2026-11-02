@@ -1343,45 +1343,29 @@
     "localTime": "현지 {{time}}",
     "none": "지금 시험 중인 기능이 없어요\n새 기능이 생기면 여기에 먼저 보여요",
     "item": {
-      "leftDrive": {
-        "name": "좌측 통행 안내",
-        "desc": "렌터카 예약이 있고\n좌측 통행 나라면 예약 탭에 안내"
+      "transitGuide": {
+        "name": "대중교통 안내",
+        "desc": "빠른 메뉴에 나라별 교통수단\n요금과 환승, 추천 앱"
       },
-      "tapWater": {
-        "name": "수돗물 안내",
-        "desc": "준비 탭 위에\n여행지 수돗물을 마셔도 되는지"
+      "nearbyFind": {
+        "name": "근처 찾기",
+        "desc": "빠른 메뉴에 편의점·약국·ATM·화장실\n지도 앱으로 바로 찾기"
       },
-      "transitCard": {
-        "name": "현지 교통카드",
-        "desc": "빠른 메뉴에\n여행지 교통카드 이름과 쓰는 법"
+      "arrivalRoute": {
+        "name": "공항에서 숙소 가는 길",
+        "desc": "빠른 메뉴에 도착 공항에서\n첫 숙소까지 대중교통 길찾기"
       },
-      "payTips": {
-        "name": "현지 결제 팁",
-        "desc": "빠른 메뉴에\n현금, 카드, 간편결제 중 무엇이 편한지"
+      "missingStay": {
+        "name": "숙소 없는 밤",
+        "desc": "숙소 예약이 비는 밤을\n예약 탭 위에 알려 줘요"
       },
-      "leaveDays": {
-        "name": "필요한 연차 계산",
-        "desc": "출발 전 홈에\n주말·한국 공휴일 뺀 연차 일수"
+      "offlineReady": {
+        "name": "오프라인 준비",
+        "desc": "출발 7일 전부터 홈에\n바우처와 지도 준비를 알려 줘요"
       },
-      "firstCountry": {
-        "name": "처음 가는 나라",
-        "desc": "처음 가는 나라면\n출발 전 홈에 알려 줘요"
-      },
-      "cancelReminder": {
-        "name": "무료 취소 마감 알림",
-        "desc": "무료 취소 마감이 3일 안이면\n홈에 남은 날로 알려 줘요"
-      },
-      "onsitePay": {
-        "name": "현장 결제 모아보기",
-        "desc": "현장 결제 예약을\n예약 탭 위에 모아 보여 줘요"
-      },
-      "voucherList": {
-        "name": "바우처 모아보기",
-        "desc": "빠른 메뉴에서\n예약 바우처 링크를 한곳에"
-      },
-      "earlyStart": {
-        "name": "이른 출발 안내",
-        "desc": "첫 일정이 7시 전이면\n그날 위에 알람 안내"
+      "placeTips": {
+        "name": "장소 맞춤 팁",
+        "desc": "사원이나 온천, 해변이 있는 날\n챙길 것을 알려 줘요"
       }
     },
     "checkoutAt": "오늘 {{time}} 체크아웃 · {{name}}",
@@ -1409,7 +1393,7 @@
     },
     "sample": {
       "title": "샘플 테스트 (관리자)",
-      "desc": "오늘 출발 도쿄 5일 샘플을 만들어요\n6일 뒤 타이베이·지난 여행도 함께\n방문 기록·삭제 기록 복원까지\n실험실 기능도 모두 켜져요",
+      "desc": "오늘 출발 도쿄 5일 샘플을 만들어요\n6일 뒤 타이베이·지난 여행도 함께\n방문 기록·삭제 기록 복원까지",
       "create": "샘플 테스트",
       "created": "샘플 여행을 만들었어요",
       "remove": "샘플 지우기",
@@ -1427,21 +1411,10 @@
     "jetLagAhead": "🕒 여행지는 한국보다 {{h}}시간 빨라요",
     "jetLagBehind": "🕒 여행지는 한국보다 {{h}}시간 느려요",
     "homeLabel": "여행 도움 정보",
-    "leftDrive": "🚗 {{country}} · 좌측 통행이에요\n운전석이 오른쪽이에요\n회전 방향도 반대예요",
-    "tapWaterOk": "🚰 {{country}} 수돗물은 마셔도 돼요",
-    "tapWaterBoil": "🚰 {{country}} 수돗물은 끓이거나\n생수를 드세요",
-    "tapWaterNo": "🚰 {{country}} 수돗물은 마시지 말고\n생수를 사 드세요",
     "localTitle": "현지 생활 정보",
     "transitLabel": "🚇 교통카드",
     "payLabel": "💳 결제",
-    "leaveDays": "🗓️ 이 여행에 연차 {{n}}일이 필요해요\n주말·한국 공휴일 빼고",
-    "leaveNone": "🗓️ 연차 없이 다녀올 수 있어요\n주말·공휴일 안의 여행이에요",
-    "firstCountry": "🌏 처음 가는 나라예요 · {{country}}\n입국 준비를 꼼꼼히 확인하세요",
-    "cancelSoon": "⏰ 무료 취소 마감 D-{{d}} · {{name}}",
-    "cancelToday": "⏰ 오늘 무료 취소 마감 · {{name}}",
-    "onsitePay": "💵 현장 결제 예약 {{n}}건\n현금·카드를 준비하세요",
     "voucherTitle": "🎫 바우처",
-    "earlyStart": "{{time}}에 하루를 시작해요\n알람을 맞춰 두세요",
     "voucherDoc": "{{name}} 문서 보기",
     "voucherLink": "{{name}} 바우처 링크 열기"
   },
@@ -2118,7 +2091,8 @@
     "japan": "일본",
     "arrive": "공항 가는 리무진",
     "vietnam": "베트남",
-    "tour": "감천마을 투어"
+    "tour": "감천마을 투어",
+    "airport": "나리타 공항"
   },
   "currencyName": {
     "USD": "미국 달러",
@@ -2333,5 +2307,36 @@
     "noteOfficial": "{{date}} 공식 안내로 확인했어요\n운임·노선마다 달라요 · 출발 전날 다시 확인하세요",
     "noteTypical": "{{date}} 기준 여러 안내가 일치한 대표값이에요\n운임·노선마다 달라요 · 공식 안내로 꼭 확인하세요",
     "official": "항공사 공식 수하물 안내"
+  },
+  "transitGuide": {
+    "title": "🚆 {{country}} 대중교통 안내",
+    "transfer": "환승",
+    "apps": "추천 앱",
+    "checked": "{{date}} 여러 안내로 확인한 대표값이에요\n공식 안내로 꼭 다시 확인하세요",
+    "official": "공식 요금 안내"
+  },
+  "nearbyFind": {
+    "title": "📍 근처 찾기",
+    "store": "편의점",
+    "pharmacy": "약국",
+    "atm": "ATM",
+    "toilet": "화장실",
+    "note": "지도 앱이 열려요\n내 위치는 앱에 저장하지 않아요"
+  },
+  "arrivalRoute": {
+    "title": "{{date}} 공항에서 숙소 가는 길"
+  },
+  "missingStay": {
+    "text": "🛏️ 숙소 예약이 없는 밤이 있어요\n{{dates}}"
+  },
+  "offlineReady": {
+    "vouchers": "📥 바우처 {{n}}개가 링크로만 있어요\n예약에 문서로 붙여 두면 오프라인에서도 보여요",
+    "maps": "🗺️ 지도 앱에서 여행지 오프라인 지도를\n미리 받아 두세요"
+  },
+  "placeTips": {
+    "dress": "👕 사원·신사·성당이 있어요\n어깨·무릎을 가리는 옷을 챙기세요",
+    "onsen": "♨️ 온천 일정이 있어요\n작은 수건을 챙기고 문신 규정을 확인하세요",
+    "beach": "🏖️ 해변 일정이 있어요\n선크림·수영복·샌들을 챙기세요",
+    "hike": "🥾 산행 일정이 있어요\n편한 신발과 물을 챙기세요"
   }
 }
