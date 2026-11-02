@@ -22,7 +22,14 @@ const NO_SPOTS: SavedSpot[] = [];
  * 이 기기에만, 이번 여행 동안만 — 다른 여행이 시작되면 자동으로 지운다 (data/savedSpots.ts).
  * GPS를 못 잡으면 저장하지 않고 안내 팝업
  */
-export function SavedSpotsButtons({ trip }: { trip: Trip }) {
+export function SavedSpotsButtons({
+  trip,
+  horizontal = false,
+}: {
+  trip: Trip;
+  /** 렌터카 칸이 없으면 두 버튼을 가로로 */
+  horizontal?: boolean;
+}) {
   const { t } = useTranslation();
   const spots = useSavedSpots((s) => (s.tripId === trip.id ? s.spots : NO_SPOTS));
   const app = useSettings((s) => s.directionsApp);
@@ -86,7 +93,7 @@ export function SavedSpotsButtons({ trip }: { trip: Trip }) {
 
   return (
     <>
-      <div className="flex flex-col gap-2">
+      <div className={horizontal ? 'grid grid-cols-2 gap-2' : 'flex flex-col gap-2'}>
         <button
           type="button"
           onClick={() => setSaveOpen(true)}

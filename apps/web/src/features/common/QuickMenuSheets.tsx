@@ -1,15 +1,13 @@
 import {
-  Bed,
   Car,
   Copy,
-  CalendarClock,
+  ChevronDown,
   ChevronRight,
+  Pencil,
   Languages,
   Siren,
-  ListChecks,
   Settings,
   Sparkles,
-  Ticket,
   Wallet,
 } from 'lucide-react';
 import { dayNumberOf, getTripStatus, todayIn, type Trip } from '@trippocket/shared';
@@ -30,6 +28,8 @@ import { BottomSheet, SegmentedControl, toast } from '../../shared/ui';
 import { DirectionsSheet } from './DirectionsSheet';
 import { CarCard } from './CarCard';
 import { SavedSpotsButtons } from './SavedSpotsButtons';
+import { ShortcutEditSheet } from './ShortcutEditSheet';
+import { SHORTCUT_ICON, shortcutPath, useQuickShortcuts, type ShortcutId } from './quickShortcuts';
 import { openDirectionsDirect } from './openDirections';
 import { isDomesticTrip } from '../../domain/tripPlace';
 
@@ -175,6 +175,22 @@ function TripQuickMenu({ open, setOpen }: { open: boolean; setOpen: (open: boole
   );
 }
 
+/** 여행 안에서만 되는 바로가기 */
+const TRIP_ONLY = new Set<ShortcutId>([
+  'lodging',
+  'bookingNo',
+  'nextItem',
+  'car',
+  'plan',
+  'bookings',
+  'checklist',
+  'essentials',
+  'weather',
+  'places',
+  'tripSettings',
+  'print',
+]);
+
 interface Shortcuts {
   lodging: () => void;
   bookingNo: () => void;
@@ -196,6 +212,21 @@ function QuickMenuContent({
   const inTrip = shortcuts !== undefined;
   const { tripId } = useParams();
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const [editOpen, setEditOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const ids = useQuickShortcuts((st) => st.ids);
+  // 여행 밖에서는 여행 화면·여행 기능 바로가기는 숨긴다
+  const chosen = ids.filter((id) => inTrip || !TRIP_ONLY.has(id));
+  const runShortcut = (id: ShortcutId) => {
+    const own = shortcuts?.[id as keyof Shortcuts];
+    if (own) return own();
+    if (id === 'emergency') return onEmergency();
+    if (id === 'car') return toast(t('quickMenu.noCar'));
+    const path = shortcutPath(id, tripId ?? '');
+    // 메뉴 기록 자리를 그 화면으로 바꿔서, 뒤로 가면 원래 화면
+    if (path) void navigate(path, { replace: true });
+  };
   const theme = useSettings((st) => st.theme);
   const app = useSettings((st) => st.directionsApp);
   const mode = useSettings((st) => st.travelMode);
@@ -240,94 +271,111 @@ function QuickMenuContent({
         </Link>
       </div>
 
-      {inTrip && shortcuts && (
-        <section className="flex flex-col gap-2">
+      {/* 바로가기 4칸: 편집으로 모든 기능·화면 중에서 고른다 (사용자 요청 2026-11-02) */}
+      <section className="flex flex-col gap-2">
+        <div className="flex items-center justify-between">
           <h3 className="text-caption font-bold text-fg-muted">{t('quickMenu.shortcuts')}</h3>
-          <div className="grid grid-cols-2 gap-2">
-            <Shortcut
-              icon={<Bed />}
-              label={t('quickMenu.shortcut.lodging')}
-              onClick={shortcuts.lodging}
-            />
-            <Shortcut
-              icon={<Ticket />}
-              label={t('quickMenu.shortcut.bookingNo')}
-              onClick={shortcuts.bookingNo}
-            />
-            <Shortcut
-              icon={<CalendarClock />}
-              label={t('quickMenu.shortcut.nextItem')}
-              onClick={shortcuts.nextItem}
-            />
-            <Shortcut
-              icon={<ListChecks />}
-              label={t('quickMenu.shortcut.checklist')}
-              onClick={shortcuts.checklist}
-            />
-          </div>
-          {/* 렌터카(있을 때) + 현재 위치 저장·저장한 위치 (이 기기·이번 여행만, 사용자 요청 2026-11-02) */}
-          {trip && (
+          <button
+            type="button"
+            onClick={() => setEditOpen(true)}
+            className="flex h-9 items-center gap-1 text-caption font-semibold text-primary"
+          >
+            <Pencil aria-hidden="true" className="size-3.5" />
+            {t('quickMenu.edit')}
+          </button>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          {chosen.map((id) => {
+            const Icon = SHORTCUT_ICON[id];
+            return (
+              <Shortcut
+                key={id}
+                icon={<Icon />}
+                label={t(`quickMenu.shortcut.${id}`)}
+                onClick={() => runShortcut(id)}
+              />
+            );
+          })}
+        </div>
+        {/* 렌터카(있을 때) + 현재 위치 저장·저장한 위치 (이 기기·이번 여행만, 사용자 요청 2026-11-02) */}
+        {trip &&
+          shortcuts &&
+          (shortcuts.car ? (
             <div className="grid grid-cols-2 gap-2">
-              {shortcuts.car ? (
-                <button
-                  type="button"
-                  onClick={shortcuts.car}
-                  className="flex min-h-[6.5rem] flex-col items-start justify-center gap-1 rounded-card border border-line px-3 text-left"
-                >
-                  <Car aria-hidden="true" className="size-5 text-primary" />
-                  <span className="text-body-2 font-semibold">{t('quickMenu.shortcut.car')}</span>
-                </button>
-              ) : (
-                <span aria-hidden="true" />
-              )}
+              <button
+                type="button"
+                onClick={shortcuts.car}
+                className="flex min-h-[6.5rem] flex-col items-start justify-center gap-1 rounded-card border border-line px-3 text-left"
+              >
+                <Car aria-hidden="true" className="size-5 text-primary" />
+                <span className="text-body-2 font-semibold">{t('quickMenu.shortcut.car')}</span>
+              </button>
               <SavedSpotsButtons trip={trip} />
             </div>
-          )}
-        </section>
-      )}
+          ) : (
+            <SavedSpotsButtons trip={trip} horizontal />
+          ))}
+      </section>
+      <ShortcutEditSheet open={editOpen} onOpenChange={setEditOpen} />
 
       {/* 실험실: 교통카드·결제 팁·바우처 */}
       {inTrip && tripId && <LocalInfoSection tripId={tripId} />}
 
+      {/* 빠른 설정은 기본으로 접어 둔다 (사용자 요청 2026-11-02) */}
       <section className="flex flex-col gap-2">
-        <h3 className="text-caption font-bold text-fg-muted">{t('quickMenu.quickSettings')}</h3>
-        <span className="text-caption font-semibold text-fg-sub">{t('quickMenu.theme')}</span>
-        <SegmentedControl
-          label={t('quickMenu.theme')}
-          value={theme}
-          onChange={(v) => updateSettings({ theme: v })}
-          options={[
-            { value: 'light', label: t('quickMenu.themeLight') },
-            { value: 'dark', label: t('quickMenu.themeDark') },
-            { value: 'system', label: t('quickMenu.themeSystem') },
-          ]}
-        />
-        <span className="mt-1 text-caption font-semibold text-fg-sub">
-          {t('settings.directionsApp')}
-        </span>
-        <SegmentedControl
-          label={t('settings.directionsApp')}
-          value={app}
-          onChange={(v) => updateSettings({ directionsApp: v })}
-          options={[
-            { value: 'naver', label: t('quickMenu.appNaver') },
-            { value: 'kakao', label: t('quickMenu.appKakao') },
-            { value: 'ask', label: t('quickMenu.appAsk') },
-          ]}
-        />
-        <span className="mt-1 text-caption font-semibold text-fg-sub">
-          {t('settings.travelMode')}
-        </span>
-        <SegmentedControl
-          label={t('settings.travelMode')}
-          value={mode}
-          onChange={(v) => updateSettings({ travelMode: v })}
-          options={[
-            { value: 'transit', label: t('dir.transit') },
-            { value: 'walk', label: t('dir.walk') },
-            { value: 'car', label: t('dir.car') },
-          ]}
-        />
+        <button
+          type="button"
+          aria-expanded={settingsOpen}
+          onClick={() => setSettingsOpen(!settingsOpen)}
+          className="flex h-10 items-center justify-between text-caption font-bold text-fg-muted"
+        >
+          {t('quickMenu.quickSettings')}
+          <ChevronDown
+            aria-hidden="true"
+            className={`size-4 transition-transform ${settingsOpen ? 'rotate-180' : ''}`}
+          />
+        </button>
+        {settingsOpen && (
+          <>
+            <span className="text-caption font-semibold text-fg-sub">{t('quickMenu.theme')}</span>
+            <SegmentedControl
+              label={t('quickMenu.theme')}
+              value={theme}
+              onChange={(v) => updateSettings({ theme: v })}
+              options={[
+                { value: 'light', label: t('quickMenu.themeLight') },
+                { value: 'dark', label: t('quickMenu.themeDark') },
+                { value: 'system', label: t('quickMenu.themeSystem') },
+              ]}
+            />
+            <span className="mt-1 text-caption font-semibold text-fg-sub">
+              {t('settings.directionsApp')}
+            </span>
+            <SegmentedControl
+              label={t('settings.directionsApp')}
+              value={app}
+              onChange={(v) => updateSettings({ directionsApp: v })}
+              options={[
+                { value: 'naver', label: t('quickMenu.appNaver') },
+                { value: 'kakao', label: t('quickMenu.appKakao') },
+                { value: 'ask', label: t('quickMenu.appAsk') },
+              ]}
+            />
+            <span className="mt-1 text-caption font-semibold text-fg-sub">
+              {t('settings.travelMode')}
+            </span>
+            <SegmentedControl
+              label={t('settings.travelMode')}
+              value={mode}
+              onChange={(v) => updateSettings({ travelMode: v })}
+              options={[
+                { value: 'transit', label: t('dir.transit') },
+                { value: 'walk', label: t('dir.walk') },
+                { value: 'car', label: t('dir.car') },
+              ]}
+            />
+          </>
+        )}
       </section>
 
       <Link
