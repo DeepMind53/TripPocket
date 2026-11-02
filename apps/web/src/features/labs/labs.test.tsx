@@ -624,9 +624,13 @@ describe('실험실', () => {
       await user.click(await screen.findByRole('button', { name: '빠른 메뉴' }));
       expect(await screen.findByText(/Suica·PASMO·ICOCA/)).toBeInTheDocument();
       expect(screen.getByText(/작은 가게·신사는 현금/)).toBeInTheDocument();
-      expect(await screen.findByRole('link', { name: /후지산 투어/ })).toHaveAttribute(
+      // 링크 버튼은 바우처 주소로, 이름은 예약 탭의 그 예약으로 (2026-11-02)
+      expect(
+        await screen.findByRole('link', { name: '후지산 투어 바우처 링크 열기' }),
+      ).toHaveAttribute('href', 'https://v.example/fuji');
+      expect(screen.getByRole('link', { name: /11\.13.*후지산 투어/ })).toHaveAttribute(
         'href',
-        'https://v.example/fuji',
+        expect.stringContaining('/bookings?focus='),
       );
     } finally {
       for (const id of ids) setLab(id, false);
