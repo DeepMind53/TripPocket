@@ -6,6 +6,7 @@ import { copyText } from '../../shared/lib/clipboard';
 import { formatMonthDay } from '../../shared/lib/dateFormat';
 import { BOOKING_ICON } from '../common/bookingKinds';
 import { membershipFor, useTravelProfile } from '../../data/travelProfile';
+import { FlightAirportInfo } from './FlightAirportInfo';
 
 /** S-16 예약 카드. 항공 = 탑승권 모양, 숙소 = 체크인·체크아웃 (docs/05 §3 S-09) */
 export function BookingCard({ booking, onOpen }: { booking: Booking; onOpen: () => void }) {
@@ -46,6 +47,7 @@ export function BookingCard({ booking, onOpen }: { booking: Booking; onOpen: () 
           </a>
         </div>
       )}
+      {b.kind === 'flight' && <FlightAirportInfo booking={b} />}
       {member && (
         <div className="flex items-center justify-between gap-2 border-t border-dashed border-line px-4 py-1.5">
           <span className="tabular min-w-0 truncate text-caption text-fg-sub">

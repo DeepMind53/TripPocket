@@ -1247,7 +1247,9 @@
       "google_routes": "Google 길 소요 시간 (출발 시각)",
       "geoapify": "Geoapify (검색·택시 카드 백업)",
       "openfreemap": "OpenFreeMap 지도 (지도 백업)",
-      "kakao_maps_js": "카카오 지도 (지도 로드)"
+      "kakao_maps_js": "카카오 지도 (지도 로드)",
+      "icn_flights": "인천공항 운항 정보",
+      "kac_flights": "한국공항공사 운항 정보"
     },
     "note": {
       "google_places_search": "해외 장소 검색 · 월 5,000회 무료",
@@ -1286,7 +1288,9 @@
       "google_routes": "걷기·대중교통 1번에 2건 · Essentials · 월 10,000회 무료",
       "geoapify": "Google 백업까지 멈추면 · 하루 3,000회 무료 (요금 없음)",
       "openfreemap": "Google·네이버 지도를 못 쓸 때 · 무료·한도 없음",
-      "kakao_maps_js": "국내 일정 지도(카카오 선택 시)\n하루 30만 건 무료 · 월은 카카오 합산"
+      "kakao_maps_js": "국내 일정 지도(카카오 선택 시)\n하루 30만 건 무료 · 월은 카카오 합산",
+      "icn_flights": "체크인 카운터·터미널·게이트 · 하루 500회 무료",
+      "kac_flights": "김포·김해·제주 등 게이트 · 하루 5,000회 무료"
     },
     "autoStoppedDay": "오늘 자동 중지",
     "monthMeter": "이번 달",
@@ -2220,5 +2224,22 @@
       "FR": "컨택리스 카드 대부분 · 작은 빵집은 현금",
       "AU": "컨택리스 카드 대부분 · 카드 수수료가 붙기도 해요"
     }
+  },
+  "flightAirport": {
+    "title": "공항 정보",
+    "check": "확인하기",
+    "recheck": "다시 확인",
+    "hint": "터미널·체크인 카운터·게이트를 불러와요\n인천은 출발 6일 전부터, 김포 등은 당일에 돼요",
+    "dep": "출발",
+    "arr": "도착",
+    "counter": "체크인 {{v}}",
+    "gate": "게이트 {{v}}",
+    "carousel": "수하물 {{v}}",
+    "exit": "출구 {{v}}",
+    "changed": "변경 {{v}}",
+    "from": "{{date}}부터 확인할 수 있어요",
+    "none": "아직 정보가 없어요",
+    "checkedAt": "{{at}} 확인 · 바뀔 수 있어요\n출발 전날과 당일에 다시 확인하세요",
+    "failed": "공항 정보를 불러오지 못했어요"
   }
 }

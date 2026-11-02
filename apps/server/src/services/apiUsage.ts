@@ -30,6 +30,8 @@ export type ApiId =
   | 'groq'
   | 'exim'
   | 'aviationstack'
+  | 'icn_flights'
+  | 'kac_flights'
   | 'overpass'
   | 'open_meteo'
   | 'nager_date'
@@ -133,6 +135,9 @@ export const APIS: readonly ApiDef[] = [
   // AviationStack 무료: 월 100회(넘으면 거절, 결제 수단 없음) — 편명으로 항공편 불러오기
   // 하루 제한 없이 월 100회만 (사용자 결정 2026-10-25) — 90회에서 자동 중지
   { id: 'aviationstack', group: 'free', freeMonthly: 100, tz: 'UTC' },
+  // 공공데이터포털 공항 운항 정보 (2026-11-02): 인천 개발계정 하루 500, 한국공항공사 개발계정 하루 5,000
+  { id: 'icn_flights', group: 'free', freeDaily: 500, tz: 'Asia/Seoul' },
+  { id: 'kac_flights', group: 'free', freeDaily: 5000, tz: 'Asia/Seoul' },
   // Geoapify 무료 플랜: 하루 3,000 크레딧(요청 1건 = 1), 상업 이용 가능, 결제 수단 없음 — Google 다음 백업 (검색·택시 카드)
   // 초기화 시간대는 공식 문서에 없어 UTC로 셈 (90%에서 멈추니 여유 있음)
   { id: 'geoapify', group: 'free', freeDaily: 3000, tz: 'UTC' },

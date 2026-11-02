@@ -56,6 +56,7 @@ Tailscale Funnel https://jin-server.tail0844c0.ts.net ─▶ 홈 PC 127.0.0.1:87
 - **AI 엔진 추가·순서**: `services/llm.ts`의 `llmProviders` (OpenAI 호환이면 주소·키·모델만). 모두 실패하면 `basicRecommend.ts`(AI 없이)
 - **서버 DB 표 추가**: `db/migrations.ts` 끝에 새 항목 + 테스트
 - **웹 DB 표 추가**: `data/db.ts` 버전 올림 + `data/migrations` + 마이그레이션 테스트 (CLAUDE.md)
+- **국내 공항 정보 (2026-11-02)**: 서버 `services/airportInfo.ts`(인천 `B551177/statusOfAllFltDeOdp` = 체크인 카운터·터미널·게이트·수하물, 3일 전~6일 후 / 한국공항공사 `B551178/flight-search/info` = 게이트, 당일만) + `routes/flights.ts` `GET /api/flights/:no/airport`. 키는 `DATA_GO_KR_KEY`, 사용량 `icn_flights`·`kac_flights`. 웹 `features/bookings/FlightAirportInfo.tsx`(확인 시각은 기기에만, `data/flightAirportStore.ts`)
 - **사용 통계 (ADR-0009)**: 서버 `repositories/statsRepo.ts`(저장·요약) + `routes/stats.ts`(앱이 보낸 횟수 받기·관리자 조회),
   요청·로그인 사용자는 `app.ts`의 `onResponse` 훅, 입력·삭제는 `syncRepo`의 `onApplied`. 웹은 `shared/lib/usageCount.ts`의 `countUse('이름')`로 세고
   `data/usageStats.ts`가 동기화 뒤 보낸다. 화면 `features/me/AdminStatsPage.tsx`. 이름에 입력값·id를 넣지 않는다
