@@ -407,33 +407,34 @@ function BookingForm({
           {/* 출발 날짜 + 편명 → 불러오기 — 점선으로 한 묶음 (사용자 요청 2026-10-25, 날짜도 이 안에 2026-11-02) */}
           <div className="flex flex-col gap-1.5 rounded-card border border-dashed border-primary/60 p-2.5">
             {/* 아래 출발 날짜와 같은 값 — 어느 쪽을 고쳐도 함께 바뀐다 (사용자 요청 2026-11-02) */}
-            <label htmlFor="bk-lookup-date" className="text-caption font-semibold text-fg-sub">
-              {t('bookings.departDate')}
-            </label>
-            <input
-              id="bk-lookup-date"
-              type="date"
-              required
-              value={f.startDate}
-              onChange={set('startDate')}
-              className={`${inputClass} tabular`}
-            />
-            <label htmlFor="bk-flight" className="mt-1 text-caption font-semibold text-fg-sub">
-              {t('bookings.flightNo')}
-            </label>
-            <div className="flex gap-1.5">
-              <input
-                id="bk-flight"
-                value={f.flightNo}
-                maxLength={20}
-                placeholder="KE703"
-                onChange={set('flightNo')}
-                className={`${inputClass} min-w-0 flex-1 uppercase`}
-              />
+            {/* 출발 날짜 · 편명 · 불러오기 한 줄 (사용자 요청 2026-11-02) */}
+            <div className="grid grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)_auto] items-end gap-1.5 tight:grid-cols-[minmax(0,1fr)_auto]">
+              <div className="min-w-0 tight:col-span-2">
+                <Field label={t('bookings.departDate')}>
+                  <input
+                    id="bk-lookup-date"
+                    type="date"
+                    required
+                    value={f.startDate}
+                    onChange={set('startDate')}
+                    className={`${inputClass} tabular px-2 text-body-2`}
+                  />
+                </Field>
+              </div>
+              <Field label={t('bookings.flightNo')}>
+                <input
+                  id="bk-flight"
+                  value={f.flightNo}
+                  maxLength={20}
+                  placeholder="KE703"
+                  onChange={set('flightNo')}
+                  className={`${inputClass} px-2 uppercase`}
+                />
+              </Field>
               <Button
                 size="sm"
                 variant="secondary"
-                className="h-12 shrink-0"
+                className="h-12 px-2"
                 loading={looking}
                 disabled={!/^[a-z0-9]{2}\s?\d{1,4}[a-z]?$/i.test(f.flightNo.trim())}
                 onClick={() => void lookupFlight()}
