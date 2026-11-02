@@ -80,9 +80,11 @@ export function AccountCard() {
           >
             {t('profile.title')}
           </Link>
-          {/* 로그인 수단은 이 줄 오른쪽 끝 (사용자 요청 2026-11-02) */}
-          <span className="ml-auto text-caption text-fg-muted">
-            {me.providers.map((p) => t(`login.name.${p}` as 'login.name.kakao')).join(' · ')}
+          {/* 로그인 수단: 개인정보 오른쪽에 조금 띄워 회사 색으로 (사용자 요청 2026-11-02) */}
+          <span className="ml-2 flex items-center gap-1.5">
+            {me.providers.map((p) => (
+              <ProviderName key={p} provider={p} />
+            ))}
           </span>
         </span>
       </div>
@@ -236,6 +238,33 @@ export function AccountCard() {
       {nicknameOpen && <NicknameSheet open onOpenChange={setNicknameOpen} />}
     </section>
   );
+}
+
+/** 구글 로고 글자색 (G 파랑 · o 빨강 · o 노랑 · g 파랑 · l 초록 · e 빨강) */
+const GOOGLE_COLORS = ['#4285F4', '#EA4335', '#FBBC05', '#4285F4', '#34A853', '#EA4335'];
+
+/** 로그인 방법 이름을 그 회사 로고 색으로. 카카오는 노란 바탕(글자만 노랑이면 안 읽혀서) */
+function ProviderName({ provider }: { provider: string }) {
+  const { t } = useTranslation();
+  if (provider === 'google')
+    return (
+      <span aria-label="Google" className="text-caption font-bold">
+        {[...'Google'].map((ch, i) => (
+          <span key={i} aria-hidden="true" style={{ color: GOOGLE_COLORS[i] }}>
+            {ch}
+          </span>
+        ))}
+      </span>
+    );
+  if (provider === 'kakao')
+    return (
+      <span className="rounded-full bg-[#FEE500] px-2 py-0.5 text-caption font-bold text-[#191919]">
+        {t('login.name.kakao')}
+      </span>
+    );
+  if (provider === 'naver')
+    return <span className="text-caption font-bold text-[#03C75A]">{t('login.name.naver')}</span>;
+  return <span className="text-caption text-fg-muted">{provider}</span>;
 }
 
 /** 브라우저 정보 → "아이폰 · Safari" 정도로 */

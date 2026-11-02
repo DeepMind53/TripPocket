@@ -12,13 +12,15 @@ export interface TopBarProps {
   backTo?: string;
   /** 오른쪽 버튼들 */
   actions?: ReactNode;
+  /** 제목 줄 가운데 (예: 마이의 동기화 상태) */
+  center?: ReactNode;
 }
 
 /**
  * 화면 상단 헤더. 스크롤해도 위에 고정된다.
  * 뒤로 버튼이 있는 화면에는 그 왼쪽에 홈 버튼을 항상 둔다 (어디서든 한 번에 홈으로 — 사용자 요청).
  */
-export function TopBar({ title, subtitle, backTo, actions }: TopBarProps) {
+export function TopBar({ title, subtitle, backTo, actions, center }: TopBarProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const header = useRef<HTMLElement>(null);
@@ -66,6 +68,11 @@ export function TopBar({ title, subtitle, backTo, actions }: TopBarProps) {
         <h1 className="line-clamp-2 text-title-2">{title}</h1>
         {subtitle && <p className="tabular truncate text-caption text-fg-muted">{subtitle}</p>}
       </div>
+      {center && (
+        <div className="pointer-events-none absolute inset-x-0 top-[var(--safe-top)] flex h-14 items-center justify-center">
+          <div className="pointer-events-auto">{center}</div>
+        </div>
+      )}
       {actions && <div className="ml-auto flex shrink-0 items-center">{actions}</div>}
     </header>
   );
