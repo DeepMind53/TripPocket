@@ -5,6 +5,7 @@ import {
   ESSENTIALS_CHECKED_AT,
   TRANSIT_CHECKED_AT,
 } from '@trippocket/shared';
+import { TRANSIT_CARDS_CHECKED_AT } from '../../data/transitCards';
 
 /**
  * 관리자 월간 갱신 요청문 (사용자 요청 2026-10-27): 팝업에서 [복사]해 Claude에게 그대로 붙여 넣는 글.
@@ -51,6 +52,13 @@ export function monthlyUpdateRequest(month: string): string {
 16. 항공사 수하물 대표값: packages/shared/src/data/baggage.ts (지난 확인: ${BAGGAGE_CHECKED_AT})
     - official: false인 항공사는 공식 페이지로 확인해 true로, 인천 취항 항공사를 차례로 더하기
     - 항공사 등급: AIRLINE_TIERS_VERIFIED에 없는 프로그램을 공식 사이트로 확인
+17. 빠른 메뉴 "현지 정보" — 교통카드·결제 팁 (지난 확인: ${TRANSIT_CARDS_CHECKED_AT})
+    - 교통카드 문구: apps/web/src/i18n/ko.json localInfo.transit (나라별 카드 이름·충전 방법, 새 결제 방식)
+    - 결제 팁 문구: 같은 파일 localInfo.pay (현금·카드·QR 결제, 팁 문화가 바뀌었는지)
+    - 카드·승차권·토큰 사진과 공식 링크: apps/web/src/data/transitCards.ts (+ apps/web/public/transit/)
+      · 공식 링크가 열리는지, 카드 디자인이 바뀌었거나 없어진 승차권·토큰이 있는지
+      · 그린 카드(사진 없음)는 위키미디어 공용에서 자유 이용(CC0·CC BY·CC BY-SA·퍼블릭 도메인) 사진을 찾아
+        360px로 줄여 넣고 작가·라이선스·원본 주소를 함께 적기 (상표 로고만 있는 그림은 쓰지 않기)
 15. AI 추천 결과 품질: 성수역·서면역·신주쿠역·타이베이역·숙소 기준으로 0곳이 나오는지
 9. 도움말·소개 카드 그림이 지금 화면·기능과 맞는지 (features/me/IntroCarousel.tsx, legal/content.ko.ts HELP)
 

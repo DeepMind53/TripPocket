@@ -172,6 +172,12 @@ export const DATA_SOURCES: { name: string; use: string; license: string; url: st
     license: 'CC BY 4.0',
     url: 'https://open-meteo.com',
   },
+  {
+    name: 'Wikimedia Commons',
+    use: '교통카드·승차권 사진 (작가·라이선스는 사진 아래에)',
+    license: 'CC0 · CC BY · CC BY-SA (크기만 줄임)',
+    url: 'https://commons.wikimedia.org',
+  },
   { name: 'Nager.Date', use: '공휴일', license: 'MIT', url: 'https://date.nager.at' },
   {
     name: '행정원 인사행정총처 (TaiwanCalendar 경유)',

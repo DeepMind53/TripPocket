@@ -18,13 +18,17 @@ function serviceWorker(): Plugin {
       const icons = readdirSync('public/icons')
         .filter((f) => f.endsWith('.png'))
         .map((f) => `/icons/${f}`);
+      // 교통카드·승차권 사진 (약 290KB) — 현지에서 인터넷 없이도 보이게 미리 받는다
+      const transit = readdirSync('public/transit')
+        .filter((f) => f.endsWith('.jpg'))
+        .map((f) => `/transit/${f}`);
       const files = Object.keys(bundle)
         .filter((f) => !f.endsWith('.map') && !f.endsWith('.woff2') && f !== 'sw.js')
         // 무료 지도 백업(MapLibre, 약 1.5MB)은 인터넷이 될 때만 쓰므로 미리 받지 않는다 (docs/23 §4)
         .filter((f) => !/(^|\/)(osmMap|maplibre-gl-worker)-/.test(f))
         .map((f) => `/${f}`)
         .filter((f) => f !== '/index.html')
-        .concat('/', '/boot.js', '/manifest.webmanifest', ...icons)
+        .concat('/', '/boot.js', '/manifest.webmanifest', ...icons, ...transit)
         .sort();
       const version = createHash('sha256').update(files.join(' ')).digest('hex').slice(0, 12);
       const source = readFileSync('src/sw/sw-template.js', 'utf8')

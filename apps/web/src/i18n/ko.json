@@ -1509,7 +1509,8 @@
     "translateFailed": "지금은 번역하지 못했어요\n카드에서 번역기 바로가기를 써 주세요",
     "pickAirline": "항공사 고르기",
     "pickTier": "{{program}} 등급",
-    "pickTierLabel": "등급 고르기"
+    "pickTierLabel": "등급 고르기",
+    "noTier": "등급 없음"
   },
   "nickname": {
     "title": "닉네임 바꾸기",
@@ -2283,7 +2284,12 @@
       "GB": "컨택리스 카드가 거의 다 돼요",
       "FR": "컨택리스 카드 대부분 · 작은 빵집은 현금",
       "AU": "컨택리스 카드 대부분 · 카드 수수료가 붙기도 해요"
-    }
+    },
+    "cardsHint": "이름을 누르면 사진이 보여요",
+    "photoCredit": "사진 {{author}} · {{license}}\n위키미디어 공용 · 크기만 줄였어요",
+    "drawn": "{{name}} 그림",
+    "drawnNote": "자유 이용 사진이 없어 그림으로 보여요",
+    "official": "{{name}} 공식 안내"
   },
   "flightAirport": {
     "title": "공항 정보",

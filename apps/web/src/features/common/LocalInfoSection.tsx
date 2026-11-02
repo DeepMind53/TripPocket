@@ -5,11 +5,11 @@ import { attachmentRepo } from '../../data/repositories/attachmentRepo';
 import { openBlob } from '../../shared/lib/openBlob';
 import { IconButton } from '../../shared/ui';
 import { useTrip, useTripBookings } from '../../data/hooks';
-import { useLab } from '../../data/labsStore';
 import { voucherBookings } from '../../domain/localInfo';
 import { tripCountries } from '../../domain/tripPlace';
 import { t as tr, useTranslation, type TKey } from '../../i18n';
 import { formatMonthDay } from '../../shared/lib/dateFormat';
+import { TransitCardList } from './TransitCardList';
 
 /** 나라별 문구 (없으면 null) */
 const localText = (group: 'transit' | 'pay', cc: string): string | null => {
@@ -24,20 +24,21 @@ const localText = (group: 'transit' | 'pay', cc: string): string | null => {
  */
 export function LocalInfoSection({ tripId }: { tripId: string }) {
   const { t } = useTranslation();
-  const transitOn = useLab('transitCard');
-  const payOn = useLab('payTips');
-  const voucherOn = useLab('voucherList');
+  // 교통카드·결제 팁·바우처는 정식 기능 (2026-11-03, 예전 실험실)
+  const transitOn = true;
+  const payOn = true;
+  const voucherOn = true;
   const trip = useTrip(tripId);
   const bookings = useTripBookings(tripId) ?? [];
   // 붙인 예약 문서 (기기에 있는 것)
   const docs = useLiveQuery(() => attachmentRepo.listByTrip(tripId), [tripId]) ?? [];
   if (!trip || (!transitOn && !payOn && !voucherOn)) return null;
   const countries = tripCountries(trip).filter((c) => c !== 'KR');
-  const rows: { label: string; text: string }[] = [];
+  const rows: { label: string; text: string; cards?: string }[] = [];
   for (const c of countries) {
     const transit = transitOn ? localText('transit', c) : null;
     const pay = payOn ? localText('pay', c) : null;
-    if (transit) rows.push({ label: t('labs.transitLabel'), text: transit });
+    if (transit) rows.push({ label: t('labs.transitLabel'), text: transit, cards: c });
     if (pay) rows.push({ label: t('labs.payLabel'), text: pay });
   }
   const vouchers = voucherOn
@@ -48,13 +49,14 @@ export function LocalInfoSection({ tripId }: { tripId: string }) {
     <section className="flex flex-col gap-2">
       <h3 className="text-caption font-bold text-fg-muted">{t('labs.localTitle')}</h3>
       {rows.map((r, i) => (
-        <p
+        <div
           key={i}
           className="flex flex-col rounded-card bg-bg-subtle px-3 py-2.5 text-caption text-fg-sub"
         >
           <span className="font-semibold text-fg">{r.label}</span>
           {r.text}
-        </p>
+          {r.cards && <TransitCardList country={r.cards} />}
+        </div>
       ))}
       {vouchers.length > 0 && (
         <div className="flex flex-col rounded-card bg-bg-subtle px-3 py-2">

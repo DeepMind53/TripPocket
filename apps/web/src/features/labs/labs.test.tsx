@@ -34,7 +34,7 @@ beforeEach(async () => {
 });
 
 describe('실험실', () => {
-  it('마이 → 실험실: 새 실험 10개(3차), 켜면 이 기기에 저장, 실험마다 [샘플] (2026-10-28)', async () => {
+  it('마이 → 실험실: 실험 7개(교통카드·결제 팁·바우처는 2026-11-03 정식), 켜면 이 기기에 저장, 실험마다 [샘플] (2026-10-28)', async () => {
     const user = userEvent.setup();
     render(<RouterProvider router={createMemoryRouter(routes, { initialEntries: ['/me'] })} />);
     await user.click(await screen.findByRole('link', { name: '실험실' }));
@@ -42,11 +42,19 @@ describe('실험실', () => {
     expect(sw).toHaveAttribute('aria-checked', 'false');
     await user.click(sw);
     expect(JSON.parse(localStorage.getItem('tp-labs')!)).toEqual({ leftDrive: true });
-    expect(LABS).toHaveLength(10);
-    expect(screen.getAllByRole('switch')).toHaveLength(10);
-    expect(screen.getAllByRole('button', { name: / 샘플$/ })).toHaveLength(10);
+    expect(LABS).toHaveLength(7);
+    expect(screen.getAllByRole('switch')).toHaveLength(7);
+    expect(screen.getAllByRole('button', { name: / 샘플$/ })).toHaveLength(7);
     // 정식이 됐거나 뺀 것은 실험실에 없다
-    for (const name of [/현지 공휴일/, /늦은 귀가/, /공항 도착/, /골든아워/, /메모 체크박스/])
+    for (const name of [
+      /현지 공휴일/,
+      /늦은 귀가/,
+      /공항 도착/,
+      /골든아워/,
+      /메모 체크박스/,
+      /교통카드/,
+      /바우처/,
+    ])
       expect(screen.queryByRole('switch', { name })).toBeNull();
     setLab('leftDrive', false);
   });
@@ -555,9 +563,6 @@ describe('실험실', () => {
       'leftDrive',
       'onsitePay',
       'tapWater',
-      'transitCard',
-      'payTips',
-      'voucherList',
     ] as const;
     for (const id of ids) setLab(id, true);
     // 공휴일은 빈 목록, 서버는 없음(HTML)
