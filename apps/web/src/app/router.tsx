@@ -206,6 +206,12 @@ const allRoutes: RouteObject[] = [
         }),
       },
       {
+        path: 'stats',
+        lazy: async () => ({
+          Component: (await import('../features/me/AdminStatsPage')).AdminStatsPage,
+        }),
+      },
+      {
         path: 'users',
         lazy: async () => ({
           Component: (await import('../features/me/AdminUsersPage')).AdminUsersPage,

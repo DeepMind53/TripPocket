@@ -1,6 +1,7 @@
 import {
   ArchiveRestore,
   CalendarCheck,
+  ChartColumn,
   ChevronRight,
   CircleHelp,
   Database,
@@ -39,7 +40,7 @@ export function MePage() {
   const [monthlyOpen, setMonthlyOpen] = useRouteSheet('monthly-update');
   return (
     <>
-      <TopBar title={t('me.title')} actions={<SyncStatus />} />
+      <TopBar title={t('me.title')} center={<SyncStatus />} />
       <div className="flex flex-col gap-4 px-5 pt-2">
         <AccountCard />
         {/* 묶음: 여행 도구 · 관리자(관리자만) · 앱 정보 (docs/16 H1) */}
@@ -59,6 +60,7 @@ export function MePage() {
         {isAdmin && (
           <MenuGroup title={t('me.groupAdmin')}>
             <MenuRow to="/admin/users" icon={<Users />} label={t('admin.title')} />
+            <MenuRow to="/admin/stats" icon={<ChartColumn />} label={t('me.stats')} />
             <MenuRow to="/admin/api-usage" icon={<Gauge />} label={t('apiUsage.title')} />
             <MenuRow to="/admin/ai" icon={<Sparkles />} label={t('me.devAi')} />
             <MenuRow to="/admin/suggestions" icon={<Inbox />} label={t('suggest.adminTitle')} />

@@ -23,6 +23,7 @@ import { extractPlaces, llmProviders, type LlmEngine } from '../services/llm';
 import { naverSearchKeys, searchBlog, type BlogPost } from '../services/naverBlog';
 import { searchGoogle, searchKakao } from '../services/places';
 import { apiAllowed } from '../services/apiUsage';
+import { statsRepo } from '../repositories/statsRepo';
 
 /** 카테고리별 블로그 검색어 (docs/14 §3-4). custom = 사용자 키워드 그대로 */
 const QUERIES: Record<Exclude<AiCategory, 'custom'>, readonly string[]> = {
@@ -120,6 +121,7 @@ type Rec = Recommendation & { place?: PlaceSummary; origin: Origin };
 export function aiRoutes(app: FastifyInstance, config: Config, db: Db): void {
   const naver = naverSearchKeys(config);
   const providers = llmProviders(config);
+  const stats = statsRepo(db);
   const today = () => new Date().toISOString().slice(0, 10);
   const usedToday = (userId: string) =>
     (
@@ -259,7 +261,11 @@ export function aiRoutes(app: FastifyInstance, config: Config, db: Db): void {
     const stay = p.lodging ? `${p.lodging.address ?? ''}|${p.lodging.area ?? ''}` : '';
     const key = `rec|${p.anchor}|${where}|${stay}|${p.categories.join(',')}|${p.keyword ?? ''}|${p.domestic}|${today()}`;
     const hit = getCache(key);
-    if (hit) return JSON.parse(hit);
+    if (hit) {
+      stats.bump('ai', 'cache.hit');
+      return JSON.parse(hit);
+    }
+    stats.bump('ai', 'cache.miss');
 
     const now = new Date();
     const result: RecommendResult = {
@@ -395,7 +401,14 @@ export function aiRoutes(app: FastifyInstance, config: Config, db: Db): void {
         ] as const;
       }),
     );
-    for (const [c, value] of done) result.categories[c] = value;
+    for (const [c, value] of done) {
+      result.categories[c] = value;
+      // 추천 품질: 정리한 AI(basic = AI 없이 집계), 0곳, 블로그 근거가 있는 곳 수
+      stats.bump('ai', `engine.${value.engine}`);
+      if (value.places.length === 0) stats.bump('ai', 'empty');
+      stats.bump('ai', 'places', value.places.length);
+      stats.bump('ai', 'withBlog', value.places.filter((x) => x.mentions > 0).length);
+    }
     // 한 곳도 못 찾았으면 하루 횟수를 쓰지 않고, 빈 결과가 6시간 남지 않게 저장도 하지 않는다
     if (done.some(([, value]) => value.places.length > 0)) {
       countUse(req.user!.userId);

@@ -1,3 +1,5 @@
+import { countUse } from './usageCount';
+
 /**
  * 길찾기 · 지도 열기 딥링크 (docs/10 §5). 외부 API·비용 없이 사용자가 쓰는 지도 앱으로 넘긴다.
  * 출발지를 비워 두면 지도 앱이 "현재 위치"를 출발지로 쓴다 → 위치 권한이 필요 없다.
@@ -129,6 +131,7 @@ export function directionApps(isDomestic: boolean): MapApp[] {
  * PC·앱 주소가 없으면 바로 웹을 새 탭으로.
  */
 export function openMapLink(link: MapLink): void {
+  countUse(`map.open.${link.app ? 'app' : 'web'}`);
   const isTouch = window.matchMedia('(pointer: coarse)').matches;
   if (!link.app || !isTouch) {
     window.open(link.web, '_blank', 'noopener');

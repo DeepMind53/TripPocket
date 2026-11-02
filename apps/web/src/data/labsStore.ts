@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { countUse } from '../shared/lib/usageCount';
 
 /**
  * 실험실 (마이 → 실험실): 정식으로 넣기 전에 시험해 보는 기능의 켜기/끄기.
@@ -41,12 +42,13 @@ function load(): Partial<Record<LabId, boolean>> {
   }
 }
 
-const useLabs = create<Partial<Record<LabId, boolean>>>(load);
+export const useLabs = create<Partial<Record<LabId, boolean>>>(load);
 
 export const useLab = (id: LabId): boolean => useLabs((s) => s[id] === true);
 
 export function setLab(id: LabId, on: boolean): void {
   useLabs.setState({ [id]: on });
+  countUse(`lab.${id}.${on ? 'on' : 'off'}`);
   try {
     localStorage.setItem(KEY, JSON.stringify(useLabs.getState()));
   } catch {

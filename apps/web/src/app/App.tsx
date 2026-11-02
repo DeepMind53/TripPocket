@@ -6,6 +6,7 @@ import { useTranslation } from '../i18n';
 import { RouterProvider } from 'react-router';
 import { Toaster, toast } from '../shared/ui';
 import { createAppRouter } from './router';
+import { countUse, screenName } from '../data/usageStats';
 import { useInstall } from './pwa';
 import { InAppBanner } from '../features/common/InAppBanner';
 import { MovedBanner } from '../features/common/MovedBanner';
@@ -47,6 +48,19 @@ function installOffered(): boolean {
 
 export function App() {
   const [router] = useState(createAppRouter);
+  // 화면·시트 열기 횟수 (ADR-0009): 경로의 id는 :id로, 시트는 이름만
+  useEffect(() => {
+    let last = '';
+    return router.subscribe((s) => {
+      const sheet = (s.location.state as { sheet?: unknown } | null)?.sheet;
+      const key = `${s.location.pathname}|${typeof sheet === 'string' ? sheet : ''}`;
+      if (key === last || s.navigation.state !== 'idle') return;
+      const [path] = key.split('|');
+      if (path !== last.split('|')[0]) countUse(screenName(s.location.pathname));
+      if (typeof sheet === 'string' && sheet) countUse(`sheet:${sheet}`);
+      last = key;
+    });
+  }, [router]);
   const needChoice = useSync((st) => st.choiceFor !== null);
   const limited = useLimitNotice((s) => s.notice !== null);
   // 처음 로그인하면 닉네임부터 (멤버 목록에서 누가 누구인지 알아보게). 닫으면 이번에는 다시 묻지 않음

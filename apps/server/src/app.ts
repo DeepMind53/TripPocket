@@ -23,6 +23,8 @@ import { placesRoutes } from './routes/places';
 import { routeEtaRoutes } from './routes/routes';
 import { shareRoutes } from './routes/share';
 import { syncRoutes } from './routes/sync';
+import { statsRoutes } from './routes/stats';
+import { statsRepo } from './repositories/statsRepo';
 import { latestFx } from './services/fx';
 
 export const PROXY_HEADER = 'x-tp-proxy';
@@ -80,6 +82,19 @@ export async function buildApp(config: Config, db: Db): Promise<FastifyInstance>
     }
   });
 
+  // 사용 통계 (ADR-0009): 경로 패턴(값 없음)·결과·걸린 시간, 오늘 처음 쓴 사람 수. 누가 했는지는 남기지 않는다
+  const stats = statsRepo(db);
+  app.addHook('onResponse', async (req, reply) => {
+    const route = req.routeOptions.url;
+    if (!route || route === '/healthz') return;
+    try {
+      stats.request(`${req.method} ${route}`, reply.statusCode, reply.elapsedTime);
+      if (req.user) stats.markActive(req.user.userId);
+    } catch (e) {
+      req.log.warn({ err: String(e) }, 'stats failed');
+    }
+  });
+
   app.setErrorHandler((error, req, reply) => {
     // 관리자가 멈췄거나 이번 달 자동 상한에 닿은 외부 API (API 사용량 화면)
     // 앱은 api(어느 외부 API인지)로 안내 팝업 문구를 고른다
@@ -100,6 +115,7 @@ export async function buildApp(config: Config, db: Db): Promise<FastifyInstance>
   adminRoutes(app, db);
   usageRoutes(app, db);
   syncRoutes(app, db);
+  statsRoutes(app, db);
   aiRoutes(app, config, db);
   shareRoutes(app, db);
   placesRoutes(app, config, db);

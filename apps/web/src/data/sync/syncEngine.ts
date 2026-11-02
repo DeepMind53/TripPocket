@@ -79,11 +79,29 @@ async function run(): Promise<void> {
   if (ok === true) await (await import('../settingsSync')).syncSettings();
   // 오프라인에서 쓴 후기 — 일정이 서버에 올라간 뒤에 (docs/17 §6)
   if (ok === true) await (await import('../reviewQueue')).flushReviewQueue();
+  // 기능 사용 횟수 (ADR-0009) — 실패해도 동기화 결과와 상관없음
+  if (ok === true) await sendUsage().catch(() => {});
   useSync.setState(
     ok === true
       ? { state: 'idle', lastSyncedAt: new Date().toISOString() }
       : { state: ok === 'offline' ? 'offline' : 'error' },
   );
+}
+
+/** 기기 설정(테마·글자 크기)·실험실은 서버에 없으므로 기기 환경으로 함께 센다 */
+async function sendUsage(): Promise<void> {
+  const [{ flushUsage }, { useSettings }, { LABS, useLabs }] = await Promise.all([
+    import('../usageStats'),
+    import('../settingsStore'),
+    import('../labsStore'),
+  ]);
+  const s = useSettings.getState();
+  const labs = useLabs.getState();
+  await flushUsage({
+    [`theme.${s.theme}`]: true,
+    [`font.${Math.round(s.fontScale * 100)}`]: true,
+    ...Object.fromEntries(LABS.map((id) => [`lab.${id}`, labs[id] === true])),
+  });
 }
 
 type Step = true | 'offline' | 'error';

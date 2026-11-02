@@ -16,13 +16,17 @@ interface StoredRow {
   owner_user_id: string;
   data_json: string;
   rev: number;
+  deleted_at: string | null;
 }
 
 /**
  * 동기화 저장소 — 모든 쿼리에 사용자·여행 멤버십 조건을 강제한다 (docs/09 §5, IDOR 방지).
  * 클라이언트가 보낸 tripId·소유자를 그대로 믿지 않는다.
  */
-export function syncRepo(db: Db) {
+/** 반영한 변경의 종류 (사용 통계용) */
+export type SyncOp = 'create' | 'update' | 'delete' | 'restore' | 'conflict';
+
+export function syncRepo(db: Db, onApplied: (table: SyncTable, op: SyncOp) => void = () => {}) {
   const roleOf = (userId: string, tripId: string): Role | null => {
     const r = db
       .prepare('SELECT role FROM trip_members WHERE trip_id = ? AND user_id = ?')
@@ -33,7 +37,7 @@ export function syncRepo(db: Db) {
   const getRow = (table: SyncTable, id: string) =>
     db
       .prepare(
-        'SELECT trip_id, owner_user_id, data_json, rev FROM records WHERE table_name = ? AND id = ?',
+        'SELECT trip_id, owner_user_id, data_json, rev, deleted_at FROM records WHERE table_name = ? AND id = ?',
       )
       .get(table, id) as StoredRow | undefined;
   const nextRev = () => {
@@ -122,6 +126,7 @@ export function syncRepo(db: Db) {
           db.prepare(
             'INSERT INTO conflicts (table_name, record_id, user_id, losing_data_json, created_at) VALUES (?, ?, ?, ?, ?)',
           ).run(c.table, record.id, userId, existing.data_json, new Date().toISOString());
+          onApplied(c.table, 'conflict');
         }
         const rev = nextRev();
         const { rev: _ignored, ...data } = record;
@@ -146,6 +151,16 @@ export function syncRepo(db: Db) {
             "INSERT INTO trip_members (trip_id, user_id, role, created_at) VALUES (?, ?, 'owner', ?)",
           ).run(record.id, userId, new Date().toISOString());
         }
+        onApplied(
+          c.table,
+          !existing
+            ? 'create'
+            : record.deletedAt && !existing.deleted_at
+              ? 'delete'
+              : !record.deletedAt && existing.deleted_at
+                ? 'restore'
+                : 'update',
+        );
         result.applied.push({ table: c.table, id: record.id, rev });
       }
       db.exec('COMMIT');

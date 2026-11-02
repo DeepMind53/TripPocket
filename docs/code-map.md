@@ -56,6 +56,9 @@ Tailscale Funnel https://jin-server.tail0844c0.ts.net ─▶ 홈 PC 127.0.0.1:87
 - **AI 엔진 추가·순서**: `services/llm.ts`의 `llmProviders` (OpenAI 호환이면 주소·키·모델만). 모두 실패하면 `basicRecommend.ts`(AI 없이)
 - **서버 DB 표 추가**: `db/migrations.ts` 끝에 새 항목 + 테스트
 - **웹 DB 표 추가**: `data/db.ts` 버전 올림 + `data/migrations` + 마이그레이션 테스트 (CLAUDE.md)
+- **사용 통계 (ADR-0009)**: 서버 `repositories/statsRepo.ts`(저장·요약) + `routes/stats.ts`(앱이 보낸 횟수 받기·관리자 조회),
+  요청·로그인 사용자는 `app.ts`의 `onResponse` 훅, 입력·삭제는 `syncRepo`의 `onApplied`. 웹은 `shared/lib/usageCount.ts`의 `countUse('이름')`로 세고
+  `data/usageStats.ts`가 동기화 뒤 보낸다. 화면 `features/me/AdminStatsPage.tsx`. 이름에 입력값·id를 넣지 않는다
 - **관리자 전용 기능**: 서버는 `routes/admin.ts`의 `requireAdmin`, 웹은 `useAuth((s) => s.me?.isAdmin)`로 메뉴 표시
 - **삭제 확인 팝업**: `shared/ui/confirmStore.ts`의 `confirmDelete(문구)` (모든 삭제는 한 번 더 묻는다)
 - **여행지 특보 나라 추가**: 링크는 shared `alerts/alerts.ts` `WEATHER_WARNING_LINKS`, 내용은 서버 `services/nationalAlerts.ts`에 파서 + `APIS` 등록 + docs/24 §7 표

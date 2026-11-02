@@ -288,4 +288,16 @@ export const MIGRATIONS: readonly string[] = [
   );
   CREATE INDEX suggestions_user ON suggestions(user_id, created_at);
   `,
+  // 18: 사용 통계 (관리자만, ADR-0009) — 날짜·종류·이름별 횟수만, 누가 했는지는 남기지 않음. 3년 보관.
+  // last_active_date = 오늘 처음 쓴 사람만 하루 사용자 수에 더하려고 (날짜 하나만 덮어씀)
+  `
+  CREATE TABLE usage_stats (
+    date TEXT NOT NULL,
+    kind TEXT NOT NULL,
+    name TEXT NOT NULL,
+    count INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (date, kind, name)
+  );
+  ALTER TABLE users ADD COLUMN last_active_date TEXT;
+  `,
 ];

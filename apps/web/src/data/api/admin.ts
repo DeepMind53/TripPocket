@@ -68,3 +68,57 @@ export const apiUsageApi = {
       body: JSON.stringify(body),
     }),
 };
+
+/** 사용 통계 (서버 routes/stats.ts, 관리자만) — 사람 구분 없는 합계 */
+export interface StatRow {
+  name: string;
+  n: number;
+}
+export interface StatsReport {
+  days: number;
+  since: string;
+  today: string;
+  users: {
+    total: number;
+    active1: number;
+    active7: number;
+    active30: number;
+    daily: { date: string; n: number }[];
+    signups: { date: string; n: number }[];
+    providers: StatRow[];
+  };
+  events: StatRow[];
+  env: StatRow[];
+  data: StatRow[];
+  sync: StatRow[];
+  ai: StatRow[];
+  api: {
+    route: string;
+    n: number;
+    e4: number;
+    e5: number;
+    limit: number;
+    p50: number | null;
+    p95: number | null;
+  }[];
+  trips: {
+    total: number;
+    domestic: number;
+    countries: StatRow[];
+    cities: StatRow[];
+    avgDays: number;
+    perTrip: { items: number; bookings: number; checklistItems: number };
+    shared: number;
+  };
+  settings: {
+    users: number;
+    features: StatRow[];
+    domesticMap: StatRow[];
+    prompt: { seen: number; on: number };
+  };
+  devices: { sessions: number; os: StatRow[]; browser: StatRow[] };
+}
+
+export const statsApi = {
+  report: (days: number) => api<StatsReport>(`/api/admin/stats?days=${days}`),
+};

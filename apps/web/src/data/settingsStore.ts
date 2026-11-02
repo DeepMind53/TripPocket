@@ -9,6 +9,7 @@ import { create } from 'zustand';
 import { applyTheme } from '../shared/lib/theme';
 import { setDateStyle } from '../shared/lib/dateFormat';
 import { settingsRepo } from './repositories/settingsRepo';
+import { countUse } from '../shared/lib/usageCount';
 
 const KEY = 'settings';
 /** 첫 화면이 깜빡이지 않게 테마·글자 크기는 localStorage에도 (index.html이 먼저 읽음) */
@@ -57,6 +58,7 @@ export function currentSettings(): Settings {
 }
 
 export function updateSettings(patch: Partial<Settings>): void {
+  for (const k of Object.keys(patch)) countUse(`setting.${k}`);
   const next = parseSettings({ ...currentSettings(), ...patch });
   useSettings.setState(next);
   applyDevice(next);
