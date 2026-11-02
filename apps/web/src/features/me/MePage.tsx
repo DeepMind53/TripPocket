@@ -15,6 +15,7 @@ import {
   Sparkles,
   Users,
   Gauge,
+  IdCard,
   FlaskConical,
   SquarePen,
   Inbox,
@@ -45,6 +46,8 @@ export function MePage() {
         <AccountCard />
         {/* 묶음: 여행 도구 · 관리자(관리자만) · 앱 정보 (docs/16 H1) */}
         <MenuGroup title={t('me.groupTools')}>
+          {/* 개인정보(여권 만료일 등)는 메뉴로 (사용자 요청 2026-11-02) */}
+          <MenuRow to="/me/profile" icon={<IdCard />} label={t('profile.title')} />
           <MenuRow to="/settings" icon={<Settings />} label={t('me.settings')} />
           <MenuRow to="/backup" icon={<DatabaseBackup />} label={t('me.backup')} />
           {/* 설치한 뒤에도 늘 보인다 (다른 기기에 추가·아이콘을 지운 경우, 사용자 요청 2026-10-24) */}

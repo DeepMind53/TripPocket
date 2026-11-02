@@ -5,11 +5,18 @@ import { useTranslation } from '../../i18n';
 import { copyText } from '../../shared/lib/clipboard';
 import { formatMonthDay } from '../../shared/lib/dateFormat';
 import { BOOKING_ICON } from '../common/bookingKinds';
+import { membershipFor, useTravelProfile } from '../../data/travelProfile';
 
 /** S-16 예약 카드. 항공 = 탑승권 모양, 숙소 = 체크인·체크아웃 (docs/05 §3 S-09) */
 export function BookingCard({ booking, onOpen }: { booking: Booking; onOpen: () => void }) {
   const { t } = useTranslation();
   const b = booking;
+  // 마이 → 개인정보의 항공사 회원번호 (예약 항공사·편명과 맞을 때, 2026-11-02)
+  const member = useTravelProfile((p) =>
+    b.kind === 'flight'
+      ? membershipFor(p.memberships, { provider: b.provider, flightNo: b.details?.flightNo })
+      : undefined,
+  );
   return (
     <li className="overflow-hidden rounded-card border border-line bg-surface shadow-card">
       <button
@@ -37,6 +44,22 @@ export function BookingCard({ booking, onOpen }: { booking: Booking; onOpen: () 
             {t('bookings.voucherOpen')}
             <ExternalLink aria-hidden="true" className="size-3.5" />
           </a>
+        </div>
+      )}
+      {member && (
+        <div className="flex items-center justify-between gap-2 border-t border-dashed border-line px-4 py-1.5">
+          <span className="tabular min-w-0 truncate text-caption text-fg-sub">
+            {t('bookings.member')} <strong className="font-bold text-fg">{member.number}</strong>
+            {member.tier && ` · ${member.tier}`}
+          </span>
+          <button
+            type="button"
+            aria-label={t('bookings.copyMember', { no: member.number })}
+            onClick={() => void copyText(member.number, t('bookings.copied'))}
+            className="flex h-10 items-center gap-1 px-1 text-caption font-semibold text-primary"
+          >
+            <Copy aria-hidden="true" className="size-4" />
+          </button>
         </div>
       )}
       {b.confirmationNo && (

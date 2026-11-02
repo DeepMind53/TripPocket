@@ -46,9 +46,11 @@ export function ShowCard({
         <X aria-hidden="true" className="size-6" />
       </button>
       <div className="flex flex-1 flex-col items-center justify-center gap-6 text-center">
-        <p className="text-[clamp(1.75rem,8vw,3rem)] leading-tight font-bold break-words">{big}</p>
+        <p className="text-[clamp(1.75rem,8vw,3rem)] leading-tight font-bold break-words whitespace-pre-line">
+          {big}
+        </p>
         {children}
-        {sub && <p className="text-body-1 text-fg-sub">{sub}</p>}
+        {sub && <p className="text-body-1 whitespace-pre-line text-fg-sub">{sub}</p>}
       </div>
     </div>,
     document.body,

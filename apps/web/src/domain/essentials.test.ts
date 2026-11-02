@@ -63,6 +63,21 @@ describe('나라별 필수 항목 자동 판단 (docs/19)', () => {
     });
   });
 
+  it('전자여행허가: 개인정보의 ESTA 만료일이 귀국일까지면 자동 ✓, 그 전에 끝나면 경고 (2026-11-02)', () => {
+    const base = {
+      trip: trip(['US']),
+      bookings: [],
+      checked: new Set<string>(),
+      passportExpiry: null,
+      today: '2026-10-01',
+    };
+    const visa = (permits: { esta?: string }) =>
+      buildEssentials({ ...base, permits }).groups[0]!.rows.find((r) => r.item.id === 'visa')!;
+    expect(visa({ esta: '2028-01-01' })).toMatchObject({ checked: true, auto: true });
+    expect(visa({ esta: '2026-11-02' }).warn).toContain('귀국일');
+    expect(visa({}).checked).toBe(false);
+  });
+
   it('직접 체크한 항목 반영, 팁은 개수에서 빠짐, 국내 여행은 비어 있음, 모르는 나라는 따로', () => {
     const s = buildEssentials({
       trip: trip(['JP']),

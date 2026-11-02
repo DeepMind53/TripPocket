@@ -5,6 +5,8 @@ import {
   essentialsFor,
   getTripDays,
   passportNeededUntil,
+  PERMIT_FOR_COUNTRY,
+  type EntryPermit,
   type Booking,
   type CountryEssentials,
   type EssentialItem,
@@ -62,9 +64,11 @@ export function buildEssentials(input: {
   bookings: readonly Booking[];
   checked: ReadonlySet<string>;
   passportExpiry: LocalDate | null;
+  /** 개인정보에 적은 전자여행허가 만료일 (ESTA 등, 2026-11-02) */
+  permits?: Partial<Record<EntryPermit, LocalDate>>;
   today: LocalDate;
 }): EssentialsSummary {
-  const { trip, bookings, checked, passportExpiry, today } = input;
+  const { trip, bookings, checked, passportExpiry, today, permits = {} } = input;
   const live = bookings.filter((b) => !b.deletedAt);
   const codes = [
     ...new Set(trip.destinations.flatMap((d) => (d.countryCode ? [d.countryCode] : []))),
@@ -89,6 +93,15 @@ export function buildEssentials(input: {
     let auto = false;
     let note: string | undefined;
     let warn: string | undefined;
+    // 전자여행허가: 개인정보에 만료일이 있으면 귀국일까지 유효한지 본다
+    const permit = item.id === 'visa' ? PERMIT_FOR_COUNTRY[code] : undefined;
+    const permitUntil = permit ? permits[permit] : undefined;
+    if (permitUntil) {
+      if (permitUntil >= trip.endDate) {
+        auto = true;
+        note = `허가 만료 ${permitUntil} — 귀국일까지 유효해요`;
+      } else warn = `허가가 귀국일(${trip.endDate}) 전에 끝나요 (만료 ${permitUntil})`;
+    }
     switch (item.auto) {
       case 'visaFree':
         if (country?.visaFreeDays && tripDays <= country.visaFreeDays) {

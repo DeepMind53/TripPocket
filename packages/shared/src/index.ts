@@ -136,5 +136,6 @@ export { flagEmoji } from './data/flag';
 export * from './reviews/reviews';
 export * from './data/essentials';
 export * from './data/phrases';
+export * from './data/health';
 export * from './data/emergency';
 export { DEFAULT_PUSH_PREFS, PUSH_KINDS, type PushKind, type PushPrefs } from './push/push';

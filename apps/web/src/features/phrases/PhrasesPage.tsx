@@ -14,6 +14,7 @@ import { useTrip } from '../../data/hooks';
 import { useTranslation } from '../../i18n';
 import { Chip, ScrollRow, TopBar } from '../../shared/ui';
 import { ShowCard } from './ShowCard';
+import { HealthCardButton } from './HealthCardButton';
 
 /**
  * 번역·회화 (docs/20 G7): 여행지 말로 자주 쓰는 10문장 — 누르면 크게 보여 주기.
@@ -76,6 +77,7 @@ export function PhrasesPage() {
           </a>
         </div>
 
+        <HealthCardButton lang={lang} />
         <ul
           aria-label={t('phrases.list', { lang: lang.name })}
           className="flex flex-col divide-y divide-line rounded-card border border-line"

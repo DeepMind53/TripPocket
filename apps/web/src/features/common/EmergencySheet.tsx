@@ -9,6 +9,7 @@ import {
 import { ExternalLink, Phone } from 'lucide-react';
 import { useTranslation } from '../../i18n';
 import { BottomSheet } from '../../shared/ui';
+import { MySafetyInfo } from './MySafetyInfo';
 
 /** 나라 이름 (기기 글꼴·데이터 없이 브라우저가 아는 이름) */
 function countryName(code: string): string {
@@ -38,6 +39,7 @@ export function EmergencySheet({
   return (
     <BottomSheet open={open} onOpenChange={onOpenChange} title={t('emergency.title')}>
       <div className="flex flex-col gap-4">
+        <MySafetyInfo />
         {countries.map((code) => {
           const data = emergencyFor(code);
           return (

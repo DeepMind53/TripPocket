@@ -1,4 +1,3 @@
-import { Link } from 'react-router';
 import { LogOut, MonitorSmartphone, Pencil, UserX } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import {
@@ -56,10 +55,10 @@ export function AccountCard() {
 
   return (
     <section className="flex flex-col gap-3 rounded-card bg-bg-subtle p-4">
-      {/* 닉네임 · 로그인 방법 · 개인정보 · 포인트를 4칸 같은 너비로 (사용자 요청 2026-11-02).
+      {/* 닉네임 · 로그인 방법 · 포인트를 3칸 같은 너비로 (사용자 요청 2026-11-02, 개인정보는 아래 메뉴로).
           칸마다 넘치면 그 칸 안에서 말줄임 — 한 값이 길어도 다른 칸 위치는 그대로.
-          아주 좁거나 글자가 크면(tight) 2칸 × 2줄 */}
-      <div className="grid grid-cols-4 items-center gap-1 tight:grid-cols-2 tight:gap-y-2">
+          */}
+      <div className="grid grid-cols-3 items-center gap-1">
         <button
           type="button"
           onClick={() => setNicknameOpen(true)}
@@ -85,12 +84,6 @@ export function AccountCard() {
             </span>
           )}
         </span>
-        <Link
-          to="/me/profile"
-          className="flex h-8 min-w-0 items-center justify-center rounded-full border border-line bg-surface px-1.5 text-caption font-semibold text-fg-sub"
-        >
-          <span className="truncate">{t('profile.title')}</span>
-        </Link>
         <button
           type="button"
           onClick={() => open('points')}
