@@ -96,19 +96,19 @@ export function SavedSpotsButtons({
       <div className={horizontal ? 'grid grid-cols-2 gap-2' : 'flex flex-col gap-2'}>
         <button
           type="button"
-          onClick={() => setSaveOpen(true)}
-          className="flex min-h-12 items-center gap-2 rounded-card bg-primary-weak px-3 text-left text-body-2 font-semibold"
-        >
-          <MapPinPlus aria-hidden="true" className="size-5 shrink-0 text-primary" />
-          {t('spots.save')}
-        </button>
-        <button
-          type="button"
           onClick={() => setListOpen(true)}
           className="flex min-h-12 items-center gap-2 rounded-card bg-bg-subtle px-3 text-left text-body-2 font-semibold"
         >
           <List aria-hidden="true" className="size-5 shrink-0 text-primary" />
           {t('spots.list', { n: spots.length })}
+        </button>
+        <button
+          type="button"
+          onClick={() => setSaveOpen(true)}
+          className="flex min-h-12 items-center gap-2 rounded-card bg-primary-weak px-3 text-left text-body-2 font-semibold"
+        >
+          <MapPinPlus aria-hidden="true" className="size-5 shrink-0 text-primary" />
+          {t('spots.save')}
         </button>
       </div>
 

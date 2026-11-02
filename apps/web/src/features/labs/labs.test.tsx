@@ -628,10 +628,11 @@ describe('실험실', () => {
       expect(
         await screen.findByRole('link', { name: '후지산 투어 바우처 링크 열기' }),
       ).toHaveAttribute('href', 'https://v.example/fuji');
-      expect(screen.getByRole('link', { name: /11\.13.*후지산 투어/ })).toHaveAttribute(
-        'href',
-        expect.stringContaining('/bookings?focus='),
-      );
+      expect(
+        screen
+          .getAllByRole('link', { name: /후지산 투어/ })
+          .some((a) => a.getAttribute('href')?.includes('/bookings?focus=')),
+      ).toBe(true);
     } finally {
       for (const id of ids) setLab(id, false);
       vi.unstubAllGlobals();

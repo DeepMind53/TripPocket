@@ -12,7 +12,9 @@ export interface AirlineProgram {
   tiers: readonly string[];
 }
 
-export const AIRLINE_TIERS_CHECKED_AT = '2026-11-02';
+export const AIRLINE_TIERS_CHECKED_AT = '2026-11-03';
+/** 공식 사이트·여러 자료로 확인한 프로그램 (나머지는 월간 갱신에서 공식 확인) */
+export const AIRLINE_TIERS_VERIFIED = ['KE', 'OZ', 'CI', 'VN', 'DL', 'UA', 'AA', 'AF'] as const;
 
 export const AIRLINE_PROGRAMS: readonly AirlineProgram[] = [
   {
@@ -27,7 +29,7 @@ export const AIRLINE_PROGRAMS: readonly AirlineProgram[] = [
     name: '아시아나항공',
     aliases: ['아시아나', 'asiana'],
     program: '아시아나클럽',
-    tiers: ['실버', '골드', '다이아몬드', '다이아몬드 플러스', '플래티늄'],
+    tiers: ['일반', '골드', '다이아몬드', '다이아몬드 플러스', '플래티늄'],
   },
   {
     code: 'JL',
@@ -90,14 +92,14 @@ export const AIRLINE_PROGRAMS: readonly AirlineProgram[] = [
     name: '델타항공',
     aliases: ['델타', 'delta'],
     program: '스카이마일스',
-    tiers: ['일반', '실버', '골드', '플래티넘', '다이아몬드'],
+    tiers: ['일반', '실버 메달리온', '골드 메달리온', '플래티넘 메달리온', '다이아몬드 메달리온'],
   },
   {
     code: 'UA',
     name: '유나이티드항공',
     aliases: ['유나이티드', 'united'],
     program: '마일리지플러스',
-    tiers: ['일반', '실버', '골드', '플래티넘', '1K'],
+    tiers: ['일반', '프리미어 실버', '프리미어 골드', '프리미어 플래티넘', '프리미어 1K'],
   },
   {
     code: 'AA',
@@ -125,7 +127,7 @@ export const AIRLINE_PROGRAMS: readonly AirlineProgram[] = [
     name: '에어프랑스',
     aliases: ['에어프랑스', 'airfrance', 'flyingblue'],
     program: '플라잉블루',
-    tiers: ['익스플로러', '실버', '골드', '플래티넘'],
+    tiers: ['익스플로러', '실버', '골드', '플래티넘', '얼티밋'],
   },
   {
     code: 'LH',

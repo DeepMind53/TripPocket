@@ -1,5 +1,6 @@
 import {
   AIRLINE_TIERS_CHECKED_AT,
+  BAGGAGE_CHECKED_AT,
   EMERGENCY_CHECKED_AT,
   ESSENTIALS_CHECKED_AT,
   TRANSIT_CHECKED_AT,
@@ -47,6 +48,9 @@ export function monthlyUpdateRequest(month: string): string {
 13. 건강 카드 번역(알레르기 23종·12개 언어 문장): packages/shared/src/data/health.ts — 어색한 번역
 14. 국내 공항 정보 API: 인천(B551177 statusOfAllFltDeOdp, 터미널 코드 P01·P02·P03),
     한국공항공사(B551178 flight-search) 주소·응답 항목·대상 공항 14곳 (apps/server/src/services/airportInfo.ts)
+16. 항공사 수하물 대표값: packages/shared/src/data/baggage.ts (지난 확인: ${BAGGAGE_CHECKED_AT})
+    - official: false인 항공사는 공식 페이지로 확인해 true로, 인천 취항 항공사를 차례로 더하기
+    - 항공사 등급: AIRLINE_TIERS_VERIFIED에 없는 프로그램을 공식 사이트로 확인
 15. AI 추천 결과 품질: 성수역·서면역·신주쿠역·타이베이역·숙소 기준으로 0곳이 나오는지
 9. 도움말·소개 카드 그림이 지금 화면·기능과 맞는지 (features/me/IntroCarousel.tsx, legal/content.ko.ts HELP)
 

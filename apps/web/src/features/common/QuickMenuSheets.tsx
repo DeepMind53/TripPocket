@@ -280,6 +280,13 @@ function QuickMenuContent({
         </Link>
       </div>
 
+      {/* 바로가기 위: 지금 이동 정보(출국편 → 렌터카 반납 전까지 → 귀국편) + 위치 저장 2개 (사용자 요청 2026-11-03) */}
+      {trip && (leg || shortcuts) && (
+        <section className="flex flex-col gap-2">
+          {leg && <TravelLegCard leg={leg} tripId={trip.id} onCar={() => shortcuts?.car?.()} />}
+          {shortcuts && <SavedSpotsButtons trip={trip} horizontal />}
+        </section>
+      )}
       {/* 바로가기 4칸: 편집으로 모든 기능·화면 중에서 고른다 (사용자 요청 2026-11-02) */}
       <section className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
@@ -306,12 +313,6 @@ function QuickMenuContent({
             );
           })}
         </div>
-        {/* 지금 이동 정보: 출국편 → 렌터카(반납 전까지) → 귀국편 (사용자 요청 2026-11-02) */}
-        {trip && leg && (
-          <TravelLegCard leg={leg} tripId={trip.id} onCar={() => shortcuts?.car?.()} />
-        )}
-        {/* 현재 위치 저장·저장한 위치 (이 기기·이번 여행만) */}
-        {trip && shortcuts && <SavedSpotsButtons trip={trip} horizontal />}
       </section>
       <ShortcutEditSheet open={editOpen} onOpenChange={setEditOpen} />
 

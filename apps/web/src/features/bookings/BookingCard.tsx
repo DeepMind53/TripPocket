@@ -7,6 +7,7 @@ import { formatMonthDay } from '../../shared/lib/dateFormat';
 import { BOOKING_ICON } from '../common/bookingKinds';
 import { membershipFor, useTravelProfile } from '../../data/travelProfile';
 import { FlightAirportInfo } from './FlightAirportInfo';
+import { BaggageInfo } from './BaggageInfo';
 
 /** S-16 예약 카드. 항공 = 탑승권 모양, 숙소 = 체크인·체크아웃 (docs/05 §3 S-09) */
 export function BookingCard({
@@ -60,6 +61,7 @@ export function BookingCard({
         </div>
       )}
       {b.kind === 'flight' && <FlightAirportInfo booking={b} />}
+      {b.kind === 'flight' && <BaggageInfo booking={b} />}
       {member && (
         <div className="flex items-center justify-between gap-2 border-t border-dashed border-line px-4 py-1.5">
           <span className="tabular min-w-0 truncate text-caption text-fg-sub">

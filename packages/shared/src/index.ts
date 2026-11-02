@@ -139,5 +139,6 @@ export * from './data/phrases';
 export * from './data/health';
 export * from './data/transit';
 export * from './data/airlineTiers';
+export * from './data/baggage';
 export * from './data/emergency';
 export { DEFAULT_PUSH_PREFS, PUSH_KINDS, type PushKind, type PushPrefs } from './push/push';
