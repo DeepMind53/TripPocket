@@ -404,9 +404,21 @@ function BookingForm({
 
       {kind === 'flight' ? (
         <>
-          {/* 편명만 넣고 불러오기 — 점선으로 한 묶음 (사용자 요청 2026-10-25) */}
+          {/* 출발 날짜 + 편명 → 불러오기 — 점선으로 한 묶음 (사용자 요청 2026-10-25, 날짜도 이 안에 2026-11-02) */}
           <div className="flex flex-col gap-1.5 rounded-card border border-dashed border-primary/60 p-2.5">
-            <label htmlFor="bk-flight" className="text-caption font-semibold text-fg-sub">
+            {/* 아래 출발 날짜와 같은 값 — 어느 쪽을 고쳐도 함께 바뀐다 (사용자 요청 2026-11-02) */}
+            <label htmlFor="bk-lookup-date" className="text-caption font-semibold text-fg-sub">
+              {t('bookings.departDate')}
+            </label>
+            <input
+              id="bk-lookup-date"
+              type="date"
+              required
+              value={f.startDate}
+              onChange={set('startDate')}
+              className={`${inputClass} tabular`}
+            />
+            <label htmlFor="bk-flight" className="mt-1 text-caption font-semibold text-fg-sub">
               {t('bookings.flightNo')}
             </label>
             <div className="flex gap-1.5">
@@ -429,7 +441,9 @@ function BookingForm({
                 {t('bookings.lookup')}
               </Button>
             </div>
-            <p className="text-micro text-fg-muted">{t('bookings.lookupHint')}</p>
+            <p className="text-micro whitespace-pre-line text-fg-muted">
+              {t('bookings.lookupHint')}
+            </p>
           </div>
           <Field label={t('bookings.provider')}>
             <input

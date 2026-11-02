@@ -482,6 +482,18 @@ describe('편명으로 불러오기', () => {
     vi.unstubAllGlobals();
     useAuth.setState({ status: 'unknown', me: null });
   });
+
+  it('점선 칸의 출발 날짜와 아래 출발 날짜는 같은 값으로 함께 바뀐다', async () => {
+    const user = userEvent.setup();
+    renderAt([`/trips/${tripId}/bookings`]);
+    await user.click(await screen.findByRole('button', { name: '예약 추가' }));
+    const sheet = screen.getByRole('dialog', { name: '예약 추가' });
+    const [box, below] = within(sheet).getAllByLabelText('출발 날짜');
+    fireEvent.change(box!, { target: { value: '2026-10-25' } });
+    expect(below).toHaveValue('2026-10-25');
+    fireEvent.change(below!, { target: { value: '2026-10-26' } });
+    expect(box).toHaveValue('2026-10-26');
+  });
 });
 
 describe('픽업·드랍 예약 (사용자 요청 2026-10-25)', () => {

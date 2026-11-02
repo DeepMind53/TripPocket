@@ -296,7 +296,7 @@
     "lookupNote": "최근 운항 기준으로 채웠어요\n실제 날짜의 시간은 다를 수 있어요",
     "lookupNone": "운항 정보를 못 찾았어요\n직접 입력해 주세요",
     "lookupFailed": "지금은 항공편을 불러올 수 없어요\n직접 입력해 주세요",
-    "lookupHint": "편명만 넣고 불러오면 공항·터미널·시간을 채워요",
+    "lookupHint": "출발 날짜와 편명을 넣고 불러오세요\n공항·터미널·시간을 채워요",
     "direction": "구분",
     "directionValue": {
       "pickup": "픽업 (공항 → 숙소)",
@@ -974,6 +974,8 @@
     "radius": "{{km}}km 안",
     "fromGoogle": "Google 장소 검색",
     "fromMap": "지도 장소 검색",
+    "keywordNote": "블로그에 자주 나온 키워드로 근처를 찾았어요\n가게 자체의 블로그 후기는 아니에요",
+    "keywordPick": "블로그 인기 키워드 \"{{keyword}}\" · 글 {{n}}개",
     "alsoGoogle": "Google에서도 찾음"
   },
   "admin": {
