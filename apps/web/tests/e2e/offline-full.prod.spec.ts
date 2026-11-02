@@ -61,6 +61,23 @@ async function visitAll(page: Page, tripUrl: string, title: string) {
   await expect(page.getByRole('heading', { name: '환율 계산기' })).toBeVisible();
   await page.goto('/settings');
   await expect(page.getByRole('region', { name: '화면' })).toBeVisible();
+  // 2026-11-02 새 화면들도 인터넷 없이 (기기에 저장된 정보로)
+  await page.goto(`${tripUrl}/weather`);
+  await expect(page.getByRole('button', { name: '날씨 표시 설명' })).toBeVisible();
+  await page.goto(`${tripUrl}/essentials`);
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  await page.goto('/me/profile');
+  await expect(page.getByRole('heading', { name: '알레르기·건강' })).toBeVisible();
+  await page.goto('/phrases');
+  await expect(page.getByRole('radiogroup', { name: '언어' })).toBeVisible();
+  await page.goto(`${tripUrl}/plan`);
+  await page
+    .getByRole('button', { name: /빠른 메뉴/ })
+    .first()
+    .click();
+  await expect(page.getByRole('button', { name: '현재 위치 저장' })).toBeVisible();
+  await expect(page.getByRole('button', { name: '편집' }).last()).toBeVisible();
+  await page.keyboard.press('Escape');
 }
 
 test('비행기 모드: 설치 후 인터넷 없이 앱을 새로 열어도 모든 화면이 열리고, 일정을 더하고 고친 것이 남는다', async ({
