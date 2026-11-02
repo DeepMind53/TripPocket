@@ -1,6 +1,7 @@
 import * as Dialog from '@radix-ui/react-dialog';
 import { useRef, useState, type ReactNode } from 'react';
 import { cn } from '../lib/cn';
+import { useKeyboardInset } from '../hooks/useKeyboardInset';
 
 export interface BottomSheetProps {
   open: boolean;
@@ -37,6 +38,8 @@ export function BottomSheetImpl({
   const [full, setFull] = useState(false);
   if (!open && full) setFull(false);
   const dragY = useRef<number | null>(null);
+  // 키보드가 뜨면 시트를 키보드 위로 올리고 보이는 칸 안에 맞춘다 (닉네임 입력 등, 사용자 요청 2026-11-02)
+  const kb = useKeyboardInset(open);
   const handleDrag = {
     onPointerDown: (e: React.PointerEvent) => {
       dragY.current = e.clientY;
@@ -75,6 +78,9 @@ export function BottomSheetImpl({
             full && 'h-[90dvh]',
             className,
           )}
+          style={
+            kb.inset > 0 ? { bottom: kb.inset, maxHeight: `${(kb.height ?? 0) - 8}px` } : undefined
+          }
         >
           <div
             aria-hidden="true"
