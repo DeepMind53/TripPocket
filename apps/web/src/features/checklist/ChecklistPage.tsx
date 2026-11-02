@@ -2,7 +2,7 @@ import type { ChecklistTemplate } from '@trippocket/shared';
 import { useChecklist, useSharedPacking, useTrip } from '../../data/hooks';
 import { useEssentials } from '../essentials/useEssentials';
 import { Check, ListPlus, Plus, Share2, X } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useBeforeUnload, useBlocker, useParams } from 'react-router';
 import { useMemberCount } from '../../data/tripRoles';
 import type { PrepList as ListKind } from '../../data/repositories/checklistRepo';
@@ -294,6 +294,11 @@ function AddRow({
   const [category, setCategory] = useState<string>(draft.categories[0] ?? '기타');
   const [addingCategory, setAddingCategory] = useState(false);
   const [newCategory, setNewCategory] = useState('');
+  const categoryForm = useRef<HTMLFormElement>(null);
+  // 칩이 많으면 입력칸·체크 버튼이 칩 줄 오른쪽 밖에 생긴다 → 끝까지 보이게 민다 (사용자 요청 2026-11-02)
+  useEffect(() => {
+    if (addingCategory) categoryForm.current?.scrollIntoView?.({ block: 'nearest', inline: 'end' });
+  }, [addingCategory]);
   // 고른 카테고리를 그룹 삭제로 지웠으면 첫 카테고리로
   const selectedCategory = draft.categories.includes(category)
     ? category
@@ -365,6 +370,7 @@ function AddRow({
           ))}
           {addingCategory ? (
             <form
+              ref={categoryForm}
               className="flex shrink-0 items-center gap-1"
               onSubmit={(e) => {
                 e.preventDefault();

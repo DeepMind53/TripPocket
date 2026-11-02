@@ -102,7 +102,11 @@ describe('준비 탭 (저장·취소)', () => {
   it('카테고리 칩 + 로 추가하고, 그룹 전체를 지운다', async () => {
     const user = userEvent.setup();
     renderAt(`/trips/${tripId}/checklist`);
+    const scroll = vi.fn();
+    Element.prototype.scrollIntoView = scroll;
     await user.click(await screen.findByRole('button', { name: '카테고리 추가' }));
+    // 입력칸·체크 버튼이 칩 줄 밖에 있어도 보이게 민다
+    expect(scroll).toHaveBeenCalledWith({ block: 'nearest', inline: 'end' });
     await user.type(screen.getByLabelText('새 카테고리'), '캠핑{Enter}');
     expect(screen.getByRole('radio', { name: '캠핑' })).toHaveAttribute('aria-checked', 'true');
     await user.type(screen.getByLabelText('준비물 추가'), '랜턴{Enter}');
