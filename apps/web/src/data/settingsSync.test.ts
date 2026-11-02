@@ -87,4 +87,28 @@ describe('날짜 표시 형식', () => {
     expect(formatMonthDay('2026-10-27')).toBe('10월 27일 (화)');
     expect(formatPeriod('2026-10-27', '2026-10-31')).toBe('2026년 10월 27일 – 10월 31일');
   });
+
+  it('다른 계정으로 바뀌면 앞 사람의 설정·물어본 기록을 쓰지 않는다', async () => {
+    await syncSettings();
+    updateSettings({ dateFormat: 'korean', planPromptSeen: ['jetLag'] });
+    await syncSettings();
+    useAuth.setState({
+      status: 'user',
+      me: { id: 'other', nickname: 'o', createdAt: '', providers: [] },
+    });
+    server = { data: null, updatedAt: null };
+    await syncSettings();
+    expect(useSettings.getState()).toMatchObject({ dateFormat: 'dot', planPromptSeen: [] });
+  });
+
+  it('물어본 기록은 받을 때도 합친다', async () => {
+    updateSettings({ planPromptSeen: ['jetLag'] });
+    await syncSettings();
+    server = {
+      data: { planPromptV: 1, planPromptSeen: ['sunTimes'] },
+      updatedAt: '2030-01-01T00:00:00.000Z',
+    };
+    await syncSettings();
+    expect(useSettings.getState().planPromptSeen).toEqual(['jetLag', 'sunTimes']);
+  });
 });

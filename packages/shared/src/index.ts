@@ -37,8 +37,12 @@ export {
 } from './data/places';
 export {
   DEVICE_SETTINGS,
+  mergePlanSeen,
+  nextPlanPrompt,
   parseSettings,
+  PLAN_FEATURES,
   SETTINGS_DEFAULTS,
+  type PlanFeature,
   type Settings,
   pickSynced,
   SYNCED_SETTINGS,

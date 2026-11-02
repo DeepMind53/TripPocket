@@ -1,5 +1,6 @@
 import type { ItineraryItem, LocalDate, Trip } from '@trippocket/shared';
-import { useSettings } from '../../data/settingsStore';
+import { useDomesticMap } from '../../data/mapChoice';
+import { DomesticMapChoice } from '../common/DomesticMapChoice';
 import { Minimize2, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { fitPoints } from '../../domain/bookingPlan';
@@ -72,11 +73,14 @@ export function TripMap({
   const el = useRef<HTMLDivElement>(null);
   const handle = useRef<MapHandle | null>(null);
   const [status, setStatus] = useState<'loading' | 'ready' | 'error' | 'paused'>('loading');
-  const domesticMap = useSettings((s) => s.domesticMap);
-  const chosen = chooseProvider(isDomesticTrip(trip), domesticMap);
+  const domesticMap = useDomesticMap();
+  const domestic = isDomesticTrip(trip);
+  // 국내 지도가 "매번 묻기"면 고를 때까지 지도를 불러오지 않는다 (무료 사용량 절약)
+  const asking = domestic && domesticMap === null;
+  const chosen = chooseProvider(domestic, domesticMap ?? 'naver');
   // 고른 지도가 무료 사용량으로 멈췄거나 못 불러오면 무료 지도(MapLibre + OpenFreeMap)로 (docs/23 §4)
   const [fallback, setFallback] = useState(false);
-  const provider: ActiveMapId | null = fallback ? 'osm' : (chosen ?? 'osm');
+  const provider: ActiveMapId | null = asking ? null : fallback ? 'osm' : (chosen ?? 'osm');
   const online = typeof navigator === 'undefined' || navigator.onLine;
   const [hintDone, setHintDone] = useState(hintSeen);
 
@@ -286,6 +290,7 @@ export function TripMap({
         : {})}
     >
       <div ref={el} className="absolute inset-0" aria-label={t('map.label')} role="region" />
+      {asking && online && <DomesticMapChoice />}
       {/* 작은 지도: 누르면 크게 (지도를 바로 움직이지 않고, 크게 본 뒤 움직인다) */}
       {size === 'small' && onSizeChange && status === 'ready' && (
         <button

@@ -11,7 +11,7 @@ export interface Settings {
   directionsApp: 'naver' | 'kakao' | 'ask';
   travelMode: 'transit' | 'walk' | 'car';
   /** 앱 안 국내 지도 (해외는 늘 Google, 2026-10-28). 예전 inAppMap 값은 parseSettings가 버림 */
-  domesticMap: 'naver' | 'kakao';
+  domesticMap: 'naver' | 'kakao' | 'ask';
   timeStepMin: 5 | 10 | 15 | 30;
   dimPastItems: boolean;
   /** 0 = 끄기 */
@@ -56,6 +56,42 @@ export interface Settings {
   aiCats: ('food' | 'cafe' | 'play')[];
   /** AI 추천 기준 위치 처음 값: 가까운 역(현재 위치) / 숙소 / 직접 입력 */
   aiAnchor: 'coords' | 'lodging' | 'text';
+  /** 기능 안내 팝업으로 이미 물어본 일정 기능 (계정별, 기능마다 한 번만) */
+  planPromptSeen: PlanFeature[];
+  /** 없으면 옛 설정 → 일정 기능을 모두 끄고 다시 묻는다 (사용자 결정 2026-11-02) */
+  planPromptV: 1;
+}
+
+/** 설정 "일정"의 켜고 끄는 항목. 처음에는 모두 끔, 접속할 때 하나씩 묻는다 (2026-11-02) */
+export const PLAN_FEATURES = [
+  'dimPastItems',
+  'planMapOpen',
+  'sunTimes',
+  'legDistance',
+  'compactList',
+  'nearbyWish',
+  'checkoutNotice',
+  'dayRecap',
+  'nowScroll',
+  'weatherMark',
+  'jetLag',
+  'localHoliday',
+  'lateNight',
+] as const;
+export type PlanFeature = (typeof PLAN_FEATURES)[number];
+
+/** 아직 묻지 않은 기능 중 무작위 하나, 다 물었으면 null */
+export function nextPlanPrompt(
+  seen: readonly string[],
+  random: () => number = Math.random,
+): PlanFeature | null {
+  const left = PLAN_FEATURES.filter((f) => !seen.includes(f));
+  return left[Math.floor(random() * left.length)] ?? null;
+}
+
+/** 물어본 기록 합치기 — 기기끼리 덮어써도 한 번 물은 기능을 또 묻지 않게 */
+export function mergePlanSeen(a: readonly PlanFeature[], b: readonly PlanFeature[]): PlanFeature[] {
+  return [...new Set([...a, ...b])];
 }
 
 export const SETTINGS_DEFAULTS: Settings = {
@@ -67,7 +103,7 @@ export const SETTINGS_DEFAULTS: Settings = {
   travelMode: 'transit',
   domesticMap: 'naver',
   timeStepMin: 15,
-  dimPastItems: true,
+  dimPastItems: false,
   backupReminderDays: 14,
   fxFeeEnabled: false,
   fxFeePercent: 1.75,
@@ -75,20 +111,22 @@ export const SETTINGS_DEFAULTS: Settings = {
   startScreen: 'home',
   dateFormat: 'dot',
   planMapOpen: false,
-  sunTimes: true,
-  legDistance: true,
+  sunTimes: false,
+  legDistance: false,
   compactList: false,
-  nearbyWish: true,
-  checkoutNotice: true,
-  dayRecap: true,
-  nowScroll: true,
-  weatherMark: true,
-  jetLag: true,
-  localHoliday: true,
-  lateNight: true,
+  nearbyWish: false,
+  checkoutNotice: false,
+  dayRecap: false,
+  nowScroll: false,
+  weatherMark: false,
+  jetLag: false,
+  localHoliday: false,
+  lateNight: false,
   quickButton: true,
   aiCats: ['food', 'cafe'],
   aiAnchor: 'text',
+  planPromptSeen: [],
+  planPromptV: 1,
 };
 
 const oneOf =
@@ -104,7 +142,7 @@ const VALID: { [K in keyof Settings]: (v: unknown) => v is Settings[K] } = {
   haptics: (v): v is boolean => typeof v === 'boolean',
   directionsApp: oneOf('naver', 'kakao', 'ask'),
   travelMode: oneOf('transit', 'walk', 'car'),
-  domesticMap: oneOf('naver', 'kakao'),
+  domesticMap: oneOf('naver', 'kakao', 'ask'),
   timeStepMin: oneOf(5, 10, 15, 30),
   dimPastItems: (v): v is boolean => typeof v === 'boolean',
   backupReminderDays: (v): v is number =>
@@ -131,6 +169,9 @@ const VALID: { [K in keyof Settings]: (v: unknown) => v is Settings[K] } = {
     new Set(v).size === v.length &&
     v.every((x) => x === 'food' || x === 'cafe' || x === 'play'),
   aiAnchor: oneOf('coords', 'lodging', 'text'),
+  planPromptSeen: (v): v is PlanFeature[] =>
+    Array.isArray(v) && v.every((x) => (PLAN_FEATURES as readonly unknown[]).includes(x)),
+  planPromptV: oneOf(1),
   fxFeeEnabled: (v): v is boolean => typeof v === 'boolean',
   fxFeePercent: (v): v is number =>
     typeof v === 'number' && v >= 0 && v <= 10 && Math.abs(Math.round(v * 20) - v * 20) < 1e-9,
@@ -140,7 +181,9 @@ const VALID: { [K in keyof Settings]: (v: unknown) => v is Settings[K] } = {
 export function parseSettings(raw: unknown): Settings {
   const src = typeof raw === 'object' && raw !== null ? (raw as Record<string, unknown>) : {};
   const out = { ...SETTINGS_DEFAULTS };
+  const current = src.planPromptV === 1;
   for (const key of Object.keys(VALID) as (keyof Settings)[]) {
+    if (!current && (PLAN_FEATURES as readonly string[]).includes(key)) continue;
     const v = src[key];
     if (VALID[key](v)) (out as Record<keyof Settings, unknown>)[key] = v;
   }

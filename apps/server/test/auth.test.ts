@@ -160,6 +160,31 @@ describe('로그인', () => {
     expect((await api('GET', '/api/me/settings')).statusCode).toBe(401);
   });
 
+  it('기능 안내 기록: 예전 시각의 기기가 올려도 합친다 (기능마다 한 번만), 옛 설정은 일정 기능 끔', async () => {
+    const { sid } = await login('kakao');
+    await api('PUT', '/api/me/settings', sid, {
+      data: { planPromptV: 1, sunTimes: true, dateFormat: 'korean', planPromptSeen: ['sunTimes'] },
+      updatedAt: '2026-10-30T10:00:00.000Z',
+    });
+    const older = await api('PUT', '/api/me/settings', sid, {
+      data: { planPromptV: 1, sunTimes: false, dateFormat: 'dot', planPromptSeen: ['jetLag'] },
+      updatedAt: '2026-10-30T09:00:00.000Z',
+    });
+    expect(older.json().data).toMatchObject({
+      sunTimes: true,
+      dateFormat: 'korean',
+      planPromptSeen: ['sunTimes', 'jetLag'],
+    });
+    const oldClient = await api('PUT', '/api/me/settings', sid, {
+      data: { sunTimes: true },
+      updatedAt: '2026-10-30T11:00:00.000Z',
+    });
+    expect(oldClient.json().data).toMatchObject({
+      sunTimes: false,
+      planPromptSeen: ['sunTimes', 'jetLag'],
+    });
+  });
+
   it('구글은 PKCE (code_challenge → code_verifier)', async () => {
     const start = await app.inject({ method: 'GET', url: '/auth/google/start', headers: base });
     const to = new URL(start.headers.location as string);

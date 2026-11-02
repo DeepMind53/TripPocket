@@ -1,4 +1,5 @@
-import type { Settings } from '@trippocket/shared';
+import { PLAN_FEATURES, type Settings } from '@trippocket/shared';
+import { PLAN_LABELS } from './planLabels';
 import { useAuth } from '../../data/authStore';
 import { NotificationGroup } from './NotificationGroup';
 import { DeviceDataGroup } from './DeviceDataGroup';
@@ -171,6 +172,7 @@ export function SettingsPage() {
               options={[
                 { value: 'naver', label: t('dir.naver') },
                 { value: 'kakao', label: t('dir.kakao') },
+                { value: 'ask', label: t('settings.askEveryTime') },
               ]}
             />
           </Field>
@@ -223,26 +225,10 @@ export function SettingsPage() {
             />
           </Field>
           {/* 일정 화면 표시 — 항목마다 [샘플] 미리보기 (사용자 요청 2026-10-27) */}
-          {(
-            [
-              ['dimPastItems', 'settings.dimPast'],
-              ['planMapOpen', 'settings.planMapOpen'],
-              ['sunTimes', 'settings.sunTimes'],
-              ['legDistance', 'settings.legDistance'],
-              ['compactList', 'settings.compactList'],
-              ['nearbyWish', 'settings.nearbyWish'],
-              ['checkoutNotice', 'settings.checkoutNotice'],
-              ['dayRecap', 'settings.dayRecap'],
-              ['nowScroll', 'settings.nowScroll'],
-              ['weatherMark', 'settings.weatherMark'],
-              ['jetLag', 'settings.jetLag'],
-              ['localHoliday', 'settings.localHoliday'],
-              ['lateNight', 'settings.lateNight'],
-            ] as const
-          ).map(([key, label]) => (
+          {PLAN_FEATURES.map((key) => (
             <SwitchRow
               key={key}
-              label={t(label)}
+              label={t(PLAN_LABELS[key])}
               checked={s[key]}
               onChange={set(key)}
               preview={key}

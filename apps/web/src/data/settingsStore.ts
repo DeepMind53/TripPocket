@@ -1,5 +1,6 @@
 import {
   DEVICE_SETTINGS,
+  mergePlanSeen,
   parseSettings,
   SETTINGS_DEFAULTS,
   type Settings,
@@ -70,10 +71,23 @@ export function updateSettings(patch: Partial<Settings>): void {
 }
 
 /** 계정에서 받은 설정 적용 (기기별 설정은 그대로) */
-export async function applyRemoteSettings(remote: Partial<Settings>): Promise<void> {
+export async function applyRemoteSettings(
+  remote: Partial<Settings>,
+  otherAccount = false,
+): Promise<void> {
   const cur = currentSettings();
   const device = Object.fromEntries(DEVICE_SETTINGS.map((k) => [k, cur[k]]));
-  const next = parseSettings({ ...cur, ...remote, ...device });
+  // 다른 계정으로 바뀌었으면 앞 사람의 설정·물어본 기록을 이어 쓰지 않는다
+  const next = parseSettings(
+    otherAccount
+      ? { ...SETTINGS_DEFAULTS, ...remote, ...device }
+      : {
+          ...cur,
+          ...remote,
+          ...device,
+          planPromptSeen: mergePlanSeen(cur.planPromptSeen, remote.planPromptSeen ?? []),
+        },
+  );
   useSettings.setState(next);
   applyDevice(next);
   await settingsRepo.set(KEY, next);

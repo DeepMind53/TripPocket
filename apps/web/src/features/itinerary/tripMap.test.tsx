@@ -67,6 +67,34 @@ const item = (
   }) as ItineraryItem;
 
 describe('일정 지도', () => {
+  it('국내 지도 매번 묻기: 고르기 전에는 지도를 안 불러오고, 고르면 이번 접속 동안 다시 묻지 않는다', async () => {
+    const { updateSettings } = await import('../../data/settingsStore');
+    const { resetDomesticMapChoice } = await import('../../data/mapChoice');
+    resetDomesticMapChoice();
+    updateSettings({ domesticMap: 'ask' });
+    const seoul = {
+      ...trip,
+      timezone: 'Asia/Seoul',
+      destinations: [{ name: '서울', kind: 'city', countryCode: 'KR' }],
+    } as Trip;
+    const props = {
+      trip: seoul,
+      items: [item('A', '2026-11-01', 'a', { lat: 37.5, lng: 127 })],
+      dayIndexOf: () => 0,
+      onSelect: () => {},
+    };
+    calls.markers = [];
+    const first = render(<TripMap {...props} />);
+    fireEvent.click(await screen.findByRole('button', { name: '카카오맵' }));
+    await waitFor(() => expect(calls.markers).toHaveLength(1));
+    first.unmount();
+    render(<TripMap {...props} />);
+    await waitFor(() => expect(calls.markers).toHaveLength(1));
+    expect(screen.queryByRole('button', { name: '카카오맵' })).not.toBeInTheDocument();
+    resetDomesticMapChoice();
+    updateSettings({ domesticMap: 'naver' });
+  });
+
   it('키 선택: 해외=구글, 국내=설정(네이버·카카오), 키 없으면 다른 국내 → 구글, 다 없으면 없음', async () => {
     const { chooseProvider } = await vi.importActual<typeof Maps>('../../shared/maps');
     const all = { google: 'g', naver: 'n', kakao: 'k' };

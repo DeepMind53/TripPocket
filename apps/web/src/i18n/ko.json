@@ -416,6 +416,12 @@
     "leaveWithoutSave": "저장하지 않고 나가기",
     "keepEditing": "계속 편집"
   },
+  "planPrompt": {
+    "title": "{{name}}\n이 기능을 켤까요?",
+    "on": "켜기",
+    "off": "끄기",
+    "where": "마이 → 설정 → 일정에서 바꿀 수 있어요"
+  },
   "settings": {
     "title": "설정",
     "display": "화면",
@@ -886,6 +892,7 @@
     "error": "지도를 불러오지 못했어요",
     "noPlaces": "장소를 검색해 고른 일정만 지도에 표시돼요",
     "paused": "무료 사용량을 아끼려고 지도를 잠시 멈췄어요\n일정·길찾기는 그대로 돼요",
+    "askTitle": "어느 지도로 볼까요?\n다음 접속 때 다시 물어봐요",
     "expand": "지도 크게 보기",
     "shrink": "작게",
     "closeFull": "전체 화면 지도 닫기",

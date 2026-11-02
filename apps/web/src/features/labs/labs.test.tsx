@@ -17,6 +17,20 @@ import { localTimeLabel } from '../../shared/hooks/useMinuteClock';
 beforeEach(async () => {
   await resetLocalDb();
   localStorage.removeItem('tp-labs');
+  // 일정 기능은 처음엔 모두 끔(2026-11-02) — 이 파일은 켠 상태의 화면을 본다
+  updateSettings({
+    dimPastItems: true,
+    sunTimes: true,
+    legDistance: true,
+    nearbyWish: true,
+    checkoutNotice: true,
+    dayRecap: true,
+    nowScroll: true,
+    weatherMark: true,
+    jetLag: true,
+    localHoliday: true,
+    lateNight: true,
+  });
 });
 
 describe('실험실', () => {
@@ -446,7 +460,7 @@ describe('실험실', () => {
     }
   });
 
-  it('정식(설정 기본 켬, 2026-10-27): 근처 가고 싶은 곳 · 오늘 체크아웃 · 하루 돌아보기', async () => {
+  it('정식(설정에서 켠 상태, 2026-10-27): 근처 가고 싶은 곳 · 오늘 체크아웃 · 하루 돌아보기', async () => {
     vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(new Date('2026-10-25T09:00:00Z')); // 도쿄 10.25 18:00 = 2일차
     try {

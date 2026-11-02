@@ -2,7 +2,8 @@ import { inKorea, type SavedPlace } from '@trippocket/shared';
 import { useEffect, useRef, useState } from 'react';
 import { mapAllowed, reportMapLoad } from '../../data/api/usage';
 import { useTranslation } from '../../i18n';
-import { useSettings } from '../../data/settingsStore';
+import { useDomesticMap } from '../../data/mapChoice';
+import { DomesticMapChoice } from '../common/DomesticMapChoice';
 import { chooseProvider, mountMap } from '../../shared/maps';
 import { OfflineNote } from '../common/OfflineNote';
 
@@ -24,8 +25,9 @@ export function SavedMap({
   const [status, setStatus] = useState<'loading' | 'ready' | 'error' | 'paused'>('loading');
   const withCoords = places.filter((p) => p.coords);
   const domestic = withCoords.length > 0 && withCoords.every((p) => inKorea(p.coords!));
-  const domesticMap = useSettings((s) => s.domesticMap);
-  const provider = chooseProvider(domestic, domesticMap);
+  const domesticMap = useDomesticMap();
+  const asking = domestic && domesticMap === null;
+  const provider = asking ? null : chooseProvider(domestic, domesticMap ?? 'naver');
   // Google에서 받은 좌표는 Google 지도에만 (docs/10 §2.1)
   const visible = withCoords.filter((p) => !(provider !== 'google' && p.coordsSource === 'google'));
   const online = typeof navigator === 'undefined' || navigator.onLine;
@@ -83,17 +85,20 @@ export function SavedMap({
       ? t('saved.mapNoCoords')
       : !online
         ? t('map.offline')
-        : !provider
-          ? t('map.noKey')
-          : status === 'error'
-            ? t('map.error')
-            : status === 'paused'
-              ? t('map.paused')
-              : null;
+        : asking
+          ? null
+          : !provider
+            ? t('map.noKey')
+            : status === 'error'
+              ? t('map.error')
+              : status === 'paused'
+                ? t('map.paused')
+                : null;
 
   return (
     <div className="relative h-[55vh] overflow-hidden rounded-2xl bg-bg-subtle">
       <div ref={el} className="absolute inset-0" />
+      {asking && online && visible.length > 0 && <DomesticMapChoice />}
       {notice && (
         <div className="absolute inset-0 flex items-center justify-center px-6 text-center text-body-2 whitespace-pre-line text-fg-muted">
           {!online ? <OfflineNote text={notice} /> : notice}

@@ -28,6 +28,9 @@ const AccountChoiceSheet = lazy(async () => ({
 const AdminMonthlyNotice = lazy(async () => ({
   default: (await import('../features/me/AdminMonthlyNotice')).AdminMonthlyNotice,
 }));
+const PlanFeaturePrompt = lazy(async () => ({
+  default: (await import('../features/me/PlanFeaturePrompt')).PlanFeaturePrompt,
+}));
 const InstallSheet = lazy(async () => ({
   default: (await import('../features/me/InstallSheet')).InstallSheet,
 }));
@@ -107,6 +110,16 @@ export function App() {
           <AccountChoiceSheet />
         </Suspense>
       )}
+      {/* 다른 첫 안내가 다 끝난 뒤에 */}
+      {signedIn &&
+        !needChoice &&
+        !limited &&
+        !offerInstall &&
+        (!needNickname || nicknameDismissed) && (
+          <Suspense fallback={null}>
+            <PlanFeaturePrompt />
+          </Suspense>
+        )}
       {signedIn && <FlightReminder />}
       {isAdmin && (
         <Suspense fallback={null}>

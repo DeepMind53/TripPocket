@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify';
-import { normalizeNickname, parseSettings, pickSynced } from '@trippocket/shared';
+import { mergePlanSeen, normalizeNickname, parseSettings, pickSynced } from '@trippocket/shared';
 import type { Db } from '../db/database';
 import type { Config } from '../config';
 import { fixedAdmins } from '../auth/admins';
@@ -72,9 +72,18 @@ export function meRoutes(app: FastifyInstance, db: Db, config: Config): void {
         return reply.code(400).send({ error: 'bad_request' });
       const data = pickSynced(parseSettings(req.body?.data));
       const cur = db
-        .prepare('SELECT updated_at FROM user_settings WHERE user_id = ?')
-        .get(req.user!.userId) as { updated_at: string } | undefined;
-      if (!cur || cur.updated_at < at)
+        .prepare('SELECT data_json, updated_at FROM user_settings WHERE user_id = ?')
+        .get(req.user!.userId) as { data_json: string; updated_at: string } | undefined;
+      // 기능 안내 팝업 기록은 시각과 상관없이 합친다 (사용자별·기능별 한 번만)
+      const old = cur ? parseSettings(JSON.parse(cur.data_json)) : null;
+      const seen = mergePlanSeen(old?.planPromptSeen ?? [], data.planPromptSeen ?? []);
+      data.planPromptSeen = seen;
+      if (cur && cur.updated_at >= at)
+        db.prepare('UPDATE user_settings SET data_json = ? WHERE user_id = ?').run(
+          JSON.stringify({ ...pickSynced(old!), planPromptSeen: seen }),
+          req.user!.userId,
+        );
+      else
         db.prepare(
           `INSERT INTO user_settings (user_id, data_json, updated_at) VALUES (?, ?, ?)
            ON CONFLICT (user_id) DO UPDATE SET data_json = excluded.data_json, updated_at = excluded.updated_at`,

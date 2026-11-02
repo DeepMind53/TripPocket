@@ -17,6 +17,15 @@ import {
  * 기기별 설정(테마·글자 크기·진동)은 올리지 않는다 (shared DEVICE_SETTINGS)
  */
 let running: Promise<void> | null = null;
+/** 이 기기 설정이 어느 계정 것인지 */
+const OWNER_KEY = 'settingsOwner';
+/** 이번 실행에서 계정 설정을 한 번이라도 맞췄나 (기능 안내 팝업은 그 뒤에만) */
+let confirmed = false;
+export const settingsConfirmed = (): boolean => confirmed;
+/** 시험용 */
+export const resetSettingsConfirmed = (): void => {
+  confirmed = false;
+};
 
 export function syncSettings(): Promise<void> {
   running ??= run().finally(() => {
@@ -28,7 +37,20 @@ export function syncSettings(): Promise<void> {
 type Remote = { data: Partial<Settings> | null; updatedAt: string | null };
 
 async function run(): Promise<void> {
-  if (useAuth.getState().status !== 'user') return;
+  const auth = useAuth.getState();
+  if (auth.status !== 'user' || !auth.me) return;
+  const owner = await settingsRepo.get<string | null>(OWNER_KEY, null);
+  if (owner && owner !== auth.me.id) {
+    confirmed = false;
+    const res = await api<Remote>('/api/me/settings');
+    if (!res.ok) return;
+    await applyRemoteSettings(res.data.data ?? {}, true);
+    await settingsRepo.set(SETTINGS_META_KEY, { updatedAt: res.data.updatedAt, dirty: false });
+    await settingsRepo.set(OWNER_KEY, auth.me.id);
+    confirmed = true;
+    return;
+  }
+  if (!owner) await settingsRepo.set(OWNER_KEY, auth.me.id);
   const meta = await settingsRepo.get<SettingsMeta>(SETTINGS_META_KEY, {
     updatedAt: null,
     dirty: false,
@@ -40,6 +62,7 @@ async function run(): Promise<void> {
     });
     // 실패(오프라인 등)하면 "안 올림"을 그대로 두고 다음 동기화 때 다시
     if (!res.ok) return;
+    confirmed = true;
     await settingsRepo.set(SETTINGS_META_KEY, {
       updatedAt: res.data.updatedAt,
       dirty: false,
@@ -50,7 +73,9 @@ async function run(): Promise<void> {
     return;
   }
   const res = await api<Remote>('/api/me/settings');
-  if (!res.ok || !res.data.data || !res.data.updatedAt) return;
+  if (!res.ok) return;
+  confirmed = true;
+  if (!res.data.data || !res.data.updatedAt) return;
   if (meta.updatedAt && res.data.updatedAt <= meta.updatedAt) return;
   await applyRemoteSettings(res.data.data);
   await settingsRepo.set(SETTINGS_META_KEY, {
