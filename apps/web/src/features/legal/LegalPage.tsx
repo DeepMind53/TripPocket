@@ -75,7 +75,7 @@ function Sections({ list }: { list: Section[] }) {
         <section key={s.title} className="flex flex-col gap-1.5">
           <h2 className="text-body-1 font-bold">{s.title}</h2>
           {s.body.map((p) => (
-            <p key={p} className="text-fg-sub">
+            <p key={p} className="whitespace-pre-line text-fg-sub">
               {p}
             </p>
           ))}
