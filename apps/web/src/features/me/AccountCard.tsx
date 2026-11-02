@@ -10,7 +10,6 @@ import {
   useAuth,
   type DeviceSession,
 } from '../../data/authStore';
-import { useSync } from '../../data/sync/syncStore';
 import { ServerOfflineNotice } from '../common/ServerOfflineNotice';
 import { useTranslation } from '../../i18n';
 import { cn } from '../../shared/lib/cn';
@@ -57,7 +56,6 @@ export function AccountCard() {
 
   return (
     <section className="flex flex-col gap-3 rounded-card bg-bg-subtle p-4">
-      {/* 첫 줄 포인트·이름, 다음 줄 로그인 수단·동기화 (좁으면 카드 밖으로 나가서 2026-11-02 분리) */}
       <div className="flex flex-col gap-1">
         <span className="flex min-w-0 flex-wrap items-center gap-1.5">
           {/* 후기 포인트는 닉네임 왼쪽 (사용자 요청 2026-10-25) — 누르면 적립 내역 */}
@@ -82,12 +80,10 @@ export function AccountCard() {
           >
             {t('profile.title')}
           </Link>
-        </span>
-        <span className="flex flex-wrap items-center justify-between gap-x-2 gap-y-0.5">
-          <span className="text-caption text-fg-muted">
+          {/* 로그인 수단은 이 줄 오른쪽 끝 (사용자 요청 2026-11-02) */}
+          <span className="ml-auto text-caption text-fg-muted">
             {me.providers.map((p) => t(`login.name.${p}` as 'login.name.kakao')).join(' · ')}
           </span>
-          <SyncStatus />
         </span>
       </div>
       <div className="grid grid-cols-3 gap-2">
@@ -265,48 +261,4 @@ function deviceName(ua: string): string {
             ? 'Firefox'
             : '';
   return [os, browser].filter(Boolean).join(' · ') || ua.slice(0, 30) || '?';
-}
-
-/** 동기화 상태 한 줄: "동기화됨" / "올릴 변경 3개" / "서버에 연결할 수 없어요" */
-function SyncStatus() {
-  const { t } = useTranslation();
-  const { state, pending } = useSync();
-  const text =
-    state === 'syncing'
-      ? t('sync.syncing')
-      : state === 'offline'
-        ? t('sync.offline')
-        : state === 'error'
-          ? t('sync.error')
-          : pending > 0
-            ? t('sync.pending', { n: pending })
-            : t('sync.done');
-  return (
-    <span
-      role="status"
-      className="flex min-w-0 flex-wrap items-center gap-1 text-caption text-fg-sub"
-    >
-      <span
-        aria-hidden="true"
-        className={cn(
-          'size-2 rounded-full',
-          state === 'idle' && pending === 0
-            ? 'bg-success'
-            : state === 'syncing'
-              ? 'bg-primary'
-              : 'bg-warning',
-        )}
-      />
-      {text}
-      {(state === 'offline' || state === 'error') && (
-        <button
-          type="button"
-          onClick={() => void import('../../data/sync/syncEngine').then((m) => m.syncNow())}
-          className="ml-1 font-semibold text-primary"
-        >
-          {t('sync.retry')}
-        </button>
-      )}
-    </span>
-  );
 }

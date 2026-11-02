@@ -24,6 +24,7 @@ import { useRouteSheet } from '../../shared/hooks/useRouteSheet';
 import { AccountCard } from './AccountCard';
 import { InstallSheet } from './InstallSheet';
 import { MonthlyUpdateSheet } from './MonthlyUpdateSheet';
+import { SyncStatus } from './SyncStatus';
 import { todayIn } from '@trippocket/shared';
 import type { ReactNode } from 'react';
 import { useTranslation } from '../../i18n';
@@ -38,7 +39,7 @@ export function MePage() {
   const [monthlyOpen, setMonthlyOpen] = useRouteSheet('monthly-update');
   return (
     <>
-      <TopBar title={t('me.title')} />
+      <TopBar title={t('me.title')} actions={<SyncStatus />} />
       <div className="flex flex-col gap-4 px-5 pt-2">
         <AccountCard />
         {/* 묶음: 여행 도구 · 관리자(관리자만) · 앱 정보 (docs/16 H1) */}
