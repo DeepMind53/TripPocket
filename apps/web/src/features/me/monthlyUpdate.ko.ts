@@ -62,7 +62,8 @@ export function monthlyUpdateRequest(month: string): string {
       · 그린 카드(사진 없음)는 위키미디어 공용에서 자유 이용(CC0·CC BY·CC BY-SA·퍼블릭 도메인) 사진을 찾아
         360px로 줄여 넣고 작가·라이선스·원본 주소를 함께 적기 (상표 로고만 있는 그림은 쓰지 않기)
     - 도시별 현지 생활 정보: apps/web/src/data/cityLocal.ts (지난 확인: ${CITY_LOCAL_CHECKED_AT}, 지금 ${CITY_LOCAL.length}곳)
-      · 도시마다 교통카드·결제·교통수단·요금·환승·앱 확인, 한국인이 많이 찾는 도시를 30곳씩 더해 100곳까지
+      · 도시마다 교통카드·결제·교통수단·요금·환승·앱 확인 (1차 cityLocal.ts, 2차 cityLocal2.ts)
+      · 한국인이 많이 찾는 도시를 계속 더하기 (겹치지 않게, 요금은 확인한 것만)
     - 실험실 "대중교통 안내": apps/web/src/data/transitGuide.ts (지난 확인: ${TRANSIT_GUIDE_CHECKED_AT})
       · 나라별 교통수단·대표 도시 기본요금·환승 규칙·추천 앱·공식 링크 — 요금 인상·새 노선·없어진 앱
       · note에 적은 "곧 바뀜"(예: 스타페리 2027-01, 멜버른 반값 2027-01-01, 취리히 2026-12-13)이 지났으면 고치기

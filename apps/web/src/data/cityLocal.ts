@@ -1,9 +1,10 @@
+import { CITY_LOCAL_2 } from './cityLocal2';
 import type { CountryTransit } from './transitGuide';
 
 /**
  * 도시별 현지 생활 정보 (빠른 메뉴 "현지 생활 정보", 사용자 요청 2026-11-03):
  * 한국인이 많이 찾는 도시는 그 도시의 교통카드·결제·교통수단·요금·환승·추천 앱을, 나머지 도시는 나라 대표 정보를 참고로.
- * 1차 30곳 (2026-11-03) — 30곳씩 나눠 100곳까지 더한다 (docs/22 A10, CITY_LOCAL_CHECKED_AT).
+ * 1차 30곳 + 2차 70곳 = 100곳 (2026-11-03, 2차는 cityLocal2.ts) — 앞으로 계속 늘린다 (docs/22 A10, CITY_LOCAL_CHECKED_AT).
  * 요금은 여러 안내가 일치한 대표값 — 공식 운임표로 다시 확인할 것
  */
 export interface CityLocal extends CountryTransit {
@@ -25,7 +26,8 @@ export interface CityLocal extends CountryTransit {
 
 export const CITY_LOCAL_CHECKED_AT = '2026-11-03';
 
-export const CITY_LOCAL: readonly CityLocal[] = [
+/** 1차 30곳 */
+const CITY_LOCAL_1: readonly CityLocal[] = [
   // ── 일본 ──
   {
     id: 'tokyo',
@@ -485,7 +487,7 @@ export const CITY_LOCAL: readonly CityLocal[] = [
     country: 'MY',
     center: { lat: 3.14, lng: 101.69 },
     radiusKm: 45,
-    aliases: ['쿠알라룸푸르', 'kuala lumpur', 'kl'],
+    aliases: ['쿠알라룸푸르', 'kuala lumpur'],
     card: '터치앤고 카드 · 편의점에서 충전',
     cards: ['touchngo', 'my-token'],
     pay: '카드 대부분 · 노점은 현금',
@@ -616,6 +618,9 @@ export const CITY_LOCAL: readonly CityLocal[] = [
     url: 'https://omny.info',
   },
 ];
+
+/** 1차 30곳 + 2차 70곳 = 100곳 (2026-11-03) — 앞으로 계속 늘린다 */
+export const CITY_LOCAL: readonly CityLocal[] = [...CITY_LOCAL_1, ...CITY_LOCAL_2];
 
 const toRad = (d: number) => (d * Math.PI) / 180;
 function km(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
