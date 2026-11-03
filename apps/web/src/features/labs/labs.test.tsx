@@ -34,7 +34,7 @@ beforeEach(async () => {
 });
 
 describe('실험실', () => {
-  it('마이 → 실험실: 새 실험 6개(2026-11-03, 예전 실험은 비움), 켜면 이 기기에 저장, 실험마다 [샘플]', async () => {
+  it('마이 → 실험실: 새 실험 8개(2026-11-03, 예전 실험은 비움), 켜면 이 기기에 저장, 실험마다 [샘플]', async () => {
     const user = userEvent.setup();
     render(<RouterProvider router={createMemoryRouter(routes, { initialEntries: ['/me'] })} />);
     await user.click(await screen.findByRole('link', { name: '실험실' }));
@@ -42,9 +42,9 @@ describe('실험실', () => {
     expect(sw).toHaveAttribute('aria-checked', 'false');
     await user.click(sw);
     expect(JSON.parse(localStorage.getItem('tp-labs')!)).toEqual({ transitGuide: true });
-    expect(LABS).toHaveLength(6);
-    expect(screen.getAllByRole('switch')).toHaveLength(6);
-    expect(screen.getAllByRole('button', { name: / 샘플$/ })).toHaveLength(6);
+    expect(LABS).toHaveLength(8);
+    expect(screen.getAllByRole('switch')).toHaveLength(8);
+    expect(screen.getAllByRole('button', { name: / 샘플$/ })).toHaveLength(8);
     // 정식이 됐거나 뺀 것은 실험실에 없다
     for (const name of [
       /현지 공휴일/,
@@ -640,6 +640,81 @@ describe('실험실', () => {
       );
     } finally {
       for (const id of ids) setLab(id, false);
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('실험: 미세먼지·자외선(나쁜 날만) · 여행지 소개(위키백과, 접어 둠)', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-10-22T03:00:00Z'));
+    setLab('airQuality', true);
+    setLab('cityIntro', true);
+    const hours = (d: string) =>
+      Array.from({ length: 24 }, (_, h) => `${d}T${String(h).padStart(2, '0')}:00`);
+    vi.stubGlobal('fetch', async (url: string) => {
+      const u = String(url);
+      if (u.includes('air-quality-api'))
+        return Response.json({
+          hourly: {
+            time: [...hours('2026-10-23'), ...hours('2026-10-24')],
+            pm2_5: [...hours('').map(() => 50), ...hours('').map(() => 10)],
+            uv_index: [...hours('').map(() => 3), ...hours('').map((_, h) => (h === 12 ? 9 : 2))],
+          },
+        });
+      if (u.includes('api.open-meteo'))
+        return Response.json({
+          daily: {
+            time: ['2026-10-23', '2026-10-24'],
+            weather_code: [0, 0],
+            temperature_2m_max: [20, 20],
+            temperature_2m_min: [12, 12],
+          },
+        });
+      if (u.includes('/api/info/summary'))
+        return Response.json({
+          summary: {
+            title: '방콕',
+            extract: '방콕은 태국의 수도이다.',
+            url: 'https://ko.m.wikipedia.org/wiki/방콕',
+          },
+        });
+      return new Response('<html>', { headers: { 'content-type': 'text/html' } });
+    });
+    try {
+      const trip = await tripRepo.create({
+        title: '방콕',
+        destinations: [
+          { name: '방콕', kind: 'city', countryCode: 'TH', coords: { lat: 13.75, lng: 100.5 } },
+        ],
+        startDate: '2026-10-23',
+        endDate: '2026-10-24',
+        timezone: 'Asia/Bangkok',
+        cover: {},
+      });
+      for (const date of ['2026-10-23', '2026-10-24'])
+        await itemRepo.create({ tripId: trip.id, date, kind: 'place', title: '시장' });
+      const user = userEvent.setup();
+      const router = createMemoryRouter(routes, { initialEntries: [`/trips/${trip.id}/plan`] });
+      render(<RouterProvider router={router} />);
+      const day = (n: number) => screen.getByRole('region', { name: new RegExp(`^${n}일차`) });
+      await waitFor(() =>
+        expect(within(day(1)).getByText(/미세먼지 나쁨 \(하루 평균 50/)).toBeInTheDocument(),
+      );
+      expect(within(day(1)).queryByText(/자외선/)).toBeNull();
+      expect(within(day(2)).getByText(/자외선 매우 높음 \(최고 9\)/)).toBeInTheDocument();
+      expect(within(day(2)).queryByText(/미세먼지/)).toBeNull();
+      // 홈: 여행지 소개는 접어 두고, 펼치면 출처 링크
+      await act(() => router.navigate('/'));
+      await user.click(await screen.findByRole('button', { name: /방콕 소개/ }));
+      expect(screen.getByText('방콕은 태국의 수도이다.')).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: /위키백과에서 더 보기/ })).toHaveAttribute(
+        'href',
+        'https://ko.m.wikipedia.org/wiki/방콕',
+      );
+    } finally {
+      setLab('airQuality', false);
+      setLab('cityIntro', false);
+      vi.useRealTimers();
       vi.unstubAllGlobals();
     }
   });

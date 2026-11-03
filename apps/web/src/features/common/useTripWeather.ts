@@ -1,6 +1,8 @@
 import { addDays, getTripDays, todayIn, type LocalDate, type Trip } from '@trippocket/shared';
 import { useEffect, useState } from 'react';
-import { getForecast, getLastYearWeather } from '../../data/services/travelInfo';
+import { useLab } from '../../data/labsStore';
+import { getAirQuality, getForecast, getLastYearWeather } from '../../data/services/travelInfo';
+import type { DayAir } from '../../domain/air';
 import type { DayWeather } from '../../domain/weather';
 
 /** 예보는 오늘부터 16일 (Open-Meteo) — 그 뒤 날은 작년 같은 날 기록 */
@@ -11,6 +13,8 @@ export interface TripDayWeather extends DayWeather {
   year?: number;
   /** 이미 지난 날 (최근 7일, 예보 API의 지난 날 값) */
   past?: true;
+  /** 실험실 "미세먼지·자외선": 5일 안 예보만 */
+  air?: DayAir;
 }
 
 /** 지난 날도 이만큼은 보여 준다 (Open-Meteo past_days) */
@@ -24,7 +28,8 @@ export const PAST_DAYS = 7;
 export function useTripWeather(trip: Trip | undefined): Record<LocalDate, TripDayWeather> {
   const coords = trip?.destinations.find((d) => d.coords)?.coords;
   const dates = trip ? getTripDays(trip.startDate, trip.endDate) : [];
-  return useWeatherDays(coords, trip?.timezone ?? 'Asia/Seoul', dates);
+  const air = useLab('airQuality');
+  return useWeatherDays(coords, trip?.timezone ?? 'Asia/Seoul', dates, air);
 }
 
 /**
@@ -36,6 +41,8 @@ export function useWeatherDays(
   coords: { lat: number; lng: number } | undefined,
   tz: string,
   dates: readonly LocalDate[],
+  /** 미세먼지·자외선도 함께 (실험실) */
+  withAir = false,
 ): Record<LocalDate, TripDayWeather> {
   const [out, setOut] = useState<Record<LocalDate, TripDayWeather>>({});
   const key = dates.join(',');
@@ -51,17 +58,27 @@ export function useWeatherDays(
     void Promise.all([
       near.length ? getForecast(coords.lat, coords.lng, tz) : Promise.resolve({}),
       getLastYearWeather(coords.lat, coords.lng, tz, far),
-    ]).then(([f, ly]: [Record<LocalDate, DayWeather>, Record<LocalDate, DayWeather>]) => {
-      if (!alive) return;
-      const next: Record<LocalDate, TripDayWeather> = {};
-      for (const d of near) if (f[d]) next[d] = d < today ? { ...f[d], past: true } : f[d];
-      for (const d of far) if (ly[d]) next[d] = { ...ly[d], year: Number(d.slice(0, 4)) - 1 };
-      setOut(next);
-    });
+      withAir && near.length ? getAirQuality(coords.lat, coords.lng, tz) : Promise.resolve({}),
+    ]).then(
+      ([f, ly, air]: [
+        Record<LocalDate, DayWeather>,
+        Record<LocalDate, DayWeather>,
+        Record<LocalDate, DayAir>,
+      ]) => {
+        if (!alive) return;
+        const next: Record<LocalDate, TripDayWeather> = {};
+        for (const d of near)
+          if (f[d])
+            next[d] =
+              d < today ? { ...f[d], past: true } : air[d] ? { ...f[d], air: air[d] } : f[d];
+        for (const d of far) if (ly[d]) next[d] = { ...ly[d], year: Number(d.slice(0, 4)) - 1 };
+        setOut(next);
+      },
+    );
     return () => {
       alive = false;
     };
-  }, [coords?.lat, coords?.lng, tz, key]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [coords?.lat, coords?.lng, tz, key, withAir]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return out;
 }

@@ -1,5 +1,6 @@
 import type { LocalDate } from '@trippocket/shared';
 import type { Holiday } from '../../domain/holidays';
+import { dailyAir, type DayAir } from '../../domain/air';
 import type { DayWeather } from '../../domain/weather';
 import { externalAllowed, reportExternal, type BrowserApi } from '../api/usage';
 import { settingsRepo } from '../repositories/settingsRepo';
@@ -144,6 +145,32 @@ const TW_EN: Record<string, string> = {
   臺灣光復暨金門古寧頭大捷紀念日: 'Retrocession Day',
   行憲紀念日: 'Constitution Day',
 };
+
+/**
+ * 목적지 좌표의 미세먼지(PM2.5)·자외선 예보 (Open-Meteo 대기질, CAMS — 5일까지, docs/26 A3).
+ * 보내는 것은 도시 좌표(소수 둘째 자리)뿐. 실패하면 빈 값
+ */
+export function getAirQuality(
+  lat: number,
+  lng: number,
+  timezone: string,
+): Promise<Record<LocalDate, DayAir>> {
+  return cached(
+    `air1:${lat.toFixed(2)},${lng.toFixed(2)}`,
+    WEATHER_TTL,
+    async () => {
+      const url =
+        `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat.toFixed(2)}&longitude=${lng.toFixed(2)}` +
+        `&hourly=pm2_5,uv_index&forecast_days=5&timezone=${encodeURIComponent(timezone)}`;
+      const res = await fetchCounted('open_meteo', url);
+      if (!res.ok) throw new Error(`air ${res.status}`);
+      const body: unknown = await res.json();
+      const h = isObj(body) && isObj(body.hourly) ? body.hourly : {};
+      return dailyAir(arr(h.time), arr(h.pm2_5), arr(h.uv_index));
+    },
+    {},
+  );
+}
 
 /** 목적지 좌표의 일별 예보 (오늘부터 16일) + 지난 7일 실제에 가까운 값 (past_days, 날씨 정보 화면 '여행 전날' 등) */
 export function getForecast(

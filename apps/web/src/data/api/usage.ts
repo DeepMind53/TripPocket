@@ -13,7 +13,8 @@ export type BrowserApi =
   | 'openfreemap'
   | 'open_meteo'
   | 'nager_date'
-  | 'jsdelivr';
+  | 'jsdelivr'
+  | 'frankfurter';
 
 const FLAGS_TTL = 5 * 60_000;
 const DENY_ALL: Record<BrowserApi, boolean> = {
@@ -24,6 +25,7 @@ const DENY_ALL: Record<BrowserApi, boolean> = {
   open_meteo: false,
   nager_date: false,
   jsdelivr: false,
+  frankfurter: false,
 };
 let flags: { at: number; apis: Partial<Record<BrowserApi, boolean>> | null } | null = null;
 let pending: Promise<Partial<Record<BrowserApi, boolean>> | null> | null = null;

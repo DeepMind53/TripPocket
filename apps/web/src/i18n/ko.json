@@ -1287,7 +1287,9 @@
       "openfreemap": "OpenFreeMap 지도 (지도 백업)",
       "kakao_maps_js": "카카오 지도 (지도 로드)",
       "icn_flights": "인천공항 운항 정보",
-      "kac_flights": "한국공항공사 운항 정보"
+      "kac_flights": "한국공항공사 운항 정보",
+      "frankfurter": "Frankfurter 환율 (유럽중앙은행)",
+      "wikipedia": "위키백과 요약"
     },
     "note": {
       "google_places_search": "해외 장소 검색 · 월 5,000회 무료",
@@ -1328,7 +1330,9 @@
       "openfreemap": "Google·네이버 지도를 못 쓸 때 · 무료·한도 없음",
       "kakao_maps_js": "국내 일정 지도(카카오 선택 시)\n하루 30만 건 무료 · 월은 카카오 합산",
       "icn_flights": "체크인 카운터·터미널·게이트 · 하루 500회 무료",
-      "kac_flights": "김포·김해·제주 등 게이트 · 하루 5,000회 무료"
+      "kac_flights": "김포·김해·제주 등 게이트 · 하루 5,000회 무료",
+      "frankfurter": "환율 보조 2번째 · 무료·제한 없음",
+      "wikipedia": "여행지 소개 · 무료 · 서버가 30일 저장"
     },
     "autoStoppedDay": "오늘 자동 중지",
     "monthMeter": "이번 달",
@@ -1366,6 +1370,14 @@
       "placeTips": {
         "name": "장소 맞춤 팁",
         "desc": "사원이나 온천, 해변이 있는 날\n챙길 것을 알려 줘요"
+      },
+      "airQuality": {
+        "name": "미세먼지 안내",
+        "desc": "일정 날짜 아래에 공기가 나쁜 날\n자외선이 센 날을 알려 줘요"
+      },
+      "cityIntro": {
+        "name": "여행지 소개",
+        "desc": "홈 여행 카드 아래에\n위키백과 한두 문장 소개"
       }
     },
     "checkoutAt": "오늘 {{time}} 체크아웃 · {{name}}",
@@ -2092,7 +2104,9 @@
     "arrive": "공항 가는 리무진",
     "vietnam": "베트남",
     "tour": "감천마을 투어",
-    "airport": "나리타 공항"
+    "airport": "나리타 공항",
+    "tokyo": "도쿄",
+    "tokyoIntro": "도쿄는 일본의 수도예요\n일본에서 사람이 가장 많은 도시예요"
   },
   "currencyName": {
     "USD": "미국 달러",
@@ -2338,5 +2352,17 @@
     "onsen": "♨️ 온천 일정이 있어요\n작은 수건을 챙기고 문신 규정을 확인하세요",
     "beach": "🏖️ 해변 일정이 있어요\n선크림·수영복·샌들을 챙기세요",
     "hike": "🥾 산행 일정이 있어요\n편한 신발과 물을 챙기세요"
+  },
+  "air": {
+    "pm25Bad": "😷 미세먼지 나쁨 (하루 평균 {{v}}㎍/㎥)\n마스크를 챙기세요",
+    "pm25VeryBad": "😷 미세먼지 매우 나쁨 (하루 평균 {{v}}㎍/㎥)\n바깥 일정을 줄이고 마스크를 쓰세요",
+    "uvVeryHigh": "🧴 자외선 매우 높음 (최고 {{v}})\n선크림·모자를 챙기세요",
+    "uvExtreme": "🧴 자외선 위험 (최고 {{v}})\n한낮 햇볕을 피하세요",
+    "source": "대기질 예보 Open-Meteo (CAMS)"
+  },
+  "cityIntro": {
+    "title": "📖 {{name}} 소개",
+    "source": "위키백과 · CC BY-SA",
+    "open": "위키백과에서 더 보기"
   }
 }

@@ -5,7 +5,7 @@ import { settingsRepo } from '../repositories/settingsRepo';
 
 /**
  * 환율 가져오기 (docs/12 §2): ① 홈 서버(수출입은행 매매기준율) → ② 무료 보조 출처(currency-api, jsDelivr, 하루 1회)
- * → ③ 마지막으로 받은 값(오프라인). 금액은 저장하지 않고 환율만 기기에 남긴다.
+ * → ②' Frankfurter(유럽중앙은행, 2026-11-03 docs/26 C1 — currency-api가 모두 실패할 때) → ③ 마지막으로 받은 값(오프라인). 금액은 저장하지 않고 환율만 기기에 남긴다.
  * 수출입은행이 고시하지 않는 통화(대만달러·베트남 동·필리핀 페소 등)는 ②로 채운다 (화면에 "국제 시세" 표시)
  */
 const CACHE_KEY = 'fxCache';
@@ -40,12 +40,30 @@ async function fetchFallback(): Promise<{ date?: unknown; krw?: Record<string, u
   return null;
 }
 
+/** 유럽중앙은행 기준 (주요 통화 약 30개 — 대만달러·베트남 동은 없음) */
+async function fromFrankfurter(): Promise<FxSnapshot | null> {
+  try {
+    if (!(await externalAllowed('frankfurter'))) return null;
+    reportExternal('frankfurter');
+    const res = await fetch('https://api.frankfurter.dev/v1/latest?base=KRW');
+    if (!res.ok) return null;
+    const body = (await res.json()) as { date?: unknown; rates?: Record<string, unknown> };
+    if (typeof body.date !== 'string' || typeof body.rates !== 'object' || !body.rates) return null;
+    const rates: Record<string, number> = {};
+    for (const [code, v] of Object.entries(body.rates))
+      if (typeof v === 'number' && v > 0 && /^[A-Z]{3}$/.test(code)) rates[code] = 1 / v;
+    return { source: 'frankfurter', date: body.date, fetchedAt: new Date().toISOString(), rates };
+  } catch {
+    return null;
+  }
+}
+
 async function fromFallback(): Promise<FxSnapshot | null> {
   try {
-    if (!(await externalAllowed('jsdelivr'))) return null;
+    if (!(await externalAllowed('jsdelivr'))) return fromFrankfurter();
     reportExternal('jsdelivr');
     const body = await fetchFallback();
-    if (!body) return null;
+    if (!body) return fromFrankfurter();
     if (typeof body.date !== 'string' || typeof body.krw !== 'object' || !body.krw) return null;
     // 1원 = x외화 → 1외화 = 1/x원
     const rates: Record<string, number> = {};

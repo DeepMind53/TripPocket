@@ -6,11 +6,13 @@ import { useSettings } from '../../data/settingsStore';
 import { vouchersNotSaved } from '../../domain/localInfo';
 import { hoursAhead } from '../../domain/travelExtras';
 import { useTranslation } from '../../i18n';
+import { CityIntro } from './CityIntro';
 
 /**
  * 홈 여행 카드 아래 도움 줄:
  * - 출발 전 시차 (설정 "일정" — 2026-10-28 실험실에서 정식, Google 여행 참고)
  * - 실험실 "오프라인 준비" (2026-11-03): 출발 7일 전부터 — 기기에 안 받은 바우처, 오프라인 지도 받기
+ * - 실험실 "여행지 소개" (2026-11-03): 첫 목적지의 위키백과 요약 (접어 둠)
  */
 export function HomeLabs({
   trip,
@@ -29,6 +31,8 @@ export function HomeLabs({
     trip.startDate >= today &&
     Date.parse(trip.startDate) - Date.parse(today) <= 7 * 86_400_000;
   const offlineOn = useLab('offlineReady') && soon;
+  const introOn = useLab('cityIntro');
+  const city = trip.destinations[0]?.name;
   const docs = useLiveQuery(
     () => (offlineOn ? attachmentRepo.listByTrip(trip.id) : []),
     [offlineOn, trip.id],
@@ -50,9 +54,11 @@ export function HomeLabs({
     if (n > 0) lines.push(t('offlineReady.vouchers', { n }));
     lines.push(t('offlineReady.maps'));
   }
-  if (!lines.length) return null;
+  const intro = introOn && city ? <CityIntro name={city} /> : null;
+  if (!lines.length) return intro;
   return (
     <ul aria-label={t('labs.homeLabel')} className="flex flex-col gap-1">
+      {intro && <li>{intro}</li>}
       {lines.map((l, i) => (
         <li
           key={`${i}-${l}`}

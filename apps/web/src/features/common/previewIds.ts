@@ -18,7 +18,9 @@ export type PreviewId =
   | 'arrivalRoute'
   | 'missingStay'
   | 'offlineReady'
-  | 'placeTips';
+  | 'placeTips'
+  | 'airQuality'
+  | 'cityIntro';
 
 const IDS: readonly string[] = [
   'dimPastItems',
@@ -40,6 +42,8 @@ const IDS: readonly string[] = [
   'missingStay',
   'offlineReady',
   'placeTips',
+  'airQuality',
+  'cityIntro',
 ];
 
 export const hasPreview = (id: string): id is PreviewId => IDS.includes(id);

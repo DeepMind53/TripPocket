@@ -235,6 +235,24 @@ export function FeaturePreview({ id }: { id: PreviewId }) {
           {note(t('offlineReady.maps'), 'bg-bg-subtle text-fg-sub whitespace-pre-line')}
         </div>
       );
+    case 'airQuality':
+      return day(
+        <>
+          {note(t('air.pm25Bad', { v: 48 }), 'bg-warning/10 text-fg-sub whitespace-pre-line')}
+          {note(t('air.uvVeryHigh', { v: 9 }), 'bg-warning/10 text-fg-sub whitespace-pre-line')}
+          {row(1, '10:00', t('sample.sensoji'))}
+        </>,
+      );
+    case 'cityIntro':
+      return (
+        <div className="flex flex-col gap-1 rounded-btn bg-bg-subtle px-3 py-2 text-caption text-fg-sub">
+          <span className="font-semibold text-fg">
+            {t('cityIntro.title', { name: t('sample.tokyo') })}
+          </span>
+          {t('sample.tokyoIntro')}
+          <span className="text-micro text-fg-muted">{t('cityIntro.source')}</span>
+        </div>
+      );
     case 'placeTips':
       return day(
         <>

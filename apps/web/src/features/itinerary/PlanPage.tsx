@@ -105,6 +105,7 @@ import { dayRouteUrl } from '../../domain/dayRoute';
 import { sunSlot, sunTimes } from '../../domain/sun';
 import { checkoutsOn, dayRecap, nearbyWishes } from '../../domain/dayExtras';
 import { lateNightAt } from '../../domain/travelExtras';
+import { airWarnings } from '../../domain/air';
 import { placeTips } from '../../domain/localInfo';
 import { weatherCautionsAt, type WeatherCaution } from '../../domain/weather';
 import { CautionIcons } from '../common/CautionIcons';
@@ -1083,6 +1084,16 @@ function DaySection({
           </span>
         </div>
       )}
+      {/* 실험실: 미세먼지·자외선 (예보 5일 안, 나쁠 때만) */}
+      {!weather?.past &&
+        airWarnings(weather?.air).map((w) => (
+          <p
+            key={w.key}
+            className="mx-3 mt-2 rounded-btn bg-warning/10 px-3 py-2 text-caption whitespace-pre-line text-fg-sub"
+          >
+            {t(`air.${w.key}`, { v: w.v })}
+          </p>
+        ))}
       {/* 실험실: 장소 맞춤 팁 (사원 복장·온천·해변·산) */}
       {tips.map((k) => (
         <p
