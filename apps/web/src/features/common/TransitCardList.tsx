@@ -1,16 +1,23 @@
 import { ExternalLink } from 'lucide-react';
 import { useState } from 'react';
-import { transitCardsFor, type TransitCard } from '../../data/transitCards';
+import { transitCardsByIds, transitCardsFor, type TransitCard } from '../../data/transitCards';
 import { useTranslation } from '../../i18n';
 
 /**
  * 나라별 교통카드·승차권 이름 칩 — 누르면 사진(없으면 그린 카드)·출처·공식 안내를 펼친다 (사용자 요청 2026-11-03).
  * 사진은 앱에 들어 있어 인터넷 없이도 보인다
  */
-export function TransitCardList({ country }: { country: string }) {
+export function TransitCardList({
+  country,
+  ids,
+}: {
+  country: string;
+  /** 도시 정보의 카드 (있으면 나라 목록 대신) */
+  ids?: readonly string[] | undefined;
+}) {
   const { t } = useTranslation();
   const [openId, setOpenId] = useState<string | null>(null);
-  const cards = transitCardsFor(country);
+  const cards = ids ? transitCardsByIds(ids) : transitCardsFor(country);
   if (!cards.length) return null;
   const open = cards.find((c) => c.id === openId);
   return (

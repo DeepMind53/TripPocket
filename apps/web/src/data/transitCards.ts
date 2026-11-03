@@ -307,5 +307,9 @@ export function transitCardsFor(country: string): TransitCard[] {
   return (BY_COUNTRY[country] ?? []).flatMap((id) => (CARDS[id] ? [CARDS[id]] : []));
 }
 
+/** 도시 정보에 적은 카드 id 순서대로 (없는 id는 건너뜀) */
+export const transitCardsByIds = (ids: readonly string[]): TransitCard[] =>
+  ids.flatMap((id) => (CARDS[id] ? [CARDS[id]] : []));
+
 /** 출처 표기·시험용: 사진이 있는 카드 전부 */
 export const TRANSIT_CARD_PHOTOS = Object.values(CARDS).filter((c) => c.photo);

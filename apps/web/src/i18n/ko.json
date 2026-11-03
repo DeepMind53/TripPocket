@@ -1404,8 +1404,8 @@
       "cold": "아침 5° 아래"
     },
     "sample": {
-      "title": "샘플 테스트 (관리자)",
-      "desc": "오늘 출발 도쿄 5일 샘플을 만들어요\n6일 뒤 타이베이·지난 여행도 함께\n방문 기록·삭제 기록 복원까지",
+      "title": "샘플 테스트",
+      "desc": "샘플 여행으로 기능을 미리 써 봐요\n24시간 뒤 자동으로 지워져요",
       "create": "샘플 테스트",
       "created": "샘플 여행을 만들었어요",
       "remove": "샘플 지우기",
@@ -2277,7 +2277,10 @@
     "photoCredit": "사진 {{author}} · {{license}}\n위키미디어 공용 · 크기만 줄였어요",
     "drawn": "{{name}} 그림",
     "drawnNote": "자유 이용 사진이 없어 그림으로 보여요",
-    "official": "{{name}} 공식 안내"
+    "official": "{{name}} 공식 안내",
+    "cityTitle": "📍 {{name}}",
+    "countryTitle": "🌏 {{name}}",
+    "reference": "나라 대표 정보 · 참고용"
   },
   "flightAirport": {
     "title": "공항 정보",
@@ -2335,7 +2338,7 @@
     "pharmacy": "약국",
     "atm": "ATM",
     "toilet": "화장실",
-    "note": "지도 앱이 열려요\n내 위치는 앱에 저장하지 않아요"
+    "note": "(지도앱이 열리고 위치는 저장되지 않아요.)"
   },
   "arrivalRoute": {
     "title": "{{date}} 공항에서 숙소 가는 길"

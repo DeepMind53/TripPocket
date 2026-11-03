@@ -3,6 +3,7 @@ import { useState } from 'react';
 import {
   TRANSIT_GUIDE_CHECKED_AT,
   transitGuideFor,
+  type CountryTransit,
   type TransitModeKind,
 } from '../../data/transitGuide';
 import { useTranslation } from '../../i18n';
@@ -22,10 +23,19 @@ const ICON: Record<TransitModeKind, string> = {
  * 실험실 "대중교통 안내" (사용자 요청 2026-11-03): 나라별 교통수단·대표 요금·환승·추천 앱·공식 안내.
  * 처음엔 접어 두고 눌러서 펼친다 (빠른 메뉴가 길어지지 않게)
  */
-export function TransitGuide({ country, label }: { country: string; label: string }) {
+export function TransitGuide({
+  country,
+  guide,
+  label,
+}: {
+  country: string;
+  /** 도시 정보 (있으면 나라 대표 정보 대신) */
+  guide?: CountryTransit | undefined;
+  label: string;
+}) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
-  const g = transitGuideFor(country);
+  const g = guide ?? transitGuideFor(country);
   if (!g) return null;
   return (
     <div className="flex flex-col rounded-card bg-bg-subtle px-3 py-1 text-caption text-fg-sub">

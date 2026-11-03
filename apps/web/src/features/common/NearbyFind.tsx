@@ -15,7 +15,11 @@ export function NearbyFind({ domestic }: { domestic: boolean }) {
   const { t } = useTranslation();
   return (
     <div className="flex flex-col gap-1.5 rounded-card bg-bg-subtle px-3 py-2.5">
-      <span className="text-caption font-semibold">{t('nearbyFind.title')}</span>
+      {/* 설명은 제목 옆에 작게 (사용자 요청 2026-11-03) */}
+      <span className="flex flex-wrap items-baseline gap-x-1.5">
+        <span className="text-caption font-semibold">{t('nearbyFind.title')}</span>
+        <span className="text-micro text-fg-muted">{t('nearbyFind.note')}</span>
+      </span>
       <div className="grid grid-cols-4 gap-1.5">
         {KINDS.map((k) => (
           <a
@@ -36,7 +40,6 @@ export function NearbyFind({ domestic }: { domestic: boolean }) {
           </a>
         ))}
       </div>
-      <span className="text-micro text-fg-muted">{t('nearbyFind.note')}</span>
     </div>
   );
 }
