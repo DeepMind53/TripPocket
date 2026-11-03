@@ -101,30 +101,35 @@ export function FlightAirportInfo({ booking: b }: { booking: Booking }) {
   const checked = report ? new Date(report.checkedAt) : null;
   return (
     <div className="flex flex-col gap-1 border-t border-dashed border-line px-4 py-2">
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-caption font-semibold text-fg-sub">{t('flightAirport.title')}</span>
-        <button
-          type="button"
-          disabled={busy}
-          onClick={() => void check()}
-          className="flex h-9 items-center gap-1 text-caption font-semibold text-primary disabled:opacity-50"
-        >
-          <RefreshCw aria-hidden="true" className={`size-3.5 ${busy ? 'animate-spin' : ''}`} />
-          {report ? t('flightAirport.recheck') : t('flightAirport.check')}
-        </button>
+      <div className="flex items-start justify-between gap-2">
+        <span className="flex h-9 items-center text-caption font-semibold text-fg-sub">
+          {t('flightAirport.title')}
+        </span>
+        {/* 확인 시각·재확인 안내는 버튼 바로 아래에 짧게 (사용자 요청 2026-11-03) */}
+        <span className="flex flex-col items-end">
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => void check()}
+            className="flex h-9 items-center gap-1 text-caption font-semibold text-primary disabled:opacity-50"
+          >
+            <RefreshCw aria-hidden="true" className={`size-3.5 ${busy ? 'animate-spin' : ''}`} />
+            {report ? t('flightAirport.recheck') : t('flightAirport.check')}
+          </button>
+          {checked && (
+            <span className="tabular -mt-1 text-right text-micro whitespace-pre-line text-warning">
+              {t('flightAirport.checkedAt', {
+                at: `${checked.getMonth() + 1}.${String(checked.getDate()).padStart(2, '0')} ${String(checked.getHours()).padStart(2, '0')}:${String(checked.getMinutes()).padStart(2, '0')}`,
+              })}
+            </span>
+          )}
+        </span>
       </div>
       {report ? (
-        <>
-          <ul className="flex flex-col gap-0.5">
-            {line('dep', report.dep)}
-            {line('arr', report.arr)}
-          </ul>
-          <p className="tabular text-micro text-warning">
-            {t('flightAirport.checkedAt', {
-              at: `${checked!.getMonth() + 1}.${String(checked!.getDate()).padStart(2, '0')} ${String(checked!.getHours()).padStart(2, '0')}:${String(checked!.getMinutes()).padStart(2, '0')}`,
-            })}
-          </p>
-        </>
+        <ul className="flex flex-col gap-0.5">
+          {line('dep', report.dep)}
+          {line('arr', report.arr)}
+        </ul>
       ) : (
         <p className="text-micro text-fg-muted">{t('flightAirport.hint')}</p>
       )}

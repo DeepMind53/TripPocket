@@ -36,6 +36,12 @@ export function BaggageInfo({ booking: b }: { booking: Booking }) {
             <span className="font-semibold">{t('baggage.checked')}</span> {info.checked}
           </p>
           {info.note && <p className="text-warning">{info.note}</p>}
+          {(info.tips || info.lcc) && (
+            <p className="flex flex-col whitespace-pre-line text-fg-sub">
+              <span className="font-semibold text-fg">{t('baggage.tips')}</span>
+              {[info.tips, info.lcc && t('baggage.lccTips')].filter(Boolean).join('\n')}
+            </p>
+          )}
           <p className="text-micro whitespace-pre-line text-fg-muted">
             {t(info.official ? 'baggage.noteOfficial' : 'baggage.noteTypical', {
               date: BAGGAGE_CHECKED_AT,

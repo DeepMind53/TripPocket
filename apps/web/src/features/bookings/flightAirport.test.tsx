@@ -35,7 +35,7 @@ it('인천 출발편: 터미널·체크인 카운터·게이트와 확인 시각
   render(<FlightAirportInfo booking={flight({})} />);
   await user.click(screen.getByRole('button', { name: '확인하기' }));
   expect(await screen.findByText(/T2 · 체크인 A B C D · 게이트 267/)).toBeInTheDocument();
-  expect(screen.getByText(/출발 전날과 당일에 다시 확인하세요/)).toBeInTheDocument();
+  expect(screen.getByText(/\d{2}:\d{2} 확인\s+출발 전 재확인 필요/)).toBeInTheDocument();
   // 해외 도착 공항은 묻지 않는다
   expect(urls[0]).toBe('/api/flights/KE703/airport?date=2026-11-03&from=ICN&arrDate=2026-11-03');
 });
