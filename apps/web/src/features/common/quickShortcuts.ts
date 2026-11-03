@@ -10,18 +10,14 @@ import {
   FlaskConical,
   Heart,
   IdCard,
-  Languages,
   ListChecks,
   MapPinned,
   Printer,
   Settings,
-  Siren,
-  Sparkles,
   SquarePen,
   Ticket,
   TicketCheck,
   Trash2,
-  Wallet,
   Wrench,
   type LucideIcon,
 } from 'lucide-react';
@@ -37,7 +33,6 @@ export const SHORTCUT_IDS = [
   'bookingNo',
   'nextItem',
   'car',
-  'emergency',
   // 여행 화면
   'plan',
   'bookings',
@@ -47,10 +42,7 @@ export const SHORTCUT_IDS = [
   'places',
   'tripSettings',
   'print',
-  // 앱 화면
-  'ai',
-  'fx',
-  'phrases',
+  // 앱 화면 (긴급 연락처·환율·AI 추천·번역·회화는 빠른 메뉴 맨 위에 늘 있어 뺐다, 2026-11-04)
   'saved',
   'records',
   'profile',
@@ -71,7 +63,6 @@ export const SHORTCUT_ICON: Record<ShortcutId, LucideIcon> = {
   bookingNo: Ticket,
   nextItem: CalendarClock,
   car: Car,
-  emergency: Siren,
   plan: CalendarDays,
   bookings: TicketCheck,
   checklist: ListChecks,
@@ -80,9 +71,6 @@ export const SHORTCUT_ICON: Record<ShortcutId, LucideIcon> = {
   places: MapPinned,
   tripSettings: Wrench,
   print: Printer,
-  ai: Sparkles,
-  fx: Wallet,
-  phrases: Languages,
   saved: Heart,
   records: BookOpen,
   profile: IdCard,
@@ -97,7 +85,6 @@ export const SHORTCUT_ICON: Record<ShortcutId, LucideIcon> = {
 /** 화면으로 가는 바로가기의 주소 (tripId가 필요한 것은 여행 안에서만) */
 export function shortcutPath(id: ShortcutId, tripId: string): string | null {
   const trip = `/trips/${tripId}`;
-  const q = tripId ? `?trip=${tripId}` : '';
   const paths: Partial<Record<ShortcutId, string>> = {
     plan: `${trip}/plan`,
     bookings: `${trip}/bookings`,
@@ -107,9 +94,6 @@ export function shortcutPath(id: ShortcutId, tripId: string): string | null {
     places: `${trip}/places`,
     tripSettings: `${trip}/settings`,
     print: `${trip}/print`,
-    ai: `/ai${q}`,
-    fx: `/fx${q}`,
-    phrases: `/phrases${q}`,
     saved: '/saved',
     records: '/records',
     profile: '/me/profile',

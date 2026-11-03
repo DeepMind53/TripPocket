@@ -1,5 +1,6 @@
+import { InlineIcon } from '../../shared/ui/InlineIcon';
 import type { ChecklistItem } from '@trippocket/shared';
-import { Plus } from 'lucide-react';
+import { Plus, Users } from 'lucide-react';
 import { useTranslation } from '../../i18n';
 
 /**
@@ -24,7 +25,10 @@ export function SharedPacking({
       aria-label={t('checklist.share.fromOthers')}
       className="flex flex-col gap-2 rounded-card bg-bg-subtle px-3 py-2.5"
     >
-      <h2 className="text-caption font-bold text-fg-sub">👥 {t('checklist.share.fromOthers')}</h2>
+      <h2 className="text-caption font-bold text-fg-sub">
+        <InlineIcon icon={Users} />
+        {t('checklist.share.fromOthers')}
+      </h2>
       <ul className="flex flex-col divide-y divide-line">
         {items.map((i) => (
           <li key={i.id} className="flex min-h-10 items-center gap-2 text-body-2">

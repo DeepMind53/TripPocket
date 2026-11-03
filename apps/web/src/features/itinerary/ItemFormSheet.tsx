@@ -1,4 +1,5 @@
 import { useTrip } from '../../data/hooks';
+import { itemDefaultTimes, switchTimes } from '../../domain/defaultTimes';
 import { isDomesticTrip } from '../../domain/tripPlace';
 import { PlaceAutocomplete } from '../common/PlaceAutocomplete';
 import { SavedPick } from '../saved/SavedPick';
@@ -73,6 +74,7 @@ function ItemForm({
   const { t } = useTranslation();
   const [kind, setKind] = useState<ItemKind>(item?.kind ?? 'place');
   const [title, setTitle] = useState(item?.title ?? '');
+  // 새 음식점 일정은 12:00부터 (사용자 요청 2026-11-04)
   const [startTime, setStartTime] = useState(item?.startTime ?? '');
   // 설정의 시간 입력 간격 (분 → 초)
   const timeStep = useSettings((st) => st.timeStepMin) * 60;
@@ -85,6 +87,20 @@ function ItemForm({
   const [memo, setMemo] = useState(item?.memo ?? '');
   const [url, setUrl] = useState(item?.url ?? '');
   const [saving, setSaving] = useState(false);
+
+  // 새 일정이면 종류에 맞는 시각 초기값 (직접 고친 시각은 그대로)
+  const changeKind = (k: ItemKind) => {
+    if (!item) {
+      const next = switchTimes(
+        { start: startTime, end: endTime },
+        itemDefaultTimes(kind),
+        itemDefaultTimes(k),
+      );
+      setStartTime(next.start);
+      setEndTime(next.end);
+    }
+    setKind(k);
+  };
 
   // 메모는 이름 없이 내용만 (사용자 요청 2026-10-26) — 이름은 내용 첫 줄로 저장
   const isNote = kind === 'note';
@@ -161,7 +177,7 @@ function ItemForm({
               <Chip
                 key={k}
                 selected={k === kind}
-                onClick={() => setKind(k)}
+                onClick={() => changeKind(k)}
                 leading={<Icon aria-hidden="true" className="size-4" />}
               >
                 {t(`kind.${k}`)}
@@ -178,7 +194,7 @@ function ItemForm({
             <SavedPick
               countries={trip.destinations.flatMap((d) => (d.countryCode ? [d.countryCode] : []))}
               onPick={(p) => {
-                setKind(p.kind);
+                changeKind(p.kind);
                 setTitle(p.name);
                 setAddress(p.address ?? '');
                 setPicked({

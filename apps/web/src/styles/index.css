@@ -245,6 +245,25 @@
   opacity: 0.35;
 }
 
+/* 휴대폰에서 글을 입력하는 동안은 하단 탭을 숨긴다: 자판 위로 올라와 입력칸·저장 버튼을 가리지 않게 (사용자 요청 2026-11-04) */
+@media (pointer: coarse) {
+  body:has(
+      input:is(
+          [type='text'],
+          [type='search'],
+          [type='tel'],
+          [type='url'],
+          [type='email'],
+          [type='number'],
+          :not([type])
+        ):focus,
+      textarea:focus
+    )
+    .tp-tabbar {
+    display: none;
+  }
+}
+
 /* 여행 모드 햇빛 모드 (실험실, 2026-11-03): 밖에서 잘 보이게 글씨 크게·대비 높게 */
 .travel-sun {
   --tp-fg-sub: var(--tp-fg);

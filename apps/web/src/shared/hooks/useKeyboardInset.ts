@@ -21,12 +21,25 @@ export function useKeyboardInset(active: boolean): { inset: number; height: numb
       setState((cur) => (cur.inset === next.inset && cur.height === next.height ? cur : next));
       // 입력칸을 보이는 곳으로 올리는 일은 useKeyboardScroll이 한다 (위쪽으로 — 아래 검색 결과·버튼 자리)
     };
+    // 자판이 다 올라온 뒤 한 번 더 (resize가 늦거나 안 오는 폰이 있다)
+    let timer = 0;
+    const later = () => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(update, 350);
+    };
     update();
     vv.addEventListener('resize', update);
     vv.addEventListener('scroll', update);
+    window.addEventListener('resize', update);
+    document.addEventListener('focusin', later);
+    document.addEventListener('focusout', later);
     return () => {
+      window.clearTimeout(timer);
       vv.removeEventListener('resize', update);
       vv.removeEventListener('scroll', update);
+      window.removeEventListener('resize', update);
+      document.removeEventListener('focusin', later);
+      document.removeEventListener('focusout', later);
       setState({ inset: 0, height: null });
     };
   }, [active]);

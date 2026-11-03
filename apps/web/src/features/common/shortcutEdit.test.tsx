@@ -13,9 +13,9 @@ it('하나를 빼고 다른 것을 넣으면 고른 순서대로 저장, 4개가
   const user = userEvent.setup();
   render(<ShortcutEditSheet open onOpenChange={() => {}} />);
   await user.click(await screen.findByRole('button', { name: /준비물/ }));
-  await user.click(screen.getByRole('button', { name: /환율/ }));
+  await user.click(screen.getByRole('button', { name: /날씨 정보/ }));
   expect(screen.getByRole('button', { name: /도움말/ })).toBeDisabled();
   await user.click(screen.getByRole('button', { name: '저장' }));
-  expect(useQuickShortcuts.getState().ids).toEqual(['lodging', 'bookingNo', 'nextItem', 'fx']);
+  expect(useQuickShortcuts.getState().ids).toEqual(['lodging', 'bookingNo', 'nextItem', 'weather']);
   expect(JSON.parse(localStorage.getItem('tp-quick-shortcuts')!)).toHaveLength(4);
 });

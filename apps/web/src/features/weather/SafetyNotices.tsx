@@ -1,3 +1,5 @@
+import { InlineIcon } from '../../shared/ui/InlineIcon';
+import { ShieldAlert } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { api } from '../../data/api/client';
 import { useLab } from '../../data/labsStore';
@@ -39,7 +41,10 @@ function List({ codes }: { codes: string[] }) {
   if (!notices?.length) return null;
   return (
     <section aria-label={t('safetyNotice.title')} className="flex flex-col gap-1.5">
-      <h3 className="text-caption font-bold text-fg-muted">{t('safetyNotice.title')}</h3>
+      <h3 className="text-caption font-bold text-fg-muted">
+        <InlineIcon icon={ShieldAlert} />
+        {t('safetyNotice.title')}
+      </h3>
       <ul className="flex flex-col gap-1">
         {notices.map((n) => (
           <li

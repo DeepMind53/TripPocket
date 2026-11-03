@@ -1,3 +1,5 @@
+import { InlineIcon } from '../../shared/ui/InlineIcon';
+import { Timer } from 'lucide-react';
 import { todayIn, type Booking } from '@trippocket/shared';
 import { useEffect, useState } from 'react';
 import { api } from '../../data/api/client';
@@ -41,6 +43,7 @@ function Line({ no }: { no: string }) {
         s.depDelay ? 'text-warning' : 'text-fg-sub'
       }`}
     >
+      <InlineIcon icon={Timer} className="text-current" />
       {s.depDelay ? t('flightDelay.delayed', { min: s.depDelay }) : t('flightDelay.onTime')}
       <span className="ml-1 text-micro font-normal text-fg-muted">{t('flightDelay.source')}</span>
     </p>

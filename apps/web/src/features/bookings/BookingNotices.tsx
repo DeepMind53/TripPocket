@@ -1,3 +1,5 @@
+import { InlineIcon } from '../../shared/ui/InlineIcon';
+import { BedDouble } from 'lucide-react';
 import type { Booking, Trip } from '@trippocket/shared';
 import { useSettings } from '../../data/settingsStore';
 import { nightsWithoutStay } from '../../domain/localInfo';
@@ -16,6 +18,7 @@ export function BookingNotices({ trip, bookings }: { trip: Trip; bookings: reado
   if (!nights.length) return null;
   return (
     <p className="rounded-btn bg-warning/10 px-3 py-2 text-caption whitespace-pre-line text-fg-sub">
+      <InlineIcon icon={BedDouble} className="text-warning" />
       {t('missingStay.text', { dates: nights.map(formatMonthDay).join(', ') })}
     </p>
   );

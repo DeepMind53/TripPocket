@@ -1,10 +1,12 @@
+import { InlineIcon } from '../../shared/ui/InlineIcon';
+import { Banknote, MapPin, Pill, Store, Toilet } from 'lucide-react';
 import { useTranslation } from '../../i18n';
 
 const KINDS = [
-  { id: 'store', emoji: '🏪', google: 'convenience store', naver: '편의점' },
-  { id: 'pharmacy', emoji: '💊', google: 'pharmacy', naver: '약국' },
-  { id: 'atm', emoji: '🏧', google: 'ATM', naver: 'ATM' },
-  { id: 'toilet', emoji: '🚻', google: 'public toilet', naver: '공중화장실' },
+  { id: 'store', icon: Store, google: 'convenience store', naver: '편의점' },
+  { id: 'pharmacy', icon: Pill, google: 'pharmacy', naver: '약국' },
+  { id: 'atm', icon: Banknote, google: 'ATM', naver: 'ATM' },
+  { id: 'toilet', icon: Toilet, google: 'public toilet', naver: '공중화장실' },
 ] as const;
 
 /**
@@ -17,7 +19,10 @@ export function NearbyFind({ domestic }: { domestic: boolean }) {
     <div className="flex flex-col gap-1.5 rounded-card bg-bg-subtle px-3 py-2.5">
       {/* 설명은 제목 옆에 작게 (사용자 요청 2026-11-03) */}
       <span className="flex flex-wrap items-baseline gap-x-1.5">
-        <span className="text-caption font-semibold">{t('nearbyFind.title')}</span>
+        <span className="text-caption font-semibold">
+          <InlineIcon icon={MapPin} />
+          {t('nearbyFind.title')}
+        </span>
         <span className="text-micro text-fg-muted">{t('nearbyFind.note')}</span>
       </span>
       <div className="grid grid-cols-4 gap-1.5">
@@ -33,9 +38,7 @@ export function NearbyFind({ domestic }: { domestic: boolean }) {
             rel="noopener noreferrer"
             className="flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-btn bg-surface text-caption font-semibold"
           >
-            <span aria-hidden="true" className="text-body-1">
-              {k.emoji}
-            </span>
+            <k.icon aria-hidden="true" className="size-5 text-primary" />
             {t(`nearbyFind.${k.id}`)}
           </a>
         ))}

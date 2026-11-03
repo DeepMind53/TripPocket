@@ -1,10 +1,12 @@
 import { todayIn } from '@trippocket/shared';
+import { InlineIcon } from '../../shared/ui/InlineIcon';
 import { useLab } from '../../data/labsStore';
 import { setTravelMode } from '../../data/travelModeStore';
 import {
   CalendarDays,
   Compass,
   Ellipsis,
+  Eye,
   ListChecks,
   Printer,
   Search,
@@ -116,6 +118,7 @@ export function TripLayout() {
           role="status"
           className="mx-5 mb-2 rounded-btn bg-bg-subtle px-3 py-2 text-caption text-fg-sub"
         >
+          <InlineIcon icon={Eye} />
           {t('share.readOnly.banner')}
         </p>
       )}

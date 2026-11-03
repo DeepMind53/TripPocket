@@ -363,7 +363,7 @@
     "noBreakfast": "조식 없음",
     "baggage": "수하물 허용량",
     "baggagePlaceholder": "예: 위탁 23kg · 기내 7kg",
-    "baggageValue": "🧳 {{v}}",
+    "baggageValue": "{{v}}",
     "cancelBy": "무료 취소 마감일",
     "cancelByValue": "{{date}}까지 무료 취소",
     "cancelPassed": "무료 취소 기간 지남",
@@ -374,13 +374,13 @@
     },
     "meetingPoint": "만나는 곳",
     "meetingPlaceholder": "예: 1층 3번 출구 앞",
-    "meetingValue": "📍 {{v}}",
+    "meetingValue": "{{v}}",
     "voucherUrl": "바우처·확인서 링크",
     "voucherOpen": "바우처 열기",
     "voucherBad": "링크는 https://로 시작해야 해요",
     "insurance": "보험",
     "insurancePlaceholder": "예: 완전자차",
-    "insuranceValue": "🛡️ {{v}}",
+    "insuranceValue": "{{v}}",
     "carPickup": "인수 장소",
     "carReturn": "반납 장소",
     "returnDate": "반납 날짜",
@@ -524,9 +524,9 @@
     "checkoutNotice": "체크아웃 날 시각 보여 주기",
     "dayRecap": "하루 끝에 돌아보기",
     "nowScroll": "열면 지금 일정으로 이동",
-    "quickButton": "⚡ 빠른 메뉴 버튼 보이기",
-    "quickButtonReset": "⚡ 버튼 위치 처음으로",
-    "quickButtonResetDone": "⚡ 버튼을 처음 자리로 옮겼어요",
+    "quickButton": "빠른 메뉴 버튼 보이기",
+    "quickButtonReset": "빠른 메뉴 버튼 위치 처음으로",
+    "quickButtonResetDone": "빠른 메뉴 버튼을 처음 자리로 옮겼어요",
     "ai": "AI 추천",
     "aiCats": "처음 고를 카테고리",
     "aiAnchor": "처음 기준 위치",
@@ -778,7 +778,7 @@
     "update": "업데이트",
     "installTitle": "홈 화면에 앱 설치",
     "installWhy": "홈 화면에 추가하면 앱처럼 바로 열려요\n인터넷 없이도 써요",
-    "installed": "이 기기에는 이미 설치했어요 ✓\n아이콘을 지웠다면 아래 방법으로 다시 추가하세요",
+    "installed": "이 기기에는 이미 설치했어요\n아이콘을 지웠다면 아래 방법으로 다시 추가하세요",
     "install": "설치하기",
     "installConfirm": "확인",
     "installLater": "나중에",
@@ -927,7 +927,7 @@
     "inviteInvalid": "사용할 수 없는 초대예요",
     "inviteInvalidDesc": "기간(7일)이 지났거나 이미 쓴 링크예요\n새 초대를 받아 주세요",
     "readOnly": {
-      "banner": "👀 보기만 가능한 여행이에요\n고치려면 여행 주인에게 수정 권한을 요청하세요",
+      "banner": "보기만 가능한 여행이에요\n고치려면 여행 주인에게 수정 권한을 요청하세요",
       "blocked": "보기만 가능한 여행이라 고칠 수 없어요"
     },
     "offline": "서버에 연결할 수 없어 링크는 못 만들어요\n텍스트·이미지 공유는 돼요",
@@ -1405,7 +1405,7 @@
     },
     "checkoutAt": "오늘 {{time}} 체크아웃 · {{name}}",
     "checkout": "오늘 체크아웃 · {{name}}",
-    "nearbyWish": "📍 근처 가고 싶은 곳: {{names}}{{more}}",
+    "nearbyWish": "근처 가고 싶은 곳: {{names}}{{more}}",
     "recap": "오늘 돌아보기 · 방문 {{n}}곳 · 약 {{km}}km 이동",
     "preview": "샘플",
     "previewOf": "{{name}} 샘플",
@@ -1442,14 +1442,14 @@
     "copyDay": "일정 글로 복사",
     "copyDayDesc": "카톡 등에 붙여 넣을 수 있어요",
     "dayCopied": "하루 일정을 복사했어요",
-    "jetLagSame": "🕒 여행지는 한국과 같은 시간이에요",
-    "jetLagAhead": "🕒 여행지는 한국보다 {{h}}시간 빨라요",
-    "jetLagBehind": "🕒 여행지는 한국보다 {{h}}시간 느려요",
+    "jetLagSame": "여행지는 한국과 같은 시간이에요",
+    "jetLagAhead": "여행지는 한국보다 {{h}}시간 빨라요",
+    "jetLagBehind": "여행지는 한국보다 {{h}}시간 느려요",
     "homeLabel": "여행 도움 정보",
     "localTitle": "현지 생활 정보",
-    "transitLabel": "🚇 교통카드",
-    "payLabel": "💳 결제",
-    "voucherTitle": "🎫 바우처",
+    "transitLabel": "교통카드",
+    "payLabel": "결제",
+    "voucherTitle": "바우처",
     "voucherDoc": "{{name}} 문서 보기",
     "voucherLink": "{{name}} 바우처 링크 열기"
   },
@@ -1592,7 +1592,7 @@
       "desc": "다음 일정까지 시간·출발 시각\n지난 일정은 방문·미방문 기록"
     },
     "quick": {
-      "title": "⚡ 버튼 하나로",
+      "title": "버튼 하나로",
       "desc": "긴급 연락처·환율·AI·회화\n어느 화면에서든 바로 열려요"
     },
     "alerts": {
@@ -1896,14 +1896,14 @@
       "info": "참고"
     },
     "kind": {
-      "cyclone": "🌀 태풍",
-      "earthquake": "🌏 지진",
-      "flood": "🌊 홍수",
-      "volcano": "🌋 화산",
-      "wildfire": "🔥 산불",
-      "drought": "🏜 가뭄",
-      "travel": "🛂 외교부",
-      "weather": "🌦 기상청"
+      "cyclone": "태풍",
+      "earthquake": "지진",
+      "flood": "홍수",
+      "volcano": "화산",
+      "wildfire": "산불",
+      "drought": "가뭄",
+      "travel": "외교부",
+      "weather": "기상청"
     },
     "agency": {
       "kma": "기상청",
@@ -1912,15 +1912,15 @@
       "cwa": "대만 기상서",
       "eccc": "캐나다 기상청"
     },
-    "national": "🌦 {{agency}} · {{names}}",
+    "national": "{{agency}} · {{names}}",
     "homeDot": "여행지 특보 {{n}}건",
     "banner": "여행지 특보 {{n}}건 · 날씨 정보에서 확인",
     "announced": "특보 발표",
     "gdacs": "{{kind}} · {{level}} 경보",
-    "quake": "🌏 지진 · 규모 {{mag}}",
-    "step": "🛂 여행경보 {{n}}단계",
-    "evacuate": "🛂 특별여행주의보",
-    "forbidden": "🛂 특별여행경보",
+    "quake": "지진 · 규모 {{mag}}",
+    "step": "여행경보 {{n}}단계",
+    "evacuate": "특별여행주의보",
+    "forbidden": "특별여행경보",
     "whole": "전 지역",
     "source": "원문",
     "sourceOf": "{{title}} 원문 보기",
@@ -1929,7 +1929,7 @@
     "note": "참고용이므로 공식 발표도 한 번 더 확인 해 주세요\n출처 : 각 나라 기상청 및 GDACS, USGS, 외교부"
   },
   "flightCheck": {
-    "title": "✈ {{title}} 출발 전이에요",
+    "title": "{{title}} 출발 전이에요",
     "notice": "항공편 일정이 변동된 경우\n자동으로 반영되지 않아요\n반드시 항공편 일정을 재확인해 주세요",
     "confirm": "확인"
   },
@@ -2047,7 +2047,7 @@
       "pinned": "여행 중인 여행은 목록 맨 위에",
       "trash": "지운 것은 7일 안에 마이에서 복원",
       "alerts": "여행지 특보는 날씨 정보 맨 위에",
-      "localNow": "현지 시각은 ⚡ 빠른 메뉴 제목 옆에",
+      "localNow": "현지 시각은 빠른 메뉴 제목 옆에",
       "profile": "여권 만료일은 마이 → 개인정보에"
     },
     "askTitle": "모르는 게 있나요?",
@@ -2309,8 +2309,8 @@
     "drawn": "{{name}} 그림",
     "drawnNote": "자유 이용 사진이 없어 그림으로 보여요",
     "official": "{{name}} 공식 안내",
-    "cityTitle": "📍 {{name}}",
-    "countryTitle": "🌏 {{name}}",
+    "cityTitle": "{{name}}",
+    "countryTitle": "{{name}}",
     "reference": "나라 대표 정보 · 참고용"
   },
   "flightAirport": {
@@ -2359,14 +2359,14 @@
     "tips": "알아 두기"
   },
   "transitGuide": {
-    "title": "🚆 {{country}} 대중교통 안내",
+    "title": "{{country}} 대중교통 안내",
     "transfer": "환승",
     "apps": "추천 앱",
     "checked": "{{date}} 여러 안내로 확인한 대표값이에요\n공식 안내로 꼭 다시 확인하세요",
     "official": "공식 요금 안내"
   },
   "nearbyFind": {
-    "title": "📍 근처 찾기",
+    "title": "근처 찾기",
     "store": "편의점",
     "pharmacy": "약국",
     "atm": "ATM",
@@ -2377,27 +2377,27 @@
     "title": "{{date}} 공항에서 숙소 가는 길"
   },
   "missingStay": {
-    "text": "🛏️ 숙소 예약이 없는 밤이 있어요\n{{dates}}"
+    "text": "숙소 예약이 없는 밤이 있어요\n{{dates}}"
   },
   "offlineReady": {
-    "vouchers": "📥 바우처 {{n}}개가 링크로만 있어요\n예약에 문서로 붙여 두면 오프라인에서도 보여요",
-    "maps": "🗺️ 지도 앱에서 여행지 오프라인 지도를\n미리 받아 두세요"
+    "vouchers": "바우처 {{n}}개가 링크로만 있어요\n예약에 문서로 붙여 두면 오프라인에서도 보여요",
+    "maps": "지도 앱에서 여행지 오프라인 지도를\n미리 받아 두세요"
   },
   "placeTips": {
-    "dress": "👕 사원·신사·성당이 있어요\n어깨·무릎을 가리는 옷을 챙기세요",
-    "onsen": "♨️ 온천 일정이 있어요\n작은 수건을 챙기고 문신 규정을 확인하세요",
-    "beach": "🏖️ 해변 일정이 있어요\n선크림·수영복·샌들을 챙기세요",
-    "hike": "🥾 산행 일정이 있어요\n편한 신발과 물을 챙기세요"
+    "dress": "사원·신사·성당이 있어요\n어깨·무릎을 가리는 옷을 챙기세요",
+    "onsen": "온천 일정이 있어요\n작은 수건을 챙기고 문신 규정을 확인하세요",
+    "beach": "해변 일정이 있어요\n선크림·수영복·샌들을 챙기세요",
+    "hike": "산행 일정이 있어요\n편한 신발과 물을 챙기세요"
   },
   "air": {
-    "pm25Bad": "😷 미세먼지 나쁨 (하루 평균 {{v}}㎍/㎥)\n마스크를 챙기세요",
-    "pm25VeryBad": "😷 미세먼지 매우 나쁨 (하루 평균 {{v}}㎍/㎥)\n바깥 일정을 줄이고 마스크를 쓰세요",
-    "uvVeryHigh": "🧴 자외선 매우 높음 (최고 {{v}})\n선크림·모자를 챙기세요",
-    "uvExtreme": "🧴 자외선 위험 (최고 {{v}})\n한낮 햇볕을 피하세요",
+    "pm25Bad": "미세먼지 나쁨 (하루 평균 {{v}}㎍/㎥)\n마스크를 챙기세요",
+    "pm25VeryBad": "미세먼지 매우 나쁨 (하루 평균 {{v}}㎍/㎥)\n바깥 일정을 줄이고 마스크를 쓰세요",
+    "uvVeryHigh": "자외선 매우 높음 (최고 {{v}})\n선크림·모자를 챙기세요",
+    "uvExtreme": "자외선 위험 (최고 {{v}})\n한낮 햇볕을 피하세요",
     "source": "대기질 예보 Open-Meteo (CAMS)"
   },
   "cityIntro": {
-    "title": "📖 {{name}} 소개",
+    "title": "{{name}} 소개",
     "source": "위키백과 · CC BY-SA",
     "open": "위키백과에서 더 보기"
   },
@@ -2500,18 +2500,18 @@
     "vehiclePlaceholder": "예: KTX 101"
   },
   "safetyNotice": {
-    "title": "🛡️ 외교부 안전공지",
+    "title": "외교부 안전공지",
     "source": "외교부"
   },
   "festivals": {
-    "title": "🎉 여행 기간 축제·행사",
+    "title": "여행 기간 축제·행사",
     "add": "{{name}} 가고 싶은 곳에 넣기",
     "added": "{{name}}을(를) 가고 싶은 곳에 넣었어요",
     "source": "한국관광공사 자료"
   },
   "flightDelay": {
-    "delayed": "⏱ 출발 약 {{min}}분 지연",
-    "onTime": "⏱ 지연 소식 없음",
+    "delayed": "출발 약 {{min}}분 지연",
+    "onTime": "지연 소식 없음",
     "source": "AirLabs"
   },
   "entryCheck": {

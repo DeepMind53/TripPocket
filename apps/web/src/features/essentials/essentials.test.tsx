@@ -62,7 +62,7 @@ it('홈 준비 현황에 필수 항목 칸 (완료 수·다음 할 일)', async 
   renderAt('/');
   const prep = await screen.findByRole('region', { name: '준비 현황' });
   await waitFor(() =>
-    expect(within(prep).getByRole('button', { expanded: false })).toHaveTextContent(/🛂 \d+\/\d+/),
+    expect(within(prep).getByRole('button', { expanded: false })).toHaveTextContent(/\d+\/\d+/),
   );
   fireEvent.click(within(prep).getByRole('button', { expanded: false }));
   expect(await screen.findByRole('link', { name: /필수 항목 체크리스트/ })).toHaveTextContent(

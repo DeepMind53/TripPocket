@@ -22,6 +22,11 @@ export function useKeyboardScroll(): void {
       // 자판이 올라오는 동안 기다렸다가
       timer = window.setTimeout(() => {
         if (document.activeElement !== el) return;
+        // 시트 안 입력칸: 시트가 자판 위로 올라가니 시트 안에서만 보이게 (화면 전체를 밀면 저장 버튼이 가려진다)
+        if (el.closest('[role=dialog]')) {
+          el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+          return;
+        }
         const visible = window.visualViewport?.height ?? window.innerHeight;
         const r = el.getBoundingClientRect();
         if (r.top >= 0 && r.bottom <= visible * 0.45) return;

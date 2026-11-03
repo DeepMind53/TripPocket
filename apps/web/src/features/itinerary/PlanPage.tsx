@@ -1,4 +1,5 @@
 import { useSettings } from '../../data/settingsStore';
+import { InlineIcon } from '../../shared/ui/InlineIcon';
 import { TravelModeGate } from '../travel/TravelModeGate';
 import { useCanEdit } from '../../data/tripRoles';
 import { useTimeText } from '../../shared/hooks/useTimeText';
@@ -17,20 +18,29 @@ import {
   ArrowDownWideNarrow,
   BedDouble,
   Check,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   ClipboardCopy,
   CopyPlus,
+  Droplets,
+  EggFried,
   Ellipsis,
-  Map as MapIcon,
-  Plus,
   Footprints,
-  Route,
-  ChevronDown,
+  Haze,
+  Luggage,
+  Map as MapIcon,
   MapPinned,
   Moon,
   MoonStar,
+  Mountain,
+  Plus,
+  Route,
+  Shirt,
+  StickyNote,
   Sun,
+  SunMedium,
+  TreePalm,
 } from 'lucide-react';
 import {
   currentItemId,
@@ -133,6 +143,14 @@ type DayFilter = 'all' | 'wish' | number;
  */
 /** 일정 상세에서 보던 일정 id (이 탭에만, sessionStorage) */
 const SELECTED_KEY = 'tp-plan-selected';
+
+/** 장소 맞춤 팁 앞 아이콘 (2026-11-04 이모지 → 선 아이콘) */
+const PLACE_TIP_ICON = {
+  dress: Shirt,
+  onsen: Droplets,
+  beach: TreePalm,
+  hike: Mountain,
+} as const;
 
 export function PlanPage() {
   const { tripId = '' } = useParams();
@@ -1151,6 +1169,7 @@ function DaySection({
             key={w.key}
             className="mx-3 mt-2 rounded-btn bg-warning/10 px-3 py-2 text-caption whitespace-pre-line text-fg-sub"
           >
+            <InlineIcon icon={w.key.startsWith('uv') ? SunMedium : Haze} className="text-warning" />
             {t(`air.${w.key}`, { v: w.v })}
           </p>
         ))}
@@ -1160,6 +1179,7 @@ function DaySection({
           key={k}
           className="mx-3 mt-2 rounded-btn bg-bg-subtle px-3 py-2 text-caption whitespace-pre-line text-fg-sub"
         >
+          <InlineIcon icon={PLACE_TIP_ICON[k]} />
           {t(`placeTips.${k}`)}
         </p>
       ))}
@@ -1176,7 +1196,7 @@ function DaySection({
           key={`out-${i}-${o.title}`}
           className="mx-3 mt-2 flex items-center gap-2 rounded-btn bg-warning/10 px-3 py-2 text-caption text-fg-sub"
         >
-          <span aria-hidden="true">🧳</span>
+          <Luggage aria-hidden="true" className="size-4 shrink-0 text-primary" />
           {o.time
             ? t('labs.checkoutAt', { time: o.time, name: o.title })
             : t('labs.checkout', { name: o.title })}
@@ -1197,7 +1217,7 @@ function DaySection({
       {/* 그날 아침 숙소 조식 (사용자 요청 2026-10-26) */}
       {breakfast && (
         <p className="mx-3 mt-2 flex items-center gap-2 rounded-btn bg-bg-subtle px-3 py-2 text-caption text-fg-sub">
-          <span aria-hidden="true">🍳</span>
+          <EggFried aria-hidden="true" className="size-4 shrink-0 text-primary" />
           {t('plan.breakfast', { name: breakfast.title })}
         </p>
       )}
@@ -1640,7 +1660,8 @@ function ItemRow({
         {/* 메모가 있으면 첫 줄만 (사용자 요청 2026-10-27) */}
         {item.kind !== 'note' && item.memo?.trim() && (
           <span className="truncate text-caption text-fg-sub">
-            📝 {item.memo.trim().split('\n')[0]}
+            <InlineIcon icon={StickyNote} className="text-fg-muted" />
+            {item.memo.trim().split('\n')[0]}
           </span>
         )}
       </span>

@@ -176,6 +176,9 @@ describe('일정 화면', () => {
     const sheet = screen.getByRole('dialog', { name: '일정 추가' });
     await user.click(within(sheet).getByRole('button', { name: '맛집' }));
     await user.type(within(sheet).getByLabelText('이름'), '이치란 라멘');
+    // 맛집을 고르면 시작이 12:00으로 채워진다 (2026-11-04)
+    expect(within(sheet).getByLabelText('시작')).toHaveValue('12:00');
+    await user.clear(within(sheet).getByLabelText('시작'));
     await user.type(within(sheet).getByLabelText('시작'), '11:30');
     await user.type(within(sheet).getByLabelText('주소'), '신주쿠 3-34-11');
     await user.click(within(sheet).getByRole('button', { name: '일정에 추가' }));
@@ -522,6 +525,6 @@ it('일정에 메모가 있으면 첫 줄을 일정 줄에 보여 준다 (2026-1
   });
   await renderPlan('?day=1');
   const row = await screen.findByRole('button', { name: '1번째 일정, 이치란' });
-  expect(row).toHaveTextContent('📝 줄 서기 전에 식권 사기');
+  expect(row).toHaveTextContent('줄 서기 전에 식권 사기');
   expect(row).not.toHaveTextContent('현금만');
 });

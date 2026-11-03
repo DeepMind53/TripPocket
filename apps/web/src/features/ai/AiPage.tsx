@@ -1,3 +1,4 @@
+import { InlineIcon } from '../../shared/ui/InlineIcon';
 import {
   todayIn,
   type AiCategory,
@@ -10,7 +11,7 @@ import { attachFallback } from '../../data/limitNotice';
 import { recommendLinks, type FallbackLink } from '../../shared/lib/fallbackLinks';
 import { FallbackLinks } from '../common/FallbackLinks';
 import { KeywordPicks, type KeywordPick } from './KeywordPicks';
-import { ChevronDown, Heart, MapPin, Plus, Sparkles, X } from 'lucide-react';
+import { Bed, ChevronDown, Heart, MapPin, Plus, Sparkles, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { api } from '../../data/api/client';
@@ -230,7 +231,8 @@ export function AiPage() {
             <div role="group" aria-label={t('ai.pickLodging')} className="flex flex-wrap gap-2">
               {lodgings.map((b) => (
                 <Chip key={b.id} selected={b.id === lodging?.id} onClick={() => setLodgingId(b.id)}>
-                  🛏 {b.title}
+                  <InlineIcon icon={Bed} className="text-current" />
+                  {b.title}
                 </Chip>
               ))}
             </div>

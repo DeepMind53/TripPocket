@@ -1,3 +1,5 @@
+import { InlineIcon } from '../../shared/ui/InlineIcon';
+import { Wallet } from 'lucide-react';
 import { COUNTRY_CURRENCY, type FxSnapshot } from '@trippocket/shared';
 import { useEffect, useState } from 'react';
 import { cachedFx } from '../../data/services/fxService';
@@ -24,7 +26,8 @@ export function MemoFx({ memo, countryCode }: { memo: string; countryCode?: stri
     <ul aria-label={t('labs.memoFxLabel')} className="mt-1 flex flex-col gap-0.5">
       {amounts.map((a, i) => (
         <li key={`${i}-${a.text}`} className="tabular text-caption text-fg-sub">
-          💱 {a.text} ≈{' '}
+          <InlineIcon icon={Wallet} />
+          {a.text} ≈{' '}
           {t('labs.memoFxWon', {
             won: Math.round(a.amount * a.rate).toLocaleString('ko-KR'),
           })}

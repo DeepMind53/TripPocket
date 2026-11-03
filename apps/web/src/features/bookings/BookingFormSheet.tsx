@@ -1,4 +1,6 @@
+import { InlineIcon } from '../../shared/ui/InlineIcon';
 import { useSettings } from '../../data/settingsStore';
+import { bookingDefaultTimes, switchTimes } from '../../domain/defaultTimes';
 import { attachFallback } from '../../data/limitNotice';
 import { flightLink } from '../../shared/lib/fallbackLinks';
 import { flightsApi } from '../../data/api/flights';
@@ -14,7 +16,7 @@ import {
   type Booking,
   type Trip,
 } from '@trippocket/shared';
-import { CalendarRange, Trash2 } from 'lucide-react';
+import { CalendarRange, EggFried, Trash2 } from 'lucide-react';
 import { StayRangeSheet } from './StayRangeSheet';
 import { BookingDocs } from './BookingDocs';
 import { formatMonthDay } from '../../shared/lib/dateFormat';
@@ -139,9 +141,10 @@ function BookingForm({
     carModel: b?.details?.carModel ?? '',
     plate: b?.details?.plate ?? '',
     startDate: b?.start.date ?? trip.startDate,
-    startTime: b?.start.time ?? '',
+    // 새 숙소 15:00, 새 식당 12:00 (사용자 요청 2026-11-04)
+    startTime: b ? (b.start.time ?? '') : bookingDefaultTimes(initialKind ?? 'flight').start,
     endDate: b?.end?.date ?? '',
-    endTime: b?.end?.time ?? '',
+    endTime: b ? (b.end?.time ?? '') : bookingDefaultTimes(initialKind ?? 'flight').end,
     seat: b?.details?.seat ?? '',
     terminal: b?.details?.terminal ?? '',
     arrivalTerminal: b?.details?.arrivalTerminal ?? '',
@@ -455,7 +458,18 @@ function BookingForm({
               <Chip
                 key={k}
                 selected={k === kind}
-                onClick={() => setKind(k)}
+                onClick={() => {
+                  // 새 예약이면 종류에 맞는 시각 초기값 (직접 고친 시각은 그대로)
+                  if (!b) {
+                    const next = switchTimes(
+                      { start: f.startTime, end: f.endTime },
+                      bookingDefaultTimes(kind),
+                      bookingDefaultTimes(k),
+                    );
+                    setF((cur) => ({ ...cur, startTime: next.start, endTime: next.end }));
+                  }
+                  setKind(k);
+                }}
                 leading={<Icon aria-hidden="true" className="size-4" />}
               >
                 {t(`bookingKind.${k}`)}
@@ -523,6 +537,7 @@ function BookingForm({
               {t('bookings.lookupNote')}
             </p>
           )}
+          {/* 출발(공항·터미널·날짜·시각) | 점선 | 도착 — 묶음으로 나눠 보기 (사용자 요청 2026-11-04) */}
           <Row>
             <AirportField
               id="bk-from"
@@ -531,33 +546,6 @@ function BookingForm({
               placeholder={t('bookings.airportPlaceholder', { example: 'ICN' })}
               onChange={(value) => set('from')({ target: { value } })}
             />
-            <AirportField
-              id="bk-to"
-              label={t('bookings.to')}
-              value={f.to}
-              placeholder={t('bookings.airportPlaceholder', { example: 'NRT' })}
-              onChange={(value) => set('to')({ target: { value } })}
-            />
-          </Row>
-          <DateTimeRow
-            dateLabel={t('bookings.departDate')}
-            timeLabel={t('bookings.departTime')}
-            date={f.startDate}
-            time={f.startTime}
-            onDate={set('startDate')}
-            onTime={set('startTime')}
-            idPrefix="bk-depart"
-          />
-          <DateTimeRow
-            dateLabel={t('bookings.arriveDate')}
-            timeLabel={t('bookings.arriveTime')}
-            date={endDate}
-            time={f.endTime}
-            onDate={set('endDate')}
-            onTime={set('endTime')}
-            idPrefix="bk-arrive"
-          />
-          <Row>
             <Field label={t('bookings.departTerminal')}>
               <input
                 id="bk-terminal"
@@ -568,6 +556,25 @@ function BookingForm({
                 className={inputClass}
               />
             </Field>
+          </Row>
+          <DateTimeRow
+            dateLabel={t('bookings.departDate')}
+            timeLabel={t('bookings.departTime')}
+            date={f.startDate}
+            time={f.startTime}
+            onDate={set('startDate')}
+            onTime={set('startTime')}
+            idPrefix="bk-depart"
+          />
+          <hr aria-hidden="true" className="my-1 border-t-2 border-dashed border-line" />
+          <Row>
+            <AirportField
+              id="bk-to"
+              label={t('bookings.to')}
+              value={f.to}
+              placeholder={t('bookings.airportPlaceholder', { example: 'NRT' })}
+              onChange={(value) => set('to')({ target: { value } })}
+            />
             <Field label={t('bookings.arriveTerminal')}>
               <input
                 id="bk-arrival-terminal"
@@ -579,6 +586,15 @@ function BookingForm({
               />
             </Field>
           </Row>
+          <DateTimeRow
+            dateLabel={t('bookings.arriveDate')}
+            timeLabel={t('bookings.arriveTime')}
+            date={endDate}
+            time={f.endTime}
+            onDate={set('endDate')}
+            onTime={set('endTime')}
+            idPrefix="bk-arrive"
+          />
           {more && (
             <>
               <Field label={t('bookings.seat')}>
@@ -758,7 +774,10 @@ function BookingForm({
               <div className="flex flex-col gap-2 rounded-card bg-bg-subtle px-3 py-2.5">
                 <div className="flex items-center justify-between gap-3">
                   <span className="flex flex-col">
-                    <span className="text-body-2 font-medium">🍳 {t('bookings.breakfast')}</span>
+                    <span className="text-body-2 font-medium">
+                      <InlineIcon icon={EggFried} />
+                      {t('bookings.breakfast')}
+                    </span>
                     <span className="text-caption text-fg-muted">
                       {t('bookings.breakfastDesc')}
                     </span>

@@ -182,6 +182,9 @@ describe('예약', () => {
     await user.click(within(sheet).getByRole('button', { name: '음식점' }));
     await user.type(within(sheet).getByLabelText('음식점 이름'), '해운대 암소갈비');
     fireEvent.change(within(sheet).getByLabelText('날짜'), { target: { value: '2026-10-25' } });
+    // 새 음식점은 12:00으로 채워져 있다 (2026-11-04)
+    expect(within(sheet).getByLabelText('시간')).toHaveValue('12:00');
+    await user.clear(within(sheet).getByLabelText('시간'));
     await user.type(within(sheet).getByLabelText('시간'), '19:00');
     await user.type(within(sheet).getByLabelText('인원'), '4');
     await user.type(within(sheet).getByLabelText('예약번호'), 'R-55');

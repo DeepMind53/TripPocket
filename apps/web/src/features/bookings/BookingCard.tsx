@@ -1,6 +1,16 @@
 import { useTimeText } from '../../shared/hooks/useTimeText';
+import { InlineIcon } from '../../shared/ui/InlineIcon';
 import { nightsBetween, todayIn, type Booking } from '@trippocket/shared';
-import { BedDouble, Copy, ExternalLink, Plane } from 'lucide-react';
+import {
+  BedDouble,
+  Copy,
+  EggFried,
+  ExternalLink,
+  Luggage,
+  MapPin,
+  Plane,
+  ShieldCheck,
+} from 'lucide-react';
 import { useTranslation } from '../../i18n';
 import { copyText } from '../../shared/lib/clipboard';
 import { formatMonthDay } from '../../shared/lib/dateFormat';
@@ -126,6 +136,7 @@ export function FlightTicket({ booking: b }: { booking: Booking }) {
       </div>
       {(b.details?.seat || b.details?.baggage) && (
         <p className="text-caption text-fg-sub">
+          {b.details.baggage && !b.details.seat && <InlineIcon icon={Luggage} />}
           {[
             b.details.seat && t('bookings.seatValue', { seat: b.details.seat }),
             b.details.baggage && t('bookings.baggageValue', { v: b.details.baggage }),
@@ -193,7 +204,7 @@ export function LodgingBody({ booking: b }: { booking: Booking }) {
       {/* 조식 있음·없음을 한눈에 (사용자 요청 2026-10-26) */}
       {b.details?.breakfast ? (
         <p className="self-start rounded-full bg-primary-weak px-2 py-0.5 text-caption font-semibold text-primary">
-          🍳{' '}
+          <InlineIcon icon={EggFried} className="text-current" />
           {b.details.breakfastDates
             ? t('bookings.breakfastSome', {
                 days: b.details.breakfastDates.map(formatMonthDay).join(', '),
@@ -292,11 +303,13 @@ function BasicBody({ booking: b }: { booking: Booking }) {
         )}
         {b.details?.meetingPoint && (
           <span className="truncate text-caption text-fg-sub">
+            <InlineIcon icon={MapPin} />
             {t('bookings.meetingValue', { v: b.details.meetingPoint })}
           </span>
         )}
         {b.details?.insurance && (
           <span className="truncate text-caption text-fg-sub">
+            <InlineIcon icon={ShieldCheck} />
             {t('bookings.insuranceValue', { v: b.details.insurance })}
           </span>
         )}

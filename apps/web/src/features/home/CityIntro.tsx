@@ -1,4 +1,5 @@
-import { ChevronDown, ExternalLink } from 'lucide-react';
+import { InlineIcon } from '../../shared/ui/InlineIcon';
+import { BookOpen, ChevronDown, ExternalLink } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { api } from '../../data/api/client';
 import { settingsRepo } from '../../data/repositories/settingsRepo';
@@ -49,7 +50,10 @@ export function CityIntro({ name }: { name: string }) {
         onClick={() => setOpen(!open)}
         className="flex min-h-9 items-center gap-1.5 text-left font-semibold text-fg"
       >
-        <span className="flex-1">{t('cityIntro.title', { name: summary.title })}</span>
+        <span className="flex-1">
+          <InlineIcon icon={BookOpen} />
+          {t('cityIntro.title', { name: summary.title })}
+        </span>
         <ChevronDown
           aria-hidden="true"
           className={`size-4 transition-transform ${open ? 'rotate-180' : ''}`}

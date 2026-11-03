@@ -1,5 +1,6 @@
 import { addDays, dayNumberOf, todayIn, type ItineraryItem, type Trip } from '@trippocket/shared';
-import { Bed, Bell, BellOff, House, Navigation, Sun } from 'lucide-react';
+import { InlineIcon } from '../../shared/ui/InlineIcon';
+import { Bed, Bell, BellOff, Haze, House, Navigation, Sun, SunMedium } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { useTrip, useTripBookings, useTripItems } from '../../data/hooks';
@@ -160,6 +161,7 @@ function TravelView({ trip, items: all }: { trip: Trip; items: ItineraryItem[] }
           key={w.key}
           className="rounded-btn bg-warning/10 px-3 py-2 text-caption whitespace-pre-line"
         >
+          <InlineIcon icon={w.key.startsWith('uv') ? SunMedium : Haze} className="text-warning" />
           {t(`air.${w.key}`, { v: w.v })}
         </p>
       ))}

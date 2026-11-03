@@ -1,5 +1,6 @@
+import { InlineIcon } from '../../shared/ui/InlineIcon';
 import { getTripStatus, todayIn, type Trip, type TripStatus, flagEmoji } from '@trippocket/shared';
-import { ChevronDown, CloudSun, Ellipsis, Plus, Trash2 } from 'lucide-react';
+import { ChevronDown, CloudSun, Ellipsis, Plus, Trash2, Users } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from '../../i18n';
 import { Link, useNavigate } from 'react-router';
@@ -89,7 +90,7 @@ export function TripList({
         {showActive && (
           <>
             <TripSection
-              title={`📌 ${t('trips.sectionOngoing')}`}
+              title={t('trips.sectionOngoing')}
               trips={groups.ongoing}
               onMenu={openMenu}
             />
@@ -220,7 +221,8 @@ function TripCard({ trip, onMenu }: { trip: Trip; onMenu: (trip: Trip) => void }
             )}
             {members > 1 && (
               <span className="tabular text-micro text-fg-muted">
-                👥 {members}
+                <InlineIcon icon={Users} className="text-fg-muted" />
+                {members}
                 {role === 'viewer' && ` · ${t('share.role.viewer')}`}
               </span>
             )}

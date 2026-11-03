@@ -1,4 +1,6 @@
 import { todayIn, type Booking, type Trip } from '@trippocket/shared';
+import { InlineIcon } from '../../shared/ui/InlineIcon';
+import { Clock, Download, Map, type LucideIcon } from 'lucide-react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useLab } from '../../data/labsStore';
 import { attachmentRepo } from '../../data/repositories/attachmentRepo';
@@ -38,21 +40,23 @@ export function HomeLabs({
     [offlineOn, trip.id],
   );
 
-  const lines: string[] = [];
+  const lines: { icon: LucideIcon; text: string }[] = [];
   const ahead = jetLagOn && !ongoing ? hoursAhead(trip.timezone) : null;
   if (ahead !== null)
-    lines.push(
-      ahead === 0
-        ? t('labs.jetLagSame')
-        : t(ahead > 0 ? 'labs.jetLagAhead' : 'labs.jetLagBehind', { h: Math.abs(ahead) }),
-    );
+    lines.push({
+      icon: Clock,
+      text:
+        ahead === 0
+          ? t('labs.jetLagSame')
+          : t(ahead > 0 ? 'labs.jetLagAhead' : 'labs.jetLagBehind', { h: Math.abs(ahead) }),
+    });
   if (offlineOn && docs) {
     const n = vouchersNotSaved(
       bookings,
       new Set(docs.filter((d) => d.blob).map((d) => d.bookingId)),
     );
-    if (n > 0) lines.push(t('offlineReady.vouchers', { n }));
-    lines.push(t('offlineReady.maps'));
+    if (n > 0) lines.push({ icon: Download, text: t('offlineReady.vouchers', { n }) });
+    lines.push({ icon: Map, text: t('offlineReady.maps') });
   }
   const intro = introOn && city ? <CityIntro name={city} /> : null;
   if (!lines.length) return intro;
@@ -61,10 +65,11 @@ export function HomeLabs({
       {intro && <li>{intro}</li>}
       {lines.map((l, i) => (
         <li
-          key={`${i}-${l}`}
+          key={`${i}-${l.text}`}
           className="rounded-btn bg-bg-subtle px-3 py-2 text-caption whitespace-pre-line text-fg-sub"
         >
-          {l}
+          <InlineIcon icon={l.icon} />
+          {l.text}
         </li>
       ))}
     </ul>

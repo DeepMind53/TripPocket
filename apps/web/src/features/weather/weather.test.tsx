@@ -129,15 +129,15 @@ it('여행지 특이사항: 나라 코드만 보내고, 특보와 그 나라 기
     />,
   );
   const box = await screen.findByRole('region', { name: '여행지 특이사항' });
-  expect(await within(box).findByText('🌀 태풍 · 빨강 경보')).toBeInTheDocument();
+  expect(await within(box).findByText('태풍 · 빨강 경보')).toBeInTheDocument();
   expect(within(box).getByText('Tropical Cyclone CHAMPI-26')).toBeInTheDocument();
-  expect(within(box).getByText('🛂 여행경보 3단계')).toBeInTheDocument();
+  expect(within(box).getByText('여행경보 3단계')).toBeInTheDocument();
   expect(within(box).getByText('후쿠시마 원전 반경 30km 이내')).toBeInTheDocument();
   expect(within(box).getByRole('link', { name: /일본 기상청 경보·주의보/ })).toHaveAttribute(
     'href',
     'https://www.jma.go.jp/bosai/warning/',
   );
-  expect(within(box).getByText('🌦 일본 기상청 · 大雨警報')).toBeInTheDocument();
+  expect(within(box).getByText('일본 기상청 · 大雨警報')).toBeInTheDocument();
   expect(within(box).getByText('大雨警報を発表します。')).toBeInTheDocument();
   const alertUrl = decodeURIComponent(urls.find((u) => u.includes('/api/alerts'))!);
   expect(alertUrl).toContain('countries=JP');

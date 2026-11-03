@@ -220,7 +220,6 @@ function QuickMenuContent({
   const runShortcut = (id: ShortcutId) => {
     const own = shortcuts?.[id as keyof Shortcuts];
     if (own) return own();
-    if (id === 'emergency') return onEmergency();
     if (id === 'car') return toast(t('quickMenu.noCar'));
     const path = shortcutPath(id, tripId ?? '');
     // 메뉴 기록 자리를 그 화면으로 바꿔서, 뒤로 가면 원래 화면
@@ -239,24 +238,33 @@ function QuickMenuContent({
           onClick={onEmergency}
           className="flex min-h-20 flex-col justify-center gap-0.5 rounded-card border border-danger/40 px-3 py-2.5 text-left"
         >
-          <Siren aria-hidden="true" className="size-5 text-danger" />
-          <span className="text-body-2 font-semibold">{t('emergency.title')}</span>
+          {/* 제목은 아이콘 오른쪽, 설명은 아래 (사용자 요청 2026-11-04) */}
+          <span className="flex items-center gap-1.5">
+            <Siren aria-hidden="true" className="size-5 shrink-0 text-danger" />
+            <span className="text-body-2 font-semibold">{t('emergency.title')}</span>
+          </span>
           <span className="text-micro text-fg-muted">{t('emergency.menuDesc')}</span>
         </button>
         <Link
           to={tripId ? `/fx?trip=${tripId}` : '/fx'}
           className="flex min-h-20 flex-col justify-center gap-0.5 rounded-card bg-bg-subtle px-3 py-2.5 text-left"
         >
-          <Wallet aria-hidden="true" className="size-5 text-primary" />
-          <span className="text-body-2 font-semibold">{t('quickMenu.fx')}</span>
+          {/* 제목은 아이콘 오른쪽, 설명은 아래 (사용자 요청 2026-11-04) */}
+          <span className="flex items-center gap-1.5">
+            <Wallet aria-hidden="true" className="size-5 shrink-0 text-primary" />
+            <span className="text-body-2 font-semibold">{t('quickMenu.fx')}</span>
+          </span>
           <span className="text-micro text-fg-muted">{t('quickMenu.fxDesc')}</span>
         </Link>
         <Link
           to={tripId ? `/ai?trip=${tripId}` : '/ai'}
           className="flex min-h-20 flex-col justify-center gap-0.5 rounded-card bg-primary-weak px-3 py-2.5 text-left"
         >
-          <Sparkles aria-hidden="true" className="size-5 text-primary" />
-          <span className="text-body-2 font-semibold">{t('quickMenu.ai')}</span>
+          {/* 제목은 아이콘 오른쪽, 설명은 아래 (사용자 요청 2026-11-04) */}
+          <span className="flex items-center gap-1.5">
+            <Sparkles aria-hidden="true" className="size-5 shrink-0 text-primary" />
+            <span className="text-body-2 font-semibold">{t('quickMenu.ai')}</span>
+          </span>
           <span className="text-micro text-fg-muted">{t('quickMenu.aiDesc')}</span>
         </Link>
         {/* 번역·회화 (docs/20 G7) */}
@@ -264,8 +272,11 @@ function QuickMenuContent({
           to={tripId ? `/phrases?trip=${tripId}` : '/phrases'}
           className="flex min-h-20 flex-col justify-center gap-0.5 rounded-card bg-bg-subtle px-3 py-2.5 text-left"
         >
-          <Languages aria-hidden="true" className="size-5 text-primary" />
-          <span className="text-body-2 font-semibold">{t('quickMenu.phrases')}</span>
+          {/* 제목은 아이콘 오른쪽, 설명은 아래 (사용자 요청 2026-11-04) */}
+          <span className="flex items-center gap-1.5">
+            <Languages aria-hidden="true" className="size-5 shrink-0 text-primary" />
+            <span className="text-body-2 font-semibold">{t('quickMenu.phrases')}</span>
+          </span>
           <span className="text-micro text-fg-muted">{t('quickMenu.phrasesDesc')}</span>
         </Link>
       </div>

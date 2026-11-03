@@ -1,5 +1,5 @@
 import { topAlertLevel, type Trip } from '@trippocket/shared';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, TriangleAlert } from 'lucide-react';
 import { Link } from 'react-router';
 import { useTranslation } from '../../i18n';
 import { cn } from '../../shared/lib/cn';
@@ -20,7 +20,7 @@ export function TripAlertBanner({ trip }: { trip: Trip }) {
         level === 'red' ? 'border-danger bg-danger/10' : 'border-warning bg-warning/10',
       )}
     >
-      <span aria-hidden="true">⚠️</span>
+      <TriangleAlert aria-hidden="true" className="size-4 shrink-0 text-warning" />
       <span className="min-w-0 flex-1">{t('alerts.banner', { n: alerts.length })}</span>
       <ChevronRight aria-hidden="true" className="size-4 shrink-0 text-fg-muted" />
     </Link>

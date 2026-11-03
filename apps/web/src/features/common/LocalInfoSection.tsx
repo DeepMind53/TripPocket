@@ -1,5 +1,15 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { ExternalLink, FileText, Image as ImageIcon } from 'lucide-react';
+import { InlineIcon } from '../../shared/ui/InlineIcon';
+import {
+  CreditCard,
+  ExternalLink,
+  FileText,
+  Globe,
+  Image as ImageIcon,
+  MapPin,
+  Ticket,
+  Wallet,
+} from 'lucide-react';
 import { Link } from 'react-router';
 import { attachmentRepo } from '../../data/repositories/attachmentRepo';
 import { openBlob } from '../../shared/lib/openBlob';
@@ -127,7 +137,10 @@ export function LocalInfoSection({ tripId }: { tripId: string }) {
       {groups.map((g) => (
         <div key={g.key} className="flex flex-col gap-1.5">
           <span className="flex items-baseline gap-1.5 text-caption font-bold">
-            {g.title}
+            <span>
+              <InlineIcon icon={g.reference ? Globe : MapPin} />
+              {g.title}
+            </span>
             {g.reference && (
               <span className="text-micro font-normal text-fg-muted">
                 {t('localInfo.reference')}
@@ -138,14 +151,20 @@ export function LocalInfoSection({ tripId }: { tripId: string }) {
           {guideOn && <TransitGuide country={g.country} guide={g.guide} label={g.name} />}
           {g.card && (
             <div className="flex flex-col rounded-card bg-bg-subtle px-3 py-2.5 text-caption whitespace-pre-line text-fg-sub">
-              <span className="font-semibold text-fg">{t('labs.transitLabel')}</span>
+              <span className="font-semibold text-fg">
+                <InlineIcon icon={CreditCard} />
+                {t('labs.transitLabel')}
+              </span>
               {g.card}
               <TransitCardList country={g.country} ids={g.cards} />
             </div>
           )}
           {g.pay && (
             <p className="flex flex-col rounded-card bg-bg-subtle px-3 py-2.5 text-caption whitespace-pre-line text-fg-sub">
-              <span className="font-semibold text-fg">{t('labs.payLabel')}</span>
+              <span className="font-semibold text-fg">
+                <InlineIcon icon={Wallet} />
+                {t('labs.payLabel')}
+              </span>
               {g.pay}
             </p>
           )}
@@ -156,7 +175,10 @@ export function LocalInfoSection({ tripId }: { tripId: string }) {
       {nearbyOn && <NearbyFind domestic={countries.length === 0} />}
       {vouchers.length > 0 && (
         <div className="flex flex-col rounded-card bg-bg-subtle px-3 py-2">
-          <span className="text-caption font-semibold">{t('labs.voucherTitle')}</span>
+          <span className="text-caption font-semibold">
+            <InlineIcon icon={Ticket} />
+            {t('labs.voucherTitle')}
+          </span>
           {vouchers.map((b) => {
             const doc = docs.find((d) => d.bookingId === b.id && d.blob);
             return (

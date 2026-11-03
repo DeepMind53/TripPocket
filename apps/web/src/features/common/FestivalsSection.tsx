@@ -1,5 +1,6 @@
+import { InlineIcon } from '../../shared/ui/InlineIcon';
 import type { Trip } from '@trippocket/shared';
-import { Plus } from 'lucide-react';
+import { PartyPopper, Plus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { api } from '../../data/api/client';
 import { useLab } from '../../data/labsStore';
@@ -45,7 +46,10 @@ function List({ trip, near }: { trip: Trip; near: { lat: number; lng: number } }
   if (!list?.length) return null;
   return (
     <div className="flex flex-col rounded-card bg-bg-subtle px-3 py-2">
-      <span className="text-caption font-semibold">{t('festivals.title')}</span>
+      <span className="text-caption font-semibold">
+        <InlineIcon icon={PartyPopper} />
+        {t('festivals.title')}
+      </span>
       <ul className="flex flex-col">
         {list.map((f) => (
           <li key={f.id} className="flex min-h-11 items-center gap-2">

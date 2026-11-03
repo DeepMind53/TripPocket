@@ -1,3 +1,4 @@
+import { InlineIcon } from '../../shared/ui/InlineIcon';
 import {
   COUNTRY_CURRENCY,
   daysUntil,
@@ -7,7 +8,16 @@ import {
   type FxSnapshot,
   type Trip,
 } from '@trippocket/shared';
-import { ChevronDown, Sparkles } from 'lucide-react';
+import {
+  ChevronDown,
+  CloudSun,
+  IdCard,
+  Luggage,
+  Sparkles,
+  Ticket,
+  Wallet,
+  type LucideIcon,
+} from 'lucide-react';
 
 /** 준비 현황 펼침 상태 (이 기기) */
 const OPEN_KEY = 'tp-prep-open';
@@ -97,8 +107,16 @@ export function PrepCards({ trip }: { trip: Trip }) {
       >
         <span className="shrink-0 text-caption font-bold text-fg-muted">{t('prep.title')}</span>
         <span className="min-w-0 flex-1 truncate text-caption text-fg-sub">
-          🧳 {packed}/{total} · 🎫 {t('prep.bookingCounts', { flights, lodgings })}
-          {essentials && essentials.total > 0 && ` · 🛂 ${essentials.done}/${essentials.total}`}
+          <InlineIcon icon={Luggage} />
+          {packed}/{total} · <InlineIcon icon={Ticket} />
+          {t('prep.bookingCounts', { flights, lodgings })}
+          {essentials && essentials.total > 0 && (
+            <>
+              {' · '}
+              <InlineIcon icon={IdCard} />
+              {essentials.done}/{essentials.total}
+            </>
+          )}
         </span>
         {anyAlert && (
           <span
@@ -117,7 +135,7 @@ export function PrepCards({ trip }: { trip: Trip }) {
           <div className="grid grid-cols-2 gap-2">
             <Card
               to={`${base}/checklist`}
-              emoji="🧳"
+              icon={Luggage}
               label={t('prep.packing')}
               alert={packing !== undefined && (total === 0 || (daysLeft <= 3 && packed < total))}
             >
@@ -139,7 +157,7 @@ export function PrepCards({ trip }: { trip: Trip }) {
             </Card>
             <Card
               to={`${base}/bookings`}
-              emoji="🎫"
+              icon={Ticket}
               label={t('prep.bookings')}
               alert={lodgings === 0}
             >
@@ -150,7 +168,7 @@ export function PrepCards({ trip }: { trip: Trip }) {
             </Card>
             <Card
               to={`${base}/weather`}
-              emoji="☀️"
+              icon={CloudSun}
               label={t('prep.weather')}
               alert={alertLevel ?? false}
               alertLabel={alertLevel ? t('alerts.homeDot', { n: alerts.length }) : undefined}
@@ -198,7 +216,7 @@ export function PrepCards({ trip }: { trip: Trip }) {
                 </span>
               )}
             </Card>
-            <Card to={`/fx?trip=${trip.id}`} emoji="💱" label={t('prep.fx')}>
+            <Card to={`/fx?trip=${trip.id}`} icon={Wallet} label={t('prep.fx')}>
               {currency && rate ? (
                 <span className="tabular text-body-2">
                   {t('prep.fxValue', {
@@ -219,7 +237,7 @@ export function PrepCards({ trip }: { trip: Trip }) {
               className="relative flex flex-col gap-1 rounded-card border border-line bg-surface p-3"
             >
               <span className="flex items-center gap-1.5 text-caption font-semibold text-fg-sub">
-                <span aria-hidden="true">🛂</span>
+                <IdCard aria-hidden="true" className="size-4 text-primary" />
                 {t('essentials.title')}
                 <span className="tabular ml-auto pr-4 text-body-2 font-bold text-fg">
                   {essentials.done}/{essentials.total}
@@ -260,14 +278,14 @@ export function PrepCards({ trip }: { trip: Trip }) {
 
 function Card({
   to,
-  emoji,
+  icon: Icon,
   label,
   alert = false,
   alertLabel,
   children,
 }: {
   to: string;
-  emoji: string;
+  icon: LucideIcon;
   label: string;
   /** true = 할 일(주황 점), 'red'·'orange' = 여행지 특보 등급 점 */
   alert?: boolean | 'red' | 'orange';
@@ -281,7 +299,7 @@ function Card({
       className="relative flex min-h-24 flex-col gap-1.5 rounded-card border border-line bg-surface p-3"
     >
       <span className="flex items-center gap-1.5 text-caption font-semibold text-fg-sub">
-        <span aria-hidden="true">{emoji}</span>
+        <Icon aria-hidden="true" className="size-4 text-primary" />
         {label}
       </span>
       {children}

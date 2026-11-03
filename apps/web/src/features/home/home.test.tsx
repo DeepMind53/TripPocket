@@ -15,7 +15,7 @@ it('여행 전 홈: 준비 현황 4장(준비물·예약·날씨 정보·환율)
   const prep = await screen.findByRole('region', { name: '준비 현황' });
   // 기본은 한 줄 요약 (docs/20 U3) — 누르면 펼침
   const summary = within(prep).getByRole('button', { expanded: false });
-  await waitFor(() => expect(summary).toHaveTextContent('🧳 0/1'));
+  await waitFor(() => expect(summary).toHaveTextContent('0/1'));
   fireEvent.click(summary);
   for (const name of ['준비물', '예약', '날씨 정보', '환율'])
     expect(within(prep).getByRole('link', { name: new RegExp(name) })).toBeInTheDocument();

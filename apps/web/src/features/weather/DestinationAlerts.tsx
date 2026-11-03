@@ -1,10 +1,23 @@
+import { InlineIcon } from '../../shared/ui/InlineIcon';
 import {
   flagEmoji,
   MOFA_SAFETY_URL,
   warningLinkFor,
   type DestinationAlert,
 } from '@trippocket/shared';
-import { ExternalLink } from 'lucide-react';
+import {
+  Activity,
+  CloudLightning,
+  ExternalLink,
+  Flame,
+  Mountain,
+  ShieldAlert,
+  Sun,
+  Tornado,
+  TriangleAlert,
+  Waves,
+  type LucideIcon,
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { fetchAlerts, type AlertsResult } from '../../data/api/alerts';
 import { useTranslation } from '../../i18n';
@@ -108,6 +121,17 @@ const localHm = (iso: string) => {
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 };
 
+/** 특보 종류 앞 아이콘 (2026-11-04 이모지 → 선 아이콘) */
+const ALERT_ICON: Record<string, LucideIcon> = {
+  cyclone: Tornado,
+  earthquake: Activity,
+  flood: Waves,
+  volcano: Mountain,
+  wildfire: Flame,
+  drought: Sun,
+  weather: CloudLightning,
+};
+
 function AlertRow({ alert: a, flag }: { alert: DestinationAlert; flag: boolean }) {
   const { t } = useTranslation();
   const head =
@@ -151,6 +175,10 @@ function AlertRow({ alert: a, flag }: { alert: DestinationAlert; flag: boolean }
       <span className="flex min-w-0 flex-1 flex-col">
         <span className="text-body-2 font-semibold">
           {flag ? `${flagEmoji(a.country)} ` : ''}
+          <InlineIcon
+            icon={a.source === 'mofa' ? ShieldAlert : (ALERT_ICON[a.kind] ?? TriangleAlert)}
+            className={a.level === 'red' ? 'text-danger' : 'text-warning'}
+          />
           {head}
         </span>
         {detail && <span className="text-caption break-words text-fg-sub">{detail}</span>}

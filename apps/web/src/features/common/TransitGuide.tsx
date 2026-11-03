@@ -1,4 +1,16 @@
-import { ChevronDown, ExternalLink } from 'lucide-react';
+import {
+  Bike,
+  Bus,
+  BusFront,
+  CarTaxiFront,
+  ChevronDown,
+  ExternalLink,
+  Ship,
+  TrainFront,
+  TramFront,
+  type LucideIcon,
+} from 'lucide-react';
+import { InlineIcon } from '../../shared/ui/InlineIcon';
 import { useState } from 'react';
 import {
   TRANSIT_GUIDE_CHECKED_AT,
@@ -8,15 +20,15 @@ import {
 } from '../../data/transitGuide';
 import { useTranslation } from '../../i18n';
 
-const ICON: Record<TransitModeKind, string> = {
-  metro: '🚇',
-  bus: '🚌',
-  coach: '🚍',
-  rail: '🚆',
-  tram: '🚋',
-  ferry: '⛴️',
-  bike: '🚲',
-  taxi: '🚕',
+const ICON: Record<TransitModeKind, LucideIcon> = {
+  metro: TramFront,
+  bus: Bus,
+  coach: BusFront,
+  rail: TrainFront,
+  tram: TramFront,
+  ferry: Ship,
+  bike: Bike,
+  taxi: CarTaxiFront,
 };
 
 /**
@@ -45,7 +57,10 @@ export function TransitGuide({
         onClick={() => setOpen(!open)}
         className="flex min-h-10 items-center gap-1.5 text-left font-semibold text-fg"
       >
-        <span className="flex-1">{t('transitGuide.title', { country: label })}</span>
+        <span className="flex-1">
+          <InlineIcon icon={TrainFront} />
+          {t('transitGuide.title', { country: label })}
+        </span>
         <ChevronDown
           aria-hidden="true"
           className={`size-4 transition-transform ${open ? 'rotate-180' : ''}`}
@@ -56,7 +71,7 @@ export function TransitGuide({
           <ul className="flex flex-col gap-1">
             {g.modes.map((m) => (
               <li key={m.name} className="flex items-start gap-1.5">
-                <span aria-hidden="true">{ICON[m.kind]}</span>
+                <InlineIcon icon={ICON[m.kind]} className="mt-0.5 text-primary" />
                 <span className="min-w-0 flex-1">{m.name}</span>
                 {m.fare && <span className="tabular shrink-0 text-fg">{m.fare}</span>}
               </li>

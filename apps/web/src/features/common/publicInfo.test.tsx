@@ -92,5 +92,5 @@ it('항공편 지연: 출발 당일에만, 지연 분을 보여 준다', async (
   );
   expect(screen.queryByText(/지연/)).toBeNull();
   rerender(<FlightDelay booking={b} />);
-  expect(await screen.findByText('⏱ 출발 약 35분 지연')).toBeInTheDocument();
+  expect(await screen.findByText('출발 약 35분 지연', { exact: false })).toBeInTheDocument();
 });

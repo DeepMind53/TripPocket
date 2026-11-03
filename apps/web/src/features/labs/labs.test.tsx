@@ -474,7 +474,7 @@ describe('실험실', () => {
       expect(day.querySelector('ol')?.className).toContain('gap-0.5');
       // 메모 외화 → 원화 (상세)
       await user.click(within(day).getByRole('button', { name: /센소지/ }));
-      expect(await screen.findByText('💱 ¥200 ≈ 1,840원')).toBeInTheDocument();
+      expect(await screen.findByText('¥200 ≈ 1,840원', { exact: false })).toBeInTheDocument();
     } finally {
       updateSettings({ compactList: false });
       vi.useRealTimers();
@@ -617,7 +617,7 @@ describe('실험실', () => {
           <Toaster />
         </>,
       );
-      expect(await screen.findByText('🕒 여행지는 한국과 같은 시간이에요')).toBeInTheDocument();
+      expect(await screen.findByText('여행지는 한국과 같은 시간이에요')).toBeInTheDocument();
       // 오프라인 준비: 출발 7일 안
       expect(await screen.findByText(/바우처 1개가 링크로만 있어요/)).toBeInTheDocument();
       expect(screen.getByText(/오프라인 지도를/)).toBeInTheDocument();

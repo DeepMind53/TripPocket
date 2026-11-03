@@ -1,5 +1,6 @@
+import { InlineIcon } from '../../shared/ui/InlineIcon';
 import type { Trip } from '@trippocket/shared';
-import { Plus } from 'lucide-react';
+import { CloudSun, Plus } from 'lucide-react';
 import { packingTips, type PackingTip } from '../../domain/packingWeather';
 import { useTranslation } from '../../i18n';
 import { useTripWeather } from '../common/useTripWeather';
@@ -27,7 +28,10 @@ export function WeatherPackingTips({
       aria-label={t('labs.packTitle')}
       className="flex flex-col gap-2 rounded-card bg-bg-subtle px-3 py-2.5"
     >
-      <h2 className="text-caption font-bold text-fg-sub">🌦 {t('labs.packTitle')}</h2>
+      <h2 className="text-caption font-bold text-fg-sub">
+        <InlineIcon icon={CloudSun} />
+        {t('labs.packTitle')}
+      </h2>
       <ul className="flex flex-wrap gap-1.5">
         {tips.map((tip) => (
           <li key={tip.text}>

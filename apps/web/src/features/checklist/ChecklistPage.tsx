@@ -1,7 +1,8 @@
+import { InlineIcon } from '../../shared/ui/InlineIcon';
 import type { ChecklistTemplate } from '@trippocket/shared';
 import { useChecklist, useSharedPacking, useTrip } from '../../data/hooks';
 import { useEssentials } from '../essentials/useEssentials';
-import { Check, ListPlus, Plus, Share2, X } from 'lucide-react';
+import { Check, IdCard, ListPlus, Plus, Share2, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useBeforeUnload, useBlocker, useParams } from 'react-router';
 import { useMemberCount } from '../../data/tripRoles';
@@ -90,7 +91,10 @@ export function ChecklistPage() {
           to={`/trips/${tripId}/essentials`}
           className="tabular flex items-center justify-between gap-2 rounded-card border border-dashed border-primary/60 px-4 py-3 text-body-2 font-semibold"
         >
-          <span>🛂 {t('essentials.title')}</span>
+          <span>
+            <InlineIcon icon={IdCard} />
+            {t('essentials.title')}
+          </span>
           <span className="text-primary">
             {essentials.done}/{essentials.total} ›
           </span>
