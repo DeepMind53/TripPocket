@@ -27,7 +27,7 @@ import { BottomSheet, SegmentedControl, toast } from '../../shared/ui';
 import { DirectionsSheet } from './DirectionsSheet';
 import { CarCard } from './CarCard';
 import { TravelLegCard } from './TravelLegCard';
-import { travelLegNow, type TravelLeg } from '../../domain/travelLeg';
+import { travelLegsAhead, type TravelLeg } from '../../domain/travelLeg';
 import { nowTimeIn } from '../../domain/lodging';
 import { SavedSpotsButtons } from './SavedSpotsButtons';
 import { ShortcutEditSheet } from './ShortcutEditSheet';
@@ -96,7 +96,10 @@ function TripQuickMenu({ open, setOpen }: { open: boolean; setOpen: (open: boole
   // 렌터카: 오늘 쓰는 차 → 아직 반납 전인 차 → 첫 차 (사용자 요청 2026-11-02)
   // 지금 필요한 이동 정보 (여행지 시각 기준, 1분마다 다시 계산)
   const clock = useMinuteClock(open);
-  const leg = trip ? travelLegNow(bookings, today, nowTimeIn(trip.timezone, clock)) : null;
+  // 이동수단을 출발 순서대로 — 지금 것과 다음 것 (기차·버스 포함, 2026-11-03)
+  const legs = trip ? travelLegsAhead(bookings, today, nowTimeIn(trip.timezone, clock)) : [];
+  const leg = legs[0] ?? null;
+  const nextLeg = legs[1];
   const cars = bookings.filter((b) => b.kind === 'car' && !b.deletedAt);
   const car =
     (leg?.kind === 'car' ? leg.booking : undefined) ??
@@ -143,6 +146,7 @@ function TripQuickMenu({ open, setOpen }: { open: boolean; setOpen: (open: boole
           shortcuts={shortcuts}
           trip={trip ?? undefined}
           leg={leg}
+          nextLeg={nextLeg}
           onEmergency={() => setSosOpen(true)}
         />
       </BottomSheet>
@@ -211,11 +215,13 @@ function QuickMenuContent({
   shortcuts,
   trip,
   leg,
+  nextLeg,
   onEmergency,
 }: {
   shortcuts?: Shortcuts;
   trip?: Trip | undefined;
   leg?: TravelLeg | undefined;
+  nextLeg?: NonNullable<TravelLeg> | undefined;
   onEmergency: () => void;
 }) {
   const inTrip = shortcuts !== undefined;
@@ -283,7 +289,14 @@ function QuickMenuContent({
       {/* 바로가기 위: 지금 이동 정보(출국편 → 렌터카 반납 전까지 → 귀국편) + 위치 저장 2개 (사용자 요청 2026-11-03) */}
       {trip && (leg || shortcuts) && (
         <section className="flex flex-col gap-2">
-          {leg && <TravelLegCard leg={leg} tripId={trip.id} onCar={() => shortcuts?.car?.()} />}
+          {leg && (
+            <TravelLegCard
+              leg={leg}
+              next={nextLeg}
+              tripId={trip.id}
+              onCar={() => shortcuts?.car?.()}
+            />
+          )}
           {shortcuts && <SavedSpotsButtons trip={trip} horizontal />}
         </section>
       )}

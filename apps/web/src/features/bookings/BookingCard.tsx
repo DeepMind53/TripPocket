@@ -4,7 +4,7 @@ import { BedDouble, Copy, ExternalLink, Plane } from 'lucide-react';
 import { useTranslation } from '../../i18n';
 import { copyText } from '../../shared/lib/clipboard';
 import { formatMonthDay } from '../../shared/lib/dateFormat';
-import { BOOKING_ICON } from '../common/bookingKinds';
+import { BookingKindIcon } from '../common/BookingKindIcon';
 import { membershipFor, useTravelProfile } from '../../data/travelProfile';
 import { FlightAirportInfo } from './FlightAirportInfo';
 import { BaggageInfo } from './BaggageInfo';
@@ -237,13 +237,12 @@ const longDay = (date: string) => {
  */
 export function TrainTicket({ booking: b }: { booking: Booking }) {
   const { time } = useTimeText();
-  const Icon = BOOKING_ICON[b.kind];
   const point = (place?: string, at?: string) => [place, time(at)].filter(Boolean).join(' ');
   const from = point(b.start.place, b.start.time);
   const to = b.end ? point(b.end.place, b.end.time) : '';
   return (
     <div className="flex items-start gap-3">
-      <Icon aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-primary" />
+      <BookingKindIcon booking={b} className="mt-0.5 size-4 shrink-0 text-primary" />
       <span className="flex min-w-0 flex-1 flex-col">
         <span className="text-body-1">
           {b.title} <span className="tabular">{longDay(b.start.date)}</span>
@@ -264,11 +263,10 @@ export function TrainTicket({ booking: b }: { booking: Booking }) {
 function BasicBody({ booking: b }: { booking: Booking }) {
   const { time } = useTimeText();
   const { t } = useTranslation();
-  const Icon = BOOKING_ICON[b.kind];
   if (b.kind === 'train') return <TrainTicket booking={b} />;
   return (
     <div className="flex items-start gap-3">
-      <Icon aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-primary" />
+      <BookingKindIcon booking={b} className="mt-0.5 size-4 shrink-0 text-primary" />
       <span className="flex min-w-0 flex-1 flex-col">
         <span className="text-body-1">{b.title}</span>
         <span className="tabular text-caption text-fg-muted">

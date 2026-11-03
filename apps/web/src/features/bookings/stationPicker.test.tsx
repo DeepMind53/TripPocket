@@ -136,3 +136,10 @@ it('예약 카드: "KTX 12월23일 (수요일)" · "동대구역 13:32 -> 수원
   expect(screen.getByText('12월23일 (수요일)')).toBeInTheDocument();
   expect(screen.getByText('동대구역 13:32 -> 수원역 15:44')).toBeInTheDocument();
 });
+
+it('기차는 기차 그림, 버스는 버스 그림 (교통편 이름으로)', async () => {
+  const { isBusTitle } = await import('../../domain/travelLeg');
+  expect(isBusTitle('KTX')).toBe(false);
+  expect(isBusTitle('고속버스')).toBe(true);
+  expect(isBusTitle('Greyhound bus')).toBe(true);
+});

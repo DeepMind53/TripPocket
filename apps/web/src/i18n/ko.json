@@ -99,7 +99,11 @@
       "outbound": "출국 비행기",
       "car": "렌터카",
       "return": "귀국 비행기",
-      "carReturn": "반납 {{date}} {{time}} {{place}}"
+      "carReturn": "반납 {{date}} {{time}} {{place}}",
+      "flight": "비행기",
+      "train": "기차",
+      "bus": "버스",
+      "next": "다음 이동 · {{what}}"
     }
   },
   "home": {
@@ -2452,9 +2456,11 @@
     "source": "Powered by Geoapify · © OpenStreetMap",
     "departTime": "출발 시각",
     "arriveTime": "도착 시각",
-    "placeholder": "도시나 역 이름 (예: 동대구)",
-    "placeholderAbroad": "도시나 역 이름 (예: 오사카)",
+    "placeholder": "도시나 역 (예: 동대구)",
+    "placeholderAbroad": "도시나 역 (예: 오사카)",
     "listOf": "{{label}} 후보",
-    "searching": "역을 찾는 중이에요"
+    "searching": "역을 찾는 중이에요",
+    "vehicle": "교통편",
+    "vehiclePlaceholder": "예: KTX 101"
   }
 }

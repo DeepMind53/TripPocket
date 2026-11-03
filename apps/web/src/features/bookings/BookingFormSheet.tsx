@@ -647,6 +647,30 @@ function BookingForm({
                 />
               </Field>
             </Row>
+          ) : kind === 'train' ? (
+            // 기차·버스: 날짜 | 교통편 한 줄 (사용자 요청 2026-11-03 — 칸을 작게)
+            <div className="grid grid-cols-[9.5rem_minmax(0,1fr)] gap-2">
+              <Field label={t('bookings.date')}>
+                <input
+                  id="bk-start-date"
+                  type="date"
+                  required
+                  value={f.startDate}
+                  onChange={set('startDate')}
+                  className={`${inputClass} tabular px-2`}
+                />
+              </Field>
+              <Field label={t('station.vehicle')}>
+                <input
+                  id="bk-title"
+                  value={f.title}
+                  maxLength={100}
+                  placeholder={t('station.vehiclePlaceholder')}
+                  onChange={set('title')}
+                  className={inputClass}
+                />
+              </Field>
+            </div>
           ) : (
             <Field
               label={
@@ -978,63 +1002,66 @@ function BookingForm({
           ) : (
             <>
               {kind === 'train' ? (
-                // 기차·버스: 출발 시각·역 → 도착 시각·역 (역을 고르면 주소·좌표도, 사용자 요청 2026-11-03)
+                // 기차·버스: 출발 시각 | 출발역, 도착 시각 | 도착역 (역을 고르면 주소·좌표도, 사용자 요청 2026-11-03)
                 <>
-                  <DateTimeRow
-                    dateLabel={t('bookings.date')}
-                    timeLabel={t('station.departTime')}
-                    date={f.startDate}
-                    time={f.startTime}
-                    onDate={set('startDate')}
-                    onTime={set('startTime')}
-                    idPrefix="bk-start"
-                  />
-                  <Field label={t('station.from')}>
-                    <StationField
-                      id="bk-place"
-                      label={t('station.from')}
-                      value={f.from}
-                      address={f.fromAddress}
-                      chip={f.title}
-                      domestic={isDomesticTrip(trip)}
-                      country={tripCountries(trip).find((c) => c !== 'KR')}
-                      onChange={(p) =>
-                        setF((cur) => ({
-                          ...cur,
-                          from: p.name.slice(0, 100),
-                          fromCoords: p.coords,
-                          fromAddress: p.address,
-                        }))
-                      }
-                    />
-                  </Field>
-                  <Field label={t('station.arriveTime')}>
-                    <TimeInput
-                      id="bk-arrive-time"
-                      step={timeStep}
-                      value={f.endTime}
-                      onChange={(value) => setF((cur) => ({ ...cur, endTime: value }))}
-                    />
-                  </Field>
-                  <Field label={t('station.to')}>
-                    <StationField
-                      id="bk-arrive-place"
-                      label={t('station.to')}
-                      value={f.to}
-                      address={f.toAddress}
-                      chip={f.title}
-                      domestic={isDomesticTrip(trip)}
-                      country={tripCountries(trip).find((c) => c !== 'KR')}
-                      onChange={(p) =>
-                        setF((cur) => ({
-                          ...cur,
-                          to: p.name.slice(0, 100),
-                          toCoords: p.coords,
-                          toAddress: p.address,
-                        }))
-                      }
-                    />
-                  </Field>
+                  <div className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-2">
+                    <Field label={t('station.departTime')}>
+                      <TimeInput
+                        id="bk-start-time"
+                        step={timeStep}
+                        value={f.startTime}
+                        onChange={(value) => setF((cur) => ({ ...cur, startTime: value }))}
+                      />
+                    </Field>
+                    <Field label={t('station.from')}>
+                      <StationField
+                        id="bk-place"
+                        label={t('station.from')}
+                        value={f.from}
+                        address={f.fromAddress}
+                        chip={f.title}
+                        domestic={isDomesticTrip(trip)}
+                        country={tripCountries(trip).find((c) => c !== 'KR')}
+                        onChange={(p) =>
+                          setF((cur) => ({
+                            ...cur,
+                            from: p.name.slice(0, 100),
+                            fromCoords: p.coords,
+                            fromAddress: p.address,
+                          }))
+                        }
+                      />
+                    </Field>
+                  </div>
+                  <div className="grid grid-cols-[7.5rem_minmax(0,1fr)] gap-2">
+                    <Field label={t('station.arriveTime')}>
+                      <TimeInput
+                        id="bk-arrive-time"
+                        step={timeStep}
+                        value={f.endTime}
+                        onChange={(value) => setF((cur) => ({ ...cur, endTime: value }))}
+                      />
+                    </Field>
+                    <Field label={t('station.to')}>
+                      <StationField
+                        id="bk-arrive-place"
+                        label={t('station.to')}
+                        value={f.to}
+                        address={f.toAddress}
+                        chip={f.title}
+                        domestic={isDomesticTrip(trip)}
+                        country={tripCountries(trip).find((c) => c !== 'KR')}
+                        onChange={(p) =>
+                          setF((cur) => ({
+                            ...cur,
+                            to: p.name.slice(0, 100),
+                            toCoords: p.coords,
+                            toAddress: p.address,
+                          }))
+                        }
+                      />
+                    </Field>
+                  </div>
                 </>
               ) : (
                 <>

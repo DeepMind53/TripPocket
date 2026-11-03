@@ -99,7 +99,7 @@ import { ItemDetailSheet } from './ItemDetailSheet';
 import { ItemFormSheet } from './ItemFormSheet';
 import { dayColor, KIND_ICON } from './itemKinds';
 import { MoveDaySheet } from './MoveDaySheet';
-import { BOOKING_ICON } from '../common/bookingKinds';
+import { BookingKindIcon } from '../common/BookingKindIcon';
 import { FlightTicket, TrainTicket } from '../bookings/BookingCard';
 import { isDomesticTrip } from '../../domain/tripPlace';
 import { dayRouteUrl } from '../../domain/dayRoute';
@@ -1322,7 +1322,6 @@ function BookingLine({ row, onOpen }: { row: BookingRow; onOpen: () => void }) {
   const { time, wide } = useTimeText();
   const { t } = useTranslation();
   const b = row.booking;
-  const Icon = BOOKING_ICON[b.kind];
   const route =
     (b.kind === 'flight' || b.kind === 'transfer') && (b.start.place || b.end?.place)
       ? `${b.start.place ?? ''} → ${b.end?.place ?? ''}`
@@ -1359,7 +1358,7 @@ function BookingLine({ row, onOpen }: { row: BookingRow; onOpen: () => void }) {
           aria-hidden="true"
           className="grid size-6 shrink-0 place-items-center rounded-full bg-primary-weak text-primary"
         >
-          <Icon className="size-3.5" />
+          <BookingKindIcon booking={b} className="size-3.5" />
         </span>
         <span className={cn('tabular shrink-0 text-caption text-fg-sub', wide ? 'w-16' : 'w-11')}>
           {time(row.time) ?? '—'}

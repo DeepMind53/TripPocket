@@ -35,3 +35,27 @@ test('예약: 숙소를 추가하면 예약 탭 카드와 일정 화면 숙소 �
   await expect(detail.getByText('조식 없음')).toBeVisible();
   await expect(detail.getByRole('region', { name: '길찾기' })).toBeVisible();
 });
+
+test('예약: 기차·버스는 날짜|교통편, 출발 시각|출발역, 도착 시각|도착역 세 줄 — 320px에서도 넘치지 않는다', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 720 });
+  await createTrip(page, '기차 여행');
+  await page
+    .getByRole('navigation', { name: '여행 메뉴' })
+    .getByRole('link', { name: '예약' })
+    .click();
+  await page.getByRole('button', { name: '예약 추가' }).click();
+  const sheet = page.getByRole('dialog', { name: '예약 추가' });
+  await sheet.getByRole('button', { name: /기차/ }).click();
+  await sheet.getByLabel('교통편').fill('KTX');
+  await sheet.getByLabel('출발 시각').fill('1332');
+  await sheet.getByLabel('출발역').fill('동대구역');
+  await sheet.getByLabel('도착 시각').fill('1544');
+  await sheet.getByLabel('도착역').fill('수원역');
+  const overflow = await sheet.evaluate((el) => el.scrollWidth - el.clientWidth);
+  expect(overflow).toBeLessThanOrEqual(1);
+  await page.screenshot({ path: 'test-results/train-form-320.png' });
+  await sheet.getByRole('button', { name: '예약 추가' }).click();
+  await expect(page.getByText('동대구역 13:32 -> 수원역 15:44')).toBeVisible();
+});
