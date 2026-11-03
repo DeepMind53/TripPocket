@@ -3,7 +3,7 @@
  * 환율 값 = 그 통화 1단위가 몇 원인가 (KRW per 1 unit). 수출입은행의 JPY(100) 같은 100단위는 1단위로 바꿔 저장
  */
 export interface FxSnapshot {
-  source: 'koreaexim' | 'currency-api';
+  source: 'koreaexim' | 'currency-api' | 'frankfurter';
   /** 고시일 YYYY-MM-DD */
   date: string;
   fetchedAt: string;

@@ -36,6 +36,8 @@ export type ApiId =
   | 'open_meteo'
   | 'nager_date'
   | 'jsdelivr'
+  | 'frankfurter'
+  | 'wikipedia'
   | 'oauth_kakao'
   | 'oauth_naver'
   | 'oauth_google'
@@ -149,6 +151,10 @@ export const APIS: readonly ApiDef[] = [
   { id: 'open_meteo', group: 'free', freeDaily: 10000, tz: 'UTC', browser: true },
   { id: 'nager_date', group: 'free', tz: 'UTC', browser: true },
   { id: 'jsdelivr', group: 'free', tz: 'UTC', browser: true },
+  // Frankfurter(유럽중앙은행 환율, 키·한도 없음) — 환율 보조 2번째 (docs/26 C1, 2026-11-03). 기록만
+  { id: 'frankfurter', group: 'free', tz: 'UTC', browser: true },
+  // 위키백과 REST 요약(키 없음, 예의상 초당 몇 번) — 여행지 소개 (docs/26 A4). 서버가 30일 저장해 하루 수백 회면 충분
+  { id: 'wikipedia', group: 'free', freeDaily: 5000, tz: 'UTC' },
   // 로그인(토큰 교환·프로필) — 무료, 멈추면 로그인 불가라 기록만
   { id: 'oauth_kakao', group: 'free', tz: 'Asia/Seoul', pausable: false },
   { id: 'oauth_naver', group: 'free', tz: 'Asia/Seoul', pausable: false },

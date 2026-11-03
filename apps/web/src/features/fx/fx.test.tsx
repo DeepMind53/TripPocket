@@ -25,6 +25,21 @@ beforeEach(async () => {
 afterEach(() => vi.unstubAllGlobals());
 
 describe('환율', () => {
+  it('보조 출처(currency-api)가 모두 안 되면 Frankfurter(유럽중앙은행) — 2026-11-03', async () => {
+    vi.stubGlobal('fetch', async (url: string) => {
+      if (url.startsWith('/api/'))
+        return new Response('<html>', { headers: { 'content-type': 'text/html' } });
+      if (url.includes('frankfurter'))
+        return Response.json({ base: 'KRW', date: '2026-11-02', rates: { JPY: 0.1, USD: 0.0008 } });
+      return Promise.reject(new Error('down'));
+    });
+    expect(await getFx()).toMatchObject({
+      source: 'frankfurter',
+      stale: false,
+      rates: { JPY: 10, USD: 1250 },
+    });
+  });
+
   it('서버가 없으면 무료 출처, 그것도 안 되면 저장해 둔 값(최신 아님)', async () => {
     mockFallback();
     expect(await getFx()).toMatchObject({

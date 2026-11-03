@@ -4,7 +4,7 @@
  * (2026-10-24 사용자 요청: 공개할 연락처를 정할 때까지 비활성화).
  */
 export const OPERATOR_CONTACT: string = '';
-export const UPDATED = '2026-11-02';
+export const UPDATED = '2026-11-03';
 
 export interface Section {
   title: string;
@@ -39,7 +39,9 @@ export const PRIVACY: Section[] = [
     body: [
       '공휴일: 나라 코드와 연도만 보냅니다.\nNager.Date, 대만 정부 근무일 달력(jsDelivr 경유)',
       '날씨: 여행지 도시 좌표와 날짜를 Open-Meteo로 보냅니다.\n내 현재 위치가 아닙니다.',
-      '환율: 개인정보 없이 요청만 보냅니다.\n한국수출입은행, 보조로 currency-api',
+      '미세먼지·자외선(실험실): 여행지 도시 좌표를 Open-Meteo로 보냅니다.',
+      '여행지 소개(실험실): 여행지 이름만 서버가 위키백과로 보냅니다.\n받은 요약은 서버에 30일 보관합니다.',
+      '환율: 개인정보 없이 요청만 보냅니다.\n한국수출입은행, 보조로 currency-api·Frankfurter',
       '장소 검색: 검색어와 여행지 도시 좌표를 서버가 대신 보냅니다.\n국내는 네이버를 먼저, 없으면 카카오에서 찾습니다.\n해외는 Google로 찾습니다.\nGoogle 무료 사용량이 끝나면 Geoapify(OpenStreetMap)로 찾습니다.',
       '지도: 해외는 Google 지도를 씁니다.\n국내는 설정에서 고른 네이버 지도·카카오맵을 씁니다.\n둘 다 못 쓰면 OpenFreeMap을 씁니다.\n화면에 보이는 지역의 지도 조각을 그 서비스에서 받습니다.',
       '택시 카드 현지어 이름: 장소 좌표를 Google로 보냅니다.\nGoogle 무료 사용량이 끝나면 Geoapify로 보냅니다.',
@@ -177,6 +179,24 @@ export const DATA_SOURCES: { name: string; use: string; license: string; url: st
     use: '교통카드·승차권 사진 (작가·라이선스는 사진 아래에)',
     license: 'CC0 · CC BY · CC BY-SA (크기만 줄임)',
     url: 'https://commons.wikimedia.org',
+  },
+  {
+    name: 'Open-Meteo 대기질 (Copernicus CAMS)',
+    use: '미세먼지·자외선 예보',
+    license: 'CC BY 4.0 (CAMS ENSEMBLE data)',
+    url: 'https://open-meteo.com/en/docs/air-quality-api',
+  },
+  {
+    name: '위키백과',
+    use: '여행지 소개 (문장을 짧게 줄임)',
+    license: 'CC BY-SA 4.0',
+    url: 'https://ko.wikipedia.org',
+  },
+  {
+    name: 'Frankfurter (유럽중앙은행)',
+    use: '환율 보조',
+    license: '무료 · 유럽중앙은행 기준 환율',
+    url: 'https://frankfurter.dev',
   },
   { name: 'Nager.Date', use: '공휴일', license: 'MIT', url: 'https://date.nager.at' },
   {
