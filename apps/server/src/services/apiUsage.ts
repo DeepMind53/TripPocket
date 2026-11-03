@@ -39,7 +39,6 @@ export type ApiId =
   | 'frankfurter'
   | 'wikipedia'
   | 'oauth_kakao'
-  | 'oauth_naver'
   | 'oauth_google'
   | 'cf_functions'
   | 'web_push'
@@ -157,7 +156,6 @@ export const APIS: readonly ApiDef[] = [
   { id: 'wikipedia', group: 'free', freeDaily: 5000, tz: 'UTC' },
   // 로그인(토큰 교환·프로필) — 무료, 멈추면 로그인 불가라 기록만
   { id: 'oauth_kakao', group: 'free', tz: 'Asia/Seoul', pausable: false },
-  { id: 'oauth_naver', group: 'free', tz: 'Asia/Seoul', pausable: false },
   { id: 'oauth_google', group: 'free', tz: 'UTC', pausable: false },
   // Cloudflare Pages Functions (무료 플랜 하루 10만 요청, 넘으면 오류 — 과금 없음). 홈 서버까지 온 요청만 센다(화면 이동 제외)
   { id: 'cf_functions', group: 'free', freeDaily: 100000, tz: 'UTC', pausable: false },

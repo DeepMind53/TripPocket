@@ -68,11 +68,9 @@
 5. 동의항목 → **닉네임**만 "필수 동의" (그 밖은 받지 않음)
 6. 플랫폼 → Web → 사이트 도메인 `<앱주소>`
 
-### 네이버 (https://developers.naver.com/apps)
-1. Application 등록 → 사용 API **네이버 로그인** → 제공 정보 **별명(닉네임)** 만 필수
-2. 환경: PC 웹 → 서비스 URL `<앱주소>`, Callback URL `<앱주소>/auth/naver/callback`
-3. Client ID → `NAVER_CLIENT_ID`, Client Secret → `NAVER_CLIENT_SECRET`
-4. 처음에는 "개발 중" 상태 — 멤버관리에 등록한 아이디(최대 20명)만 로그인 가능. 가족·지인만 쓰면 그대로 두어도 됨 (공개하려면 검수 요청)
+### 네이버
+- 네이버 로그인은 2026-11-03 뺐다 (사용자 결정 — 카카오·Google만). `NAVER_CLIENT_ID`·`NAVER_CLIENT_SECRET`는
+  검색 API HUB 키(`NAVER_SEARCH_ID`)가 없을 때 네이버 검색(옛 방식)에만 쓰인다. 네이버 개발자센터의 로그인 API·Callback URL은 지워도 된다
 
 ### Google (https://console.cloud.google.com)
 1. 새 프로젝트 → API 및 서비스 → **OAuth 동의 화면**: 외부, 앱 이름 `트립포켓`, 범위는 기본(openid·profile)만 — 민감 범위가 없어 심사 불필요

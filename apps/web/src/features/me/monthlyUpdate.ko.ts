@@ -102,14 +102,13 @@ export function monthlyUpdateRequest(month: string): string {
 - 서버 PC 백업이 매일 생기는지(E:\\TripPocketBackup), 디스크·문서 용량 (pnpm admin:data list)
 - 분기마다(1·4·7·10월) 백업 복구 리허설 (ops/README.md §3)
 - Windows 업데이트 뒤 서버가 자동으로 켜졌는지 (안 켜졌으면 "TripPocket 서버 재시작.bat")
-- 로그인 앱(Google·카카오·네이버)·지도 키의 허용 도메인이 trippocket.day로 제한돼 있는지
+- 로그인 앱(Google·카카오)·지도 키의 허용 도메인이 trippocket.day로 제한돼 있는지
 - 도메인 trippocket.day 갱신일 (자동 갱신·결제 수단)
 - 관리자 → API 사용량에서 한도 20% 아래인 API
 - 공공데이터포털 마이페이지 → 개발계정: 활용기간 끝나는 날 (한 달 전이면 [연장신청])
 - Google 결제 카드 만료일, Cloudflare API 토큰 만료일
 - 반년 안에 Google 계정으로 로그인한 적이 있는지 (안 쓰면 Google 로그인 설정이 자동 삭제)
 - 숨긴 후기, 개선 제안 답장
-- 네이버 로그인 검수 결과 (승인되면 로그인 화면 경고 문구 지우기)
 - 실험실 기능 중 정식으로 넣거나 뺄 것 (켜 두고 써 본 느낌)
 
 끝나면 바뀐 것·출처 링크·확인 못 한 것을 표로 보고해 줘. 커밋·푸시는 보고를 보고 내가 말할게.`;

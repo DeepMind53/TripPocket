@@ -10,7 +10,6 @@ import { JoinNoteForm } from './JoinNoteForm';
 
 const STYLE: Record<string, { bg: string; fg: string; border?: string }> = {
   kakao: { bg: '#FEE500', fg: '#191919' },
-  naver: { bg: '#03C75A', fg: '#FFFFFF' },
   google: { bg: '#FFFFFF', fg: '#1F1F1F', border: '#DADCE0' },
 };
 

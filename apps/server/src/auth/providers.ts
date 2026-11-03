@@ -2,10 +2,11 @@ import type { Config } from '../config';
 
 /**
  * 소셜 로그인 제공자 (docs/09 §4.1). 시크릿은 서버에만 — 코드 교환도 서버에서.
- * PKCE: 구글만 지원(카카오·네이버 공식 문서에 없음) → 모두 state + 브라우저 쿠키 대조, 구글은 PKCE 추가
+ * PKCE: 구글만 지원(카카오 공식 문서에 없음) → 모두 state + 브라우저 쿠키 대조, 구글은 PKCE 추가.
+ * 네이버 로그인은 2026-11-03 뺐다 (사용자 결정 — 카카오·구글만). 네이버 키는 검색 API에만 쓴다
  */
-export type ProviderId = 'kakao' | 'naver' | 'google';
-export const PROVIDERS: readonly ProviderId[] = ['kakao', 'naver', 'google'];
+export type ProviderId = 'kakao' | 'google';
+export const PROVIDERS: readonly ProviderId[] = ['kakao', 'google'];
 
 export interface Profile {
   providerUserId: string;
@@ -39,15 +40,6 @@ export const SPECS: Record<ProviderId, ProviderSpec> = {
       const me = await getJson('https://kapi.kakao.com/v2/user/me', token);
       const nickname = str(obj(obj(me.kakao_account).profile).nickname);
       return { providerUserId: str(me.id), nickname };
-    },
-  },
-  naver: {
-    authorizeUrl: 'https://nid.naver.com/oauth2.0/authorize',
-    tokenUrl: 'https://nid.naver.com/oauth2.0/token',
-    pkce: false,
-    profile: async (token) => {
-      const me = obj((await getJson('https://openapi.naver.com/v1/nid/me', token)).response);
-      return { providerUserId: str(me.id), nickname: str(me.nickname) };
     },
   },
   google: {

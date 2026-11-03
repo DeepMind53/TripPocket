@@ -75,9 +75,9 @@ const Env = z.object({
   VAPID_SUBJECT: z.optional(z.string()),
   /** 가입 정책 (docs/08 G1): invite = 첫 계정 + 허용 목록만, open = 누구나 */
   SIGNUP: z._default(z.enum(['invite', 'open']), 'invite'),
-  /** 허용 목록: "kakao:123,naver:abc" — 가입 거절 화면에 표시되는 값을 넣는다 */
+  /** 허용 목록: "kakao:123,google:abc" — 가입 거절 화면에 표시되는 값을 넣는다 */
   ALLOWED_ACCOUNTS: z.optional(z.string()),
-  /** 관리자 고정 목록 "kakao:123,naver:abc" — 이 계정들만 관리자 (auth/admins.ts) */
+  /** 관리자 고정 목록 "kakao:123,google:abc" — 이 계정들만 관리자 (auth/admins.ts) */
   ADMIN_ACCOUNTS: z.optional(z.string()),
 });
 

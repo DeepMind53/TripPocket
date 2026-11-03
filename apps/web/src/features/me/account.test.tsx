@@ -17,8 +17,7 @@ function mockServer(loggedIn: boolean) {
       return loggedIn
         ? Response.json(me)
         : Response.json({ error: 'unauthorized' }, { status: 401 });
-    if (url === '/auth/providers')
-      return Response.json({ providers: ['kakao', 'naver', 'google'] });
+    if (url === '/auth/providers') return Response.json({ providers: ['kakao', 'google'] });
     if (url === '/auth/logout') return Response.json({ ok: true });
     if (url === '/api/me/nickname')
       return Response.json({ nickname: JSON.parse(String(init?.body)).nickname });
@@ -100,18 +99,15 @@ describe('계정', () => {
   });
 });
 
-it('네이버도 안내 없이 바로 로그인으로 (2026-11-03 — 네이버 로그인 정상 동작)', async () => {
+it('로그인은 카카오·구글만 (네이버는 2026-11-03 뺌)', async () => {
   mockServer(false);
   renderAt('/login');
-  expect(await screen.findByRole('link', { name: '네이버로 시작하기' })).toHaveAttribute(
-    'href',
-    '/auth/naver/start?returnTo=%2Fme',
-  );
-  expect(screen.getByRole('link', { name: '카카오로 시작하기' })).toHaveAttribute(
+  expect(await screen.findByRole('link', { name: '카카오로 시작하기' })).toHaveAttribute(
     'href',
     '/auth/kakao/start?returnTo=%2Fme',
   );
-  expect(screen.queryByRole('dialog')).toBeNull();
+  expect(screen.getByRole('link', { name: /Google/ })).toBeInTheDocument();
+  expect(screen.queryByRole('link', { name: '네이버로 시작하기' })).toBeNull();
 });
 
 it('로그인 전 화면: 맨 위 로고, 소개 카드 8장을 점으로 넘긴다', async () => {

@@ -319,4 +319,8 @@ export const MIGRATIONS: readonly string[] = [
     PRIMARY KEY (provider, provider_user_id)
   );
   `,
+  // 22: 네이버 로그인 뺌 (2026-11-03 사용자 결정) — 네이버로 들어온 가입 요청은 더 승인할 수 없으니 지운다
+  `
+  DELETE FROM join_requests WHERE provider = 'naver';
+  `,
 ];

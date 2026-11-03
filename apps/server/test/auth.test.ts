@@ -15,7 +15,8 @@ const env = {
   NAVER_CLIENT_SECRET: 'nsecret',
   GOOGLE_CLIENT_ID: 'gid',
   GOOGLE_CLIENT_SECRET: 'gsecret',
-  ALLOWED_ACCOUNTS: 'naver:N-2',
+  // 두 번째 카카오 계정 (네이버 로그인은 2026-11-03 뺌)
+  ALLOWED_ACCOUNTS: 'kakao:2002',
 };
 const config = loadConfig(env);
 
@@ -23,8 +24,10 @@ let db: Db;
 let app: FastifyInstance;
 let tokenCalls: { url: string; body: URLSearchParams }[];
 
-/** 제공자 서버 흉내: 코드 → 토큰 → 프로필 */
-function mockProviders(profiles: Record<string, unknown>) {
+/** 제공자 서버 흉내: 코드 → 토큰 → 프로필 (profiles는 시험 중에 바꿀 수 있다) */
+let profiles: Record<string, unknown> = {};
+function mockProviders(initial: Record<string, unknown>) {
+  profiles = initial;
   tokenCalls = [];
   vi.stubGlobal('fetch', async (input: string | URL, init?: RequestInit) => {
     const url = String(input);
@@ -41,6 +44,17 @@ function mockProviders(profiles: Record<string, unknown>) {
 const base = { [PROXY_HEADER]: SECRET };
 const cookieOf = (res: LightMyRequestResponse, name: string) =>
   res.cookies.find((c) => c.name === name);
+
+/** 두 번째 사람 = 카카오 2002 (허용 목록) */
+async function loginMember(): ReturnType<typeof login> {
+  const keep = profiles['kapi.kakao.com'];
+  profiles['kapi.kakao.com'] = { id: 2002, kakao_account: { profile: { nickname: '멤버님' } } };
+  try {
+    return await login('kakao');
+  } finally {
+    profiles['kapi.kakao.com'] = keep;
+  }
+}
 
 /** 시작 → (제공자 로그인은 건너뜀) → 콜백. 세션 쿠키 반환 */
 async function login(
@@ -80,7 +94,6 @@ beforeEach(async () => {
   app = await buildApp(config, db);
   mockProviders({
     'kapi.kakao.com': { id: 1001, kakao_account: { profile: { nickname: '카카오님' } } },
-    'openapi.naver.com': { response: { id: 'N-2', nickname: '네이버님' } },
     'openidconnect.googleapis.com': { sub: 'G-3', name: 'Google User' },
   });
 });
@@ -237,22 +250,22 @@ describe('로그인', () => {
     const loc = String(denied.res.headers.location);
     expect(loc.startsWith(`${ORIGIN}/login?error=pending#join=`)).toBe(true);
     expect(loc.split('#join=')[1]!.length).toBeGreaterThanOrEqual(20);
-    const naver = await login('naver'); // ALLOWED_ACCOUNTS=naver:N-2
+    const naver = await loginMember(); // ALLOWED_ACCOUNTS=kakao:2002
     expect(naver.sid).toBeTruthy();
     expect((await api('GET', '/api/me', naver.sid)).json()).not.toHaveProperty('isAdmin');
   });
 
   it('관리자 고정 목록: 목록의 계정만 관리자, 첫 계정 규칙·탈퇴 시 넘김 없음', async () => {
     await app.close();
-    app = await buildApp(loadConfig({ ...env, ADMIN_ACCOUNTS: 'naver:N-2, google:G-3' }), db);
-    const kakao = await login('kakao'); // 첫 계정이지만 목록에 없음
+    app = await buildApp(loadConfig({ ...env, ADMIN_ACCOUNTS: 'kakao:2002, google:G-3' }), db);
+    const kakao = await login('kakao'); // 첫 계정(1001)이지만 목록에 없음
     expect((await api('GET', '/api/me', kakao.sid)).json()).not.toHaveProperty('isAdmin');
-    const naver = await login('naver');
+    const naver = await loginMember();
     expect((await api('GET', '/api/me', naver.sid)).json()).toMatchObject({ isAdmin: true });
     // 원래 관리자였던 사람도 서버가 다시 켜지면 목록대로
     db.prepare('UPDATE users SET is_admin = 1').run();
     await app.close();
-    app = await buildApp(loadConfig({ ...env, ADMIN_ACCOUNTS: 'naver:N-2' }), db);
+    app = await buildApp(loadConfig({ ...env, ADMIN_ACCOUNTS: 'kakao:2002' }), db);
     expect((await api('GET', '/api/me', kakao.sid)).json()).not.toHaveProperty('isAdmin');
     // 관리자가 탈퇴해도 다른 사람이 이어받지 않는다
     await api('DELETE', '/api/me', naver.sid);
@@ -263,7 +276,10 @@ describe('로그인', () => {
     const res = await app.inject({ method: 'GET', url: '/auth/facebook/start', headers: base });
     expect(res.headers.location).toBe(`${ORIGIN}/login?error=provider`);
     const list = await app.inject({ method: 'GET', url: '/auth/providers', headers: base });
-    expect(list.json()).toEqual({ providers: ['kakao', 'naver', 'google'] });
+    expect(list.json()).toEqual({ providers: ['kakao', 'google'] });
+    // 네이버 로그인은 뺐다 (키가 있어도 시작할 수 없음)
+    const naver = await app.inject({ method: 'GET', url: '/auth/naver/start', headers: base });
+    expect(naver.headers.location).toBe(`${ORIGIN}/login?error=provider`);
   });
 });
 
@@ -347,20 +363,20 @@ describe('사용자 관리 (관리자 승인)', () => {
 
   it('사용 중지: 바로 로그아웃되고 다시 로그인 불가, 다시 허용하면 사용', async () => {
     const owner = await login('kakao');
-    const member = await login('naver');
+    const member = await loginMember();
     const memberId = (await api('GET', '/api/me', member.sid)).json().id as string;
     await api('POST', `/api/admin/users/${memberId}/disable`, owner.sid);
     expect((await api('GET', '/api/me', member.sid)).statusCode).toBe(401);
-    const blocked = await login('naver');
+    const blocked = await loginMember();
     expect(blocked.sid).toBeUndefined();
     expect(blocked.res.headers.location).toBe(`${ORIGIN}/login?error=disabled`);
     await api('POST', `/api/admin/users/${memberId}/enable`, owner.sid);
-    expect((await login('naver')).sid).toBeTruthy();
+    expect((await loginMember()).sid).toBeTruthy();
   });
 
   it('관리자가 아니면 403, 로그인 안 했으면 401, 관리자 자신은 중지 불가', async () => {
     const owner = await login('kakao');
-    const member = await login('naver');
+    const member = await loginMember();
     expect((await api('GET', '/api/admin/users')).statusCode).toBe(401);
     expect((await api('GET', '/api/admin/users', member.sid)).statusCode).toBe(403);
     const ownerId = (await api('GET', '/api/me', owner.sid)).json().id as string;
@@ -375,7 +391,7 @@ describe('사용자 관리 (관리자 승인)', () => {
 
   it('관리자가 탈퇴하면 다음으로 오래된 계정이 관리자를 이어받는다', async () => {
     const owner = await login('kakao');
-    const member = await login('naver');
+    const member = await loginMember();
     await api('DELETE', '/api/me', owner.sid);
     expect((await api('GET', '/api/me', member.sid)).json()).toMatchObject({ isAdmin: true });
   });
@@ -400,7 +416,7 @@ describe('세션·내 정보 (인가)', () => {
 
   it('기기 목록·끊기는 내 세션만 — 남의 세션 id로는 404', async () => {
     const mine = await login('kakao');
-    const other = await login('naver');
+    const other = await loginMember();
     const list = (await api('GET', '/api/me/sessions', mine.sid)).json() as {
       sessions: { id: string; current: boolean }[];
     };

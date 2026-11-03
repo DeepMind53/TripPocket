@@ -796,7 +796,6 @@
     "why": "로그인 후 쓸 수 있어요\n여러 기기에서 같은 여행을 함께 고쳐요",
     "with": {
       "kakao": "카카오로 시작하기",
-      "naver": "네이버로 시작하기",
       "google": "Google로 시작하기"
     },
     "name": {
@@ -1294,7 +1293,6 @@
       "nager_date": "Nager.Date 공휴일",
       "jsdelivr": "jsDelivr (대만 공휴일·환율 보조)",
       "oauth_kakao": "카카오 로그인",
-      "oauth_naver": "네이버 로그인",
       "oauth_google": "Google 로그인",
       "cf_functions": "Cloudflare Pages 함수 (홈 서버 연결)",
       "aviationstack": "AviationStack 항공편",
@@ -1337,7 +1335,6 @@
       "nager_date": "무료·제한 없음 · 앱에서 바로 부름",
       "jsdelivr": "무료·제한 없음 · 앱에서 바로 부름",
       "oauth_kakao": "로그인할 때마다 2회 · 무료",
-      "oauth_naver": "로그인할 때마다 2회 · 무료",
       "oauth_google": "로그인할 때마다 2회 · 무료",
       "cf_functions": "하루 10만 요청 무료 (넘으면 오류, 요금 없음)",
       "aviationstack": "편명으로 불러오기 · 월 100회 무료 (넘으면 거절, 요금 없음)",
