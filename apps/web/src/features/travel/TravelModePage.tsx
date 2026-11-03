@@ -1,36 +1,104 @@
-import { addDays, dayNumberOf, todayIn, type ItineraryItem, type Trip } from '@trippocket/shared';
-import { InlineIcon } from '../../shared/ui/InlineIcon';
-import { Bed, Bell, BellOff, Haze, House, Navigation, Sun, SunMedium } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import {
+  addDays,
+  dayNumberOf,
+  todayIn,
+  type Coords,
+  type ItineraryItem,
+  type Trip,
+} from '@trippocket/shared';
+import {
+  Bed,
+  Bell,
+  BellOff,
+  ChevronDown,
+  CloudSun,
+  House,
+  IdCard,
+  Languages,
+  ListChecks,
+  Navigation,
+  Siren,
+  Sun,
+  Ticket,
+  TriangleAlert,
+  Wallet,
+  WifiOff,
+  type LucideIcon,
+} from 'lucide-react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import { useNavigate, useParams } from 'react-router';
+import { routeEta } from '../../data/api/routes';
 import { useTrip, useTripBookings, useTripItems } from '../../data/hooks';
 import { itemRepo } from '../../data/repositories/itemRepo';
 import { setTravelMode, setTravelPrefs, useTravelMode } from '../../data/travelModeStore';
 import { airWarnings } from '../../domain/air';
 import { currentItemId, nextStop } from '../../domain/dayTools';
 import { lodgingForNight } from '../../domain/lodging';
+import { dayPhase, leaveAt, rainFrom, type DayPhase } from '../../domain/travelDay';
+import { travelLegsAhead } from '../../domain/travelLeg';
 import { isDomesticTrip } from '../../domain/tripPlace';
+import { formatTemps } from '../../domain/weather';
 import { useTranslation } from '../../i18n';
-import { formatMonthDay } from '../../shared/lib/dateFormat';
-import { cn } from '../../shared/lib/cn';
 import { timeIn, useMinuteClock } from '../../shared/hooks/useMinuteClock';
 import { useRouteSheet } from '../../shared/hooks/useRouteSheet';
-import { Button, IconButton, Skeleton, toast } from '../../shared/ui';
+import { cn } from '../../shared/lib/cn';
+import { formatMonthDay } from '../../shared/lib/dateFormat';
 import type { Destination } from '../../shared/lib/directions';
-import { DirectionsSheet } from '../common/DirectionsSheet';
+import { Button, IconButton, Skeleton, toast } from '../../shared/ui';
+import { InlineIcon } from '../../shared/ui/InlineIcon';
 import { DayWeatherBadge } from '../common/DayWeatherBadge';
+import { DirectionsSheet } from '../common/DirectionsSheet';
+import { EmergencySheet } from '../common/EmergencySheet';
 import { openDirectionsDirect } from '../common/openDirections';
 import { QuickMenuButton } from '../common/QuickMenu';
-import { SHORTCUT_ICON, shortcutPath, useQuickShortcuts } from '../common/quickShortcuts';
+import { TravelLegCard } from '../common/TravelLegCard';
 import { useTripWeather } from '../common/useTripWeather';
+import { useTripHolidays } from '../itinerary/useTripHolidays';
 import { useTripPlanItems } from '../itinerary/usePlanView';
 
 const mins = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5));
 
+/** 인터넷 연결 여부 (끊기면 머리에 작은 칩, D3) */
+const subscribe = (cb: () => void) => {
+  window.addEventListener('online', cb);
+  window.addEventListener('offline', cb);
+  return () => {
+    window.removeEventListener('online', cb);
+    window.removeEventListener('offline', cb);
+  };
+};
+const useOnline = () =>
+  useSyncExternalStore(
+    subscribe,
+    () => navigator.onLine,
+    () => true,
+  );
+
+/** 엄지 버튼: 숙소로 길찾기 고정 + 시간대별 3칸 (docs/27 Q3) */
+type ThumbId = 'weather' | 'checklist' | 'bookings' | 'fx' | 'phrases' | 'essentials';
+type Thumb = { id: ThumbId; icon: LucideIcon; path: (tripId: string) => string };
+const THUMBS: Record<DayPhase, Thumb[]> = {
+  morning: [
+    { id: 'weather', icon: CloudSun, path: (id) => `/trips/${id}/weather` },
+    { id: 'checklist', icon: ListChecks, path: (id) => `/trips/${id}/checklist` },
+    { id: 'bookings', icon: Ticket, path: (id) => `/trips/${id}/bookings` },
+  ],
+  day: [
+    { id: 'fx', icon: Wallet, path: (id) => `/fx?trip=${id}` },
+    { id: 'phrases', icon: Languages, path: (id) => `/phrases?trip=${id}` },
+    { id: 'bookings', icon: Ticket, path: (id) => `/trips/${id}/bookings` },
+  ],
+  evening: [
+    { id: 'bookings', icon: Ticket, path: (id) => `/trips/${id}/bookings` },
+    { id: 'weather', icon: CloudSun, path: (id) => `/trips/${id}/weather` },
+    { id: 'essentials', icon: IdCard, path: (id) => `/trips/${id}/essentials` },
+  ],
+};
+
 /**
- * 여행 모드 (실험실, docs/25 1단계 + 추천안 D1~D6, 2026-11-03):
- * 고치는 기능 없이 오늘·내일만 — 지금·다음 일정(길찾기 한 번), 남은 일정(방문 표시는 됨, D5),
- * 엄지 버튼(빠른 메뉴 바로가기와 같은 목록, D4), 햇빛 모드·출발 10분 전 알림(D3). [편집]이면 일반 화면으로
+ * 여행 모드 (실험실, docs/25 + docs/27 개선 — 2026-11-04 결정 Q1~Q5):
+ * 시각에 따라 맨 위가 바뀐다 — 아침 브리핑 → 지금·다음(나갈 시각) → 저녁 정리·내일 미리보기.
+ * 고치는 기능은 없고 방문 표시(다녀옴·건너뛰기)만. [홈]이면 여행 모드를 끄고 일반 화면으로
  */
 export function TravelModePage() {
   const { tripId = '' } = useParams();
@@ -46,41 +114,75 @@ function TravelView({ trip, items: all }: { trip: Trip; items: ItineraryItem[] }
   const bookings = useTripBookings(trip.id) ?? [];
   const items = useTripPlanItems(trip, all);
   const weather = useTripWeather(trip);
-  const { sun, remind } = useTravelMode();
-  // 일정은 [홈]과, 숙소로 길찾기는 맨 앞 버튼과 같아 뺀다 (2026-11-03)
-  const ids = useQuickShortcuts((s) => s.ids).filter((id) => id !== 'plan' && id !== 'lodging');
+  const holidays = useTripHolidays(trip, true);
+  const { sun, remind, sunAsked } = useTravelMode();
+  const online = useOnline();
   const [dirOpen, setDirOpen] = useRouteSheet('travel-directions');
+  const [sosOpen, setSosOpen] = useRouteSheet('travel-emergency');
   const [dest, setDest] = useState<Destination | null>(null);
-  const [, openQuick] = useRouteSheet('quick-menu');
+  const [pastOpen, setPastOpen] = useState(false);
   const today = todayIn(trip.timezone);
-  const [tab, setTab] = useState<'today' | 'tomorrow'>('today');
-  const date = tab === 'today' ? today : addDays(today, 1);
+  const tomorrow = addDays(today, 1);
   const clock = useMinuteClock(true);
   const now = timeIn(trip.timezone, clock) ?? '00:00';
-  const dayItems = items.filter((i) => i.date === date && i.kind !== 'note');
-  const nowId = tab === 'today' ? currentItemId(dayItems, now) : null;
+  const dayItems = items.filter((i) => i.date === today && i.kind !== 'note');
+  const phase = dayPhase(dayItems, now);
+  const nowId = currentItemId(dayItems, now);
   const current = dayItems.find((i) => i.id === nowId);
-  const next = tab === 'today' ? nextStop(dayItems, now) : (dayItems[0] ?? null);
-  const n = dayNumberOf(trip.startDate, trip.endDate, date);
+  const next = nextStop(dayItems, now);
+  const n = dayNumberOf(trip.startDate, trip.endDate, today);
   const domestic = isDomesticTrip(trip);
   // 오늘 밤 숙소 → 없으면 첫 숙소 (빠른 메뉴 "숙소로 길찾기"와 같은 규칙)
   const stay =
-    lodgingForNight(bookings, date)?.booking ?? bookings.find((b) => b.kind === 'lodging');
-  const leaveIn = next?.startTime && tab === 'today' ? mins(next.startTime) - mins(now) : null;
+    lodgingForNight(bookings, today)?.booking ?? bookings.find((b) => b.kind === 'lodging');
+  const w = weather[today];
+  const countries = [
+    ...new Set(trip.destinations.map((d) => d.countryCode).filter((c): c is string => !!c)),
+  ];
 
-  // 출발 10분 전 알림 (앱이 열려 있을 때 — 브라우저 알림 권한을 허락한 경우)
+  // 다음 일정까지 이동 시간 (Q4): 앞 일정 장소 → 다음 장소, 일정마다 한 번 (기기에 7일 보관, 무료량 안에서만)
+  const prev = next
+    ? [...dayItems]
+        .filter((i) => i.place?.coords && i.startTime && i.startTime < next.startTime!)
+        .pop()
+    : undefined;
+  const from: Coords | undefined = prev?.place?.coords;
+  const to = next?.place?.coords;
+  const pair = from && to ? `${from.lat},${from.lng}>${to.lat},${to.lng}` : '';
+  const [eta, setEta] = useState<{ pair: string; min?: number; transit: boolean } | null>(null);
   useEffect(() => {
-    if (!remind || leaveIn == null || leaveIn < 0 || !next) return;
-    const ms = Math.max(0, (leaveIn - 10) * 60_000);
+    if (!pair || !from || !to || eta?.pair === pair) return;
+    let alive = true;
+    const google = next?.place?.coordsSource === 'google' || prev?.place?.coordsSource === 'google';
+    void routeEta(from, to, google).then((r) => {
+      if (!alive) return;
+      const transit = r?.transit;
+      const walk = r?.walk;
+      const best = [walk, transit].filter((x): x is number => x !== undefined);
+      setEta({
+        pair,
+        ...(best.length ? { min: Math.min(...best) } : {}),
+        transit: transit !== undefined && (walk === undefined || transit < walk),
+      });
+    });
+    return () => {
+      alive = false;
+    };
+  }, [pair]); // eslint-disable-line react-hooks/exhaustive-deps -- 다음 일정(두 장소)이 바뀔 때만
+  const travelMin = eta?.pair === pair ? eta.min : undefined;
+  const leave = next?.startTime ? leaveAt(next.startTime, now, travelMin) : null;
+
+  // 나갈 시각 알림 (앱이 열려 있을 때 — 브라우저 알림 권한을 허락한 경우)
+  useEffect(() => {
+    if (!remind || !leave || leave.inMin < 0 || !next) return;
     const timer = window.setTimeout(() => {
       if (typeof Notification !== 'undefined' && Notification.permission === 'granted')
         new Notification(t('travel.remindTitle'), { body: next.title });
       navigator.vibrate?.(200);
-    }, ms);
+    }, leave.inMin * 60_000);
     return () => window.clearTimeout(timer);
-  }, [remind, leaveIn, next, t]);
+  }, [remind, leave?.inMin, next, t]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // 길찾기 앱을 바로 열고, "매번 묻기"면 고르는 시트
   const directions = (d: Destination) => {
     if (openDirectionsDirect(d, domestic)) return;
     setDest(d);
@@ -97,32 +199,87 @@ function TravelView({ trip, items: all }: { trip: Trip; items: ItineraryItem[] }
     directions({ name: stay.title, address: stay.details?.address });
   };
 
-  const card = (label: string, i: ItineraryItem, extra?: string) => (
-    <div className="flex flex-col gap-2 rounded-card border border-primary/40 bg-primary-weak/40 p-4">
-      <span className="text-caption font-bold text-primary">{label}</span>
-      <span className="text-title-2 font-bold">{i.title}</span>
-      <span className="tabular text-body-2 text-fg-sub">
-        {[i.startTime && `${i.startTime}${i.endTime ? `–${i.endTime}` : ''}`, extra]
-          .filter(Boolean)
-          .join(' · ')}
-      </span>
-      {(i.place?.coords || i.place?.address || i.place?.name) && (
+  // 오늘 주의 한 줄 (D2): 비 → 미세먼지·자외선 → 현지 공휴일 중 가장 앞의 것
+  const rain = rainFrom(w, now);
+  const air = airWarnings(w?.air)[0];
+  const caution =
+    rain !== null
+      ? rain < 0
+        ? t('travel.rainToday')
+        : t('travel.rainFrom', { h: rain })
+      : air
+        ? t(`air.${air.key}`, { v: air.v })
+        : holidays[today]
+          ? t('travel.holiday', { name: holidays[today] })
+          : null;
+
+  // 이동 중이거나 3시간 안에 떠나는 비행기·기차·버스·렌터카 (B2)
+  const legs = travelLegsAhead(bookings, today, now);
+  const leg = legs[0];
+  const legSoon =
+    leg &&
+    leg.booking.start.date <= today &&
+    (!leg.booking.start.time ||
+      leg.booking.start.date < today ||
+      mins(leg.booking.start.time) - mins(now) <= 180);
+
+  const visitButtons = (i: ItineraryItem) =>
+    i.startTime &&
+    i.startTime <= now &&
+    !i.visit && (
+      <span className="flex shrink-0 gap-1">
         <Button
-          size="lg"
-          fullWidth
-          leading={<Navigation aria-hidden="true" className="size-5" />}
-          onClick={() => go(i)}
+          size="sm"
+          variant="secondary"
+          onClick={() => void itemRepo.setVisit(i.id, 'skipped')}
         >
-          {t('travel.directions')}
+          {t('travel.skip')}
         </Button>
-      )}
-    </div>
+        <Button size="sm" onClick={() => void itemRepo.setVisit(i.id, 'visited')}>
+          {t('travel.visited')}
+        </Button>
+      </span>
+    );
+
+  const row = (i: ItineraryItem) => (
+    <li key={i.id} className="flex min-h-12 items-center gap-2 px-3 py-2">
+      <span className="tabular w-12 shrink-0 text-caption text-fg-muted">
+        {i.startTime ?? '--:--'}
+      </span>
+      <span
+        className={cn(
+          'min-w-0 flex-1 truncate text-body-1',
+          i.visit && 'text-fg-muted line-through',
+        )}
+      >
+        {i.title}
+      </span>
+      {visitButtons(i)}
+    </li>
   );
+
+  const ended = (i: ItineraryItem) =>
+    !!i.startTime &&
+    i.id !== nowId &&
+    (!next || i.startTime < next.startTime!) &&
+    i.startTime < now;
+  const pastItems = dayItems.filter(ended);
+  const restItems = dayItems.filter((i) => !ended(i));
+
+  const tomorrowItems = items
+    .filter((i) => i.date === tomorrow && i.kind !== 'note')
+    .sort((a, b) => (a.startTime ?? '99').localeCompare(b.startTime ?? '99'));
+  const tomorrowFirst = tomorrowItems.find((i) => i.startTime) ?? tomorrowItems[0];
+  const visitedCount = dayItems.filter((i) => i.visit === 'visited').length;
+  const firstTimed = dayItems.find((i) => i.startTime);
+
+  const hour = Number(now.slice(0, 2));
+  const suggestSun = !sun && !sunAsked && hour >= 10 && hour < 16;
 
   return (
     <div
       className={cn(
-        'mx-auto flex min-h-dvh max-w-[560px] flex-col gap-4 px-5 pt-4 pb-28',
+        'mx-auto flex min-h-dvh max-w-[560px] flex-col gap-3 px-5 pt-4 pb-28',
         sun && 'travel-sun',
       )}
     >
@@ -138,92 +295,204 @@ function TravelView({ trip, items: all }: { trip: Trip; items: ItineraryItem[] }
           }}
         />
         <span className="flex min-w-0 flex-1 flex-col">
-          <span className="text-title-2 font-bold">
-            {n ? t('travel.dayN', { n, date: formatMonthDay(date) }) : formatMonthDay(date)}
+          <span className="truncate text-title-2 font-bold">
+            {n ? t('travel.dayN', { n, date: formatMonthDay(today) }) : formatMonthDay(today)}
           </span>
           <span className="tabular text-caption text-fg-muted">
             {t('travel.localTime', { time: now })}
           </span>
         </span>
-        <DayWeatherBadge weather={weather[date]} />
-        <Button
-          size="sm"
-          variant={sun ? 'primary' : 'secondary'}
+        <DayWeatherBadge weather={w} />
+        <IconButton
+          label={t('travel.sun')}
           aria-pressed={sun}
-          aria-label={t('travel.sun')}
-          onClick={() => setTravelPrefs({ sun: !sun })}
-        >
-          <Sun aria-hidden="true" className="size-4" />
-        </Button>
+          icon={<Sun />}
+          tone={sun ? 'tint' : 'plain'}
+          onClick={() => setTravelPrefs({ sun: !sun, sunAsked: true })}
+        />
+        {/* 긴급 연락처는 늘 오른쪽 위 (D1, 인터넷 없어도) */}
+        <IconButton
+          label={t('emergency.title')}
+          icon={<Siren />}
+          tone="cancel"
+          onClick={() => setSosOpen(true)}
+        />
       </header>
-      {airWarnings(weather[date]?.air).map((w) => (
-        <p
-          key={w.key}
-          className="rounded-btn bg-warning/10 px-3 py-2 text-caption whitespace-pre-line"
-        >
-          <InlineIcon icon={w.key.startsWith('uv') ? SunMedium : Haze} className="text-warning" />
-          {t(`air.${w.key}`, { v: w.v })}
+
+      {!online && (
+        <p className="flex items-center gap-1.5 self-start rounded-full bg-bg-subtle px-3 py-1 text-caption text-fg-sub">
+          <WifiOff aria-hidden="true" className="size-3.5" />
+          {t('travel.offline')}
         </p>
-      ))}
+      )}
+      {caution && (
+        <p className="rounded-btn bg-warning/10 px-3 py-2 text-caption whitespace-pre-line text-fg-sub">
+          <InlineIcon icon={TriangleAlert} className="text-warning" />
+          {caution}
+        </p>
+      )}
+      {suggestSun && (
+        <div className="flex items-center gap-2 rounded-btn bg-bg-subtle px-3 py-1.5 text-caption">
+          <span className="flex-1">{t('travel.sunAsk')}</span>
+          <Button size="sm" variant="secondary" onClick={() => setTravelPrefs({ sunAsked: true })}>
+            {t('travel.decline')}
+          </Button>
+          <Button size="sm" onClick={() => setTravelPrefs({ sun: true, sunAsked: true })}>
+            {t('travel.sunOn')}
+          </Button>
+        </div>
+      )}
 
-      <div role="tablist" className="grid grid-cols-2 gap-2">
-        {(['today', 'tomorrow'] as const).map((k) => (
-          <button
-            key={k}
-            type="button"
-            role="tab"
-            aria-selected={tab === k}
-            onClick={() => setTab(k)}
-            className={cn(
-              'h-11 rounded-btn border text-body-1 font-semibold',
-              tab === k ? 'border-primary bg-primary text-on-primary' : 'border-line',
-            )}
+      {legSoon && leg && (
+        <TravelLegCard
+          leg={leg}
+          next={legs[1]}
+          tripId={trip.id}
+          onCar={() => void navigate(`/trips/${trip.id}/bookings`)}
+        />
+      )}
+
+      {/* 아침 브리핑 (A2): 첫 일정 전까지 */}
+      {phase === 'morning' && (
+        <section
+          aria-label={t('travel.morning')}
+          className="flex flex-col gap-1 rounded-card bg-bg-subtle p-4"
+        >
+          <span className="text-caption font-bold text-fg-muted">{t('travel.morning')}</span>
+          <span className="text-body-1 font-semibold">
+            {t('travel.briefing', { n: dayItems.length, time: firstTimed?.startTime ?? '' })}
+          </span>
+          {w && <span className="tabular text-caption text-fg-sub">{formatTemps(w)}</span>}
+        </section>
+      )}
+
+      {current && (
+        <div className="flex flex-col gap-1 rounded-card border border-line p-4">
+          <span className="text-caption font-bold text-fg-muted">{t('travel.now')}</span>
+          <span className="text-title-2 font-bold">{current.title}</span>
+          {current.endTime && (
+            <span className="tabular text-caption text-fg-sub">
+              {t('travel.until', { time: current.endTime })}
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* 다음 일정: 나갈 시각이 가장 크게 (Q2) */}
+      {next && leave && (
+        <section
+          aria-label={t('travel.next')}
+          className="flex flex-col gap-1.5 rounded-card border border-primary/40 bg-primary-weak/40 p-4"
+        >
+          <span className="text-caption font-bold text-primary">
+            {t(phase === 'morning' ? 'travel.first' : 'travel.next')}
+          </span>
+          <span className="text-body-1 font-semibold">
+            {next.title} · {next.startTime}
+          </span>
+          <span className="tabular text-title-1 font-bold">
+            {t(leave.inMin < 0 ? 'travel.leaveNow' : 'travel.leaveAt', { time: leave.at })}
+          </span>
+          <span className="tabular text-caption text-fg-sub">
+            {[
+              leave.inMin >= 0 && t('travel.leaveIn', { min: leave.inMin }),
+              travelMin !== undefined &&
+                t(eta?.transit ? 'travel.byTransit' : 'travel.byWalk', { min: travelMin }),
+            ]
+              .filter(Boolean)
+              .join(' · ')}
+          </span>
+          {(next.place?.coords || next.place?.address || next.place?.name) && (
+            <Button
+              size="lg"
+              fullWidth
+              leading={<Navigation aria-hidden="true" className="size-5" />}
+              onClick={() => go(next)}
+            >
+              {t('travel.directions')}
+            </Button>
+          )}
+        </section>
+      )}
+
+      {/* 저녁 정리 + 내일 미리보기 (A5·A6, Q1) */}
+      {phase === 'evening' && (
+        <section
+          aria-label={t('travel.evening')}
+          className="flex flex-col gap-2 rounded-card bg-bg-subtle p-4"
+        >
+          <span className="text-caption font-bold text-fg-muted">{t('travel.evening')}</span>
+          <span className="text-body-1 font-semibold">
+            {t('travel.recap', { n: dayItems.length, done: visitedCount })}
+          </span>
+          <span className="border-t border-dashed border-line pt-2 text-caption font-bold text-fg-muted">
+            {t('travel.tomorrow')}
+          </span>
+          {tomorrowFirst ? (
+            <span className="text-body-2">
+              {t('travel.tomorrowFirst', {
+                time: tomorrowFirst.startTime ?? '',
+                title: tomorrowFirst.title,
+              })}
+            </span>
+          ) : (
+            <span className="text-body-2 text-fg-muted">{t('travel.tomorrowNone')}</span>
+          )}
+          {weather[tomorrow] && (
+            <span className="tabular text-caption text-fg-sub">
+              {formatTemps(weather[tomorrow])}
+            </span>
+          )}
+          <Button
+            size="lg"
+            fullWidth
+            leading={<Bed aria-hidden="true" className="size-5" />}
+            onClick={toStay}
           >
-            {t(`travel.${k}`)}
-          </button>
-        ))}
-      </div>
+            {t('travel.toStay')}
+          </Button>
+        </section>
+      )}
 
-      {current && card(t('travel.now'), current)}
-      {next &&
-        card(
-          t(tab === 'today' ? 'travel.next' : 'travel.first'),
-          next,
-          leaveIn != null && leaveIn >= 0 ? t('travel.leaveIn', { min: leaveIn }) : undefined,
-        )}
-      {!current && !next && (
+      {!current && !next && phase !== 'evening' && (
         <p className="rounded-card bg-bg-subtle p-4 text-body-2 text-fg-sub">{t('travel.empty')}</p>
       )}
 
+      {/* 남은 일정 + 지난 일정 접기 (C3) */}
       {dayItems.length > 0 && (
         <section aria-label={t('travel.rest')} className="flex flex-col gap-1.5">
-          <h2 className="text-caption font-bold text-fg-muted">{t('travel.rest')}</h2>
-          <ul className="flex flex-col divide-y divide-line rounded-card border border-line">
-            {dayItems.map((i) => (
-              <li key={i.id} className="flex min-h-12 items-center gap-2 px-3 py-2">
-                <span className="tabular w-12 shrink-0 text-caption text-fg-muted">
-                  {i.startTime ?? '--:--'}
-                </span>
-                <span
-                  className={cn(
-                    'min-w-0 flex-1 truncate text-body-1',
-                    i.visit && 'text-fg-muted line-through',
-                  )}
-                >
-                  {i.title}
-                </span>
-                {tab === 'today' && i.startTime && i.startTime <= now && !i.visit && (
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    onClick={() => void itemRepo.setVisit(i.id, 'visited')}
-                  >
-                    {t('travel.visited')}
-                  </Button>
-                )}
-              </li>
-            ))}
-          </ul>
+          <div className="flex items-center justify-between">
+            <h2 className="text-caption font-bold text-fg-muted">
+              {t('travel.restN', { n: restItems.length })}
+            </h2>
+            {pastItems.length > 0 && (
+              <button
+                type="button"
+                aria-expanded={pastOpen}
+                onClick={() => setPastOpen(!pastOpen)}
+                className="flex h-9 items-center gap-1 text-caption font-semibold text-fg-sub"
+              >
+                {t('travel.pastN', { n: pastItems.length })}
+                <ChevronDown
+                  aria-hidden="true"
+                  className={`size-4 transition-transform ${pastOpen ? 'rotate-180' : ''}`}
+                />
+              </button>
+            )}
+          </div>
+          {pastOpen && pastItems.length > 0 && (
+            <ul
+              aria-label={t('travel.past')}
+              className="flex flex-col divide-y divide-line rounded-card border border-dashed border-line"
+            >
+              {pastItems.map(row)}
+            </ul>
+          )}
+          {restItems.length > 0 && (
+            <ul className="flex flex-col divide-y divide-line rounded-card border border-line">
+              {restItems.map(row)}
+            </ul>
+          )}
         </section>
       )}
 
@@ -249,34 +518,30 @@ function TravelView({ trip, items: all }: { trip: Trip; items: ItineraryItem[] }
         {t(remind ? 'travel.remindOn' : 'travel.remindOff')}
       </Button>
 
-      {/* 엄지 버튼: 숙소로 길찾기 + 빠른 메뉴 바로가기와 같은 목록 (D4) */}
+      {/* 엄지 버튼: 숙소로 길찾기 고정 + 시간대별 3칸 (Q3) */}
       <nav
         aria-label={t('travel.thumb')}
-        className="fixed inset-x-0 bottom-0 mx-auto grid max-w-[560px] grid-cols-3 gap-2 border-t border-line bg-surface px-4 pt-2 pb-[calc(var(--safe-bottom,0px)+8px)]"
+        className="fixed inset-x-0 bottom-0 mx-auto grid max-w-[560px] grid-cols-4 gap-2 border-t border-line bg-surface px-4 pt-2 pb-[calc(var(--safe-bottom,0px)+8px)]"
       >
         <button
           type="button"
           onClick={toStay}
-          className="flex h-14 flex-col items-center justify-center gap-0.5 rounded-btn bg-primary-weak text-caption font-semibold text-primary"
+          className="flex h-14 flex-col items-center justify-center gap-0.5 rounded-btn bg-primary-weak text-micro font-semibold text-primary"
         >
           <Bed aria-hidden="true" className="size-5" />
           {t('travel.toStay')}
         </button>
-        {ids.slice(0, 5).map((id) => {
-          const Icon = SHORTCUT_ICON[id];
-          const path = shortcutPath(id, trip.id);
-          return (
-            <button
-              key={id}
-              type="button"
-              onClick={() => (path ? void navigate(path) : openQuick(true))}
-              className="flex h-14 flex-col items-center justify-center gap-0.5 rounded-btn bg-bg-subtle text-caption font-semibold"
-            >
-              <Icon aria-hidden="true" className="size-5" />
-              {t(`quickMenu.shortcut.${id}` as 'quickMenu.shortcut.plan')}
-            </button>
-          );
-        })}
+        {THUMBS[phase].map(({ id, icon: Icon, path }) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => void navigate(path(trip.id))}
+            className="flex h-14 flex-col items-center justify-center gap-0.5 rounded-btn bg-bg-subtle text-micro font-semibold"
+          >
+            <Icon aria-hidden="true" className="size-5 text-primary" />
+            {t(`travel.thumbs.${id}`)}
+          </button>
+        ))}
       </nav>
       <QuickMenuButton inTrip />
       <DirectionsSheet
@@ -285,6 +550,7 @@ function TravelView({ trip, items: all }: { trip: Trip; items: ItineraryItem[] }
         destination={dest}
         isDomestic={domestic}
       />
+      <EmergencySheet open={sosOpen} onOpenChange={setSosOpen} countries={countries} />
     </div>
   );
 }

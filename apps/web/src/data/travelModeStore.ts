@@ -12,15 +12,23 @@ interface TravelModeState {
   asked: Record<string, boolean>;
   sun: boolean;
   remind: boolean;
+  /** 낮에 햇빛 모드를 한 번 권했는지 (C4) */
+  sunAsked: boolean;
 }
 
 const KEY = 'tp-travel-mode';
 function load(): TravelModeState {
   try {
     const v = JSON.parse(localStorage.getItem(KEY) ?? '{}') as Partial<TravelModeState>;
-    return { on: v.on ?? {}, asked: v.asked ?? {}, sun: v.sun === true, remind: v.remind === true };
+    return {
+      on: v.on ?? {},
+      asked: v.asked ?? {},
+      sun: v.sun === true,
+      remind: v.remind === true,
+      sunAsked: v.sunAsked === true,
+    };
   } catch {
-    return { on: {}, asked: {}, sun: false, remind: false };
+    return { on: {}, asked: {}, sun: false, remind: false, sunAsked: false };
   }
 }
 
@@ -48,7 +56,9 @@ export function declineTravelMode(tripId: string): void {
   save();
 }
 
-export function setTravelPrefs(patch: Partial<Pick<TravelModeState, 'sun' | 'remind'>>): void {
+export function setTravelPrefs(
+  patch: Partial<Pick<TravelModeState, 'sun' | 'remind' | 'sunAsked'>>,
+): void {
   useTravelMode.setState(patch);
   save();
 }

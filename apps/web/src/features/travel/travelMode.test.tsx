@@ -71,19 +71,24 @@ it('여행 모드: 여행 중이면 한 번 묻고, 시작하면 지금·다음 
   const ask = await screen.findByRole('region', { name: '여행 모드로 볼까요?' });
   await user.click(within(ask).getByRole('button', { name: '시작' }));
 
-  await screen.findByRole('tab', { name: '오늘' });
+  // 다음 일정: 나갈 시각이 크게 (시작 11:00 − 여유 10분), 남은 분은 작게
+  const nextBox = await screen.findByRole('region', { name: '다음' });
   expect(screen.getByText(/^1일차 · 11.03 \(화\)$/)).toBeInTheDocument();
-  expect(screen.getByText('25분 남음', { exact: false })).toBeInTheDocument();
-  expect(screen.getAllByText('오사카성').length).toBeGreaterThan(0);
-  expect(screen.getByRole('button', { name: '길찾기' })).toBeInTheDocument();
+  expect(within(nextBox).getByText('10:50에 나가요')).toBeInTheDocument();
+  expect(within(nextBox).getByText('15분 남음')).toBeInTheDocument();
+  expect(within(nextBox).getByRole('button', { name: '길찾기' })).toBeInTheDocument();
+  // 오늘/내일 탭은 없다 (Q1)
+  expect(screen.queryByRole('tab')).toBeNull();
 
-  // 방문 표시 (D5)
-  await user.click(screen.getByRole('button', { name: '다녀옴' }));
-  await waitFor(() => expect(screen.queryByRole('button', { name: '다녀옴' })).toBeNull());
+  // 지난 일정은 접혀 있고, 펼쳐서 다녀옴·건너뛰기
+  expect(screen.queryByText('도톤보리')).toBeNull();
+  await user.click(screen.getByRole('button', { name: '지난 일정 1' }));
+  const past = screen.getByRole('list', { name: '지난 일정' });
+  await user.click(within(past).getByRole('button', { name: '다녀옴' }));
+  await waitFor(() => expect(within(past).queryByRole('button', { name: '다녀옴' })).toBeNull());
 
-  // 내일 탭
-  await user.click(screen.getByRole('tab', { name: '내일' }));
-  expect(screen.getAllByText('유니버설 스튜디오').length).toBeGreaterThan(0);
+  // 긴급 연락처는 늘 오른쪽 위
+  expect(screen.getByRole('button', { name: '긴급 연락처' })).toBeInTheDocument();
 
   // 숙소가 없으면 알려 준다 (숙소로 길찾기는 늘 맨 앞)
   await user.click(screen.getByRole('button', { name: '숙소로 길찾기' }));
@@ -94,6 +99,29 @@ it('여행 모드: 여행 중이면 한 번 묻고, 시작하면 지금·다음 
   await screen.findByRole('toolbar');
   expect(screen.queryByRole('region', { name: '여행 모드로 볼까요?' })).toBeNull();
   expect(useTravelMode.getState().on[trip.id]).toBe(false);
+});
+
+it('여행 모드: 아침에는 브리핑, 저녁에는 정리와 내일 미리보기 (시간대별 엄지 버튼)', async () => {
+  vi.setSystemTime(new Date('2026-11-02T23:00:00Z')); // 오사카 08:00
+  const trip = await osaka();
+  useTravelMode.setState({ on: { [trip.id]: true }, asked: { [trip.id]: true } });
+  const view = open(`/trips/${trip.id}/go`);
+  const morning = await screen.findByRole('region', { name: '오늘 아침' });
+  expect(within(morning).getByText('오늘 2곳 · 첫 일정 09:00')).toBeInTheDocument();
+  const thumbs = screen.getByRole('navigation', { name: '자주 쓰는 버튼' });
+  expect(within(thumbs).getByRole('button', { name: '준비물' })).toBeInTheDocument();
+  view.unmount();
+
+  vi.setSystemTime(new Date('2026-11-03T05:00:00Z')); // 오사카 14:00
+  open(`/trips/${trip.id}/go`);
+  const evening = await screen.findByRole('region', { name: '오늘 정리' });
+  expect(within(evening).getByText('오늘 2곳 중 0곳 다녀옴')).toBeInTheDocument();
+  expect(within(evening).getByText('09:00 유니버설 스튜디오')).toBeInTheDocument();
+  expect(
+    within(screen.getByRole('navigation', { name: '자주 쓰는 버튼' })).getByRole('button', {
+      name: '필수 항목',
+    }),
+  ).toBeInTheDocument();
 });
 
 it('여행 모드: [괜찮아요]면 그 여행에서는 다시 묻지 않는다', async () => {

@@ -2142,7 +2142,7 @@
     "mall": "선샤인 시티",
     "safetyNotice": "일본 지진 관련 안전 유의 공지\n2026-11-01 · 외교부",
     "festival": "서울빛초롱축제\n11.01~11.30 · 서울 중구",
-    "travelMode": "1일차 · 11월 3일\n다음 · 오사카성 · 25분 남음"
+    "travelMode": "다음 · 오사카성 11:00\n10:50에 나가요"
   },
   "currencyName": {
     "USD": "미국 달러",
@@ -2531,7 +2531,7 @@
   "travel": {
     "title": "여행 모드",
     "askTitle": "여행 모드로 볼까요?",
-    "askDesc": "오늘과 내일 일정만 크게 보여 줘요\n[편집]을 누르면 언제든 돌아와요",
+    "askDesc": "지금 할 일과 나갈 시각을 크게 보여 줘요\n[홈]을 누르면 언제든 돌아와요",
     "start": "시작",
     "decline": "괜찮아요",
     "ended": "여행 모드를 껐어요\n기록 탭에서 여행을 돌아보세요",
@@ -2539,7 +2539,7 @@
     "localTime": "현지 {{time}}",
     "sun": "햇빛 모드",
     "today": "오늘",
-    "tomorrow": "내일",
+    "tomorrow": "내일 미리보기",
     "now": "지금",
     "next": "다음",
     "first": "첫 일정",
@@ -2548,12 +2548,41 @@
     "empty": "남은 일정이 없어요",
     "rest": "이날 일정",
     "visited": "다녀옴",
-    "remindOn": "출발 10분 전 알림 켜짐",
-    "remindOff": "출발 10분 전 알림 꺼짐",
-    "remindTitle": "10분 뒤 다음 일정이에요",
+    "remindOn": "나갈 시각 알림 켜짐",
+    "remindOff": "나갈 시각 알림 꺼짐",
+    "remindTitle": "지금 나갈 시각이에요",
     "thumb": "자주 쓰는 버튼",
     "toStay": "숙소로 길찾기",
-    "exit": "여행 모드 끄기"
+    "exit": "여행 모드 끄기",
+    "offline": "오프라인 · 일정은 그대로 보여요",
+    "rainToday": "오늘 비 예보 · 우산 챙기세요",
+    "rainFrom": "{{h}}시부터 비 · 우산 챙기세요",
+    "holiday": "현지 공휴일 {{name}}\n쉬는 가게가 있을 수 있어요",
+    "sunAsk": "밖에서 잘 보이게 할까요?",
+    "sunOn": "햇빛 모드",
+    "morning": "오늘 아침",
+    "briefing": "오늘 {{n}}곳 · 첫 일정 {{time}}",
+    "until": "{{time}}까지",
+    "leaveAt": "{{time}}에 나가요",
+    "leaveNow": "지금 나가요",
+    "byTransit": "대중교통 {{min}}분",
+    "byWalk": "도보 {{min}}분",
+    "evening": "오늘 정리",
+    "recap": "오늘 {{n}}곳 중 {{done}}곳 다녀옴",
+    "tomorrowFirst": "{{time}} {{title}}",
+    "tomorrowNone": "내일 일정이 없어요",
+    "restN": "오늘 남은 일정 {{n}}",
+    "pastN": "지난 일정 {{n}}",
+    "past": "지난 일정",
+    "skip": "건너뛰기",
+    "thumbs": {
+      "weather": "날씨",
+      "checklist": "준비물",
+      "bookings": "예약",
+      "fx": "환율",
+      "phrases": "번역·회화",
+      "essentials": "필수 항목"
+    }
   },
   "quickTab": {
     "title": {
