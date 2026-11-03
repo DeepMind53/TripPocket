@@ -17,6 +17,7 @@ import {
   searchNaver,
 } from '../services/places';
 import { naverSearchKeys } from '../services/naverBlog';
+import { findStations } from '../services/stations';
 import { apiAllowed } from '../services/apiUsage';
 import { statsRepo } from '../repositories/statsRepo';
 
@@ -60,6 +61,31 @@ export function placesRoutes(app: FastifyInstance, config: Config, db: Db): void
     q: z.string().check(z.minLength(1), z.maxLength(60)),
     scope: z.enum(['domestic', 'overseas']),
     near: z.optional(z.object({ lat: z.number(), lng: z.number() })),
+  });
+
+  // 해외 역·터미널 (예약 기차·버스 출발/도착역, 2026-11-03) — 도시 이름 또는 여행지 좌표(본문으로만)
+  const StationBody = z.object({
+    city: z.optional(z.string().check(z.maxLength(60))),
+    cc: z.optional(z.string().check(z.regex(/^[A-Z]{2}$/))),
+    near: z.optional(z.object({ lat: z.number(), lng: z.number() })),
+    kind: z.enum(['train', 'subway', 'bus']),
+  });
+  app.post('/api/places/stations', auth, async (req, reply) => {
+    const body = StationBody.safeParse(req.body);
+    if (!body.success || (!body.data.city?.trim() && !body.data.near))
+      return reply.code(400).send({ error: 'bad_request' });
+    const userId = req.user!.userId;
+    if (!allowed(userId, 'search'))
+      return reply.code(429).send({ error: 'daily_limit', feature: 'places_search' });
+    if (!config.GEOAPIFY_KEY || !apiAllowed('geoapify'))
+      return reply.code(503).send({ error: 'unavailable' });
+    try {
+      bump(userId, 'search');
+      return { stations: await findStations(body.data, config.GEOAPIFY_KEY) };
+    } catch (e) {
+      req.log.warn({ err: String(e) }, 'station search failed');
+      return reply.code(503).send({ error: 'unavailable' });
+    }
   });
 
   app.post('/api/places/search', auth, async (req, reply) => {

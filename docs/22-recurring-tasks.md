@@ -19,6 +19,7 @@
 | A7 | **법적 고지·데이터 출처** — 쓰는 서비스와 맞는지, 오픈소스 목록 | `apps/web/src/features/legal/content.ko.ts`, `licenses.json` | 실제 코드에서 부르는 서비스 |
 | A8 | **여행지 특보** — 나라별 특보 링크, 새로 약관이 허락된 나라, 일본 기상청 새 코드표 공개 여부 | `packages/shared/src/alerts/alerts.ts`, 서버 `services/nationalAlerts.ts`, docs/24 §7 | 각 나라 기상청 |
 | A10 | **현지 정보 — 교통카드·결제 팁** (`TRANSIT_CARDS_CHECKED_AT`): 카드 이름·충전 방법, 현금·카드·QR 결제, 카드·승차권·토큰 사진과 공식 링크. 사진 없는 카드는 위키미디어 공용 자유 이용 사진을 360px로 줄여 작가·라이선스와 함께 추가 | `apps/web/src/i18n/ko.json` `localInfo.transit`·`localInfo.pay`, `apps/web/src/data/transitCards.ts`, `apps/web/public/transit/`, 도시별 정보 `apps/web/src/data/cityLocal.ts` (지금 100곳, 2차는 `cityLocal2.ts`, 계속 확대, `CITY_LOCAL_CHECKED_AT`), 대중교통 안내 `apps/web/src/data/transitGuide.ts` (요금·환승·앱, `TRANSIT_GUIDE_CHECKED_AT`) | 각 교통 운영사 공식 사이트, commons.wikimedia.org |
+| A11 | **국내 기차역·버스 터미널 목록** (`KR_STATIONS_CHECKED_AT`) — 새 역·폐지, SRT·KTX 정차역, 터미널 이전 | `apps/web/src/data/krStations.ts` | 코레일·SR·고속버스 통합예매 공식 안내 |
 | A9 | **도움말·소개 카드**가 지금 화면과 맞는지 | `features/me/IntroCarousel.tsx`, `legal/content.ko.ts` HELP | 앱 화면 |
 
 ## B. 무료 사용량·요금 (과금 방지 — CLAUDE.md 무료 우선)

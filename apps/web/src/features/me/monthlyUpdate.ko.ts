@@ -8,6 +8,7 @@ import {
 import { TRANSIT_CARDS_CHECKED_AT } from '../../data/transitCards';
 import { TRANSIT_GUIDE_CHECKED_AT } from '../../data/transitGuide';
 import { CITY_LOCAL, CITY_LOCAL_CHECKED_AT } from '../../data/cityLocal';
+import { KR_STATIONS_CHECKED_AT } from '../../data/krStations';
 
 /**
  * 관리자 월간 갱신 요청문 (사용자 요청 2026-10-27): 팝업에서 [복사]해 Claude에게 그대로 붙여 넣는 글.
@@ -67,6 +68,8 @@ export function monthlyUpdateRequest(month: string): string {
     - 실험실 "대중교통 안내": apps/web/src/data/transitGuide.ts (지난 확인: ${TRANSIT_GUIDE_CHECKED_AT})
       · 나라별 교통수단·대표 도시 기본요금·환승 규칙·추천 앱·공식 링크 — 요금 인상·새 노선·없어진 앱
       · note에 적은 "곧 바뀜"(예: 스타페리 2027-01, 멜버른 반값 2027-01-01, 취리히 2026-12-13)이 지났으면 고치기
+18. 국내 기차역·버스 터미널 목록: apps/web/src/data/krStations.ts (지난 확인: ${KR_STATIONS_CHECKED_AT})
+    - 새 역·폐지 역, SRT·KTX-이음 정차역 변경(코레일·SR 공식 안내), 고속·시외버스 터미널 이전·이름 변경
 15. AI 추천 결과 품질: 성수역·서면역·신주쿠역·타이베이역·숙소 기준으로 0곳이 나오는지
 9. 도움말·소개 카드 그림이 지금 화면·기능과 맞는지 (features/me/IntroCarousel.tsx, legal/content.ko.ts HELP)
 
