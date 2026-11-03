@@ -27,6 +27,8 @@ export const adminApi = {
   list: () => api<{ requests: JoinRequest[]; users: ManagedUser[] }>('/api/admin/users'),
   approve: (id: string) => post(`/api/admin/requests/${enc(id)}/approve`),
   reject: (id: string) => post(`/api/admin/requests/${enc(id)}/reject`),
+  /** 거절한 요청을 목록에서 지우기 */
+  remove: (id: string) => api(`/api/admin/requests/${enc(id)}`, { method: 'DELETE' }),
   disable: (userId: string) => post(`/api/admin/users/${enc(userId)}/disable`),
   enable: (userId: string) => post(`/api/admin/users/${enc(userId)}/enable`),
 };

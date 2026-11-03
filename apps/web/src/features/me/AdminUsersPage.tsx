@@ -2,7 +2,8 @@ import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { adminApi, type JoinRequest, type ManagedUser } from '../../data/api/admin';
 import { useAuth } from '../../data/authStore';
 import { useTranslation } from '../../i18n';
-import { Button, EmptyState, Spinner, TopBar, toast } from '../../shared/ui';
+import { X } from 'lucide-react';
+import { Button, EmptyState, IconButton, Spinner, TopBar, toast } from '../../shared/ui';
 
 type Data = { requests: JoinRequest[]; users: ManagedUser[] };
 
@@ -139,6 +140,15 @@ export function AdminUsersPage() {
               >
                 {t('admin.approve')}
               </Button>
+              {/* 거절한 요청 지우기 (사용자 요청 2026-11-03) */}
+              <IconButton
+                label={t('admin.removeRequest', { name: r.nickname })}
+                icon={<X />}
+                disabled={busy !== null}
+                onClick={() =>
+                  void act(r.id, () => adminApi.remove(r.id), t('admin.requestRemoved'))
+                }
+              />
             </Row>
           ))}
         </Section>

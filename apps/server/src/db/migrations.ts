@@ -310,4 +310,13 @@ export const MIGRATIONS: readonly string[] = [
   ALTER TABLE join_requests ADD COLUMN note_token_hash TEXT;
   ALTER TABLE join_requests ADD COLUMN note_token_exp TEXT;
   `,
+  // 21: 거절 횟수 (2026-11-03) — 요청 줄을 지워도 남는다. 2번 거절되면 영구 차단
+  `
+  CREATE TABLE join_rejections (
+    provider TEXT NOT NULL,
+    provider_user_id TEXT NOT NULL,
+    count INTEGER NOT NULL,
+    PRIMARY KEY (provider, provider_user_id)
+  );
+  `,
 ];

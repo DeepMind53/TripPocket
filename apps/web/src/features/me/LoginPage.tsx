@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router';
 import { loginProviders, useAuth } from '../../data/authStore';
 import { useTranslation } from '../../i18n';
 import { copyText } from '../../shared/lib/clipboard';
-import { BottomSheet, Button, Spinner, TopBar } from '../../shared/ui';
+import { Spinner, TopBar } from '../../shared/ui';
 import { Wordmark } from '../home/Wordmark';
 import { IntroCarousel } from './IntroCarousel';
 import { JoinNoteForm } from './JoinNoteForm';
@@ -14,7 +14,15 @@ const STYLE: Record<string, { bg: string; fg: string; border?: string }> = {
   google: { bg: '#FFFFFF', fg: '#1F1F1F', border: '#DADCE0' },
 };
 
-const KNOWN_ERRORS = ['invite', 'cancelled', 'provider', 'pending', 'rejected', 'disabled'];
+const KNOWN_ERRORS = [
+  'invite',
+  'cancelled',
+  'provider',
+  'pending',
+  'rejected',
+  'disabled',
+  'blocked',
+];
 
 /**
  * S-20 로그인 — 소셜 로그인만 (비밀번호 없음, docs/09 §4.1).
@@ -29,8 +37,6 @@ export function LoginPage({ returnTo: gateReturn }: { returnTo?: string } = {}) 
   // 로그인 확인(AuthGate)이 대신 보여 줄 때는 지금 주소로 돌아온다
   const returnTo = gateReturn ?? params.get('returnTo') ?? '/me';
   const signedIn = useAuth((s) => s.status === 'user');
-  // 네이버 로그인 앱은 아직 "개발 중" — 관리자가 네이버 콘솔에 등록한 아이디만 로그인된다 (누르면 먼저 안내)
-  const [naverNotice, setNaverNotice] = useState(false);
   const startUrl = (p: string) => `/auth/${p}/start?returnTo=${encodeURIComponent(returnTo)}`;
 
   useEffect(() => {
@@ -64,6 +70,12 @@ export function LoginPage({ returnTo: gateReturn }: { returnTo?: string } = {}) 
             {t(
               `login.error.${KNOWN_ERRORS.includes(error) ? error : 'state'}` as 'login.error.state',
             )}
+            {/* 가입 요청 뒤 안내 (사용자 요청 2026-11-03) — 2번 거절되면 영구 차단 */}
+            {error === 'pending' && (
+              <p className="text-caption whitespace-pre-line text-fg-sub">
+                {t('login.pendingNotice')}
+              </p>
+            )}
             {error === 'pending' && joinToken && <JoinNoteForm token={joinToken} />}
             {error === 'invite' && account && (
               <button
@@ -91,11 +103,6 @@ export function LoginPage({ returnTo: gateReturn }: { returnTo?: string } = {}) 
                 <a
                   key={p}
                   href={startUrl(p)}
-                  onClick={(e) => {
-                    if (p !== 'naver') return;
-                    e.preventDefault();
-                    setNaverNotice(true);
-                  }}
                   className="flex h-12 items-center justify-center rounded-btn text-body-1 font-semibold"
                   style={{
                     background: s.bg,
@@ -110,28 +117,6 @@ export function LoginPage({ returnTo: gateReturn }: { returnTo?: string } = {}) 
           </div>
         )}
         <p className="mt-auto pb-6 text-caption text-fg-muted">{t('login.privacy')}</p>
-        <BottomSheet
-          open={naverNotice}
-          onOpenChange={setNaverNotice}
-          title={t('login.naverNotice.title')}
-          description={t('login.naverNotice.desc')}
-          footer={
-            <div className="flex flex-col gap-2">
-              <Button size="lg" fullWidth onClick={() => window.location.assign(startUrl('naver'))}>
-                {t('login.naverNotice.continue')}
-              </Button>
-              <Button variant="ghost" fullWidth onClick={() => setNaverNotice(false)}>
-                {t('login.naverNotice.other')}
-              </Button>
-            </div>
-          }
-        >
-          <ul className="flex list-disc flex-col gap-1 pl-5 text-body-2 text-fg-sub">
-            <li>{t('login.naverNotice.step1')}</li>
-            <li>{t('login.naverNotice.step2')}</li>
-            <li>{t('login.naverNotice.step3')}</li>
-          </ul>
-        </BottomSheet>
       </div>
     </div>
   );

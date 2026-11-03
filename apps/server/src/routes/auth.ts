@@ -46,6 +46,8 @@ function mayJoin(db: Db, config: Config, provider: ProviderId, profile: Profile)
 
 /** 가입 요청 남기기 → 로그인 화면에 보여 줄 상태. 거절된 계정은 다시 쌓이지 않는다 */
 const MAX_PENDING = 50;
+/** 이만큼 거절되면 다시 요청할 수 없다 */
+export const MAX_REJECTIONS = 2;
 /** 대기 화면에서 "관리자에게 전할 말"을 적을 수 있는 시간 */
 const NOTE_TTL = 30 * 60_000;
 function requestJoin(
@@ -53,7 +55,12 @@ function requestJoin(
   provider: string,
   providerUserId: string,
   nickname: string,
-): { status: 'pending' | 'rejected' | 'invite'; noteToken?: string } {
+): { status: 'pending' | 'rejected' | 'invite' | 'blocked'; noteToken?: string } {
+  // 2번 거절된 계정은 영구 차단 (사용자 요청 2026-11-03)
+  const rejections = db
+    .prepare('SELECT count FROM join_rejections WHERE provider = ? AND provider_user_id = ?')
+    .get(provider, providerUserId) as { count: number } | undefined;
+  if ((rejections?.count ?? 0) >= MAX_REJECTIONS) return { status: 'blocked' };
   const row = db
     .prepare('SELECT status FROM join_requests WHERE provider = ? AND provider_user_id = ?')
     .get(provider, providerUserId) as { status: string } | undefined;

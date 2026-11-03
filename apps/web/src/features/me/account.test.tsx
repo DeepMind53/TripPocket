@@ -100,22 +100,18 @@ describe('계정', () => {
   });
 });
 
-it('네이버 로그인을 누르면 먼저 "관리자에게 네이버 아이디 등록" 안내', async () => {
+it('네이버도 안내 없이 바로 로그인으로 (2026-11-03 — 네이버 로그인 정상 동작)', async () => {
   mockServer(false);
-  const user = userEvent.setup();
   renderAt('/login');
-  await screen.findByRole('link', { name: '네이버로 시작하기' });
-  // 카카오·구글은 안내 없이 바로
+  expect(await screen.findByRole('link', { name: '네이버로 시작하기' })).toHaveAttribute(
+    'href',
+    '/auth/naver/start?returnTo=%2Fme',
+  );
   expect(screen.getByRole('link', { name: '카카오로 시작하기' })).toHaveAttribute(
     'href',
     '/auth/kakao/start?returnTo=%2Fme',
   );
-  await user.click(screen.getByRole('link', { name: '네이버로 시작하기' }));
-  const sheet = await screen.findByRole('dialog', { name: '네이버 아이디 등록이 필요해요' });
-  expect(within(sheet).getByText(/관리자에게 네이버 아이디를 알려/)).toBeInTheDocument();
-  expect(
-    within(sheet).getByRole('button', { name: '등록됐어요, 네이버로 계속' }),
-  ).toBeInTheDocument();
+  expect(screen.queryByRole('dialog')).toBeNull();
 });
 
 it('로그인 전 화면: 맨 위 로고, 소개 카드 8장을 점으로 넘긴다', async () => {

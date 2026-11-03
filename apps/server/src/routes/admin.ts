@@ -106,6 +106,10 @@ export function adminRoutes(app: FastifyInstance, db: Db): void {
         db.prepare('DELETE FROM join_requests WHERE provider = ? AND provider_user_id = ?').run(
           ...key,
         );
+        // 승인하면 거절 횟수도 지운다
+        db.prepare('DELETE FROM join_rejections WHERE provider = ? AND provider_user_id = ?').run(
+          ...key,
+        );
         audit(db, req.user!.userId, 'signup_approved', userId);
         db.exec('COMMIT');
       } catch (e) {
@@ -130,10 +134,30 @@ export function adminRoutes(app: FastifyInstance, db: Db): void {
             .run(...key)
         : { changes: 0 };
       if (res.changes === 0) return reply.code(404).send({ error: 'not_found' });
+      // 거절 횟수 (요청 줄을 지워도 남음 → 2번이면 영구 차단)
+      db.prepare(
+        `INSERT INTO join_rejections (provider, provider_user_id, count) VALUES (?, ?, 1)
+         ON CONFLICT (provider, provider_user_id) DO UPDATE SET count = count + 1`,
+      ).run(...key!);
       audit(db, req.user!.userId, 'signup_rejected', req.params.id);
       return { ok: true };
     },
   );
+
+  // 거절한 요청 지우기 (사용자 요청 2026-11-03): 목록에서만 없앤다 — 그 사람이 다시 로그인하면 새 요청으로 들어온다
+  app.delete<{ Params: { id: string } }>('/api/admin/requests/:id', admin, async (req, reply) => {
+    const key = splitRequestId(req.params.id);
+    const res = key
+      ? db
+          .prepare(
+            "DELETE FROM join_requests WHERE provider = ? AND provider_user_id = ? AND status = 'rejected'",
+          )
+          .run(...key)
+      : { changes: 0 };
+    if (res.changes === 0) return reply.code(404).send({ error: 'not_found' });
+    audit(db, req.user!.userId, 'signup_request_deleted', req.params.id);
+    return { ok: true };
+  });
 
   // 사용 중지: 바로 로그아웃(세션 삭제) + 다시 로그인 불가. 서버 데이터는 남겨 두어 다시 허용할 수 있다
   app.post<{ Params: { id: string } }>(

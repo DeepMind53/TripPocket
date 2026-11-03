@@ -92,6 +92,41 @@ describe('사용자 관리', () => {
     expect(within(self).queryByRole('button')).toBeNull();
   });
 
+  it('거절한 요청은 오른쪽 X로 지운다 (2026-11-03)', async () => {
+    const calls: string[] = [];
+    let removed = false;
+    vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
+      calls.push(`${init?.method ?? 'GET'} ${url}`);
+      if (url === '/api/me') return Response.json(admin);
+      if (url === '/api/admin/users')
+        return Response.json({
+          requests: removed
+            ? []
+            : [
+                {
+                  id: 'google:G-3',
+                  provider: 'google',
+                  nickname: '모르는 사람',
+                  status: 'rejected',
+                  requestedAt: '2026-10-23T01:00:00Z',
+                },
+              ],
+          users: [{ ...admin, status: 'active', lastSeenAt: null }],
+        });
+      if (init?.method === 'DELETE') {
+        removed = true;
+        return Response.json({ ok: true });
+      }
+      return Response.json({ error: 'not_found' }, { status: 404 });
+    });
+    const user = userEvent.setup();
+    renderAt('/me');
+    await user.click(await screen.findByRole('link', { name: '사용자 관리' }));
+    await user.click(await screen.findByRole('button', { name: '모르는 사람 요청 지우기' }));
+    await waitFor(() => expect(calls).toContain('DELETE /api/admin/requests/google%3AG-3'));
+    await waitFor(() => expect(screen.queryByText('모르는 사람')).toBeNull());
+  });
+
   it('관리자가 아니면 메뉴가 없고, 주소로 들어와도 안내만', async () => {
     mockServer();
     useAuth.setState({ status: 'user', me: { ...admin, isAdmin: false } });

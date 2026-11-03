@@ -21,6 +21,7 @@ it('대기 중이면 #join 토큰으로 관리자에게 전할 말을 보내고,
     );
     expect(window.location.hash).toBe('');
     expect(screen.getByText(/따로 저장하지 않고 승인·거절하면 바로 지워요/)).toBeInTheDocument();
+    expect(screen.getByText(/관리자가 2회 거절하면 영구 차단돼요/)).toBeInTheDocument();
     await user.type(screen.getByRole('textbox', { name: /닉네임/ }), '김여행');
     await user.type(screen.getByRole('textbox', { name: '관리자에게 전할 말' }), '회사 동료예요');
     await user.click(screen.getByRole('button', { name: '관리자에게 보내기' }));

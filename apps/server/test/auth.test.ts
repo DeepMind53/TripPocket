@@ -315,6 +315,24 @@ describe('사용자 관리 (관리자 승인)', () => {
     expect((await send({ token, note: '다시' })).statusCode).toBe(404);
   });
 
+  it('거절한 요청은 목록에서 지울 수 있다 (대기 중 요청은 안 지움), 지우면 다시 로그인 때 새 요청', async () => {
+    const owner = await login('kakao');
+    await login('google');
+    const del = () => api('DELETE', '/api/admin/requests/google%3AG-3', owner.sid);
+    expect((await del()).statusCode).toBe(404); // 아직 대기 중
+    await api('POST', '/api/admin/requests/google%3AG-3/reject', owner.sid);
+    expect((await del()).statusCode).toBe(200);
+    expect((await list(owner.sid)).requests).toEqual([]);
+    const again = await login('google');
+    expect(String(again.res.headers.location)).toContain('error=pending');
+    // 두 번째 거절 → 지워도 다시 요청할 수 없다 (영구 차단, 2026-11-03)
+    await api('POST', '/api/admin/requests/google%3AG-3/reject', owner.sid);
+    await del();
+    const blocked = await login('google');
+    expect(blocked.res.headers.location).toBe(`${ORIGIN}/login?error=blocked`);
+    expect((await list(owner.sid)).requests).toEqual([]);
+  });
+
   it('거절하면 다시 로그인해도 거절 안내, 나중에 승인할 수도 있다', async () => {
     const owner = await login('kakao');
     await login('google');
