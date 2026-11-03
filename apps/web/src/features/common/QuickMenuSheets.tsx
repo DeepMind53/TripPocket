@@ -31,6 +31,7 @@ import { travelLegsAhead, type TravelLeg } from '../../domain/travelLeg';
 import { nowTimeIn } from '../../domain/lodging';
 import { SavedSpotsButtons } from './SavedSpotsButtons';
 import { ShortcutEditSheet } from './ShortcutEditSheet';
+import { TabQuickInfo } from './TabQuickInfo';
 import { SHORTCUT_ICON, shortcutPath, useQuickShortcuts, type ShortcutId } from './quickShortcuts';
 import { openDirectionsDirect } from './openDirections';
 import { isDomesticTrip } from '../../domain/tripPlace';
@@ -186,22 +187,6 @@ function TripQuickMenu({ open, setOpen }: { open: boolean; setOpen: (open: boole
   );
 }
 
-/** 여행 안에서만 되는 바로가기 */
-const TRIP_ONLY = new Set<ShortcutId>([
-  'lodging',
-  'bookingNo',
-  'nextItem',
-  'car',
-  'plan',
-  'bookings',
-  'checklist',
-  'essentials',
-  'weather',
-  'places',
-  'tripSettings',
-  'print',
-]);
-
 interface Shortcuts {
   lodging: () => void;
   bookingNo: () => void;
@@ -231,8 +216,7 @@ function QuickMenuContent({
   const [editOpen, setEditOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const ids = useQuickShortcuts((st) => st.ids);
-  // 여행 밖에서는 여행 화면·여행 기능 바로가기는 숨긴다
-  const chosen = ids.filter((id) => inTrip || !TRIP_ONLY.has(id));
+  const chosen = ids;
   const runShortcut = (id: ShortcutId) => {
     const own = shortcuts?.[id as keyof Shortcuts];
     if (own) return own();
@@ -300,33 +284,37 @@ function QuickMenuContent({
           {shortcuts && <SavedSpotsButtons trip={trip} horizontal />}
         </section>
       )}
-      {/* 바로가기 4칸: 편집으로 모든 기능·화면 중에서 고른다 (사용자 요청 2026-11-02) */}
-      <section className="flex flex-col gap-2">
-        <div className="flex items-center justify-between">
-          <h3 className="text-caption font-bold text-fg-muted">{t('quickMenu.shortcuts')}</h3>
-          <button
-            type="button"
-            onClick={() => setEditOpen(true)}
-            className="flex h-9 items-center gap-1 text-caption font-semibold text-primary"
-          >
-            <Pencil aria-hidden="true" className="size-3.5" />
-            {t('quickMenu.edit')}
-          </button>
-        </div>
-        <div className="grid grid-cols-2 gap-2">
-          {chosen.map((id) => {
-            const Icon = SHORTCUT_ICON[id];
-            return (
-              <Shortcut
-                key={id}
-                icon={<Icon />}
-                label={t(`quickMenu.shortcut.${id}`)}
-                onClick={() => runShortcut(id)}
-              />
-            );
-          })}
-        </div>
-      </section>
+      {/* 여행 밖: 탭마다 맞는 정보 + 바로가기 (사용자 요청 2026-11-03) */}
+      {!inTrip && <TabQuickInfo />}
+      {/* 바로가기 4칸: 편집으로 모든 기능·화면 중에서 고른다 (사용자 요청 2026-11-02) — 여행 안에서만 */}
+      {inTrip && (
+        <section className="flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <h3 className="text-caption font-bold text-fg-muted">{t('quickMenu.shortcuts')}</h3>
+            <button
+              type="button"
+              onClick={() => setEditOpen(true)}
+              className="flex h-9 items-center gap-1 text-caption font-semibold text-primary"
+            >
+              <Pencil aria-hidden="true" className="size-3.5" />
+              {t('quickMenu.edit')}
+            </button>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            {chosen.map((id) => {
+              const Icon = SHORTCUT_ICON[id];
+              return (
+                <Shortcut
+                  key={id}
+                  icon={<Icon />}
+                  label={t(`quickMenu.shortcut.${id}`)}
+                  onClick={() => runShortcut(id)}
+                />
+              );
+            })}
+          </div>
+        </section>
+      )}
       <ShortcutEditSheet open={editOpen} onOpenChange={setEditOpen} />
 
       {/* 실험실: 교통카드·결제 팁·바우처 */}

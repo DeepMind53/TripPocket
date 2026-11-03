@@ -1,5 +1,5 @@
 import { addDays, dayNumberOf, todayIn, type ItineraryItem, type Trip } from '@trippocket/shared';
-import { Bell, BellOff, Navigation, Sun } from 'lucide-react';
+import { Bed, Bell, BellOff, House, Navigation, Sun } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { useTrip, useTripBookings, useTripItems } from '../../data/hooks';
@@ -14,7 +14,9 @@ import { formatMonthDay } from '../../shared/lib/dateFormat';
 import { cn } from '../../shared/lib/cn';
 import { timeIn, useMinuteClock } from '../../shared/hooks/useMinuteClock';
 import { useRouteSheet } from '../../shared/hooks/useRouteSheet';
-import { Button, Skeleton } from '../../shared/ui';
+import { Button, IconButton, Skeleton, toast } from '../../shared/ui';
+import type { Destination } from '../../shared/lib/directions';
+import { DirectionsSheet } from '../common/DirectionsSheet';
 import { DayWeatherBadge } from '../common/DayWeatherBadge';
 import { openDirectionsDirect } from '../common/openDirections';
 import { QuickMenuButton } from '../common/QuickMenu';
@@ -44,8 +46,10 @@ function TravelView({ trip, items: all }: { trip: Trip; items: ItineraryItem[] }
   const items = useTripPlanItems(trip, all);
   const weather = useTripWeather(trip);
   const { sun, remind } = useTravelMode();
-  // 일정 바로가기는 여기서 [편집]과 같아 뺀다
-  const ids = useQuickShortcuts((s) => s.ids).filter((id) => id !== 'plan');
+  // 일정은 [홈]과, 숙소로 길찾기는 맨 앞 버튼과 같아 뺀다 (2026-11-03)
+  const ids = useQuickShortcuts((s) => s.ids).filter((id) => id !== 'plan' && id !== 'lodging');
+  const [dirOpen, setDirOpen] = useRouteSheet('travel-directions');
+  const [dest, setDest] = useState<Destination | null>(null);
   const [, openQuick] = useRouteSheet('quick-menu');
   const today = todayIn(trip.timezone);
   const [tab, setTab] = useState<'today' | 'tomorrow'>('today');
@@ -58,7 +62,9 @@ function TravelView({ trip, items: all }: { trip: Trip; items: ItineraryItem[] }
   const next = tab === 'today' ? nextStop(dayItems, now) : (dayItems[0] ?? null);
   const n = dayNumberOf(trip.startDate, trip.endDate, date);
   const domestic = isDomesticTrip(trip);
-  const stay = lodgingForNight(bookings, date);
+  // 오늘 밤 숙소 → 없으면 첫 숙소 (빠른 메뉴 "숙소로 길찾기"와 같은 규칙)
+  const stay =
+    lodgingForNight(bookings, date)?.booking ?? bookings.find((b) => b.kind === 'lodging');
   const leaveIn = next?.startTime && tab === 'today' ? mins(next.startTime) - mins(now) : null;
 
   // 출발 10분 전 알림 (앱이 열려 있을 때 — 브라우저 알림 권한을 허락한 경우)
@@ -73,11 +79,22 @@ function TravelView({ trip, items: all }: { trip: Trip; items: ItineraryItem[] }
     return () => window.clearTimeout(timer);
   }, [remind, leaveIn, next, t]);
 
+  // 길찾기 앱을 바로 열고, "매번 묻기"면 고르는 시트
+  const directions = (d: Destination) => {
+    if (openDirectionsDirect(d, domestic)) return;
+    setDest(d);
+    setDirOpen(true);
+  };
   const go = (i: ItineraryItem) =>
-    openDirectionsDirect(
-      { name: i.place?.name ?? i.title, address: i.place?.address, coords: i.place?.coords },
-      domestic,
-    );
+    directions({
+      name: i.place?.name ?? i.title,
+      address: i.place?.address,
+      coords: i.place?.coords,
+    });
+  const toStay = () => {
+    if (!stay) return toast(t('quickMenu.noLodging'));
+    directions({ name: stay.title, address: stay.details?.address });
+  };
 
   const card = (label: string, i: ItineraryItem, extra?: string) => (
     <div className="flex flex-col gap-2 rounded-card border border-primary/40 bg-primary-weak/40 p-4">
@@ -109,6 +126,16 @@ function TravelView({ trip, items: all }: { trip: Trip; items: ItineraryItem[] }
       )}
     >
       <header className="flex items-center gap-2">
+        {/* 여행 모드 끄기 = 홈 모양, 왼쪽 (사용자 요청 2026-11-03) */}
+        <IconButton
+          label={t('travel.exit')}
+          icon={<House />}
+          tone="tint"
+          onClick={() => {
+            setTravelMode(trip.id, false);
+            void navigate(`/trips/${trip.id}/plan`, { replace: true });
+          }}
+        />
         <span className="flex min-w-0 flex-1 flex-col">
           <span className="text-title-2 font-bold">
             {n ? t('travel.dayN', { n, date: formatMonthDay(date) }) : formatMonthDay(date)}
@@ -126,16 +153,6 @@ function TravelView({ trip, items: all }: { trip: Trip; items: ItineraryItem[] }
           onClick={() => setTravelPrefs({ sun: !sun })}
         >
           <Sun aria-hidden="true" className="size-4" />
-        </Button>
-        <Button
-          size="sm"
-          variant="secondary"
-          onClick={() => {
-            setTravelMode(trip.id, false);
-            void navigate(`/trips/${trip.id}/plan`, { replace: true });
-          }}
-        >
-          {t('travel.edit')}
         </Button>
       </header>
       {airWarnings(weather[date]?.air).map((w) => (
@@ -230,26 +247,20 @@ function TravelView({ trip, items: all }: { trip: Trip; items: ItineraryItem[] }
         {t(remind ? 'travel.remindOn' : 'travel.remindOff')}
       </Button>
 
-      {/* 엄지 버튼: 숙소 가기 + 빠른 메뉴 바로가기와 같은 목록 (D4) */}
+      {/* 엄지 버튼: 숙소로 길찾기 + 빠른 메뉴 바로가기와 같은 목록 (D4) */}
       <nav
         aria-label={t('travel.thumb')}
         className="fixed inset-x-0 bottom-0 mx-auto grid max-w-[560px] grid-cols-3 gap-2 border-t border-line bg-surface px-4 pt-2 pb-[calc(var(--safe-bottom,0px)+8px)]"
       >
-        {stay && (
-          <button
-            type="button"
-            onClick={() =>
-              openDirectionsDirect(
-                { name: stay.booking.title, address: stay.booking.details?.address },
-                domestic,
-              )
-            }
-            className="flex h-14 flex-col items-center justify-center rounded-btn bg-bg-subtle text-caption font-semibold"
-          >
-            🏨 {t('travel.toStay')}
-          </button>
-        )}
-        {ids.slice(0, stay ? 5 : 6).map((id) => {
+        <button
+          type="button"
+          onClick={toStay}
+          className="flex h-14 flex-col items-center justify-center gap-0.5 rounded-btn bg-primary-weak text-caption font-semibold text-primary"
+        >
+          <Bed aria-hidden="true" className="size-5" />
+          {t('travel.toStay')}
+        </button>
+        {ids.slice(0, 5).map((id) => {
           const Icon = SHORTCUT_ICON[id];
           const path = shortcutPath(id, trip.id);
           return (
@@ -266,6 +277,12 @@ function TravelView({ trip, items: all }: { trip: Trip; items: ItineraryItem[] }
         })}
       </nav>
       <QuickMenuButton inTrip />
+      <DirectionsSheet
+        open={dirOpen}
+        onOpenChange={setDirOpen}
+        destination={dest}
+        isDomestic={domestic}
+      />
     </div>
   );
 }

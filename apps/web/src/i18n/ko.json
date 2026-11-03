@@ -2533,7 +2533,6 @@
     "dayN": "{{n}}일차 · {{date}}",
     "localTime": "현지 {{time}}",
     "sun": "햇빛 모드",
-    "edit": "편집",
     "today": "오늘",
     "tomorrow": "내일",
     "now": "지금",
@@ -2548,6 +2547,27 @@
     "remindOff": "출발 10분 전 알림 꺼짐",
     "remindTitle": "10분 뒤 다음 일정이에요",
     "thumb": "자주 쓰는 버튼",
-    "toStay": "숙소 가기"
+    "toStay": "숙소로 길찾기",
+    "exit": "여행 모드 끄기"
+  },
+  "quickTab": {
+    "title": {
+      "home": "다가오는 여행",
+      "records": "지난 여행",
+      "saved": "저장한 장소",
+      "me": "내 정보"
+    },
+    "during": "여행 중 · {{n}}일차",
+    "dDay": "출발까지 D-{{n}}",
+    "noTrip": "다가오는 여행이 없어요",
+    "newTrip": "눌러서 새 여행 만들기",
+    "pastCount": "다녀온 여행 {{n}}번",
+    "noPast": "아직 다녀온 여행이 없어요",
+    "savedCount": "저장한 장소 {{n}}곳",
+    "savedHint": "{{name}}에 넣을 곳을 골라요",
+    "hello": "{{name}}님",
+    "me": "내 정보",
+    "backupAt": "마지막 백업 {{date}}",
+    "noBackup": "아직 백업하지 않았어요"
   }
 }
