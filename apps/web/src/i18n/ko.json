@@ -1315,7 +1315,12 @@
       "icn_flights": "인천공항 운항 정보",
       "kac_flights": "한국공항공사 운항 정보",
       "frankfurter": "Frankfurter 환율 (유럽중앙은행)",
-      "wikipedia": "위키백과 요약"
+      "wikipedia": "위키백과 요약",
+      "mofa_entry": "외교부 입국허가요건",
+      "mofa_safety": "외교부 안전공지",
+      "tourapi": "한국관광공사 행사정보",
+      "airkorea": "에어코리아 대기오염",
+      "airlabs": "AirLabs 항공편"
     },
     "note": {
       "google_places_search": "해외 장소 검색 · 월 5,000회 무료",
@@ -1357,7 +1362,12 @@
       "icn_flights": "체크인 카운터·터미널·게이트 · 하루 500회 무료",
       "kac_flights": "김포·김해·제주 등 게이트 · 하루 5,000회 무료",
       "frankfurter": "환율 보조 2번째 · 무료·제한 없음",
-      "wikipedia": "여행지 소개 · 무료 · 서버가 30일 저장"
+      "wikipedia": "여행지 소개 · 무료 · 서버가 30일 저장",
+      "mofa_entry": "관리자 입국 정보 점검 · 활용신청 필요",
+      "mofa_safety": "안전공지 · 활용신청 필요",
+      "tourapi": "국내 축제·행사 · 활용신청 필요",
+      "airkorea": "국내 오늘 미세먼지 · 활용신청 필요",
+      "airlabs": "출발 당일 지연 · 무료 월 1,000회"
     },
     "autoStoppedDay": "오늘 자동 중지",
     "monthMeter": "이번 달",
@@ -1375,6 +1385,18 @@
       "offlineReady": {
         "name": "오프라인 준비",
         "desc": "출발 7일 전부터 홈에\n바우처와 지도 준비를 알려 줘요"
+      },
+      "safetyNotice": {
+        "name": "외교부 안전공지",
+        "desc": "날씨 정보 화면에\n여행 나라의 외교부 최신 공지"
+      },
+      "festivals": {
+        "name": "여행 기간 축제와 행사",
+        "desc": "국내 여행이면 빠른 메뉴에\n그 기간 근처 축제와 행사"
+      },
+      "flightDelay": {
+        "name": "항공편 지연",
+        "desc": "출발 당일 항공 예약 카드에\n지연 정보를 보여 줘요"
       }
     },
     "checkoutAt": "오늘 {{time}} 체크아웃 · {{name}}",
@@ -2108,7 +2130,9 @@
     "tokyo": "도쿄",
     "tokyoIntro": "도쿄는 일본의 수도예요\n일본에서 사람이 가장 많은 도시예요",
     "museum": "도쿄 국립박물관",
-    "mall": "선샤인 시티"
+    "mall": "선샤인 시티",
+    "safetyNotice": "일본 지진 관련 안전 유의 공지\n2026-11-01 · 외교부",
+    "festival": "서울빛초롱축제\n11.01~11.30 · 서울 중구"
   },
   "currencyName": {
     "USD": "미국 달러",
@@ -2467,5 +2491,29 @@
     "searching": "역을 찾는 중이에요",
     "vehicle": "교통편",
     "vehiclePlaceholder": "예: KTX 101"
+  },
+  "safetyNotice": {
+    "title": "🛡️ 외교부 안전공지",
+    "source": "외교부"
+  },
+  "festivals": {
+    "title": "🎉 여행 기간 축제·행사",
+    "add": "{{name}} 가고 싶은 곳에 넣기",
+    "added": "{{name}}을(를) 가고 싶은 곳에 넣었어요",
+    "source": "한국관광공사 자료"
+  },
+  "flightDelay": {
+    "delayed": "⏱ 출발 약 {{min}}분 지연",
+    "onTime": "⏱ 지연 소식 없음",
+    "source": "AirLabs"
+  },
+  "entryCheck": {
+    "title": "입국 정보 점검",
+    "desc": "앱에 담은 무비자 기간과\n외교부 입국허가요건을 비교해요\n다르면 공식 안내를 확인한 뒤 고쳐 주세요",
+    "unavailable": "지금은 확인할 수 없어요\n공공데이터포털 활용신청이 승인됐는지 확인해 주세요",
+    "values": "앱 {{app}}일 · 외교부 {{official}}",
+    "same": "같음",
+    "diff": "다름",
+    "unknown": "확인 못 함"
   }
 }

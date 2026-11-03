@@ -12,7 +12,9 @@ import { cityLocalFor } from '../../data/cityLocal';
 import { transitGuideFor, type CountryTransit } from '../../data/transitGuide';
 import { t as tr, useTranslation, type TKey } from '../../i18n';
 import { formatMonthDay } from '../../shared/lib/dateFormat';
+import { useLab } from '../../data/labsStore';
 import { ArrivalRoute } from './ArrivalRoute';
+import { FestivalsSection } from './FestivalsSection';
 import { NearbyFind } from './NearbyFind';
 import { TransitCardList } from './TransitCardList';
 import { TransitGuide } from './TransitGuide';
@@ -64,6 +66,7 @@ export function LocalInfoSection({ tripId }: { tripId: string }) {
   const guideOn = useSettings((s) => s.transitGuide);
   const nearbyOn = useSettings((s) => s.nearbyFind);
   const arrivalOn = useSettings((s) => s.arrivalRoute);
+  const festivalsOn = useLab('festivals');
   if (!trip || (!transitOn && !payOn && !voucherOn)) return null;
   const all = tripCountries(trip);
   const countries = all.filter((c) => c !== 'KR');
@@ -117,7 +120,7 @@ export function LocalInfoSection({ tripId }: { tripId: string }) {
   const vouchers = voucherOn
     ? voucherBookings(bookings, new Set(docs.filter((d) => d.blob).map((d) => d.bookingId)))
     : [];
-  if (!groups.length && !vouchers.length && !nearbyOn && !arrival) return null;
+  if (!groups.length && !vouchers.length && !nearbyOn && !arrival && !festivalsOn) return null;
   return (
     <section className="flex flex-col gap-2">
       <h3 className="text-caption font-bold text-fg-muted">{t('labs.localTitle')}</h3>
@@ -149,6 +152,7 @@ export function LocalInfoSection({ tripId }: { tripId: string }) {
         </div>
       ))}
       {arrival && <ArrivalRoute route={arrival} />}
+      <FestivalsSection trip={trip} />
       {nearbyOn && <NearbyFind domestic={countries.length === 0} />}
       {vouchers.length > 0 && (
         <div className="flex flex-col rounded-card bg-bg-subtle px-3 py-2">

@@ -1,6 +1,8 @@
 import { addDays, getTripDays, todayIn, type LocalDate, type Trip } from '@trippocket/shared';
 import { useEffect, useState } from 'react';
 import { useSettings } from '../../data/settingsStore';
+import { api } from '../../data/api/client';
+import { sidoOf } from '../../domain/sido';
 import { getAirQuality, getForecast, getLastYearWeather } from '../../data/services/travelInfo';
 import type { DayAir } from '../../domain/air';
 import type { DayWeather } from '../../domain/weather';
@@ -29,7 +31,34 @@ export function useTripWeather(trip: Trip | undefined): Record<LocalDate, TripDa
   const coords = trip?.destinations.find((d) => d.coords)?.coords;
   const dates = trip ? getTripDays(trip.startDate, trip.endDate) : [];
   const air = useSettings((s) => s.airQuality);
-  return useWeatherDays(coords, trip?.timezone ?? 'Asia/Seoul', dates, air);
+  const days = useWeatherDays(coords, trip?.timezone ?? 'Asia/Seoul', dates, air);
+  // 국내 여행 오늘 미세먼지는 에어코리아 공식 측정값으로 (docs/26 B5, 서버 경유·시도 평균)
+  const today = trip ? todayIn(trip.timezone) : '';
+  const sido =
+    air && trip && trip.destinations.every((d) => !d.countryCode || d.countryCode === 'KR')
+      ? sidoOf(trip.destinations[0]?.name ?? '')
+      : null;
+  const krPm = useKrPm25(sido && dates.includes(today) ? sido : null);
+  if (krPm == null || !days[today]) return days;
+  return { ...days, [today]: { ...days[today], air: { ...days[today].air, pm25: krPm } } };
+}
+
+/** 에어코리아 시도 평균 PM2.5 (한 번만 받는다, 실패하면 null) */
+function useKrPm25(sido: string | null): number | null {
+  const [v, setV] = useState<{ sido: string; pm25: number } | null>(null);
+  useEffect(() => {
+    if (!sido) return;
+    let alive = true;
+    void api<{ air: { pm25: number } | null }>(
+      `/api/info/air-kr?sido=${encodeURIComponent(sido)}`,
+    ).then((r) => {
+      if (alive && r.ok && r.data.air) setV({ sido, pm25: r.data.air.pm25 });
+    });
+    return () => {
+      alive = false;
+    };
+  }, [sido]);
+  return v && v.sido === sido ? v.pm25 : null;
 }
 
 /**

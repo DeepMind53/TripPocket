@@ -25,3 +25,13 @@ describe('미세먼지·자외선', () => {
     expect(airWarnings(undefined)).toEqual([]);
   });
 });
+
+describe('국내 시도 (에어코리아)', () => {
+  it('도시 이름으로 시도를 찾는다', async () => {
+    const { sidoOf } = await import('./sido');
+    expect(sidoOf('강릉')).toBe('강원');
+    expect(sidoOf('제주 서귀포')).toBe('제주');
+    expect(sidoOf('경기 광주')).toBe('경기');
+    expect(sidoOf('도쿄')).toBeNull();
+  });
+});

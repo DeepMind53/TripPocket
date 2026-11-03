@@ -6,6 +6,7 @@ import {
   type Booking,
   type LocalDate,
 } from '@trippocket/shared';
+import { SafetyNotices } from './SafetyNotices';
 import { CircleHelp, Plane } from 'lucide-react';
 import { useState } from 'react';
 import { useParams } from 'react-router';
@@ -66,6 +67,7 @@ export function WeatherPage() {
       />
       <div className="flex flex-col gap-5 px-5 pt-2">
         <DestinationAlerts countries={countries} points={points} />
+        <SafetyNotices countries={countries} />
         <section
           aria-label={t('weatherPage.dest', { place: dest?.name ?? trip.title })}
           className="flex flex-col gap-2"

@@ -6,20 +6,21 @@ import {
   CircleHelp,
   Database,
   DatabaseBackup,
-  Palette,
-  Settings,
-  Scale,
-  ShieldCheck,
   FileText,
-  Smartphone,
-  Sparkles,
-  Users,
+  FlaskConical,
   Gauge,
   IdCard,
-  FlaskConical,
-  SquarePen,
   Inbox,
   MessageSquarePlus,
+  Palette,
+  Scale,
+  Settings,
+  ShieldCheck,
+  Smartphone,
+  Sparkles,
+  SquarePen,
+  Stamp,
+  Users,
 } from 'lucide-react';
 import { useAuth } from '../../data/authStore';
 import { useRouteSheet } from '../../shared/hooks/useRouteSheet';
@@ -65,6 +66,7 @@ export function MePage() {
             <MenuRow to="/admin/users" icon={<Users />} label={t('admin.title')} />
             <MenuRow to="/admin/stats" icon={<ChartColumn />} label={t('me.stats')} />
             <MenuRow to="/admin/api-usage" icon={<Gauge />} label={t('apiUsage.title')} />
+            <MenuRow to="/admin/entry-check" icon={<Stamp />} label={t('entryCheck.title')} />
             <MenuRow to="/admin/ai" icon={<Sparkles />} label={t('me.devAi')} />
             <MenuRow to="/admin/suggestions" icon={<Inbox />} label={t('suggest.adminTitle')} />
             <MenuRow

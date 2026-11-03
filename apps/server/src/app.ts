@@ -119,7 +119,7 @@ export async function buildApp(config: Config, db: Db): Promise<FastifyInstance>
   syncRoutes(app, db);
   statsRoutes(app, db);
   translateRoutes(app, config, db);
-  infoRoutes(app, db);
+  infoRoutes(app, config, db);
   aiRoutes(app, config, db);
   shareRoutes(app, db);
   placesRoutes(app, config, db);

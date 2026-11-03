@@ -67,6 +67,8 @@ const Env = z.object({
   AVIATIONSTACK_KEY: z.optional(z.string()),
   /** 공공데이터포털 일반 인증키(Decoding) — 외교부 여행경보·특별여행주의보, 기상청 특보 (docs/24). 없으면 그 출처만 건너뜀 */
   DATA_GO_KR_KEY: z.optional(z.string()),
+  /** AirLabs 무료 키 (https://airlabs.co, 월 1,000회) — 출발 당일 항공편 지연 (docs/26 B2). 없으면 지연 표시 없음 */
+  AIRLABS_KEY: z.optional(z.string()),
   /** 대만 중앙기상서(CWA) 오픈데이터 인증 코드 — 대만 기상 특보 (docs/24 §7). 없으면 링크만 */
   CWA_API_KEY: z.optional(z.string()),
   /** 웹 푸시 알림 (docs/20 G1) — 없으면 알림 기능이 꺼진다 */

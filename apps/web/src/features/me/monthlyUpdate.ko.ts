@@ -76,7 +76,7 @@ export function monthlyUpdateRequest(month: string): string {
 [B. 무료 사용량·요금 — 과금 방지]
 1. 외부 API 무료 한도·요금 변경 (Google 지도·장소·Routes, 카카오, 네이버 지도·검색(API HUB 한시적 무료 끝나는지),
    Geoapify, Gemini·Workers AI·Groq, 수출입은행, AviationStack, Open-Meteo, OpenFreeMap, Overpass,
-   공공데이터포털(외교부·기상청·인천공항·한국공항공사 — 개발계정 하루 500·5,000회, 사용자가 늘면 운영계정), GDACS·USGS·일본·미국·대만·캐나다 기상청, 웹 푸시)
+   공공데이터포털(외교부 여행경보·안전공지·입국허가요건, 기상청, 인천공항·한국공항공사, 한국관광공사 TourAPI, 에어코리아 — 개발계정, 사용자가 늘면 운영계정), AirLabs(무료 월 1,000), GDACS·USGS·일본·미국·대만·캐나다 기상청, 웹 푸시)
    - apps/server/src/services/apiUsage.ts APIS + docs/code-map.md §3 표
    - 무료로 쓰는 기반 서비스: Cloudflare Pages·Functions(하루 10만 요청), Tailscale Funnel, GitHub Actions
 2. 한도가 끝났을 때 대체 API·대체 기능이 아직 맞게 동작하는지 (docs/23-paid-api-fallbacks.md)

@@ -66,6 +66,12 @@ export function FeaturePreview({ id }: { id: PreviewId }) {
   const note = (text: string, tone = 'bg-bg-subtle text-fg-sub') => (
     <p className={cn('rounded-btn px-3 py-2 text-caption', tone)}>{text}</p>
   );
+  const info = (label: string, text: string) => (
+    <p className="flex flex-col rounded-card bg-bg-subtle px-3 py-2.5 text-caption whitespace-pre-line text-fg-sub">
+      <span className="font-semibold text-fg">{label}</span>
+      {text}
+    </p>
+  );
   const sunLine = (kind: 'rise' | 'set', time: string) => {
     const icon =
       kind === 'rise' ? (
@@ -265,6 +271,15 @@ export function FeaturePreview({ id }: { id: PreviewId }) {
           {row(1, '10:00', t('sample.museum'))}
           {row(2, '13:00', t('sample.mall'))}
         </>,
+      );
+    case 'safetyNotice':
+      return info(t('safetyNotice.title'), t('sample.safetyNotice'));
+    case 'festivals':
+      return info(t('festivals.title'), t('sample.festival'));
+    case 'flightDelay':
+      return note(
+        t('flightDelay.delayed', { min: 35 }),
+        'bg-warning/10 text-warning font-semibold',
       );
     case 'placeTips':
       return day(

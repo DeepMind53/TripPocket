@@ -223,6 +223,12 @@ const allRoutes: RouteObject[] = [
           Component: (await import('../features/dev/DevAiPage')).DevAiPage,
         }),
       },
+      {
+        path: 'entry-check',
+        lazy: async () => ({
+          Component: (await import('../features/me/AdminEntryCheckPage')).AdminEntryCheckPage,
+        }),
+      },
     ],
   },
   // 개발용 화면은 개발 서버에서만 (운영 빌드에는 경로 자체가 없음)
