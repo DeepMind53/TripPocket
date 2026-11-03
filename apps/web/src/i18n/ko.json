@@ -1500,7 +1500,10 @@
     "pickAirline": "항공사 고르기",
     "pickTier": "{{program}} 등급",
     "pickTierLabel": "등급 고르기",
-    "noTier": "등급 없음"
+    "noTier": "등급 없음",
+    "pickAirlineName": "{{name}}로 채우기",
+    "tierOf": "{{program}} 등급",
+    "tierPick": "등급 고르기"
   },
   "nickname": {
     "title": "닉네임 바꾸기",

@@ -5,8 +5,8 @@ import {
   ENTRY_PERMITS,
   type Allergen,
 } from '@trippocket/shared';
-import { Plus, X } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { ChevronDown, Plus, X } from 'lucide-react';
+import { useState, type ReactNode } from 'react';
 import {
   CONTACTS_MAX,
   MEMBERSHIPS_MAX,
@@ -14,7 +14,7 @@ import {
   useTravelProfile,
 } from '../../data/travelProfile';
 import { useTranslation } from '../../i18n';
-import { AirlineTierChips } from './AirlineTierChips';
+import { AirlineInput, TierSelect } from './AirlineTierChips';
 import { CustomFoodsField } from './CustomFoodsField';
 import { TranslateCardsButton } from './TranslateCardsButton';
 import { Chip, IconButton, SegmentedControl, TopBar } from '../../shared/ui';
@@ -29,6 +29,7 @@ const field = 'h-12 w-full min-w-0 rounded-btn bg-bg-subtle px-3 text-body-1';
 export function ProfilePage() {
   const { t } = useTranslation();
   const p = useTravelProfile();
+  const [memOpen, setMemOpen] = useState(false);
   const toggleAllergen = (a: Allergen) =>
     updateTravelProfile({
       allergens: p.allergens.includes(a)
@@ -101,62 +102,71 @@ export function ProfilePage() {
               ]}
             />
           </div>
-          <p className="text-caption font-semibold text-fg-sub">{t('profile.memberships')}</p>
-          {p.memberships.map((m, i) => {
-            const set = (patch: Partial<typeof m>) =>
-              updateTravelProfile({
-                memberships: p.memberships.map((x, j) => (j === i ? { ...x, ...patch } : x)),
-              });
-            return (
-              <div key={i} className="flex flex-col gap-2 rounded-card border border-line p-3">
-                <div className="flex items-center gap-2">
-                  <input
-                    aria-label={t('profile.airline')}
-                    placeholder={t('profile.airlinePlaceholder')}
-                    maxLength={40}
-                    className={field}
-                    value={m.airline}
-                    onChange={(e) => set({ airline: e.target.value })}
-                  />
-                  <IconButton
-                    label={t('profile.remove')}
-                    icon={<X />}
-                    onClick={() =>
-                      updateTravelProfile({
-                        memberships: p.memberships.filter((_, j) => j !== i),
-                      })
-                    }
-                  />
+          {/* 항공사 회원번호는 눌러서 펼치는 드롭다운 (사용자 요청 2026-11-03 — 화면이 길어지지 않게) */}
+          <button
+            type="button"
+            aria-expanded={memOpen}
+            onClick={() => setMemOpen(!memOpen)}
+            className="flex min-h-11 items-center gap-1.5 text-left text-caption font-semibold text-fg-sub"
+          >
+            <span className="flex-1">
+              {t('profile.memberships')}
+              {p.memberships.length > 0 && ` (${p.memberships.length})`}
+            </span>
+            {!memOpen && p.memberships.length > 0 && (
+              <span className="truncate text-micro font-normal text-fg-muted">
+                {p.memberships
+                  .map((m) => m.airline)
+                  .filter(Boolean)
+                  .join(', ')}
+              </span>
+            )}
+            <ChevronDown
+              aria-hidden="true"
+              className={`size-4 shrink-0 transition-transform ${memOpen ? 'rotate-180' : ''}`}
+            />
+          </button>
+          {memOpen &&
+            p.memberships.map((m, i) => {
+              const set = (patch: Partial<typeof m>) =>
+                updateTravelProfile({
+                  memberships: p.memberships.map((x, j) => (j === i ? { ...x, ...patch } : x)),
+                });
+              return (
+                <div key={i} className="flex flex-col gap-2 rounded-card border border-line p-3">
+                  <div className="flex items-center gap-2">
+                    {/* 치면 오른쪽에 추천 항공사 (사용자 요청 2026-11-03) */}
+                    <AirlineInput value={m.airline} onChange={(airline) => set({ airline })} />
+                    <IconButton
+                      label={t('profile.remove')}
+                      icon={<X />}
+                      onClick={() =>
+                        updateTravelProfile({
+                          memberships: p.memberships.filter((_, j) => j !== i),
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="grid grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] gap-2">
+                    <input
+                      aria-label={t('profile.memberNo')}
+                      placeholder={t('profile.memberNo')}
+                      maxLength={30}
+                      className={`${field} tabular`}
+                      value={m.number}
+                      onChange={(e) => set({ number: e.target.value })}
+                    />
+                    {/* 등급은 그 항공사 등급 드롭다운, 등급 없는 항공사는 "등급 없음" */}
+                    <TierSelect
+                      airline={m.airline}
+                      value={m.tier}
+                      onChange={(tier) => set({ tier })}
+                    />
+                  </div>
                 </div>
-                <div className="grid grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] gap-2">
-                  <input
-                    aria-label={t('profile.memberNo')}
-                    placeholder={t('profile.memberNo')}
-                    maxLength={30}
-                    className={`${field} tabular`}
-                    value={m.number}
-                    onChange={(e) => set({ number: e.target.value })}
-                  />
-                  <input
-                    aria-label={t('profile.tier')}
-                    placeholder={t('profile.tier')}
-                    maxLength={30}
-                    className={field}
-                    value={m.tier}
-                    onChange={(e) => set({ tier: e.target.value })}
-                  />
-                </div>
-                {/* 항공사·등급 칩 — 누르면 바로 채움 (사용자 요청 2026-11-02) */}
-                <AirlineTierChips
-                  airline={m.airline}
-                  tier={m.tier}
-                  onAirline={(name) => set({ airline: name })}
-                  onTier={(tier) => set({ tier })}
-                />
-              </div>
-            );
-          })}
-          {p.memberships.length < MEMBERSHIPS_MAX && (
+              );
+            })}
+          {memOpen && p.memberships.length < MEMBERSHIPS_MAX && (
             <AddButton
               label={t('profile.addMembership')}
               onClick={() =>
@@ -166,7 +176,9 @@ export function ProfilePage() {
               }
             />
           )}
-          <p className="-mt-2 text-micro text-fg-muted">{t('profile.membershipsHint')}</p>
+          {memOpen && (
+            <p className="-mt-2 text-micro text-fg-muted">{t('profile.membershipsHint')}</p>
+          )}
         </Group>
 
         <Group title={t('profile.groupSafety')}>

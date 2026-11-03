@@ -1,54 +1,88 @@
-import { AIRLINE_PROGRAMS, airlineProgramFor } from '@trippocket/shared';
+import { airlineProgramFor, searchAirlines } from '@trippocket/shared';
 import { useTranslation } from '../../i18n';
-import { Chip, ScrollRow } from '../../shared/ui';
+
+const field =
+  'h-11 w-full min-w-0 rounded-btn border border-line bg-bg-subtle px-3 text-body-2 outline-none focus:border-primary';
 
 /**
- * 항공사 회원번호 칸 아래 칩 (사용자 요청 2026-11-02): 항공사를 모르면 항공사 칩, 알면 그 항공사 등급 칩.
- * 누르면 바로 채운다 — 손으로 쳐도 된다
+ * 항공사 칸 (사용자 요청 2026-11-03): 글자를 치면 입력창 오른쪽에 추천 항공사 — 누르면 그 이름으로 채운다.
+ * (예전 아래쪽 알약 칩 대신). 손으로 끝까지 쳐도 된다
  */
-export function AirlineTierChips({
+export function AirlineInput({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (name: string) => void;
+}) {
+  const { t } = useTranslation();
+  const picks = searchAirlines(value, 2);
+  return (
+    <div className="flex min-w-0 flex-1 items-center gap-1.5">
+      <input
+        aria-label={t('profile.airline')}
+        placeholder={t('profile.airlinePlaceholder')}
+        maxLength={40}
+        className={field}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      />
+      {picks.map((p) => (
+        <button
+          key={p.code}
+          type="button"
+          aria-label={t('profile.pickAirlineName', { name: p.name })}
+          onClick={() => onChange(p.name)}
+          className="h-9 shrink-0 rounded-full border border-primary/40 bg-primary-weak px-2.5 text-caption font-semibold whitespace-nowrap text-primary"
+        >
+          {p.name}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/**
+ * 등급 칸 (사용자 요청 2026-11-03): 아는 항공사면 그 회원 프로그램 등급을 드롭다운으로,
+ * 등급 제도가 없는 항공사(국내·해외 LCC)는 "등급 없음" 하나, 모르는 항공사면 직접 입력
+ */
+export function TierSelect({
   airline,
-  tier,
-  onAirline,
-  onTier,
+  value,
+  onChange,
 }: {
   airline: string;
-  tier: string;
-  onAirline: (name: string) => void;
-  onTier: (tier: string) => void;
+  value: string;
+  onChange: (tier: string) => void;
 }) {
   const { t } = useTranslation();
   const program = airlineProgramFor(airline);
   if (!program)
     return (
-      <ScrollRow role="group" aria-label={t('profile.pickAirline')} className="flex gap-2 pb-1">
-        {AIRLINE_PROGRAMS.map((p) => (
-          <Chip key={p.code} onClick={() => onAirline(p.name)}>
-            {p.name}
-          </Chip>
-        ))}
-      </ScrollRow>
+      <input
+        aria-label={t('profile.tier')}
+        placeholder={t('profile.tier')}
+        maxLength={30}
+        className={field}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      />
     );
+  const options = program.tiers.length ? [...program.tiers] : [t('profile.noTier')];
   return (
-    <div className="flex flex-col gap-1">
-      <span className="text-micro text-fg-muted">
-        {t('profile.pickTier', { program: program.program })}
-      </span>
-      {/* 우수 등급이 없는 항공사(LCC 등)는 "등급 없음" 하나 (사용자 요청 2026-11-03) */}
-      {program.tiers.length === 0 && (
-        <div className="flex gap-2 pb-1">
-          <Chip selected={tier === t('profile.noTier')} onClick={() => onTier(t('profile.noTier'))}>
-            {t('profile.noTier')}
-          </Chip>
-        </div>
-      )}
-      <ScrollRow role="group" aria-label={t('profile.pickTierLabel')} className="flex gap-2 pb-1">
-        {program.tiers.map((x) => (
-          <Chip key={x} selected={tier === x} onClick={() => onTier(x)}>
-            {x}
-          </Chip>
-        ))}
-      </ScrollRow>
-    </div>
+    <select
+      aria-label={t('profile.tierOf', { program: program.program })}
+      // 등급 제도가 없으면 처음부터 "등급 없음"으로 보인다
+      value={options.includes(value) ? value : program.tiers.length ? '' : options[0]}
+      onChange={(e) => onChange(e.target.value)}
+      className={field}
+    >
+      <option value="">{t('profile.tierPick')}</option>
+      {options.map((x) => (
+        <option key={x} value={x}>
+          {x}
+        </option>
+      ))}
+    </select>
   );
 }
