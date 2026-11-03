@@ -131,6 +131,13 @@ const allRoutes: RouteObject[] = [
       Component: (await import('../features/weather/WeatherPage')).WeatherPage,
     }),
   },
+  // 실험실 "여행 모드" — 여행 탭 없이 오늘·내일만 크게 (2026-11-03)
+  {
+    path: 'trips/:tripId/go',
+    lazy: async () => ({
+      Component: (await import('../features/travel/TravelModePage')).TravelModePage,
+    }),
+  },
   // 실험실 "인쇄용 일정표" — 여행 탭 없이 종이용 한 장
   {
     path: 'trips/:tripId/print',

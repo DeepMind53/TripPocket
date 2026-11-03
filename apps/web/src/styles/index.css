@@ -245,6 +245,14 @@
   opacity: 0.35;
 }
 
+/* 여행 모드 햇빛 모드 (실험실, 2026-11-03): 밖에서 잘 보이게 글씨 크게·대비 높게 */
+.travel-sun {
+  --tp-fg-sub: var(--tp-fg);
+  --tp-fg-muted: var(--tp-fg);
+  font-size: 112%;
+  font-weight: 600;
+}
+
 /* 인쇄용 일정표 (실험실, 2026-10-26): 버튼·머리 빼고, 하루가 쪽 사이에서 잘리지 않게, 흰 바탕 */
 @media print {
   .no-print {

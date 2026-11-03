@@ -42,9 +42,15 @@ describe('실험실', () => {
     expect(sw).toHaveAttribute('aria-checked', 'false');
     await user.click(sw);
     expect(JSON.parse(localStorage.getItem('tp-labs')!)).toEqual({ offlineReady: true });
-    expect(LABS).toEqual(['offlineReady', 'safetyNotice', 'festivals', 'flightDelay']);
-    expect(screen.getAllByRole('switch')).toHaveLength(4);
-    expect(screen.getAllByRole('button', { name: / 샘플$/ })).toHaveLength(4);
+    expect(LABS).toEqual([
+      'offlineReady',
+      'safetyNotice',
+      'festivals',
+      'flightDelay',
+      'travelMode',
+    ]);
+    expect(screen.getAllByRole('switch')).toHaveLength(5);
+    expect(screen.getAllByRole('button', { name: / 샘플$/ })).toHaveLength(5);
     // 정식이 됐거나 뺀 것은 실험실에 없다
     for (const name of [
       /현지 공휴일/,

@@ -1,6 +1,9 @@
 import { todayIn } from '@trippocket/shared';
+import { useLab } from '../../data/labsStore';
+import { setTravelMode } from '../../data/travelModeStore';
 import {
   CalendarDays,
+  Compass,
   Ellipsis,
   ListChecks,
   Printer,
@@ -48,6 +51,7 @@ export function TripLayout() {
   const [menuOpen, setMenuOpen, switchMenuTo] = useRouteSheet('trip-menu');
   const [shareOpen, setShareOpen] = useRouteSheet('trip-share');
   const [searchOpen, setSearchOpen] = useRouteSheet('trip-search');
+  const travelLab = useLab('travelMode');
   useBottomInset(trip ? TAB_BAR_HEIGHT : 0);
 
   if (trip === null) {
@@ -131,6 +135,20 @@ export function TripLayout() {
                 {t('tripSearch.title')}
               </Button>
             }
+            {travelLab && (
+              <Button
+                variant="secondary"
+                fullWidth
+                className="justify-start"
+                leading={<Compass aria-hidden="true" className="size-[18px]" />}
+                onClick={() => {
+                  setTravelMode(trip.id, true);
+                  void navigate(`${base}/go`, { replace: true });
+                }}
+              >
+                {t('travel.title')}
+              </Button>
+            )}
             {
               <Button
                 variant="secondary"

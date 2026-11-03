@@ -281,6 +281,8 @@ export function FeaturePreview({ id }: { id: PreviewId }) {
         t('flightDelay.delayed', { min: 35 }),
         'bg-warning/10 text-warning font-semibold',
       );
+    case 'travelMode':
+      return info(t('travel.title'), t('sample.travelMode'));
     case 'placeTips':
       return day(
         <>

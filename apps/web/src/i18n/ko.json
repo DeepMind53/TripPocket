@@ -1397,6 +1397,10 @@
       "flightDelay": {
         "name": "항공편 지연",
         "desc": "출발 당일 항공 예약 카드에\n지연 정보를 보여 줘요"
+      },
+      "travelMode": {
+        "name": "여행 모드",
+        "desc": "여행 중에는 오늘과 내일만\n크게 보여 줘요"
       }
     },
     "checkoutAt": "오늘 {{time}} 체크아웃 · {{name}}",
@@ -2132,7 +2136,8 @@
     "museum": "도쿄 국립박물관",
     "mall": "선샤인 시티",
     "safetyNotice": "일본 지진 관련 안전 유의 공지\n2026-11-01 · 외교부",
-    "festival": "서울빛초롱축제\n11.01~11.30 · 서울 중구"
+    "festival": "서울빛초롱축제\n11.01~11.30 · 서울 중구",
+    "travelMode": "1일차 · 11월 3일\n다음 · 오사카성 · 25분 남음"
   },
   "currencyName": {
     "USD": "미국 달러",
@@ -2515,5 +2520,32 @@
     "same": "같음",
     "diff": "다름",
     "unknown": "확인 못 함"
+  },
+  "travel": {
+    "title": "여행 모드",
+    "askTitle": "여행 모드로 볼까요?",
+    "askDesc": "오늘과 내일 일정만 크게 보여 줘요\n[편집]을 누르면 언제든 돌아와요",
+    "start": "시작",
+    "decline": "괜찮아요",
+    "ended": "여행 모드를 껐어요\n기록 탭에서 여행을 돌아보세요",
+    "dayN": "{{n}}일차 · {{date}}",
+    "localTime": "현지 {{time}}",
+    "sun": "햇빛 모드",
+    "edit": "편집",
+    "today": "오늘",
+    "tomorrow": "내일",
+    "now": "지금",
+    "next": "다음",
+    "first": "첫 일정",
+    "leaveIn": "{{min}}분 남음",
+    "directions": "길찾기",
+    "empty": "남은 일정이 없어요",
+    "rest": "이날 일정",
+    "visited": "다녀옴",
+    "remindOn": "출발 10분 전 알림 켜짐",
+    "remindOff": "출발 10분 전 알림 꺼짐",
+    "remindTitle": "10분 뒤 다음 일정이에요",
+    "thumb": "자주 쓰는 버튼",
+    "toStay": "숙소 가기"
   }
 }

@@ -1,4 +1,5 @@
 import { useSettings } from '../../data/settingsStore';
+import { TravelModeGate } from '../travel/TravelModeGate';
 import { useCanEdit } from '../../data/tripRoles';
 import { useTimeText } from '../../shared/hooks/useTimeText';
 import {
@@ -511,6 +512,7 @@ function PlanView({
 
   return (
     <div className="flex flex-col">
+      <TravelModeGate trip={trip} />
       {/* 날짜 칩·지도·편집은 스크롤해도 늘 보이게, 켜 둔 지도도 함께 고정 (사용자 요청 2026-10-26).
           전체 화면 지도는 이 상자 안에서 fixed라 위 머리(z-20)보다 위로 올라오게 상자를 올린다 */}
       <div
