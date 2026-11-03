@@ -5,6 +5,8 @@ export interface JoinRequest {
   id: string;
   provider: string;
   nickname: string;
+  /** 가입 대기 화면에서 남긴 말 (승인·거절하면 지움) */
+  note?: string;
   status: 'pending' | 'rejected';
   requestedAt: string;
 }

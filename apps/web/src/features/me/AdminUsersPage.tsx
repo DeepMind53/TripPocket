@@ -59,6 +59,7 @@ export function AdminUsersPage() {
                 provider: provider(r.provider),
                 date: date(r.requestedAt),
               })}
+              note={r.note}
             >
               <Button
                 size="sm"
@@ -157,12 +158,28 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-function Row({ name, sub, children }: { name: string; sub: string; children?: ReactNode }) {
+function Row({
+  name,
+  sub,
+  note,
+  children,
+}: {
+  name: string;
+  sub: string;
+  /** 가입 요청에 남긴 말 (누구인지) */
+  note?: string | undefined;
+  children?: ReactNode;
+}) {
   return (
     <li className="flex min-h-14 items-center gap-2 bg-surface px-4 py-2">
       <span className="flex min-w-0 flex-1 flex-col">
         <span className="truncate text-body-2 font-medium">{name}</span>
         {sub && <span className="truncate text-caption text-fg-muted">{sub}</span>}
+        {note && (
+          <span className="mt-0.5 rounded-btn bg-bg-subtle px-2 py-1 text-caption whitespace-pre-line text-fg-sub">
+            {note}
+          </span>
+        )}
       </span>
       {children}
     </li>

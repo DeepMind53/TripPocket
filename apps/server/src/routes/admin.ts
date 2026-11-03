@@ -34,12 +34,13 @@ export function adminRoutes(app: FastifyInstance, db: Db): void {
   app.get('/api/admin/users', admin, async () => {
     const requests = db
       .prepare(
-        'SELECT provider, provider_user_id, nickname, status, requested_at FROM join_requests ORDER BY requested_at DESC',
+        'SELECT provider, provider_user_id, nickname, note, status, requested_at FROM join_requests ORDER BY requested_at DESC',
       )
       .all() as {
       provider: string;
       provider_user_id: string;
       nickname: string;
+      note: string | null;
       status: string;
       requested_at: string;
     }[];
@@ -64,6 +65,7 @@ export function adminRoutes(app: FastifyInstance, db: Db): void {
         id: `${r.provider}:${r.provider_user_id}`,
         provider: r.provider,
         nickname: r.nickname,
+        ...(r.note ? { note: r.note } : {}),
         status: r.status,
         requestedAt: r.requested_at,
       })),
@@ -122,7 +124,8 @@ export function adminRoutes(app: FastifyInstance, db: Db): void {
       const res = key
         ? db
             .prepare(
-              "UPDATE join_requests SET status = 'rejected' WHERE provider = ? AND provider_user_id = ?",
+              // 거절하면 전할 말·토큰은 지운다 (승인은 줄 자체를 지움)
+              "UPDATE join_requests SET status = 'rejected', note = NULL, note_token_hash = NULL WHERE provider = ? AND provider_user_id = ?",
             )
             .run(...key)
         : { changes: 0 };

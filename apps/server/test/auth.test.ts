@@ -234,7 +234,9 @@ describe('로그인', () => {
     expect((await api('GET', '/api/me', owner.sid)).json()).toMatchObject({ isAdmin: true });
     const denied = await login('google');
     expect(denied.sid).toBeUndefined();
-    expect(denied.res.headers.location).toBe(`${ORIGIN}/login?error=pending`);
+    const loc = String(denied.res.headers.location);
+    expect(loc.startsWith(`${ORIGIN}/login?error=pending#join=`)).toBe(true);
+    expect(loc.split('#join=')[1]!.length).toBeGreaterThanOrEqual(20);
     const naver = await login('naver'); // ALLOWED_ACCOUNTS=naver:N-2
     expect(naver.sid).toBeTruthy();
     expect((await api('GET', '/api/me', naver.sid)).json()).not.toHaveProperty('isAdmin');
@@ -286,6 +288,31 @@ describe('사용자 관리 (관리자 승인)', () => {
     const after = await login('google');
     expect(after.sid).toBeTruthy();
     expect((await list(owner.sid)).requests).toEqual([]);
+  });
+
+  it('대기 화면에서 닉네임·관리자에게 전할 말 (토큰으로만, 승인·거절하면 지움)', async () => {
+    const owner = await login('kakao');
+    const pending = await login('google');
+    const token = String(pending.res.headers.location).split('#join=')[1]!;
+    const send = (body: object) =>
+      app.inject({
+        method: 'POST',
+        url: '/auth/join-note',
+        headers: { ...base, origin: ORIGIN },
+        payload: body,
+      });
+    expect((await send({ token: 'x'.repeat(30), note: '안녕하세요' })).statusCode).toBe(404);
+    expect(
+      (await send({ token, nickname: '김여행', note: '회사 동료 김여행이에요' })).statusCode,
+    ).toBe(200);
+    const one = (await list(owner.sid)).requests[0] as AdminList['requests'][number] & {
+      note?: string;
+    };
+    expect(one).toMatchObject({ nickname: '김여행', note: '회사 동료 김여행이에요' });
+    // 거절하면 말은 지운다
+    await api('POST', '/api/admin/requests/google%3AG-3/reject', owner.sid);
+    expect((await list(owner.sid)).requests[0]).not.toHaveProperty('note');
+    expect((await send({ token, note: '다시' })).statusCode).toBe(404);
   });
 
   it('거절하면 다시 로그인해도 거절 안내, 나중에 승인할 수도 있다', async () => {

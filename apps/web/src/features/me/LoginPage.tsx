@@ -6,6 +6,7 @@ import { copyText } from '../../shared/lib/clipboard';
 import { BottomSheet, Button, Spinner, TopBar } from '../../shared/ui';
 import { Wordmark } from '../home/Wordmark';
 import { IntroCarousel } from './IntroCarousel';
+import { JoinNoteForm } from './JoinNoteForm';
 
 const STYLE: Record<string, { bg: string; fg: string; border?: string }> = {
   kakao: { bg: '#FEE500', fg: '#191919' },
@@ -35,6 +36,12 @@ export function LoginPage({ returnTo: gateReturn }: { returnTo?: string } = {}) 
   useEffect(() => {
     void loginProviders().then(setProviders);
   }, []);
+  // 가입 대기: 콜백이 #join=토큰 으로 준 1회용 토큰 — 읽고 주소에서 지운다 (기록·공유에 남지 않게)
+  const [joinToken] = useState(() => {
+    const m = /^#join=([\w-]{10,100})$/.exec(window.location.hash);
+    if (m) history.replaceState(null, '', window.location.pathname + window.location.search);
+    return m?.[1] ?? null;
+  });
 
   return (
     <div className="mx-auto flex min-h-dvh max-w-[560px] flex-col">
@@ -57,6 +64,7 @@ export function LoginPage({ returnTo: gateReturn }: { returnTo?: string } = {}) 
             {t(
               `login.error.${KNOWN_ERRORS.includes(error) ? error : 'state'}` as 'login.error.state',
             )}
+            {error === 'pending' && joinToken && <JoinNoteForm token={joinToken} />}
             {error === 'invite' && account && (
               <button
                 type="button"

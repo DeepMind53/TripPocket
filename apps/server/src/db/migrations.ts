@@ -304,4 +304,10 @@ export const MIGRATIONS: readonly string[] = [
   `
   ALTER TABLE users ADD COLUMN active_days INTEGER NOT NULL DEFAULT 0;
   `,
+  // 20: 가입 요청에 관리자에게 전할 말 (2026-11-03) — 승인·거절하면 지운다. 적기용 1회 토큰(해시·30분)
+  `
+  ALTER TABLE join_requests ADD COLUMN note TEXT;
+  ALTER TABLE join_requests ADD COLUMN note_token_hash TEXT;
+  ALTER TABLE join_requests ADD COLUMN note_token_exp TEXT;
+  `,
 ];

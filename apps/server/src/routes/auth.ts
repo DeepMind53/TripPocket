@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import type { FastifyInstance } from 'fastify';
+import * as z from 'zod/mini';
 import { uuidv7 } from '@trippocket/shared';
 import { requestOrigin, type Config } from '../config';
 import type { Db } from '../db/database';
@@ -45,26 +46,34 @@ function mayJoin(db: Db, config: Config, provider: ProviderId, profile: Profile)
 
 /** 가입 요청 남기기 → 로그인 화면에 보여 줄 상태. 거절된 계정은 다시 쌓이지 않는다 */
 const MAX_PENDING = 50;
-function requestJoin(db: Db, provider: string, providerUserId: string, nickname: string) {
+/** 대기 화면에서 "관리자에게 전할 말"을 적을 수 있는 시간 */
+const NOTE_TTL = 30 * 60_000;
+function requestJoin(
+  db: Db,
+  provider: string,
+  providerUserId: string,
+  nickname: string,
+): { status: 'pending' | 'rejected' | 'invite'; noteToken?: string } {
   const row = db
     .prepare('SELECT status FROM join_requests WHERE provider = ? AND provider_user_id = ?')
     .get(provider, providerUserId) as { status: string } | undefined;
-  if (row?.status === 'rejected') return 'rejected';
-  if (row) {
+  if (row?.status === 'rejected') return { status: 'rejected' };
+  if (!row) {
+    // 아무나 로그인 버튼을 눌러 목록을 채우지 못하게 대기 수 상한
+    const pending = db
+      .prepare("SELECT COUNT(*) AS n FROM join_requests WHERE status = 'pending'")
+      .get() as { n: number };
+    if (pending.n >= MAX_PENDING) return { status: 'invite' };
     db.prepare(
-      'UPDATE join_requests SET nickname = ? WHERE provider = ? AND provider_user_id = ?',
-    ).run(nickname, provider, providerUserId);
-    return 'pending';
+      'INSERT INTO join_requests (provider, provider_user_id, nickname, requested_at) VALUES (?, ?, ?, ?)',
+    ).run(provider, providerUserId, nickname, new Date().toISOString());
   }
-  // 아무나 로그인 버튼을 눌러 목록을 채우지 못하게 대기 수 상한
-  const pending = db
-    .prepare("SELECT COUNT(*) AS n FROM join_requests WHERE status = 'pending'")
-    .get() as { n: number };
-  if (pending.n >= MAX_PENDING) return 'invite';
+  // 대기 화면에서 닉네임·관리자에게 전할 말을 적을 1회용 토큰 (URL 조각(#)으로만 — 서버 로그에 남지 않음)
+  const noteToken = randomToken(24);
   db.prepare(
-    'INSERT INTO join_requests (provider, provider_user_id, nickname, requested_at) VALUES (?, ?, ?, ?)',
-  ).run(provider, providerUserId, nickname, new Date().toISOString());
-  return 'pending';
+    'UPDATE join_requests SET note_token_hash = ?, note_token_exp = ? WHERE provider = ? AND provider_user_id = ?',
+  ).run(sha256(noteToken), new Date(Date.now() + NOTE_TTL).toISOString(), provider, providerUserId);
+  return { status: 'pending', noteToken };
 }
 
 export function audit(db: Db, userId: string | null, action: string, target?: string) {
@@ -79,6 +88,36 @@ export function audit(db: Db, userId: string | null, action: string, target?: st
 export function authRoutes(app: FastifyInstance, config: Config, db: Db): void {
   const fail = (origin: string, code: string, extra = '') =>
     `${origin}/login?error=${code}${extra}`;
+
+  // 가입 대기 화면: 닉네임·관리자에게 전할 말 (사용자 요청 2026-11-03 — 승인할 때 누구인지 알 수 있게).
+  // 로그인 전이라 콜백이 준 1회용 토큰(30분)으로만. 말은 승인·거절하면 지운다
+  const JoinNote = z.object({
+    token: z.string().check(z.minLength(10), z.maxLength(100)),
+    nickname: z.optional(z.string().check(z.maxLength(40))),
+    note: z.string().check(z.maxLength(200)),
+  });
+  app.post(
+    '/auth/join-note',
+    { config: { rateLimit: { max: 10, timeWindow: '1 minute' } } },
+    async (req, reply) => {
+      const body = JoinNote.safeParse(req.body);
+      if (!body.success) return reply.code(400).send({ error: 'bad_request' });
+      const { token, nickname, note } = body.data;
+      const res = db
+        .prepare(
+          `UPDATE join_requests SET note = ?, nickname = COALESCE(?, nickname)
+           WHERE note_token_hash = ? AND note_token_exp > ? AND status = 'pending'`,
+        )
+        .run(
+          note.trim() || null,
+          nickname?.trim() ? nickname.trim() : null,
+          sha256(token),
+          new Date().toISOString(),
+        );
+      if (res.changes === 0) return reply.code(404).send({ error: 'expired' });
+      return { ok: true };
+    },
+  );
 
   // 1) 시작: state(+구글은 PKCE) 만들고 제공자 로그인 화면으로
   app.get<{ Params: { provider: string }; Querystring: { returnTo?: string } }>(
@@ -182,7 +221,12 @@ export function authRoutes(app: FastifyInstance, config: Config, db: Db): void {
         const nickname = (profile.nickname || '여행자').slice(0, 40);
         if (!mayJoin(db, config, p, profile)) {
           audit(db, null, 'signup_denied', `${p}:${profile.providerUserId}`);
-          return reply.redirect(fail(origin, requestJoin(db, p, profile.providerUserId, nickname)));
+          {
+            const r = requestJoin(db, p, profile.providerUserId, nickname);
+            return reply.redirect(
+              fail(origin, r.status, r.noteToken ? `#join=${r.noteToken}` : ''),
+            );
+          }
         }
         // 첫 계정 = 관리자 (관리자 고정 목록이 있으면 그 목록만 — 아래 syncAdmins)
         const first =
