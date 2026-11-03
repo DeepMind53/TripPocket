@@ -625,12 +625,13 @@ describe('실험실', () => {
       // 빠른 메뉴: 교통카드·결제·바우처(정식) + 대중교통 안내·공항 → 숙소·근처 찾기
       await act(() => router.navigate(`/trips/${trip.id}/plan`));
       await user.click(await screen.findByRole('button', { name: '빠른 메뉴' }));
-      expect(await screen.findByText(/Suica·PASMO·ICOCA/)).toBeInTheDocument();
-      expect(screen.getByText(/작은 가게·신사는 현금/)).toBeInTheDocument();
+      // 도쿄는 도시 정보 (한국인이 많이 찾는 도시, 2026-11-03)
+      expect(await screen.findByText(/Suica·PASMO \(아이폰 지갑에도\)/)).toBeInTheDocument();
+      expect(screen.getByText(/작은 식당·신사는 현금/)).toBeInTheDocument();
       expect(
         await screen.findByRole('link', { name: '후지산 투어 바우처 링크 열기' }),
       ).toHaveAttribute('href', 'https://v.example/fuji');
-      await user.click(screen.getByRole('button', { name: /일본 대중교통 안내/ }));
+      await user.click(screen.getByRole('button', { name: /도쿄 대중교통 안내/ }));
       expect(await screen.findByText(/도쿄 메트로↔도에이/)).toBeInTheDocument();
       const route = screen.getByRole('link', { name: /공항에서 숙소 가는 길/ });
       expect(route.getAttribute('href')).toContain('travelmode=transit');
@@ -855,17 +856,10 @@ describe('실험실', () => {
     print.mockRestore();
   });
 
-  it('샘플 테스트: 관리자에게만, 누르면 오늘 출발 도쿄 5일 샘플을 만들어 열고 지울 수 있다', async () => {
+  it('샘플 테스트: 모든 사용자, 누르면 오늘 출발 도쿄 5일 샘플을 만들어 열고 지울 수 있다 · 24시간 지나면 자동 삭제', async () => {
     const user = userEvent.setup();
-    const me = { id: 'u', nickname: '관리자', createdAt: '', providers: [] };
+    const me = { id: 'u', nickname: '사용자', createdAt: '', providers: [] };
     useAuth.setState({ status: 'user', me: { ...me, isAdmin: false } });
-    const router = createMemoryRouter(routes, { initialEntries: ['/labs'] });
-    const { unmount } = render(<RouterProvider router={router} />);
-    await screen.findByRole('switch', { name: /대중교통 안내/ });
-    expect(screen.queryByRole('button', { name: '샘플 테스트' })).not.toBeInTheDocument();
-    unmount();
-
-    useAuth.setState({ status: 'user', me: { ...me, isAdmin: true } });
     const admin = createMemoryRouter(routes, { initialEntries: ['/labs'] });
     render(<RouterProvider router={admin} />);
     await user.click(await screen.findByRole('button', { name: '샘플 테스트' }));
@@ -887,6 +881,14 @@ describe('실험실', () => {
     await act(() => admin.navigate('/labs'));
     await user.click(await screen.findByRole('button', { name: '샘플 지우기' }));
     await waitFor(async () => expect(await tripRepo.listActive()).toEqual([]));
+    // 24시간: 만든 지 하루가 안 된 샘플은 남기고, 지난 것만 지운다
+    const { createLabSample, removeLabSample } = await import('../../data/labSample');
+    await createLabSample();
+    expect(await removeLabSample({ expiredOnly: true })).toBe(0);
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(Date.now() + 25 * 3_600_000);
+    expect(await removeLabSample({ expiredOnly: true })).toBe(4);
+    vi.useRealTimers();
     useAuth.setState({ status: 'unknown', me: null });
   });
 });

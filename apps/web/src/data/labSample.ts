@@ -5,7 +5,7 @@ import { savedPlaceRepo, SavedLimitError } from './repositories/savedPlaceRepo';
 import { tripRepo } from './repositories/tripRepo';
 
 /**
- * 관리자 실험실 "샘플 테스트" (사용자 요청 2026-10-26, 2026-10-27 최신 기능 반영): 당장 볼 수 없는 화면을 한 번에 보려고
+ * 실험실 "샘플 테스트" (2026-11-03 모든 사용자, 24시간 뒤 자동 삭제) (사용자 요청 2026-10-26, 2026-10-27 최신 기능 반영): 당장 볼 수 없는 화면을 한 번에 보려고
  * - 오늘 출발 도쿄 5일: 항공(출발 확인)·숙소·지금 기준 지난/진행 중/다음 일정(방문 버튼·다음 일정 바)·메모·가고 싶은 곳,
  *   좌표 있는 목적지(일출·일몰·여행지 특보·하루 동선), 지운 일정 1개(삭제 기록 복원)
  * - 6일 뒤 타이베이 3일: 다가오는 여행(준비 현황·특보 점·대만 기상 특보·입국 항목)
@@ -273,9 +273,16 @@ export async function createLabSample(): Promise<string> {
   return trip.id;
 }
 
-/** [샘플]로 만든 여행·저장 장소 지우기. 지운 여행 수 */
-export async function removeLabSample(): Promise<number> {
-  const trips = (await tripRepo.listActive()).filter((t) => t.title.startsWith(SAMPLE_MARK));
+/** 샘플은 만든 지 24시간이 지나면 앱을 열 때 지운다 (사용자 요청 2026-11-03) */
+export const SAMPLE_TTL_MS = 24 * 3_600_000;
+
+/** [샘플]로 만든 여행·저장 장소 지우기 (expiredOnly = 24시간 지난 것만). 지운 여행 수 */
+export async function removeLabSample(opts: { expiredOnly?: boolean } = {}): Promise<number> {
+  const cutoff = Date.now() - SAMPLE_TTL_MS;
+  const due = (x: { createdAt: string }) => !opts.expiredOnly || Date.parse(x.createdAt) < cutoff;
+  const trips = (await tripRepo.listActive()).filter(
+    (t) => t.title.startsWith(SAMPLE_MARK) && due(t),
+  );
   for (const t of trips) {
     // 안의 일정·예약까지 (여행만 지우면 방문 기록 등이 남는다)
     for (const i of await itemRepo.listByTrip(t.id)) await itemRepo.softDelete(i.id);
@@ -283,6 +290,6 @@ export async function removeLabSample(): Promise<number> {
     await tripRepo.softDelete(t.id);
   }
   for (const p of await savedPlaceRepo.listActive())
-    if (p.memo === SAMPLE_MARK) await savedPlaceRepo.softDelete(p.id);
+    if (p.memo === SAMPLE_MARK && due(p)) await savedPlaceRepo.softDelete(p.id);
   return trips.length;
 }

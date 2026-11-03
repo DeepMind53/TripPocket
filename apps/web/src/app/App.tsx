@@ -96,6 +96,10 @@ export function App() {
   useEffect(() => {
     const idle = window.requestIdleCallback ?? ((cb: () => void) => window.setTimeout(cb, 3000));
     idle(() => void import('../data/repositories/trashRepo').then((m) => m.trashRepo.purge()));
+    // 만든 지 24시간 지난 샘플 여행은 지운다 (실험실 샘플 테스트, 2026-11-03)
+    idle(
+      () => void import('../data/labSample').then((m) => m.removeLabSample({ expiredOnly: true })),
+    );
   }, []);
   // 보기 전용 여행을 고치려 하면 저장소(db.ts)가 막는다 → 안내만 (화면 버튼은 미리 숨김)
   useEffect(() => {

@@ -1,7 +1,6 @@
 import { FlaskConical, TestTube2 } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { useAuth } from '../../data/authStore';
 import { LABS, setLab, useLab, type LabId } from '../../data/labsStore';
 import { useTranslation } from '../../i18n';
 import { BottomSheet, Button, Switch, toast, TopBar } from '../../shared/ui';
@@ -80,15 +79,13 @@ function LabRow({ id }: { id: LabId }) {
 }
 
 /**
- * 관리자만: 오늘 출발 도쿄 5일 샘플(항공·숙소·일정) + 지난 여행·저장 장소를 만들고 실험실을 모두 켠다
- * (사용자 요청 2026-10-26 — 여행 당일에만 보이는 화면 점검용). 샘플 코드는 누를 때만 불러온다
+ * 샘플 테스트: 오늘 출발 도쿄 5일 샘플(항공·숙소·일정) + 지난 여행·저장 장소를 만든다
+ * (사용자 요청 2026-10-26, 2026-11-03 모든 사용자 · 24시간 뒤 자동 삭제). 샘플 코드는 누를 때만 불러온다
  */
 function SampleTest() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const isAdmin = useAuth((s) => s.status === 'user' && s.me?.isAdmin === true);
   const [busy, setBusy] = useState(false);
-  if (!isAdmin) return null;
   return (
     <section aria-label={t('labs.sample.title')} className="flex flex-col gap-2 pt-2">
       <h2 className="text-caption font-bold text-fg-muted">{t('labs.sample.title')}</h2>

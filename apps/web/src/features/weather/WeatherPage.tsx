@@ -146,17 +146,18 @@ function DayRow({
           : 'flex items-center gap-3 px-4 py-2.5'
       }
     >
-      <span className="flex w-24 shrink-0 flex-col">
+      <span className="flex w-20 shrink-0 flex-col">
         <span className="text-caption font-semibold text-fg-sub">{title}</span>
         <span className="tabular text-body-2">{formatMonthDay(date)}</span>
       </span>
       {weather && look ? (
         <>
-          <WeatherIcon kind={look.kind} className="size-7" />
-          <span className="flex min-w-0 flex-1 flex-col">
-            <span className="text-body-2">{look.label}</span>
+          {/* 예보·지난 날씨·작년 기록은 날짜와 날씨 그림 사이에 (사용자 요청 2026-11-03) */}
+          <span className="shrink-0 whitespace-nowrap">
             <WeatherKindBadge kind={weatherKind(weather)} />
           </span>
+          <WeatherIcon kind={look.kind} className="size-7" />
+          <span className="min-w-0 flex-1 text-body-2">{look.label}</span>
           <span className="tabular text-body-1 font-semibold">{formatTemps(weather)}</span>
         </>
       ) : (
@@ -234,12 +235,18 @@ function AirportDay({
           <span className="font-semibold">{role}</span>{' '}
           {airport ? `${airport.name} (${airport.iata})` : place}
         </span>
-        <span className="tabular text-micro text-fg-muted">
-          {formatMonthDay(date)}
-          {time ? ` ${time}` : ''}
+        {/* 예보인지, 지난 기록인지, 작년 같은 날 기록인지 — 날짜·시각 오른쪽에 (2026-11-03) */}
+        <span className="flex flex-wrap items-center gap-x-1.5">
+          <span className="tabular text-micro text-fg-muted">
+            {formatMonthDay(date)}
+            {time ? ` ${time}` : ''}
+          </span>
+          {weather && (
+            <span className="whitespace-nowrap">
+              <WeatherKindBadge kind={weatherKind(weather)} />
+            </span>
+          )}
         </span>
-        {/* 예보인지, 지난 기록인지, 작년 같은 날 기록인지 — 달력 그림으로 (2026-11-02) */}
-        {weather && <WeatherKindBadge kind={weatherKind(weather)} />}
       </span>
       {weather && look ? (
         <span className="flex shrink-0 items-center gap-1.5">
