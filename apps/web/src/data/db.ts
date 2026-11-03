@@ -30,6 +30,8 @@ export interface AttachmentRow {
   blob?: Blob;
   createdAt: string;
   remote: 0 | 1;
+  /** 서버 용량이 다 차서 못 올린 시각 (색인 없음, 하루 뒤 다시 시도 — 2026-11-04) */
+  serverFullAt?: string | undefined;
 }
 
 export interface KeyValueRow {

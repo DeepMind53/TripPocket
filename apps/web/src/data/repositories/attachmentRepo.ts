@@ -18,8 +18,11 @@ interface RemoteAttachment {
   createdAt: string;
 }
 
-async function uploadRow(row: AttachmentRow): Promise<boolean> {
+/** 올리기 결과: 'full' = 서버 용량(여행 250MB·계정 500MB)이 다 참 → 기기에만 */
+async function uploadRow(row: AttachmentRow): Promise<boolean | 'full'> {
   if (!row.blob) return false;
+  // 용량이 차서 못 올린 것은 하루에 한 번만 다시
+  if (row.serverFullAt && Date.now() - Date.parse(row.serverFullAt) < 86_400_000) return 'full';
   const res = await api<RemoteAttachment>(
     `/api/trips/${encodeURIComponent(row.tripId)}/bookings/${encodeURIComponent(row.bookingId)}/attachments`,
     {
@@ -32,7 +35,11 @@ async function uploadRow(row: AttachmentRow): Promise<boolean> {
       },
     },
   );
-  if (res.ok) await db.attachments.update(row.id, { remote: 1 });
+  if (res.ok) await db.attachments.update(row.id, { remote: 1, serverFullAt: undefined });
+  else if (res.status === 507) {
+    await db.attachments.update(row.id, { serverFullAt: new Date().toISOString() });
+    return 'full';
+  }
   return res.ok;
 }
 
@@ -55,7 +62,7 @@ export const attachmentRepo = {
     trip: Pick<Trip, 'id' | 'endDate' | 'timezone'>,
     bookingId: string,
     file: File,
-  ): Promise<'too_large' | 'bad_type' | AttachmentRow> {
+  ): Promise<'too_large' | 'bad_type' | (AttachmentRow & { full?: boolean })> {
     if (file.size > ATTACHMENT_MAX) return 'too_large';
     if (!TYPES.test(file.type)) return 'bad_type';
     const row: AttachmentRow = {
@@ -70,8 +77,22 @@ export const attachmentRepo = {
       remote: 0,
     };
     await db.attachments.add(row);
-    if (!ended(trip)) await uploadRow(row).catch(() => false);
-    return row;
+    const up = ended(trip) ? false : await uploadRow(row).catch(() => false);
+    if (up === 'full') return { ...row, full: true };
+    return { ...row, remote: up ? 1 : 0 };
+  },
+
+  /** 이름 바꾸기 (사용자 요청 2026-11-04) — 서버에 있으면 서버도 */
+  async rename(row: AttachmentRow, name: string): Promise<void> {
+    const next = name.trim().slice(0, 120);
+    if (!next) return;
+    await db.attachments.update(row.id, { name: next });
+    if (row.remote)
+      await api(`/api/attachments/${encodeURIComponent(row.id)}`, {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ name: next }),
+      });
   },
 
   async remove(row: AttachmentRow): Promise<void> {

@@ -11,6 +11,11 @@ import {
   attachmentsDir,
   removeFiles,
   safeId,
+  storageSummary,
+  TRIP_QUOTA,
+  tripUsed,
+  USER_QUOTA,
+  userUsed,
 } from '../services/attachments';
 
 interface Row {
@@ -25,7 +30,8 @@ interface Row {
 
 /**
  * 예약 문서(이티켓·바우처 PDF·사진) — docs/20 G2. 로그인 + 여행 멤버만.
- * 올리기·지우기는 소유자·편집자, 보기는 멤버 모두. 1개 10MB, 끝난 여행은 받지 않음(기기에만)
+ * 올리기·지우기·이름 바꾸기는 소유자·편집자, 보기는 멤버 모두. 1개 10MB, 개수 제한 없음,
+ * 서버에는 여행 하나 250MB·계정 하나 500MB까지 (2026-11-04). 끝난 여행은 받지 않음(기기에만)
  * 서버에서 데이터를 지우는 관리 기능은 HTTP로 열지 않는다 — 서버 PC의 `pnpm admin:data`로만
  */
 export function attachmentRoutes(app: FastifyInstance, config: Config, db: Db): void {
@@ -111,6 +117,15 @@ export function attachmentRoutes(app: FastifyInstance, config: Config, db: Db): 
         .prepare("SELECT 1 FROM records WHERE table_name = 'bookings' AND id = ? AND trip_id = ?")
         .get(bookingId, tripId);
       if (!booking) return reply.code(409).send({ error: 'booking_not_synced' });
+      // 같은 id를 다시 올리는 것(재시도)은 용량을 두 번 세지 않는다
+      const id0 = String(req.headers['x-attachment-id'] ?? '');
+      const again = id0 && db.prepare('SELECT 1 FROM attachments WHERE id = ?').get(id0);
+      if (!again) {
+        if (tripUsed(db, tripId) + req.body.length > TRIP_QUOTA)
+          return reply.code(507).send({ error: 'quota_trip' });
+        if (userUsed(db, req.user!.userId) + req.body.length > USER_QUOTA)
+          return reply.code(507).send({ error: 'quota_user' });
+      }
       let name = 'file';
       try {
         name =
@@ -153,6 +168,29 @@ export function attachmentRoutes(app: FastifyInstance, config: Config, db: Db): 
     reply.header('content-disposition', `inline; filename*=UTF-8''${encodeURIComponent(row.name)}`);
     return reply.send(createReadStream(file));
   });
+
+  // 서버 저장 용량 (설정 → 백업·복원·용량)
+  app.get('/api/me/storage', auth, async (req) => storageSummary(db, req.user!.userId));
+
+  // 이름 바꾸기 (사용자 요청 2026-11-04)
+  app.patch<{ Params: { id: string }; Body: { name?: unknown } }>(
+    '/api/attachments/:id',
+    auth,
+    async (req, reply) => {
+      if (!safeId(req.params.id)) return reply.code(404).send({ error: 'not_found' });
+      const row = db
+        .prepare('SELECT * FROM attachments WHERE id = ?')
+        .get(req.params.id) as unknown as Row | undefined;
+      if (!row) return reply.code(404).send({ error: 'not_found' });
+      const role = roleIn(row.trip_id, req.user!.userId);
+      if (!role) return reply.code(404).send({ error: 'not_found' });
+      if (role === 'viewer') return reply.code(403).send({ error: 'viewer' });
+      const name = typeof req.body?.name === 'string' ? req.body.name.trim().slice(0, 120) : '';
+      if (!name) return reply.code(400).send({ error: 'bad_name' });
+      db.prepare('UPDATE attachments SET name = ? WHERE id = ?').run(name, row.id);
+      return view({ ...row, name });
+    },
+  );
 
   app.delete<{ Params: { id: string } }>('/api/attachments/:id', auth, async (req, reply) => {
     if (!safeId(req.params.id)) return reply.code(404).send({ error: 'not_found' });

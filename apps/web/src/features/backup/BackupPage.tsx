@@ -13,10 +13,11 @@ import { useTranslation } from '../../i18n';
 import { useRouteSheet } from '../../shared/hooks/useRouteSheet';
 import { BottomSheet, Button, RadioList, TopBar, toast } from '../../shared/ui';
 import { formatBytes, formatSince, saveFile } from './backupUtils';
+import { ServerStorage } from './ServerStorage';
 
 type Ok = Extract<ParsedBackup, { ok: true }>;
 
-/** S-22 백업 · 복원 (docs/06 §3) + 저장공간 보호 */
+/** S-22 백업 · 복원 · 용량 (docs/06 §3) + 서버 저장 용량(2026-11-04) + 저장공간 보호 */
 export function BackupPage() {
   const { t } = useTranslation();
   const [last, setLast] = useState<string | null>(null);
@@ -120,6 +121,8 @@ export function BackupPage() {
             }}
           />
         </section>
+
+        <ServerStorage />
 
         <section className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4">
           <h2 className="text-body-1 font-bold">{t('backup.storage')}</h2>

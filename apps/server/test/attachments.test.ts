@@ -146,3 +146,91 @@ describe('예약 문서 (docs/20 G2)', () => {
     expect(db.prepare('SELECT COUNT(*) n FROM attachments').get()).toEqual({ n: 0 });
   });
 });
+
+describe('문서 용량·이름 바꾸기 (2026-11-04)', () => {
+  const fake = (id: string, trip: string, owner: string, size: number) =>
+    db
+      .prepare(
+        `INSERT INTO attachments (id, trip_id, booking_id, owner_user_id, name, mime, size, created_at)
+         VALUES (?, ?, 'b', ?, 'f', 'application/pdf', ?, 'x')`,
+      )
+      .run(id, trip, owner, size);
+  const MB = 1024 * 1024;
+
+  it('개수 제한은 없고, 여행 250MB·계정 500MB를 넘으면 507 — 지워지면 다시 올릴 수 있다', async () => {
+    for (let i = 0; i < 12; i++)
+      expect((await upload('A', Buffer.from(`%PDF ${i}`))).statusCode).toBe(200);
+    fake('00000000-0000-0000-0000-000000000001', 't', 'u-A', 250 * MB);
+    const full = await upload('A', Buffer.from('%PDF x'));
+    expect(full.statusCode).toBe(507);
+    expect(full.json()).toEqual({ error: 'quota_trip' });
+    db.prepare("DELETE FROM attachments WHERE id = '00000000-0000-0000-0000-000000000001'").run();
+    // 다른 여행 문서로 계정 500MB가 찼을 때
+    fake('00000000-0000-0000-0000-000000000002', 'other', 'u-A', 500 * MB);
+    expect((await upload('A', Buffer.from('%PDF y'))).json()).toEqual({ error: 'quota_user' });
+    db.prepare("DELETE FROM attachments WHERE id = '00000000-0000-0000-0000-000000000002'").run();
+    expect((await upload('A', Buffer.from('%PDF z'))).statusCode).toBe(200);
+  });
+
+  it('이름 바꾸기: 편집 멤버만, 보기 전용·남은 안 됨', async () => {
+    const att = (await upload('A', Buffer.from('%PDF'))).json() as { id: string };
+    const rename = (who: string, name: string) =>
+      app.inject({
+        method: 'PATCH',
+        url: `/api/attachments/${att.id}`,
+        headers: headers(who),
+        payload: { name },
+      });
+    expect((await rename('V', 'x')).statusCode).toBe(403);
+    expect((await rename('X', 'x')).statusCode).toBe(404);
+    expect((await rename('A', '  ')).statusCode).toBe(400);
+    expect((await rename('A', '입장권.pdf')).json()).toMatchObject({ name: '입장권.pdf' });
+  });
+
+  it('서버 저장 용량: 내 문서 합·한도·곧 지워질 양·여행별', async () => {
+    record('trips', 'soon', null, {
+      title: '오사카',
+      endDate: '2026-11-05',
+      timezone: 'Asia/Seoul',
+    });
+    db.prepare(
+      "INSERT INTO trip_members (trip_id, user_id, role, created_at) VALUES ('soon', 'u-A', 'owner', 'x')",
+    ).run();
+    fake('00000000-0000-0000-0000-000000000003', 't', 'u-A', 10 * MB);
+    fake('00000000-0000-0000-0000-000000000004', 'soon', 'u-A', 4 * MB);
+    fake('00000000-0000-0000-0000-000000000005', 't', 'u-V', 1 * MB);
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-11-04T03:00:00Z'));
+    try {
+      const r = await app.inject({ method: 'GET', url: '/api/me/storage', headers: headers('A') });
+      const s = r.json() as {
+        used: number;
+        expiring: number;
+        limit: number;
+        trips: { tripId: string; used: number; expiring: number; mine: number; limit: number }[];
+      };
+      expect(s).toMatchObject({ used: 14 * MB, expiring: 4 * MB, limit: 500 * MB });
+      expect(s.trips.find((x) => x.tripId === 't')).toMatchObject({
+        used: 11 * MB,
+        mine: 10 * MB,
+        expiring: 0,
+        limit: 250 * MB,
+      });
+      expect(s.trips.find((x) => x.tripId === 'soon')).toMatchObject({
+        used: 4 * MB,
+        expiring: 4 * MB,
+      });
+      expect(
+        (
+          await app.inject({
+            method: 'GET',
+            url: '/api/me/storage',
+            headers: { [PROXY_HEADER]: SECRET, origin: ORIGIN },
+          })
+        ).statusCode,
+      ).toBe(401);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});

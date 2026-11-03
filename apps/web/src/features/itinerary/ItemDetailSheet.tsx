@@ -1,3 +1,4 @@
+import { useTrip } from '../../data/hooks';
 import { useTimeText } from '../../shared/hooks/useTimeText';
 import type { Visit } from '../../domain/visit';
 import type { Booking, ItineraryItem } from '@trippocket/shared';
@@ -100,6 +101,7 @@ export function ItemDetailSheet({
   countryCode,
 }: ItemDetailSheetProps) {
   const { t } = useTranslation();
+  const docTrip = useTrip(tripId);
   // 후기: 숙소·맛집·카페·쇼핑·관광·액티비티만, 보기 전용 공유는 못 씀 (사용자 결정 2026-10-25)
   const reviewKind = item && isReviewKind(item.kind) ? item.kind : null;
   const canReview = !!reviewKind && !!tripId && !readOnly;
@@ -191,7 +193,15 @@ export function ItemDetailSheet({
 
           {booking && <BookingSummary booking={booking} onOpen={onOpenBooking} />}
           {/* 붙여 둔 이티켓·바우처 바로 열기 (입국 심사·체크인 때) */}
-          {booking && <BookingDocs booking={booking} canEdit={false} compact />}
+          {/* 액티비티 등 예약 문서도 여기서 붙이기·이름 바꾸기·지우기 (사용자 요청 2026-11-04) */}
+          {booking && (
+            <BookingDocs
+              trip={docTrip ?? undefined}
+              booking={booking}
+              canEdit={!readOnly && !!docTrip}
+              compact={readOnly || !docTrip}
+            />
+          )}
 
           {/* 누를 수 없는 버튼은 보이지 않게 — 종류·정보에 맞는 것만 (docs/16 D1) */}
           <div className="grid grid-cols-4 gap-2 [&:has(>:nth-child(5))]:grid-cols-5">
