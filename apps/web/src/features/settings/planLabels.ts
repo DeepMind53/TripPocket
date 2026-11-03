@@ -15,4 +15,12 @@ export const PLAN_LABELS = {
   jetLag: 'settings.jetLag',
   localHoliday: 'settings.localHoliday',
   lateNight: 'settings.lateNight',
+  planB: 'settings.planB',
+  placeTips: 'settings.placeTips',
+  missingStay: 'settings.missingStay',
+  airQuality: 'settings.airQuality',
+  cityIntro: 'settings.cityIntro',
+  transitGuide: 'settings.transitGuide',
+  nearbyFind: 'settings.nearbyFind',
+  arrivalRoute: 'settings.arrivalRoute',
 } as const satisfies Record<PlanFeature, string>;

@@ -15,7 +15,7 @@ import { OfflineBanner } from '../features/common/OfflineBanner';
 import { PullToSync } from '../features/common/PullToSync';
 import { FlightReminder } from '../features/common/FlightReminder';
 import { useSync } from '../data/sync/syncStore';
-import { useLab } from '../data/labsStore';
+import { useSettings } from '../data/settingsStore';
 
 // Plan B 아침 컨디션 체크 (실험실) — 켰을 때만
 const ConditionCheck = lazy(() => import('../features/itinerary/ConditionCheck'));
@@ -81,7 +81,7 @@ export function App() {
   const [nicknameDismissed, setNicknameDismissed] = useState(false);
   // 닉네임을 정한 다음, 설치하지 않은 기기에서 한 번만 홈 화면 추가 안내 (사용자 요청 2026-10-26)
   const signedIn = useAuth((s) => s.status === 'user');
-  const planOn = useLab('planB');
+  const planOn = useSettings((st) => st.planB);
   const isAdmin = useAuth((s) => s.status === 'user' && s.me?.isAdmin === true);
   const installed = useInstall((s) => s.installed);
   const [installDone, setInstallDone] = useState(installOffered);

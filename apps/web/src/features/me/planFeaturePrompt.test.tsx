@@ -80,7 +80,9 @@ describe('기능 안내 팝업', () => {
       updatedAt: '2030-01-01T00:00:00.000Z',
     };
     show();
-    await waitFor(() => expect(useSettings.getState().planPromptSeen).toHaveLength(13));
+    await waitFor(() =>
+      expect(useSettings.getState().planPromptSeen).toHaveLength(PLAN_FEATURES.length),
+    );
     expect(screen.queryByRole('button', { name: '켜기' })).not.toBeInTheDocument();
   });
 

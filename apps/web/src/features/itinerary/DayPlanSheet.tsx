@@ -1,4 +1,6 @@
 import {
+  addDays,
+  getTripDays,
   PLAN_CONDITION_TYPES,
   PLAN_WEATHER,
   uuidv7,
@@ -7,15 +9,16 @@ import {
   type PlanCondition,
   type Trip,
 } from '@trippocket/shared';
-import { Check, Plus, Trash2, X } from 'lucide-react';
+import { ArrowRight, Check, Copy, Plus, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
 import { setMood, setPick } from '../../data/dayPlanStore';
+import { formatMonthDay } from '../../shared/lib/dateFormat';
 import { itemRepo } from '../../data/repositories/itemRepo';
 import { tripRepo } from '../../data/repositories/tripRepo';
 import { MOODS } from '../../domain/dayPlan';
 import { useTranslation } from '../../i18n';
 import { cn } from '../../shared/lib/cn';
-import { BottomSheet, Button, confirmDelete, IconButton } from '../../shared/ui';
+import { BottomSheet, Button, confirmDelete, IconButton, toast } from '../../shared/ui';
 import type { DayPlanInfo } from './usePlanView';
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'] as const;
@@ -62,7 +65,11 @@ export function DayPlanSheet({
 }) {
   const { t } = useTranslation();
   const [editing, setEditing] = useState<string | null>(null);
+  // 다른 날로 복사·옮기기 (사용자 요청 2026-11-03)
+  const [moving, setMoving] = useState<{ id: string; mode: 'copy' | 'move' } | null>(null);
   if (!date || !info) return null;
+  const tripDays = getTripDays(trip.startDate, trip.endDate);
+  const tomorrow = addDays(date, 1);
   const all = trip.dayPlans ?? [];
   const save = (next: DayPlan[]) => void tripRepo.update(trip.id, { dayPlans: next });
   const update = (p: DayPlan) => save(all.map((x) => (x.id === p.id ? p : x)));
@@ -84,6 +91,37 @@ export function DayPlanSheet({
       if (i.planId === p.id) await itemRepo.softDelete(i.id);
     save(all.filter((x) => x.id !== p.id));
     setPick(trip.id, date, null);
+  };
+  /** 플랜과 그 일정을 다른 날로: copy = 새 플랜으로 복제, move = 날짜만 바꾸기 */
+  const relocate = async (p: DayPlan, to: LocalDate, mode: 'copy' | 'move') => {
+    const planItems = (await itemRepo.listByTrip(trip.id)).filter((i) => i.planId === p.id);
+    if (mode === 'copy') {
+      const id = uuidv7();
+      save([...all, { ...p, id, date: to }]);
+      for (const i of planItems) {
+        const {
+          id: _id,
+          createdAt: _c,
+          updatedAt: _u,
+          deletedAt: _d,
+          rev: _r,
+          order: _o,
+          ...rest
+        } = i;
+        await itemRepo.create({ ...rest, date: to, planId: id, done: undefined, visit: undefined });
+      }
+    } else {
+      save(all.map((x) => (x.id === p.id ? { ...x, date: to } : x)));
+      for (const i of planItems) await itemRepo.move(i.id, to, Number.MAX_SAFE_INTEGER);
+      setPick(trip.id, date, null);
+    }
+    setMoving(null);
+    toast(
+      t(mode === 'copy' ? 'planB.copied' : 'planB.moved', {
+        name: p.name,
+        date: formatMonthDay(to),
+      }),
+    );
   };
   const current = info.plan?.id ?? 'base';
   const pickRow = (id: string | null, label: string, sub?: string) => {
@@ -137,7 +175,10 @@ export function DayPlanSheet({
           <p className="text-caption whitespace-pre-line text-fg-sub">
             {info.fatigue == null
               ? t('planB.fatigueNone')
-              : t('planB.fatigue', { level: info.fatigue, steps: info.steps.toLocaleString() })}
+              : t(info.km == null ? 'planB.fatigueMood' : 'planB.fatigue', {
+                  level: info.fatigue,
+                  km: info.km ?? 0,
+                })}
           </p>
         </section>
 
@@ -178,12 +219,75 @@ export function DayPlanSheet({
                     <span className="text-caption text-fg-muted">{summary(p, t)}</span>
                   </button>
                   <IconButton
+                    label={t('planB.copy', { name: p.name })}
+                    icon={<Copy />}
+                    onClick={() =>
+                      setMoving(
+                        moving?.id === p.id && moving.mode === 'copy'
+                          ? null
+                          : { id: p.id, mode: 'copy' },
+                      )
+                    }
+                  />
+                  <IconButton
+                    label={t('planB.move', { name: p.name })}
+                    icon={<ArrowRight />}
+                    onClick={() =>
+                      setMoving(
+                        moving?.id === p.id && moving.mode === 'move'
+                          ? null
+                          : { id: p.id, mode: 'move' },
+                      )
+                    }
+                  />
+                  <IconButton
                     label={t('planB.delete', { name: p.name })}
                     icon={<Trash2 />}
                     onClick={() => void remove(p)}
                   />
                 </div>
               ),
+            )}
+            {moving && info.plans.some((p) => p.id === moving.id) && (
+              <div className="flex flex-col gap-1.5 rounded-btn bg-bg-subtle p-2">
+                <span className="text-caption font-semibold">
+                  {t(moving.mode === 'copy' ? 'planB.copyTo' : 'planB.moveTo')}
+                </span>
+                <div className="flex flex-wrap gap-1.5">
+                  {tripDays
+                    .filter((d) => d !== date)
+                    .map((d) => (
+                      <button
+                        key={d}
+                        type="button"
+                        onClick={() =>
+                          void relocate(
+                            info.plans.find((p) => p.id === moving.id)!,
+                            d,
+                            moving.mode,
+                          )
+                        }
+                        className="min-h-9 rounded-full border border-line bg-bg px-3 text-caption font-semibold"
+                      >
+                        {t('planB.dayChip', {
+                          n: tripDays.indexOf(d) + 1,
+                          date: formatMonthDay(d),
+                        })}
+                      </button>
+                    ))}
+                </div>
+              </div>
+            )}
+            {/* 오늘 안 쓴 플랜을 내일로 (지금 보이는 플랜이 있고 내일이 여행 안이면) */}
+            {info.plan && tripDays.includes(tomorrow) && (
+              <Button
+                variant="secondary"
+                fullWidth
+                leading={<ArrowRight aria-hidden="true" className="size-4" />}
+                onClick={() => void relocate(info.plan!, tomorrow, 'move')}
+              >
+                {t('planB.toTomorrow', { name: info.plan.name })}
+              </Button>
             )}
             {info.plans.length < 5 && (
               <Button

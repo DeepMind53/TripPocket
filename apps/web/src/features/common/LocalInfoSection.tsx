@@ -5,7 +5,7 @@ import { attachmentRepo } from '../../data/repositories/attachmentRepo';
 import { openBlob } from '../../shared/lib/openBlob';
 import { IconButton } from '../../shared/ui';
 import { useTrip, useTripBookings } from '../../data/hooks';
-import { useLab } from '../../data/labsStore';
+import { useSettings } from '../../data/settingsStore';
 import { arrivalToStay, voucherBookings } from '../../domain/localInfo';
 import { tripCountries } from '../../domain/tripPlace';
 import { cityLocalFor } from '../../data/cityLocal';
@@ -61,9 +61,9 @@ export function LocalInfoSection({ tripId }: { tripId: string }) {
   const bookings = useTripBookings(tripId) ?? [];
   // 붙인 예약 문서 (기기에 있는 것)
   const docs = useLiveQuery(() => attachmentRepo.listByTrip(tripId), [tripId]) ?? [];
-  const guideOn = useLab('transitGuide');
-  const nearbyOn = useLab('nearbyFind');
-  const arrivalOn = useLab('arrivalRoute');
+  const guideOn = useSettings((s) => s.transitGuide);
+  const nearbyOn = useSettings((s) => s.nearbyFind);
+  const arrivalOn = useSettings((s) => s.arrivalRoute);
   if (!trip || (!transitOn && !payOn && !voucherOn)) return null;
   const all = tripCountries(trip);
   const countries = all.filter((c) => c !== 'KR');

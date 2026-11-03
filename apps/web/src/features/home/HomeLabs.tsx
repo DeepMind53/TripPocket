@@ -31,7 +31,7 @@ export function HomeLabs({
     trip.startDate >= today &&
     Date.parse(trip.startDate) - Date.parse(today) <= 7 * 86_400_000;
   const offlineOn = useLab('offlineReady') && soon;
-  const introOn = useLab('cityIntro');
+  const introOn = useSettings((s) => s.cityIntro);
   const city = trip.destinations[0]?.name;
   const docs = useLiveQuery(
     () => (offlineOn ? attachmentRepo.listByTrip(trip.id) : []),

@@ -1,4 +1,5 @@
 import { BackupReminder } from '../backup/BackupReminder';
+import { useTripPlanItems } from '../itinerary/usePlanView';
 import { useTimeText } from '../../shared/hooks/useTimeText';
 import {
   addDays,
@@ -198,7 +199,8 @@ function OngoingTrip({ trip }: { trip: Trip }) {
   const { time, wide } = useTimeText();
   const { t } = useTranslation();
   useMinuteTick();
-  const items = useTripItems(trip.id);
+  // Plan B: 오늘 일정도 지금 보이는 플랜 기준 (실험실을 끄면 기본 일정만)
+  const items = useTripPlanItems(trip, useTripItems(trip.id) ?? []);
   const bookings = useTripBookings(trip.id) ?? [];
   const [dirOpen, setDirOpen] = useRouteSheet('directions');
   const [dest, setDest] = useState<Destination | null>(null);

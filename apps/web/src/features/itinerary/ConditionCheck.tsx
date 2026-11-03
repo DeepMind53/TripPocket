@@ -2,7 +2,7 @@ import { addDays, getTripStatus, todayIn, type Trip } from '@trippocket/shared';
 import { useState } from 'react';
 import { dayKey, setMood, useDayPlanStore } from '../../data/dayPlanStore';
 import { useTripItems, useTrips } from '../../data/hooks';
-import { estimateSteps, MOODS } from '../../domain/dayPlan';
+import { MOODS, travelKm } from '../../domain/dayPlan';
 import { timeIn } from '../../shared/hooks/useMinuteClock';
 import { useTranslation } from '../../i18n';
 import { cn } from '../../shared/lib/cn';
@@ -37,7 +37,7 @@ function Ask({ trip }: { trip: Trip }) {
     later.add(key);
     setDismissed(true);
   };
-  const steps = estimateSteps((items ?? []).filter((i) => i.date === addDays(today, -1)));
+  const km = travelKm((items ?? []).filter((i) => i.date === addDays(today, -1)));
   return (
     <BottomSheet
       open={open}
@@ -68,11 +68,7 @@ function Ask({ trip }: { trip: Trip }) {
             </button>
           ))}
         </div>
-        {steps > 0 && (
-          <p className="text-caption text-fg-muted">
-            {t('planB.check.steps', { steps: steps.toLocaleString() })}
-          </p>
-        )}
+        {km != null && <p className="text-caption text-fg-muted">{t('planB.check.km', { km })}</p>}
         <Button variant="ghost" fullWidth onClick={close}>
           {t('planB.check.later')}
         </Button>

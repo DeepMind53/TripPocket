@@ -1,6 +1,6 @@
 import type { DayPlan } from '@trippocket/shared';
 import { describe, expect, it } from 'vitest';
-import { activePlan, conditionMet, estimateSteps, fatigueLevel, planMatches } from './dayPlan';
+import { activePlan, conditionMet, fatigueLevel, planMatches, travelKm } from './dayPlan';
 
 const ctx = (over: Partial<Parameters<typeof conditionMet>[1]> = {}) => ({
   weather: { code: 61, min: 8, max: 14 },
@@ -49,21 +49,21 @@ describe('Plan B 조건', () => {
   });
 });
 
-describe('피로도', () => {
+describe('피로도: 당일 컨디션 + 전날 이동 거리', () => {
   const p = (lat: number) => ({ kind: 'place' as const, place: { coords: { lat, lng: 139.7 } } });
   // 위도 0.1도 ≈ 11km
-  const day = [p(35.6), p(35.7), p(35.8)];
+  const far = [p(35.6), p(35.7), p(35.8)];
 
-  it('어제 걸음 수: 다녀온(미방문 아닌) 장소 사이 거리로 추정', () => {
-    expect(estimateSteps([])).toBe(0);
-    expect(estimateSteps(day)).toBeGreaterThan(30000);
-    expect(estimateSteps([p(35.6), p(35.601)])).toBe(4200);
+  it('전날 이동 거리: 다녀온(미방문 아닌) 장소 사이 직선거리', () => {
+    expect(travelKm([])).toBeNull();
+    expect(travelKm(far)).toBeGreaterThan(20);
+    expect(travelKm([p(35.6), { ...p(35.7), visit: 'skipped' as const }])).toBe(0);
   });
 
-  it('컨디션 2 : 어제 걸음 1 · 컨디션이 없으면 걸음만 · 둘 다 없으면 null', () => {
-    expect(fatigueLevel(1, day).level).toBe(2);
+  it('컨디션 2 : 이동 거리 1 · 하나만 있으면 그것으로 · 둘 다 없으면 null', () => {
+    expect(fatigueLevel(1, far).level).toBe(2);
     expect(fatigueLevel(5, []).level).toBe(5);
-    expect(fatigueLevel(null, day).level).toBe(5);
+    expect(fatigueLevel(null, far).level).toBe(5);
     expect(fatigueLevel(null, []).level).toBeNull();
   });
 });

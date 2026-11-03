@@ -95,9 +95,53 @@ export async function applyRemoteSettings(
   await settingsRepo.set(KEY, next);
 }
 
-/** 섹션별 "기본값으로 되돌리기" */
+/**
+ * 사용자가 저장한 기본값 (사용자 요청 2026-11-03): [지금 설정을 기본값으로 저장] → 되돌리기는 이 값으로.
+ * 이 기기에만 (localStorage). 물어본 기록(planPrompt*)은 저장하지 않는다
+ */
+const USER_DEFAULTS_KEY = 'tp-settings-defaults';
+const NOT_DEFAULTS: readonly (keyof Settings)[] = ['planPromptSeen', 'planPromptV'];
+
+export function userDefaults(): Partial<Settings> | null {
+  try {
+    const raw = localStorage.getItem(USER_DEFAULTS_KEY);
+    if (!raw) return null;
+    // 저장한 값도 검사해서 틀린 항목은 처음 기본값으로
+    const parsed = parseSettings({ ...(JSON.parse(raw) as object), planPromptV: 1 });
+    const keys = Object.keys(JSON.parse(raw) as object) as (keyof Settings)[];
+    return Object.fromEntries(keys.filter((k) => k in parsed).map((k) => [k, parsed[k]]));
+  } catch {
+    return null;
+  }
+}
+
+export function saveUserDefaults(): void {
+  const cur = currentSettings();
+  const keep = (Object.keys(SETTINGS_DEFAULTS) as (keyof Settings)[]).filter(
+    (k) => !NOT_DEFAULTS.includes(k),
+  );
+  try {
+    localStorage.setItem(
+      USER_DEFAULTS_KEY,
+      JSON.stringify(Object.fromEntries(keep.map((k) => [k, cur[k]]))),
+    );
+  } catch {
+    // 저장 못 하면 처음 기본값 그대로
+  }
+}
+
+export function clearUserDefaults(): void {
+  try {
+    localStorage.removeItem(USER_DEFAULTS_KEY);
+  } catch {
+    // 지울 수 없으면 그대로
+  }
+}
+
+/** 섹션별 "기본값으로 되돌리기" — 저장한 기본값이 있으면 그 값, 없으면 처음 기본값 */
 export function resetSettings(keys: readonly (keyof Settings)[]): void {
-  updateSettings(Object.fromEntries(keys.map((k) => [k, SETTINGS_DEFAULTS[k]])));
+  const mine = userDefaults() ?? {};
+  updateSettings(Object.fromEntries(keys.map((k) => [k, mine[k] ?? SETTINGS_DEFAULTS[k]])));
 }
 
 /** 진동 (설정에서 끄면 안 함, 지원 안 하는 기기도 조용히 무시) */

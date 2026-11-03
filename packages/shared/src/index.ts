@@ -41,6 +41,7 @@ export {
   nextPlanPrompt,
   parseSettings,
   PLAN_FEATURES,
+  PLAN_FEATURE_GROUPS,
   SETTINGS_DEFAULTS,
   type PlanFeature,
   type Settings,

@@ -1,4 +1,4 @@
-import { PLAN_FEATURES, type Settings } from '@trippocket/shared';
+import { PLAN_FEATURE_GROUPS, type Settings } from '@trippocket/shared';
 import { PLAN_LABELS } from './planLabels';
 import { useAuth } from '../../data/authStore';
 import { NotificationGroup } from './NotificationGroup';
@@ -6,7 +6,14 @@ import { DeviceDataGroup } from './DeviceDataGroup';
 import { reviewsApi } from '../../data/api/reviews';
 import { maskedName } from '@trippocket/shared';
 import { useState, type ReactNode } from 'react';
-import { resetSettings, updateSettings, useSettings } from '../../data/settingsStore';
+import {
+  clearUserDefaults,
+  resetSettings,
+  saveUserDefaults,
+  updateSettings,
+  userDefaults,
+  useSettings,
+} from '../../data/settingsStore';
 import { useTranslation } from '../../i18n';
 import {
   BottomSheet,
@@ -190,27 +197,7 @@ export function SettingsPage() {
           </Field>
         </Group>
 
-        <Group
-          title={t('settings.plan')}
-          onReset={() =>
-            resetSettings([
-              'timeStepMin',
-              'dimPastItems',
-              'planMapOpen',
-              'sunTimes',
-              'legDistance',
-              'compactList',
-              'nearbyWish',
-              'checkoutNotice',
-              'dayRecap',
-              'nowScroll',
-              'weatherMark',
-              'jetLag',
-              'localHoliday',
-              'lateNight',
-            ])
-          }
-        >
+        <Group title={t('settings.plan')} onReset={() => resetSettings(['timeStepMin'])}>
           <Field label={t('settings.timeStep')}>
             <SegmentedControl
               label={t('settings.timeStep')}
@@ -224,17 +211,26 @@ export function SettingsPage() {
               }))}
             />
           </Field>
-          {/* 일정 화면 표시 — 항목마다 [샘플] 미리보기 (사용자 요청 2026-10-27) */}
-          {PLAN_FEATURES.map((key) => (
-            <SwitchRow
-              key={key}
-              label={t(PLAN_LABELS[key])}
-              checked={s[key]}
-              onChange={set(key)}
-              preview={key}
-            />
-          ))}
         </Group>
+
+        {/* 일정 기능은 묶음별로 (사용자 요청 2026-11-03) — 항목마다 [샘플] 미리보기 */}
+        {PLAN_FEATURE_GROUPS.map((g) => (
+          <Group
+            key={g.id}
+            title={t(`settings.planGroup.${g.id}` as 'settings.planGroup.view')}
+            onReset={() => resetSettings(g.keys)}
+          >
+            {g.keys.map((key) => (
+              <SwitchRow
+                key={key}
+                label={t(PLAN_LABELS[key])}
+                checked={s[key]}
+                onChange={set(key)}
+                preview={key}
+              />
+            ))}
+          </Group>
+        ))}
 
         <Group title={t('settings.ai')} onReset={() => resetSettings(['aiCats', 'aiAnchor'])}>
           <Field label={t('settings.aiAnchor')}>
@@ -351,8 +347,50 @@ export function SettingsPage() {
             ]}
           />
         </Group>
+
+        <DefaultsBox />
       </div>
     </div>
+  );
+}
+
+/** 지금 설정을 기본값으로 저장 → 섹션별 [기본값으로 되돌리기]가 이 값으로 (사용자 요청 2026-11-03) */
+function DefaultsBox() {
+  const { t } = useTranslation();
+  const [saved, setSaved] = useState(() => userDefaults() !== null);
+  return (
+    <section
+      aria-label={t('settings.saveDefaults')}
+      className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-4"
+    >
+      <Button
+        fullWidth
+        variant="secondary"
+        onClick={() => {
+          saveUserDefaults();
+          setSaved(true);
+          toast(t('settings.savedDefaults'));
+        }}
+      >
+        {t('settings.saveDefaults')}
+      </Button>
+      <p className="text-caption whitespace-pre-line text-fg-muted">
+        {t('settings.saveDefaultsDesc')}
+      </p>
+      {saved && (
+        <button
+          type="button"
+          onClick={() => {
+            clearUserDefaults();
+            setSaved(false);
+            toast(t('settings.clearedDefaults'));
+          }}
+          className="self-end px-1 py-1 text-caption font-semibold text-fg-sub"
+        >
+          {t('settings.clearDefaults')}
+        </button>
+      )}
+    </section>
   );
 }
 

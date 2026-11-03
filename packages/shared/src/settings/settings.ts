@@ -50,6 +50,22 @@ export interface Settings {
   localHoliday: boolean;
   /** 마지막 일정이 22시 이후면 늦은 귀가 안내 (2026-10-28 실험실에서 정식) */
   lateNight: boolean;
+  /** 날짜별 대안 플랜(Plan B)·아침 컨디션 체크 (2026-11-03 실험실에서 정식) */
+  planB: boolean;
+  /** 사원·온천·해변·산 일정이 있는 날 챙길 것 (2026-11-03 실험실에서 정식) */
+  placeTips: boolean;
+  /** 예약 탭 위 숙소 없는 밤 안내 (2026-11-03 실험실에서 정식) */
+  missingStay: boolean;
+  /** 미세먼지·자외선이 나쁜 날 안내 (2026-11-03 실험실에서 정식) */
+  airQuality: boolean;
+  /** 홈 여행 카드 아래 여행지 소개(위키백과) (2026-11-03 실험실에서 정식) */
+  cityIntro: boolean;
+  /** 빠른 메뉴 대중교통 안내(요금·환승·앱) (2026-11-03 실험실에서 정식) */
+  transitGuide: boolean;
+  /** 빠른 메뉴 근처 찾기(편의점·약국·ATM·화장실) (2026-11-03 실험실에서 정식) */
+  nearbyFind: boolean;
+  /** 빠른 메뉴 공항 → 숙소 길찾기 (2026-11-03 실험실에서 정식) */
+  arrivalRoute: boolean;
   /** ⚡ 빠른 메뉴 버튼 보이기 */
   quickButton: boolean;
   /** AI 추천을 열 때 처음 골라 둘 카테고리 */
@@ -77,8 +93,38 @@ export const PLAN_FEATURES = [
   'jetLag',
   'localHoliday',
   'lateNight',
+  'planB',
+  'placeTips',
+  'missingStay',
+  'airQuality',
+  'cityIntro',
+  'transitGuide',
+  'nearbyFind',
+  'arrivalRoute',
 ] as const;
 export type PlanFeature = (typeof PLAN_FEATURES)[number];
+
+/** 설정 "일정"을 나눈 묶음 (사용자 요청 2026-11-03 — 항목이 많아져 카테고리로) */
+export const PLAN_FEATURE_GROUPS: readonly { id: string; keys: readonly PlanFeature[] }[] = [
+  {
+    id: 'view',
+    keys: [
+      'planMapOpen',
+      'compactList',
+      'dimPastItems',
+      'nowScroll',
+      'legDistance',
+      'sunTimes',
+      'planB',
+    ],
+  },
+  {
+    id: 'notice',
+    keys: ['nearbyWish', 'checkoutNotice', 'lateNight', 'dayRecap', 'placeTips', 'missingStay'],
+  },
+  { id: 'local', keys: ['weatherMark', 'airQuality', 'localHoliday', 'jetLag', 'cityIntro'] },
+  { id: 'quick', keys: ['transitGuide', 'nearbyFind', 'arrivalRoute'] },
+];
 
 /** 아직 묻지 않은 기능 중 무작위 하나, 다 물었으면 null */
 export function nextPlanPrompt(
@@ -122,6 +168,14 @@ export const SETTINGS_DEFAULTS: Settings = {
   jetLag: false,
   localHoliday: false,
   lateNight: false,
+  planB: false,
+  placeTips: false,
+  missingStay: false,
+  airQuality: false,
+  cityIntro: false,
+  transitGuide: false,
+  nearbyFind: false,
+  arrivalRoute: false,
   quickButton: true,
   aiCats: ['food', 'cafe'],
   aiAnchor: 'text',
@@ -162,6 +216,14 @@ const VALID: { [K in keyof Settings]: (v: unknown) => v is Settings[K] } = {
   jetLag: (v): v is boolean => typeof v === 'boolean',
   localHoliday: (v): v is boolean => typeof v === 'boolean',
   lateNight: (v): v is boolean => typeof v === 'boolean',
+  planB: (v): v is boolean => typeof v === 'boolean',
+  placeTips: (v): v is boolean => typeof v === 'boolean',
+  missingStay: (v): v is boolean => typeof v === 'boolean',
+  airQuality: (v): v is boolean => typeof v === 'boolean',
+  cityIntro: (v): v is boolean => typeof v === 'boolean',
+  transitGuide: (v): v is boolean => typeof v === 'boolean',
+  nearbyFind: (v): v is boolean => typeof v === 'boolean',
+  arrivalRoute: (v): v is boolean => typeof v === 'boolean',
   quickButton: (v): v is boolean => typeof v === 'boolean',
   aiCats: (v): v is Settings['aiCats'] =>
     Array.isArray(v) &&

@@ -1,5 +1,5 @@
 import type { Booking, Trip } from '@trippocket/shared';
-import { useLab } from '../../data/labsStore';
+import { useSettings } from '../../data/settingsStore';
 import { nightsWithoutStay } from '../../domain/localInfo';
 import { useTranslation } from '../../i18n';
 import { formatMonthDay } from '../../shared/lib/dateFormat';
@@ -10,7 +10,7 @@ import { formatMonthDay } from '../../shared/lib/dateFormat';
  */
 export function BookingNotices({ trip, bookings }: { trip: Trip; bookings: readonly Booking[] }) {
   const { t } = useTranslation();
-  const on = useLab('missingStay');
+  const on = useSettings((s) => s.missingStay);
   if (!on || !bookings.some((b) => b.kind === 'lodging' && !b.deletedAt)) return null;
   const nights = nightsWithoutStay(trip, bookings);
   if (!nights.length) return null;

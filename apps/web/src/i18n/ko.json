@@ -535,7 +535,26 @@
     "weatherMark": "날씨 주의 표시",
     "jetLag": "시차 안내 (홈)",
     "localHoliday": "현지 공휴일 표시",
-    "lateNight": "늦은 귀가 안내"
+    "lateNight": "늦은 귀가 안내",
+    "planB": "Plan B (날짜별 대안 일정)",
+    "placeTips": "장소 맞춤 팁",
+    "missingStay": "숙소 없는 밤 알림",
+    "airQuality": "미세먼지·자외선 안내",
+    "cityIntro": "여행지 소개",
+    "transitGuide": "대중교통 안내",
+    "nearbyFind": "근처 찾기",
+    "arrivalRoute": "공항에서 숙소 가는 길",
+    "planGroup": {
+      "view": "일정 · 화면",
+      "notice": "일정 · 알림",
+      "local": "일정 · 날씨와 현지 정보",
+      "quick": "일정 · 빠른 메뉴"
+    },
+    "saveDefaults": "지금 설정을 기본값으로 저장",
+    "saveDefaultsDesc": "기본값으로 되돌리면 저장한 값으로 돌아가요\n이 기기에만 저장돼요",
+    "savedDefaults": "지금 설정을 기본값으로 저장했어요",
+    "clearDefaults": "저장한 기본값 지우기",
+    "clearedDefaults": "처음 기본값으로 돌아가요"
   },
   "notFound": {
     "title": "페이지를 찾을 수 없어요",
@@ -1347,41 +1366,9 @@
     "localTime": "현지 {{time}}",
     "none": "지금 시험 중인 기능이 없어요\n새 기능이 생기면 여기에 먼저 보여요",
     "item": {
-      "transitGuide": {
-        "name": "대중교통 안내",
-        "desc": "빠른 메뉴에 나라별 교통수단\n요금과 환승, 추천 앱"
-      },
-      "nearbyFind": {
-        "name": "근처 찾기",
-        "desc": "빠른 메뉴에 편의점·약국·ATM·화장실\n지도 앱으로 바로 찾기"
-      },
-      "arrivalRoute": {
-        "name": "공항에서 숙소 가는 길",
-        "desc": "빠른 메뉴에 도착 공항에서\n첫 숙소까지 대중교통 길찾기"
-      },
-      "missingStay": {
-        "name": "숙소 없는 밤",
-        "desc": "숙소 예약이 비는 밤을\n예약 탭 위에 알려 줘요"
-      },
       "offlineReady": {
         "name": "오프라인 준비",
         "desc": "출발 7일 전부터 홈에\n바우처와 지도 준비를 알려 줘요"
-      },
-      "placeTips": {
-        "name": "장소 맞춤 팁",
-        "desc": "사원이나 온천, 해변이 있는 날\n챙길 것을 알려 줘요"
-      },
-      "airQuality": {
-        "name": "미세먼지 안내",
-        "desc": "일정 날짜 아래에 공기가 나쁜 날\n자외선이 센 날을 알려 줘요"
-      },
-      "cityIntro": {
-        "name": "여행지 소개",
-        "desc": "홈 여행 카드 아래에\n위키백과 한두 문장 소개"
-      },
-      "planB": {
-        "name": "Plan B",
-        "desc": "날짜를 눌러 대안 일정을 만들어요\n날씨와 컨디션에 맞춰 먼저 보여 줘요"
       }
     },
     "checkoutAt": "오늘 {{time}} 체크아웃 · {{name}}",
@@ -2384,7 +2371,7 @@
       "4": "피곤해요",
       "5": "녹초예요"
     },
-    "fatigue": "피로도 {{level}}/5\n어제 걸음 약 {{steps}}보(일정으로 추정)와 컨디션으로 계산해요",
+    "fatigue": "피로도 {{level}}/5\n오늘 컨디션과 어제 이동 약 {{km}}km로 계산해요",
     "fatigueNone": "컨디션을 고르면 피로도를 계산해요",
     "show": "보여 줄 일정",
     "auto": "자동 (조건대로)",
@@ -2445,9 +2432,18 @@
     "open": "{{day}} 플랜 고르기",
     "check": {
       "title": "오늘 컨디션은 어때요?",
-      "desc": "고른 컨디션과 어제 걸음 수로\n오늘 플랜을 골라 드려요",
-      "steps": "어제 약 {{steps}}보 걸었어요 (일정으로 추정)",
-      "later": "나중에"
-    }
+      "desc": "고른 컨디션과 어제 이동 거리로\n오늘 플랜을 골라 드려요",
+      "later": "나중에",
+      "km": "어제 약 {{km}}km 이동했어요 (장소 사이 직선거리)"
+    },
+    "copy": "{{name}} 다른 날로 복사",
+    "move": "{{name}} 다른 날로 옮기기",
+    "copyTo": "어느 날로 복사할까요?",
+    "moveTo": "어느 날로 옮길까요?",
+    "dayChip": "{{n}}일차 {{date}}",
+    "toTomorrow": "{{name}} 내일로 옮기기",
+    "copied": "{{name}}을(를) {{date}}로 복사했어요",
+    "moved": "{{name}}을(를) {{date}}로 옮겼어요",
+    "fatigueMood": "피로도 {{level}}/5\n어제 이동 기록이 없어 컨디션으로만 계산해요"
   }
 }

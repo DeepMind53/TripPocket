@@ -26,7 +26,7 @@ test('설치 후에는 인터넷 없이도 앱이 열리고 만든 여행이 보
   await page.goto('/trips');
   await expect(page.getByText('오프라인 여행')).toBeVisible();
   await page.goto('/settings');
-  await expect(page.getByRole('region', { name: '화면' })).toBeVisible();
+  await expect(page.getByRole('region', { name: '화면', exact: true })).toBeVisible();
 });
 
 test('로그인(/auth)·API 주소는 서비스 워커가 가로채지 않고 서버로 보낸다', async ({ page }) => {

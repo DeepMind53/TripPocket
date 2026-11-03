@@ -1,6 +1,5 @@
 import type { DayPlan, ItineraryItem, PlanCondition } from '@trippocket/shared';
 import { dayRecap } from './dayExtras';
-import { lateNightAt } from './travelExtras';
 import { weatherLook, type DayWeather } from './weather';
 
 /**
@@ -77,39 +76,35 @@ export function activePlan(
   return auto ? { plan: auto, by: 'auto' } : { plan: null, by: null };
 }
 
-/** 어제 일정으로 걸음 수 추정 (웹앱은 휴대폰 걸음 센서를 못 읽는다): 기본 4천 보 + 장소 사이 거리 × 1,700보/km */
-export function estimateSteps(
+/**
+ * 전날 이동 거리 (km, 장소 사이 직선거리 합) — 미방문만 빼고 다녀온 것으로 본다 (방문 표시를 안 한 사람이 많아서).
+ * 다녀온 장소가 없으면 null
+ */
+export function travelKm(
   items: readonly Pick<ItineraryItem, 'kind' | 'place' | 'visit' | 'done' | 'transport'>[],
-): number {
-  // 미방문만 빼고 다녀온 것으로 본다 (방문 표시를 안 한 사람이 많아서)
+): number | null {
   const went = items
     .filter((i) => i.visit !== 'skipped')
     .map((i) => ({ ...i, visit: 'visited' as const }));
   const { visited, km } = dayRecap(went);
-  if (visited === 0) return 0;
-  return Math.round((4000 + km * 1700) / 100) * 100;
+  return visited === 0 ? null : km;
 }
 
-const stepsLevel = (steps: number) =>
-  steps < 6000 ? 1 : steps < 10000 ? 2 : steps < 15000 ? 3 : steps < 20000 ? 4 : 5;
+/** 이동 거리 → 피로 1~5 (도시 여행 기준: 3·6·10·15km) */
+const kmLevel = (km: number) => (km < 3 ? 1 : km < 6 ? 2 : km < 10 ? 3 : km < 15 ? 4 : 5);
 
 /**
- * 피로도 1~5: 컨디션(이모지)이 있으면 컨디션 2 : 어제 걸음 1, 없으면 어제 걸음(+늦은 귀가 1).
- * 어제 기록도 컨디션도 없으면 null (피로도 조건은 안 맞음)
+ * 피로도 1~5 (사용자 요청 2026-11-03): 당일 고른 컨디션과 전날 이동 거리로 판단 — 컨디션 2 : 이동 거리 1.
+ * 둘 중 하나만 있으면 그것으로, 둘 다 없으면 null (피로도 조건은 안 맞음)
  */
 export function fatigueLevel(
   mood: number | null | undefined,
-  yesterday: readonly Pick<
-    ItineraryItem,
-    'kind' | 'place' | 'visit' | 'done' | 'transport' | 'startTime' | 'endTime'
-  >[],
-): { level: number | null; steps: number } {
-  const steps = estimateSteps(yesterday);
-  const late = lateNightAt(yesterday) ? 1 : 0;
+  yesterday: readonly Pick<ItineraryItem, 'kind' | 'place' | 'visit' | 'done' | 'transport'>[],
+): { level: number | null; km: number | null } {
+  const km = travelKm(yesterday);
   if (mood != null) {
-    const base = steps > 0 ? (mood * 2 + Math.min(5, stepsLevel(steps) + late)) / 3 : mood;
-    return { level: Math.min(5, Math.max(1, Math.round(base))), steps };
+    const base = km != null ? (mood * 2 + kmLevel(km)) / 3 : mood;
+    return { level: Math.min(5, Math.max(1, Math.round(base))), km };
   }
-  if (steps === 0) return { level: null, steps };
-  return { level: Math.min(5, stepsLevel(steps) + late), steps };
+  return { level: km != null ? kmLevel(km) : null, km };
 }

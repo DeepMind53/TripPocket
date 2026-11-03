@@ -110,7 +110,6 @@ import { airWarnings } from '../../domain/air';
 import { placeTips } from '../../domain/localInfo';
 import { weatherCautionsAt, type WeatherCaution } from '../../domain/weather';
 import { CautionIcons } from '../common/CautionIcons';
-import { useLab } from '../../data/labsStore';
 import { useTripHolidays } from './useTripHolidays';
 import { DayPlanSheet } from './DayPlanSheet';
 import { usePlanView, type DayPlanInfo } from './usePlanView';
@@ -1009,7 +1008,7 @@ function DaySection({
   // 늦은 귀가 안내 (설정 "일정" — 2026-10-28 실험실에서 정식)
   const lateOn = useSettings((st) => st.lateNight);
   // 실험실 (2026-11-03): 장소 맞춤 팁
-  const tipsOn = useLab('placeTips');
+  const tipsOn = useSettings((st) => st.placeTips);
   const dupOn = true;
   // 여행 당일: 현지 시각으로 지금 진행 중인 일정 (1분마다 다시 계산)
   const now = useMinuteClock(isToday);

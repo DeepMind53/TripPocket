@@ -1,6 +1,6 @@
 import { addDays, getTripDays, todayIn, type LocalDate, type Trip } from '@trippocket/shared';
 import { useEffect, useState } from 'react';
-import { useLab } from '../../data/labsStore';
+import { useSettings } from '../../data/settingsStore';
 import { getAirQuality, getForecast, getLastYearWeather } from '../../data/services/travelInfo';
 import type { DayAir } from '../../domain/air';
 import type { DayWeather } from '../../domain/weather';
@@ -28,7 +28,7 @@ export const PAST_DAYS = 7;
 export function useTripWeather(trip: Trip | undefined): Record<LocalDate, TripDayWeather> {
   const coords = trip?.destinations.find((d) => d.coords)?.coords;
   const dates = trip ? getTripDays(trip.startDate, trip.endDate) : [];
-  const air = useLab('airQuality');
+  const air = useSettings((s) => s.airQuality);
   return useWeatherDays(coords, trip?.timezone ?? 'Asia/Seoul', dates, air);
 }
 

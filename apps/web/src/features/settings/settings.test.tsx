@@ -89,3 +89,32 @@ describe('설정 저장소', () => {
     open.mockRestore();
   });
 });
+
+describe('설정 묶음·기본값 저장 (2026-11-03)', () => {
+  it('일정 기능은 묶음으로 나뉘고, 기본값을 저장하면 되돌리기가 그 값으로', async () => {
+    const user = userEvent.setup();
+    localStorage.removeItem('tp-settings-defaults');
+    render(
+      <RouterProvider router={createMemoryRouter(routes, { initialEntries: ['/settings'] })} />,
+    );
+    for (const name of [
+      '일정 · 화면',
+      '일정 · 알림',
+      '일정 · 날씨와 현지 정보',
+      '일정 · 빠른 메뉴',
+    ])
+      expect(await screen.findByRole('region', { name })).toBeInTheDocument();
+    const quick = screen.getByRole('region', { name: '일정 · 빠른 메뉴' });
+    // 대중교통 안내 켜고 기본값으로 저장 → 끈 뒤 되돌리기 → 다시 켜짐
+    await user.click(within(quick).getByRole('switch', { name: '대중교통 안내' }));
+    await user.click(screen.getByRole('button', { name: '지금 설정을 기본값으로 저장' }));
+    await user.click(within(quick).getByRole('switch', { name: '대중교통 안내' }));
+    expect(useSettings.getState().transitGuide).toBe(false);
+    await user.click(within(quick).getByRole('button', { name: '기본값으로 되돌리기' }));
+    expect(useSettings.getState().transitGuide).toBe(true);
+    // 저장한 기본값을 지우면 처음 기본값(끔)으로
+    await user.click(screen.getByRole('button', { name: '저장한 기본값 지우기' }));
+    await user.click(within(quick).getByRole('button', { name: '기본값으로 되돌리기' }));
+    expect(useSettings.getState().transitGuide).toBe(false);
+  });
+});

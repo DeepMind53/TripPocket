@@ -34,17 +34,17 @@ beforeEach(async () => {
 });
 
 describe('실험실', () => {
-  it('마이 → 실험실: 새 실험 9개(2026-11-03, 예전 실험은 비움), 켜면 이 기기에 저장, 실험마다 [샘플]', async () => {
+  it('마이 → 실험실: 오프라인 준비만 남음(나머지는 2026-11-03 정식), 켜면 이 기기에 저장, [샘플]', async () => {
     const user = userEvent.setup();
     render(<RouterProvider router={createMemoryRouter(routes, { initialEntries: ['/me'] })} />);
     await user.click(await screen.findByRole('link', { name: '실험실' }));
-    const sw = await screen.findByRole('switch', { name: /대중교통 안내/ });
+    const sw = await screen.findByRole('switch', { name: /오프라인 준비/ });
     expect(sw).toHaveAttribute('aria-checked', 'false');
     await user.click(sw);
-    expect(JSON.parse(localStorage.getItem('tp-labs')!)).toEqual({ transitGuide: true });
-    expect(LABS).toHaveLength(9);
-    expect(screen.getAllByRole('switch')).toHaveLength(9);
-    expect(screen.getAllByRole('button', { name: / 샘플$/ })).toHaveLength(9);
+    expect(JSON.parse(localStorage.getItem('tp-labs')!)).toEqual({ offlineReady: true });
+    expect(LABS).toEqual(['offlineReady']);
+    expect(screen.getAllByRole('switch')).toHaveLength(1);
+    expect(screen.getAllByRole('button', { name: / 샘플$/ })).toHaveLength(1);
     // 정식이 됐거나 뺀 것은 실험실에 없다
     for (const name of [
       /현지 공휴일/,
@@ -58,9 +58,11 @@ describe('실험실', () => {
       /수돗물/,
       /연차/,
       /이른 출발/,
+      /대중교통 안내/,
+      /Plan B/,
     ])
       expect(screen.queryByRole('switch', { name })).toBeNull();
-    setLab('transitGuide', false);
+    setLab('offlineReady', false);
   });
 
   it('정식: 날씨 주의 그림·현지 공휴일·늦은 귀가 + 실험: 장소 맞춤 팁', async () => {
@@ -76,7 +78,7 @@ describe('실험실', () => {
         },
       }),
     );
-    setLab('placeTips', true);
+    updateSettings({ placeTips: true });
     try {
       const trip = await tripRepo.create({
         title: '방콕',
@@ -114,7 +116,7 @@ describe('실험실', () => {
       expect(within(day(1)).getByText(/어깨·무릎을 가리는 옷/)).toBeInTheDocument();
       expect(within(day(2)).queryByText(/어깨·무릎/)).toBeNull();
     } finally {
-      setLab('placeTips', false);
+      updateSettings({ placeTips: false });
       vi.useRealTimers();
       vi.unstubAllGlobals();
     }
@@ -556,19 +558,13 @@ describe('실험실', () => {
     await user.click(within(sheet).getByRole('button', { name: '이 기능 끄기' }));
     expect(useSettings.getState().checkoutNotice).toBe(false);
     // 일정 표시 항목 9개 모두 샘플 버튼
-    expect(screen.getAllByRole('button', { name: / 샘플$/ })).toHaveLength(13);
+    expect(screen.getAllByRole('button', { name: / 샘플$/ })).toHaveLength(21);
     updateSettings({ checkoutNotice: true });
   });
 
   it('시차(정식) · 교통카드·결제·바우처(정식) · 실험: 오프라인 준비·숙소 없는 밤·대중교통 안내·근처 찾기·공항 → 숙소', async () => {
-    const ids = [
-      'offlineReady',
-      'missingStay',
-      'transitGuide',
-      'nearbyFind',
-      'arrivalRoute',
-    ] as const;
-    for (const id of ids) setLab(id, true);
+    setLab('offlineReady', true);
+    updateSettings({ missingStay: true, transitGuide: true, nearbyFind: true, arrivalRoute: true });
     vi.stubGlobal('fetch', async (url: string) =>
       String(url).includes('nager')
         ? Response.json([])
@@ -640,7 +636,13 @@ describe('실험실', () => {
         'google.com/maps/search',
       );
     } finally {
-      for (const id of ids) setLab(id, false);
+      setLab('offlineReady', false);
+      updateSettings({
+        missingStay: false,
+        transitGuide: false,
+        nearbyFind: false,
+        arrivalRoute: false,
+      });
       vi.unstubAllGlobals();
     }
   });
@@ -648,8 +650,8 @@ describe('실험실', () => {
   it('실험: 미세먼지·자외선(나쁜 날만) · 여행지 소개(위키백과, 접어 둠)', async () => {
     vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(new Date('2026-10-22T03:00:00Z'));
-    setLab('airQuality', true);
-    setLab('cityIntro', true);
+    updateSettings({ airQuality: true });
+    updateSettings({ cityIntro: true });
     const hours = (d: string) =>
       Array.from({ length: 24 }, (_, h) => `${d}T${String(h).padStart(2, '0')}:00`);
     vi.stubGlobal('fetch', async (url: string) => {
@@ -713,8 +715,8 @@ describe('실험실', () => {
         'https://ko.m.wikipedia.org/wiki/방콕',
       );
     } finally {
-      setLab('airQuality', false);
-      setLab('cityIntro', false);
+      updateSettings({ airQuality: false });
+      updateSettings({ cityIntro: false });
       vi.useRealTimers();
       vi.unstubAllGlobals();
     }

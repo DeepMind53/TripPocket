@@ -8,7 +8,7 @@ test('설정: 다크 테마·글자 크기는 새로고침해도 바로 적용, 
   await expect(page.getByText('샘플 여행을 만들었어요')).toBeVisible();
 
   await page.goto('/settings');
-  const display = page.getByRole('region', { name: '화면' });
+  const display = page.getByRole('region', { name: '화면', exact: true });
   await display.getByRole('radio', { name: '다크' }).click();
   await display.getByRole('radio', { name: /오전·오후/ }).click();
   await display.getByRole('slider', { name: '글자 크기' }).press('ArrowRight');
