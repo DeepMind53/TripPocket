@@ -19,7 +19,7 @@ it('저장소 v9 → v10: 예전 예약(장소 좌표·차량번호 없음)도 �
   });
   old.close();
   const db = new TripPocketDB(NAME);
-  expect(db.verno).toBe(10);
+  expect(db.verno).toBeGreaterThanOrEqual(10);
   const row = await db.bookings.get('b');
   expect(row).toMatchObject({ title: '렌터카', start: { place: '나하 공항' } });
   expect(row?.start.coords).toBeUndefined();

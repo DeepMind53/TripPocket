@@ -19,13 +19,22 @@ export interface ItemFormSheetProps {
   date: LocalDate | null;
   /** 있으면 편집 */
   item?: ItineraryItem | undefined;
+  /** Plan B: 새 일정을 넣을 대안 플랜 (없으면 기본 일정) */
+  planId?: string | undefined;
 }
 
 const inputClass =
   'h-12 w-full rounded-btn border border-line bg-bg-subtle px-3 text-body-1 outline-none focus:border-primary';
 
 /** S-11 일정 추가 · 편집 (직접 입력). 장소 검색 탭은 18단계 */
-export function ItemFormSheet({ open, onOpenChange, tripId, date, item }: ItemFormSheetProps) {
+export function ItemFormSheet({
+  open,
+  onOpenChange,
+  tripId,
+  date,
+  item,
+  planId,
+}: ItemFormSheetProps) {
   const { t } = useTranslation();
   return (
     <BottomSheet
@@ -40,6 +49,7 @@ export function ItemFormSheet({ open, onOpenChange, tripId, date, item }: ItemFo
           tripId={tripId}
           date={date}
           item={item}
+          planId={planId}
           onDone={() => onOpenChange(false)}
         />
       )}
@@ -51,11 +61,13 @@ function ItemForm({
   tripId,
   date,
   item,
+  planId,
   onDone,
 }: {
   tripId: string;
   date: LocalDate | null;
   item: ItineraryItem | undefined;
+  planId?: string | undefined;
   onDone: () => void;
 }) {
   const { t } = useTranslation();
@@ -121,6 +133,7 @@ function ItemForm({
           title: name,
           ...optional,
           ...(place ? { place } : {}),
+          ...(planId && date ? { planId } : {}),
         });
         toast(t('form.added'));
       }

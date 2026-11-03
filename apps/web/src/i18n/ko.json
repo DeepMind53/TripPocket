@@ -1378,6 +1378,10 @@
       "cityIntro": {
         "name": "여행지 소개",
         "desc": "홈 여행 카드 아래에\n위키백과 한두 문장 소개"
+      },
+      "planB": {
+        "name": "Plan B",
+        "desc": "날짜를 눌러 대안 일정을 만들고\n날씨·컨디션에 맞는 플랜을 먼저 보여 줘요"
       }
     },
     "checkoutAt": "오늘 {{time}} 체크아웃 · {{name}}",
@@ -2106,7 +2110,9 @@
     "tour": "감천마을 투어",
     "airport": "나리타 공항",
     "tokyo": "도쿄",
-    "tokyoIntro": "도쿄는 일본의 수도예요\n일본에서 사람이 가장 많은 도시예요"
+    "tokyoIntro": "도쿄는 일본의 수도예요\n일본에서 사람이 가장 많은 도시예요",
+    "museum": "도쿄 국립박물관",
+    "mall": "선샤인 시티"
   },
   "currencyName": {
     "USD": "미국 달러",
@@ -2367,5 +2373,81 @@
     "title": "📖 {{name}} 소개",
     "source": "위키백과 · CC BY-SA",
     "open": "위키백과에서 더 보기"
+  },
+  "planB": {
+    "sheetTitle": "{{day}} 플랜",
+    "mood": "오늘 컨디션",
+    "moods": {
+      "1": "아주 좋음",
+      "2": "좋음",
+      "3": "보통",
+      "4": "피곤해요",
+      "5": "녹초예요"
+    },
+    "fatigue": "피로도 {{level}}/5\n어제 걸음 약 {{steps}}보(일정으로 추정)와 컨디션으로 계산해요",
+    "fatigueNone": "컨디션을 고르면 피로도를 계산해요",
+    "show": "보여 줄 일정",
+    "auto": "자동 (조건대로)",
+    "autoNow": "지금은 {{name}} 조건이 맞아요",
+    "autoBase": "맞는 조건이 없으면 기본 일정",
+    "base": "기본 일정",
+    "manage": "플랜 만들기",
+    "add": "플랜 추가",
+    "addHint": "플랜을 고른 채 일정을 더하면\n그 플랜에 들어가요",
+    "delete": "{{name}} 지우기",
+    "confirmDelete": "{{name}}와 그 일정을 지울까요?",
+    "noCondition": "조건 없음 (직접 고를 때만)",
+    "and": " 그리고 ",
+    "or": " 또는 ",
+    "name": "플랜 이름",
+    "matchAny": "하나라도 맞으면",
+    "matchAll": "모두 맞으면",
+    "condType": "조건 종류",
+    "removeCond": "조건 빼기",
+    "addCond": "조건 추가",
+    "done": "다 했어요",
+    "temp": "기온",
+    "gte": "이상",
+    "lte": "이하",
+    "atLeast": "이상",
+    "type": {
+      "weather": "날씨",
+      "tempMax": "최고 기온",
+      "tempMin": "최저 기온",
+      "fatigue": "피로도",
+      "air": "미세먼지 나쁨",
+      "weekday": "요일",
+      "holiday": "현지 공휴일"
+    },
+    "weather": {
+      "rain": "비",
+      "snow": "눈",
+      "clear": "맑음",
+      "cloudy": "흐림",
+      "storm": "뇌우"
+    },
+    "cond": {
+      "tempMax_gte": "최고 {{v}}° 이상",
+      "tempMax_lte": "최고 {{v}}° 이하",
+      "tempMin_gte": "최저 {{v}}° 이상",
+      "tempMin_lte": "최저 {{v}}° 이하",
+      "fatigue": "피로도 {{v}} 이상",
+      "weekdaySuffix": "요일",
+      "air": "미세먼지 나쁨",
+      "holiday": "현지 공휴일"
+    },
+    "hint": {
+      "air": "실험실 \"미세먼지 안내\"를 켜야\n판단할 수 있어요",
+      "holiday": "설정의 현지 공휴일 표시를 켜면\n판단할 수 있어요"
+    },
+    "badgeAuto": "{{name}} · 자동",
+    "badgePick": "{{name}}",
+    "open": "{{day}} 플랜 고르기",
+    "check": {
+      "title": "오늘 컨디션은 어때요?",
+      "desc": "고른 컨디션과 어제 걸음 수로\n오늘 플랜을 골라 드려요",
+      "steps": "어제 약 {{steps}}보 걸었어요 (일정으로 추정)",
+      "later": "나중에"
+    }
   }
 }

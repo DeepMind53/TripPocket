@@ -15,7 +15,10 @@ import { OfflineBanner } from '../features/common/OfflineBanner';
 import { PullToSync } from '../features/common/PullToSync';
 import { FlightReminder } from '../features/common/FlightReminder';
 import { useSync } from '../data/sync/syncStore';
+import { useLab } from '../data/labsStore';
 
+// Plan B 아침 컨디션 체크 (실험실) — 켰을 때만
+const ConditionCheck = lazy(() => import('../features/itinerary/ConditionCheck'));
 // 첫 로그인 때만 필요 → 그때 불러온다
 // 사용량 한도 안내 — 한도에 걸렸을 때만
 const LimitNoticeSheet = lazy(async () => ({
@@ -78,6 +81,7 @@ export function App() {
   const [nicknameDismissed, setNicknameDismissed] = useState(false);
   // 닉네임을 정한 다음, 설치하지 않은 기기에서 한 번만 홈 화면 추가 안내 (사용자 요청 2026-10-26)
   const signedIn = useAuth((s) => s.status === 'user');
+  const planOn = useLab('planB');
   const isAdmin = useAuth((s) => s.status === 'user' && s.me?.isAdmin === true);
   const installed = useInstall((s) => s.installed);
   const [installDone, setInstallDone] = useState(installOffered);
@@ -149,6 +153,12 @@ export function App() {
           </Suspense>
         )}
       {signedIn && <FlightReminder />}
+      {/* Plan B (실험실): 여행 중 아침 컨디션 체크 — 켰을 때만 불러온다 */}
+      {signedIn && planOn && (
+        <Suspense fallback={null}>
+          <ConditionCheck />
+        </Suspense>
+      )}
       {isAdmin && (
         <Suspense fallback={null}>
           <AdminMonthlyNotice />

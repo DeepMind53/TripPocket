@@ -253,6 +253,19 @@ export function FeaturePreview({ id }: { id: PreviewId }) {
           <span className="text-micro text-fg-muted">{t('cityIntro.source')}</span>
         </div>
       );
+    case 'planB':
+      return day(
+        <>
+          <p className="flex items-center gap-2 text-caption">
+            <span className="rounded-full bg-warning/15 px-2 py-0.5 text-micro">
+              {t('planB.badgeAuto', { name: 'Plan B' })}
+            </span>
+            {t('planB.autoNow', { name: 'Plan B' })}
+          </p>
+          {row(1, '10:00', t('sample.museum'))}
+          {row(2, '13:00', t('sample.mall'))}
+        </>,
+      );
     case 'placeTips':
       return day(
         <>

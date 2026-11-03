@@ -25,6 +25,7 @@ import {
   Plus,
   Footprints,
   Route,
+  ChevronDown,
   MapPinned,
   Moon,
   MoonStar,
@@ -111,6 +112,8 @@ import { weatherCautionsAt, type WeatherCaution } from '../../domain/weather';
 import { CautionIcons } from '../common/CautionIcons';
 import { useLab } from '../../data/labsStore';
 import { useTripHolidays } from './useTripHolidays';
+import { DayPlanSheet } from './DayPlanSheet';
+import { usePlanView, type DayPlanInfo } from './usePlanView';
 import { distanceKm, formatDistance, walkMinutes } from '@trippocket/shared';
 import { DayWeatherBadge } from '../common/DayWeatherBadge';
 import { useTripWeather, type TripDayWeather } from '../common/useTripWeather';
@@ -142,7 +145,7 @@ export function PlanPage() {
 
 function PlanView({
   trip,
-  items,
+  items: allItems,
   bookings,
 }: {
   trip: Trip;
@@ -152,20 +155,29 @@ function PlanView({
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
+  const days = getTripDays(trip.startDate, trip.endDate);
+  // 현지 공휴일 (설정 "일정" — 2026-10-28 실험실에서 정식) · Plan B "현지 공휴일" 조건에도
+  const localHolidayOn = useSettings((st) => st.localHoliday);
+  const holidays = useTripHolidays(trip, localHolidayOn);
+  const weather = useTripWeather(trip);
+  // Plan B (실험실, 2026-11-03): 날짜마다 보일 플랜의 일정만 — 아래 화면은 모두 이 목록을 쓴다
+  const plansView = usePlanView(trip, allItems, days, weather, holidays);
+  const items = plansView.visible;
+  const [planDate, setPlanDate] = useState<LocalDate | null>(null);
+  const [planOpen, setPlanOpen] = useRouteSheet('day-plan');
   // 보기 전용으로 공유받은 여행이면 추가·편집·삭제를 숨긴다 (data/tripRoles.ts)
   const canEdit = useCanEdit(trip.id);
   // 예약을 일정표에 처음 한 번 시각에 맞춰 넣는다 — 이후에는 다른 일정처럼 옮기거나 지울 수 있다 (사용자 요청 2026-10-26)
-  const unplanned = canEdit ? bookingsToPlan(bookings, items).length : 0;
+  const unplanned = canEdit ? bookingsToPlan(bookings, allItems).length : 0;
   useEffect(() => {
     if (unplanned > 0)
       // 실패하면(화면을 벗어나 DB가 닫힘 등) 다음에 일정을 열 때 다시
       placeBookingsInPlan(trip.id, (airport) => t('plan.arriveAt', { airport })).catch(() => {});
   }, [unplanned, trip.id, t]);
   // 일정으로 들어간 예약은 위쪽 예약 줄에서 뺀다 (일정을 지우면 다시 줄로 보인다)
-  const linked = new Set(items.map((i) => i.bookingId).filter(Boolean));
+  const linked = new Set(allItems.map((i) => i.bookingId).filter(Boolean));
   const rowBookings = bookings.filter((b) => !linked.has(b.id));
   const bookingById = new Map(bookings.map((b) => [b.id, b]));
-  const days = getTripDays(trip.startDate, trip.endDate);
   const today = todayIn(trip.timezone);
   const dimPast = useSettings((st) => st.dimPastItems);
   // 2026-10-27 정식: 하루 일정 글로 복사·하루 동선 지도 (날짜 메뉴)
@@ -214,12 +226,6 @@ function PlanView({
       )
     : null;
   const isDomestic = isDomesticTrip(trip);
-  // 현지 공휴일 (설정 "일정" — 2026-10-28 실험실에서 정식)
-  const holidays = useTripHolidays(
-    trip,
-    useSettings((st) => st.localHoliday),
-  );
-  const weather = useTripWeather(trip);
 
   // 기본: 여행 중이면 오늘, 아니면 전체
   const dayParam = params.get('day');
@@ -325,7 +331,8 @@ function PlanView({
 
   /** 일정·예약·숙소가 하나도 없는 날 */
   const isEmptyDay = (d: LocalDate) =>
-    !items.some((i) => i.date === d) &&
+    // 다른 플랜에만 일정이 있는 날도 날짜 칸을 보여 준다 (플랜을 고를 수 있게)
+    !allItems.some((i) => i.date === d) &&
     bookingRowsForDay(rowBookings, d).length === 0 &&
     !lodgingForNight(bookings, d);
 
@@ -718,6 +725,15 @@ function PlanView({
                         setMenuDate(date);
                         setDayMenuOpen(true);
                       }}
+                      plan={date && plansView.on ? plansView.info[date] : undefined}
+                      onPlans={
+                        date && plansView.on
+                          ? () => {
+                              setPlanDate(date);
+                              setPlanOpen(true);
+                            }
+                          : undefined
+                      }
                       hideWhenEmpty={filter === 'all' && date === null}
                     />
                   ),
@@ -830,7 +846,19 @@ function PlanView({
         tripId={trip.id}
         date={formTarget.date}
         item={formTarget.editing ? selected : undefined}
+        planId={formTarget.date ? plansView.info[formTarget.date]?.plan?.id : undefined}
       />
+      {plansView.on && (
+        <DayPlanSheet
+          open={planOpen}
+          onOpenChange={setPlanOpen}
+          trip={trip}
+          date={planDate}
+          title={dayTitle(planDate)}
+          info={planDate ? plansView.info[planDate] : undefined}
+          canEdit={canEdit}
+        />
+      )}
       <ItemDetailSheet
         open={detailOpen}
         onOpenChange={setDetailOpen}
@@ -922,7 +950,12 @@ function DaySection({
   wishes,
   checkouts,
   holiday,
+  plan,
+  onPlans,
 }: {
+  /** Plan B (실험실): 그날 플랜 정보 · 날짜 머리글을 누르면 플랜 시트 */
+  plan?: DayPlanInfo | undefined;
+  onPlans?: (() => void) | undefined;
   /** 지난 일정 방문·미방문 (미방문이면 저장 탭에도 담는다) */
   onVisitItem: (item: ItineraryItem, visit: Visit) => void;
   /** 이 일정 장소를 예전에 방문한 날 */
@@ -1027,7 +1060,26 @@ function DaySection({
           style={{ boxShadow: `inset 4px 0 0 ${color}` }}
         >
           <h2 aria-label={title} className="tabular flex flex-1 flex-wrap items-center gap-2 py-2">
-            {date ? (
+            {date && onPlans ? (
+              // Plan B (실험실): 날짜를 누르면 플랜 고르기·만들기
+              <button
+                type="button"
+                onClick={onPlans}
+                aria-label={t('planB.open', { day: title })}
+                className="flex min-h-9 items-center gap-2"
+              >
+                <span
+                  className="rounded-full px-2.5 py-0.5 text-caption font-bold whitespace-nowrap text-white"
+                  style={{ background: color }}
+                >
+                  {t('plan.dayN', { n: index + 1 })}
+                </span>
+                <span className="text-body-1 font-bold whitespace-nowrap">
+                  {formatMonthDay(date)}
+                </span>
+                <ChevronDown aria-hidden="true" className="size-4 text-fg-muted" />
+              </button>
+            ) : date ? (
               <>
                 <span
                   className="rounded-full px-2.5 py-0.5 text-caption font-bold whitespace-nowrap text-white"
@@ -1045,6 +1097,13 @@ function DaySection({
             {isToday && (
               <span className="rounded-full bg-primary-weak px-2 py-0.5 text-micro whitespace-nowrap text-primary">
                 {t('date.today')}
+              </span>
+            )}
+            {plan?.plan && (
+              <span className="rounded-full bg-warning/15 px-2 py-0.5 text-micro whitespace-nowrap text-fg">
+                {t(plan.by === 'auto' ? 'planB.badgeAuto' : 'planB.badgePick', {
+                  name: plan.plan.name,
+                })}
               </span>
             )}
           </h2>

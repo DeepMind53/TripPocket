@@ -83,6 +83,8 @@ export class TripPocketDB extends Dexie {
     this.version(9).stores({});
     // v10 (2026-11-02): 예약 장소 좌표(start·end.coords)·렌터카 차종·차량번호 — 인덱스 없음, 예전 행은 그대로
     this.version(10).stores({});
+    // v11 (2026-11-03): Plan B — 일정의 대안 플랜(planId)·여행의 날짜별 플랜(dayPlans). 인덱스 없음, 예전 행은 기본 일정
+    this.version(11).stores({});
   }
 }
 

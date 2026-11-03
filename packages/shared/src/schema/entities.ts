@@ -27,6 +27,43 @@ export const DestinationSchema = z.object({
 });
 export type Destination = z.infer<typeof DestinationSchema>;
 
+/**
+ * Plan B (실험실, 2026-11-03): 날짜마다 기본 일정 대신 쓸 대안 플랜과 그 조건.
+ * 조건이 맞으면 그날은 이 플랜의 일정(item.planId)이 먼저 보인다. 직접 고른 플랜이 조건보다 먼저(기기마다)
+ */
+export const PLAN_CONDITION_TYPES = [
+  'weather',
+  'tempMax',
+  'tempMin',
+  'fatigue',
+  'air',
+  'weekday',
+  'holiday',
+] as const;
+export const PLAN_WEATHER = ['rain', 'snow', 'clear', 'cloudy', 'storm'] as const;
+export const PlanConditionSchema = z.object({
+  type: z.enum(PLAN_CONDITION_TYPES),
+  /** weather: 이 날씨 중 하나 */
+  weather: z.optional(z.array(z.enum(PLAN_WEATHER)).check(z.maxLength(5))),
+  /** tempMax·tempMin: 이상(gte)·이하(lte), fatigue: 이상만 */
+  op: z.optional(z.enum(['gte', 'lte'])),
+  /** 기온(°C) 또는 피로도(1~5) */
+  value: z.optional(z.number().check(z.gte(-50), z.lte(60))),
+  /** weekday: 0(일)~6(토) */
+  days: z.optional(z.array(z.number().check(z.int(), z.gte(0), z.lte(6))).check(z.maxLength(7))),
+});
+export type PlanCondition = z.infer<typeof PlanConditionSchema>;
+
+export const DayPlanSchema = z.object({
+  id: IdSchema,
+  date: LocalDateSchema,
+  name: nonEmpty(30),
+  /** all = 모두 맞을 때, any = 하나라도 맞을 때 */
+  match: z.enum(['all', 'any']),
+  conditions: z.array(PlanConditionSchema).check(z.maxLength(8)),
+});
+export type DayPlan = z.infer<typeof DayPlanSchema>;
+
 export const TripSchema = z
   .object({
     ...baseFields,
@@ -46,6 +83,8 @@ export const TripSchema = z
     archivedAt: z.optional(IsoDateTimeSchema),
     /** 앱이 샘플로 만든 여행 (홈 "샘플로 둘러보기"·실험실 샘플) — 사용 통계에서 뺀다 (2026-11-02) */
     sample: z.optional(z.boolean()),
+    /** Plan B (실험실, 2026-11-03) — 날짜별 대안 플랜 */
+    dayPlans: z.optional(z.array(DayPlanSchema).check(z.maxLength(100))),
   })
   .check(
     // 날짜 형식 오류는 각 필드에서 따로 알리므로 여기서는 둘 다 올바를 때만 비교
@@ -113,6 +152,8 @@ export const ItineraryItemSchema = z.object({
   done: z.optional(z.boolean()),
   /** 지난 일정에 남긴 방문 기록 (2026-10-26): visited = 방문(done도 true), skipped = 미방문 */
   visit: z.optional(z.enum(['visited', 'skipped'])),
+  /** Plan B (2026-11-03): 대안 플랜 소속 (없으면 기본 일정) — trip.dayPlans[].id */
+  planId: z.optional(IdSchema),
 });
 export type ItineraryItem = z.infer<typeof ItineraryItemSchema>;
 

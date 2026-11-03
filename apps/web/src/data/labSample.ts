@@ -1,4 +1,4 @@
-import { addDays, todayIn, type ItemKind, type LocalDate } from '@trippocket/shared';
+import { addDays, todayIn, uuidv7, type ItemKind, type LocalDate } from '@trippocket/shared';
 import { bookingRepo } from './repositories/bookingRepo';
 import { itemRepo } from './repositories/itemRepo';
 import { savedPlaceRepo, SavedLimitError } from './repositories/savedPlaceRepo';
@@ -160,6 +160,40 @@ export async function createLabSample(): Promise<string> {
     P('스카이트리', 'place', 35.7101, 139.8107, '도쿄 스미다구 오시아게 1-1-2'),
   );
   await itemRepo.softDelete(gone.id);
+
+  // Plan B 샘플 (실험실 "Plan B", 2026-11-03): 2일차에 비 오는 날 실내 플랜, 피곤한 날 쉬는 플랜
+  const rainy = uuidv7();
+  const tired = uuidv7();
+  await tripRepo.update(trip.id, {
+    dayPlans: [
+      {
+        id: rainy,
+        date: day(1),
+        name: 'Plan B 비 오는 날',
+        match: 'any',
+        conditions: [{ type: 'weather', weather: ['rain', 'snow', 'storm'] }],
+      },
+      {
+        id: tired,
+        date: day(1),
+        name: 'Plan C 쉬는 날',
+        match: 'any',
+        conditions: [{ type: 'fatigue', value: 4 }],
+      },
+    ],
+  });
+  for (const [i, s] of [
+    P('도쿄 국립박물관', 'place', 35.7188, 139.7765, '도쿄 다이토구 우에노 공원 13-9'),
+    P('선샤인 시티', 'shopping', 35.729, 139.7193, '도쿄 도시마구 히가시이케부쿠로 3-1'),
+  ].entries())
+    await makeItem(trip.id, day(1), s, hhmm(10 * 60 + i * 180), { planId: rainy });
+  await makeItem(
+    trip.id,
+    day(1),
+    P('스파 라쿠아', 'activity', 35.7056, 139.7519, '도쿄 분쿄구 가스가 1-1-1'),
+    '13:00',
+    { planId: tired },
+  );
 
   // 6일 뒤 타이베이 3일 (다가오는 여행: 준비 현황·여행지 특보·대만 입국 항목)
   const taipei = await tripRepo.create({

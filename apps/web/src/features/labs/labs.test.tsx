@@ -34,7 +34,7 @@ beforeEach(async () => {
 });
 
 describe('실험실', () => {
-  it('마이 → 실험실: 새 실험 8개(2026-11-03, 예전 실험은 비움), 켜면 이 기기에 저장, 실험마다 [샘플]', async () => {
+  it('마이 → 실험실: 새 실험 9개(2026-11-03, 예전 실험은 비움), 켜면 이 기기에 저장, 실험마다 [샘플]', async () => {
     const user = userEvent.setup();
     render(<RouterProvider router={createMemoryRouter(routes, { initialEntries: ['/me'] })} />);
     await user.click(await screen.findByRole('link', { name: '실험실' }));
@@ -42,9 +42,9 @@ describe('실험실', () => {
     expect(sw).toHaveAttribute('aria-checked', 'false');
     await user.click(sw);
     expect(JSON.parse(localStorage.getItem('tp-labs')!)).toEqual({ transitGuide: true });
-    expect(LABS).toHaveLength(8);
-    expect(screen.getAllByRole('switch')).toHaveLength(8);
-    expect(screen.getAllByRole('button', { name: / 샘플$/ })).toHaveLength(8);
+    expect(LABS).toHaveLength(9);
+    expect(screen.getAllByRole('switch')).toHaveLength(9);
+    expect(screen.getAllByRole('button', { name: / 샘플$/ })).toHaveLength(9);
     // 정식이 됐거나 뺀 것은 실험실에 없다
     for (const name of [
       /현지 공휴일/,
