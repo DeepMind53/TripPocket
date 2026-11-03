@@ -89,11 +89,17 @@ export function planDraftsFromBooking(
     return out;
   }
   const mode = MODE[b.kind];
-  const address = b.details?.address;
+  // 기차·버스는 고른 출발역 주소·좌표 (2026-11-03) — 일정에서 바로 길찾기
+  const address = b.details?.address ?? b.start.address;
+  const coords = b.kind === 'train' ? b.start.coords : undefined;
   const placeName = b.kind === 'lodging' || b.kind === 'restaurant' ? b.title : b.start.place;
   const place =
     placeName || address
-      ? { ...(placeName ? { name: clip(placeName) } : {}), ...(address ? { address } : {}) }
+      ? {
+          ...(placeName ? { name: clip(placeName) } : {}),
+          ...(address ? { address } : {}),
+          ...(coords ? { coords, coordsSource: 'user' as const } : {}),
+        }
       : undefined;
   return [
     {

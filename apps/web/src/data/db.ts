@@ -85,6 +85,8 @@ export class TripPocketDB extends Dexie {
     this.version(10).stores({});
     // v11 (2026-11-03): Plan B — 일정의 대안 플랜(planId)·여행의 날짜별 플랜(dayPlans). 인덱스 없음, 예전 행은 기본 일정
     this.version(11).stores({});
+    // v12 (2026-11-03): 예약 출발·도착 지점 주소(start·end.address) — 인덱스 없음, 예전 행은 그대로
+    this.version(12).stores({});
   }
 }
 

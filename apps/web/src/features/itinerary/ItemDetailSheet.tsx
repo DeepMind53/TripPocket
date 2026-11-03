@@ -26,7 +26,7 @@ import { useTranslation } from '../../i18n';
 import { placeLink, openMapLink, type MapApp } from '../../shared/lib/directions';
 import { BottomSheet, Button, SegmentedControl, Switch, TimeInput, toast } from '../../shared/ui';
 import { copyText } from '../../shared/lib/clipboard';
-import { FlightTicket, LodgingBody } from '../bookings/BookingCard';
+import { FlightTicket, LodgingBody, TrainTicket } from '../bookings/BookingCard';
 import { DirectionsPanel } from '../common/DirectionsPanel';
 import { BookingDocs } from '../bookings/BookingDocs';
 import { TaxiCard } from '../phrases/TaxiCard';
@@ -451,6 +451,8 @@ function BookingSummary({
       </div>
       {b.kind === 'flight' ? (
         <FlightTicket booking={b} />
+      ) : b.kind === 'train' ? (
+        <TrainTicket booking={b} />
       ) : b.kind === 'lodging' ? (
         <LodgingBody booking={b} />
       ) : (

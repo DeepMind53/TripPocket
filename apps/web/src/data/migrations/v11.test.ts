@@ -18,7 +18,7 @@ it('저장소 v10 → v11: 예전 여행·일정(플랜 없음)은 그대로 기
     .add({ id: 'i', tripId: 't', date: '2026-11-12', title: '센소지', dirty: 0 });
   old.close();
   const db = new TripPocketDB(NAME);
-  expect(db.verno).toBe(11);
+  expect(db.verno).toBeGreaterThanOrEqual(11);
   expect((await db.trips.get('t'))?.dayPlans).toBeUndefined();
   const item = await db.items.get('i');
   expect(item).toMatchObject({ title: '센소지' });

@@ -221,10 +221,51 @@ export function LodgingBody({ booking: b }: { booking: Booking }) {
   );
 }
 
+/** "12월23일 (목요일)" */
+const longDay = (date: string) => {
+  const [, m, d] = date.split('-').map(Number);
+  const wd = new Intl.DateTimeFormat('ko', { weekday: 'long', timeZone: 'UTC' }).format(
+    new Date(`${date}T00:00:00Z`),
+  );
+  return `${m}월${d}일 (${wd})`;
+};
+
+/**
+ * 기차·버스 (사용자 요청 2026-11-03):
+ * KTX 12월23일 (목요일)
+ * 동대구역 13:32 -> 수원역 15:44
+ */
+export function TrainTicket({ booking: b }: { booking: Booking }) {
+  const { time } = useTimeText();
+  const Icon = BOOKING_ICON[b.kind];
+  const point = (place?: string, at?: string) => [place, time(at)].filter(Boolean).join(' ');
+  const from = point(b.start.place, b.start.time);
+  const to = b.end ? point(b.end.place, b.end.time) : '';
+  return (
+    <div className="flex items-start gap-3">
+      <Icon aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-primary" />
+      <span className="flex min-w-0 flex-1 flex-col">
+        <span className="text-body-1">
+          {b.title} <span className="tabular">{longDay(b.start.date)}</span>
+        </span>
+        {(from || to) && (
+          <span className="tabular text-body-2 text-fg-sub">
+            {from}
+            {to ? ` -> ${to}` : ''}
+          </span>
+        )}
+        {b.details?.seat && <span className="text-caption text-fg-sub">{b.details.seat}</span>}
+        <BookingExtras booking={b} />
+      </span>
+    </div>
+  );
+}
+
 function BasicBody({ booking: b }: { booking: Booking }) {
   const { time } = useTimeText();
   const { t } = useTranslation();
   const Icon = BOOKING_ICON[b.kind];
+  if (b.kind === 'train') return <TrainTicket booking={b} />;
   return (
     <div className="flex items-start gap-3">
       <Icon aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-primary" />
@@ -237,9 +278,6 @@ function BasicBody({ booking: b }: { booking: Booking }) {
             ? ` · ${t('bookings.partySizeValue', { n: b.details.partySize })}`
             : ''}
         </span>
-        {b.kind === 'train' && b.details?.seat && (
-          <span className="text-caption text-fg-sub">{b.details.seat}</span>
-        )}
         {b.kind === 'car' && b.end && (
           <span className="tabular truncate text-caption text-fg-sub">
             {t('bookings.returnValue', {

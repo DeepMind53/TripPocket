@@ -2449,15 +2449,12 @@
   "station": {
     "from": "출발역",
     "to": "도착역",
-    "cityOf": "{{label}} 도시",
-    "cityPlaceholder": "도시 (선택)",
-    "cityPlaceholderAbroad": "도시 이름 (예: 오사카)",
-    "pickOf": "{{label}} 고르기",
-    "pick": "역·터미널 고르기 ({{n}}곳)",
-    "find": "역 찾기",
-    "resultsOf": "{{label}} 찾은 곳",
-    "none": "찾은 역이 없어요\n도시 이름을 바꾸거나 위 칸에 직접 적어 주세요",
-    "failed": "지금은 찾을 수 없어요\n위 칸에 직접 적어 주세요",
-    "source": "Powered by Geoapify · © OpenStreetMap"
+    "source": "Powered by Geoapify · © OpenStreetMap",
+    "departTime": "출발 시각",
+    "arriveTime": "도착 시각",
+    "placeholder": "도시나 역 이름 (예: 동대구)",
+    "placeholderAbroad": "도시나 역 이름 (예: 오사카)",
+    "listOf": "{{label}} 후보",
+    "searching": "역을 찾는 중이에요"
   }
 }

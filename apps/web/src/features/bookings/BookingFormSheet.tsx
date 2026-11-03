@@ -5,7 +5,7 @@ import { flightsApi } from '../../data/api/flights';
 import { AirportField } from './AirportField';
 import { isDomesticTrip, tripCountries } from '../../domain/tripPlace';
 import { PlaceAutocomplete } from '../common/PlaceAutocomplete';
-import { StationPicker } from './StationPicker';
+import { StationField } from './StationPicker';
 import {
   addDays,
   diffDays,
@@ -133,6 +133,9 @@ function BookingForm({
     // 장소 검색으로 고른 좌표 (이름을 고치면 지운다)
     fromCoords: b?.start.coords as { lat: number; lng: number } | undefined,
     toCoords: b?.end?.coords as { lat: number; lng: number } | undefined,
+    // 역을 고르면 채우는 주소 (2026-11-03)
+    fromAddress: b?.start.address,
+    toAddress: b?.end?.address,
     carModel: b?.details?.carModel ?? '',
     plate: b?.details?.plate ?? '',
     startDate: b?.start.date ?? trip.startDate,
@@ -161,6 +164,7 @@ function BookingForm({
     insurance: b?.details?.insurance ?? '',
   });
   const transit = transitNames(tripCountries(trip));
+  const timeStep = useSettings((st) => st.timeStepMin) * 60;
   const [saving, setSaving] = useState(false);
   const [stayOpen, setStayOpen] = useState(false);
   // 덜 쓰는 칸은 접어 둔다 (docs/20 U4) — 고칠 때 값이 있으면 펼쳐서
@@ -337,9 +341,19 @@ function BookingForm({
     // 기차·렌터카·투어·티켓·기타
     const placed = kind === 'train' || kind === 'car';
     // 기차·버스 도착역 (2026-11-03): 출발 날짜와 같은 날로
+    // 도착 시각이 출발보다 이르면 다음 날 도착 (야간열차·버스)
     const trainArrive =
-      kind === 'train' && v(f.to)
-        ? clean({ date: f.startDate, place: v(f.to), coords: f.toCoords })
+      kind === 'train' && (v(f.to) || v(f.endTime))
+        ? clean({
+            date:
+              f.startTime && f.endTime && f.endTime < f.startTime
+                ? addDays(f.startDate, 1)
+                : f.startDate,
+            time: v(f.endTime),
+            place: v(f.to),
+            coords: v(f.to) ? f.toCoords : undefined,
+            address: v(f.to) ? f.toAddress : undefined,
+          })
         : undefined;
     const carReturn =
       kind === 'car' && (v(f.to) || f.endDate || v(f.endTime))
@@ -359,6 +373,7 @@ function BookingForm({
         time: v(f.startTime),
         place: v(f.from),
         coords: placed && v(f.from) ? f.fromCoords : undefined,
+        address: kind === 'train' && v(f.from) ? f.fromAddress : undefined,
       }),
       end: carReturn ?? trainArrive,
       details: cleanOrUndefined({
@@ -962,123 +977,138 @@ function BookingForm({
             </>
           ) : (
             <>
-              <DateTimeRow
-                dateLabel={t('bookings.date')}
-                timeLabel={t('bookings.time')}
-                date={f.startDate}
-                time={f.startTime}
-                onDate={set('startDate')}
-                onTime={set('startTime')}
-                idPrefix="bk-start"
-              />
-              <Field
-                label={
-                  kind === 'car'
-                    ? t('bookings.carPickup')
-                    : kind === 'train'
-                      ? t('station.from')
-                      : t('bookings.place')
-                }
-              >
-                <input
-                  id="bk-place"
-                  value={f.from}
-                  maxLength={100}
-                  placeholder={kind === 'train' ? t('bookings.stationPlaceholder') : undefined}
-                  onChange={(e) =>
-                    setF((cur) => ({ ...cur, from: e.target.value, fromCoords: undefined }))
-                  }
-                  className={inputClass}
-                />
-              </Field>
-              {/* 기차·버스: 도시 → 그 도시 역 고르기 (국내 드롭다운·해외 검색, 2026-11-03) */}
-              {kind === 'train' && (
-                <StationPicker
-                  label={t('station.from')}
-                  chip={f.title}
-                  domestic={isDomesticTrip(trip)}
-                  country={tripCountries(trip).find((c) => c !== 'KR')}
-                  near={trip.destinations.find((d) => d.coords)?.coords}
-                  onPick={(name, coords) =>
-                    setF((cur) => ({ ...cur, from: name.slice(0, 100), fromCoords: coords }))
-                  }
-                />
-              )}
-              {/* 역·터미널·렌터카 지점: 검색해서 고르면 좌표도 저장 (길찾기, 사용자 요청 2026-11-02) */}
-              {(kind === 'train' || kind === 'car') && (
-                <PlaceAutocomplete
-                  query={f.from}
-                  domestic={isDomesticTrip(trip)}
-                  near={trip.destinations.find((d) => d.coords)?.coords}
-                  onPick={(p) =>
-                    setF((cur) => ({
-                      ...cur,
-                      from: p.name.slice(0, 100),
-                      fromCoords: p.coords ?? undefined,
-                    }))
-                  }
-                />
-              )}
-              {kind === 'car' && (
+              {kind === 'train' ? (
+                // 기차·버스: 출발 시각·역 → 도착 시각·역 (역을 고르면 주소·좌표도, 사용자 요청 2026-11-03)
                 <>
                   <DateTimeRow
-                    dateLabel={t('bookings.returnDate')}
-                    timeLabel={t('bookings.returnTime')}
-                    date={f.endDate || f.startDate}
-                    time={f.endTime}
-                    onDate={set('endDate')}
-                    onTime={set('endTime')}
-                    idPrefix="bk-return"
+                    dateLabel={t('bookings.date')}
+                    timeLabel={t('station.departTime')}
+                    date={f.startDate}
+                    time={f.startTime}
+                    onDate={set('startDate')}
+                    onTime={set('startTime')}
+                    idPrefix="bk-start"
                   />
-                  <Field label={t('bookings.carReturn')}>
-                    <input
-                      id="bk-return-place"
-                      value={f.to}
-                      maxLength={100}
-                      onChange={(e) =>
-                        setF((cur) => ({ ...cur, to: e.target.value, toCoords: undefined }))
+                  <Field label={t('station.from')}>
+                    <StationField
+                      id="bk-place"
+                      label={t('station.from')}
+                      value={f.from}
+                      address={f.fromAddress}
+                      chip={f.title}
+                      domestic={isDomesticTrip(trip)}
+                      country={tripCountries(trip).find((c) => c !== 'KR')}
+                      onChange={(p) =>
+                        setF((cur) => ({
+                          ...cur,
+                          from: p.name.slice(0, 100),
+                          fromCoords: p.coords,
+                          fromAddress: p.address,
+                        }))
                       }
-                      className={inputClass}
                     />
                   </Field>
-                  <PlaceAutocomplete
-                    query={f.to}
-                    domestic={isDomesticTrip(trip)}
-                    near={trip.destinations.find((d) => d.coords)?.coords}
-                    onPick={(p) =>
-                      setF((cur) => ({
-                        ...cur,
-                        to: p.name.slice(0, 100),
-                        toCoords: p.coords ?? undefined,
-                      }))
-                    }
-                  />
-                </>
-              )}
-              {kind === 'train' && (
-                <>
+                  <Field label={t('station.arriveTime')}>
+                    <TimeInput
+                      id="bk-arrive-time"
+                      step={timeStep}
+                      value={f.endTime}
+                      onChange={(value) => setF((cur) => ({ ...cur, endTime: value }))}
+                    />
+                  </Field>
                   <Field label={t('station.to')}>
-                    <input
+                    <StationField
                       id="bk-arrive-place"
+                      label={t('station.to')}
                       value={f.to}
+                      address={f.toAddress}
+                      chip={f.title}
+                      domestic={isDomesticTrip(trip)}
+                      country={tripCountries(trip).find((c) => c !== 'KR')}
+                      onChange={(p) =>
+                        setF((cur) => ({
+                          ...cur,
+                          to: p.name.slice(0, 100),
+                          toCoords: p.coords,
+                          toAddress: p.address,
+                        }))
+                      }
+                    />
+                  </Field>
+                </>
+              ) : (
+                <>
+                  <DateTimeRow
+                    dateLabel={t('bookings.date')}
+                    timeLabel={t('bookings.time')}
+                    date={f.startDate}
+                    time={f.startTime}
+                    onDate={set('startDate')}
+                    onTime={set('startTime')}
+                    idPrefix="bk-start"
+                  />
+                  <Field label={kind === 'car' ? t('bookings.carPickup') : t('bookings.place')}>
+                    <input
+                      id="bk-place"
+                      value={f.from}
                       maxLength={100}
-                      placeholder={t('bookings.stationPlaceholder')}
                       onChange={(e) =>
-                        setF((cur) => ({ ...cur, to: e.target.value, toCoords: undefined }))
+                        setF((cur) => ({ ...cur, from: e.target.value, fromCoords: undefined }))
                       }
                       className={inputClass}
                     />
                   </Field>
-                  <StationPicker
-                    label={t('station.to')}
-                    chip={f.title}
-                    domestic={isDomesticTrip(trip)}
-                    country={tripCountries(trip).find((c) => c !== 'KR')}
-                    near={trip.destinations.find((d) => d.coords)?.coords}
-                    onPick={(name, coords) =>
-                      setF((cur) => ({ ...cur, to: name.slice(0, 100), toCoords: coords }))
-                    }
-                  />
+                  {/* 역·터미널·렌터카 지점: 검색해서 고르면 좌표도 저장 (길찾기, 사용자 요청 2026-11-02) */}
+                  {kind === 'car' && (
+                    <PlaceAutocomplete
+                      query={f.from}
+                      domestic={isDomesticTrip(trip)}
+                      near={trip.destinations.find((d) => d.coords)?.coords}
+                      onPick={(p) =>
+                        setF((cur) => ({
+                          ...cur,
+                          from: p.name.slice(0, 100),
+                          fromCoords: p.coords ?? undefined,
+                        }))
+                      }
+                    />
+                  )}
+                  {kind === 'car' && (
+                    <>
+                      <DateTimeRow
+                        dateLabel={t('bookings.returnDate')}
+                        timeLabel={t('bookings.returnTime')}
+                        date={f.endDate || f.startDate}
+                        time={f.endTime}
+                        onDate={set('endDate')}
+                        onTime={set('endTime')}
+                        idPrefix="bk-return"
+                      />
+                      <Field label={t('bookings.carReturn')}>
+                        <input
+                          id="bk-return-place"
+                          value={f.to}
+                          maxLength={100}
+                          onChange={(e) =>
+                            setF((cur) => ({ ...cur, to: e.target.value, toCoords: undefined }))
+                          }
+                          className={inputClass}
+                        />
+                      </Field>
+                      <PlaceAutocomplete
+                        query={f.to}
+                        domestic={isDomesticTrip(trip)}
+                        near={trip.destinations.find((d) => d.coords)?.coords}
+                        onPick={(p) =>
+                          setF((cur) => ({
+                            ...cur,
+                            to: p.name.slice(0, 100),
+                            toCoords: p.coords ?? undefined,
+                          }))
+                        }
+                      />
+                    </>
+                  )}
                 </>
               )}
               {kind === 'train' && (

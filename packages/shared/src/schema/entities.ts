@@ -164,6 +164,8 @@ const BookingPointSchema = z.object({
   place: z.optional(z.string().check(z.maxLength(100))),
   /** 장소 검색으로 고른 역·터미널·렌터카 지점 좌표 (2026-11-02) — 길찾기·지도 */
   coords: z.optional(CoordsSchema),
+  /** 고른 역·터미널 주소 (2026-11-03, 역 고르면 자동으로) — 길찾기 */
+  address: z.optional(z.string().check(z.maxLength(200))),
 });
 
 export const BookingSchema = z.object({

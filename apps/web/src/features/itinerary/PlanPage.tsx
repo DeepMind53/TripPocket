@@ -100,7 +100,7 @@ import { ItemFormSheet } from './ItemFormSheet';
 import { dayColor, KIND_ICON } from './itemKinds';
 import { MoveDaySheet } from './MoveDaySheet';
 import { BOOKING_ICON } from '../common/bookingKinds';
-import { FlightTicket } from '../bookings/BookingCard';
+import { FlightTicket, TrainTicket } from '../bookings/BookingCard';
 import { isDomesticTrip } from '../../domain/tripPlace';
 import { dayRouteUrl } from '../../domain/dayRoute';
 import { sunSlot, sunTimes } from '../../domain/sun';
@@ -1327,8 +1327,8 @@ function BookingLine({ row, onOpen }: { row: BookingRow; onOpen: () => void }) {
     (b.kind === 'flight' || b.kind === 'transfer') && (b.start.place || b.end?.place)
       ? `${b.start.place ?? ''} → ${b.end?.place ?? ''}`
       : null;
-  // 출발하는 날의 항공편은 예약 탭과 같은 탑승권으로 (편명·공항·시각·터미널·좌석·예약번호)
-  if (b.kind === 'flight' && row.part === 'start')
+  // 출발하는 날의 항공편·기차·버스는 예약 탭과 같은 표 모양으로 (편명·역·시각·좌석·예약번호)
+  if ((b.kind === 'flight' || b.kind === 'train') && row.part === 'start')
     return (
       <li>
         <button
@@ -1337,7 +1337,7 @@ function BookingLine({ row, onOpen }: { row: BookingRow; onOpen: () => void }) {
           aria-label={t('plan.openBooking', { title: b.title })}
           className="flex w-full flex-col gap-2 rounded-btn border border-dashed border-line px-3 py-3 text-left"
         >
-          <FlightTicket booking={b} />
+          {b.kind === 'train' ? <TrainTicket booking={b} /> : <FlightTicket booking={b} />}
           {b.confirmationNo && (
             <span className="tabular border-t border-dashed border-line pt-1.5 text-caption text-fg-sub">
               {t('bookings.confirmationNo')}{' '}
@@ -1507,7 +1507,8 @@ function ItemRow({
   // 종류마다 아주 연한 파스텔 바탕 (styles/index.css .kind-tint)
   const kindStyle = { '--kind': `var(--tp-kind-${item.kind})` } as CSSProperties;
   // 항공편 출발 일정은 예약 탭과 같은 탑승권 모양 그대로 (도착 공항 일정은 아래 보통 줄)
-  if (booking?.kind === 'flight' && item.transport)
+  // 기차·버스도 예약 탭과 같은 표 모양 (사용자 요청 2026-11-03 — "비행기표처럼")
+  if ((booking?.kind === 'flight' || booking?.kind === 'train') && item.transport)
     return wrap(
       <button
         type="button"
@@ -1527,7 +1528,11 @@ function ItemRow({
       >
         {badge}
         <span className="flex min-w-0 flex-1 flex-col gap-2">
-          <FlightTicket booking={booking} />
+          {booking.kind === 'train' ? (
+            <TrainTicket booking={booking} />
+          ) : (
+            <FlightTicket booking={booking} />
+          )}
           {cautions && cautions.length > 0 && (
             <span className="flex">
               <CautionIcons cautions={cautions} />
