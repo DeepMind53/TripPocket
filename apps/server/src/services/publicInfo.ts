@@ -23,8 +23,8 @@ export function dataItems(raw: unknown): Record<string, unknown>[] {
     data?: unknown;
   };
   const code = r.response?.header?.resultCode;
-  if (code && code !== '00' && code !== '0' && code !== 'INFO-000')
-    throw new Error(`data.go.kr ${code}`);
+  // 정상 코드는 서비스마다 다르다 (한국관광공사는 '0000', 2026-11-03 실제 응답으로 확인)
+  if (code && !/^0+$/.test(code) && code !== 'INFO-000') throw new Error(`data.go.kr ${code}`);
   const items = r.response?.body?.items ?? r.data;
   const list = Array.isArray(items)
     ? items

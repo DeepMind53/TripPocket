@@ -66,6 +66,10 @@ it('응답 모양 셋 다 읽고, 기간 글자를 일 수로', () => {
   expect(dataItems({ response: { body: { items: [{ a: 2 }] } } })).toEqual([{ a: 2 }]);
   expect(dataItems({ data: [{ a: 3 }] })).toEqual([{ a: 3 }]);
   expect(() => dataItems({ response: { header: { resultCode: '30' } } })).toThrow();
+  // 한국관광공사는 정상 코드가 '0000'
+  expect(
+    dataItems({ response: { header: { resultCode: '0000' }, body: { items: [{ a: 4 }] } } }),
+  ).toEqual([{ a: 4 }]);
   expect(periodDays('90일')).toBe(90);
   expect(periodDays('3개월')).toBe(90);
   expect(periodDays('불가')).toBeNull();
