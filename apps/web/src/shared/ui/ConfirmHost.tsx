@@ -16,12 +16,11 @@ export function ConfirmHost() {
       <div className="flex flex-col gap-4 pb-2">
         <p className="text-body-2 whitespace-pre-line text-fg-sub">{message}</p>
         <div className="grid grid-cols-2 gap-2">
-          <Button variant="secondary" onClick={() => closeConfirm(false)}>
+          {/* 취소 = 빨강, 확인(삭제) = 파랑 — 앱 전체 같은 규칙 (2026-11-03) */}
+          <Button variant="cancel" onClick={() => closeConfirm(false)}>
             {t('common.cancel')}
           </Button>
-          <Button variant="danger" onClick={() => closeConfirm(true)}>
-            {t('confirm.delete')}
-          </Button>
+          <Button onClick={() => closeConfirm(true)}>{t('confirm.delete')}</Button>
         </div>
       </div>
     </BottomSheet>

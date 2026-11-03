@@ -69,7 +69,7 @@ export function InstallSheet({
           <Button
             size="lg"
             fullWidth
-            variant={prompt && !inApp && where !== 'ios' ? 'ghost' : 'primary'}
+            variant={prompt && !inApp && where !== 'ios' ? 'secondary' : 'primary'}
             onClick={() => onOpenChange(false)}
           >
             {prompt && !inApp && where !== 'ios' ? t('pwa.installLater') : t('pwa.installConfirm')}

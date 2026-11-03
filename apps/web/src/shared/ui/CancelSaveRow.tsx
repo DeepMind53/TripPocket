@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { useTranslation } from '../../i18n';
+import { Button } from './Button';
 
 /**
  * 저장·추가 버튼 왼쪽에 빨간 [취소] (사용자 요청 2026-11-02): 저장하지 않고 나가기.
@@ -15,13 +16,13 @@ export function CancelSaveRow({
   const { t } = useTranslation();
   return (
     <div className="flex items-stretch gap-2">
-      <button
-        type="button"
+      <Button
+        variant="cancel"
         onClick={onCancel}
-        className="w-1/5 shrink-0 rounded-btn bg-danger px-1 text-body-2 font-semibold text-white active:opacity-80"
+        className="h-auto! w-1/5 shrink-0 px-1! whitespace-nowrap"
       >
         {t('common.cancel')}
-      </button>
+      </Button>
       <div className="min-w-0 flex-1">{children}</div>
     </div>
   );

@@ -112,8 +112,8 @@
 ## 7. 컴포넌트 목록 (구현 단위)
 | 컴포넌트 | 변형 / 상태 | 비고 |
 |---|---|---|
-| `Button` | primary / secondary / ghost / danger · 대/중/소 · loading / disabled | 하단 고정형 `BottomCTA` 별도 |
-| `IconButton` | 기본 / 강조 | `aria-label` 필수 |
+| `Button` | primary / secondary / ghost / danger / cancel · 대/중/소 · loading / disabled | 하단 고정형 `BottomCTA` 별도 |
+| `IconButton` | 기본 / 강조(tint) / 취소(cancel) | `aria-label` 필수 |
 | `Chip` | 필터(선택/미선택), 카테고리, Day 칩(색 점 포함) | 가로 스크롤 그룹 |
 | `TextField` | 기본 / 오류 / 비활성, 접두·접미 아이콘, 지우기 버튼 | 라벨은 위 고정 |
 | `DateRangePicker` | 달력 2개월 스크롤, 시작/종료 선택 | 한국 요일 표기 |
@@ -137,6 +137,13 @@
 | `Avatar` | 멤버 이니셜 + 색 | 공동 편집 멤버 표시 |
 | 설정 컨트롤 | `SegmentedControl` `Switch` `RadioList` `Stepper` `Slider` `NumberInput` `NumPad` `CurrencyPicker` `FxCard` `QuickMenuSheet` | 명세·선택 원칙은 `12` 문서 §3.1, §4 |
 | `DirectionsSheet` | 이동수단(대중교통/도보/자동차) × 지도앱(네이버/구글/카카오) | 마지막 선택 기억 |
+
+### 7.1 버튼 색·순서 규칙 (사용자 요청 2026-11-03)
+- 확인·저장·추가·시작·삭제 확정 = **파랑** (`primary`, 아이콘은 `tint`)
+- 취소 = **빨강** (`cancel`, 아이콘 X는 `tone="cancel"`) — 저장 폼은 `CancelSaveRow`
+- 나중에·괜찮아요처럼 넘어가기 = **회색** (`secondary`)
+- 두 개를 나란히 둘 때는 왼쪽 취소·넘어가기, 오른쪽 확인
+- `danger`는 화면 안에 혼자 있는 위험 동작(여행 삭제 등)에만
 
 ## 8. 모션
 - 기본 지속 시간 200ms, 시트 280ms, `cubic-bezier(.2,.8,.2,1)`

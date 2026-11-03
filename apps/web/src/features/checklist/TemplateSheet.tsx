@@ -106,6 +106,7 @@ export function TemplateSheet({ open, onOpenChange, list, current, onApply }: Te
                   <IconButton
                     label={t('checklist.cancel')}
                     icon={<X />}
+                    tone="cancel"
                     onClick={() => setEditingId(null)}
                   />
                 </form>

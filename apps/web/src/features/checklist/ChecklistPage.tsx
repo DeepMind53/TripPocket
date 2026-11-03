@@ -394,6 +394,7 @@ function AddRow({
               <IconButton
                 label={t('checklist.cancel')}
                 icon={<X />}
+                tone="cancel"
                 onClick={() => setAddingCategory(false)}
               />
             </form>
@@ -433,7 +434,7 @@ function SaveBar({
       style={{ bottom: 'calc(56px + env(safe-area-inset-bottom) + 12px)' }}
     >
       <Button
-        variant="secondary"
+        variant="cancel"
         size="lg"
         className="flex-1 shadow-card"
         onClick={onCancel}

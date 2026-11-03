@@ -2,7 +2,11 @@ import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import { cn } from '../lib/cn';
 import { Spinner } from './Spinner';
 
-type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
+/**
+ * 색 규칙 (사용자 요청 2026-11-03): 확인·저장·추가·시작 = primary(파랑), 취소 = cancel(빨강),
+ * 나중에·괜찮아요·닫기 같은 넘어가기 = secondary/ghost. danger는 화면 안의 위험 동작(여행 삭제 등)
+ */
+type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'cancel';
 type Size = 'lg' | 'md' | 'sm';
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -18,6 +22,7 @@ const variantClass: Record<Variant, string> = {
   secondary: 'bg-bg-subtle text-fg active:brightness-95',
   ghost: 'bg-transparent text-primary active:bg-primary-weak',
   danger: 'bg-danger text-on-primary active:brightness-95',
+  cancel: 'bg-danger text-on-primary active:brightness-95',
 };
 
 // 높이 52 / 44 / 36 (docs/11 §5)

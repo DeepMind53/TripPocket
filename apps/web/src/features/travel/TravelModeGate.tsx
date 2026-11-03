@@ -39,12 +39,13 @@ export function TravelModeGate({ trip }: { trip: Trip }) {
     >
       <span className="text-body-1 font-bold">{t('travel.askTitle')}</span>
       <span className="text-caption whitespace-pre-line text-fg-sub">{t('travel.askDesc')}</span>
-      <div className="flex gap-2">
-        <Button size="sm" onClick={() => setTravelMode(trip.id, true)}>
-          {t('travel.start')}
-        </Button>
+      {/* 넘어가기는 왼쪽 회색, 확인은 오른쪽 파랑 (앱 전체 같은 순서) */}
+      <div className="grid grid-cols-2 gap-2">
         <Button size="sm" variant="secondary" onClick={() => declineTravelMode(trip.id)}>
           {t('travel.decline')}
+        </Button>
+        <Button size="sm" onClick={() => setTravelMode(trip.id, true)}>
+          {t('travel.start')}
         </Button>
       </div>
     </div>

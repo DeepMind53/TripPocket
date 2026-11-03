@@ -69,7 +69,7 @@ function Ask({ trip }: { trip: Trip }) {
           ))}
         </div>
         {km != null && <p className="text-caption text-fg-muted">{t('planB.check.km', { km })}</p>}
-        <Button variant="ghost" fullWidth onClick={close}>
+        <Button variant="secondary" fullWidth onClick={close}>
           {t('planB.check.later')}
         </Button>
       </div>

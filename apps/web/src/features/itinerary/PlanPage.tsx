@@ -1461,7 +1461,7 @@ function ItemRow({
           <button
             type="button"
             onClick={onConfirmFlight}
-            className="h-8 shrink-0 rounded-full bg-danger px-4 text-caption font-bold text-white"
+            className="h-8 shrink-0 rounded-full bg-primary px-4 text-caption font-bold text-on-primary"
           >
             {t('flightCheck.confirm')}
           </button>
