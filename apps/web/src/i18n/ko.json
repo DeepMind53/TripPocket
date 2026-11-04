@@ -1886,7 +1886,12 @@
       "forecast": "오늘부터 2주 안이에요\n일기예보라 바뀔 수 있어요",
       "lastYear": "2주보다 먼 날이에요\n작년 같은 날 날씨로 미리 짐작해요"
     },
-    "source": "날씨 출처: Open-Meteo"
+    "source": "날씨 출처: Open-Meteo",
+    "noHours": "시간대별 예보는\n16일 안쪽 날짜만 있어요",
+    "hoursTitle": "{{date}} 시간대별 날씨",
+    "hoursList": "시간대별 날씨",
+    "openHours": "{{date}} 시간대별 날씨 보기",
+    "hour": "{{h}}시"
   },
   "alerts": {
     "title": "여행지 특이사항",

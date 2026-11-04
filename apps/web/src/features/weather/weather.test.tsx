@@ -1,3 +1,5 @@
+import userEvent from '@testing-library/user-event';
+import { useToastStore } from '../../shared/ui/toastStore';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { routes } from '../../app/router';
@@ -228,4 +230,62 @@ it('공항 날씨도 2주보다 먼 날은 "과거 날씨"(작년 같은 날)로
   await waitFor(() => expect(within(air).getAllByText('작년 기록')).toHaveLength(2));
   // 제목에 공항 코드가 있으면 경로를 두 번 쓰지 않는다
   expect(within(air).queryByText('ICN → NRT')).toBeNull();
+});
+
+it('날짜를 누르면 그날 시간대별 날씨 (비 오는 시간 표시), 시간별 예보가 없으면 안내', async () => {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date('2026-10-22T03:00:00Z'));
+  const days = ['2026-10-23', '2026-10-24', '2026-10-25'];
+  const time: string[] = [];
+  const code: number[] = [];
+  const temp: number[] = [];
+  for (const d of ['2026-10-24'])
+    for (let h = 0; h < 24; h++) {
+      time.push(`${d}T${String(h).padStart(2, '0')}:00`);
+      code.push(h >= 10 && h < 15 ? 61 : 0);
+      temp.push(15);
+    }
+  vi.stubGlobal('fetch', async () =>
+    Response.json({
+      daily: {
+        time: days,
+        weather_code: [0, 61, 0],
+        temperature_2m_max: [20, 20, 20],
+        temperature_2m_min: [10, 10, 10],
+      },
+      hourly: { time, weather_code: code, temperature_2m: temp },
+    }),
+  );
+  const trip = await tripRepo.create({
+    title: '도쿄',
+    destinations: [
+      { name: '도쿄', kind: 'city', countryCode: 'JP', coords: { lat: 35.68, lng: 139.69 } },
+    ],
+    startDate: '2026-10-24',
+    endDate: '2026-10-24',
+    timezone: 'Asia/Tokyo',
+    cover: {},
+  });
+  const user = userEvent.setup();
+  render(
+    <RouterProvider
+      router={createMemoryRouter(routes, { initialEntries: [`/trips/${trip.id}/weather`] })}
+    />,
+  );
+  await user.click(await screen.findByRole('button', { name: /10.24 \(토\) 시간대별 날씨 보기/ }));
+  const list = await screen.findByRole('list', { name: '시간대별 날씨' });
+  const rows = within(list).getAllByRole('listitem');
+  expect(rows).toHaveLength(24);
+  expect(rows[10]).toHaveTextContent('10시');
+  expect(rows[10]).toHaveTextContent('비');
+  expect(rows[15]).toHaveTextContent('맑음');
+  await user.keyboard('{Escape}');
+  await user.click(screen.getByRole('button', { name: /10.23 \(금\) 시간대별 날씨 보기/ }));
+  expect(
+    useToastStore
+      .getState()
+      .items.map((x) => x.message)
+      .join(),
+  ).toMatch(/16일 안쪽/);
+  vi.useRealTimers();
 });

@@ -14,7 +14,8 @@ import { useTrip, useTripBookings } from '../../data/hooks';
 import { formatTemps, weatherLook } from '../../domain/weather';
 import { useTranslation } from '../../i18n';
 import { formatMonthDay } from '../../shared/lib/dateFormat';
-import { BottomSheet, IconButton, TopBar, WeatherIcon } from '../../shared/ui';
+import { BottomSheet, IconButton, TopBar, WeatherIcon, toast } from '../../shared/ui';
+import { useRouteSheet } from '../../shared/hooks/useRouteSheet';
 import { WeatherKindBadge } from './WeatherKindBadge';
 import { KIND_ICON, weatherKind, type WeatherKind } from './weatherKind';
 import { useWeatherDays, type TripDayWeather } from '../common/useTripWeather';
@@ -42,6 +43,9 @@ export function WeatherPage() {
   const flights = bookings.filter((b) => b.kind === 'flight' && b.start.place);
   const { countries, points } = alertQuery(trip ?? { destinations: [] });
   const [help, setHelp] = useState(false);
+  // 날짜를 누르면 그날 시간대별 날씨 (사용자 요청 2026-11-04)
+  const [hourDate, setHourDate] = useState<LocalDate | null>(null);
+  const [hourOpen, setHourOpen] = useRouteSheet('weather-hours');
   if (!trip) return null;
 
   const label = (i: number) =>
@@ -83,6 +87,11 @@ export function WeatherPage() {
                 date={d}
                 weather={weather[d]}
                 outside={i === 0 || i === dates.length - 1}
+                onOpen={() => {
+                  if (!weather[d]?.hours) return toast(t('weatherPage.noHours'));
+                  setHourDate(d);
+                  setHourOpen(true);
+                }}
               />
             ))}
           </ul>
@@ -99,6 +108,14 @@ export function WeatherPage() {
           </section>
         )}
       </div>
+      <BottomSheet
+        open={hourOpen && !!hourDate}
+        onOpenChange={setHourOpen}
+        title={hourDate ? t('weatherPage.hoursTitle', { date: formatMonthDay(hourDate) }) : ''}
+        autoFocusInput={false}
+      >
+        {hourDate && weather[hourDate]?.hours && <HourList hours={weather[hourDate].hours} />}
+      </BottomSheet>
       <BottomSheet
         open={help}
         onOpenChange={setHelp}
@@ -132,40 +149,75 @@ function DayRow({
   date,
   weather,
   outside = false,
+  onOpen,
 }: {
   title: string;
   date: LocalDate;
   weather: TripDayWeather | undefined;
   outside?: boolean;
+  onOpen: () => void;
 }) {
   const { t } = useTranslation();
   const look = weather ? weatherLook(weather.code) : null;
   return (
-    <li
-      className={
-        outside
-          ? 'flex items-center gap-3 bg-bg-subtle/60 px-4 py-2.5'
-          : 'flex items-center gap-3 px-4 py-2.5'
-      }
-    >
-      <span className="flex w-20 shrink-0 flex-col">
-        <span className="text-caption font-semibold text-fg-sub">{title}</span>
-        <span className="tabular text-body-2">{formatMonthDay(date)}</span>
-      </span>
-      {weather && look ? (
-        <>
-          {/* 예보·지난 날씨·작년 기록은 날짜와 날씨 그림 사이에 (사용자 요청 2026-11-03) */}
-          <span className="shrink-0 whitespace-nowrap">
-            <WeatherKindBadge kind={weatherKind(weather)} />
-          </span>
-          <WeatherIcon kind={look.kind} className="size-7" />
-          <span className="min-w-0 flex-1 text-body-2">{look.label}</span>
-          <span className="tabular text-body-1 font-semibold">{formatTemps(weather)}</span>
-        </>
-      ) : (
-        <span className="flex-1 text-caption text-fg-muted">{t('prep.weatherNone')}</span>
-      )}
+    <li className={outside ? 'bg-bg-subtle/60' : undefined}>
+      <button
+        type="button"
+        onClick={onOpen}
+        aria-label={t('weatherPage.openHours', { date: formatMonthDay(date) })}
+        className="flex w-full items-center gap-3 px-4 py-2.5 text-left"
+      >
+        <span className="flex w-20 shrink-0 flex-col">
+          <span className="text-caption font-semibold text-fg-sub">{title}</span>
+          <span className="tabular text-body-2">{formatMonthDay(date)}</span>
+        </span>
+        {weather && look ? (
+          <>
+            {/* 예보·지난 날씨·작년 기록은 날짜와 날씨 그림 사이에 (사용자 요청 2026-11-03) */}
+            <span className="shrink-0 whitespace-nowrap">
+              <WeatherKindBadge kind={weatherKind(weather)} />
+            </span>
+            <WeatherIcon kind={look.kind} className="size-7" />
+            <span className="min-w-0 flex-1 text-body-2">{look.label}</span>
+            <span className="tabular text-body-1 font-semibold">{formatTemps(weather)}</span>
+          </>
+        ) : (
+          <span className="flex-1 text-caption text-fg-muted">{t('prep.weatherNone')}</span>
+        )}
+      </button>
     </li>
+  );
+}
+
+/** 그날 시간대별 날씨 (0~23시, 지금 시각 이후 먼저 보이게 하지는 않고 하루 전체) */
+function HourList({ hours }: { hours: { code: number[]; temp: number[] } }) {
+  const { t } = useTranslation();
+  return (
+    <ul aria-label={t('weatherPage.hoursList')} className="flex flex-col divide-y divide-line pb-2">
+      {hours.code.map((code, h) => {
+        const temp = hours.temp[h];
+        if (code === undefined || temp === undefined) return null;
+        const look = weatherLook(code);
+        const wet =
+          look.kind === 'rain' ||
+          look.kind === 'drizzle' ||
+          look.kind === 'storm' ||
+          look.kind === 'snow';
+        return (
+          <li
+            key={h}
+            className={`flex min-h-11 items-center gap-3 px-1 ${wet ? 'bg-primary-weak/40' : ''}`}
+          >
+            <span className="tabular w-12 shrink-0 text-caption font-semibold text-fg-sub">
+              {t('weatherPage.hour', { h })}
+            </span>
+            <WeatherIcon kind={look.kind} className="size-6 shrink-0" />
+            <span className="min-w-0 flex-1 text-body-2">{look.label}</span>
+            <span className="tabular text-body-2 font-semibold">{Math.round(temp)}°</span>
+          </li>
+        );
+      })}
+    </ul>
   );
 }
 
