@@ -279,11 +279,12 @@ function TravelView({ trip, items: all }: { trip: Trip; items: ItineraryItem[] }
   return (
     <div
       className={cn(
-        'mx-auto flex min-h-dvh max-w-[560px] flex-col gap-3 px-5 pt-4 pb-28',
+        'mx-auto flex min-h-dvh max-w-[560px] flex-col gap-3 px-5 pb-28',
         sun && 'travel-sun',
       )}
     >
-      <header className="flex items-center gap-2">
+      {/* 머리는 일정표 머리(TopBar)와 같은 자리·높이: 홈 버튼이 화면을 오가도 같은 곳에 (사용자 요청 2026-11-04) */}
+      <header className="sticky top-0 z-20 -mx-5 flex min-h-[calc(56px+var(--safe-top))] items-center gap-1 bg-bg/95 px-1 pt-[var(--safe-top)] backdrop-blur">
         {/* 여행 모드 끄기 = 홈 모양, 왼쪽 (사용자 요청 2026-11-03) */}
         <IconButton
           label={t('travel.exit')}

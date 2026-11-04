@@ -226,3 +226,17 @@ test('글자 크기 130%: 주요 화면 가로 넘침 없음, 탭 이름이 잘�
     expect(clipped, `${path} 탭 글자`).toEqual([]);
   }
 });
+
+// 여행 모드의 [홈] 버튼은 일정표 머리의 [홈으로] 버튼과 같은 자리 (사용자 요청 2026-11-04)
+test('여행 모드 [홈] 버튼은 일정표 [홈으로] 버튼과 같은 자리', async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 640 });
+  const base = await seedTrip(page);
+  const planHome = await box(page.getByRole('button', { name: '홈으로' }).first());
+  await page.evaluate(() => {
+    localStorage.setItem('tp-labs-reset', '2026-11-03');
+    localStorage.setItem('tp-labs', JSON.stringify({ travelMode: true }));
+  });
+  await page.goto(`${base}/go`);
+  const goHome = await box(page.getByRole('button', { name: '여행 모드 끄기' }));
+  expect(goHome).toEqual(planHome);
+});

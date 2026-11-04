@@ -232,6 +232,7 @@ it('공항 날씨도 2주보다 먼 날은 "과거 날씨"(작년 같은 날)로
   expect(within(air).queryByText('ICN → NRT')).toBeNull();
 });
 
+// 좌표는 앞 시험과 다르게 (날씨 저장본이 겹치지 않게)
 it('날짜를 누르면 그날 시간대별 날씨 (비 오는 시간 표시), 시간별 예보가 없으면 안내', async () => {
   vi.useFakeTimers({ toFake: ['Date'] });
   vi.setSystemTime(new Date('2026-10-22T03:00:00Z'));
@@ -259,7 +260,7 @@ it('날짜를 누르면 그날 시간대별 날씨 (비 오는 시간 표시), �
   const trip = await tripRepo.create({
     title: '도쿄',
     destinations: [
-      { name: '도쿄', kind: 'city', countryCode: 'JP', coords: { lat: 35.68, lng: 139.69 } },
+      { name: '도쿄', kind: 'city', countryCode: 'JP', coords: { lat: 34.69, lng: 135.5 } },
     ],
     startDate: '2026-10-24',
     endDate: '2026-10-24',
@@ -272,6 +273,8 @@ it('날짜를 누르면 그날 시간대별 날씨 (비 오는 시간 표시), �
       router={createMemoryRouter(routes, { initialEntries: [`/trips/${trip.id}/weather`] })}
     />,
   );
+  // 날씨를 받은 뒤에 누른다
+  await screen.findAllByText('10°/20°');
   await user.click(await screen.findByRole('button', { name: /10.24 \(토\) 시간대별 날씨 보기/ }));
   const list = await screen.findByRole('list', { name: '시간대별 날씨' });
   const rows = within(list).getAllByRole('listitem');
