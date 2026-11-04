@@ -30,6 +30,7 @@ import { formatPeriod, formatTripBadge, formatTripLength } from '../../shared/li
 import type { Destination } from '../../shared/lib/directions';
 import { Button, EmptyState, toast } from '../../shared/ui';
 import { Wordmark } from './Wordmark';
+import { TravelModeButton } from '../travel/TravelModeButton';
 import { TripList } from '../trips/TripsPage';
 
 const PrepCards = lazy(async () => ({ default: (await import('./PrepCards')).PrepCards }));
@@ -76,8 +77,9 @@ export function HomePage() {
   return (
     <>
       {/* 홈만 가운데 로고 (빠른 메뉴는 AppShell의 플로팅 버튼) */}
-      <header className="sticky top-0 z-20 grid min-h-[calc(56px+var(--safe-top))] pt-[var(--safe-top)] grid-cols-[72px_1fr_72px] items-center bg-bg/95 px-1 backdrop-blur">
-        <span />
+      <header className="sticky top-0 z-20 grid min-h-[calc(56px+var(--safe-top))] pt-[var(--safe-top)] grid-cols-[1fr_auto_1fr] items-center gap-1 bg-bg/95 px-1 backdrop-blur">
+        {/* 왼쪽 빈칸: 여행 모드 켜기 (실험실, 사용자 요청 2026-11-04) */}
+        <TravelModeButton tripId={featured?.id} className="justify-self-start" />
         <Wordmark label={t('app.name')} />
         {/* 앱 소개 다시 보기 (사용자 요청 2026-10-26) */}
         <Link

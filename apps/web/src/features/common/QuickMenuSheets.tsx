@@ -32,6 +32,7 @@ import { nowTimeIn } from '../../domain/lodging';
 import { SavedSpotsButtons } from './SavedSpotsButtons';
 import { ShortcutEditSheet } from './ShortcutEditSheet';
 import { TabQuickInfo } from './TabQuickInfo';
+import { TravelModeButton } from '../travel/TravelModeButton';
 import { SHORTCUT_ICON, shortcutPath, useQuickShortcuts, type ShortcutId } from './quickShortcuts';
 import { openDirectionsDirect } from './openDirections';
 import { isDomesticTrip } from '../../domain/tripPlace';
@@ -59,7 +60,12 @@ export function QuickMenuSheets({
     .sort((a, b) => a.startDate.localeCompare(b.startDate))[0];
   return (
     <>
-      <BottomSheet open={open} onOpenChange={setOpen} title={t('quickMenu.title')}>
+      <BottomSheet
+        open={open}
+        onOpenChange={setOpen}
+        title={t('quickMenu.title')}
+        headerAside={open ? <TravelModeButton tripId={soon?.id} replace /> : undefined}
+      >
         <QuickMenuContent onEmergency={() => setSosOpen(true)} />
       </BottomSheet>
       <EmergencySheet open={sosOpen} onOpenChange={setSosOpen} countries={tripCountries(soon)} />
@@ -141,7 +147,15 @@ function TripQuickMenu({ open, setOpen }: { open: boolean; setOpen: (open: boole
         onOpenChange={setOpen}
         title={t('quickMenu.title')}
         // 여행지 현지 날짜·시각 (일정 제목 아래에서는 가려 보이지 않아 여기로, 사용자 요청 2026-10-27)
-        headerAside={trip && open ? <LocalNow timezone={trip.timezone} /> : undefined}
+        // 여행 모드 켜기는 제목 바로 오른쪽에 작게 (사용자 요청 2026-11-04)
+        headerAside={
+          trip && open ? (
+            <span className="flex items-center gap-2">
+              <TravelModeButton tripId={trip.id} replace />
+              <LocalNow timezone={trip.timezone} />
+            </span>
+          ) : undefined
+        }
       >
         <QuickMenuContent
           shortcuts={shortcuts}

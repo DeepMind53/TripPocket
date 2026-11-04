@@ -157,3 +157,22 @@ it('빠른 메뉴: 여행 밖에서는 탭마다 맞는 정보와 바로가기',
   await waitFor(() => expect(screen.queryByRole('region', { name: '다가오는 여행' })).toBeNull());
   expect(trip.id).toBeTruthy();
 });
+
+it('여행 모드 켜기 버튼: 홈 왼쪽 위와 빠른 메뉴 제목 오른쪽 (실험실을 켰을 때만)', async () => {
+  vi.setSystemTime(new Date('2026-11-03T01:35:00Z'));
+  const trip = await osaka();
+  const user = userEvent.setup();
+  const view = open('/');
+  const btn = await screen.findByRole('button', { name: '여행 모드' });
+  await user.click(btn);
+  expect(await screen.findByRole('region', { name: '다음' })).toBeInTheDocument();
+  expect(useTravelMode.getState().on[trip.id]).toBe(true);
+  view.unmount();
+
+  useTravelMode.setState({ on: {}, asked: { [trip.id]: true } });
+  open(`/trips/${trip.id}/bookings`);
+  await user.click(await screen.findByRole('button', { name: '빠른 메뉴' }));
+  const sheet = await screen.findByRole('dialog', { name: '빠른 메뉴' });
+  await user.click(within(sheet).getByRole('button', { name: '여행 모드' }));
+  expect(await screen.findByRole('region', { name: '다음' })).toBeInTheDocument();
+});

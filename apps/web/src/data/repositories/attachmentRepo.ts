@@ -112,6 +112,8 @@ export const attachmentRepo = {
     );
     if (!res.ok) return;
     const local = await db.attachments.where('tripId').equals(trip.id).toArray();
+    // 응답 모양이 다르면(예전 서버 등) 아무것도 지우지 않는다
+    if (!Array.isArray(res.data.attachments)) return;
     const remoteIds = new Set(res.data.attachments.map((a) => a.id));
     for (const r of res.data.attachments) {
       const have = local.find((l) => l.id === r.id);
