@@ -43,7 +43,14 @@ import { WeatherIcon } from '../../shared/ui';
  * 출발 30일 전부터. 모두 기기에 있는 값(준비물·예약·저장해 둔 환율)과 날씨 예보(3시간 저장)만 — 새 외부 호출은 날씨뿐.
  * 할 일 표시(주황 점): 숙소 예약 없음 / 준비물 없음 / 출발 3일 전인데 준비물이 남음
  */
-export function PrepCards({ trip }: { trip: Trip }) {
+export function PrepCards({
+  trip,
+  collapsed = false,
+}: {
+  trip: Trip;
+  /** 여행 중: 늘 접힌 채로 시작하고 펼친 것을 기억하지 않는다 (사용자 요청 2026-11-06) */
+  collapsed?: boolean;
+}) {
   const { t } = useTranslation();
   const bookings = useTripBookings(trip.id) ?? [];
   const packing = useChecklist(trip.id, 'packing');
@@ -75,6 +82,7 @@ export function PrepCards({ trip }: { trip: Trip }) {
   const rate = currency ? fx?.rates[currency] : undefined;
   const unit = currency && HUNDRED_UNIT.has(currency) ? 100 : 1;
   const [open, setOpen] = useState(() => {
+    if (collapsed) return false;
     try {
       return localStorage.getItem(OPEN_KEY) === '1';
     } catch {
@@ -83,6 +91,7 @@ export function PrepCards({ trip }: { trip: Trip }) {
   });
   const toggleOpen = (v: boolean) => {
     setOpen(v);
+    if (collapsed) return;
     try {
       localStorage.setItem(OPEN_KEY, v ? '1' : '0');
     } catch {
@@ -97,7 +106,8 @@ export function PrepCards({ trip }: { trip: Trip }) {
   return (
     <section aria-label={t('prep.title')} className="flex flex-col gap-2">
       {/* 시차(설정)·연차·처음 가는 나라·무료 취소 마감(실험실) */}
-      <HomeLabs trip={trip} bookings={bookings} ongoing={false} />
+      {/* 여행 중에는 아래 오늘 일정 묶음에 같은 줄이 있어 뺀다 */}
+      {!collapsed && <HomeLabs trip={trip} bookings={bookings} ongoing={false} />}
       {/* 기본은 한 줄 요약, 누르면 펼침 (docs/20 U3) — 펼침 상태는 이 기기에 기억 */}
       <button
         type="button"

@@ -126,13 +126,13 @@ export function HomePage() {
             null,
           )}
         />
-        {!ongoing && upcoming && <UpcomingTrip trip={upcoming} />}
-        {/* 출발 30일 전부터 준비 현황 (docs/16 B1) — 필요할 때 불러온다 */}
-        {!ongoing &&
-          upcoming &&
-          daysUntil(upcoming.startDate, todayIn(upcoming.timezone)) <= 30 && (
+        {/* 여행 카드는 여행 중에도 같은 모양으로 맨 위에 (사용자 요청 2026-11-06) */}
+        {featured && <UpcomingTrip trip={featured} />}
+        {/* 출발 30일 전부터 준비 현황 (docs/16 B1) — 여행 중에는 접힌 채로 — 필요할 때 불러온다 */}
+        {featured &&
+          (ongoing || daysUntil(featured.startDate, todayIn(featured.timezone)) <= 30) && (
             <Suspense fallback={null}>
-              <PrepCards trip={upcoming} />
+              <PrepCards trip={featured} collapsed={!!ongoing} />
             </Suspense>
           )}
       </div>
@@ -249,15 +249,7 @@ function OngoingTrip({ trip }: { trip: Trip }) {
 
   return (
     <>
-      <Link to={planUrl} className="flex items-center gap-2">
-        <span aria-hidden="true" className="text-[22px]">
-          {trip.cover.emoji ?? '🧳'}
-        </span>
-        <span className="line-clamp-2 min-w-0 flex-1 text-body-1">{trip.title}</span>
-        <span className="tabular shrink-0 rounded-full bg-primary-weak px-2 py-0.5 text-micro text-primary">
-          {formatTripBadge(trip.startDate, trip.endDate, today)}
-        </span>
-      </Link>
+      {/* 여행 이름·배지는 맨 위 여행 카드에 있어 여기서는 뺀다 (2026-11-06) */}
       <Suspense fallback={null}>
         <TripAlertBanner trip={trip} />
       </Suspense>
