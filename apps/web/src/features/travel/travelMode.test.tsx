@@ -84,8 +84,13 @@ it('여행 모드: 여행 중이면 한 번 묻고, 시작하면 지금·다음 
   expect(screen.queryByText('도톤보리')).toBeNull();
   await user.click(screen.getByRole('button', { name: '지난 일정 1' }));
   const past = screen.getByRole('list', { name: '지난 일정' });
-  await user.click(within(past).getByRole('button', { name: '다녀옴' }));
-  await waitFor(() => expect(within(past).queryByRole('button', { name: '다녀옴' })).toBeNull());
+  await user.click(within(past).getByRole('button', { name: '방문' }));
+  await waitFor(() =>
+    expect(within(past).getByRole('button', { name: '방문' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    ),
+  );
 
   // 긴급 연락처는 늘 오른쪽 위
   expect(screen.getByRole('button', { name: '긴급 연락처' })).toBeInTheDocument();

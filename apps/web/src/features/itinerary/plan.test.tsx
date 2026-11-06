@@ -69,7 +69,7 @@ describe('일정 화면', () => {
     expect(screen.getByRole('button', { name: /KE703/ }).className).not.toContain('flight-alert');
   });
 
-  it('지난 일정 오른쪽 [방문][미방문]: 누르면 둘 다 사라지고, 미방문은 빗금·저장 탭으로, 상세에서 고친다', async () => {
+  it('지난 일정 오른쪽 [미방문][방문]: 고른 것만 칠해지고 버튼은 남는다, 미방문은 빗금·저장 탭으로, 상세에서 고친다', async () => {
     const user = userEvent.setup();
     vi.setSystemTime(new Date('2026-10-25T03:00:00Z')); // 도쿄 10.25 12:00 = 2일차
     await itemRepo.create({ tripId, date: '2026-10-24', kind: 'place', title: '센소지' });
@@ -98,8 +98,15 @@ describe('일정 화면', () => {
     expect(
       await within(day1).findByRole('button', { name: /센소지, 방문 기록/ }),
     ).toBeInTheDocument();
-    expect(within(day1).queryByRole('button', { name: '방문' })).not.toBeInTheDocument();
-    expect(within(day1).queryByRole('button', { name: '미방문' })).not.toBeInTheDocument();
+    // 버튼은 남고 고른 것만 눌린 상태 (사용자 요청 2026-11-06)
+    expect(within(day1).getByRole('button', { name: '방문' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    expect(within(day1).getByRole('button', { name: '미방문' })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    );
     const [senso] = await itemRepo.listByTrip(tripId);
     expect(senso).toMatchObject({ visit: 'visited', done: true });
 
@@ -109,7 +116,10 @@ describe('일정 화면', () => {
     await user.click(within(day2).getByRole('button', { name: '미방문' }));
     const ramen = await within(day2).findByRole('button', { name: /라멘, 미방문 기록/ });
     expect(ramen.className).toContain('visit-mark');
-    expect(within(day2).queryByRole('button', { name: '미방문' })).not.toBeInTheDocument();
+    expect(within(day2).getByRole('button', { name: '미방문' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
     // 미방문은 저장 탭으로 (나라 정보와 함께)
     await waitFor(async () =>
       expect(await savedPlaceRepo.listActive()).toMatchObject([

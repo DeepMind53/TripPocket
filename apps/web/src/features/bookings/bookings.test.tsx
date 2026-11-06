@@ -384,7 +384,8 @@ describe('홈', () => {
       date: '2026-10-25',
       kind: 'place',
       title: '감천문화마을',
-      startTime: '09:00',
+      startTime: '08:00',
+      endTime: '09:00',
     });
     await itemRepo.create({
       tripId,
@@ -410,9 +411,24 @@ describe('홈', () => {
     expect(lodging).toHaveTextContent('해운대 호텔');
     expect(lodging).toHaveTextContent('2/3');
 
-    // 오늘 일정에서 다녀옴 체크
-    await user.click(screen.getByRole('checkbox', { name: '감천문화마을' }));
-    await waitFor(async () => expect((await itemRepo.listByTrip(tripId))[0]?.done).toBe(true));
+    // 끝난 일정 오른쪽 [미방문][방문] — 일정 탭과 같은 방문 기록 (2026-11-06)
+    const visits = screen.getByRole('group', { name: '감천문화마을 방문 기록' });
+    await user.click(within(visits).getByRole('button', { name: '방문' }));
+    await waitFor(async () =>
+      expect((await itemRepo.listByTrip(tripId))[0]).toMatchObject({
+        visit: 'visited',
+        done: true,
+      }),
+    );
+    await waitFor(() =>
+      expect(
+        within(screen.getByRole('group', { name: '감천문화마을 방문 기록' })).getByRole('button', {
+          name: '방문',
+        }),
+      ).toHaveAttribute('aria-pressed', 'true'),
+    );
+    // 아직인 돼지국밥에는 버튼이 없다
+    expect(screen.queryByRole('group', { name: '돼지국밥 방문 기록' })).toBeNull();
   });
 
   it('여행 전에는 D-day 카드를 보여준다', async () => {

@@ -240,3 +240,31 @@ test('여행 모드 [홈] 버튼은 일정표 [홈으로] 버튼과 같은 자�
   const goHome = await box(page.getByRole('button', { name: '여행 모드 끄기' }));
   expect(goHome).toEqual(planHome);
 });
+
+// 아이폰 폭: 홈 로고는 늘 가운데, 여행 모드 버튼은 잘리지 않고 로고와 겹치지 않는다 (사용자 요청 2026-11-06)
+for (const width of [320, 375, 390]) {
+  test(`${width}px 홈 머리: 로고 가운데, 여행 모드 버튼이 다 보인다`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 700 });
+    await seedTrip(page);
+    await page.goto('/');
+    const logo = page.getByRole('heading', { name: '트립포켓' });
+    const center = async () => {
+      const b = await box(logo);
+      return b.x + b.w / 2;
+    };
+    // 실험실을 끈 상태(버튼 없음)에도 가운데
+    expect(Math.abs((await center()) - width / 2)).toBeLessThanOrEqual(2);
+    await page.evaluate(() => {
+      localStorage.setItem('tp-labs-reset', '2026-11-03');
+      localStorage.setItem('tp-labs', JSON.stringify({ travelMode: true }));
+    });
+    await page.reload();
+    const btn = page.getByRole('button', { name: '여행 모드' });
+    const b = await box(btn);
+    const l = await box(logo);
+    expect(b.x).toBeGreaterThanOrEqual(0);
+    expect(b.x + b.w).toBeLessThanOrEqual(l.x);
+    expect(await btn.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true);
+    expect(Math.abs((await center()) - width / 2)).toBeLessThanOrEqual(2);
+  });
+}

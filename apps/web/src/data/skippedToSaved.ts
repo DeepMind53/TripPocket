@@ -1,5 +1,6 @@
 import type { ItineraryItem } from '@trippocket/shared';
 import { savedPlaceRepo, SavedLimitError } from './repositories/savedPlaceRepo';
+import { itemRepo } from './repositories/itemRepo';
 
 const norm = (s: string | undefined) => (s ?? '').toLowerCase().replace(/[\s·\-()]/g, '');
 
@@ -39,4 +40,21 @@ export async function saveSkippedPlace(
     if (e instanceof SavedLimitError) return 'limit';
     throw e;
   }
+}
+
+/**
+ * 방문·미방문 고르기 — 홈·일정·여행 모드가 모두 이것을 쓴다 (사용자 요청 2026-11-06, 어디서 눌러도 같게).
+ * 같은 것을 다시 누르면 기록을 지운다(null). 미방문이면 저장 탭에도 담는다
+ */
+export async function applyVisit(
+  item: ItineraryItem,
+  visit: NonNullable<ItineraryItem['visit']> | null,
+  trip: { destinations: readonly { countryCode?: string | undefined; name: string }[] },
+): Promise<'saved' | 'exists' | 'limit' | 'none' | null> {
+  await itemRepo.setVisit(item.id, visit);
+  if (visit !== 'skipped') return null;
+  return saveSkippedPlace(item, {
+    countryCode: trip.destinations[0]?.countryCode,
+    cityTag: trip.destinations[0]?.name,
+  });
 }

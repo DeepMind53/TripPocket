@@ -1,3 +1,8 @@
+import { applyVisit } from '../../data/skippedToSaved';
+import { pastItemIds } from '../../domain/dayTools';
+import type { Visit } from '../../domain/visit';
+import { VisitToggle } from '../common/VisitToggle';
+import { SAVED_PLACES_MAX } from '@trippocket/shared';
 import { BackupReminder } from '../backup/BackupReminder';
 import { useTripPlanItems } from '../itinerary/usePlanView';
 import { useTimeText } from '../../shared/hooks/useTimeText';
@@ -10,19 +15,12 @@ import {
   type ItineraryItem,
   type Trip,
 } from '@trippocket/shared';
-import { BedDouble, Check, CircleHelp, Copy, Navigation, Plus } from 'lucide-react';
+import { BedDouble, CircleHelp, Copy, Navigation, Plus } from 'lucide-react';
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { useTranslation } from '../../i18n';
 import { Link, useNavigate } from 'react-router';
 import { useChecklist, useTripBookings, useTripItems, useTrips } from '../../data/hooks';
-import { itemRepo } from '../../data/repositories/itemRepo';
-import {
-  currentItem,
-  lodgingForNight,
-  minutesUntil,
-  nextItem,
-  nowTimeIn,
-} from '../../domain/lodging';
+import { lodgingForNight, minutesUntil, nextItem, nowTimeIn } from '../../domain/lodging';
 import { useRouteSheet } from '../../shared/hooks/useRouteSheet';
 import { copyText } from '../../shared/lib/clipboard';
 import { cn } from '../../shared/lib/cn';
@@ -77,9 +75,12 @@ export function HomePage() {
   return (
     <>
       {/* 홈만 가운데 로고 (빠른 메뉴는 AppShell의 플로팅 버튼) */}
-      <header className="sticky top-0 z-20 grid min-h-[calc(56px+var(--safe-top))] pt-[var(--safe-top)] grid-cols-[1fr_auto_1fr] items-center gap-1 bg-bg/95 px-4 backdrop-blur">
-        {/* 왼쪽 빈칸: 여행 모드 켜기 (실험실, 사용자 요청 2026-11-04) */}
-        <TravelModeButton tripId={featured?.id} className="justify-self-start" />
+      <header className="sticky top-0 z-20 grid min-h-[calc(56px+var(--safe-top))] pt-[var(--safe-top)] grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-1 bg-bg/95 px-4 backdrop-blur">
+        {/* 왼쪽 빈칸: 여행 모드 켜기 (실험실, 사용자 요청 2026-11-04).
+            버튼이 없을 때도 칸은 남겨 로고가 늘 가운데에 (아이폰에서 로고가 왼쪽에 붙던 문제, 2026-11-06) */}
+        <div className="flex min-w-0 justify-start">
+          <TravelModeButton tripId={featured?.id} compact />
+        </div>
         <Wordmark label={t('app.name')} />
         {/* 앱 소개 다시 보기 (사용자 요청 2026-10-26) */}
         <Link
@@ -212,8 +213,13 @@ function OngoingTrip({ trip }: { trip: Trip }) {
   const todayItems = (items ?? []).filter((i) => i.date === today);
   const now = nowTimeIn(trip.timezone);
   const next = nextItem(todayItems, now);
-  // 지금 하고 있을 일정 (시작은 지났고 아직 안 다녀옴) — docs/20 U2
-  const current = currentItem(todayItems, now);
+  // 지난 일정 (방문·미방문을 고를 수 있는 것) — 일정 탭과 같은 규칙
+  const past = pastItemIds(todayItems, today, now);
+  async function markVisit(item: ItineraryItem, v: Visit | null) {
+    const r = await applyVisit(item, v, trip);
+    if (r === 'saved') toast(t('visit.savedToSaved'));
+    else if (r === 'limit') toast(t('saved.limit', { max: SAVED_PLACES_MAX }));
+  }
   // 오늘 다 끝나면 내일 첫 일정
   const tomorrow = addDays(today, 1);
   const tomorrowFirst =
@@ -255,42 +261,6 @@ function OngoingTrip({ trip }: { trip: Trip }) {
       <Suspense fallback={null}>
         <HomeLabs trip={trip} bookings={bookings} ongoing />
       </Suspense>
-
-      {current && current.id !== next?.id && (
-        <section
-          aria-label={t('home.currentItem')}
-          className="flex items-center gap-3 rounded-card border border-primary/40 bg-primary-weak px-4 py-3"
-        >
-          <span className="flex min-w-0 flex-1 flex-col">
-            <span className="tabular text-caption font-semibold text-primary">
-              {t('home.currentItem')} · {time(current.startTime)}
-            </span>
-            <span className="line-clamp-2 text-body-1 font-semibold">{current.title}</span>
-          </span>
-          <button
-            type="button"
-            onClick={() => void itemRepo.update(current.id, { done: true })}
-            className="flex h-10 shrink-0 items-center gap-1 rounded-btn bg-surface px-3 text-caption font-semibold text-primary"
-          >
-            <Check aria-hidden="true" className="size-4" />
-            {t('home.markDone')}
-          </button>
-          <button
-            type="button"
-            aria-label={t('home.directionsTo', { name: current.title })}
-            onClick={() =>
-              directions({
-                name: current.title,
-                address: current.place?.address,
-                coords: current.place?.coords,
-              })
-            }
-            className="grid size-10 shrink-0 place-items-center rounded-btn bg-surface text-primary"
-          >
-            <Navigation aria-hidden="true" className="size-4" />
-          </button>
-        </section>
-      )}
 
       {next ? (
         <section
@@ -357,28 +327,10 @@ function OngoingTrip({ trip }: { trip: Trip }) {
           <h2 className="text-caption font-bold text-fg-muted">
             {t('home.todayItems', { n: todayItems.length })}
           </h2>
-          {/* 체크 = 방문 완료 (방문 기록에 남는다, 사용자 요청 2026-10-27). 메모는 체크하지 않는다 */}
-          <p className="mb-1 text-micro text-fg-muted">{t('home.checkHint')}</p>
+          {/* 지난 일정은 오른쪽 [미방문][방문] — 일정 탭·여행 모드와 같은 기록 (사용자 요청 2026-11-06) */}
           <ul className="flex flex-col">
             {todayItems.map((item) => (
-              <li key={item.id} className="flex items-center gap-3 py-1.5">
-                {item.kind === 'note' ? (
-                  <span aria-hidden="true" className="size-6 shrink-0" />
-                ) : (
-                  <button
-                    type="button"
-                    role="checkbox"
-                    aria-checked={item.done ?? false}
-                    aria-label={item.title}
-                    onClick={() => void itemRepo.update(item.id, { done: !item.done })}
-                    className={cn(
-                      'grid size-6 shrink-0 place-items-center rounded-full border-2',
-                      item.done ? 'border-success bg-success text-white' : 'border-line',
-                    )}
-                  >
-                    {item.done && <Check aria-hidden="true" className="size-3.5" />}
-                  </button>
-                )}
+              <li key={item.id} className="flex min-h-11 items-center gap-3 py-1">
                 <span
                   className={cn(
                     'tabular shrink-0 text-caption text-fg-sub',
@@ -390,12 +342,19 @@ function OngoingTrip({ trip }: { trip: Trip }) {
                 <span
                   className={cn(
                     'min-w-0 flex-1 truncate text-body-2',
-                    item.done && 'text-fg-muted line-through',
+                    item.visit && 'text-fg-muted',
                     item.id === next?.id && 'font-bold',
                   )}
                 >
                   {item.title}
                 </span>
+                {item.kind !== 'note' && past.has(item.id) && (
+                  <VisitToggle
+                    value={item.visit}
+                    label={item.title}
+                    onChange={(v) => void markVisit(item, v)}
+                  />
+                )}
               </li>
             ))}
           </ul>

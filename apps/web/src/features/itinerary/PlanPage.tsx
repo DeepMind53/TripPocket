@@ -52,7 +52,8 @@ import {
 } from '../../domain/dayTools';
 import { NextStopBar } from './NextStopBar';
 import { earlierVisits, type Visit } from '../../domain/visit';
-import { saveSkippedPlace } from '../../data/skippedToSaved';
+import { applyVisit } from '../../data/skippedToSaved';
+import { VisitToggle } from '../common/VisitToggle';
 import { flightSignature, flightsToReconfirm } from '../../domain/flightCheck';
 import { confirmFlight, useFlightChecks } from '../../data/flightCheckStore';
 import { timeIn, useMinuteClock } from '../../shared/hooks/useMinuteClock';
@@ -271,12 +272,7 @@ function PlanView({
       trip: tripTitles.get(v.tripId) ?? '',
     }));
   async function markVisit(item: ItineraryItem, visit: Visit | null) {
-    await itemRepo.setVisit(item.id, visit);
-    if (visit !== 'skipped') return;
-    const r = await saveSkippedPlace(item, {
-      countryCode: trip.destinations[0]?.countryCode,
-      cityTag: trip.destinations[0]?.name,
-    });
+    const r = await applyVisit(item, visit, trip);
     if (r === 'saved') toast(t('visit.savedToSaved'));
     else if (r === 'limit') toast(t('saved.limit', { max: SAVED_PLACES_MAX }));
   }
@@ -976,7 +972,7 @@ function DaySection({
   plan?: DayPlanInfo | undefined;
   onPlans?: (() => void) | undefined;
   /** 지난 일정 방문·미방문 (미방문이면 저장 탭에도 담는다) */
-  onVisitItem: (item: ItineraryItem, visit: Visit) => void;
+  onVisitItem: (item: ItineraryItem, visit: Visit | null) => void;
   /** 이 일정 장소를 예전에 방문한 날 */
   historyOf: (item: ItineraryItem) => { date: string; trip: string }[];
   weather?: TripDayWeather | undefined;
@@ -1259,7 +1255,8 @@ function DaySection({
               now={item.id === nowId}
               booking={item.bookingId ? bookingById.get(item.bookingId) : undefined}
               onOpen={() => onOpen(item)}
-              onVisit={past?.has(item.id) && !item.visit ? (v) => onVisitItem(item, v) : undefined}
+              // 고른 뒤에도 버튼은 남고 고른 것만 칠해진다 (사용자 요청 2026-11-06)
+              onVisit={past?.has(item.id) ? (v) => onVisitItem(item, v) : undefined}
               history={historyOf(item)}
               onConfirmFlight={(() => {
                 const b = item.bookingId ? bookingById.get(item.bookingId) : undefined;
@@ -1448,7 +1445,7 @@ function ItemRow({
   /** 여행 당일 지금 진행 중: 진한 테두리·굵은 글자·바탕 깜빡임 (사용자 요청 2026-10-26) */
   now: boolean;
   /** 아직 방문 기록이 없는 지난 일정: 오른쪽에 [방문][미방문] — 누르면 둘 다 사라진다 (2026-10-27) */
-  onVisit?: ((visit: Visit) => void) | undefined;
+  onVisit?: ((visit: Visit | null) => void) | undefined;
   /** 예전에 이 장소를 방문한 날 (다른 여행 포함) — 이름 오른쪽 "방문기록 N회" */
   history?: readonly { date: string; trip: string }[] | undefined;
   /** 출발 전날~출발 날 항공편: 위에 [확인], 누르기 전까지 빨갛게 깜빡임 (사용자 요청 2026-10-26) */
@@ -1500,7 +1497,9 @@ function ItemRow({
             </span>
           )}
         </div>
-        {onVisit && <VisitBar onChange={onVisit} />}
+        {onVisit && (
+          <VisitToggle vertical value={item.visit} label={item.title} onChange={onVisit} />
+        )}
       </div>
       {showHistory && history && history.length > 0 && (
         <ul
@@ -1670,30 +1669,6 @@ function ItemRow({
         {t(`kind.${item.kind}`)}
       </span>
     </button>,
-  );
-}
-
-/** 지난 일정 오른쪽 [방문] [미방문] — 어느 것이든 누르면 둘 다 사라진다 (사용자 요청 2026-10-27) */
-function VisitBar({ onChange }: { onChange: (visit: Visit) => void }) {
-  const { t } = useTranslation();
-  return (
-    <div className="flex w-16 shrink-0 flex-col justify-center gap-1">
-      {(['visited', 'skipped'] as const).map((v) => (
-        <button
-          key={v}
-          type="button"
-          onClick={() => onChange(v)}
-          className={cn(
-            'h-9 rounded-btn border text-caption font-semibold',
-            v === 'visited'
-              ? 'border-primary/40 bg-primary-weak text-primary'
-              : 'border-line bg-surface text-fg-sub',
-          )}
-        >
-          {t(`visit.button.${v}`)}
-        </button>
-      ))}
-    </div>
   );
 }
 

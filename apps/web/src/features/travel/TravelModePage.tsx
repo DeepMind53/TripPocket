@@ -29,10 +29,11 @@ import { useEffect, useState, useSyncExternalStore } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { routeEta } from '../../data/api/routes';
 import { useTrip, useTripBookings, useTripItems } from '../../data/hooks';
-import { itemRepo } from '../../data/repositories/itemRepo';
+import { applyVisit } from '../../data/skippedToSaved';
+import { VisitToggle } from '../common/VisitToggle';
 import { setTravelMode, setTravelPrefs, useTravelMode } from '../../data/travelModeStore';
 import { airWarnings } from '../../domain/air';
-import { currentItemId, nextStop } from '../../domain/dayTools';
+import { currentItemId, nextStop, pastItemIds } from '../../domain/dayTools';
 import { lodgingForNight } from '../../domain/lodging';
 import { dayPhase, leaveAt, rainFrom, type DayPhase } from '../../domain/travelDay';
 import { travelLegsAhead } from '../../domain/travelLeg';
@@ -223,22 +224,15 @@ function TravelView({ trip, items: all }: { trip: Trip; items: ItineraryItem[] }
       leg.booking.start.date < today ||
       mins(leg.booking.start.time) - mins(now) <= 180);
 
+  // 지난 일정 [미방문][방문] — 홈·일정 탭과 같은 기록 (사용자 요청 2026-11-06)
+  const past = pastItemIds(dayItems, today, now);
+  const markVisit = async (i: ItineraryItem, v: 'visited' | 'skipped' | null) => {
+    const r = await applyVisit(i, v, trip);
+    if (r === 'saved') toast(t('visit.savedToSaved'));
+  };
   const visitButtons = (i: ItineraryItem) =>
-    i.startTime &&
-    i.startTime <= now &&
-    !i.visit && (
-      <span className="flex shrink-0 gap-1">
-        <Button
-          size="sm"
-          variant="secondary"
-          onClick={() => void itemRepo.setVisit(i.id, 'skipped')}
-        >
-          {t('travel.skip')}
-        </Button>
-        <Button size="sm" onClick={() => void itemRepo.setVisit(i.id, 'visited')}>
-          {t('travel.visited')}
-        </Button>
-      </span>
+    past.has(i.id) && (
+      <VisitToggle value={i.visit} label={i.title} onChange={(v) => void markVisit(i, v)} />
     );
 
   const row = (i: ItineraryItem) => (
@@ -365,18 +359,6 @@ function TravelView({ trip, items: all }: { trip: Trip; items: ItineraryItem[] }
           </span>
           {w && <span className="tabular text-caption text-fg-sub">{formatTemps(w)}</span>}
         </section>
-      )}
-
-      {current && (
-        <div className="flex flex-col gap-1 rounded-card border border-line p-4">
-          <span className="text-caption font-bold text-fg-muted">{t('travel.now')}</span>
-          <span className="text-title-2 font-bold">{current.title}</span>
-          {current.endTime && (
-            <span className="tabular text-caption text-fg-sub">
-              {t('travel.until', { time: current.endTime })}
-            </span>
-          )}
-        </div>
       )}
 
       {/* 다음 일정: 나갈 시각이 가장 크게 (Q2) */}

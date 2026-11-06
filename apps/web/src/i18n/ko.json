@@ -115,7 +115,6 @@
     "inHours": "{{h}}시간 {{m}}분 후",
     "now": "지금",
     "todayItems": "오늘 일정 {{n}}개",
-    "checkHint": "체크시 방문 완료처리",
     "noItemsToday": "오늘 일정이 없어요",
     "allDone": "오늘 일정을 모두 마쳤어요",
     "lodgingTonight": "오늘 숙소",
@@ -131,8 +130,6 @@
     "newTrip": "새 여행",
     "sampleCta": "샘플 여행으로 둘러보기",
     "sampleCreated": "샘플 여행을 만들었어요\n둘러본 뒤 지워도 돼요",
-    "currentItem": "지금",
-    "markDone": "다녀왔어요",
     "directionsTo": "{{name}} 길찾기",
     "tomorrowFirst": "내일 첫 일정 · {{time}} {{title}} ›"
   },
@@ -2015,7 +2012,8 @@
     "historyRow": "{{date}} · {{trip}}",
     "historyCount": "방문기록 {{n}}회",
     "detailLabel": "방문 기록",
-    "none": "기록 없음"
+    "none": "기록 없음",
+    "groupLabel": "{{name}} 방문 기록"
   },
   "emergency": {
     "title": "긴급 연락처",
