@@ -1,7 +1,7 @@
 import { InlineIcon } from '../../shared/ui/InlineIcon';
 import { getTripStatus, todayIn, type Trip, type TripStatus, flagEmoji } from '@trippocket/shared';
 import { ChevronDown, CloudSun, Ellipsis, Plus, Trash2, Users } from 'lucide-react';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useTranslation } from '../../i18n';
 import { Link, useNavigate } from 'react-router';
 import { useTripItems, useTrips } from '../../data/hooks';
@@ -41,10 +41,13 @@ export function TripsPage() {
 export function TripList({
   only,
   exclude,
+  renderOngoing,
 }: {
   only: 'active' | 'past' | 'all';
   /** 홈 위쪽 큰 카드로 이미 보여 준 여행 */
   exclude?: string | undefined;
+  /** 홈: 여행 중인 여행은 카드 대신 오늘 일정 묶음으로 (사용자 요청 2026-11-06) */
+  renderOngoing?: ((trip: Trip) => ReactNode) | undefined;
 }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -93,6 +96,7 @@ export function TripList({
               title={t('trips.sectionOngoing')}
               trips={groups.ongoing}
               onMenu={openMenu}
+              render={renderOngoing}
             />
             <TripSection
               title={t('trips.sectionUpcoming')}
@@ -151,19 +155,27 @@ function TripSection({
   title,
   trips,
   onMenu,
+  render,
 }: {
   title: string;
   trips: Trip[];
   onMenu: (trip: Trip) => void;
+  render?: ((trip: Trip) => ReactNode) | undefined;
 }) {
   if (trips.length === 0) return null;
   return (
     <section className="flex flex-col gap-2">
       <h2 className="text-caption font-bold text-fg-muted">{title}</h2>
       <ul className="flex flex-col gap-2">
-        {trips.map((trip) => (
-          <TripCard key={trip.id} trip={trip} onMenu={onMenu} />
-        ))}
+        {trips.map((trip) =>
+          render ? (
+            <li key={trip.id} className="flex flex-col gap-4">
+              {render(trip)}
+            </li>
+          ) : (
+            <TripCard key={trip.id} trip={trip} onMenu={onMenu} />
+          ),
+        )}
       </ul>
     </section>
   );

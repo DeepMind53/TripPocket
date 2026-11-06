@@ -126,7 +126,6 @@ export function HomePage() {
             null,
           )}
         />
-        {ongoing && <OngoingTrip trip={ongoing} />}
         {!ongoing && upcoming && <UpcomingTrip trip={upcoming} />}
         {/* 출발 30일 전부터 준비 현황 (docs/16 B1) — 필요할 때 불러온다 */}
         {!ongoing &&
@@ -151,8 +150,13 @@ export function HomePage() {
               {t('home.newTrip')}
             </Button>
           </div>
-          {/* 여행 중인 여행은 목록 맨 위 '여행 중'에 고정 (사용자 요청 2026-10-27) — 다가오는 여행만 위 카드와 겹치지 않게 뺀다 */}
-          <TripList only="active" exclude={ongoing ? undefined : featured?.id} />
+          {/* 여행 중인 여행은 목록 맨 위 '여행 중'에 — 카드 대신 오늘 일정 묶음으로 (사용자 요청 2026-11-06).
+              다가오는 여행만 위 카드와 겹치지 않게 뺀다 */}
+          <TripList
+            only="active"
+            exclude={ongoing ? undefined : featured?.id}
+            renderOngoing={(tr) => <OngoingTrip trip={tr} />}
+          />
         </section>
       )}
     </>

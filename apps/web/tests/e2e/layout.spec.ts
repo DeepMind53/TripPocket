@@ -237,8 +237,11 @@ test('여행 모드 [홈] 버튼은 일정표 [홈으로] 버튼과 같은 자�
     localStorage.setItem('tp-labs', JSON.stringify({ travelMode: true }));
   });
   await page.goto(`${base}/go`);
-  const goHome = await box(page.getByRole('button', { name: '여행 모드 끄기' }));
-  expect(goHome).toEqual(planHome);
+  // 화면이 다 그려질 때까지 기다렸다가 잰다
+  await expect(page.getByRole('navigation', { name: '자주 쓰는 버튼' })).toBeVisible();
+  await expect
+    .poll(() => box(page.getByRole('button', { name: '여행 모드 끄기' })))
+    .toEqual(planHome);
 });
 
 // 아이폰 폭: 홈 로고는 늘 가운데, 여행 모드 버튼은 잘리지 않고 로고와 겹치지 않는다 (사용자 요청 2026-11-06)
