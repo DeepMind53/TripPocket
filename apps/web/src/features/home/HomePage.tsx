@@ -169,11 +169,16 @@ function UpcomingTrip({ trip }: { trip: Trip }) {
   const bookings = useTripBookings(trip.id) ?? [];
   const packing = useChecklist(trip.id, 'packing') ?? [];
   const packed = packing.filter((p) => p.checked).length;
+  const ongoing = getTripStatus(trip.startDate, trip.endDate, todayIn(trip.timezone)) === 'ongoing';
   return (
     <Link
       to={`/trips/${trip.id}/plan`}
-      className="flex flex-col gap-3 rounded-card p-5 text-white shadow-card"
-      style={{ background: trip.cover.color ?? '#2F6BFF' }}
+      className={cn(
+        'flex flex-col gap-3 rounded-card p-5 text-white shadow-card',
+        ongoing && 'bg-mint',
+      )}
+      // 여행 중이면 민트(아래 파란 다음 일정 카드와 구분, 사용자 요청 2026-11-06), 아니면 여행 표지 색
+      style={ongoing ? undefined : { background: trip.cover.color ?? '#2F6BFF' }}
     >
       <span className="tabular self-start rounded-full bg-white/20 px-2.5 py-0.5 text-caption font-bold">
         {formatTripBadge(trip.startDate, trip.endDate, todayIn(trip.timezone))}

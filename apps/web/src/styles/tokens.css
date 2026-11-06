@@ -5,6 +5,8 @@
  */
 :root {
   --tp-primary: #2160f0; /* 흰 글자·연한 바탕 4.5:1 (I1) */
+  /* 여행 중 카드 (홈, 파랑과 구분 — 사용자 요청 2026-11-06). 흰 글자 4.5:1 */
+  --tp-mint: #0a8576;
   --tp-primary-pressed: #1a4fcf;
   --tp-primary-weak: #eaf0ff;
   --tp-on-primary: #ffffff;
@@ -58,6 +60,7 @@
     --tp-kind-tint: 11%;
     --tp-kind-pulse: 34%;
     --tp-primary: #5b8cff;
+    --tp-mint: #138a7c;
     --tp-primary-pressed: #7aa2ff;
     --tp-primary-weak: #1b2747;
     --tp-on-primary: #0b1220; /* 밝은 파랑 위 흰 글자는 3.2:1 → 어두운 글자 (I1) */
@@ -84,6 +87,7 @@
   --tp-kind-tint: 11%;
   --tp-kind-pulse: 34%;
   --tp-primary: #5b8cff;
+  --tp-mint: #138a7c;
   --tp-primary-pressed: #7aa2ff;
   --tp-primary-weak: #1b2747;
   --tp-on-primary: #0b1220;

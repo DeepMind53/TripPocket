@@ -405,7 +405,8 @@ describe('홈', () => {
     renderAt(['/']);
 
     // 여행 카드는 맨 위에 그대로, 준비 현황은 여행 중이라 접혀 있다 (2026-11-06)
-    expect(await screen.findByRole('link', { name: /부산 여행/ })).toBeInTheDocument();
+    // 여행 중 카드는 민트 (파란 다음 일정과 구분)
+    expect(await screen.findByRole('link', { name: /부산 여행/ })).toHaveClass('bg-mint');
     const prep = await screen.findByRole('button', { expanded: false, name: /준비/ });
     expect(prep).toBeInTheDocument();
     const next = await screen.findByRole('region', { name: '다음 일정' });

@@ -15,6 +15,7 @@
 /* 토큰 → Tailwind 유틸리티 연결 (bg-primary, text-fg-sub, border-line …) */
 @theme inline {
   --color-primary: var(--tp-primary);
+  --color-mint: var(--tp-mint);
   --color-primary-pressed: var(--tp-primary-pressed);
   --color-primary-weak: var(--tp-primary-weak);
   --color-on-primary: var(--tp-on-primary);
