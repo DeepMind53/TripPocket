@@ -636,7 +636,7 @@ function PlanView({
 
       <div
         {...gestures}
-        className={cn('flex flex-col px-5 pt-2', editing ? 'gap-6' : 'gap-4 pb-4')}
+        className={cn('flex flex-col px-5 pt-2', editing ? 'gap-6' : 'gap-6 pb-4')}
         style={{ '--day-top': `${stickyH}px` } as CSSProperties}
       >
         {/* 막 만든 여행: 무엇부터 할지 (docs/20 U5) */}
@@ -1062,18 +1062,12 @@ function DaySection({
     <section
       aria-label={title}
       data-day={date ?? 'wish'}
-      className={cn(
-        'flex flex-col rounded-2xl border border-line bg-surface',
-        isPast && 'opacity-60',
-      )}
+      className={cn('flex flex-col', isPast && 'opacity-60')}
     >
-      {/* 날짜 머리글: 날짜 색 띠 + "1일차" 알약 (일정 번호 색과 같음).
+      {/* 날짜 머리글: "1일차" 알약(일정 번호 색과 같음) + 날짜, 아래 선 (unslop 2026-11-09 카드 상자 → 평평한 목록).
           그날 일정이 보이는 동안 화면 위(고정 영역 아래)에 붙어 있고, 다음 날로 넘어가면 다음 날 머리로 바뀐다 (2026-10-27) */}
-      <div className="sticky top-[var(--day-top,0px)] z-[5] rounded-t-2xl bg-surface">
-        <div
-          className="flex min-h-12 items-center gap-2 rounded-t-2xl border-b border-line bg-bg-subtle/60 pr-2 pl-4"
-          style={{ boxShadow: `inset 4px 0 0 ${color}` }}
-        >
+      <div className="sticky top-[var(--day-top,0px)] z-[5] -mx-5 bg-bg/95 px-5 backdrop-blur">
+        <div className="flex min-h-12 items-center gap-2 border-b border-line">
           <h2 aria-label={title} className="tabular flex flex-1 flex-wrap items-center gap-2 py-2">
             {date && onPlans ? (
               // Plan B (실험실): 날짜를 누르면 플랜 고르기·만들기
@@ -1163,7 +1157,7 @@ function DaySection({
         airWarnings(weather?.air).map((w) => (
           <p
             key={w.key}
-            className="mx-2 mt-2 rounded-btn bg-warning/10 px-3 py-2 text-caption whitespace-pre-line text-fg-sub"
+            className="mt-2 rounded-btn bg-warning/10 px-3 py-2 text-caption whitespace-pre-line text-fg-sub"
           >
             <InlineIcon icon={w.key.startsWith('uv') ? SunMedium : Haze} className="text-warning" />
             {t(`air.${w.key}`, { v: w.v })}
@@ -1173,7 +1167,7 @@ function DaySection({
       {tips.map((k) => (
         <p
           key={k}
-          className="mx-2 mt-2 rounded-btn bg-bg-subtle px-3 py-2 text-caption whitespace-pre-line text-fg-sub"
+          className="mt-2 rounded-btn bg-bg-subtle px-3 py-2 text-caption whitespace-pre-line text-fg-sub"
         >
           <InlineIcon icon={PLACE_TIP_ICON[k]} />
           {t(`placeTips.${k}`)}
@@ -1190,7 +1184,7 @@ function DaySection({
       {outs.map((o, i) => (
         <p
           key={`out-${i}-${o.title}`}
-          className="mx-2 mt-2 flex items-center gap-2 rounded-btn bg-warning/10 px-3 py-2 text-caption text-fg-sub"
+          className="mt-2 flex items-center gap-2 rounded-btn bg-warning/10 px-3 py-2 text-caption text-fg-sub"
         >
           <Luggage aria-hidden="true" className="size-4 shrink-0 text-primary" />
           {o.time
@@ -1200,7 +1194,7 @@ function DaySection({
       ))}
       {/* 실험실: 그날 장소 1km 안의 가고 싶은 곳 */}
       {nearby.length > 0 && (
-        <p className="mx-2 mt-2 line-clamp-2 rounded-btn bg-primary-weak px-3 py-2 text-caption text-primary">
+        <p className="mt-2 line-clamp-2 rounded-btn bg-primary-weak px-3 py-2 text-caption text-primary">
           {t('labs.nearbyWish', {
             names: nearby
               .slice(0, 3)
@@ -1212,26 +1206,26 @@ function DaySection({
       )}
       {/* 그날 아침 숙소 조식 (사용자 요청 2026-10-26) */}
       {breakfast && (
-        <p className="mx-2 mt-2 flex items-center gap-2 rounded-btn bg-bg-subtle px-3 py-2 text-caption text-fg-sub">
+        <p className="mt-2 flex items-center gap-2 rounded-btn bg-bg-subtle px-3 py-2 text-caption text-fg-sub">
           <EggFried aria-hidden="true" className="size-4 shrink-0 text-primary" />
           {t('plan.breakfast', { name: breakfast.title })}
         </p>
       )}
       {bookingRows.length > 0 && (
-        <ul aria-label={t('plan.bookingsLabel')} className="flex flex-col gap-1 px-2 pt-2">
+        <ul aria-label={t('plan.bookingsLabel')} className="flex flex-col gap-1 pt-2">
           {bookingRows.map((row) => (
             <BookingLine key={`${row.booking.id}-${row.part}`} row={row} onOpen={onBooking} />
           ))}
         </ul>
       )}
       {items.length === 0 && (
-        <p className="px-4 py-3 text-body-2 text-fg-muted">
+        <p className="px-1 py-3 text-body-2 text-fg-muted">
           {date ? t('plan.emptyDay') : t('plan.wishEmpty')}
         </p>
       )}
       <ol
         className={cn(
-          'flex flex-col px-2 py-2',
+          'flex flex-col py-2',
           compact ? 'gap-0.5 [&_[data-item-row]]:py-1.5' : 'gap-1.5',
         )}
       >
@@ -1306,7 +1300,7 @@ function DaySection({
         <button
           type="button"
           onClick={onAdd}
-          className="mx-2 mb-2 flex h-11 items-center justify-center gap-1 rounded-btn border border-dashed border-line text-body-2 font-medium text-fg-sub"
+          className="mb-2 flex h-11 items-center justify-center gap-1 rounded-btn border border-dashed border-line text-body-2 font-medium text-fg-sub"
         >
           <Plus aria-hidden="true" className="size-4" />
           {t('plan.addItem')}
@@ -1320,7 +1314,7 @@ function DaySection({
             title: lodging.booking.title,
             night: lodging.night,
           })}
-          className="mx-2 mb-2 -mt-1 flex items-center gap-2 rounded-btn bg-bg-subtle px-3 py-2.5 text-left"
+          className="mb-2 -mt-1 flex items-center gap-2 rounded-btn bg-bg-subtle px-3 py-2.5 text-left"
         >
           <BedDouble aria-hidden="true" className="size-4 shrink-0 text-day-4" />
           <span className="text-caption font-semibold text-fg-sub">{t('plan.lodging')}</span>
@@ -1577,26 +1571,17 @@ function ItemRow({
       aria-current={now ? 'time' : undefined}
       style={kindStyle}
       className={cn(
-        'kind-tint flex w-full items-start gap-3 rounded-btn px-2 py-3 text-left active:bg-bg-subtle tight:flex-wrap tight:gap-y-1',
+        'kind-tint flex w-full items-start gap-3 rounded-btn px-3 py-3 text-left active:bg-bg-subtle',
         booking && 'border border-dashed border-fg-muted/60',
         now && 'kind-now border-transparent',
         marked && 'visit-mark',
       )}
     >
-      {/* 번호·시간·종류는 제목 첫 줄 높이(24px)에 가운데 맞춤 */}
+      {/* unslop(2026-11-09): 번호 · 제목(아래 종류·경로·주소·메모) · 오른쪽 시간. 시간·종류가 제목 폭을 덜 먹어 긴 이름도 덜 접힌다 */}
       {badge}
       <span
         className={cn(
-          'tabular shrink-0 text-caption leading-6 font-semibold text-fg-sub tight:w-auto tight:flex-1',
-          wide ? 'w-16' : 'w-11',
-        )}
-      >
-        {time(item.startTime) ?? <span className="text-fg-muted/60">--:--</span>}
-        <CautionIcons cautions={cautions} />
-      </span>
-      <span
-        className={cn(
-          'flex min-w-0 flex-1 flex-col tight:order-last tight:basis-full',
+          'flex min-w-0 flex-1 flex-col gap-0.5',
           item.done && !visitedLook && 'opacity-50',
         )}
       >
@@ -1614,7 +1599,7 @@ function ItemRow({
           <span className="flex flex-wrap items-center gap-x-2">
             <span
               className={cn(
-                'text-body-1',
+                'text-body-1 text-pretty',
                 item.done && !visitedLook && 'line-through',
                 now && 'font-semibold',
               )}
@@ -1648,25 +1633,37 @@ function ItemRow({
             )}
           </span>
         )}
-        {item.transport && (item.transport.from || item.transport.to) && (
-          <span className="tabular truncate text-caption text-fg-muted">
-            {item.transport.from ?? ''} → {item.transport.to ?? ''}
-          </span>
-        )}
-        {item.kind !== 'note' && item.place?.address && (
-          <span className="truncate text-caption text-fg-muted">{item.place.address}</span>
-        )}
+        {/* 종류 + 경로/주소 한 줄 (예전 오른쪽 종류 칩) */}
+        <span className="flex min-w-0 items-center gap-1 text-caption text-fg-muted">
+          <Icon aria-hidden="true" className="size-3.5 shrink-0" />
+          <span className="shrink-0">{t(`kind.${item.kind}`)}</span>
+          {item.transport && (item.transport.from || item.transport.to) ? (
+            <span className="tabular truncate">
+              {' · '}
+              {item.transport.from ?? ''} → {item.transport.to ?? ''}
+            </span>
+          ) : (
+            item.kind !== 'note' &&
+            item.place?.address && <span className="truncate"> · {item.place.address}</span>
+          )}
+        </span>
         {/* 메모가 있으면 첫 줄만 (사용자 요청 2026-10-27) */}
         {item.kind !== 'note' && item.memo?.trim() && (
           <span className="truncate text-caption text-fg-sub">
             <InlineIcon icon={StickyNote} className="text-fg-muted" />
-            {item.memo.trim().split('\n')[0]}
+            {item.memo.trim().split(/\r?\n/)[0]}
           </span>
         )}
       </span>
-      <span className="flex h-6 shrink-0 items-center gap-1 rounded-md bg-bg-subtle px-1.5 text-micro whitespace-nowrap text-fg-sub">
-        <Icon aria-hidden="true" className="size-3" />
-        {t(`kind.${item.kind}`)}
+      <span
+        className={cn(
+          'tabular flex shrink-0 flex-col items-end text-body-2 leading-6',
+          now ? 'font-semibold text-fg' : 'text-fg-sub',
+          wide ? 'min-w-16' : 'min-w-11',
+        )}
+      >
+        {time(item.startTime) ?? <span className="text-fg-muted/60">--:--</span>}
+        <CautionIcons cautions={cautions} />
       </span>
     </button>,
   );

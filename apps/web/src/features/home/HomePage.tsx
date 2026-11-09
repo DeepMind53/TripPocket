@@ -266,19 +266,20 @@ function OngoingTrip({ trip }: { trip: Trip }) {
       {next ? (
         <section
           aria-label={t('home.nextItem')}
-          className="flex flex-col gap-2 rounded-card bg-primary p-4 text-on-primary"
+          className="flex flex-col gap-3 rounded-card border border-line bg-surface p-4 shadow-card"
         >
-          <p className="tabular text-caption opacity-90">
+          {/* unslop(2026-11-09): 흰 카드 + 파란 남은 시간 — 위 민트 여행 카드와 구분은 그대로 */}
+          <p className="tabular flex items-baseline justify-between gap-2 text-caption text-fg-sub">
             {t('home.nextItem')}
-            {countdown(next) && ` · ${countdown(next)}`}
+            {countdown(next) && <span className="font-medium text-primary">{countdown(next)}</span>}
           </p>
-          <p className="text-title-2">{next.title}</p>
+          <p className="text-title-2 text-pretty">{next.title}</p>
           {(next.startTime || next.place?.address) && (
-            <p className="tabular truncate text-caption opacity-90">
+            <p className="tabular -mt-2 line-clamp-2 text-body-2 text-fg-sub">
               {[next.startTime, next.place?.address].filter(Boolean).join(' · ')}
             </p>
           )}
-          <div className="mt-1 flex gap-2">
+          <div className="flex gap-2">
             <button
               type="button"
               onClick={() =>
@@ -288,14 +289,14 @@ function OngoingTrip({ trip }: { trip: Trip }) {
                   coords: next.place?.coords,
                 })
               }
-              className="flex h-10 items-center gap-1.5 rounded-btn bg-white/20 px-3 text-caption font-semibold"
+              className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-btn bg-primary px-3 text-body-2 font-medium text-on-primary active:bg-primary-pressed"
             >
               <Navigation aria-hidden="true" className="size-4" />
               {t('home.directions')}
             </button>
             <Link
               to={planUrl}
-              className="flex h-10 items-center rounded-btn bg-white/20 px-3 text-caption font-semibold"
+              className="flex h-11 flex-1 items-center justify-center rounded-btn bg-bg-subtle px-3 text-body-2 font-medium text-fg"
             >
               {t('home.viewPlan')}
             </Link>
@@ -323,15 +324,18 @@ function OngoingTrip({ trip }: { trip: Trip }) {
       {todayItems.length > 0 && (
         <section
           aria-label={t('home.todayItems', { n: todayItems.length })}
-          className="flex flex-col"
+          className="flex flex-col rounded-card border border-line bg-surface px-4 py-2"
         >
-          <h2 className="text-caption font-semibold text-fg-muted">
+          <h2 className="py-2 text-body-2 font-semibold">
             {t('home.todayItems', { n: todayItems.length })}
           </h2>
           {/* 지난 일정은 오른쪽 [미방문][방문] — 일정 탭·여행 모드와 같은 기록 (사용자 요청 2026-11-06) */}
           <ul className="flex flex-col">
             {todayItems.map((item) => (
-              <li key={item.id} className="flex min-h-11 items-center gap-3 py-1">
+              <li
+                key={item.id}
+                className="flex min-h-12 items-center gap-3 border-t border-line py-1"
+              >
                 <span
                   className={cn(
                     'tabular shrink-0 text-caption text-fg-sub',
@@ -342,7 +346,7 @@ function OngoingTrip({ trip }: { trip: Trip }) {
                 </span>
                 <span
                   className={cn(
-                    'min-w-0 flex-1 truncate text-body-2',
+                    'min-w-0 flex-1 truncate text-body-1',
                     item.visit && 'text-fg-muted',
                     item.id === next?.id && 'font-semibold',
                   )}

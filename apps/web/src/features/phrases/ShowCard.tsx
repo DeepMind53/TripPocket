@@ -11,6 +11,7 @@ export function ShowCard({
   open,
   onClose,
   big,
+  bigLang,
   en,
   sub,
   children,
@@ -19,6 +20,8 @@ export function ShowCard({
   onClose: () => void;
   /** 크게 보여 줄 현지어 */
   big: string;
+  /** 현지어 BCP 47 코드 — 언어별 글꼴(styles/index.css :lang)과 읽기 */
+  bigLang?: string | undefined;
   /** 현지어 아래 영어 (현지어가 영어가 아니면 모든 카드에, 사용자 요청 2026-11-02) */
   en?: string | undefined;
   /** 아래 작은 한국어 등 */
@@ -49,7 +52,10 @@ export function ShowCard({
         <X aria-hidden="true" className="size-6" />
       </button>
       <div className="flex flex-1 flex-col items-center justify-center gap-6 text-center">
-        <p className="text-[clamp(1.75rem,8vw,3rem)] leading-tight font-semibold whitespace-pre-line [overflow-wrap:anywhere] [word-break:normal]">
+        <p
+          lang={bigLang}
+          className="text-[clamp(1.75rem,8vw,3rem)] leading-tight font-semibold whitespace-pre-line [overflow-wrap:anywhere] [word-break:normal]"
+        >
           {big}
         </p>
         {en && (

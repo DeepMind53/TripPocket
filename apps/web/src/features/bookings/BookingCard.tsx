@@ -94,7 +94,7 @@ export function BookingCard({
         <div className="flex items-center justify-between gap-2 border-t border-dashed border-line px-4 py-1.5">
           <span className="tabular min-w-0 truncate text-caption text-fg-sub">
             {t('bookings.member')}{' '}
-            <strong className="font-semibold text-fg">{member.number}</strong>
+            <strong className="font-mono font-medium tracking-wide text-fg">{member.number}</strong>
             {member.tier && ` · ${member.tier}`}
           </span>
           <button
@@ -111,7 +111,9 @@ export function BookingCard({
         <div className="flex items-center justify-between gap-2 border-t border-dashed border-line px-4 py-1.5">
           <span className="tabular text-caption text-fg-sub">
             {t('bookings.confirmationNo')}{' '}
-            <strong className="font-semibold whitespace-nowrap text-fg">{b.confirmationNo}</strong>
+            <strong className="font-mono font-medium tracking-wide whitespace-nowrap text-primary">
+              {b.confirmationNo}
+            </strong>
           </span>
           <button
             type="button"
@@ -180,7 +182,9 @@ function Point({
   const { time: fmt } = useTimeText();
   return (
     <span className={`flex flex-col ${align === 'end' ? 'items-end' : ''}`}>
-      <span className="text-title-1 leading-none">{code || '—'}</span>
+      <span className="font-mono text-[28px] leading-none font-medium tracking-tight">
+        {code || '—'}
+      </span>
       <span className="mt-1 text-body-2 text-fg-sub">{fmt(time) ?? '--:--'}</span>
       {terminal && <span className="text-micro text-fg-muted">{terminal}</span>}
     </span>

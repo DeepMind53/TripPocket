@@ -92,7 +92,9 @@ export function PhrasesPage() {
                 className="flex w-full flex-col gap-0.5 px-4 py-3 text-left active:bg-bg-subtle"
               >
                 <span className="text-caption text-fg-muted">{KO_PHRASES[id]}</span>
-                <span className="text-title-2">{lang.phrases[id]}</span>
+                <span lang={lang.code} className="text-title-2">
+                  {lang.phrases[id]}
+                </span>
               </button>
             </li>
           ))}
@@ -103,6 +105,7 @@ export function PhrasesPage() {
         open={show !== null}
         onClose={() => setShow(null)}
         big={show ? lang.phrases[show] : ''}
+        bigLang={lang.code}
         // 영어가 아닌 말이면 영어도 함께 (사용자 요청 2026-11-02)
         en={show && lang.code !== 'en' ? EN.phrases[show] : undefined}
         sub={show ? KO_PHRASES[show] : undefined}

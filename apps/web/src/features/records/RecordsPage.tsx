@@ -35,9 +35,12 @@ export function RecordsPage() {
     <>
       <TopBar title={t('records.title')} />
       <div className="flex flex-col gap-6 px-5 pt-2">
-        <section aria-label={t('records.stats')} className="flex flex-col gap-3">
-          <h2 className="text-caption font-semibold text-fg-muted">{t('records.stats')}</h2>
-          <div className="grid grid-cols-3 gap-2">
+        <section
+          aria-label={t('records.stats')}
+          className="flex flex-col gap-4 rounded-card border border-line bg-surface p-4"
+        >
+          <h2 className="text-body-1 font-semibold">{t('records.stats')}</h2>
+          <div className="grid grid-cols-3 gap-3">
             <Stat label={t('records.trips')} value={t('records.tripsN', { n: past.length })} />
             <Stat label={t('records.days')} value={t('records.daysN', { n: days })} />
             <Stat
@@ -52,7 +55,7 @@ export function RecordsPage() {
         <VisitLog trips={trips ?? []} />
 
         <section aria-label={t('records.pastTitle')} className="flex flex-col gap-2">
-          <h2 className="text-caption font-semibold text-fg-muted">{t('records.pastTitle')}</h2>
+          <h2 className="text-body-1 font-semibold">{t('records.pastTitle')}</h2>
           {trips && past.length === 0 ? (
             <EmptyState
               icon={BookOpen}
@@ -75,9 +78,9 @@ export function RecordsPage() {
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex flex-col items-center gap-1 rounded-card bg-bg-subtle py-3">
-      <span className="tabular text-title-2">{value}</span>
-      <span className="text-caption text-fg-muted">{label}</span>
+    <div className="flex min-w-0 flex-col gap-1">
+      <span className="tabular text-title-1">{value}</span>
+      <span className="text-caption text-fg-sub">{label}</span>
     </div>
   );
 }

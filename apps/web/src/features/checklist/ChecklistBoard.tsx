@@ -121,7 +121,7 @@ export function ChecklistBoard({
         },
       }}
     >
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col rounded-card border border-line bg-surface px-3">
         {containers.map((id) => {
           const list = itemsOf(id);
           const name = id === SINGLE ? '' : id.slice(GROUP.length);
@@ -143,9 +143,11 @@ export function ChecklistBoard({
           if (!grouped) return <div key={id}>{body}</div>;
           const done = list.filter((i) => i.checked).length;
           return (
-            <details key={id} open className="group rounded-card border border-line bg-surface">
-              <summary className="flex min-h-12 cursor-pointer list-none items-center gap-2 pr-1 pl-4">
-                <span className="min-w-0 flex-1 truncate text-body-1">{name}</span>
+            <details key={id} open className="group border-b border-line last:border-b-0">
+              <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 pr-0 pl-1">
+                <span className="min-w-0 flex-1 truncate text-body-2 font-semibold text-fg-sub">
+                  {name}
+                </span>
                 <span
                   className={cn(
                     'tabular shrink-0 text-caption',
@@ -170,7 +172,7 @@ export function ChecklistBoard({
                   <Trash2 aria-hidden="true" className="size-4" />
                 </button>
               </summary>
-              <div className="border-t border-line px-1 py-1">{body}</div>
+              <div className="pb-2">{body}</div>
             </details>
           );
         })}

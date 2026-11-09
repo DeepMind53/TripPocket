@@ -67,6 +67,8 @@
 - 폰트: **Pretendard Variable** (한글 가독성, 숫자 폭 균일) — 셀프 호스팅, 한글 2,350자 + 영문 서브셋 ⚠️
 - 숫자(시간·거리)에는 `font-variant-numeric: tabular-nums` (자릿수 정렬)
 - 한국어 줄바꿈: `word-break: keep-all; overflow-wrap: anywhere;`
+- **언어별 글꼴** (2026-11-09 사용자 요청): 한국어·영어 = Pretendard(번들, 라틴은 Inter 계열). 현지어 글자(회화·크게 보여 주기)는 `lang` 속성을 달고 `styles/index.css` `:lang()` 규칙으로 그 나라 기기 고딕 — 번체 PingFang TC·Noto Sans TC, 간체 PingFang SC·Noto Sans SC, 일본어 Hiragino Sans·Noto Sans JP. 따로 받는 글꼴 파일 없음(오프라인·첫 화면 크기 유지). 현지어를 새로 보여 줄 때는 `lang`을 꼭 단다
+- 큰 제목(display·title-1·title-2)은 자간 -0.02em
 
 | 토큰 | 크기/행간 | 굵기 | 용도 |
 |---|---|---|---|
@@ -223,4 +225,5 @@
 7. 모션은 `ease-soft` 하나, `transition-all` 금지(바뀌는 속성만), 장식용 깜빡임(`animate-pulse`) 금지 — 로딩 뼈대와 진행 중 일정 표시만 예외
 8. **긴 글자**: 한 줄 고정 칸은 `truncate`, 제목·설명은 줄바꿈 허용(`text-pretty`/`text-balance`, 필요하면 `line-clamp-2`). flex 안 글자 칸에는 `min-w-0`. 320·360·430px와 글자 130%에서 확인 (`tests/e2e/text-fit.spec.ts`)
 9. 휴대폰 폭마다 공간 활용: 고정 폭(`w-[..px]`) 대신 `flex-1`·`minmax(0,1fr)`, 좁은 화면(≤340px·큰 글자)은 `tight:` 변형으로 줄바꿈 배치
-10. 기능·문구 키·화면 순서는 바꾸지 않는다 — 디자인 변경 커밋은 `pnpm check` 통과 + 360px 스크린샷 전후 비교
+10. **목록 화면 모양**(2026-11-09 2차): 일정은 일차 카드 상자 없이 평평한 목록 — 일차 머리(알약+날짜, 아래 선)가 위에 붙고, 줄은 `번호 · 제목(아래 종류·경로·주소) · 오른쪽 시간`. 홈 다음 일정은 흰 카드 + 파란 남은 시간·[길찾기] 버튼, 오늘 일정은 카드 한 장 안 구분선 줄. 준비물 분류는 카드 한 장 안 구분선. 예약번호·공항 코드는 고정폭(`font-mono`)
+11. 기능·문구 키·화면 순서는 바꾸지 않는다 — 디자인 변경 커밋은 `pnpm check` 통과 + 360px 스크린샷 전후 비교
