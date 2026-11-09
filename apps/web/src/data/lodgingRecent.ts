@@ -6,6 +6,8 @@ import type { StayQuery } from '../domain/lodgingLinks';
  */
 export interface RecentStay extends StayQuery {
   agoda?: string;
+  /** 국내 숙소 (여기어때 주소가 다름) */
+  domestic?: boolean;
 }
 
 const KEY = 'tp-lodging-recent';

@@ -94,7 +94,13 @@ describe('숙소 최저가 (실험실, docs/28)', () => {
       );
       expect(within(apps).getByRole('link', { name: '트립닷컴 열기' })).toHaveAttribute(
         'href',
-        expect.stringContaining('checkin=2026/11/24'),
+        expect.stringContaining('checkIn=2026-11-24'),
+      );
+      // 도쿄 여행 = 해외: 여기어때는 이름을 복사해 연다
+      expect(screen.getByRole('radio', { name: '해외' })).toBeChecked();
+      expect(within(apps).getByRole('link', { name: '여기어때 열기' })).toHaveAttribute(
+        'href',
+        'https://www.yeogi.com/',
       );
       expect(within(apps).getByText('날짜는 앱에서 골라요')).toBeInTheDocument();
       await user.click(within(apps).getByRole('link', { name: 'NOL 열기' }));

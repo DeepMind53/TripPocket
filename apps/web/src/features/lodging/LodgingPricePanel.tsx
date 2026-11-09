@@ -22,7 +22,7 @@ import { useTranslation } from '../../i18n';
 import { copyText } from '../../shared/lib/clipboard';
 import { formatMonthDay } from '../../shared/lib/dateFormat';
 import { countUse } from '../../shared/lib/usageCount';
-import { Button, Chip, ScrollRow, Stepper, toast } from '../../shared/ui';
+import { Button, Chip, ScrollRow, SegmentedControl, Stepper, toast } from '../../shared/ui';
 
 const inputClass =
   'h-12 w-full min-w-0 rounded-btn border border-line bg-bg-subtle px-3 text-body-1 outline-none focus:border-primary';
@@ -42,8 +42,14 @@ export function LodgingPricePanel({ initial }: { initial: Partial<RecentStay> })
   const [adults, setAdults] = useState(initial.adults ?? 2);
   const [rooms, setRooms] = useState(initial.rooms ?? 1);
   const [agodaText, setAgodaText] = useState(initial.agoda ?? '');
+  // 국내·해외에 따라 여기어때 주소가 다르다 — 처음 값은 여행지 기준 (2026-11-09 사용자 제보)
+  const [domestic, setDomestic] = useState(initial.domestic ?? false);
   const [recent, setRecent] = useState(loadRecentStays);
-  const [result, setResult] = useState<{ q: StayQuery; agoda: AgodaBase | null } | null>(null);
+  const [result, setResult] = useState<{
+    q: StayQuery;
+    agoda: AgodaBase | null;
+    domestic: boolean;
+  } | null>(null);
 
   const draft: StayQuery = { name: name.trim(), checkIn, checkOut, adults, rooms };
   const error = stayQueryError(draft);
@@ -56,14 +62,17 @@ export function LodgingPricePanel({ initial }: { initial: Partial<RecentStay> })
     setAdults(s.adults);
     setRooms(s.rooms);
     setAgodaText(s.agoda ?? '');
+    if (s.domestic !== undefined) setDomestic(s.domestic);
     setResult(null);
   };
 
   const search = () => {
     if (error || agodaBad) return;
     const agoda = parseAgodaLink(agodaText);
-    setResult({ q: draft, agoda });
-    setRecent(saveRecentStay({ ...draft, ...(agoda ? { agoda: agodaText.trim() } : {}) }));
+    setResult({ q: draft, agoda, domestic });
+    setRecent(
+      saveRecentStay({ ...draft, domestic, ...(agoda ? { agoda: agodaText.trim() } : {}) }),
+    );
     countUse('lodgingPrice.search');
   };
 
@@ -111,6 +120,15 @@ export function LodgingPricePanel({ initial }: { initial: Partial<RecentStay> })
             className={inputClass}
           />
         </label>
+        <SegmentedControl
+          label={t('lodgingPrice.region')}
+          value={domestic ? 'domestic' : 'overseas'}
+          onChange={(v) => setDomestic(v === 'domestic')}
+          options={[
+            { value: 'domestic', label: t('lodgingPrice.domestic') },
+            { value: 'overseas', label: t('lodgingPrice.overseas') },
+          ]}
+        />
         <div className="grid grid-cols-2 gap-2">
           <label className="flex min-w-0 flex-col gap-1.5">
             <span className="text-caption font-semibold text-fg-sub">
@@ -195,19 +213,27 @@ export function LodgingPricePanel({ initial }: { initial: Partial<RecentStay> })
         </Button>
       </form>
 
-      {result && <Results q={result.q} agoda={result.agoda} />}
+      {result && <Results q={result.q} agoda={result.agoda} domestic={result.domestic} />}
     </div>
   );
 }
 
-function Results({ q, agoda }: { q: StayQuery; agoda: AgodaBase | null }) {
+function Results({
+  q,
+  agoda,
+  domestic,
+}: {
+  q: StayQuery;
+  agoda: AgodaBase | null;
+  domestic: boolean;
+}) {
   const { t } = useTranslation();
   const [group, setGroup] = useState<Group>('all');
   const routes = AGODA_ROUTES.filter((r) => group === 'all' || r.group === group);
   const count = (g: Group) =>
     g === 'all' ? AGODA_ROUTES.length + 1 : AGODA_ROUTES.filter((r) => r.group === g).length;
   // 아고다 숙소를 알면 아고다 버튼도 그 숙소의 기본 경로로
-  const apps: AppLink[] = appLinks(q).map((l) =>
+  const apps: AppLink[] = appLinks(q, { domestic }).map((l) =>
     l.app === 'agoda' && agoda
       ? { ...l, url: agodaRouteUrl(agoda, AGODA_DEFAULT_CID, q), dates: true, copyName: false }
       : l,

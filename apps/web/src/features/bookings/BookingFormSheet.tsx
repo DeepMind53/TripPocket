@@ -790,7 +790,12 @@ function BookingForm({
                   <LodgingPriceSheet
                     open={priceOpen}
                     onOpenChange={setPriceOpen}
-                    initial={{ name: f.title.trim(), checkIn: f.startDate, checkOut: endDate }}
+                    initial={{
+                      name: f.title.trim(),
+                      checkIn: f.startDate,
+                      checkOut: endDate,
+                      domestic: isDomesticTrip(trip),
+                    }}
                   />
                 </>
               )}

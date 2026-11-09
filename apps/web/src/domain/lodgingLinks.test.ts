@@ -26,12 +26,12 @@ describe('숙소 최저가 링크 (docs/28 §4)', () => {
   });
 
   it('앱 6개 순서대로, 이름은 주소에 맞게 바꾸고 날짜·인원을 넣는다', () => {
-    const links = appLinks(q);
+    const links = appLinks(q, { domestic: true });
     expect(links.map((l) => l.app)).toEqual([...LODGING_APPS]);
     const by = Object.fromEntries(links.map((l) => [l.app, l]));
     const name = encodeURIComponent(q.name);
     expect(by.tripcom!.url).toBe(
-      `https://kr.trip.com/hotels/list?keyword=${name}&checkin=2026/11/24&checkout=2026/11/27&adult=2&crn=1`,
+      `https://kr.trip.com/hotels/list?keyword=${name}&checkIn=2026-11-24&checkOut=2026-11-27&checkin=2026/11/24&checkout=2026/11/27&adult=2&crn=1`,
     );
     expect(by.booking!.url).toContain(
       `ss=${name}&checkin=2026-11-24&checkout=2026-11-27&group_adults=2&no_rooms=1`,
@@ -42,6 +42,12 @@ describe('숙소 최저가 링크 (docs/28 §4)', () => {
     expect(by.nol).toMatchObject({ dates: false, copyName: true });
     expect(by.agoda).toMatchObject({ dates: false, copyName: true });
     expect(links.every((l) => l.url.startsWith('https://'))).toBe(true);
+  });
+
+  it('해외 숙소: 여기어때는 국내 검색 주소를 쓰지 않고 이름을 복사해 연다 (대만 숙소에 한국 숙소가 나오던 문제)', () => {
+    const yeogi = appLinks(q, { domestic: false }).find((l) => l.app === 'yeogi')!;
+    expect(yeogi.url).not.toContain('domestic');
+    expect(yeogi).toMatchObject({ dates: false, copyName: true });
   });
 
   it('아고다 경로 20개 + 할인 안내 17개, 경로 값은 겹치지 않는다', () => {

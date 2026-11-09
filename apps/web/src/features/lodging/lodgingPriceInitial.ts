@@ -1,18 +1,21 @@
 import type { Booking, Trip } from '@trippocket/shared';
 import type { RecentStay } from '../../data/lodgingRecent';
 import { parseAgodaLink } from '../../domain/agodaRoutes';
+import { isDomesticTrip } from '../../domain/tripPlace';
 
 /**
  * 숙소 최저가 입력 칸의 처음 값 (docs/28 I2): 숙소 예약 → 이름·체크인·체크아웃·인원·아고다 바우처 링크,
- * 없으면 여행 날짜
+ * 없으면 여행 날짜. 국내·해외는 여행지로 (여기어때 주소가 다름)
  */
 export function lodgingPriceInitial(
   booking: Pick<Booking, 'title' | 'start' | 'end' | 'details'> | undefined,
-  trip: Pick<Trip, 'startDate' | 'endDate'> | null | undefined,
+  trip: Pick<Trip, 'startDate' | 'endDate' | 'destinations' | 'timezone'> | null | undefined,
 ): Partial<RecentStay> {
+  const region = trip ? { domestic: isDomesticTrip(trip) } : {};
   if (booking) {
     const voucher = booking.details?.voucherUrl;
     return {
+      ...region,
       name: booking.title,
       checkIn: booking.start.date,
       ...(booking.end?.date ? { checkOut: booking.end.date } : {}),
@@ -21,6 +24,6 @@ export function lodgingPriceInitial(
     };
   }
   if (trip && trip.endDate > trip.startDate)
-    return { checkIn: trip.startDate, checkOut: trip.endDate };
-  return {};
+    return { ...region, checkIn: trip.startDate, checkOut: trip.endDate };
+  return region;
 }
