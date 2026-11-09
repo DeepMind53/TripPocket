@@ -43,6 +43,7 @@ export type ApiId =
   | 'jsdelivr'
   | 'frankfurter'
   | 'wikipedia'
+  | 'agoda_lookup'
   | 'oauth_kakao'
   | 'oauth_google'
   | 'cf_functions'
@@ -165,6 +166,8 @@ export const APIS: readonly ApiDef[] = [
   { id: 'frankfurter', group: 'free', tz: 'UTC', browser: true },
   // 위키백과 REST 요약(키 없음, 예의상 초당 몇 번) — 여행지 소개 (docs/26 A4). 서버가 30일 저장해 하루 수백 회면 충분
   { id: 'wikipedia', group: 'free', freeDaily: 5000, tz: 'UTC' },
+  // 아고다 숙소 자동 찾기 (docs/28 §4.2, ADR-0010): 공개 API가 아니라 스스로 정한 하루 100회 — 사이트 부담·차단 위험을 줄인다
+  { id: 'agoda_lookup', group: 'free', freeDaily: 100, tz: 'Asia/Seoul' },
   // 로그인(토큰 교환·프로필) — 무료, 멈추면 로그인 불가라 기록만
   { id: 'oauth_kakao', group: 'free', tz: 'Asia/Seoul', pausable: false },
   { id: 'oauth_google', group: 'free', tz: 'UTC', pausable: false },

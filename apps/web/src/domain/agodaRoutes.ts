@@ -94,6 +94,12 @@ export function parseAgodaLink(text: string): AgodaBase | null {
   return null;
 }
 
+/** 다시 붙여 넣을 수 있는 숙소 주소 (최근 검색에 남김) */
+export const agodaLinkOf = (base: AgodaBase): string =>
+  'hid' in base
+    ? `https://www.agoda.com/partners/partnersearch.aspx?hid=${base.hid}`
+    : `https://www.agoda.com${base.path}`;
+
 /**
  * 경로 하나의 링크. 숙소 id면 아고다 제휴 검색 주소(경로·날짜·인원이 그대로 넘어감, 2026-11-09 확인),
  * 숙소 화면 주소면 그 주소의 날짜·인원·경로만 바꾼다 (아고다스캐너와 같음)

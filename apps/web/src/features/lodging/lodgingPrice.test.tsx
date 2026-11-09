@@ -5,6 +5,7 @@ import { routes } from '../../app/router';
 import { resetLocalDb } from '../../data/dev';
 import { setLab } from '../../data/labsStore';
 import { resetReportGuards } from '../../data/lodgingReports';
+import { resetAgodaLookup } from '../../data/agodaLookup';
 import { bookingRepo } from '../../data/repositories/bookingRepo';
 import { tripRepo } from '../../data/repositories/tripRepo';
 import { Toaster } from '../../shared/ui';
@@ -14,6 +15,7 @@ beforeEach(async () => {
   await resetLocalDb();
   localStorage.removeItem('tp-lodging-recent');
   resetReportGuards();
+  resetAgodaLookup();
   tripId = (
     await tripRepo.create({
       title: '도쿄',
@@ -67,7 +69,8 @@ describe('숙소 최저가 (실험실, docs/28)', () => {
       expect(screen.getByLabelText('체크인')).toHaveValue('2026-11-24');
       expect(screen.getByLabelText('체크아웃')).toHaveValue('2026-11-27');
 
-      // 아고다가 아닌 링크는 막는다
+      // 링크 칸은 접혀 있다 — 직접 넣기를 누르면 열림. 아고다가 아닌 링크는 막는다
+      await user.click(screen.getByRole('button', { name: '아고다 링크 직접 넣기' }));
       const link = screen.getByLabelText('아고다 숙소 링크 (선택)');
       await user.type(link, 'https://www.booking.com/hotel/jp/x.html');
       expect(screen.getByRole('alert')).toHaveTextContent('아고다 숙소 링크가 아니에요');
@@ -79,7 +82,7 @@ describe('숙소 최저가 (실험실, docs/28)', () => {
       );
       await user.click(screen.getByRole('button', { name: '검색' }));
 
-      const agoda = screen.getByRole('region', { name: '아고다 경로별' });
+      const agoda = await screen.findByRole('region', { name: '아고다 경로별' });
       expect(within(agoda).getByRole('link', { name: '신한카드 열기' })).toHaveAttribute(
         'href',
         'https://www.agoda.com/partners/partnersearch.aspx?hid=706347&cid=1760133&checkin=2026-11-24&checkout=2026-11-27&NumberofAdults=2&Rooms=1',
@@ -110,7 +113,7 @@ describe('숙소 최저가 (실험실, docs/28)', () => {
       await user.click(within(apps).getByRole('link', { name: 'NOL 열기' }));
       expect(await navigator.clipboard.readText()).toBe('호텔 그레이스리 신주쿠');
 
-      // 링크는 웹에서 만들고, 서버에는 기록 목록 1번만 (아고다 번호 + 이름 열쇠)
+      // 링크를 넣었으니 자동 찾기는 안 하고, 서버에는 기록 목록 1번만 (아고다 번호 + 이름 열쇠)
       const calls = fetchSpy.mock.calls.filter(([u]) => String(u).includes('lodging'));
       expect(calls).toHaveLength(1);
       expect(calls[0]![0]).toContain('hotelKey=agoda%3A706347');
@@ -126,15 +129,76 @@ describe('숙소 최저가 (실험실, docs/28)', () => {
     }
   });
 
-  it('아고다 링크가 없으면 붙여 넣는 방법 안내, 날짜가 거꾸로면 검색 잠금', async () => {
+  it('아고다 링크가 없으면 이름으로 자동 찾기 → 다른 후보 고르기 (누를 때만 다시)', async () => {
     setLab('lodgingPrice', true, { silent: true });
+    const fetchSpy = vi.fn(async (url: string) => {
+      const u = String(url);
+      if (u.startsWith('/api/lodging/lookup'))
+        return Response.json({
+          candidates: [
+            { hid: 706347, name: 'Hotel Gracery Shinjuku', city: 'Tokyo' },
+            { hid: 60887367, name: 'Gracious Higashi Shinjuku', city: 'Tokyo' },
+          ],
+        });
+      if (u.startsWith('/api/lodging/reports')) return Response.json({ reports: [] });
+      return Response.json({});
+    });
+    vi.stubGlobal('fetch', fetchSpy);
+    try {
+      const user = userEvent.setup();
+      show(`/lodging-price?trip=${tripId}`);
+      await user.type(await screen.findByLabelText('숙소 이름'), '신주쿠 그레이스리');
+      // 링크 칸은 처음엔 접혀 있다
+      expect(screen.queryByLabelText('아고다 숙소 링크 (선택)')).toBeNull();
+      await user.click(screen.getByRole('button', { name: '검색' }));
+      const agoda = await screen.findByRole('region', { name: '아고다 경로별' });
+      expect(
+        await within(agoda).findByText('아고다에서 찾은 숙소 · Hotel Gracery Shinjuku'),
+      ).toBeInTheDocument();
+      expect(within(agoda).getByRole('link', { name: '신한카드 열기' })).toHaveAttribute(
+        'href',
+        expect.stringContaining('hid=706347&cid=1760133'),
+      );
+      const lookups = () =>
+        fetchSpy.mock.calls.filter(([u]) => String(u).startsWith('/api/lodging/lookup'));
+      expect(lookups()).toHaveLength(1);
+      expect(lookups()[0]![0]).toBe(
+        `/api/lodging/lookup?name=${encodeURIComponent('신주쿠 그레이스리').replaceAll('%20', '+')}`,
+      );
+
+      await user.click(within(agoda).getByRole('radio', { name: 'Gracious Higashi Shinjuku' }));
+      await waitFor(() =>
+        expect(within(agoda).getByRole('link', { name: '신한카드 열기' })).toHaveAttribute(
+          'href',
+          expect.stringContaining('hid=60887367'),
+        ),
+      );
+      // 후보를 바꿔도 자동 찾기를 다시 하지 않는다
+      expect(lookups()).toHaveLength(1);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('자동 찾기를 못 하면 링크 칸을 열고 안내, 날짜가 거꾸로면 검색 잠금', async () => {
+    setLab('lodgingPrice', true, { silent: true });
+    vi.stubGlobal('fetch', async (url: string) =>
+      String(url).startsWith('/api/lodging/lookup')
+        ? Response.json({ candidates: [] })
+        : Response.json({ reports: [] }),
+    );
     const user = userEvent.setup();
-    show(`/lodging-price?trip=${tripId}`);
-    // 여행에서 열면 여행 날짜
-    expect(await screen.findByLabelText('체크인')).toHaveValue('2026-11-24');
-    await user.type(screen.getByLabelText('숙소 이름'), '신주쿠 호텔');
-    await user.click(screen.getByRole('button', { name: '검색' }));
-    expect(screen.getByText(/경로별 가격은 아고다 링크가 필요해요/)).toBeInTheDocument();
+    try {
+      show(`/lodging-price?trip=${tripId}`);
+      // 여행에서 열면 여행 날짜
+      expect(await screen.findByLabelText('체크인')).toHaveValue('2026-11-24');
+      await user.type(screen.getByLabelText('숙소 이름'), '신주쿠 호텔');
+      await user.click(screen.getByRole('button', { name: '검색' }));
+      expect(await screen.findByText(/아고다에서 이 숙소를 찾지 못했어요/)).toBeInTheDocument();
+      expect(screen.getByLabelText('아고다 숙소 링크 (선택)')).toBeInTheDocument();
+    } finally {
+      vi.unstubAllGlobals();
+    }
 
     const out = screen.getByLabelText('체크아웃');
     await user.clear(out);
@@ -228,22 +292,27 @@ describe('숙소 최저가 (실험실, docs/28)', () => {
 
   it('기록을 못 불러오면 멈추고, 연타는 앞에서 막는다', async () => {
     setLab('lodgingPrice', true, { silent: true });
-    const fetchSpy = vi.fn(async () => new Response('x', { status: 500 }));
+    const fetchSpy = vi.fn(async (_url: string) => new Response('x', { status: 500 }));
     vi.stubGlobal('fetch', fetchSpy);
+    const count = (path: string) =>
+      fetchSpy.mock.calls.filter(([u]) => String(u).startsWith(path)).length;
     try {
       const user = userEvent.setup();
       show(`/lodging-price?trip=${tripId}`);
       await user.type(await screen.findByLabelText('숙소 이름'), '신주쿠 호텔');
       await user.click(screen.getByRole('button', { name: '검색' }));
       expect(await screen.findByText(/기록을 불러오지 못했어요/)).toBeInTheDocument();
-      // 자동 재시도 없음
-      expect(fetchSpy).toHaveBeenCalledTimes(1);
+      expect(screen.getByText(/아고다에서 찾지 못했어요/)).toBeInTheDocument();
+      // 자동 재시도 없음 — 찾기 1번 + 기록 1번
+      expect(count('/api/lodging/lookup')).toBe(1);
+      expect(count('/api/lodging/reports')).toBe(1);
       for (let i = 0; i < 6; i++) {
         await user.click(screen.getByRole('button', { name: '검색' }));
         await screen.findByText(/기록을 불러오지 못했어요/);
       }
-      // 1분에 5번까지만 서버로
-      expect(fetchSpy).toHaveBeenCalledTimes(5);
+      // 종류마다 1분에 5번까지만 서버로
+      expect(count('/api/lodging/lookup')).toBe(5);
+      expect(count('/api/lodging/reports')).toBe(5);
     } finally {
       vi.unstubAllGlobals();
     }

@@ -10,7 +10,13 @@ import type { Db } from '../db/database';
 import { requireUser } from '../auth/session';
 import { lodgingReportsRepo } from '../repositories/lodgingReportsRepo';
 import { latestFx } from '../services/fx';
+import { agodaLookup, LookupPaused } from '../services/agodaLookup';
+import { ApiPaused } from '../services/apiUsage';
+import { statDate } from '../repositories/statsRepo';
 import { requireAdmin } from './admin';
+
+/** 자동 찾기 한도 (Q6 확정: 넉넉하게 — 검색 분당 5·하루 60) */
+export const LOOKUP_RULES = { perMinute: 5, perDay: 60, concurrent: 2 } as const;
 
 /**
  * 1박 원화 환산이 정상 범위인지 (docs/28 §7.3). 환율을 모르는 통화는 금액 상한만 본다
@@ -88,6 +94,39 @@ export function lodgingRoutes(app: FastifyInstance, db: Db): void {
       if (!repo.remove(req.params.id, req.user!.userId))
         return reply.code(404).send({ error: 'not_found' });
       return { ok: true };
+    },
+  );
+
+  // 아고다 숙소 자동 찾기 (docs/28 §4.2): 이름 → 숙소 후보 최대 3개. 외부 요청은 1번(캐시면 0)
+  const lookups = new Map<string, { day: string; n: number }>();
+  let running = 0;
+  app.get<{ Querystring: { name?: string } }>(
+    '/api/lodging/lookup',
+    { ...auth, config: { rateLimit: { max: LOOKUP_RULES.perMinute, timeWindow: '1 minute' } } },
+    async (req, reply) => {
+      const name = (req.query.name ?? '').trim();
+      if (!name || name.length > 80) return reply.code(400).send({ error: 'bad_request' });
+      const me = req.user!.userId;
+      const day = statDate();
+      const used = lookups.get(me);
+      const n = used?.day === day ? used.n : 0;
+      if (n >= LOOKUP_RULES.perDay)
+        return reply.code(429).send({ error: 'lookup_daily', limit: LOOKUP_RULES.perDay });
+      // 서버 전체 동시에 2개까지 (아고다에 몰아서 묻지 않게)
+      if (running >= LOOKUP_RULES.concurrent) return reply.code(503).send({ error: 'busy' });
+      running += 1;
+      try {
+        lookups.set(me, { day, n: n + 1 });
+        reply.header('cache-control', 'no-store');
+        return { candidates: await agodaLookup(name) };
+      } catch (e) {
+        if (e instanceof LookupPaused) return reply.code(503).send({ error: 'lookup_paused' });
+        if (e instanceof ApiPaused) throw e;
+        req.log.warn({ err: String(e) }, 'agoda lookup failed');
+        return reply.code(502).send({ error: 'lookup_failed' });
+      } finally {
+        running -= 1;
+      }
     },
   );
 

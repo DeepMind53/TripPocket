@@ -2,6 +2,7 @@ import { todayIn, type LodgingReportView, type LodgingSite } from '@trippocket/s
 import { Clipboard, Copy, ExternalLink, History, PencilLine } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { loadReports, removeReport } from '../../data/lodgingReports';
+import { lookupAgoda, type AgodaCandidate, type LookupResult } from '../../data/agodaLookup';
 import { reportQueryOf } from './reportQuery';
 import { loadRecentStays, saveRecentStay, type RecentStay } from '../../data/lodgingRecent';
 import { cachedFx } from '../../data/services/fxService';
@@ -18,6 +19,7 @@ import {
   AGODA_PROMOS,
   AGODA_ROUTES,
   agodaPromoUrl,
+  agodaLinkOf,
   agodaRouteUrl,
   parseAgodaLink,
   type AgodaBase,
@@ -44,6 +46,9 @@ import {
   Stepper,
   toast,
 } from '../../shared/ui';
+
+/** 자동 찾기 실패 이유 (none = 결과 0개) */
+type LookupFail = Extract<LookupResult, { ok: false }>['reason'] | 'none';
 
 type PanelReports =
   | { status: 'idle' | 'loading' | 'offline' | 'error' }
@@ -75,7 +80,11 @@ export function LodgingPricePanel({ initial }: { initial: Partial<RecentStay> })
     q: StayQuery;
     agoda: AgodaBase | null;
     domestic: boolean;
+    /** 자동 찾기 결과 (링크를 넣었으면 없음) */
+    found?: { candidates: AgodaCandidate[]; failed: LookupFail | null };
   } | null>(null);
+  // 아고다 링크 칸은 자동으로 못 찾았을 때만 연다 (사용자 요청 2026-11-09)
+  const [manual, setManual] = useState(!!initial.agoda);
   const [reports, setReports] = useState<PanelReports>({ status: 'idle' });
   const [rates, setRates] = useState<Record<string, number> | undefined>(undefined);
   const abort = useRef<AbortController | null>(null);
@@ -97,20 +106,9 @@ export function LodgingPricePanel({ initial }: { initial: Partial<RecentStay> })
     setResult(null);
   };
 
-  const search = () => {
-    if (error || agodaBad || reports.status === 'loading') return;
-    const agoda = parseAgodaLink(agodaText);
-    setResult({ q: draft, agoda, domestic });
-    setRecent(
-      saveRecentStay({ ...draft, domestic, ...(agoda ? { agoda: agodaText.trim() } : {}) }),
-    );
-    countUse('lodgingPrice.search');
-    // 기록 목록: 누를 때 한 번 (실패해도 다시 부르지 않는다)
-    abort.current?.abort();
-    const ctrl = new AbortController();
-    abort.current = ctrl;
-    setReports({ status: 'loading' });
-    void Promise.all([loadReports(reportQueryOf(draft, agoda), ctrl.signal), cachedFx()]).then(
+  /** 기록 목록: 누를 때 한 번 (실패해도 다시 부르지 않는다) */
+  const loadList = (q: StayQuery, agoda: AgodaBase | null, ctrl: AbortController) =>
+    Promise.all([loadReports(reportQueryOf(q, agoda), ctrl.signal), cachedFx()]).then(
       ([res, fx]) => {
         if (ctrl.signal.aborted) return;
         setRates(fx?.rates);
@@ -121,6 +119,49 @@ export function LodgingPricePanel({ initial }: { initial: Partial<RecentStay> })
         );
       },
     );
+
+  const search = async () => {
+    if (error || agodaBad || reports.status === 'loading') return;
+    abort.current?.abort();
+    const ctrl = new AbortController();
+    abort.current = ctrl;
+    setReports({ status: 'loading' });
+    countUse('lodgingPrice.search');
+    const q = draft;
+    // 아고다: 붙여 넣은 링크 → 없으면 이름으로 자동 찾기 (서버 1번, 못 찾으면 링크 칸을 연다)
+    let agoda = parseAgodaLink(agodaText);
+    let found: { candidates: AgodaCandidate[]; failed: LookupFail | null } | undefined;
+    if (!agoda) {
+      const res = await lookupAgoda(q.name, ctrl.signal);
+      if (ctrl.signal.aborted) return;
+      found = res.ok
+        ? { candidates: res.candidates, failed: res.candidates.length ? null : 'none' }
+        : { candidates: [], failed: res.reason };
+      const first = found.candidates[0];
+      agoda = first ? { hid: first.hid } : null;
+      if (!first) setManual(true);
+    }
+    setResult({ q, agoda, domestic, ...(found ? { found } : {}) });
+    setRecent(
+      saveRecentStay({
+        ...q,
+        domestic,
+        ...(agoda ? { agoda: agodaText.trim() || agodaLinkOf(agoda) } : {}),
+      }),
+    );
+    await loadList(q, agoda, ctrl);
+  };
+
+  /** 자동으로 찾은 후보 중 다른 숙소를 고르면 그 숙소로 링크·기록을 다시 (누를 때 한 번) */
+  const pick = (c: AgodaCandidate) => {
+    if (!result || reports.status === 'loading') return;
+    abort.current?.abort();
+    const ctrl = new AbortController();
+    abort.current = ctrl;
+    const agoda = { hid: c.hid };
+    setResult({ ...result, agoda });
+    setReports({ status: 'loading' });
+    void loadList(result.q, agoda, ctrl);
   };
 
   const paste = async () => {
@@ -154,7 +195,7 @@ export function LodgingPricePanel({ initial }: { initial: Partial<RecentStay> })
         className="flex flex-col gap-3"
         onSubmit={(e) => {
           e.preventDefault();
-          search();
+          void search();
         }}
       >
         <label className="flex flex-col gap-1.5">
@@ -227,29 +268,39 @@ export function LodgingPricePanel({ initial }: { initial: Partial<RecentStay> })
             />
           </span>
         </div>
-        <label className="flex flex-col gap-1.5">
-          <span className="text-caption font-semibold text-fg-sub">
-            {t('lodgingPrice.agodaLink')}
-          </span>
-          <span className="flex gap-2">
-            <input
-              value={agodaText}
-              inputMode="url"
-              placeholder={t('lodgingPrice.agodaPlaceholder')}
-              onChange={(e) => setAgodaText(e.target.value)}
-              className={inputClass}
-            />
-            <Button
-              type="button"
-              variant="secondary"
-              className="h-12! shrink-0 px-3!"
-              onClick={() => void paste()}
-            >
-              <Clipboard aria-hidden="true" className="size-4" />
-              {t('lodgingPrice.paste')}
-            </Button>
-          </span>
-        </label>
+        {manual ? (
+          <label className="flex flex-col gap-1.5">
+            <span className="text-caption font-semibold text-fg-sub">
+              {t('lodgingPrice.agodaLink')}
+            </span>
+            <span className="flex gap-2">
+              <input
+                value={agodaText}
+                inputMode="url"
+                placeholder={t('lodgingPrice.agodaPlaceholder')}
+                onChange={(e) => setAgodaText(e.target.value)}
+                className={inputClass}
+              />
+              <Button
+                type="button"
+                variant="secondary"
+                className="h-12! shrink-0 px-3!"
+                onClick={() => void paste()}
+              >
+                <Clipboard aria-hidden="true" className="size-4" />
+                {t('lodgingPrice.paste')}
+              </Button>
+            </span>
+          </label>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setManual(true)}
+            className="flex min-h-10 items-center self-start text-caption font-semibold text-primary"
+          >
+            {t('lodgingPrice.agodaManual')}
+          </button>
+        )}
         {(agodaBad || (error && error !== 'name' && checkIn && checkOut)) && (
           <p role="alert" className="text-caption whitespace-pre-line text-danger">
             {agodaBad ? t('lodgingPrice.errAgoda') : t(`lodgingPrice.err.${error!}`)}
@@ -270,6 +321,8 @@ export function LodgingPricePanel({ initial }: { initial: Partial<RecentStay> })
           q={result.q}
           agoda={result.agoda}
           domestic={result.domestic}
+          found={result.found}
+          onPick={pick}
           reports={reports}
           rates={rates}
           onReports={(list) => setReports({ status: 'ready', list })}
@@ -286,6 +339,8 @@ function Results({
   q,
   agoda,
   domestic,
+  found,
+  onPick,
   reports,
   rates,
   onReports,
@@ -293,6 +348,8 @@ function Results({
   q: StayQuery;
   agoda: AgodaBase | null;
   domestic: boolean;
+  found: { candidates: AgodaCandidate[]; failed: LookupFail | null } | undefined;
+  onPick: (c: AgodaCandidate) => void;
   reports: PanelReports;
   rates: Record<string, number> | undefined;
   onReports: (list: LodgingReportView[]) => void;
@@ -374,6 +431,44 @@ function Results({
       />
       <section aria-label={t('lodgingPrice.agodaTitle')} className="flex flex-col gap-2">
         <h3 className="text-body-1 font-bold">{t('lodgingPrice.agodaTitle')}</h3>
+        {/* 자동으로 찾은 숙소 — 다른 후보가 있으면 고를 수 있다 */}
+        {found && found.candidates.length > 0 && agoda && 'hid' in agoda && (
+          <div className="flex flex-col gap-1.5 rounded-card bg-bg-subtle px-3 py-2">
+            <p className="text-caption text-fg-sub">
+              {t('lodgingPrice.found', {
+                name: found.candidates.find((c) => c.hid === agoda.hid)?.name ?? '',
+              })}
+            </p>
+            {found.candidates.length > 1 && (
+              <ScrollRow
+                role="radiogroup"
+                aria-label={t('lodgingPrice.foundOther')}
+                className="flex gap-2 pb-1"
+              >
+                {found.candidates.map((c) => (
+                  <Chip
+                    key={c.hid}
+                    role="radio"
+                    aria-checked={c.hid === agoda.hid}
+                    selected={c.hid === agoda.hid}
+                    disabled={reports.status === 'loading'}
+                    onClick={() => onPick(c)}
+                  >
+                    <span className="max-w-48 truncate">{c.name}</span>
+                  </Chip>
+                ))}
+              </ScrollRow>
+            )}
+          </div>
+        )}
+        {found?.failed && (
+          <p
+            role="status"
+            className="rounded-card bg-warning/10 px-3 py-2 text-caption whitespace-pre-line text-fg-sub"
+          >
+            {t(`lodgingPrice.lookupFail.${found.failed}`)}
+          </p>
+        )}
         {agoda ? (
           <>
             <p className="text-caption whitespace-pre-line text-fg-muted">
