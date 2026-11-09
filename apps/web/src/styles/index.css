@@ -270,22 +270,7 @@
 .kind-tint {
   background: color-mix(in srgb, var(--kind) var(--tp-kind-tint), var(--tp-surface));
 }
-/* 여행 당일 지금 진행 중인 일정: 진한 테두리 + 바탕이 진해졌다 연해지기를 반복 */
-.kind-now {
-  box-shadow: inset 0 0 0 2px var(--kind);
-  animation: kind-pulse 2.4s ease-in-out infinite;
-}
-@keyframes kind-pulse {
-  50% {
-    background: color-mix(in srgb, var(--kind) var(--tp-kind-pulse), var(--tp-surface));
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .kind-now {
-    animation: none;
-    background: color-mix(in srgb, var(--kind) var(--tp-kind-pulse), var(--tp-surface));
-  }
-}
+/* 진행 중 일정 깜빡임(.kind-now)은 2026-11-10 사용자 결정으로 뺐다 — 노선 점·고리로 (docs/29 §7.5) */
 
 /* 방문·미방문을 남긴 지난 일정 (실험실 "방문 기록", 사용자 요청 2026-10-26): 회색 바탕 + 옅은 빗금, 내용은 흐리게 */
 .visit-mark {

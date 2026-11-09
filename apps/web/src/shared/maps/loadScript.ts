@@ -31,7 +31,8 @@ export function loadScript(src: string, ready: () => boolean): Promise<void> {
 }
 
 /** 원 안에 숫자가 있는 핀 (SVG) — 두 제공자 모두 이미지로 쓴다 */
-export function pinSvg(label: string, color: string): string {
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30"><circle cx="15" cy="15" r="13" fill="${color}" stroke="white" stroke-width="2.5"/><text x="15" y="20" text-anchor="middle" font-family="sans-serif" font-size="13" font-weight="700" fill="white">${label}</text></svg>`;
+export function pinSvg(label: string, color: string, ink: string = color): string {
+  // 일정의 역 점과 같은 모양 (docs/29 §7.6): 흰 바탕 + 노선 색 고리 + 진한 노선 색 번호, 바깥 흰 테두리로 지도 위에서도 또렷하게
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30"><circle cx="15" cy="15" r="14" fill="white"/><circle cx="15" cy="15" r="10.5" fill="white" stroke="${color}" stroke-width="4"/><text x="15" y="19.5" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="700" fill="${ink}">${label}</text></svg>`;
   return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
 }

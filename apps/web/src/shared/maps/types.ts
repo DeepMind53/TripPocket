@@ -14,6 +14,8 @@ export interface MapMarker {
   /** 핀 안 글자 (일정 번호) */
   label: string;
   color: string;
+  /** 번호 글자색 (흰 바탕 위 4.5:1). 없으면 color */
+  ink?: string;
   title: string;
 }
 

@@ -41,7 +41,7 @@ export async function mountOsm(el: HTMLElement, opts: MapOptions): Promise<MapHa
       markers.forEach((m) => m.remove());
       markers = list.map((m) => {
         const img = document.createElement('img');
-        img.src = pinSvg(m.label, m.color);
+        img.src = pinSvg(m.label, m.color, m.ink);
         img.width = 30;
         img.height = 30;
         img.alt = m.title;

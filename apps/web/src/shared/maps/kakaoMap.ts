@@ -61,7 +61,7 @@ export async function mountKakao(
           map,
           position: ll(m.position),
           title: m.title,
-          image: new k.MarkerImage(pinSvg(m.label, m.color), new k.Size(30, 30), {
+          image: new k.MarkerImage(pinSvg(m.label, m.color, m.ink), new k.Size(30, 30), {
             offset: new k.Point(15, 15),
           }),
           clickable: true,

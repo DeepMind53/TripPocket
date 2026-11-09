@@ -103,6 +103,8 @@ import {
   toast,
   Skeleton,
   ScrollRow,
+  routeColor,
+  routeStyle,
 } from '../../shared/ui';
 import { DirectionsSheet } from '../common/DirectionsSheet';
 import { openDirectionsDirect } from '../common/openDirections';
@@ -337,6 +339,7 @@ function PlanView({
             item,
             n: n + 1,
             color: dayColor(s.index),
+            dayIndex: s.index,
             day: t('plan.dayHeader', { n: s.index + 1, date: formatMonthDay(s.date!) }),
           }))
       : [],
@@ -551,14 +554,24 @@ function PlanView({
               key={d}
               data-chip={d}
               aria-current={inView === d ? 'location' : undefined}
-              className={inView === d ? 'border-primary text-primary' : undefined}
+              // 노선 색 알약 (docs/29 §4.3): 고르면 진한 노선 색 채움, 아니면 노선 색 테두리. 버튼 구조·이름은 그대로
+              style={routeStyle(i)}
+              className={
+                filter === i + 1
+                  ? 'border-transparent! bg-[var(--route-ink)]! text-on-primary!'
+                  : inView === d
+                    ? 'border-primary text-primary'
+                    : 'border-[var(--route)]! text-[var(--route-ink)]!'
+              }
               selected={filter === i + 1}
               onClick={() => setFilter(i + 1)}
               leading={
                 <span
                   aria-hidden="true"
                   className="size-2 rounded-full"
-                  style={{ background: dayColor(i) }}
+                  style={{
+                    background: filter === i + 1 ? 'var(--tp-on-primary)' : dayColor(i),
+                  }}
                 />
               }
             >
@@ -1053,7 +1066,8 @@ function DaySection({
   const lastCoords = [...tracked].reverse().find((i) => i.place?.coords)?.place?.coords;
   const visited = tracked.filter((i) => i.visit === 'visited' || i.done).length;
   const skipped = tracked.filter((i) => i.visit === 'skipped').length;
-  const color = date ? dayColor(index) : 'var(--tp-fg-muted)';
+  // 일차 알약은 진한 노선 색 + on-primary 글자 (8색 모두 4.5:1, docs/29 §3.1)
+  const dayInk = routeColor(index).ink;
   const title = date
     ? t('plan.dayHeader', { n: index + 1, date: formatMonthDay(date) })
     : t('plan.wishlist');
@@ -1078,8 +1092,8 @@ function DaySection({
                 className="flex min-h-9 items-center gap-2"
               >
                 <span
-                  className="rounded-full px-2.5 py-0.5 text-caption font-semibold whitespace-nowrap text-white"
-                  style={{ background: color }}
+                  className="rounded-full px-2.5 py-0.5 text-caption font-semibold whitespace-nowrap text-on-primary"
+                  style={{ background: dayInk }}
                 >
                   {t('plan.dayN', { n: index + 1 })}
                 </span>
@@ -1091,8 +1105,8 @@ function DaySection({
             ) : date ? (
               <>
                 <span
-                  className="rounded-full px-2.5 py-0.5 text-caption font-semibold whitespace-nowrap text-white"
-                  style={{ background: color }}
+                  className="rounded-full px-2.5 py-0.5 text-caption font-semibold whitespace-nowrap text-on-primary"
+                  style={{ background: dayInk }}
                 >
                   {t('plan.dayN', { n: index + 1 })}
                 </span>
@@ -1223,7 +1237,9 @@ function DaySection({
           {date ? t('plan.emptyDay') : t('plan.wishEmpty')}
         </p>
       )}
+      {/* 노선 (docs/29 §4.1): 줄마다 왼쪽에 일차 색 선을 이어 그린다 — 색은 --route·--route-ink */}
       <ol
+        style={routeStyle(date ? index : null)}
         className={cn(
           'flex flex-col py-2',
           compact ? 'gap-0.5 [&_[data-item-row]]:py-1.5' : 'gap-1.5',
@@ -1232,10 +1248,15 @@ function DaySection({
         {items.map((item, i) => (
           <Fragment key={item.id}>
             {sun && sunSlot(items, sun.rise) === i && (
-              <SunLine kind="rise" label={t('plan.sunrise')} time={sun.rise} />
+              <SunLine
+                kind="rise"
+                label={t('plan.sunrise')}
+                time={sun.rise}
+                line={!!date && i > 0}
+              />
             )}
             {sun && sunSlot(items, sun.set) === i && (
-              <SunLine kind="set" label={t('plan.sunset')} time={sun.set} />
+              <SunLine kind="set" label={t('plan.sunset')} time={sun.set} line={!!date && i > 0} />
             )}
             <ItemRow
               item={item}
@@ -1245,7 +1266,9 @@ function DaySection({
                   : weatherCautionsAt(forecast, item.startTime, item.endTime)
               }
               n={i + 1}
-              color={color}
+              dayIndex={date ? index : null}
+              last={i === items.length - 1}
+              past={!!past?.has(item.id) || !!item.done}
               now={item.id === nowId}
               booking={item.bookingId ? bookingById.get(item.bookingId) : undefined}
               onOpen={() => onOpen(item)}
@@ -1259,7 +1282,9 @@ function DaySection({
                   : undefined;
               })()}
             />
-            {legs && <LegLine from={item} to={items[i + 1]} />}
+            {legs && (
+              <LegLine from={item} to={items[i + 1]} past={!!past?.has(item.id)} line={!!date} />
+            )}
           </Fragment>
         ))}
         {sun && items.length > 0 && sunSlot(items, sun.rise) === items.length && (
@@ -1402,7 +1427,19 @@ function BookingLine({ row, onOpen }: { row: BookingRow; onOpen: () => void }) {
 /** 실험실 "빠듯한 일정 알림": 걸어서 걸리는 시간이 두 일정 시각 차이보다 길 때 */
 
 /** 실험실 "다음 장소까지 거리": 두 일정 모두 좌표가 있을 때만 직선거리·도보 어림 */
-function LegLine({ from, to }: { from: ItineraryItem; to: ItineraryItem | undefined }) {
+function LegLine({
+  from,
+  to,
+  past = false,
+  line = false,
+}: {
+  from: ItineraryItem;
+  to: ItineraryItem | undefined;
+  /** 지난 구간이면 노선을 흐리게 */
+  past?: boolean;
+  /** 날짜 있는 날이면 노선을 이어 그린다 (가고 싶은 곳은 노선 없음) */
+  line?: boolean;
+}) {
   const { t } = useTranslation();
   const a = from.place?.coords;
   const b = to?.place?.coords;
@@ -1410,18 +1447,43 @@ function LegLine({ from, to }: { from: ItineraryItem; to: ItineraryItem | undefi
   const km = distanceKm(a, b);
   // 비행기로 건너갈 거리(다른 나라 등)는 걷는 시간을 적지 않는다 (2026-10-27)
   if (km > FAR_LEG_KM) return null;
+  // 환승 알약 모양 (docs/29 §4.2) — 문구는 그대로 (사용자 결정 2026-11-10)
   return (
-    <li className="flex items-center gap-1.5 py-1 pl-9 text-micro text-fg-muted">
-      <Footprints aria-hidden="true" className="size-3" />
-      {t('labs.leg', { distance: formatDistance(km), min: walkMinutes(km) })}
+    <li className="relative flex items-center py-0.5 pl-12">
+      {line && <RouteSeg past={past} full />}
+      <span className="inline-flex min-w-0 items-center gap-1 rounded-full bg-bg-subtle px-2.5 py-0.5 text-caption text-fg-sub">
+        <Footprints aria-hidden="true" className="size-3.5 shrink-0" />
+        <span className="tabular truncate">
+          {t('labs.leg', { distance: formatDistance(km), min: walkMinutes(km) })}
+        </span>
+      </span>
     </li>
+  );
+}
+
+/**
+ * 노선 선 한 토막 (docs/29 §4.1): 줄 왼쪽 점 가운데(22px)에 일차 색 선.
+ * full = 줄 전체(역 사이 줄), 아니면 점 가운데부터 아래로(역 줄). 다음 줄과 겹치게 조금 더 내려 끊기지 않게
+ */
+function RouteSeg({ past = false, full = false }: { past?: boolean; full?: boolean }) {
+  return (
+    <span
+      aria-hidden="true"
+      className={cn(
+        'pointer-events-none absolute left-[22px] w-[var(--tp-route-width)] rounded-full bg-[var(--route)]',
+        full ? '-top-2 -bottom-2' : 'top-6 -bottom-3',
+      )}
+      style={past ? { opacity: 'var(--tp-past-opacity)' } : undefined}
+    />
   );
 }
 
 function ItemRow({
   item,
   n,
-  color,
+  dayIndex,
+  last = false,
+  past = false,
   now,
   booking,
   onOpen,
@@ -1435,8 +1497,13 @@ function ItemRow({
   /** 날씨 주의 (설정 "일정"): 시간 아래 작은 선 그림 — 여러 개면 모두 (사용자 요청 2026-10-28) */
   cautions?: readonly WeatherCaution[] | undefined;
 
-  color: string;
-  /** 여행 당일 지금 진행 중: 진한 테두리·굵은 글자·바탕 깜빡임 (사용자 요청 2026-10-26) */
+  /** 일차 번호(0부터) — 노선 색. null이면 회색·노선 없음 (가고 싶은 곳) */
+  dayIndex: number | null;
+  /** 그날 마지막 일정이면 아래로 노선을 긋지 않는다 */
+  last?: boolean;
+  /** 지난 일정 — 아래 노선 토막과 점을 흐리게 */
+  past?: boolean;
+  /** 여행 당일 지금 진행 중: 노선 점 채움·고리 + 진한 테두리 (깜빡임 없음 — 사용자 결정 2026-11-10, 전에는 2026-10-26 깜빡임) */
   now: boolean;
   /** 아직 방문 기록이 없는 지난 일정: 오른쪽에 [방문][미방문] — 누르면 둘 다 사라진다 (2026-10-27) */
   onVisit?: ((visit: Visit | null) => void) | undefined;
@@ -1462,7 +1529,8 @@ function ItemRow({
   const [showHistory, setShowHistory] = useState(false);
   const visitedLook = item.visit === 'visited';
   const wrap = (row: ReactNode) => (
-    <li className="flex flex-col gap-1">
+    <li className="relative flex flex-col gap-1">
+      {dayIndex !== null && !last && <RouteSeg past={past} />}
       {onConfirmFlight && (
         <div
           role="alert"
@@ -1509,17 +1577,31 @@ function ItemRow({
       )}
     </li>
   );
+  // 노선 역 점 (docs/29 §4.1): 흰 바탕 + 노선 색 테두리 + 진한 노선 색 번호, 진행 중이면 채움 + 바깥 고리.
+  // 메모는 둥근 네모 (정류장 아님), 지난 일정은 흐리게
   const badge = (
     <span
       aria-hidden="true"
-      className="tabular grid size-6 shrink-0 place-items-center rounded-full text-micro font-semibold text-white"
-      style={{ background: color }}
+      className={cn(
+        'relative z-[1] grid size-6 shrink-0 place-items-center border-[3px] font-mono text-micro leading-none',
+        item.kind === 'note' ? 'rounded-md border-2' : 'rounded-full',
+        now
+          ? 'border-[var(--route-ink)] bg-[var(--route-ink)] text-on-primary shadow-[0_0_0_4px_color-mix(in_srgb,var(--route)_22%,transparent)]'
+          : 'border-[var(--route)] bg-surface text-[var(--route-ink)]',
+        past && !now && 'opacity-60',
+      )}
     >
-      {item.done ? <Check className="size-3.5" /> : n}
+      {item.done ? <Check className="size-3" strokeWidth={3} /> : n}
     </span>
   );
-  // 종류마다 아주 연한 파스텔 바탕 (styles/index.css .kind-tint)
-  const kindStyle = { '--kind': `var(--tp-kind-${item.kind})` } as CSSProperties;
+  // 종류 색은 줄 바탕 대신 종류 아이콘 칸에 (사용자 결정 2026-11-10, 전에는 줄 전체 파스텔 2026-10-26)
+  const kindStyle = {
+    '--kind': `var(--tp-kind-${item.kind})`,
+    ...routeStyle(dayIndex),
+  } as CSSProperties;
+  // 진행 중: 깜빡임 없이 노선 색 옅은 바탕 + 진한 테두리
+  const nowLook =
+    'bg-[color-mix(in_srgb,var(--route)_8%,var(--tp-surface))] shadow-[inset_0_0_0_2px_var(--route-ink)]';
   // 항공편 출발 일정은 예약 탭과 같은 탑승권 모양 그대로 (도착 공항 일정은 아래 보통 줄)
   // 기차·버스도 예약 탭과 같은 표 모양 (사용자 요청 2026-11-03 — "비행기표처럼")
   if ((booking?.kind === 'flight' || booking?.kind === 'train') && item.transport)
@@ -1533,9 +1615,9 @@ function ItemRow({
         aria-current={now ? 'time' : undefined}
         style={kindStyle}
         className={cn(
-          'kind-tint flex w-full items-start gap-3 rounded-btn border border-dashed border-fg-muted/60 px-2 py-3 text-left active:bg-bg-subtle',
+          'flex w-full items-start gap-3 rounded-btn border border-dashed border-fg-muted/60 px-3 py-3 text-left active:bg-bg-subtle',
           item.done && !marked && !visitedLook && 'opacity-50',
-          now && 'kind-now border-transparent font-semibold',
+          now && `${nowLook} border-transparent font-semibold`,
           marked && 'visit-mark',
           onConfirmFlight && 'flight-alert border-transparent',
         )}
@@ -1571,9 +1653,9 @@ function ItemRow({
       aria-current={now ? 'time' : undefined}
       style={kindStyle}
       className={cn(
-        'kind-tint flex w-full items-start gap-3 rounded-btn px-3 py-3 text-left active:bg-bg-subtle',
+        'flex w-full items-start gap-3 rounded-btn px-3 py-3 text-left active:bg-bg-subtle',
         booking && 'border border-dashed border-fg-muted/60',
-        now && 'kind-now border-transparent',
+        now && `${nowLook} border-transparent`,
         marked && 'visit-mark',
       )}
     >
@@ -1634,8 +1716,14 @@ function ItemRow({
           </span>
         )}
         {/* 종류 + 경로/주소 한 줄 (예전 오른쪽 종류 칩) */}
-        <span className="flex min-w-0 items-center gap-1 text-caption text-fg-muted">
-          <Icon aria-hidden="true" className="size-3.5 shrink-0" />
+        <span className="flex min-w-0 items-center gap-1.5 text-caption text-fg-muted">
+          {/* 종류 아이콘 칸: 종류 색 옅은 바탕 + 종류 색 아이콘 */}
+          <span
+            aria-hidden="true"
+            className="grid size-5 shrink-0 place-items-center rounded-md bg-[color-mix(in_srgb,var(--kind)_16%,var(--tp-surface))] text-[var(--kind)]"
+          >
+            <Icon className="size-3.5" />
+          </span>
           <span className="shrink-0">{t(`kind.${item.kind}`)}</span>
           {item.transport && (item.transport.from || item.transport.to) ? (
             <span className="tabular truncate">
@@ -1676,7 +1764,7 @@ function MapPager({
   onChange,
   onOpen,
 }: {
-  list: { item: ItineraryItem; n: number; color: string; day: string }[];
+  list: { item: ItineraryItem; n: number; color: string; dayIndex: number; day: string }[];
   current: number;
   onChange: (index: number) => void;
   onOpen: (item: ItineraryItem) => void;
@@ -1722,7 +1810,8 @@ function MapPager({
         <ItemRow
           item={entry.item}
           n={entry.n}
-          color={entry.color}
+          dayIndex={entry.dayIndex}
+          last
           now={false}
           onOpen={() => onOpen(entry.item)}
         />
@@ -1776,7 +1865,7 @@ function EmptyDayRow({
   weather?: TripDayWeather | undefined;
 }) {
   const { t } = useTranslation();
-  const color = dayColor(index);
+  const dayInk = routeColor(index).ink;
   const title = t('plan.dayHeader', { n: index + 1, date: formatMonthDay(date) });
   return (
     <section
@@ -1786,8 +1875,8 @@ function EmptyDayRow({
     >
       <h2 aria-label={title} className="tabular flex flex-1 items-center gap-2">
         <span
-          className="rounded-full px-2.5 py-0.5 text-caption font-semibold whitespace-nowrap text-white"
-          style={{ background: color }}
+          className="rounded-full px-2.5 py-0.5 text-caption font-semibold whitespace-nowrap text-on-primary"
+          style={{ background: dayInk }}
         >
           {t('plan.dayN', { n: index + 1 })}
         </span>
@@ -1838,7 +1927,18 @@ function EmptyRun({ from, to, onOpen }: { from: Section; to: Section; onOpen: ()
 }
 
 /** "------ 일몰 17:40 ------" — 좌우 '-'는 화면 폭만큼 채우고 넘치면 잘린다. 일정이 아니라 옮기거나 지울 수 없음 */
-function SunLine({ kind, label, time }: { kind: 'rise' | 'set'; label: string; time: string }) {
+function SunLine({
+  kind,
+  label,
+  time,
+  line = false,
+}: {
+  kind: 'rise' | 'set';
+  label: string;
+  time: string;
+  /** 역 사이에 끼면 노선을 이어 그린다 */
+  line?: boolean;
+}) {
   const dashes = '-'.repeat(120);
   // 글자 양옆에 일출 = 해, 일몰 = 달 (사용자 요청 2026-10-27)
   const icon =
@@ -1850,8 +1950,10 @@ function SunLine({ kind, label, time }: { kind: 'rise' | 'set'; label: string; t
   return (
     <li
       aria-label={`${label} ${time}`}
-      className="tabular flex items-center gap-1.5 px-1 text-micro text-fg-muted select-none"
+      // 노선 오른쪽부터 (선 위로 '-'가 지나가지 않게, docs/29 §7.5)
+      className="tabular relative flex items-center gap-1.5 pr-1 pl-12 text-micro text-fg-muted select-none"
     >
+      {line && <RouteSeg full />}
       <span
         aria-hidden="true"
         className="flex min-w-0 flex-1 justify-end overflow-hidden whitespace-nowrap"
