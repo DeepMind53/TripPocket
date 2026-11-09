@@ -1,10 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <!-- 트립포켓 아이콘 (unslop 2026-11-09): 주머니에 꽂힌 지도 핀. 파랑 = --tp-primary -->
+  <!-- 트립포켓 아이콘: 점선 비행 경로 + 비행기, 주머니에 꽂힌 지도 핀 (2026-11-09). 파랑 = --tp-primary -->
   <rect width="512" height="512" rx="112" fill="#2160f0"/>
-  <g transform="translate(20.48 14.48) scale(0.92)">
-    <path d="M256 104a86 86 0 0 0-86 86c0 64 86 170 86 170s86-106 86-170a86 86 0 0 0-86-86z" fill="#ffffff"/>
-    <circle cx="256" cy="190" r="32" fill="#2160f0"/>
-    <path d="M128 292H384V342C384 388 348 420 300 420H212C164 420 128 388 128 342Z" fill="#ffffff" stroke="#2160f0" stroke-width="16" stroke-linejoin="round" paint-order="stroke"/>
-    <path d="M160 322H352" stroke="#2160f0" stroke-opacity=".35" stroke-width="8" stroke-linecap="round" stroke-dasharray="1 22"/>
+  <g transform="translate(22 26) scale(0.88)">
+    <path d="M84 318 C 104 150, 300 54, 418 120" fill="none" stroke="#ffffff" stroke-opacity=".75"
+      stroke-width="16" stroke-linecap="round" stroke-dasharray="2 34"/>
+    <path d="M36 0C36-4 30-6 24-6H12L-6-34H-16L-4-6H-20L-28-18H-36L-30 0L-36 18H-28L-20 6H-4L-16 34H-6L12 6H24C30 6 36 4 36 0Z" transform="translate(432 130) rotate(32) scale(1.25)" fill="#ffffff"/>
+    <path d="M256 128a80 80 0 0 0-80 80c0 60 80 158 80 158s80-98 80-158a80 80 0 0 0-80-80z" fill="#ffffff" stroke="#2160f0" stroke-width="14" paint-order="stroke"/>
+    <circle cx="256" cy="208" r="30" fill="#2160f0"/>
+    <path d="M136 300H376V346C376 390 342 420 296 420H216C170 420 136 390 136 346Z" fill="#ffffff" stroke="#2160f0" stroke-width="16" stroke-linejoin="round" paint-order="stroke"/>
+    <path d="M166 330H346" stroke="#2160f0" stroke-opacity=".35" stroke-width="8" stroke-linecap="round" stroke-dasharray="1 22"/>
   </g>
 </svg>
