@@ -76,6 +76,8 @@
   4. 자동 찾기가 안 되면 아고다 링크 붙여넣기를 안내한다 (이름만으로 여는 아고다 검색 주소는 첫 화면으로 돌아감, §12.1)
 - **경로 링크 주소 (§12.1 확인):** `https://www.agoda.com/partners/partnersearch.aspx?hid=<숙소 id>&cid=<경로>&checkin=YYYY-MM-DD&checkout=YYYY-MM-DD&NumberofAdults=<인원>&Rooms=<객실>`.
   붙여 넣은 아고다 숙소 링크는 그 주소의 `cid`만 바꾼다 (아고다스캐너와 같음)
+- **앱으로 열림:** 아고다 앱이 깔린 휴대폰에서는 링크가 앱으로 열린다 (경로는 적용됨, §12.1). 막지 않고,
+  웹으로 보고 싶을 때를 위해 줄마다 [링크 복사]를 둔다
 - **날짜·인원:** 주소의 `checkIn`·`los`(박 수)·`adults`·`rooms`를 입력값으로 맞춘다
 - **점검할 것:** 아고다가 처음 들어온 경로를 쿠키로 기억해 두 번째 링크부터 경로가 안 바뀌는지.
   그렇다면 "링크마다 새 시크릿 창" 같은 안내를 붙인다
@@ -324,11 +326,11 @@
 | E 자동 찾기 | `GET www.agoda.com/api/cronos/search/GetUnifiedSuggestResult/3/1/1/0/ko-kr/?searchText=<이름>&origin=KR&cid=-1&pageTypeId=1` → 200 JSON. 한국어 "신주쿠 그레이스리"로 `IsHotel=true, ObjectId=706347 (Hotel Gracery Shinjuku), CityId=5085` | **통과** — 후보 여러 개 (`IsHotel=true`만 고름) |
 | E 경로 링크 | `www.agoda.com/partners/partnersearch.aspx?hid=<숙소 id>&cid=<경로>&checkin=&checkout=&NumberofAdults=&Rooms=` → 302 → `/search?cid=<경로>&…&los=3&selectedproperty=<id>` (구글 지도·신한카드·대한항공 경로 3개 확인) | **통과** — 경로 값·날짜·인원 유지 |
 | E 이름만으로 검색 | `/ko-kr/search?textToSearch=…` → 아고다 첫 화면으로 돌아감 | 실패 → 아고다는 **자동 찾기 또는 링크 붙여넣기**로만 |
-| E 경로 기억(쿠키) | 실제 브라우저가 필요 (브라우저 확장 연결 안 됨) | **사용자 휴대폰 확인 필요** |
+| E 경로 기억(쿠키) | 사용자 휴대폰 확인 (2026-11-09): 경로마다 값이 바뀜. 단 아고다 앱이 깔려 있으면 **웹이 아니라 앱으로 열림** | **통과** — 앱으로 열려도 경로가 적용됨. 웹으로 보고 싶을 때를 위해 줄마다 [링크 복사] (브라우저에 붙여 넣기) |
 | A 트립닷컴 | `kr.trip.com/hotels/list?keyword=&checkin=YYYY/MM/DD&checkout=&adult=&crn=` → 200, 이름이 화면에 들어감 | 통과 (날짜는 휴대폰 확인) |
 | A 여기어때 | `www.yeogi.com/domestic-accommodations?keyword=&checkIn=&checkOut=&personal=` → 200, 이름이 화면에 들어감 | 통과 (날짜는 휴대폰 확인) |
 | A 부킹닷컴 | `www.booking.com/searchresults.ko.html?ss=&checkin=&checkout=&group_adults=&no_rooms=` → 202 (로봇 확인 화면) | 서버 요청은 막힘. **링크는 브라우저에서 열리므로 사용** (휴대폰 확인) |
-| A 구글 호텔 | `www.google.com/travel/search?q=&hl=ko&gl=kr` → 브라우저가 아니라서 안내 화면 | 링크로 사용, 날짜는 앱에서 고르기 (휴대폰 확인) |
+| A 구글 호텔 | `www.google.com/travel/search?q=&hl=ko&gl=kr`. 사용자 휴대폰 확인: **날짜가 안 들어감**. 날짜 칸(`ts`)은 공개되지 않은 암호화 형식이라 쓰지 않음 | 이름만 넣고 "날짜는 구글에서 골라요" 표시. B 단계에서 SerpApi가 날짜 넣은 링크를 주면 그것으로 바꿈 |
 | A NOL | 검색 화면 `nol.yanolja.com/search?tab=place` (앱: `yanoljamotel://search?tab=place`). 검색어 칸 주소는 찾지 못함 | 검색 화면 열기만, 이름은 직접 입력 ("이름을 붙여 넣어 주세요" + 이름 복사) |
 
 ### 12.2 아고다 경로 목록 (안 — 사용자 확인 필요)
