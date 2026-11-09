@@ -306,10 +306,11 @@ describe('숙소 최저가 (실험실, docs/28)', () => {
       // 자동 재시도 없음 — 찾기 1번 + 기록 1번
       expect(count('/api/lodging/lookup')).toBe(1);
       expect(count('/api/lodging/reports')).toBe(1);
-      for (let i = 0; i < 6; i++) {
-        await user.click(screen.getByRole('button', { name: '검색' }));
-        await screen.findByText(/기록을 불러오지 못했어요/);
-      }
+      // 검색 중에는 버튼 이름이 "찾는 중…" — 다시 [검색]이 될 때까지 기다렸다 누른다 (느린 CI)
+      for (let i = 0; i < 6; i++)
+        await user.click(await screen.findByRole('button', { name: '검색' }));
+      await screen.findByRole('button', { name: '검색' });
+      await screen.findByText(/기록을 불러오지 못했어요/);
       // 종류마다 1분에 5번까지만 서버로
       expect(count('/api/lodging/lookup')).toBe(5);
       expect(count('/api/lodging/reports')).toBe(5);
