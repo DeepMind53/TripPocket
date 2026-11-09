@@ -8,18 +8,18 @@ export interface NextStopCardProps {
   /** 다음 장소 이름 */
   title: ReactNode;
   /** 큰 남은 시간 ("38분") — 없으면 줄을 숨긴다 */
-  countdown?: string | null;
+  countdown?: string | null | undefined;
   /** 남은 시간 옆 ("뒤 14:00") */
-  countdownSuffix?: ReactNode;
+  countdownSuffix?: ReactNode | undefined;
   /** 지난 역 → 다음 역 진행 (0~1). null이면 막대 없음 */
-  progress?: number | null;
+  progress?: number | null | undefined;
   /** 진행 막대 스크린리더 이름 */
-  progressLabel?: string;
+  progressLabel?: string | undefined;
   /** 막대 아래 양 끝 (지난 역 이름, 다음 역 이름) */
-  from?: ReactNode;
-  to?: ReactNode;
+  from?: ReactNode | undefined;
+  to?: ReactNode | undefined;
   /** 아래 버튼 줄 ([길찾기] [일정 보기]) */
-  actions?: ReactNode;
+  actions?: ReactNode | undefined;
   /** 여행 모드처럼 더 크게 */
   size?: 'md' | 'lg';
 }

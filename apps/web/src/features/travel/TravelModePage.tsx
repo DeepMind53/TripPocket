@@ -45,7 +45,7 @@ import { useRouteSheet } from '../../shared/hooks/useRouteSheet';
 import { cn } from '../../shared/lib/cn';
 import { formatMonthDay } from '../../shared/lib/dateFormat';
 import type { Destination } from '../../shared/lib/directions';
-import { Button, IconButton, Skeleton, toast } from '../../shared/ui';
+import { Button, IconButton, NextStopCard, Skeleton, toast } from '../../shared/ui';
 import { InlineIcon } from '../../shared/ui/InlineIcon';
 import { DayWeatherBadge } from '../common/DayWeatherBadge';
 import { DirectionsSheet } from '../common/DirectionsSheet';
@@ -362,40 +362,38 @@ function TravelView({ trip, items: all }: { trip: Trip; items: ItineraryItem[] }
       )}
 
       {/* 다음 일정: 나갈 시각이 가장 크게 (Q2) */}
+      {/* 다음 역 카드 (docs/29 §7.12, 사용자 결정 Q3 파랑 채움) — 정보·문구는 그대로, 나갈 시각이 가장 크게 */}
       {next && leave && (
-        <section
-          aria-label={t('travel.next')}
-          className="flex flex-col gap-1.5 rounded-card border border-primary/40 bg-primary-weak/40 p-4"
-        >
-          <span className="text-caption font-semibold text-primary">
-            {t(phase === 'morning' ? 'travel.first' : 'travel.next')}
-          </span>
-          <span className="text-body-1 font-semibold">
-            {next.title} · {next.startTime}
-          </span>
-          <span className="tabular text-title-1 font-semibold">
-            {t(leave.inMin < 0 ? 'travel.leaveNow' : 'travel.leaveAt', { time: leave.at })}
-          </span>
-          <span className="tabular text-caption text-fg-sub">
-            {[
+        <NextStopCard
+          size="lg"
+          label={t('travel.next')}
+          kicker={t(phase === 'morning' ? 'travel.first' : 'travel.next')}
+          title={`${next.title} · ${next.startTime}`}
+          countdown={t(leave.inMin < 0 ? 'travel.leaveNow' : 'travel.leaveAt', {
+            time: leave.at,
+          })}
+          countdownSuffix={
+            [
               leave.inMin >= 0 && t('travel.leaveIn', { min: leave.inMin }),
               travelMin !== undefined &&
                 t(eta?.transit ? 'travel.byTransit' : 'travel.byWalk', { min: travelMin }),
             ]
               .filter(Boolean)
-              .join(' · ')}
-          </span>
-          {(next.place?.coords || next.place?.address || next.place?.name) && (
-            <Button
-              size="lg"
-              fullWidth
-              leading={<Navigation aria-hidden="true" className="size-5" />}
-              onClick={() => go(next)}
-            >
-              {t('travel.directions')}
-            </Button>
-          )}
-        </section>
+              .join(' · ') || undefined
+          }
+          actions={
+            (next.place?.coords || next.place?.address || next.place?.name) && (
+              <button
+                type="button"
+                onClick={() => go(next)}
+                className="flex h-13 flex-1 items-center justify-center gap-2 rounded-btn bg-on-primary text-body-1 font-semibold text-primary"
+              >
+                <Navigation aria-hidden="true" className="size-5" />
+                {t('travel.directions')}
+              </button>
+            )
+          }
+        />
       )}
 
       {/* 저녁 정리 + 내일 미리보기 (A5·A6, Q1) */}

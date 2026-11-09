@@ -15,7 +15,17 @@ import {
   type ItineraryItem,
   type Trip,
 } from '@trippocket/shared';
-import { BedDouble, CircleHelp, Copy, Navigation, Plus, Luggage } from 'lucide-react';
+import {
+  BedDouble,
+  ChevronDown,
+  CircleHelp,
+  Copy,
+  Navigation,
+  Plane,
+  Plus,
+  Luggage,
+  TrainFront,
+} from 'lucide-react';
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { useTranslation } from '../../i18n';
 import { Link, useNavigate } from 'react-router';
@@ -26,7 +36,17 @@ import { copyText } from '../../shared/lib/clipboard';
 import { cn } from '../../shared/lib/cn';
 import { formatPeriod, formatTripBadge, formatTripLength } from '../../shared/lib/dateFormat';
 import type { Destination } from '../../shared/lib/directions';
-import { Button, EmptyState, toast } from '../../shared/ui';
+import {
+  Button,
+  EmptyState,
+  NextStopCard,
+  RouteBar,
+  RouteLine,
+  RouteStop,
+  TicketCard,
+  toast,
+} from '../../shared/ui';
+import { formatMonthDay } from '../../shared/lib/dateFormat';
 import { Wordmark } from './Wordmark';
 import { TravelModeButton } from '../travel/TravelModeButton';
 import { TripList } from '../trips/TripsPage';
@@ -45,6 +65,16 @@ import { isDomesticTrip } from '../../domain/tripPlace';
 const DirectionsSheet = lazy(async () => ({
   default: (await import('../common/DirectionsSheet')).DirectionsSheet,
 }));
+
+const toMin = (hhmm: string) => Number(hhmm.slice(0, 2)) * 60 + Number(hhmm.slice(3, 5));
+
+/** 지난 일정 시각 → 다음 일정 시각 사이에서 지금이 어디쯤인지 (0~1, 다음 일정 카드 진행 막대) */
+function progressBetween(prev: ItineraryItem, next: ItineraryItem, now: string): number | null {
+  if (!prev.startTime || !next.startTime) return null;
+  const span = toMin(next.startTime) - toMin(prev.startTime);
+  if (span <= 0) return null;
+  return (toMin(now) - toMin(prev.startTime)) / span;
+}
 
 /** 1분마다 다시 그려 "35분 후"를 갱신한다 */
 function useMinuteTick() {
@@ -126,8 +156,12 @@ export function HomePage() {
             null,
           )}
         />
-        {/* 여행 카드는 여행 중에도 같은 모양으로 맨 위에 (사용자 요청 2026-11-06) */}
-        {featured && <UpcomingTrip trip={featured} />}
+        {/* 디자인 개편 3단계 (docs/29 §7.1, 사용자 결정 Q1·Q2 2026-11-09): 여행 중에는 여행 카드를 한 줄 띠로 줄이고
+            바로 아래 다음 일정 카드·오늘 노선·오늘 숙소. 출발 전에는 여행 카드 + 다음 이동 탑승권 (2026-11-10) */}
+        {featured &&
+          (ongoing ? <OngoingStrip trip={featured} /> : <UpcomingTrip trip={featured} />)}
+        {featured && !ongoing && <NextTransport trip={featured} />}
+        {ongoing && <OngoingTrip trip={ongoing} />}
         {/* 출발 30일 전부터 준비 현황 (docs/16 B1) — 여행 중에는 접힌 채로 — 필요할 때 불러온다 */}
         {featured &&
           (ongoing || daysUntil(featured.startDate, todayIn(featured.timezone)) <= 30) && (
@@ -150,11 +184,11 @@ export function HomePage() {
               {t('home.newTrip')}
             </Button>
           </div>
-          {/* 여행 중인 여행은 목록 맨 위 '여행 중'에 — 카드 대신 오늘 일정 묶음으로 (사용자 요청 2026-11-06).
-              다가오는 여행만 위 카드와 겹치지 않게 뺀다 */}
+          {/* 맨 위에 보인 여행은 뺀다 (여행 중이면 그 오늘 일정 묶음도 위로 옮겼다, docs/29 §7.1).
+              같은 날 여행 중인 다른 여행은 지금처럼 목록 '여행 중'에 오늘 일정 묶음으로 (사용자 요청 2026-11-06) */}
           <TripList
             only="active"
-            exclude={ongoing ? undefined : featured?.id}
+            exclude={featured.id}
             renderOngoing={(tr) => <OngoingTrip trip={tr} />}
           />
         </section>
@@ -207,8 +241,100 @@ function UpcomingTrip({ trip }: { trip: Trip }) {
   );
 }
 
+/**
+ * 여행 중 대표 여행 한 줄 띠 (docs/29 §7.1, 사용자 결정 Q2): 이모지 · 제목 · N일차 + 노선 막대(Q7).
+ * 여행 중 민트(2026-11-06 요청)는 이모지 칸과 배지에 남기고, 카드는 조용하게 — 아래 파란 다음 일정이 주인공
+ */
+function OngoingStrip({ trip }: { trip: Trip }) {
+  const { t } = useTranslation();
+  const items = useTripItems(trip.id) ?? [];
+  const bookings = useTripBookings(trip.id) ?? [];
+  const packing = useChecklist(trip.id, 'packing') ?? [];
+  const packed = packing.filter((p) => p.checked).length;
+  const today = todayIn(trip.timezone);
+  const total = dayNumberOf(trip.startDate, trip.endDate, trip.endDate) ?? 1;
+  const day = dayNumberOf(trip.startDate, trip.endDate, today) ?? 1;
+  const badge = formatTripBadge(trip.startDate, trip.endDate, today);
+  return (
+    <Link
+      to={`/trips/${trip.id}/plan`}
+      className="flex flex-col gap-2 rounded-card border border-line bg-surface px-4 py-3 shadow-card active:bg-bg-subtle"
+    >
+      <span className="flex items-center gap-3">
+        <span
+          aria-hidden="true"
+          className="grid size-10 shrink-0 place-items-center rounded-btn bg-mint text-[22px] leading-none"
+        >
+          {trip.cover.emoji ?? '🧳'}
+        </span>
+        <span className="flex min-w-0 flex-1 flex-col">
+          <span className="truncate text-body-1 font-semibold">{trip.title}</span>
+          <span className="tabular truncate text-caption text-fg-muted">
+            {t('home.itemCount', { n: items.length })} ·{' '}
+            {t('home.bookingCount', { n: bookings.length })}
+            {packing.length > 0 &&
+              ` · ${t('home.checklistProgress', { done: packed, total: packing.length })}`}
+          </span>
+        </span>
+        <span className="tabular shrink-0 rounded-full bg-mint px-2.5 py-0.5 text-caption font-semibold text-white">
+          {badge}
+        </span>
+      </span>
+      <RouteBar days={total} todayIndex={day - 1} pastBefore={day - 1} label={badge} />
+    </Link>
+  );
+}
+
+/**
+ * 출발 전 다음 이동 탑승권 (docs/29 §7.1, 사용자 결정 2026-11-10 "넣기"): 오늘 이후 첫 항공·기차 예약.
+ * 문구는 예약 탭과 같은 키, 예약번호는 눌러 복사
+ */
+function NextTransport({ trip }: { trip: Trip }) {
+  const { t } = useTranslation();
+  const { time } = useTimeText();
+  const bookings = useTripBookings(trip.id) ?? [];
+  const today = todayIn(trip.timezone);
+  const b = bookings
+    .filter((x) => (x.kind === 'flight' || x.kind === 'train') && x.start.date >= today)
+    .sort((x, y) =>
+      `${x.start.date} ${x.start.time ?? ''}`.localeCompare(
+        `${y.start.date} ${y.start.time ?? ''}`,
+      ),
+    )[0];
+  if (!b) return null;
+  const flight = b.kind === 'flight';
+  const end = (place: string | undefined, at: string | undefined, terminal?: string) => ({
+    code: place || '—',
+    sub: [time(at) ?? '--:--', terminal].filter(Boolean).join(' · '),
+  });
+  return (
+    <TicketCard
+      header={`${[b.provider, b.details?.flightNo].filter(Boolean).join(' ') || b.title} · ${formatMonthDay(b.start.date)}`}
+      from={end(b.start.place, b.start.time, b.details?.terminal)}
+      to={end(b.end?.place, b.end?.time, b.details?.arrivalTerminal)}
+      via={flight ? <Plane /> : <TrainFront />}
+      codeSize={flight ? 'code' : 'name'}
+      cells={[
+        ...(b.confirmationNo
+          ? [
+              {
+                label: t('bookings.confirmationNo'),
+                value: b.confirmationNo,
+                accent: true,
+                'aria-label': t('bookings.copyNo', { no: b.confirmationNo }),
+                onClick: () => void copyText(b.confirmationNo as string, t('bookings.copied')),
+              },
+            ]
+          : []),
+        ...(b.details?.seat ? [{ label: t('bookings.seat'), value: b.details.seat }] : []),
+        ...(b.details?.baggage ? [{ label: t('bookings.baggage'), value: b.details.baggage }] : []),
+      ]}
+    />
+  );
+}
+
 function OngoingTrip({ trip }: { trip: Trip }) {
-  const { time, wide } = useTimeText();
+  const { time } = useTimeText();
   const { t } = useTranslation();
   useMinuteTick();
   // Plan B: 오늘 일정도 지금 보이는 플랜 기준 (실험실을 끄면 기본 일정만)
@@ -224,6 +350,16 @@ function OngoingTrip({ trip }: { trip: Trip }) {
   const next = nextItem(todayItems, now);
   // 지난 일정 (방문·미방문을 고를 수 있는 것) — 일정 탭과 같은 규칙
   const past = pastItemIds(todayItems, today, now);
+  // 지난 일정 접기 (사용자 결정 2026-11-10) — 다음 일정·남은 일정이 바로 보이게
+  const [pastOpen, setPastOpen] = useState(false);
+  const pastList = todayItems.filter((i) => past.has(i.id));
+  const shown = pastOpen ? todayItems : todayItems.filter((i) => !past.has(i.id));
+  // 진행 막대의 출발점: 다음 일정 바로 앞, 시각이 있는 일정
+  const nextIdx = next ? todayItems.findIndex((i) => i.id === next.id) : -1;
+  const prevStop =
+    nextIdx > 0
+      ? ([...todayItems.slice(0, nextIdx)].reverse().find((i) => i.startTime) ?? null)
+      : null;
   async function markVisit(item: ItineraryItem, v: Visit | null) {
     const r = await applyVisit(item, v, trip);
     if (r === 'saved') toast(t('visit.savedToSaved'));
@@ -264,44 +400,44 @@ function OngoingTrip({ trip }: { trip: Trip }) {
       </Suspense>
 
       {next ? (
-        <section
-          aria-label={t('home.nextItem')}
-          className="flex flex-col gap-3 rounded-card border border-line bg-surface p-4 shadow-card"
-        >
-          {/* unslop(2026-11-09): 흰 카드 + 파란 남은 시간 — 위 민트 여행 카드와 구분은 그대로 */}
-          <p className="tabular flex items-baseline justify-between gap-2 text-caption text-fg-sub">
-            {t('home.nextItem')}
-            {countdown(next) && <span className="font-medium text-primary">{countdown(next)}</span>}
-          </p>
-          <p className="text-title-2 text-pretty">{next.title}</p>
-          {(next.startTime || next.place?.address) && (
-            <p className="tabular -mt-2 line-clamp-2 text-body-2 text-fg-sub">
-              {[next.startTime, next.place?.address].filter(Boolean).join(' · ')}
-            </p>
-          )}
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() =>
-                directions({
-                  name: next.title,
-                  address: next.place?.address,
-                  coords: next.place?.coords,
-                })
-              }
-              className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-btn bg-primary px-3 text-body-2 font-medium text-on-primary active:bg-primary-pressed"
-            >
-              <Navigation aria-hidden="true" className="size-4" />
-              {t('home.directions')}
-            </button>
-            <Link
-              to={planUrl}
-              className="flex h-11 flex-1 items-center justify-center rounded-btn bg-bg-subtle px-3 text-body-2 font-medium text-fg"
-            >
-              {t('home.viewPlan')}
-            </Link>
-          </div>
-        </section>
+        // 다음 일정 카드 (docs/29 §4.4, 사용자 결정 Q3 파랑 채움): 남은 시간 크게 + 지난 일정 → 다음 일정 진행 막대
+        <NextStopCard
+          label={t('home.nextItem')}
+          kicker={t('home.nextItem')}
+          title={next.title}
+          countdown={countdown(next)}
+          countdownSuffix={
+            [time(next.startTime), next.place?.address].filter(Boolean).join(' · ') || undefined
+          }
+          progress={prevStop && next.startTime ? progressBetween(prevStop, next, now) : null}
+          progressLabel={prevStop ? `${prevStop.title} → ${next.title}` : undefined}
+          from={prevStop?.title}
+          to={next.title}
+          actions={
+            <>
+              <button
+                type="button"
+                onClick={() =>
+                  directions({
+                    name: next.title,
+                    address: next.place?.address,
+                    coords: next.place?.coords,
+                  })
+                }
+                className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-btn bg-on-primary px-3 text-body-2 font-medium text-primary"
+              >
+                <Navigation aria-hidden="true" className="size-4" />
+                {t('home.directions')}
+              </button>
+              <Link
+                to={planUrl}
+                className="flex h-11 flex-1 items-center justify-center rounded-btn bg-on-primary/20 px-3 text-body-2 font-medium text-on-primary"
+              >
+                {t('home.viewPlan')}
+              </Link>
+            </>
+          }
+        />
       ) : (
         items && (
           <div className="flex flex-col gap-1 rounded-card bg-bg-subtle p-4 text-body-2 text-fg-sub">
@@ -326,43 +462,50 @@ function OngoingTrip({ trip }: { trip: Trip }) {
           aria-label={t('home.todayItems', { n: todayItems.length })}
           className="flex flex-col rounded-card border border-line bg-surface px-4 py-2"
         >
-          <h2 className="py-2 text-body-2 font-semibold">
-            {t('home.todayItems', { n: todayItems.length })}
-          </h2>
-          {/* 지난 일정은 오른쪽 [미방문][방문] — 일정 탭·여행 모드와 같은 기록 (사용자 요청 2026-11-06) */}
-          <ul className="flex flex-col">
-            {todayItems.map((item) => (
-              <li
-                key={item.id}
-                className="flex min-h-12 items-center gap-3 border-t border-line py-1"
+          <div className="flex min-h-11 items-center justify-between gap-2">
+            <h2 className="text-body-2 font-semibold">
+              {t('home.todayItems', { n: todayItems.length })}
+            </h2>
+            {/* 지난 일정은 접어 둔다 — 여행 모드와 같은 문구 (사용자 결정 2026-11-10) */}
+            {pastList.length > 0 && (
+              <button
+                type="button"
+                aria-expanded={pastOpen}
+                onClick={() => setPastOpen(!pastOpen)}
+                className="flex h-9 items-center gap-1 text-caption font-semibold text-fg-sub"
               >
-                <span
-                  className={cn(
-                    'tabular shrink-0 text-caption text-fg-sub',
-                    wide ? 'w-16' : 'w-11',
-                  )}
-                >
-                  {time(item.startTime) ?? '—'}
-                </span>
-                <span
-                  className={cn(
-                    'min-w-0 flex-1 truncate text-body-1',
-                    item.visit && 'text-fg-muted',
-                    item.id === next?.id && 'font-semibold',
-                  )}
-                >
-                  {item.title}
-                </span>
-                {item.kind !== 'note' && past.has(item.id) && (
-                  <VisitToggle
-                    value={item.visit}
-                    label={item.title}
-                    onChange={(v) => void markVisit(item, v)}
-                  />
-                )}
-              </li>
+                {t('travel.pastN', { n: pastList.length })}
+                <ChevronDown
+                  aria-hidden="true"
+                  className={cn('size-4 transition-transform', pastOpen && 'rotate-180')}
+                />
+              </button>
+            )}
+          </div>
+          {/* 오늘 노선 (docs/29 §7.1): 지난 일정은 흐리게 + 오른쪽 [미방문][방문] — 일정 탭·여행 모드와 같은 기록 (2026-11-06) */}
+          <RouteLine label={t('home.todayItems', { n: todayItems.length })} dayIndex={day - 1}>
+            {shown.map((item, i) => (
+              <RouteStop
+                key={item.id}
+                number={item.kind === 'note' ? undefined : todayItems.indexOf(item) + 1}
+                state={item.id === next?.id ? 'next' : past.has(item.id) ? 'past' : 'default'}
+                mark={item.visit ?? null}
+                title={item.title}
+                time={time(item.startTime) ?? undefined}
+                last={i === shown.length - 1}
+                dense
+                trailing={
+                  item.kind !== 'note' && past.has(item.id) ? (
+                    <VisitToggle
+                      value={item.visit}
+                      label={item.title}
+                      onChange={(v) => void markVisit(item, v)}
+                    />
+                  ) : undefined
+                }
+              />
             ))}
-          </ul>
+          </RouteLine>
         </section>
       )}
 
