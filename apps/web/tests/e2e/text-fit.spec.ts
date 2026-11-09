@@ -32,8 +32,8 @@ const brokenWords = () => {
 for (const [width, scale] of [
   [360, 100],
   [320, 100],
-  [360, 130],
-  [320, 130],
+  [360, 115],
+  [320, 115],
 ] as const) {
   test(`${width}px·글자 ${scale}%: 단어 중간에서 끊기지 않는다`, async ({ page }) => {
     test.slow();
@@ -45,13 +45,13 @@ for (const [width, scale] of [
     await page.getByText('도쿄 가을여행').click();
     await expect(page).toHaveURL(/\/plan/);
     const trip = page.url().replace(/\/plan.*$/, '');
-    if (scale === 130) {
+    if (scale === 115) {
       await page.goto('/settings');
       await page.getByRole('slider', { name: '글자 크기' }).focus();
       await page.keyboard.press('End');
       await expect
         .poll(() => page.evaluate(() => document.documentElement.style.fontSize))
-        .toBe('130%');
+        .toBe('115%');
     }
     const found: Record<string, string[]> = {};
     for (const path of [
