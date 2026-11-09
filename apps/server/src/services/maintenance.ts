@@ -1,5 +1,6 @@
 import type { Db } from '../db/database';
 import { attachmentsDir, purgeEndedTripFiles } from './attachments';
+import { lodgingReportsRepo } from '../repositories/lodgingReportsRepo';
 
 const DAY = 86_400_000;
 
@@ -28,6 +29,8 @@ export function runMaintenance(db: Db, now = Date.now()): Record<string, number>
     apiUsage: run('DELETE FROM api_usage WHERE date < ?', day(now - 400 * DAY)),
     placesUsage: run('DELETE FROM places_usage WHERE date < ?', day(now - 400 * DAY)),
     aiUsage: run('DELETE FROM ai_usage WHERE date < ?', day(now - 400 * DAY)),
+    // 숙소 가격 기록 30일 (docs/28 §7.1)
+    lodgingReports: lodgingReportsRepo(db).purgeExpired(now),
     deletedContent: run(
       `UPDATE records SET data_json = json_object('id', id, 'updatedAt', updated_at, 'deletedAt', deleted_at, 'purged', 1)
        WHERE deleted_at IS NOT NULL AND deleted_at < ? AND json_extract(data_json, '$.purged') IS NULL`,

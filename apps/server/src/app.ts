@@ -12,6 +12,7 @@ import { authRoutes } from './routes/auth';
 import { usageRoutes } from './routes/usage';
 import { flightRoutes } from './routes/flights';
 import { reviewRoutes } from './routes/reviews';
+import { lodgingRoutes } from './routes/lodging';
 import { pushRoutes } from './routes/push';
 import { attachmentRoutes } from './routes/attachments';
 import { alertRoutes } from './routes/alerts';
@@ -126,6 +127,7 @@ export async function buildApp(config: Config, db: Db): Promise<FastifyInstance>
   routeEtaRoutes(app, config, db);
   flightRoutes(app, config, db);
   reviewRoutes(app, db);
+  lodgingRoutes(app, db);
   pushRoutes(app, config, db);
   attachmentRoutes(app, config, db);
   suggestionRoutes(app, config, db);

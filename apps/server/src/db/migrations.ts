@@ -323,4 +323,31 @@ export const MIGRATIONS: readonly string[] = [
   `
   DELETE FROM join_requests WHERE provider = 'naver';
   `,
+  // 23: 숙소 가격 기록 (docs/28 §7, ADR-0010) — 사용자가 본 가격, 30일 뒤 지움, 로그인한 모두가 봄(작성자 비공개).
+  // 여행·좌표·자유 글은 없다. 탈퇴하면 그 사람 기록도 지운다 (ON DELETE CASCADE)
+  `
+  CREATE TABLE lodging_price_reports (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    hotel_key TEXT NOT NULL,
+    hotel_name TEXT NOT NULL,
+    city TEXT,
+    check_in TEXT NOT NULL,
+    nights INTEGER NOT NULL,
+    adults INTEGER NOT NULL,
+    rooms INTEGER NOT NULL,
+    site TEXT NOT NULL,
+    route TEXT,
+    price INTEGER NOT NULL,
+    price_type TEXT NOT NULL,
+    currency TEXT NOT NULL,
+    tax TEXT NOT NULL,
+    tags TEXT NOT NULL,
+    seen_at TEXT NOT NULL,
+    expires_at TEXT NOT NULL
+  );
+  CREATE INDEX lodging_reports_hotel ON lodging_price_reports(hotel_key, expires_at);
+  CREATE INDEX lodging_reports_user ON lodging_price_reports(user_id, seen_at);
+  CREATE INDEX lodging_reports_expires ON lodging_price_reports(expires_at);
+  `,
 ];
