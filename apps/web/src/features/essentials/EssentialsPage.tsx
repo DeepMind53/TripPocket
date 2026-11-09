@@ -55,9 +55,20 @@ export function EssentialsPage() {
           />
         ) : (
           <>
-            <p className="tabular text-body-2 font-semibold">
-              {t('essentials.progress', { done: s.done, total: s.total })}
-            </p>
+            {/* 출발 게이트 모양 (docs/29 §7.11) — 같은 문구 + 진행 막대 */}
+            <div className="flex flex-col gap-2 rounded-card bg-bg-subtle px-4 py-3">
+              <p className="tabular text-body-1 font-semibold">
+                {t('essentials.progress', { done: s.done, total: s.total })}
+              </p>
+              {s.total > 0 && (
+                <div aria-hidden="true" className="h-2 overflow-hidden rounded-full bg-line">
+                  <div
+                    className="h-full origin-left rounded-full bg-success"
+                    style={{ transform: `scaleX(${Math.min(1, s.done / s.total)})` }}
+                  />
+                </div>
+              )}
+            </div>
             {/* 나라별 이벤트·혜택 (누구나 응모·신청, 끝나면 안 보임) */}
             {events.length > 0 && (
               <section aria-label={t('essentials.events')} className="flex flex-col gap-2">

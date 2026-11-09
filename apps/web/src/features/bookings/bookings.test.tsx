@@ -404,9 +404,10 @@ describe('홈', () => {
     });
     renderAt(['/']);
 
-    // 여행 카드는 맨 위에 그대로, 준비 현황은 여행 중이라 접혀 있다 (2026-11-06)
-    // 여행 중 카드는 민트 (파란 다음 일정과 구분)
-    expect(await screen.findByRole('link', { name: /부산 여행/ })).toHaveClass('bg-mint');
+    // 여행 카드는 맨 위에 한 줄 띠로, 준비 현황은 여행 중이라 접혀 있다 (2026-11-06 → docs/29 §7.1 2026-11-10)
+    // 여행 중 민트는 이모지 칸·배지에 남는다 (파란 다음 일정과 구분)
+    const strip = await screen.findByRole('link', { name: /부산 여행/ });
+    expect(strip.querySelector('.bg-mint')).not.toBeNull();
     const prep = await screen.findByRole('button', { expanded: false, name: /준비/ });
     expect(prep).toBeInTheDocument();
     const next = await screen.findByRole('region', { name: '다음 일정' });
@@ -416,7 +417,9 @@ describe('홈', () => {
     expect(lodging).toHaveTextContent('해운대 호텔');
     expect(lodging).toHaveTextContent('2/3');
 
-    // 끝난 일정 오른쪽 [미방문][방문] — 일정 탭과 같은 방문 기록 (2026-11-06)
+    // 끝난 일정은 "지난 일정 N"으로 접혀 있다 (사용자 결정 2026-11-10) → 펼치면 오른쪽 [미방문][방문] (2026-11-06)
+    expect(screen.queryByRole('group', { name: '감천문화마을 방문 기록' })).toBeNull();
+    await user.click(screen.getByRole('button', { name: /지난 일정 1/ }));
     const visits = screen.getByRole('group', { name: '감천문화마을 방문 기록' });
     await user.click(within(visits).getByRole('button', { name: '방문' }));
     await waitFor(async () =>

@@ -253,8 +253,9 @@ export function ChecklistPage() {
 function Progress({ done, total, list }: { done: number; total: number; list: ListKind }) {
   const { t } = useTranslation();
   return (
-    <div className="flex flex-col gap-1.5" aria-live="polite">
-      <div className="flex justify-between text-caption font-semibold">
+    // 출발 게이트 모양 (docs/29 §4.6) — 문구는 그대로 (사용자 결정 2026-11-10)
+    <div className="flex flex-col gap-2 rounded-card bg-bg-subtle px-4 py-3" aria-live="polite">
+      <div className="flex items-baseline justify-between gap-2 text-body-1 font-semibold">
         <span>
           {done === total
             ? t('checklist.allDone')
@@ -263,7 +264,9 @@ function Progress({ done, total, list }: { done: number; total: number; list: Li
                 total,
               })}
         </span>
-        <span className="tabular text-fg-muted">{Math.round((done / total) * 100)}%</span>
+        <span className="tabular text-caption font-medium text-fg-muted">
+          {Math.round((done / total) * 100)}%
+        </span>
       </div>
       <div
         role="progressbar"
@@ -271,11 +274,11 @@ function Progress({ done, total, list }: { done: number; total: number; list: Li
         aria-valuemax={total}
         aria-valuenow={done}
         aria-label={t('checklist.progress', { done, total })}
-        className="h-2 overflow-hidden rounded-full bg-bg-subtle"
+        className="h-2 overflow-hidden rounded-full bg-line"
       >
         <div
-          className="h-full rounded-full bg-success transition-[width] duration-300"
-          style={{ width: `${(done / total) * 100}%` }}
+          className="h-full origin-left rounded-full bg-success transition-transform duration-300 ease-soft motion-reduce:transition-none"
+          style={{ transform: `scaleX(${done / total})` }}
         />
       </div>
     </div>

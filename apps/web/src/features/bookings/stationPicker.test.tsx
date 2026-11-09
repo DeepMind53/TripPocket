@@ -117,7 +117,8 @@ describe('역 칸 하나 (2026-11-03)', () => {
   });
 });
 
-it('예약 카드: "KTX 12월23일 (수요일)" · "동대구역 13:32 -> 수원역 15:44"', () => {
+// 탑승권 모양 (사용자 결정 2026-11-10): 윗줄 그대로, 출발역·도착역 크게 + 아래 시각, 절취선
+it('예약 카드: "KTX 12월23일 (수요일)" · 동대구역 13:32 ┈ 수원역 15:44 탑승권', () => {
   const b = {
     id: 'b',
     tripId: 't',
@@ -134,7 +135,11 @@ it('예약 카드: "KTX 12월23일 (수요일)" · "동대구역 13:32 -> 수원
     </MemoryRouter>,
   );
   expect(screen.getByText('12월23일 (수요일)')).toBeInTheDocument();
-  expect(screen.getByText('동대구역 13:32 -> 수원역 15:44')).toBeInTheDocument();
+  for (const s of ['동대구역', '13:32', '수원역', '15:44'])
+    expect(screen.getByText(s)).toBeInTheDocument();
+  // 출발이 도착보다 앞에 온다
+  const card = screen.getByRole('button', { name: /KTX/ });
+  expect(card.textContent!.indexOf('동대구역')).toBeLessThan(card.textContent!.indexOf('수원역'));
 });
 
 it('기차는 기차 그림, 버스는 버스 그림 (교통편 이름으로)', async () => {

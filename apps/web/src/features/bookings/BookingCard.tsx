@@ -46,7 +46,7 @@ export function BookingCard({
   return (
     <li
       id={`booking-${b.id}`}
-      className={`overflow-hidden rounded-card border bg-surface shadow-card ${highlight ? 'border-primary ring-2 ring-primary' : 'border-line'}`}
+      className={`overflow-hidden rounded-card border bg-surface shadow-card [&>[data-perf]+*]:border-t-transparent ${highlight ? 'border-primary ring-2 ring-primary' : 'border-line'}`}
     >
       <button
         type="button"
@@ -62,6 +62,18 @@ export function BookingCard({
           <BasicBody booking={b} />
         )}
       </button>
+      {/* 탑승권 절취선 (docs/29 §4.5, 사용자 결정 Q11: 항공·기차·버스만) — 양 끝 반원 구멍은 카드 밖 바탕색.
+          바로 아래 줄의 점선 위 테두리는 이 선과 겹치지 않게 숨긴다 */}
+      {(b.kind === 'flight' || b.kind === 'train') && (
+        <div
+          data-perf=""
+          aria-hidden="true"
+          className="relative mx-4 border-t-[1.5px] border-dashed border-line"
+        >
+          <span className="absolute -top-[8px] -left-[23px] size-3.5 rounded-full border border-line bg-bg" />
+          <span className="absolute -top-[8px] -right-[23px] size-3.5 rounded-full border border-line bg-bg" />
+        </div>
+      )}
       {b.details?.voucherUrl && (
         <div className="flex justify-end border-t border-dashed border-line px-4">
           <a
@@ -267,29 +279,40 @@ const longDay = (date: string) => {
 /**
  * 기차·버스 (사용자 요청 2026-11-03):
  * KTX 12월23일 (목요일)
- * 동대구역 13:32 -> 수원역 15:44
+ * 동대구역 13:32 ┈┈ 수원역 15:44  ← 탑승권 모양 (docs/29 §4.5, 사용자 결정 Q11 2026-11-09): 역 이름 크게, 시각은 아래
  */
 export function TrainTicket({ booking: b }: { booking: Booking }) {
   const { time } = useTimeText();
-  const point = (place?: string, at?: string) => [place, time(at)].filter(Boolean).join(' ');
-  const from = point(b.start.place, b.start.time);
-  const to = b.end ? point(b.end.place, b.end.time) : '';
+  const end = (place: string | undefined, at: string | undefined, align: 'start' | 'end') => (
+    <span className={`flex min-w-0 flex-col ${align === 'end' ? 'items-end text-right' : ''}`}>
+      <span className="line-clamp-2 text-title-2">{place || '—'}</span>
+      <span className="tabular text-body-2 text-fg-sub">{time(at) ?? '--:--'}</span>
+    </span>
+  );
   return (
-    <div className="flex items-start gap-3">
-      <BookingKindIcon booking={b} className="mt-0.5 size-4 shrink-0 text-primary" />
-      <span className="flex min-w-0 flex-1 flex-col">
+    <div className="flex flex-col gap-2">
+      <span className="flex items-start gap-1.5">
+        <BookingKindIcon booking={b} className="mt-1 size-4 shrink-0 text-primary" />
         <span className="text-body-1">
           {b.title} <span className="tabular">{longDay(b.start.date)}</span>
         </span>
-        {(from || to) && (
-          <span className="tabular text-body-2 text-fg-sub">
-            {from}
-            {to ? ` -> ${to}` : ''}
-          </span>
-        )}
-        {b.details?.seat && <span className="text-caption text-fg-sub">{b.details.seat}</span>}
-        <BookingExtras booking={b} />
       </span>
+      {(b.start.place || b.end?.place) && (
+        <span className="flex items-end gap-3">
+          {end(b.start.place, b.start.time, 'start')}
+          {b.end && (
+            <>
+              <span
+                aria-hidden="true"
+                className="mb-3 h-px min-w-6 flex-1 border-t border-dashed border-fg-muted"
+              />
+              {end(b.end.place, b.end.time, 'end')}
+            </>
+          )}
+        </span>
+      )}
+      {b.details?.seat && <span className="text-caption text-fg-sub">{b.details.seat}</span>}
+      <BookingExtras booking={b} />
     </div>
   );
 }
