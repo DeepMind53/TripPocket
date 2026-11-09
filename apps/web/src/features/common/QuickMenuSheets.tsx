@@ -33,7 +33,14 @@ import { SavedSpotsButtons } from './SavedSpotsButtons';
 import { ShortcutEditSheet } from './ShortcutEditSheet';
 import { TabQuickInfo } from './TabQuickInfo';
 import { TravelModeButton } from '../travel/TravelModeButton';
-import { SHORTCUT_ICON, shortcutPath, useQuickShortcuts, type ShortcutId } from './quickShortcuts';
+import {
+  SHORTCUT_ICON,
+  SHORTCUT_LAB,
+  shortcutPath,
+  useQuickShortcuts,
+  type ShortcutId,
+} from './quickShortcuts';
+import { useLabs } from '../../data/labsStore';
 import { openDirectionsDirect } from './openDirections';
 import { isDomesticTrip } from '../../domain/tripPlace';
 
@@ -230,7 +237,12 @@ function QuickMenuContent({
   const [editOpen, setEditOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const ids = useQuickShortcuts((st) => st.ids);
-  const chosen = ids;
+  const labs = useLabs();
+  // 실험을 끈 기능의 바로가기는 숨긴다
+  const chosen = ids.filter((id) => {
+    const lab = SHORTCUT_LAB[id];
+    return !lab || labs[lab] === true;
+  });
   const runShortcut = (id: ShortcutId) => {
     const own = shortcuts?.[id as keyof Shortcuts];
     if (own) return own();

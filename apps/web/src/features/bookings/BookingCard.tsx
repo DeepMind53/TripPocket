@@ -1,7 +1,10 @@
 import { useTimeText } from '../../shared/hooks/useTimeText';
 import { InlineIcon } from '../../shared/ui/InlineIcon';
 import { nightsBetween, todayIn, type Booking } from '@trippocket/shared';
+import { Link } from 'react-router';
+import { useLab } from '../../data/labsStore';
 import {
+  BadgePercent,
   BedDouble,
   Copy,
   EggFried,
@@ -33,6 +36,7 @@ export function BookingCard({
 }) {
   const { t } = useTranslation();
   const b = booking;
+  const priceLab = useLab('lodgingPrice');
   // 마이 → 개인정보의 항공사 회원번호 (예약 항공사·편명과 맞을 때, 2026-11-02)
   const member = useTravelProfile((p) =>
     b.kind === 'flight'
@@ -69,6 +73,18 @@ export function BookingCard({
             {t('bookings.voucherOpen')}
             <ExternalLink aria-hidden="true" className="size-3.5" />
           </a>
+        </div>
+      )}
+      {/* 실험실 "숙소 최저가": 이 숙소 이름·날짜로 아고다 경로별·예약 앱 링크 (docs/28 Q5) */}
+      {b.kind === 'lodging' && priceLab && (
+        <div className="flex justify-end border-t border-dashed border-line px-4">
+          <Link
+            to={`/lodging-price?trip=${b.tripId}&booking=${b.id}`}
+            className="flex h-10 items-center gap-1 text-caption font-semibold text-primary"
+          >
+            <BadgePercent aria-hidden="true" className="size-4" />
+            {t('lodgingPrice.button')}
+          </Link>
         </div>
       )}
       {b.kind === 'flight' && <FlightAirportInfo booking={b} />}

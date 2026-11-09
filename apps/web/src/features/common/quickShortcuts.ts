@@ -1,4 +1,5 @@
 import {
+  BadgePercent,
   Bed,
   BookOpen,
   CalendarClock,
@@ -22,6 +23,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { create } from 'zustand';
+import type { LabId } from '../../data/labsStore';
 
 /**
  * 빠른 메뉴 바로가기 (사용자 요청 2026-11-02): 4칸을 사용자가 고른다. 이동 가능한 화면과 빠른 메뉴 기능 모두.
@@ -42,6 +44,8 @@ export const SHORTCUT_IDS = [
   'places',
   'tripSettings',
   'print',
+  // 실험실 "숙소 최저가"를 켰을 때만 고를 수 있다 (docs/28 Q5)
+  'lodgingPrice',
   // 앱 화면 (긴급 연락처·환율·AI 추천·번역·회화는 빠른 메뉴 맨 위에 늘 있어 뺐다, 2026-11-04)
   'saved',
   'records',
@@ -54,6 +58,9 @@ export const SHORTCUT_IDS = [
   'help',
 ] as const;
 export type ShortcutId = (typeof SHORTCUT_IDS)[number];
+
+/** 실험실 기능 바로가기: 그 실험을 켰을 때만 고르고 보인다 */
+export const SHORTCUT_LAB: Partial<Record<ShortcutId, LabId>> = { lodgingPrice: 'lodgingPrice' };
 
 export const DEFAULT_SHORTCUTS: ShortcutId[] = ['lodging', 'bookingNo', 'nextItem', 'checklist'];
 export const SHORTCUT_SLOTS = 4;
@@ -71,6 +78,7 @@ export const SHORTCUT_ICON: Record<ShortcutId, LucideIcon> = {
   places: MapPinned,
   tripSettings: Wrench,
   print: Printer,
+  lodgingPrice: BadgePercent,
   saved: Heart,
   records: BookOpen,
   profile: IdCard,
@@ -94,6 +102,7 @@ export function shortcutPath(id: ShortcutId, tripId: string): string | null {
     places: `${trip}/places`,
     tripSettings: `${trip}/settings`,
     print: `${trip}/print`,
+    lodgingPrice: `/lodging-price?trip=${tripId}`,
     saved: '/saved',
     records: '/records',
     profile: '/me/profile',

@@ -118,6 +118,13 @@ const allRoutes: RouteObject[] = [
       Component: (await import('../features/fx/FxPage')).FxPage,
     }),
   },
+  // 실험실 "숙소 최저가" — 아고다 경로별·예약 앱 링크 (docs/28)
+  {
+    path: 'lodging-price',
+    lazy: async () => ({
+      Component: (await import('../features/lodging/LodgingPricePage')).LodgingPricePage,
+    }),
+  },
   {
     path: 'login',
     lazy: async () => ({

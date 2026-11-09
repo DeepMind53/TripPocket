@@ -1,11 +1,13 @@
 import { Check } from 'lucide-react';
 import { useState } from 'react';
+import { useLabs } from '../../data/labsStore';
 import { useTranslation } from '../../i18n';
 import { BottomSheet, Button, CancelSaveRow } from '../../shared/ui';
 import {
   DEFAULT_SHORTCUTS,
   SHORTCUT_ICON,
   SHORTCUT_IDS,
+  SHORTCUT_LAB,
   SHORTCUT_SLOTS,
   setQuickShortcuts,
   useQuickShortcuts,
@@ -22,6 +24,7 @@ export function ShortcutEditSheet({
 }) {
   const { t } = useTranslation();
   const saved = useQuickShortcuts((s) => s.ids);
+  const labs = useLabs();
   const [draft, setDraft] = useState<ShortcutId[]>(saved);
   const [wasOpen, setWasOpen] = useState(open);
   // 열 때마다 저장된 값에서 시작
@@ -70,7 +73,10 @@ export function ShortcutEditSheet({
       }
     >
       <ul className="grid grid-cols-2 gap-2 pb-2">
-        {SHORTCUT_IDS.map((id) => {
+        {SHORTCUT_IDS.filter((id) => {
+          const lab = SHORTCUT_LAB[id];
+          return !lab || labs[lab] === true;
+        }).map((id) => {
           const Icon = SHORTCUT_ICON[id];
           const order = draft.indexOf(id);
           const full = order < 0 && draft.length >= SHORTCUT_SLOTS;

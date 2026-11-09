@@ -283,6 +283,8 @@ export function FeaturePreview({ id }: { id: PreviewId }) {
       );
     case 'travelMode':
       return info(t('travel.title'), t('sample.travelMode'));
+    case 'lodgingPrice':
+      return info(t('lodgingPrice.title'), t('sample.lodgingPrice'));
     case 'placeTips':
       return day(
         <>

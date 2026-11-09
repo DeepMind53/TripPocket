@@ -48,9 +48,10 @@ describe('실험실', () => {
       'festivals',
       'flightDelay',
       'travelMode',
+      'lodgingPrice',
     ]);
-    expect(screen.getAllByRole('switch')).toHaveLength(5);
-    expect(screen.getAllByRole('button', { name: / 샘플$/ })).toHaveLength(5);
+    expect(screen.getAllByRole('switch')).toHaveLength(6);
+    expect(screen.getAllByRole('button', { name: / 샘플$/ })).toHaveLength(6);
     // 정식이 됐거나 뺀 것은 실험실에 없다
     for (const name of [
       /현지 공휴일/,

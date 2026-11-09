@@ -70,7 +70,8 @@
       "backup": "백업·복원·용량",
       "settings": "설정",
       "labs": "실험실",
-      "help": "도움말"
+      "help": "도움말",
+      "lodgingPrice": "숙소 최저가"
     },
     "quickSettings": "빠른 설정",
     "theme": "화면",
@@ -1398,6 +1399,10 @@
       "travelMode": {
         "name": "여행 모드",
         "desc": "여행 중에는 오늘과 내일만\n크게 보여 줘요"
+      },
+      "lodgingPrice": {
+        "name": "숙소 최저가",
+        "desc": "아고다 경로별·예약 앱 링크로\n숙소 가격을 한 번에 비교해요"
       }
     },
     "checkoutAt": "오늘 {{time}} 체크아웃 · {{name}}",
@@ -2145,7 +2150,8 @@
     "mall": "선샤인 시티",
     "safetyNotice": "일본 지진 관련 안전 유의 공지\n2026-11-01 · 외교부",
     "festival": "서울빛초롱축제\n11.01~11.30 · 서울 중구",
-    "travelMode": "다음 · 오사카성 11:00\n10:50에 나가요"
+    "travelMode": "다음 · 오사카성 11:00\n10:50에 나가요",
+    "lodgingPrice": "아고다 경로 21곳 · 예약 앱 6곳\n눌러서 각 앱 가격을 확인해요"
   },
   "currencyName": {
     "USD": "미국 달러",
@@ -2616,5 +2622,98 @@
     "value": "{{limit}} 중 {{used}} 사용",
     "expiring": "1주일 안에 지워질 {{size}}",
     "offline": "지금은 서버에 연결할 수 없어요\n연결되면 다시 보여요"
+  },
+  "lodgingPrice": {
+    "title": "숙소 최저가",
+    "button": "최저가 비교",
+    "recent": "최근 검색",
+    "name": "숙소 이름",
+    "namePlaceholder": "예: 호텔 그레이스리 신주쿠",
+    "checkIn": "체크인",
+    "checkOut": "체크아웃",
+    "adults": "인원",
+    "rooms": "객실",
+    "agodaLink": "아고다 숙소 링크 (선택)",
+    "agodaPlaceholder": "아고다에서 복사한 링크",
+    "paste": "붙여넣기",
+    "pasteFailed": "붙여넣기가 막혀 있어요\n칸을 길게 눌러 붙여 넣어 주세요",
+    "errAgoda": "아고다 숙소 링크가 아니에요\n숙소 화면에서 공유 링크를 복사해 주세요",
+    "err": {
+      "name": "숙소 이름을 적어 주세요",
+      "dates": "체크아웃은 체크인 뒤 날짜여야 해요",
+      "tooLong": "30박까지 찾을 수 있어요"
+    },
+    "search": "검색",
+    "agodaTitle": "아고다 경로별",
+    "agodaHint": "누르면 그 경로의 가격이 보여요\n아고다 앱이 있으면 앱으로 열려요",
+    "agodaNeedLink": "경로별 가격은 아고다 링크가 필요해요\n아고다 앱에서 숙소를 열고 공유를 눌러요\n링크를 복사해 위 칸에 붙여 넣어요",
+    "groupLabel": "경로 묶음",
+    "group": {
+      "all": "전체",
+      "search": "검색 경유",
+      "card": "카드사",
+      "airline": "항공사"
+    },
+    "cardNote": "그 카드로 결제할 때",
+    "route": {
+      "default": "기본 (경로 없음)",
+      "googleMaps1": "구글 지도 1",
+      "googleMaps2": "구글 지도 2",
+      "googleMaps3": "구글 지도 3",
+      "googleSearch1": "구글 검색 1",
+      "googleSearch2": "구글 검색 2",
+      "googleSearch3": "구글 검색 3",
+      "naverSearch": "네이버 검색",
+      "kb": "국민카드",
+      "woori": "우리카드",
+      "wooriMaster": "우리카드 (마스터)",
+      "bc": "BC카드",
+      "shinhan": "신한카드",
+      "shinhanMaster": "신한카드 (마스터)",
+      "toss": "토스",
+      "hana": "하나카드",
+      "mastercard": "마스터카드",
+      "visa": "비자",
+      "koreanAir": "대한항공 (마일 적립)",
+      "asiana": "아시아나 (마일 적립)",
+      "airSeoul": "에어서울"
+    },
+    "promoTitle": "카드·결제 할인 안내 {{n}}곳",
+    "promo": {
+      "kakaopaypromo": "카카오페이 할인",
+      "kbcard": "국민카드 할인",
+      "hyundaipromo": "현대카드 할인",
+      "wooricard": "우리카드 할인",
+      "wooricardmaster": "우리카드 (마스터) 할인",
+      "upikrpromo": "유니온페이 할인",
+      "unionpayKR": "유니온페이 (한국) 할인",
+      "bccard": "BC카드 할인",
+      "shinhancard": "신한카드 할인",
+      "shinhanmaster": "신한카드 (마스터) 할인",
+      "tossbank": "토스뱅크 할인",
+      "hanacard": "하나카드 할인",
+      "krmastercard": "마스터카드 할인",
+      "visakorea": "비자 할인",
+      "koreanair": "대한항공 할인",
+      "flyasiana": "아시아나 할인",
+      "airseoul": "에어서울 할인"
+    },
+    "appsTitle": "다른 앱에서 찾기",
+    "app": {
+      "yeogi": "여기어때",
+      "nol": "NOL",
+      "agoda": "아고다",
+      "tripcom": "트립닷컴",
+      "booking": "부킹닷컴",
+      "google": "구글 호텔"
+    },
+    "noDates": "날짜는 앱에서 골라요",
+    "copyNameNote": "숙소 이름을 복사하고 열어요",
+    "nameCopied": "숙소 이름을 복사했어요\n검색 칸에 붙여 넣어 주세요",
+    "open": "열기",
+    "openLabel": "{{name}} 열기",
+    "copyLabel": "{{name}} 링크 복사",
+    "linkCopied": "링크를 복사했어요\n브라우저에 붙여 넣으면 웹으로 열려요",
+    "footer": "가격은 각 앱에서 확인해요\n결제 전에 최종 가격을 꼭 확인해요"
   }
 }
