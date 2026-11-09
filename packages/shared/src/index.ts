@@ -135,6 +135,7 @@ export { cleanShortText, NICKNAME_MAX, normalizeNickname } from './user/nickname
 export { findAirport, searchAirports, type Airport } from './data/airports';
 export { flagEmoji } from './data/flag';
 export * from './reviews/reviews';
+export * from './lodging/lodgingReports';
 export * from './data/essentials';
 export * from './data/phrases';
 export * from './data/health';
