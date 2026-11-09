@@ -29,6 +29,7 @@ import {
 } from '../../shared/ui';
 import { resetQuickButtonPosition } from '../common/FloatingQuickButton';
 import { MapAppMark } from '../common/MapAppMark';
+import { MAP_KEYS } from '../../shared/maps';
 import { FeaturePreview } from '../common/FeaturePreview';
 import type { PreviewId } from '../common/previewIds';
 
@@ -182,6 +183,12 @@ export function SettingsPage() {
                 { value: 'ask', label: t('settings.askEveryTime') },
               ]}
             />
+            {/* 고른 지도의 키가 배포본에 없으면 다른 지도로 대신 보인다 — 왜 그런지 알려 준다 (2026-11-09 사용자 제보) */}
+            {s.domesticMap !== 'ask' && !MAP_KEYS[s.domesticMap] && (
+              <p role="status" className="mt-1.5 text-caption whitespace-pre-line text-warning">
+                {t(`settings.domesticMapNoKey.${s.domesticMap}`)}
+              </p>
+            )}
           </Field>
           <Field label={t('settings.travelMode')}>
             <SegmentedControl

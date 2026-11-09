@@ -220,6 +220,18 @@ export async function hotelPrices(
   return run;
 }
 
+/** 관리자: 차단기만 풀기 (캐시·시간당 횟수는 그대로). SerpApi 무료량 끝 표시도 푼다 */
+export function resumeHotelPrices(): void {
+  Object.assign(breaker, { fails: 0, pausedUntil: 0, blocks: [], off: false, quotaUntil: 0 });
+}
+
+/** 관리자 화면용: 서버가 기억하는 조건 수, 최근 1시간 호출 수 */
+export const hotelPricesStats = (now = Date.now()) => ({
+  cacheSize: cache.size,
+  lastHour: hour.filter((t) => now - t < 3_600_000).length,
+  hourly: HOURLY,
+});
+
 /** 시험용 */
 export function resetHotelPrices(): void {
   cache.clear();

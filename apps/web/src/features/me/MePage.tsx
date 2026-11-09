@@ -9,6 +9,7 @@ import {
   FileText,
   FlaskConical,
   Gauge,
+  Hotel,
   IdCard,
   Inbox,
   MessageSquarePlus,
@@ -67,6 +68,7 @@ export function MePage() {
             <MenuRow to="/admin/stats" icon={<ChartColumn />} label={t('me.stats')} />
             <MenuRow to="/admin/api-usage" icon={<Gauge />} label={t('apiUsage.title')} />
             <MenuRow to="/admin/entry-check" icon={<Stamp />} label={t('entryCheck.title')} />
+            <MenuRow to="/admin/lodging" icon={<Hotel />} label={t('lodgingAdmin.title')} />
             <MenuRow to="/admin/ai" icon={<Sparkles />} label={t('me.devAi')} />
             <MenuRow to="/admin/suggestions" icon={<Inbox />} label={t('suggest.adminTitle')} />
             <MenuRow

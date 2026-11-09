@@ -238,6 +238,12 @@ const allRoutes: RouteObject[] = [
         }),
       },
       {
+        path: 'lodging',
+        lazy: async () => ({
+          Component: (await import('../features/me/AdminLodgingPage')).AdminLodgingPage,
+        }),
+      },
+      {
         path: 'entry-check',
         lazy: async () => ({
           Component: (await import('../features/me/AdminEntryCheckPage')).AdminEntryCheckPage,

@@ -1168,7 +1168,8 @@
         "/login": "로그인",
         "/admin/stats": "사용 통계(관리자)",
         "/admin/users": "사용자 관리(관리자)",
-        "/admin/api-usage": "API 사용량(관리자)"
+        "/admin/api-usage": "API 사용량(관리자)",
+        "/admin/lodging": "숙소 최저가 관리(관리자)"
       },
       "sheets": {
         "account": "계정 메뉴",
@@ -2531,6 +2532,36 @@
     "delayed": "출발 약 {{min}}분 지연",
     "onTime": "지연 소식 없음",
     "source": "AirLabs"
+  },
+  "lodgingAdmin": {
+    "title": "숙소 최저가 관리",
+    "desc": "가격 소스 상태와\n사람들이 적은 가격 기록이에요\n누가 적었는지는 보이지 않아요",
+    "sources": "가격 소스",
+    "state": {
+      "ok": "정상",
+      "noKey": "키가 없어 꺼져 있어요",
+      "paused": "관리자가 멈췄어요",
+      "auto": "무료량 상한에 닿았어요",
+      "off": "계속 막혀서 꺼졌어요",
+      "quota": "SerpApi 무료량이 끝났어요",
+      "breaker": "{{time}}까지 쉬는 중"
+    },
+    "usage": "이번 달 {{month}}회 · 오늘 {{today}}회",
+    "monthLimit": "월 {{n}}회에서 자동 중지",
+    "dayLimit": "하루 {{n}}회에서 자동 중지",
+    "hour": "최근 1시간 {{n}}/{{max}}회",
+    "cache": "서버가 기억하는 결과 {{n}}개",
+    "pause": "멈추기",
+    "resume": "다시 켜기",
+    "unblock": "차단기 풀기",
+    "unblocked": "차단기를 풀었어요",
+    "reports": "가격 기록 · 30일",
+    "total": "전체 {{n}}줄",
+    "none": "아직 기록이 없어요",
+    "row": "{{checkIn}} · {{nights}}박 · {{adults}}명 · {{seen}} 기록",
+    "price": "1박 {{price}} {{cur}}",
+    "confirmDelete": "이 기록을 지울까요",
+    "deleteLabel": "{{name}} 기록 지우기"
   },
   "entryCheck": {
     "title": "입국 정보 점검",

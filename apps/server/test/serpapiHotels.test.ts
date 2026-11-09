@@ -195,6 +195,40 @@ describe('구글 호텔 참고 가격', () => {
     expect(urls).toHaveLength(3);
   });
 
+  it('관리자 화면: 소스 상태·사용량을 보고 차단기를 풀 수 있다 (관리자만)', async () => {
+    const adminCall = (method: 'GET' | 'POST', url: string) =>
+      app.inject({
+        method,
+        url,
+        headers: { [PROXY_HEADER]: SECRET, origin: ORIGIN, cookie: `__Host-sid=${sid}` },
+      });
+    expect((await adminCall('GET', '/api/admin/lodging')).statusCode).toBe(403);
+    expect(
+      (await adminCall('POST', '/api/admin/lodging/sources/serpapi_hotels/resume')).statusCode,
+    ).toBe(403);
+
+    db.prepare("UPDATE users SET is_admin = 1 WHERE id = 'u1'").run();
+    reply = () => Response.json({ error: 'Invalid API key.' }, { status: 401 });
+    await ask('a');
+    const res = await adminCall('GET', '/api/admin/lodging');
+    expect(res.statusCode).toBe(200);
+    const body = res.json() as {
+      sources: { id: string; configured: boolean; breaker: { paused: boolean }; used: number }[];
+      reports: { total: number };
+    };
+    expect(body.sources.map((s) => s.id)).toEqual(['agoda_lookup', 'serpapi_hotels']);
+    const serp = body.sources[1]!;
+    expect(serp).toMatchObject({ configured: true, breaker: { paused: true }, used: 1 });
+    expect(JSON.stringify(body)).not.toContain('kkkk');
+    expect(body.reports.total).toBe(0);
+
+    expect(
+      (await adminCall('POST', '/api/admin/lodging/sources/serpapi_hotels/resume')).statusCode,
+    ).toBe(200);
+    expect(pricesState().paused).toBe(false);
+    expect((await adminCall('POST', '/api/admin/lodging/sources/x/resume')).statusCode).toBe(404);
+  });
+
   it('입력 검사: 이름·날짜·박 수·인원', () => {
     const ok = { name: 'a', checkIn: '2026-11-24', checkOut: '2026-11-27', adults: '2' };
     expect(priceQueryOf(ok)).toEqual({ ...ok, adults: 2 });

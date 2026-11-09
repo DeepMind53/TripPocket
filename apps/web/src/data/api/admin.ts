@@ -1,3 +1,4 @@
+import type { LodgingReportView } from '@trippocket/shared';
 import { api } from './client';
 
 /** 사용자 관리 API — 관리자만 (서버 routes/admin.ts) */
@@ -71,6 +72,32 @@ export const apiUsageApi = {
       method: 'POST',
       body: JSON.stringify(body),
     }),
+};
+
+/** 숙소 최저가 관리 (서버 routes/lodging.ts, docs/28 6단계) — 작성자는 오지 않는다 */
+export interface LodgingSource {
+  id: 'agoda_lookup' | 'serpapi_hotels';
+  configured: boolean;
+  breaker: { paused: boolean; off: boolean; quota: boolean; until: number | null };
+  cacheSize: number;
+  lastHour?: number;
+  hourly?: number;
+  used: number;
+  today: number;
+  autoLimit: number | null;
+  dailyLimit: number | null;
+  paused: boolean;
+  autoStopped: boolean;
+}
+export interface LodgingAdmin {
+  sources: LodgingSource[];
+  reports: { total: number; recent: LodgingReportView[] };
+}
+
+export const lodgingAdminApi = {
+  report: () => api<LodgingAdmin>('/api/admin/lodging'),
+  resume: (id: string) => post(`/api/admin/lodging/sources/${enc(id)}/resume`),
+  remove: (id: string) => api(`/api/admin/lodging/reports/${enc(id)}`, { method: 'DELETE' }),
 };
 
 /** 사용 통계 (서버 routes/stats.ts, 관리자만) — 사람 구분 없는 합계 */

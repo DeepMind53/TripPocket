@@ -128,6 +128,14 @@ export async function agodaLookup(rawName: string, now = Date.now()): Promise<Ag
   return run;
 }
 
+/** 관리자: 차단기만 풀기 (캐시는 그대로) */
+export function resumeAgodaLookup(): void {
+  Object.assign(breaker, { fails: 0, pausedUntil: 0, blocks: [], off: false });
+}
+
+/** 관리자 화면용: 서버가 기억하는 이름 수 */
+export const agodaCacheSize = () => cache.size;
+
 /** 시험용 */
 export function resetAgodaLookup(): void {
   cache.clear();

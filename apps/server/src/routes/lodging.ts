@@ -12,9 +12,22 @@ import type { Db } from '../db/database';
 import { requireUser } from '../auth/session';
 import { lodgingReportsRepo } from '../repositories/lodgingReportsRepo';
 import { latestFx } from '../services/fx';
-import { agodaLookup, LookupPaused } from '../services/agodaLookup';
-import { ApiPaused } from '../services/apiUsage';
-import { hotelPrices, PricesPaused, type PriceQuery } from '../services/serpapiHotels';
+import {
+  agodaCacheSize,
+  agodaLookup,
+  LookupPaused,
+  lookupState,
+  resumeAgodaLookup,
+} from '../services/agodaLookup';
+import { ApiPaused, usageReport, type ApiId } from '../services/apiUsage';
+import {
+  hotelPrices,
+  hotelPricesStats,
+  PricesPaused,
+  pricesState,
+  resumeHotelPrices,
+  type PriceQuery,
+} from '../services/serpapiHotels';
 import { statDate } from '../repositories/statsRepo';
 import { requireAdmin } from './admin';
 
@@ -185,6 +198,63 @@ export function lodgingRoutes(app: FastifyInstance, db: Db, config: Config): voi
   // 관리자: 잘못된 기록 정리 (작성자는 보이지 않음)
   const admin = { preHandler: requireAdmin(db) };
   app.get('/api/admin/lodging/reports', admin, async () => repo.adminSummary());
+  // 관리자: 소스 상태 (차단기 + 이번 달·오늘 사용량) + 최근 기록 (docs/28 §14 6단계)
+  app.get('/api/admin/lodging', admin, async (_req, reply) => {
+    reply.header('cache-control', 'no-store');
+    const usage = usageReport().apis;
+    const use = (id: ApiId) => {
+      const u = usage.find((a) => a.id === id)!;
+      return {
+        used: u.used,
+        today: u.today,
+        autoLimit: u.autoLimit,
+        dailyLimit: u.dailyLimit,
+        paused: u.paused,
+        autoStopped: u.autoStopped,
+      };
+    };
+    const agoda = lookupState();
+    const serp = pricesState();
+    return {
+      sources: [
+        {
+          id: 'agoda_lookup',
+          configured: true,
+          breaker: {
+            paused: agoda.paused,
+            off: agoda.off,
+            quota: false,
+            until: agoda.until || null,
+          },
+          cacheSize: agodaCacheSize(),
+          ...use('agoda_lookup'),
+        },
+        {
+          id: 'serpapi_hotels',
+          configured: !!config.SERPAPI_KEY,
+          breaker: {
+            paused: serp.paused,
+            off: serp.off,
+            quota: serp.quota,
+            until: serp.until || null,
+          },
+          ...hotelPricesStats(),
+          ...use('serpapi_hotels'),
+        },
+      ],
+      reports: repo.adminSummary(),
+    };
+  });
+  app.post<{ Params: { id: string } }>(
+    '/api/admin/lodging/sources/:id/resume',
+    admin,
+    async (req, reply) => {
+      if (req.params.id === 'agoda_lookup') resumeAgodaLookup();
+      else if (req.params.id === 'serpapi_hotels') resumeHotelPrices();
+      else return reply.code(404).send({ error: 'not_found' });
+      return { ok: true };
+    },
+  );
   app.delete<{ Params: { id: string } }>(
     '/api/admin/lodging/reports/:id',
     admin,
