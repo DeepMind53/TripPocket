@@ -73,7 +73,9 @@
   2. **예약에 저장된 아고다 링크** 재사용 — 요청 0
   3. **자동 찾기** — 서버가 아고다 숙소 검색(자동완성) **1번**으로 숙소 id를 찾아 날짜를 넣은 주소를 만든다.
      30일 캐시, 아고다에 보내는 것은 숙소 이름뿐, 하루 100번 상한, 막히면 멈춤 (§9). 사전 점검(§12) 필요
-  4. 자동 찾기가 안 되면 **아고다 검색 결과 링크에 CID를 넣은 것**으로 대신 (숙소를 한 번 더 눌러야 함). 점검 필요
+  4. 자동 찾기가 안 되면 아고다 링크 붙여넣기를 안내한다 (이름만으로 여는 아고다 검색 주소는 첫 화면으로 돌아감, §12.1)
+- **경로 링크 주소 (§12.1 확인):** `https://www.agoda.com/partners/partnersearch.aspx?hid=<숙소 id>&cid=<경로>&checkin=YYYY-MM-DD&checkout=YYYY-MM-DD&NumberofAdults=<인원>&Rooms=<객실>`.
+  붙여 넣은 아고다 숙소 링크는 그 주소의 `cid`만 바꾼다 (아고다스캐너와 같음)
 - **날짜·인원:** 주소의 `checkIn`·`los`(박 수)·`adults`·`rooms`를 입력값으로 맞춘다
 - **점검할 것:** 아고다가 처음 들어온 경로를 쿠키로 기억해 두 번째 링크부터 경로가 안 바뀌는지.
   그렇다면 "링크마다 새 시크릿 창" 같은 안내를 붙인다
@@ -313,6 +315,34 @@
 | A 각 앱 링크 | 앱마다 이름·날짜 넣은 주소 열어 보기 | 검색 결과가 열림, 날짜 반영 여부 기록 |
 | B 구글 호텔 (B 단계 전) | SerpApi 키로 2~3회 호출 | 예약처별 `prices[]`가 오고 KRW로 옴 |
 - 점검 호출은 소스마다 5회 이내. 결과는 이 문서 §12.1에 표로 추가. 통과 못 한 것은 링크로만 둔다
+
+### 12.1 점검 결과 (2026-11-09, 서버 쪽 요청 — 아고다 7번, 다른 앱 1~2번)
+요청은 정직한 이름(`TripPocket/1.0 (+https://trippocket.day)`)으로 보냈고 위장하지 않았다.
+
+| 점검 | 결과 | 판정 |
+|---|---|---|
+| E 자동 찾기 | `GET www.agoda.com/api/cronos/search/GetUnifiedSuggestResult/3/1/1/0/ko-kr/?searchText=<이름>&origin=KR&cid=-1&pageTypeId=1` → 200 JSON. 한국어 "신주쿠 그레이스리"로 `IsHotel=true, ObjectId=706347 (Hotel Gracery Shinjuku), CityId=5085` | **통과** — 후보 여러 개 (`IsHotel=true`만 고름) |
+| E 경로 링크 | `www.agoda.com/partners/partnersearch.aspx?hid=<숙소 id>&cid=<경로>&checkin=&checkout=&NumberofAdults=&Rooms=` → 302 → `/search?cid=<경로>&…&los=3&selectedproperty=<id>` (구글 지도·신한카드·대한항공 경로 3개 확인) | **통과** — 경로 값·날짜·인원 유지 |
+| E 이름만으로 검색 | `/ko-kr/search?textToSearch=…` → 아고다 첫 화면으로 돌아감 | 실패 → 아고다는 **자동 찾기 또는 링크 붙여넣기**로만 |
+| E 경로 기억(쿠키) | 실제 브라우저가 필요 (브라우저 확장 연결 안 됨) | **사용자 휴대폰 확인 필요** |
+| A 트립닷컴 | `kr.trip.com/hotels/list?keyword=&checkin=YYYY/MM/DD&checkout=&adult=&crn=` → 200, 이름이 화면에 들어감 | 통과 (날짜는 휴대폰 확인) |
+| A 여기어때 | `www.yeogi.com/domestic-accommodations?keyword=&checkIn=&checkOut=&personal=` → 200, 이름이 화면에 들어감 | 통과 (날짜는 휴대폰 확인) |
+| A 부킹닷컴 | `www.booking.com/searchresults.ko.html?ss=&checkin=&checkout=&group_adults=&no_rooms=` → 202 (로봇 확인 화면) | 서버 요청은 막힘. **링크는 브라우저에서 열리므로 사용** (휴대폰 확인) |
+| A 구글 호텔 | `www.google.com/travel/search?q=&hl=ko&gl=kr` → 브라우저가 아니라서 안내 화면 | 링크로 사용, 날짜는 앱에서 고르기 (휴대폰 확인) |
+| A NOL | 검색 화면 `nol.yanolja.com/search?tab=place` (앱: `yanoljamotel://search?tab=place`). 검색어 칸 주소는 찾지 못함 | 검색 화면 열기만, 이름은 직접 입력 ("이름을 붙여 넣어 주세요" + 이름 복사) |
+
+### 12.2 아고다 경로 목록 (안 — 사용자 확인 필요)
+출처: 아고다스캐너 공개 페이지 스크립트(2026-11-09)의 경로 값. 아고다스캐너의 제휴 태그(`tag=`)와 제휴 단축 링크(`app.ac`)는 넣지 않는다.
+
+| 묶음 | 경로 (CID) |
+|---|---|
+| 검색 경유 7 | 구글 지도1 `1833981` · 구글 지도2 `1917614` · 구글 지도3 `1829968` · 구글 검색1 `1908612` · 구글 검색2 `1922868` · 구글 검색3 `1776688` · 네이버 검색 `1729890` |
+| 카드사 10 | 국민 `1563295` · 우리 `1654104` · 우리(마스터) `1932810` · BC `1748498` · 신한 `1760133` · 신한(마스터) `1917257` · 토스 `1917334` · 하나 `1729471` · 마스터카드 `1889572` · 비자 `1889319` |
+| 항공사 3 | 대한항공 `1904827` · 아시아나 `1806212` · 에어서울 `1800120` |
+| 프로모션 페이지 (숙소 링크 아님) | 아고다 공식 카드·결제 할인 페이지 `www.agoda.com/ko-kr/<이름>`: kakaopaypromo · kbcard · hyundaipromo · wooricard · wooricardmaster · upikrpromo · unionpayKR · bccard · shinhancard · shinhanmaster · tossbank · hanacard · krmastercard · visakorea · koreanair · flyasiana · airseoul |
+
+- 숙소 링크 20개 + 기본(경로 없음) 1개 = 21개, 그리고 프로모션 페이지 17개. 현대카드·유니온페이·카카오페이는 아고다스캐너도 경로 값 없이 프로모션 페이지로만 연결한다
+- 경로 값은 아고다가 바꿀 수 있다 → 웹 데이터 파일 한 곳에만 두고, 열리지 않는다는 기록이 쌓이면 고친다
 
 ## 13. 정할 것 (하나씩 묻기)
 | # | 질문 | 추천 |
