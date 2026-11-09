@@ -128,6 +128,12 @@ export const DATA_SOURCES: { name: string; use: string; license: string; url: st
     url: 'https://github.com/orioncactus/pretendard',
   },
   {
+    name: 'JetBrains Mono',
+    use: '예약번호·공항 코드 글꼴 (숫자·영문만 줄인 판)',
+    license: 'SIL Open Font License 1.1',
+    url: 'https://github.com/JetBrains/JetBrainsMono',
+  },
+  {
     name: 'GeoNames',
     use: '한국·일본·대만 시·군·정·촌 목록',
     license: 'CC BY 4.0',

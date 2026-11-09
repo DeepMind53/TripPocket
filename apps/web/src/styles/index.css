@@ -41,7 +41,28 @@
   --color-day-6: var(--tp-day-6);
   --color-day-7: var(--tp-day-7);
   --color-day-8: var(--tp-day-8);
+  /* 노선 글자색 (docs/29 §3.1) — text-day-N-ink, bg-day-N-ink */
+  --color-day-1-ink: var(--tp-day-1-ink);
+  --color-day-2-ink: var(--tp-day-2-ink);
+  --color-day-3-ink: var(--tp-day-3-ink);
+  --color-day-4-ink: var(--tp-day-4-ink);
+  --color-day-5-ink: var(--tp-day-5-ink);
+  --color-day-6-ink: var(--tp-day-6-ink);
+  --color-day-7-ink: var(--tp-day-7-ink);
+  --color-day-8-ink: var(--tp-day-8-ink);
   --shadow-card: var(--tp-shadow);
+}
+
+/* 고정폭 글꼴 (docs/29 §3.3, 사용자 결정 2026-11-09): JetBrains Mono 500을 숫자·영문·기호만 남긴 판 (약 8KB, OFL 1.1 —
+   fonts/JetBrainsMono-OFL.txt). 예약번호·공항/역 코드·편명·좌석에만. 없는 글자(한글)는 Pretendard가 그린다 */
+@font-face {
+  font-family: 'JetBrains Mono Sub';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('./fonts/jbmono-sub-500.woff2') format('woff2');
+  unicode-range:
+    U+20, U+23-26, U+28-3A, U+41-5A, U+61-7A, U+A5, U+B7, U+2013-2014, U+20A9, U+20AC, U+2192;
 }
 
 @theme {
@@ -49,6 +70,10 @@
   --font-sans:
     'Twemoji Country Flags', 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont,
     'Apple SD Gothic Neo', 'Malgun Gothic', system-ui, sans-serif;
+  /* 코드류 고정폭 (font-mono) — 받은 글꼴이 없으면 기기 고정폭 */
+  --font-mono:
+    'JetBrains Mono Sub', ui-monospace, 'SF Mono', 'Roboto Mono', Menlo, Consolas,
+    'Pretendard Variable', monospace;
 
   /* 타입 스케일 (docs/11 §4) */
   --text-display: 1.75rem;
@@ -73,6 +98,15 @@
   --text-micro: 0.6875rem;
   --text-micro--line-height: 0.875rem;
   --text-micro--font-weight: 500;
+  /* 탑승권 출발·도착 코드, 다음 역 남은 시간 (docs/29 §3.3) */
+  --text-code-xl: 1.75rem;
+  --text-code-xl--line-height: 2rem;
+  --text-code-xl--font-weight: 500;
+  --text-code-xl--letter-spacing: -0.02em;
+  --text-count-xl: 2.125rem;
+  --text-count-xl--line-height: 2.375rem;
+  --text-count-xl--font-weight: 600;
+  --text-count-xl--letter-spacing: -0.03em;
 
   /* 형태 (docs/11 §5) */
   --radius-btn: 12px;

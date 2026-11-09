@@ -35,6 +35,18 @@
   --tp-day-6: #e5488a;
   --tp-day-7: #3ba55c;
   --tp-day-8: #5a6b85;
+  /* 노선 글자색 (docs/29 §3.1): 일차 색을 글자·채움(흰 글자)으로 쓸 때 — 흰·옅은 바탕 4.5:1 */
+  --tp-day-1-ink: #2c64ed;
+  --tp-day-2-ink: #b84d35;
+  --tp-day-3-ink: #0c7d72;
+  --tp-day-4-ink: #854fdb;
+  --tp-day-5-ink: #956516;
+  --tp-day-6-ink: #c03c74;
+  --tp-day-7-ink: #2d7d46;
+  --tp-day-8-ink: #5a6b85;
+  /* 노선 모양 (docs/29 §3.2) */
+  --tp-route-width: 4px;
+  --tp-past-opacity: 0.3;
 
   /* 일정 종류 색 (사용자 요청 2026-10-26) — 바탕은 이 색을 아주 조금만 섞은 파스텔(--tp-kind-tint),
      진행 중인 일정은 테두리·깜빡임에 이 색. 색상환에서 고르게 떨어뜨려 서로 겹치지 않게, 교통은 회색 */
@@ -79,6 +91,24 @@
     --tp-toast-bg: #f2f4f7;
     --tp-toast-fg: #191f28;
     --tp-shadow: 0 1px 2px rgb(0 0 0 / 0.3);
+    /* 노선 색 다크: 어두운 표면에서 4.5:1이 되게 밝힘 (docs/29 §8) — 선·글자 같은 값 */
+    --tp-day-1: #5083ff;
+    --tp-day-2: #ff6b4a;
+    --tp-day-3: #12b5a5;
+    --tp-day-4: #a369ff;
+    --tp-day-5: #f5a524;
+    --tp-day-6: #e75391;
+    --tp-day-7: #3ba55c;
+    --tp-day-8: #7d8a9f;
+    --tp-day-1-ink: #5083ff;
+    --tp-day-2-ink: #ff6b4a;
+    --tp-day-3-ink: #12b5a5;
+    --tp-day-4-ink: #a369ff;
+    --tp-day-5-ink: #f5a524;
+    --tp-day-6-ink: #e75391;
+    --tp-day-7-ink: #3ba55c;
+    --tp-day-8-ink: #7d8a9f;
+    --tp-past-opacity: 0.35;
     color-scheme: dark;
   }
 }
@@ -106,5 +136,22 @@
   --tp-toast-bg: #f2f4f7;
   --tp-toast-fg: #191f28;
   --tp-shadow: 0 1px 2px rgb(0 0 0 / 0.3);
+  --tp-day-1: #5083ff;
+  --tp-day-2: #ff6b4a;
+  --tp-day-3: #12b5a5;
+  --tp-day-4: #a369ff;
+  --tp-day-5: #f5a524;
+  --tp-day-6: #e75391;
+  --tp-day-7: #3ba55c;
+  --tp-day-8: #7d8a9f;
+  --tp-day-1-ink: #5083ff;
+  --tp-day-2-ink: #ff6b4a;
+  --tp-day-3-ink: #12b5a5;
+  --tp-day-4-ink: #a369ff;
+  --tp-day-5-ink: #f5a524;
+  --tp-day-6-ink: #e75391;
+  --tp-day-7-ink: #3ba55c;
+  --tp-day-8-ink: #7d8a9f;
+  --tp-past-opacity: 0.35;
   color-scheme: dark;
 }

@@ -8,7 +8,8 @@ import { readdirSync, readFileSync } from 'node:fs';
 
 /**
  * 서비스 워커 생성 (라이브러리 없이): 빌드 결과 파일 목록을 src/sw/sw-template.js에 넣어 dist/sw.js로.
- * 글꼴(woff2)은 미리 받지 않고 쓸 때 저장 — Pretendard 조각이 많아(약 3MB) 설치가 무거워지므로
+ * 글꼴(woff2)은 미리 받지 않고 쓸 때 저장 — Pretendard 조각이 많아(약 3MB) 설치가 무거워지므로.
+ * 예외: 고정폭 숫자 글꼴(jbmono, 약 8KB)은 예약번호·코드에 늘 쓰므로 미리 받는다 (docs/29 §3.3)
  */
 function serviceWorker(): Plugin {
   return {
@@ -23,7 +24,12 @@ function serviceWorker(): Plugin {
         .filter((f) => f.endsWith('.jpg'))
         .map((f) => `/transit/${f}`);
       const files = Object.keys(bundle)
-        .filter((f) => !f.endsWith('.map') && !f.endsWith('.woff2') && f !== 'sw.js')
+        .filter(
+          (f) =>
+            !f.endsWith('.map') &&
+            (!f.endsWith('.woff2') || /(^|\/)jbmono-/.test(f)) &&
+            f !== 'sw.js',
+        )
         // 무료 지도 백업(MapLibre, 약 1.5MB)은 인터넷이 될 때만 쓰므로 미리 받지 않는다 (docs/23 §4)
         .filter((f) => !/(^|\/)(osmMap|maplibre-gl-worker)-/.test(f))
         .map((f) => `/${f}`)

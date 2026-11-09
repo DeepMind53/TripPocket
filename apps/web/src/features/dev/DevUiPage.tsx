@@ -2,6 +2,7 @@ import { ArrowLeft, Bed, Bell, Copy, Heart, MapPin, Zap } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router';
 import { applyTheme, type ThemePref } from '../../shared/lib/theme';
+import { RouteSamples } from './RouteSamples';
 import {
   BottomSheet,
   Button,
@@ -316,6 +317,13 @@ export function DevUiPage() {
               실행 취소 스낵바
             </Button>
           </div>
+        </Section>
+
+        <Section
+          title="여행 노선 부품"
+          hint="디자인 개편 docs/29 §4 — 일정·홈·예약·준비·기록에 쓰여요"
+        >
+          <RouteSamples />
         </Section>
       </div>
 

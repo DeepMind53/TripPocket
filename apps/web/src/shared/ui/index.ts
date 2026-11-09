@@ -21,3 +21,14 @@ export { ConfirmHost } from './ConfirmHost';
 export { TopBar } from './TopBar';
 export { TimeInput } from './TimeInput';
 export { Skeleton } from './Skeleton';
+// 디자인 개편 "여행 노선" 공통 부품 (docs/29 §4)
+export { routeColor, routeStyle } from './routeColor';
+export { RouteLine } from './RouteLine';
+export { RouteStop, type RouteStopState } from './RouteStop';
+export { TransferChip } from './TransferChip';
+export { DayLineTabs, type DayLineTab } from './DayLineTabs';
+export { NextStopCard } from './NextStopCard';
+export { TicketCard, type TicketCell, type TicketEnd } from './TicketCard';
+export { GateProgress } from './GateProgress';
+export { Stamp } from './Stamp';
+export { RouteBar } from './RouteBar';
