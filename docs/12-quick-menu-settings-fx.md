@@ -223,7 +223,7 @@
 // AppSetting 키 (04-data-model §3 AppSetting 확장)
 type Settings = {
   theme: "light" | "dark" | "system";
-  fontScale: 0.9 | 1 | 1.15 | 1.3;
+  fontScale: 0.9 | 1 | 1.15; // 작게·보통·크게 (2026-11-10, 아주 크게 1.3은 뺌)
   timeFormat: "24h" | "12h";
   haptics: boolean;
   directionsApp: "naver" | "google" | "kakao" | "apple" | "ask";

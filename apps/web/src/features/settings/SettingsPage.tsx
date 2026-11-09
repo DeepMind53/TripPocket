@@ -33,7 +33,8 @@ import { MAP_KEYS } from '../../shared/maps';
 import { FeaturePreview } from '../common/FeaturePreview';
 import type { PreviewId } from '../common/previewIds';
 
-const FONT_SCALES = [0.9, 1, 1.15, 1.3] as const;
+/** 작게·보통·크게 (사용자 요청 2026-11-10 — 보통이 가운데) */
+const FONT_SCALES = [0.9, 1, 1.15] as const;
 
 /**
  * S-23 설정 (docs/12 §3). 바꾸면 바로 적용, 저장 버튼 없음.
@@ -126,7 +127,7 @@ export function SettingsPage() {
                   label={t('settings.fontScale')}
                   value={fontIndex}
                   min={0}
-                  max={3}
+                  max={FONT_SCALES.length - 1}
                   step={1}
                   showTicks
                   onChange={(i) => updateSettings({ fontScale: FONT_SCALES[i] ?? 1 })}

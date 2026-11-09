@@ -29,6 +29,12 @@ describe('설정 검사', () => {
     expect('unknown' in s).toBe(false);
   });
 
+  it('글자 크기는 작게·보통·크게 3단계, 예전 아주 크게(1.3)는 크게로 (2026-11-10)', () => {
+    expect(parseSettings({ fontScale: 0.9 }).fontScale).toBe(0.9);
+    expect(parseSettings({ fontScale: 1.15 }).fontScale).toBe(1.15);
+    expect(parseSettings({ fontScale: 1.3 }).fontScale).toBe(1.15);
+  });
+
   it('일정 기능: 처음엔 모두 끔, 옛 설정도 끄고 다시 묻는다, 새 설정은 그대로 (2026-11-02)', () => {
     const fresh = parseSettings(undefined);
     expect(PLAN_FEATURES.every((f) => fresh[f] === false)).toBe(true);

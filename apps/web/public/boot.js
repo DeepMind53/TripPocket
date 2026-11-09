@@ -3,6 +3,8 @@
 try {
   var b = JSON.parse(localStorage.getItem('tp-boot') || '{}');
   if (b.theme === 'light' || b.theme === 'dark') document.documentElement.dataset.theme = b.theme;
+  // 글자 크기는 최대 "크게"(1.15) — 예전 "아주 크게"(1.3)가 남아 있어도 크게로 (2026-11-10)
+  if (typeof b.fontScale === 'number' && b.fontScale > 1.15) b.fontScale = 1.15;
   if (typeof b.fontScale === 'number' && b.fontScale !== 1)
     document.documentElement.style.fontSize = Math.round(b.fontScale * 100) + '%';
   if (typeof b.fontScale === 'number' && b.fontScale >= 1.15)

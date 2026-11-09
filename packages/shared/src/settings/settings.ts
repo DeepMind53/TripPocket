@@ -4,7 +4,8 @@
  */
 export interface Settings {
   theme: 'light' | 'dark' | 'system';
-  fontScale: 0.9 | 1 | 1.15 | 1.3;
+  /** 작게·보통·크게 3단계 (사용자 요청 2026-11-10, 전에는 아주 크게 1.3까지 4단계) */
+  fontScale: 0.9 | 1 | 1.15;
   timeFormat: '24h' | '12h';
   haptics: boolean;
   /** 국내 길찾기 앱 — 해외는 늘 Google 지도 (2026-10-27). 예전 값 'google'은 기본값으로 */
@@ -191,7 +192,7 @@ const oneOf =
 /** 항목별 검사 */
 const VALID: { [K in keyof Settings]: (v: unknown) => v is Settings[K] } = {
   theme: oneOf('light', 'dark', 'system'),
-  fontScale: oneOf(0.9, 1, 1.15, 1.3),
+  fontScale: oneOf(0.9, 1, 1.15),
   timeFormat: oneOf('24h', '12h'),
   haptics: (v): v is boolean => typeof v === 'boolean',
   directionsApp: oneOf('naver', 'kakao', 'ask'),
@@ -241,7 +242,9 @@ const VALID: { [K in keyof Settings]: (v: unknown) => v is Settings[K] } = {
 
 /** 저장된 값(무엇이든) → 올바른 설정. 모르는 키는 버리고, 틀린 값은 기본값 */
 export function parseSettings(raw: unknown): Settings {
-  const src = typeof raw === 'object' && raw !== null ? (raw as Record<string, unknown>) : {};
+  const src0 = typeof raw === 'object' && raw !== null ? (raw as Record<string, unknown>) : {};
+  // 예전 "아주 크게"(1.3)는 지금 가장 큰 "크게"(1.15)로 — 옛 백업·다른 기기 설정도 그대로 읽힌다 (2026-11-10)
+  const src = src0.fontScale === 1.3 ? { ...src0, fontScale: 1.15 } : src0;
   const out = { ...SETTINGS_DEFAULTS };
   const current = src.planPromptV === 1;
   for (const key of Object.keys(VALID) as (keyof Settings)[]) {

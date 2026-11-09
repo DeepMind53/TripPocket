@@ -33,8 +33,8 @@ export function DevUiPage() {
   const [radius, setRadius] = useState(3);
   const [loading, setLoading] = useState(false);
 
-  const fontNames = ['작게', '보통', '크게', '아주 크게'] as const;
-  const fontScales = [0.9, 1, 1.15, 1.3] as const;
+  const fontNames = ['작게', '보통', '크게'] as const;
+  const fontScales = [0.9, 1, 1.15] as const;
 
   function toggleCategory(id: string) {
     setCategories((prev) => (prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]));
@@ -270,7 +270,7 @@ export function DevUiPage() {
                 value={fontStep}
                 onChange={setFontStep}
                 min={0}
-                max={3}
+                max={2}
                 showTicks
               />
               <p
