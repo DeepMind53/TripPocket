@@ -534,6 +534,10 @@
     "hideNicknameDesc": "다른 사람에게 \"{{masked}}\"로 보여요\n이미 쓴 후기에도 바로 적용돼요",
     "hideNicknameFailed": "바꾸지 못했어요\n연결된 뒤 다시 해 주세요",
     "domesticMap": "앱 안 국내 지도",
+    "domesticMapNoKey": {
+      "kakao": "카카오 지도 키가 아직 없어요\n지금은 네이버 지도로 보여요",
+      "naver": "네이버 지도 키가 아직 없어요\n지금은 다른 지도로 보여요"
+    },
     "weatherMark": "날씨 주의 표시",
     "jetLag": "시차 안내 (홈)",
     "localHoliday": "현지 공휴일 표시",

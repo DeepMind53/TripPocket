@@ -23,6 +23,8 @@ interface NMapsNs {
   Size: new (w: number, h: number) => unknown;
   Point: new (x: number, y: number) => unknown;
   Event: { addListener(target: unknown, ev: string, cb: () => void): void };
+  ZoomControlStyle?: { SMALL: number };
+  Position?: { TOP_RIGHT: number };
 }
 const nmaps = () => (window as unknown as { naver?: { maps?: NMapsNs } }).naver?.maps;
 
@@ -42,6 +44,15 @@ export async function mountNaver(
     center: ll(opts.center),
     zoom: opts.zoom,
     zoomControl: true,
+    // 기본(LARGE)은 긴 막대라 작은 지도 칸에서 일부가 가려진다 → +/- 버튼만 (사용자 요청 2026-11-09)
+    ...(n.ZoomControlStyle && n.Position
+      ? {
+          zoomControlOptions: {
+            style: n.ZoomControlStyle.SMALL,
+            position: n.Position.TOP_RIGHT,
+          },
+        }
+      : {}),
     scaleControl: false,
     mapDataControl: false,
   });
