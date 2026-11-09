@@ -127,7 +127,7 @@ export async function buildApp(config: Config, db: Db): Promise<FastifyInstance>
   routeEtaRoutes(app, config, db);
   flightRoutes(app, config, db);
   reviewRoutes(app, db);
-  lodgingRoutes(app, db);
+  lodgingRoutes(app, db, config);
   pushRoutes(app, config, db);
   attachmentRoutes(app, config, db);
   suggestionRoutes(app, config, db);

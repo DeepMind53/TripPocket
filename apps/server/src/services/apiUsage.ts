@@ -44,6 +44,7 @@ export type ApiId =
   | 'frankfurter'
   | 'wikipedia'
   | 'agoda_lookup'
+  | 'serpapi_hotels'
   | 'oauth_kakao'
   | 'oauth_google'
   | 'cf_functions'
@@ -168,6 +169,9 @@ export const APIS: readonly ApiDef[] = [
   { id: 'wikipedia', group: 'free', freeDaily: 5000, tz: 'UTC' },
   // 아고다 숙소 자동 찾기 (docs/28 §4.2, ADR-0010): 공개 API가 아니라 스스로 정한 하루 100회 — 사이트 부담·차단 위험을 줄인다
   { id: 'agoda_lookup', group: 'free', freeDaily: 100, tz: 'Asia/Seoul' },
+  // SerpApi 무료 플랜 (serpapi.com 계정 확인 2026-11-09): 월 250회, 시간당 250회, 결제 수단 없음 → 넘으면 거절될 뿐.
+  // 구글 호텔 참고 가격 (docs/28 §4.3) — 검색 1번에 최대 2회. 같은 조건은 서버가 6시간 재사용
+  { id: 'serpapi_hotels', group: 'free', freeMonthly: 250, tz: 'UTC' },
   // 로그인(토큰 교환·프로필) — 무료, 멈추면 로그인 불가라 기록만
   { id: 'oauth_kakao', group: 'free', tz: 'Asia/Seoul', pausable: false },
   { id: 'oauth_google', group: 'free', tz: 'UTC', pausable: false },

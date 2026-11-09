@@ -6,6 +6,7 @@ import { resetLocalDb } from '../../data/dev';
 import { setLab } from '../../data/labsStore';
 import { resetReportGuards } from '../../data/lodgingReports';
 import { resetAgodaLookup } from '../../data/agodaLookup';
+import { resetHotelPrices } from '../../data/hotelPrices';
 import { bookingRepo } from '../../data/repositories/bookingRepo';
 import { tripRepo } from '../../data/repositories/tripRepo';
 import { Toaster } from '../../shared/ui';
@@ -16,6 +17,7 @@ beforeEach(async () => {
   localStorage.removeItem('tp-lodging-recent');
   resetReportGuards();
   resetAgodaLookup();
+  resetHotelPrices();
   tripId = (
     await tripRepo.create({
       title: '도쿄',
@@ -113,9 +115,15 @@ describe('숙소 최저가 (실험실, docs/28)', () => {
       await user.click(within(apps).getByRole('link', { name: 'NOL 열기' }));
       expect(await navigator.clipboard.readText()).toBe('호텔 그레이스리 신주쿠');
 
-      // 링크를 넣었으니 자동 찾기는 안 하고, 서버에는 기록 목록 1번만 (아고다 번호 + 이름 열쇠)
-      const calls = fetchSpy.mock.calls.filter(([u]) => String(u).includes('lodging'));
+      // 링크를 넣었으니 자동 찾기는 안 하고, 서버에는 기록 목록 1번 + 참고 가격 1번 (아고다 번호 + 이름 열쇠)
+      expect(
+        fetchSpy.mock.calls.filter(([u]) => String(u).startsWith('/api/lodging/prices')),
+      ).toHaveLength(1);
+      const calls = fetchSpy.mock.calls.filter(([u]) =>
+        String(u).startsWith('/api/lodging/reports'),
+      );
       expect(calls).toHaveLength(1);
+      expect(fetchSpy.mock.calls.filter(([u]) => String(u).includes('lodging'))).toHaveLength(2);
       expect(calls[0]![0]).toContain('hotelKey=agoda%3A706347');
       expect(calls[0]![0]).toContain('altKey=name');
       expect(await screen.findByText(/아직 기록이 없어요/)).toBeInTheDocument();
@@ -306,6 +314,8 @@ describe('숙소 최저가 (실험실, docs/28)', () => {
       // 자동 재시도 없음 — 찾기 1번 + 기록 1번
       expect(count('/api/lodging/lookup')).toBe(1);
       expect(count('/api/lodging/reports')).toBe(1);
+      expect(count('/api/lodging/prices')).toBe(1);
+      expect(screen.getByText('참고 가격을 불러오지 못했어요')).toBeInTheDocument();
       // 검색 중에는 버튼 이름이 "찾는 중…" — 다시 [검색]이 될 때까지 기다렸다 누른다 (느린 CI)
       for (let i = 0; i < 6; i++)
         await user.click(await screen.findByRole('button', { name: '검색' }));
@@ -314,6 +324,71 @@ describe('숙소 최저가 (실험실, docs/28)', () => {
       // 종류마다 1분에 5번까지만 서버로
       expect(count('/api/lodging/lookup')).toBe(5);
       expect(count('/api/lodging/reports')).toBe(5);
+      expect(count('/api/lodging/prices')).toBe(5);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('구글 호텔 참고 가격: 싼 순 5곳 + 접힌 나머지, 같은 조건은 다시 묻지 않음, 무료량이 끝나면 구글 호텔 창 열기', async () => {
+    setLab('lodgingPrice', true, { silent: true });
+    let quota = false;
+    const prices = Array.from({ length: 7 }, (_, i) => ({
+      source: `site${i}`,
+      nightlyKrw: 100000 + i * 1000,
+      ...(i === 1 ? { official: true } : {}),
+    }));
+    const fetchSpy = vi.fn(async (url: string) => {
+      const u = String(url);
+      if (u.startsWith('/api/lodging/prices'))
+        return quota
+          ? Response.json({ error: 'prices_quota' }, { status: 503 })
+          : Response.json({ hotel: { name: '호텔 그레이스리 신주쿠', prices } });
+      if (u.startsWith('/api/lodging/lookup')) return Response.json({ candidates: [] });
+      return Response.json({ reports: [] });
+    });
+    vi.stubGlobal('fetch', fetchSpy);
+    const count = () =>
+      fetchSpy.mock.calls.filter(([u]) => String(u).startsWith('/api/lodging/prices')).length;
+    try {
+      const user = userEvent.setup();
+      show(`/lodging-price?trip=${tripId}`);
+      await user.type(await screen.findByLabelText('숙소 이름'), '그레이스리');
+      await user.click(screen.getByRole('button', { name: '검색' }));
+      const google = await screen.findByRole('region', { name: '구글 호텔 참고 가격' });
+      expect(
+        await within(google).findByText('구글에서 찾은 숙소 · 호텔 그레이스리 신주쿠'),
+      ).toBeInTheDocument();
+      expect(within(google).getByText('1박 100,000원')).toBeInTheDocument();
+      expect(within(google).getByText('공식')).toBeInTheDocument();
+      expect(within(google).getByText('2곳 더 보기')).toBeInTheDocument();
+      const [first] = fetchSpy.mock.calls.filter(([u]) =>
+        String(u).startsWith('/api/lodging/prices'),
+      );
+      expect(new URL(String(first![0]), 'https://x').searchParams.toString()).toBe(
+        'name=%EA%B7%B8%EB%A0%88%EC%9D%B4%EC%8A%A4%EB%A6%AC&checkIn=2026-11-24&checkOut=2026-11-27&adults=2',
+      );
+
+      // 같은 조건 다시 검색 → 기기 캐시 (요청 0)
+      await user.click(await screen.findByRole('button', { name: '검색' }));
+      await within(await screen.findByRole('region', { name: '구글 호텔 참고 가격' })).findByText(
+        '1박 100,000원',
+      );
+      expect(count()).toBe(1);
+
+      // 날짜를 바꿨는데 무료량이 끝났으면 안내 + 구글 호텔 창 열기
+      quota = true;
+      const out = screen.getByLabelText('체크아웃');
+      await user.clear(out);
+      await user.type(out, '2026-11-26');
+      await user.click(await screen.findByRole('button', { name: '검색' }));
+      const after = await screen.findByRole('region', { name: '구글 호텔 참고 가격' });
+      expect(await within(after).findByText(/이번 달 참고 가격을 다 썼어요/)).toBeInTheDocument();
+      expect(within(after).getByRole('link', { name: '구글 호텔에서 보기' })).toHaveAttribute(
+        'href',
+        expect.stringContaining('google.com/travel/search'),
+      );
+      expect(count()).toBe(2);
     } finally {
       vi.unstubAllGlobals();
     }

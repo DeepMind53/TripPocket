@@ -98,6 +98,24 @@ export interface LodgingReportView extends Omit<LodgingReportInput, 'city'> {
   mine: boolean;
 }
 
+/**
+ * 구글 호텔 참고 가격 (docs/28 §4.3, B): 서버 메모리에만 6시간, 저장·공유하지 않는다.
+ * 금액은 원화 정수, 예약처마다 가장 싼 1줄, 1박 가격 오름차순
+ */
+export interface HotelPriceView {
+  source: string;
+  nightlyKrw: number;
+  totalKrw?: number;
+  /** 숙소 공식 사이트 */
+  official?: true;
+}
+export interface HotelPricesView {
+  /** 구글이 고른 숙소 이름 (입력한 이름과 다를 수 있어 화면에 보여 준다) */
+  name: string;
+  prices: HotelPriceView[];
+}
+export const HOTEL_PRICE_RULES = { maxRows: 12, maxNights: 30, adultsMax: 8 } as const;
+
 /** 1박 가격 (총액이면 박 수로 나눔, 반올림) */
 export const nightlyOf = (r: Pick<LodgingReportInput, 'price' | 'priceType' | 'nights'>) =>
   r.priceType === 'total' ? Math.round(r.price / r.nights) : r.price;

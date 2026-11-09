@@ -1,22 +1,39 @@
 import type { FastifyInstance } from 'fastify';
 import {
+  HOTEL_PRICE_RULES,
   HotelKeySchema,
   LodgingReportInputSchema,
   nightlyOf,
   REPORT_RULES,
   type LodgingReportInput,
 } from '@trippocket/shared';
+import type { Config } from '../config';
 import type { Db } from '../db/database';
 import { requireUser } from '../auth/session';
 import { lodgingReportsRepo } from '../repositories/lodgingReportsRepo';
 import { latestFx } from '../services/fx';
 import { agodaLookup, LookupPaused } from '../services/agodaLookup';
 import { ApiPaused } from '../services/apiUsage';
+import { hotelPrices, PricesPaused, type PriceQuery } from '../services/serpapiHotels';
 import { statDate } from '../repositories/statsRepo';
 import { requireAdmin } from './admin';
 
 /** 자동 찾기 한도 (Q6 확정: 넉넉하게 — 검색 분당 5·하루 60) */
 export const LOOKUP_RULES = { perMinute: 5, perDay: 60, concurrent: 2 } as const;
+
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+/** 참고 가격 검색 조건 검사 (docs/28 §8.2): 이름 1~80자, 체크아웃 > 체크인, 최대 30박, 인원 1~8 */
+export function priceQueryOf(q: Record<string, string | undefined>): PriceQuery | null {
+  const name = (q.name ?? '').trim();
+  const { checkIn = '', checkOut = '' } = q;
+  const adults = /^\d{1,2}$/.test(q.adults ?? '') ? Number(q.adults) : 0;
+  if (!name || name.length > 80 || !DATE_RE.test(checkIn) || !DATE_RE.test(checkOut)) return null;
+  const nights = (Date.parse(checkOut) - Date.parse(checkIn)) / 86_400_000;
+  if (!(nights >= 1 && nights <= HOTEL_PRICE_RULES.maxNights)) return null;
+  if (adults < 1 || adults > HOTEL_PRICE_RULES.adultsMax) return null;
+  return { name, checkIn, checkOut, adults };
+}
 
 /**
  * 1박 원화 환산이 정상 범위인지 (docs/28 §7.3). 환율을 모르는 통화는 금액 상한만 본다
@@ -34,7 +51,7 @@ function priceInRange(db: Db, r: LodgingReportInput): boolean {
  * 숙소 가격 기록 (docs/28 §7, ADR-0010). 모두 로그인 필요. 기록은 로그인한 모두가 보고, 누가 적었는지는 mine만.
  * 외부 요청 없음 — 우리 서버 DB만
  */
-export function lodgingRoutes(app: FastifyInstance, db: Db): void {
+export function lodgingRoutes(app: FastifyInstance, db: Db, config: Config): void {
   const auth = { preHandler: requireUser(db) };
   const repo = lodgingReportsRepo(db);
 
@@ -126,6 +143,41 @@ export function lodgingRoutes(app: FastifyInstance, db: Db): void {
         return reply.code(502).send({ error: 'lookup_failed' });
       } finally {
         running -= 1;
+      }
+    },
+  );
+
+  // 구글 호텔 참고 가격 (docs/28 §4.3 B): 이름·날짜·인원 → 예약처별 가격. 외부 요청 최대 2번(캐시면 0), 저장 안 함
+  const priceUses = new Map<string, { day: string; n: number }>();
+  let pricing = 0;
+  app.get<{ Querystring: Record<string, string | undefined> }>(
+    '/api/lodging/prices',
+    { ...auth, config: { rateLimit: { max: LOOKUP_RULES.perMinute, timeWindow: '1 minute' } } },
+    async (req, reply) => {
+      const q = priceQueryOf(req.query);
+      if (!q) return reply.code(400).send({ error: 'bad_request' });
+      if (!config.SERPAPI_KEY) return reply.code(503).send({ error: 'prices_off' });
+      const me = req.user!.userId;
+      const day = statDate();
+      const used = priceUses.get(me);
+      const n = used?.day === day ? used.n : 0;
+      if (n >= LOOKUP_RULES.perDay)
+        return reply.code(429).send({ error: 'prices_daily', limit: LOOKUP_RULES.perDay });
+      if (pricing >= LOOKUP_RULES.concurrent) return reply.code(503).send({ error: 'busy' });
+      pricing += 1;
+      try {
+        priceUses.set(me, { day, n: n + 1 });
+        reply.header('cache-control', 'no-store');
+        return { hotel: await hotelPrices(config.SERPAPI_KEY, q) };
+      } catch (e) {
+        // 무료량 끝(우리 95% 상한 또는 SerpApi가 알림) → 화면은 구글 호텔 창 열기 버튼 (Q8)
+        if (e instanceof ApiPaused || (e instanceof PricesPaused && e.quota))
+          return reply.code(503).send({ error: 'prices_quota' });
+        if (e instanceof PricesPaused) return reply.code(503).send({ error: 'prices_paused' });
+        req.log.warn({ err: String(e) }, 'hotel prices failed');
+        return reply.code(502).send({ error: 'prices_failed' });
+      } finally {
+        pricing -= 1;
       }
     },
   );

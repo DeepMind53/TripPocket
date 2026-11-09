@@ -14,6 +14,8 @@ import {
 } from '../../domain/lodgingReports';
 import { ReportFormSheet, type ReportTarget } from './ReportFormSheet';
 import { ReportsSection } from './ReportsSection';
+import { GooglePricesSection, type GooglePrices } from './GooglePricesSection';
+import { loadHotelPrices } from '../../data/hotelPrices';
 import {
   AGODA_DEFAULT_CID,
   AGODA_PROMOS,
@@ -87,9 +89,19 @@ export function LodgingPricePanel({ initial }: { initial: Partial<RecentStay> })
   const [manual, setManual] = useState(!!initial.agoda);
   const [reports, setReports] = useState<PanelReports>({ status: 'idle' });
   const [rates, setRates] = useState<Record<string, number> | undefined>(undefined);
+  // 구글 호텔 참고 가격 (null = 키가 없어 꺼짐 또는 아직 검색 전)
+  const [google, setGoogle] = useState<GooglePrices | null>(null);
   const abort = useRef<AbortController | null>(null);
+  // 참고 가격은 후보를 바꿔도 이어서 받도록 따로 취소한다
+  const pricesAbort = useRef<AbortController | null>(null);
   // 화면을 닫으면 진행 중인 요청 취소 (요청을 새로 만들지는 않는다)
-  useEffect(() => () => abort.current?.abort(), []);
+  useEffect(
+    () => () => {
+      abort.current?.abort();
+      pricesAbort.current?.abort();
+    },
+    [],
+  );
 
   const draft: StayQuery = { name: name.trim(), checkIn, checkOut, adults, rooms };
   const error = stayQueryError(draft);
@@ -104,6 +116,8 @@ export function LodgingPricePanel({ initial }: { initial: Partial<RecentStay> })
     setAgodaText(s.agoda ?? '');
     if (s.domestic !== undefined) setDomestic(s.domestic);
     setResult(null);
+    pricesAbort.current?.abort();
+    setGoogle(null);
   };
 
   /** 기록 목록: 누를 때 한 번 (실패해도 다시 부르지 않는다) */
@@ -128,6 +142,21 @@ export function LodgingPricePanel({ initial }: { initial: Partial<RecentStay> })
     setReports({ status: 'loading' });
     countUse('lodgingPrice.search');
     const q = draft;
+    // 참고 가격은 아고다 찾기와 함께 (서버 1번, 같은 조건은 6시간 재사용)
+    pricesAbort.current?.abort();
+    const pctrl = new AbortController();
+    pricesAbort.current = pctrl;
+    setGoogle({ status: 'loading' });
+    void loadHotelPrices(q, pctrl.signal).then((res) => {
+      if (pctrl.signal.aborted) return;
+      setGoogle(
+        res.ok
+          ? { status: 'ready', hotel: res.hotel }
+          : res.reason === 'off'
+            ? null
+            : { status: 'failed', reason: res.reason },
+      );
+    });
     // 아고다: 붙여 넣은 링크 → 없으면 이름으로 자동 찾기 (서버 1번, 못 찾으면 링크 칸을 연다)
     let agoda = parseAgodaLink(agodaText);
     let found: { candidates: AgodaCandidate[]; failed: LookupFail | null } | undefined;
@@ -322,6 +351,7 @@ export function LodgingPricePanel({ initial }: { initial: Partial<RecentStay> })
           agoda={result.agoda}
           domestic={result.domestic}
           found={result.found}
+          google={google}
           onPick={pick}
           reports={reports}
           rates={rates}
@@ -340,6 +370,7 @@ function Results({
   agoda,
   domestic,
   found,
+  google,
   onPick,
   reports,
   rates,
@@ -349,6 +380,7 @@ function Results({
   agoda: AgodaBase | null;
   domestic: boolean;
   found: { candidates: AgodaCandidate[]; failed: LookupFail | null } | undefined;
+  google: GooglePrices | null;
   onPick: (c: AgodaCandidate) => void;
   reports: PanelReports;
   rates: Record<string, number> | undefined;
@@ -419,6 +451,14 @@ function Results({
 
   return (
     <div className="flex flex-col gap-5">
+      {google && (
+        <GooglePricesSection
+          state={google}
+          googleUrl={
+            apps.find((l) => l.app === 'google')?.url ?? 'https://www.google.com/travel/search'
+          }
+        />
+      )}
       <ReportsSection
         state={
           arranged
