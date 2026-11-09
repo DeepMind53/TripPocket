@@ -66,18 +66,20 @@ export function lodgingReportsRepo(db: Db) {
   return {
     /** 그 숙소의 30일 안 기록: 같은 날짜·인원 먼저, 그 안에서 최근 순 (가격 순 정렬은 화면에서 — 통화 환산) */
     list(
-      hotelKey: string,
+      hotelKeys: readonly string[],
       me: string,
       stay: { checkIn?: string; nights?: number; adults?: number },
       now = Date.now(),
     ): LodgingReportView[] {
+      const keys = hotelKeys.slice(0, 2);
       const rows = db
         .prepare(
-          `SELECT * FROM lodging_price_reports WHERE hotel_key = ? AND expires_at > ?
+          `SELECT * FROM lodging_price_reports WHERE hotel_key IN (${keys.map(() => '?').join(',')})
+           AND expires_at > ?
            ORDER BY (check_in = ? AND nights = ? AND adults = ?) DESC, seen_at DESC LIMIT ?`,
         )
         .all(
-          hotelKey,
+          ...keys,
           new Date(now).toISOString(),
           stay.checkIn ?? '',
           stay.nights ?? 0,

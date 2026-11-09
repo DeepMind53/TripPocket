@@ -120,6 +120,19 @@ describe('숙소 가격 기록 (docs/28 §7, ADR-0010)', () => {
     // 다른 경로는 따로
     await call('A', 'POST', '/api/lodging/reports', report({ route: 'visa' }));
     expect((await list('B')).reports).toHaveLength(2);
+    // 이름 열쇠로 적은 기록도 두 번째 열쇠로 함께
+    await call('B', 'POST', '/api/lodging/reports', report({ hotelKey: 'name:그레이스리신주쿠|' }));
+    expect(
+      (
+        await list(
+          'A',
+          `hotelKey=agoda:706347&altKey=${encodeURIComponent('name:그레이스리신주쿠|')}`,
+        )
+      ).reports,
+    ).toHaveLength(3);
+    expect(
+      (await call('A', 'GET', '/api/lodging/reports?hotelKey=agoda:1&altKey=bad')).statusCode,
+    ).toBe(400);
   });
 
   it('남의 기록은 못 지우고, 관리자는 지울 수 있다', async () => {

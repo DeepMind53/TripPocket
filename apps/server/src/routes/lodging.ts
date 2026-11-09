@@ -33,13 +33,23 @@ export function lodgingRoutes(app: FastifyInstance, db: Db): void {
   const repo = lodgingReportsRepo(db);
 
   app.get<{
-    Querystring: { hotelKey?: string; checkIn?: string; nights?: string; adults?: string };
+    Querystring: {
+      hotelKey?: string;
+      altKey?: string;
+      checkIn?: string;
+      nights?: string;
+      adults?: string;
+    };
   }>(
     '/api/lodging/reports',
     { ...auth, config: { rateLimit: { max: 10, timeWindow: '1 minute' } } },
     async (req, reply) => {
       const key = HotelKeySchema.safeParse(req.query.hotelKey);
       if (!key.success) return reply.code(400).send({ error: 'bad_request' });
+      // 같은 숙소를 아고다 번호·이름 두 열쇠로 적었을 수 있어 하나 더 받는다 (docs/28 §5)
+      const alt = req.query.altKey ? HotelKeySchema.safeParse(req.query.altKey) : null;
+      if (alt && !alt.success) return reply.code(400).send({ error: 'bad_request' });
+      const keys = alt?.success && alt.data !== key.data ? [key.data, alt.data] : [key.data];
       reply.header('cache-control', 'no-store');
       const num = (s: string | undefined) => (s && /^\d{1,2}$/.test(s) ? Number(s) : undefined);
       const checkIn = /^\d{4}-\d{2}-\d{2}$/.test(req.query.checkIn ?? '')
@@ -48,7 +58,7 @@ export function lodgingRoutes(app: FastifyInstance, db: Db): void {
       const nights = num(req.query.nights);
       const adults = num(req.query.adults);
       return {
-        reports: repo.list(key.data, req.user!.userId, {
+        reports: repo.list(keys, req.user!.userId, {
           ...(checkIn ? { checkIn } : {}),
           ...(nights ? { nights } : {}),
           ...(adults ? { adults } : {}),

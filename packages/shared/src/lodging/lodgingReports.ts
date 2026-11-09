@@ -43,7 +43,14 @@ export const REPORT_RULES = {
  */
 export function hotelKeyFor(name: string, city?: string, agodaHid?: number): string {
   if (agodaHid && Number.isInteger(agodaHid) && agodaHid > 0) return `agoda:${agodaHid}`;
-  return `name:${normalizeName(name)}|${normalizeName(city ?? '')}`.slice(0, 130);
+  // "호텔"처럼 흔한 말뿐이면 그 말을 남긴다 (열쇠가 비지 않게)
+  const n =
+    normalizeName(name) ||
+    name
+      .normalize('NFKC')
+      .toLowerCase()
+      .replace(/[^\p{L}\p{N}]/gu, '');
+  return `name:${n.slice(0, 100)}|${normalizeName(city ?? '').slice(0, 40)}`;
 }
 
 const COMMON_WORDS = /\b(the|hotel|hotels|resort|inn)\b|호텔|리조트/g;

@@ -40,6 +40,9 @@ export const AGODA_ROUTES = [
   { id: 'airSeoul', group: 'airline', cid: 1800120 },
 ] as const satisfies readonly AgodaRoute[];
 
+/** 경로 id (기본 경로 포함) — 기록의 route 칸과 문구 키 */
+export type AgodaRouteId = (typeof AGODA_ROUTES)[number]['id'] | 'default';
+
 /** 아고다 공식 카드·결제 할인 안내 페이지 (숙소 링크 아님) — www.agoda.com/ko-kr/<이름> */
 export const AGODA_PROMOS = [
   'kakaopaypromo',

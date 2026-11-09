@@ -4,6 +4,7 @@ import { createMemoryRouter, RouterProvider } from 'react-router';
 import { routes } from '../../app/router';
 import { resetLocalDb } from '../../data/dev';
 import { setLab } from '../../data/labsStore';
+import { resetReportGuards } from '../../data/lodgingReports';
 import { bookingRepo } from '../../data/repositories/bookingRepo';
 import { tripRepo } from '../../data/repositories/tripRepo';
 import { Toaster } from '../../shared/ui';
@@ -12,6 +13,7 @@ let tripId = '';
 beforeEach(async () => {
   await resetLocalDb();
   localStorage.removeItem('tp-lodging-recent');
+  resetReportGuards();
   tripId = (
     await tripRepo.create({
       title: '도쿄',
@@ -50,9 +52,11 @@ describe('숙소 최저가 (실험실, docs/28)', () => {
     expect(screen.queryByRole('link', { name: /최저가 비교/ })).toBeNull();
   });
 
-  it('예약 카드 → 이름·날짜가 채워지고, 아고다 링크를 붙이면 경로 21곳 링크 (요청 없음)', async () => {
+  it('예약 카드 → 이름·날짜가 채워지고, 아고다 링크를 붙이면 경로 21곳 링크 (요청은 기록 목록 1번)', async () => {
     setLab('lodgingPrice', true, { silent: true });
-    const fetchSpy = vi.fn(async (_url: string) => Response.json({}));
+    const fetchSpy = vi.fn(async (url: string) =>
+      Response.json(String(url).startsWith('/api/lodging/reports') ? { reports: [] } : {}),
+    );
     vi.stubGlobal('fetch', fetchSpy);
     try {
       const user = userEvent.setup();
@@ -106,8 +110,12 @@ describe('숙소 최저가 (실험실, docs/28)', () => {
       await user.click(within(apps).getByRole('link', { name: 'NOL 열기' }));
       expect(await navigator.clipboard.readText()).toBe('호텔 그레이스리 신주쿠');
 
-      // 링크만 만든다 — 서버·외부 요청 없음
-      expect(fetchSpy.mock.calls.filter(([u]) => String(u).includes('lodging'))).toEqual([]);
+      // 링크는 웹에서 만들고, 서버에는 기록 목록 1번만 (아고다 번호 + 이름 열쇠)
+      const calls = fetchSpy.mock.calls.filter(([u]) => String(u).includes('lodging'));
+      expect(calls).toHaveLength(1);
+      expect(calls[0]![0]).toContain('hotelKey=agoda%3A706347');
+      expect(calls[0]![0]).toContain('altKey=name');
+      expect(await screen.findByText(/아직 기록이 없어요/)).toBeInTheDocument();
       // 최근 검색에 남는다 (아고다 링크 포함)
       expect(JSON.parse(localStorage.getItem('tp-lodging-recent')!)[0]).toMatchObject({
         name: '호텔 그레이스리 신주쿠',
@@ -133,6 +141,112 @@ describe('숙소 최저가 (실험실, docs/28)', () => {
     await user.type(out, '2026-11-20');
     expect(screen.getByRole('alert')).toHaveTextContent('체크아웃은 체크인 뒤 날짜여야 해요');
     expect(screen.getByRole('button', { name: '검색' })).toBeDisabled();
+  });
+
+  it('가격 적기: 저장 1번 → 목록에 바로 붙음(다시 불러오지 않음), 내 기록 삭제, 돌아오면 [적기] 한 번', async () => {
+    setLab('lodgingPrice', true, { silent: true });
+    const saved = {
+      id: 'r1',
+      hotelKey: 'name:신주쿠|',
+      hotelName: '신주쿠 호텔',
+      checkIn: '2026-11-24',
+      nights: 3,
+      adults: 2,
+      rooms: 1,
+      site: 'tripcom',
+      price: 135000,
+      priceType: 'nightly',
+      currency: 'KRW',
+      tax: 'unknown',
+      tags: ['member'],
+      seenOn: '2026-11-09',
+      mine: true,
+    };
+    const fetchSpy = vi.fn(async (url: string, init?: RequestInit) => {
+      const u = String(url);
+      if (u.startsWith('/api/lodging/reports') && init?.method === 'POST')
+        return Response.json({ report: saved });
+      if (u.startsWith('/api/lodging/reports/') && init?.method === 'DELETE')
+        return Response.json({ ok: true });
+      if (u.startsWith('/api/lodging/reports'))
+        return Response.json({
+          reports: [{ ...saved, id: 'r0', site: 'booking', price: 128000, mine: false }],
+        });
+      return Response.json({});
+    });
+    vi.stubGlobal('fetch', fetchSpy);
+    try {
+      const user = userEvent.setup();
+      show(`/lodging-price?trip=${tripId}`);
+      await user.type(await screen.findByLabelText('숙소 이름'), '신주쿠 호텔');
+      await user.click(screen.getByRole('button', { name: '검색' }));
+      const list = await screen.findByRole('region', { name: '다른 사람들이 본 가격 · 30일' });
+      expect(await within(list).findByText('1박 128,000원')).toBeInTheDocument();
+      // 작성자 이름은 없다
+      expect(within(list).queryByText(/닉|User#/)).toBeNull();
+
+      // 링크를 눌러 나갔다가 돌아오면 그 줄에 [적기]
+      const apps = screen.getByRole('region', { name: '다른 앱에서 찾기' });
+      await user.click(within(apps).getByRole('link', { name: '트립닷컴 열기' }));
+      Object.defineProperty(document, 'visibilityState', { value: 'hidden', configurable: true });
+      document.dispatchEvent(new Event('visibilitychange'));
+      Object.defineProperty(document, 'visibilityState', { value: 'visible', configurable: true });
+      document.dispatchEvent(new Event('visibilitychange'));
+      expect(await screen.findByText('방금 본 가격을 적을까요')).toBeInTheDocument();
+      await user.click(screen.getByRole('button', { name: '적기' }));
+
+      const sheet = await screen.findByRole('dialog', { name: /가격 적기 · 트립닷컴/ });
+      const save = within(sheet).getByRole('button', { name: '저장' });
+      expect(save).toBeDisabled();
+      await user.type(within(sheet).getByLabelText('본 가격'), '135000');
+      await user.click(within(sheet).getByRole('button', { name: '회원가' }));
+      await user.click(save);
+      await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+      const posts = fetchSpy.mock.calls.filter(([, i]) => i?.method === 'POST');
+      expect(posts).toHaveLength(1);
+      expect(JSON.parse(String(posts[0]![1]!.body))).toMatchObject({
+        site: 'tripcom',
+        price: 135000,
+        nights: 3,
+        tags: ['member'],
+      });
+      expect(within(list).getByText('1박 135,000원')).toBeInTheDocument();
+      // 목록은 처음 1번만 불렀다
+      expect(
+        fetchSpy.mock.calls.filter(
+          ([u, i]) => String(u).startsWith('/api/lodging/reports?') && !i?.method,
+        ),
+      ).toHaveLength(1);
+
+      await user.click(within(list).getByRole('button', { name: '트립닷컴 내 기록 지우기' }));
+      await user.click(await screen.findByRole('button', { name: '삭제' }));
+      await waitFor(() => expect(within(list).queryByText('1박 135,000원')).toBeNull());
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('기록을 못 불러오면 멈추고, 연타는 앞에서 막는다', async () => {
+    setLab('lodgingPrice', true, { silent: true });
+    const fetchSpy = vi.fn(async () => new Response('x', { status: 500 }));
+    vi.stubGlobal('fetch', fetchSpy);
+    try {
+      const user = userEvent.setup();
+      show(`/lodging-price?trip=${tripId}`);
+      await user.type(await screen.findByLabelText('숙소 이름'), '신주쿠 호텔');
+      await user.click(screen.getByRole('button', { name: '검색' }));
+      expect(await screen.findByText(/기록을 불러오지 못했어요/)).toBeInTheDocument();
+      // 자동 재시도 없음
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
+      for (let i = 0; i < 6; i++) {
+        await user.click(screen.getByRole('button', { name: '검색' }));
+        await screen.findByText(/기록을 불러오지 못했어요/);
+      }
+      // 1분에 5번까지만 서버로
+      expect(fetchSpy).toHaveBeenCalledTimes(5);
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 
   it('빠른 메뉴 바로가기는 실험을 켰을 때만 고를 수 있다', async () => {
