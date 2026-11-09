@@ -101,11 +101,28 @@ export function NewTripPage() {
         subtitle={t('newTrip.progress', { step })}
         backTo="/trips"
       />
-      <div aria-hidden="true" className="mx-5 h-1 overflow-hidden rounded-full bg-bg-subtle">
-        <div
-          className="h-full rounded-full bg-primary transition-[width] duration-300"
-          style={{ width: `${(step / 3) * 100}%` }}
-        />
+      {/* 단계 노선 (docs/29 §7.3): 역 3개, 지난 역 채움·지금 역 고리. 글자 "1/3"은 위 부제목에 그대로 */}
+      <div aria-hidden="true" className="mx-5 flex items-center">
+        {([1, 2, 3] as const).map((n) => (
+          <span key={n} className={n > 1 ? 'flex flex-1 items-center' : 'flex items-center'}>
+            {n > 1 && (
+              <span
+                className={`h-1 flex-1 rounded-full transition-colors ${n <= step ? 'bg-primary' : 'bg-line'}`}
+              />
+            )}
+            <span
+              className={`grid size-5 shrink-0 place-items-center rounded-full border-[3px] font-mono text-micro leading-none transition-colors ${
+                n < step
+                  ? 'border-primary bg-primary text-on-primary'
+                  : n === step
+                    ? 'border-primary bg-surface text-primary shadow-[0_0_0_3px_color-mix(in_srgb,var(--tp-primary)_20%,transparent)]'
+                    : 'border-line bg-surface text-fg-muted'
+              }`}
+            >
+              {n}
+            </span>
+          </span>
+        ))}
       </div>
 
       {step === 1 && (

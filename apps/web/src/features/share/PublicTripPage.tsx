@@ -6,7 +6,7 @@ import { shareApi } from '../../data/api/share';
 import { useTranslation } from '../../i18n';
 import { useTimeText } from '../../shared/hooks/useTimeText';
 import { formatMonthDay, formatPeriod } from '../../shared/lib/dateFormat';
-import { EmptyState, Spinner } from '../../shared/ui';
+import { EmptyState, RouteLine, RouteStop, Spinner, routeColor } from '../../shared/ui';
 
 /**
  * S-40 보기 전용 공유 일정 — 로그인 없이, 기기에 저장하지 않고 화면에만 보여 준다
@@ -63,40 +63,52 @@ export function PublicTripPage() {
           const bk = bookings.filter((b) => b.start.date === date);
           if (day.length === 0 && bk.length === 0) return null;
           return (
-            <section key={date} className="overflow-hidden rounded-2xl border border-line">
-              <h2 className="tabular bg-bg-subtle px-4 py-2.5 text-body-1 font-semibold">
-                {t('plan.dayN', { n: i + 1 })} · {formatMonthDay(date)}
+            // 일정 화면과 같은 노선 모양 (docs/29 §7.22) — 읽기 전용, 정보는 그대로
+            <section key={date} className="flex flex-col">
+              <h2 className="tabular flex items-center gap-2 border-b border-line pb-2 text-body-1 font-semibold">
+                <span
+                  className="rounded-full px-2.5 py-0.5 text-caption font-semibold text-on-primary"
+                  style={{ background: routeColor(i).ink }}
+                >
+                  {t('plan.dayN', { n: i + 1 })}
+                </span>
+                {formatMonthDay(date)}
               </h2>
-              <ul className="flex flex-col divide-y divide-line px-4">
-                {bk.map((b) => (
-                  <li key={b.id} className="flex gap-3 py-3 text-body-2">
-                    <span className="tabular w-16 shrink-0 text-caption text-fg-sub">
-                      {time(b.start.time) ?? ''}
-                    </span>
-                    <span className="flex-1">
-                      {b.title}{' '}
-                      <span className="text-caption text-fg-muted">
-                        · {t(`bookingKind.${b.kind}`)}
+              {bk.length > 0 && (
+                <ul className="flex flex-col divide-y divide-line pt-1">
+                  {bk.map((b) => (
+                    <li key={b.id} className="flex gap-3 py-3 text-body-2">
+                      <span className="tabular w-16 shrink-0 text-caption text-fg-sub">
+                        {time(b.start.time) ?? ''}
                       </span>
-                    </span>
-                  </li>
-                ))}
-                {day.map((it) => (
-                  <li key={it.id} className="flex gap-3 py-3 text-body-2">
-                    <span className="tabular w-16 shrink-0 text-caption text-fg-sub">
-                      {time(it.startTime) ?? ''}
-                    </span>
-                    <span className="flex min-w-0 flex-1 flex-col">
-                      {it.title}
-                      {it.place?.address && (
-                        <span className="truncate text-caption text-fg-muted">
-                          {it.place.address}
+                      <span className="flex-1">
+                        {b.title}{' '}
+                        <span className="text-caption text-fg-muted">
+                          · {t(`bookingKind.${b.kind}`)}
                         </span>
-                      )}
-                    </span>
-                  </li>
-                ))}
-              </ul>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {day.length > 0 && (
+                <RouteLine
+                  label={`${t('plan.dayN', { n: i + 1 })} · ${formatMonthDay(date)}`}
+                  dayIndex={i}
+                  className="pt-3"
+                >
+                  {day.map((it, n) => (
+                    <RouteStop
+                      key={it.id}
+                      number={it.kind === 'note' ? undefined : n + 1}
+                      title={it.title}
+                      meta={it.place?.address}
+                      time={time(it.startTime) ?? undefined}
+                      last={n === day.length - 1}
+                    />
+                  ))}
+                </RouteLine>
+              )}
             </section>
           );
         })}

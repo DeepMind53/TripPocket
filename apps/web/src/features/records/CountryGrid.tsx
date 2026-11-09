@@ -1,6 +1,7 @@
 import { flagEmoji } from '@trippocket/shared';
 import { useState } from 'react';
 import { useTranslation } from '../../i18n';
+import { Stamp } from '../../shared/ui';
 
 /** 처음 보이는 나라 수 (3줄 × 3) — 넘으면 "+ 더보기" */
 const SHOWN = 9;
@@ -14,8 +15,8 @@ function countryName(code: string): string {
 }
 
 /**
- * 기록 탭 가 본 나라 (사용자 요청 2026-10-27): "국기 나라 이름" 칸을 한 줄에 3개, 3줄까지.
- * 많이 간 나라 먼저, 9개가 넘으면 더보기
+ * 기록 탭 가 본 나라 (사용자 요청 2026-10-27): 한 줄에 3개, 3줄까지. 많이 간 나라 먼저, 9개가 넘으면 더보기.
+ * 여권 도장 모양 (docs/29 §7.21, 사용자 결정 Q6 2026-11-09) — 보여 주는 정보(나라 이름·여행 횟수)는 그대로
  */
 export function CountryGrid({
   codes,
@@ -30,17 +31,19 @@ export function CountryGrid({
   const shown = all ? sorted : sorted.slice(0, SHOWN);
   return (
     <div className="flex flex-col gap-2">
-      <ul aria-label={t('records.countries')} className="grid grid-cols-3 gap-2">
-        {shown.map((c) => (
-          <li
-            key={c}
-            className="flex min-h-14 flex-col items-center justify-center rounded-card border border-line bg-surface px-1 py-2 text-center"
-          >
-            <span className="w-full truncate text-body-2 font-semibold">
-              {flagEmoji(c)} {countryName(c)}
-            </span>
-            <span className="tabular text-micro text-fg-muted">
-              {t('records.tripsN', { n: counts.get(c) ?? 0 })}
+      <ul aria-label={t('records.countries')} className="grid grid-cols-3 gap-3 px-1">
+        {shown.map((c, i) => (
+          <li key={c} className="flex flex-col items-center gap-1">
+            <Stamp
+              city={countryName(c)}
+              period={t('records.tripsN', { n: counts.get(c) ?? 0 })}
+              dayIndex={i}
+              seed={c}
+              label={`${countryName(c)} ${t('records.tripsN', { n: counts.get(c) ?? 0 })}`}
+            />
+            {/* 국기는 도장 아래 작게 (도장 그림 안에는 이모지를 넣지 않는다) */}
+            <span aria-hidden="true" className="text-body-2 leading-none">
+              {flagEmoji(c)}
             </span>
           </li>
         ))}

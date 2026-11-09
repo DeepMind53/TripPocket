@@ -1,5 +1,12 @@
 import { InlineIcon } from '../../shared/ui/InlineIcon';
-import { getTripStatus, todayIn, type Trip, type TripStatus, flagEmoji } from '@trippocket/shared';
+import {
+  dayNumberOf,
+  getTripStatus,
+  todayIn,
+  type Trip,
+  type TripStatus,
+  flagEmoji,
+} from '@trippocket/shared';
 import { ChevronDown, CloudSun, Ellipsis, Plus, Trash2, Users, Map as MapIcon } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from '../../i18n';
@@ -9,7 +16,7 @@ import { useMemberCount, useTripRole } from '../../data/tripRoles';
 import { timeIn, useMinuteClock } from '../../shared/hooks/useMinuteClock';
 import { useRouteSheet } from '../../shared/hooks/useRouteSheet';
 import { formatPeriod, formatTripBadge, formatTripLength } from '../../shared/lib/dateFormat';
-import { BottomSheet, Button, EmptyState, IconButton, TopBar } from '../../shared/ui';
+import { BottomSheet, Button, EmptyState, IconButton, RouteBar, TopBar } from '../../shared/ui';
 import { deleteTripWithUndo } from './tripActions';
 
 /** S-02 내 여행 (전체 목록 — 홈·기록 탭이 나눠 보여 주고, 이 화면은 "모든 여행"으로 남김) */
@@ -185,6 +192,8 @@ function TripCard({ trip, onMenu }: { trip: Trip; onMenu: (trip: Trip) => void }
   const { t } = useTranslation();
   const today = todayIn(trip.timezone);
   const isPast = getTripStatus(trip.startDate, trip.endDate, today) === 'past';
+  const total = dayNumberOf(trip.startDate, trip.endDate, trip.endDate) ?? 1;
+  const dayNow = dayNumberOf(trip.startDate, trip.endDate, today);
   const now = useMinuteClock(!isPast);
   const localNow = isPast ? null : timeIn(trip.timezone, now);
   const items = useTripItems(trip.id);
@@ -238,6 +247,16 @@ function TripCard({ trip, onMenu }: { trip: Trip; onMenu: (trip: Trip) => void }
                 {role === 'viewer' && ` · ${t('share.role.viewer')}`}
               </span>
             )}
+          </span>
+          {/* 노선 막대 (docs/29 §7.2, 사용자 결정 Q7): 일차 수만큼 노선 색 칸, 오늘 칸 위 점, 지난 날 흐림.
+              배지 글자와 같은 정보라 스크린리더에는 숨긴다 */}
+          <span aria-hidden="true" className="mt-1.5 block">
+            <RouteBar
+              days={total}
+              todayIndex={dayNow === null ? null : dayNow - 1}
+              pastBefore={isPast ? total : dayNow === null ? 0 : dayNow - 1}
+              label={formatTripBadge(trip.startDate, trip.endDate, today)}
+            />
           </span>
         </span>
       </Link>
