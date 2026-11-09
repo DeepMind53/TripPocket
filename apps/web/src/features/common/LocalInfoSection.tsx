@@ -133,10 +133,10 @@ export function LocalInfoSection({ tripId }: { tripId: string }) {
   if (!groups.length && !vouchers.length && !nearbyOn && !arrival && !festivalsOn) return null;
   return (
     <section className="flex flex-col gap-2">
-      <h3 className="text-caption font-bold text-fg-muted">{t('labs.localTitle')}</h3>
+      <h3 className="text-caption font-semibold text-fg-muted">{t('labs.localTitle')}</h3>
       {groups.map((g) => (
         <div key={g.key} className="flex flex-col gap-1.5">
-          <span className="flex items-baseline gap-1.5 text-caption font-bold">
+          <span className="flex items-baseline gap-1.5 text-caption font-semibold">
             <span>
               <InlineIcon icon={g.reference ? Globe : MapPin} />
               {g.title}

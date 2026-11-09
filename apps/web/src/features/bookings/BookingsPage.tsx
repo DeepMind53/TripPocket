@@ -1,6 +1,6 @@
 import type { Booking } from '@trippocket/shared';
 import { BookingNotices } from './BookingNotices';
-import { Plus, BedDouble, Plane } from 'lucide-react';
+import { Plus, BedDouble, Plane, Ticket } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useTranslation } from '../../i18n';
 import { useParams, useSearchParams } from 'react-router';
@@ -61,7 +61,7 @@ export function BookingsPage() {
     <div className="flex flex-col">
       {bookings.length === 0 ? (
         <EmptyState
-          emoji="🎫"
+          icon={Ticket}
           title={t('bookings.emptyTitle')}
           description={t('bookings.emptyDesc')}
           {...(canEdit
@@ -122,7 +122,9 @@ export function BookingsPage() {
                 aria-label={t(`bookings.${g.key}`)}
                 className="flex flex-col gap-2"
               >
-                <h2 className="text-caption font-bold text-fg-muted">{t(`bookings.${g.key}`)}</h2>
+                <h2 className="text-caption font-semibold text-fg-muted">
+                  {t(`bookings.${g.key}`)}
+                </h2>
                 <ul className="flex flex-col gap-2">
                   {list.map((b) => (
                     <BookingCard

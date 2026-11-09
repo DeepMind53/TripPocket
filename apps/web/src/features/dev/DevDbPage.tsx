@@ -121,7 +121,7 @@ function TripCard({ trip }: { trip: Trip }) {
         if (date === null && dayItems.length === 0) return null;
         return (
           <div key={date ?? 'wish'} className="flex flex-col gap-1">
-            <p className="text-caption font-bold text-fg-sub">
+            <p className="text-caption font-semibold text-fg-sub">
               {date ? `${i + 1}일차 · ${date}` : '가고 싶은 곳'}
             </p>
             {dayItems.length === 0 && <p className="text-caption text-fg-muted">일정 없음</p>}

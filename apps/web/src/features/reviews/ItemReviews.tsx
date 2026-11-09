@@ -27,13 +27,13 @@ export function ItemReviews({ data, kind }: { data: Data | null; kind: ReviewKin
 
   return (
     <section aria-label={t('review.sectionTitle')} className="flex flex-col gap-2">
-      <h3 className="text-caption font-bold text-fg-muted">{t('review.sectionTitle')}</h3>
+      <h3 className="text-caption font-semibold text-fg-muted">{t('review.sectionTitle')}</h3>
       {reviews.length === 0 ? (
         <p className="text-caption text-fg-muted">{t('review.none')}</p>
       ) : (
         <>
           <p className="tabular flex flex-wrap items-center gap-x-2 gap-y-0.5 text-caption text-fg-sub">
-            <span className="flex items-center gap-1 text-body-2 font-bold text-fg">
+            <span className="flex items-center gap-1 text-body-2 font-semibold text-fg">
               <Stars value={avg.overall ?? 0} />
               {avg.overall?.toFixed(1)}
               <span className="font-normal text-fg-muted">({summary.count})</span>

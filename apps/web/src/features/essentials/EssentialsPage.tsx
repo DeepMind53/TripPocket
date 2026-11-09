@@ -1,5 +1,5 @@
 import { diffDays, ESSENTIALS_CHECKED_AT, eventsFor, flagEmoji, todayIn } from '@trippocket/shared';
-import { Gift } from 'lucide-react';
+import { Gift, IdCard } from 'lucide-react';
 import { Check, ExternalLink, TriangleAlert } from 'lucide-react';
 import { useState } from 'react';
 import { useParams } from 'react-router';
@@ -49,7 +49,7 @@ export function EssentialsPage() {
         )}
         {s.groups.length === 0 ? (
           <EmptyState
-            emoji="🛂"
+            icon={IdCard}
             title={t('essentials.domesticTitle')}
             description={t('essentials.domesticDesc')}
           />
@@ -61,7 +61,7 @@ export function EssentialsPage() {
             {/* 나라별 이벤트·혜택 (누구나 응모·신청, 끝나면 안 보임) */}
             {events.length > 0 && (
               <section aria-label={t('essentials.events')} className="flex flex-col gap-2">
-                <h2 className="flex items-center gap-1.5 text-body-1 font-bold">
+                <h2 className="flex items-center gap-1.5 text-body-1 font-semibold">
                   <Gift aria-hidden="true" className="size-4 text-primary" />
                   {t('essentials.events')}
                 </h2>
@@ -109,7 +109,7 @@ export function EssentialsPage() {
                 aria-label={g.country?.name ?? t('essentials.common')}
                 className="flex flex-col gap-2"
               >
-                <h2 className="flex items-center gap-2 text-body-1 font-bold">
+                <h2 className="flex items-center gap-2 text-body-1 font-semibold">
                   {g.country ? `${flagEmoji(g.code)} ${g.country.name}` : t('essentials.common')}
                 </h2>
                 {(['must', 'recommend', 'tip'] as const).map((level) => {
@@ -117,7 +117,7 @@ export function EssentialsPage() {
                   if (rows.length === 0) return null;
                   return (
                     <div key={level} className="flex flex-col gap-1">
-                      <h3 className="px-1 text-caption font-bold text-fg-muted">
+                      <h3 className="px-1 text-caption font-semibold text-fg-muted">
                         {t(`essentials.level.${level}`)}
                       </h3>
                       <ul className="flex flex-col divide-y divide-line rounded-card border border-line">

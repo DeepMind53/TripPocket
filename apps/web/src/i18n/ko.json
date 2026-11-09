@@ -430,7 +430,7 @@
     "delete": "{{text}} 삭제",
     "emptyTodo": "아직 할 일이 없어요\n템플릿을 불러오거나 직접 추가하세요",
     "needText": "내용을 입력해 주세요",
-    "allDone": "모두 챙겼어요!",
+    "allDone": "모두 챙겼어요",
     "templateNoNew": "이미 모두 들어 있어요",
     "applyTemplate": "{{name}} 불러오기",
     "templateRename": "{{name}} 이름 바꾸기",
@@ -1404,7 +1404,7 @@
       },
       "lodgingPrice": {
         "name": "숙소 최저가",
-        "desc": "아고다 경로별·예약 앱 링크로\n숙소 가격을 한 번에 비교해요"
+        "desc": "아고다 경로별 · 예약 앱 링크로\n숙소 가격을 한 번에 비교해요"
       }
     },
     "checkoutAt": "오늘 {{time}} 체크아웃 · {{name}}",

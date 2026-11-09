@@ -47,7 +47,7 @@ export function BackupReminder({ firstDataAt }: { firstDataAt: string | null }) 
       <p className="min-w-0 flex-1 text-caption text-fg-sub">
         {state.days === null ? t('backup.reminderNever') : t('backup.reminder', { n: state.days })}
       </p>
-      <Link to="/backup" className="shrink-0 px-2 text-caption font-bold text-primary">
+      <Link to="/backup" className="shrink-0 px-2 text-caption font-semibold text-primary">
         {t('backup.reminderCta')}
       </Link>
       <button

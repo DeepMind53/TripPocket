@@ -176,7 +176,7 @@ export function LodgingPricePanel({ initial }: { initial: Partial<RecentStay> })
     <div className="flex flex-col gap-4">
       {recent.length > 0 && (
         <section aria-label={t('lodgingPrice.recent')} className="flex flex-col gap-1.5">
-          <h3 className="flex items-center gap-1 text-caption font-bold text-fg-muted">
+          <h3 className="flex items-center gap-1 text-caption font-semibold text-fg-muted">
             <History aria-hidden="true" className="size-3.5" />
             {t('lodgingPrice.recent')}
           </h3>
@@ -430,7 +430,7 @@ function Results({
         onDelete={(r) => void remove(r)}
       />
       <section aria-label={t('lodgingPrice.agodaTitle')} className="flex flex-col gap-2">
-        <h3 className="text-body-1 font-bold">{t('lodgingPrice.agodaTitle')}</h3>
+        <h3 className="text-body-1 font-semibold">{t('lodgingPrice.agodaTitle')}</h3>
         {/* 자동으로 찾은 숙소 — 다른 후보가 있으면 고를 수 있다 */}
         {found && found.candidates.length > 0 && agoda && 'hid' in agoda && (
           <div className="flex flex-col gap-1.5 rounded-card bg-bg-subtle px-3 py-2">
@@ -543,7 +543,7 @@ function Results({
       </section>
 
       <section aria-label={t('lodgingPrice.appsTitle')} className="flex flex-col gap-2">
-        <h3 className="text-body-1 font-bold">{t('lodgingPrice.appsTitle')}</h3>
+        <h3 className="text-body-1 font-semibold">{t('lodgingPrice.appsTitle')}</h3>
         <ul className="flex flex-col divide-y divide-line rounded-card border border-line px-3">
           {apps.map((l) => (
             <LinkRow

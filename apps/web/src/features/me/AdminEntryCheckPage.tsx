@@ -52,7 +52,7 @@ export function AdminEntryCheckPage() {
                   </span>
                 </span>
                 <span
-                  className={`shrink-0 text-caption font-bold ${
+                  className={`shrink-0 text-caption font-semibold ${
                     c.match === false ? 'text-danger' : c.match ? 'text-primary' : 'text-fg-muted'
                   }`}
                 >

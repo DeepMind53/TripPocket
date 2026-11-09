@@ -1,3 +1,4 @@
+import { Lock } from 'lucide-react';
 import { Outlet } from 'react-router';
 import { useAuth } from '../data/authStore';
 import { useTranslation } from '../i18n';
@@ -15,7 +16,7 @@ export function AdminGate() {
     <div className="mx-auto min-h-dvh max-w-[560px] pb-10">
       <TopBar title={t('me.groupAdmin')} backTo="/me" />
       <div className="px-5 pt-2">
-        <EmptyState emoji="🔒" title={t('admin.onlyAdmin')} />
+        <EmptyState icon={Lock} title={t('admin.onlyAdmin')} />
       </div>
     </div>
   );

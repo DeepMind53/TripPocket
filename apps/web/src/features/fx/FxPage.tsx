@@ -350,7 +350,7 @@ function CurrencyPicker(props: {
               onClick={() => props.onPick(c)}
               className="flex min-h-12 w-full items-center gap-3 text-left"
             >
-              <span className="tabular w-12 font-bold">{c}</span>
+              <span className="tabular w-12 font-semibold">{c}</span>
               <span className="flex-1 text-body-2">{currencyName(c)}</span>
             </button>
           </li>

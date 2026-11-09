@@ -78,7 +78,7 @@ export function DeviceDataGroup() {
 
   return (
     <section aria-label={t('deviceData.title')} className="flex flex-col gap-2">
-      <h2 className="px-1 text-caption font-bold text-fg-muted">{t('deviceData.title')}</h2>
+      <h2 className="px-1 text-caption font-semibold text-fg-muted">{t('deviceData.title')}</h2>
       <div className="flex flex-col gap-1 rounded-2xl border border-line bg-surface p-4">
         <p className="pb-2 text-caption text-fg-muted">{t('deviceData.desc')}</p>
         <ul className="flex flex-col divide-y divide-line">

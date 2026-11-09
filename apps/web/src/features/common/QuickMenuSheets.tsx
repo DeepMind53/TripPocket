@@ -197,7 +197,7 @@ function TripQuickMenu({ open, setOpen }: { open: boolean; setOpen: (open: boole
                   <span className="truncate text-body-2 font-medium">{b.title}</span>
                   <span className="text-caption text-fg-muted">{t(`bookingKind.${b.kind}`)}</span>
                 </span>
-                <span className="tabular text-body-1 font-bold">{b.confirmationNo}</span>
+                <span className="tabular text-body-1 font-semibold">{b.confirmationNo}</span>
                 <Copy aria-hidden="true" className="size-4 text-primary" />
               </button>
             </li>
@@ -327,7 +327,7 @@ function QuickMenuContent({
       {inTrip && (
         <section className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
-            <h3 className="text-caption font-bold text-fg-muted">{t('quickMenu.shortcuts')}</h3>
+            <h3 className="text-caption font-semibold text-fg-muted">{t('quickMenu.shortcuts')}</h3>
             <button
               type="button"
               onClick={() => setEditOpen(true)}
@@ -363,7 +363,7 @@ function QuickMenuContent({
           type="button"
           aria-expanded={settingsOpen}
           onClick={() => setSettingsOpen(!settingsOpen)}
-          className="flex h-10 items-center justify-between text-caption font-bold text-fg-muted"
+          className="flex h-10 items-center justify-between text-caption font-semibold text-fg-muted"
         >
           {t('quickMenu.quickSettings')}
           <ChevronDown

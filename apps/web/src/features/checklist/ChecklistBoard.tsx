@@ -189,7 +189,7 @@ function DropList({ id, empty, children }: { id: string; empty: boolean; childre
       className={cn('flex min-h-11 flex-col rounded-btn', isOver && 'bg-primary-weak')}
     >
       {children}
-      {empty && <li className="px-3 py-3 text-caption text-fg-muted">{t('edit.dropHere')}</li>}
+      {empty && <li className="px-3 py-2 text-caption text-fg-muted">{t('edit.dropHere')}</li>}
     </ul>
   );
 }

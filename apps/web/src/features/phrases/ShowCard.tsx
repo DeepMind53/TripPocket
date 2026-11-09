@@ -49,7 +49,7 @@ export function ShowCard({
         <X aria-hidden="true" className="size-6" />
       </button>
       <div className="flex flex-1 flex-col items-center justify-center gap-6 text-center">
-        <p className="text-[clamp(1.75rem,8vw,3rem)] leading-tight font-bold whitespace-pre-line [overflow-wrap:anywhere] [word-break:normal]">
+        <p className="text-[clamp(1.75rem,8vw,3rem)] leading-tight font-semibold whitespace-pre-line [overflow-wrap:anywhere] [word-break:normal]">
           {big}
         </p>
         {en && (

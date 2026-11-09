@@ -1,6 +1,6 @@
 import { InlineIcon } from '../../shared/ui/InlineIcon';
 import { getTripStatus, todayIn, type Trip, type TripStatus, flagEmoji } from '@trippocket/shared';
-import { ChevronDown, CloudSun, Ellipsis, Plus, Trash2, Users } from 'lucide-react';
+import { ChevronDown, CloudSun, Ellipsis, Plus, Trash2, Users, Map as MapIcon } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from '../../i18n';
 import { Link, useNavigate } from 'react-router';
@@ -78,7 +78,7 @@ export function TripList({
     <>
       {showActive && trips?.length === 0 && (
         <EmptyState
-          emoji="🗺️"
+          icon={MapIcon}
           title={t('trips.emptyTitle')}
           description={t('trips.emptyDesc')}
           action={
@@ -114,7 +114,7 @@ export function TripList({
         )}
         {only === 'all' && showPast && groups.past.length > 0 && (
           <details className="group">
-            <summary className="flex cursor-pointer list-none items-center gap-1 py-1 text-caption font-bold text-fg-muted">
+            <summary className="flex cursor-pointer list-none items-center gap-1 py-1 text-caption font-semibold text-fg-muted">
               {t('trips.sectionPast')} {groups.past.length}
               <ChevronDown
                 aria-hidden="true"
@@ -165,7 +165,7 @@ function TripSection({
   if (trips.length === 0) return null;
   return (
     <section className="flex flex-col gap-2">
-      <h2 className="text-caption font-bold text-fg-muted">{title}</h2>
+      <h2 className="text-caption font-semibold text-fg-muted">{title}</h2>
       <ul className="flex flex-col gap-2">
         {trips.map((trip) =>
           render ? (

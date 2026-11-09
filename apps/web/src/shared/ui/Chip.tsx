@@ -23,7 +23,7 @@ export function Chip({
       className={cn(
         'inline-flex h-[34px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3 text-caption transition-colors',
         selected
-          ? 'border-transparent bg-primary-weak font-bold text-primary'
+          ? 'border-transparent bg-primary-weak font-semibold text-primary'
           : 'border-line bg-surface text-fg-sub active:bg-bg-subtle',
         className,
       )}

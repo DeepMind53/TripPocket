@@ -1,5 +1,5 @@
 import type { ReviewView } from '@trippocket/shared';
-import { Trash2 } from 'lucide-react';
+import { Trash2, PenLine } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { reviewsApi } from '../../data/api/reviews';
 import { useAuth } from '../../data/authStore';
@@ -44,7 +44,7 @@ export function MyReviewsPage() {
           <ServerOfflineNotice />
         ) : list && list.length === 0 ? (
           <EmptyState
-            emoji="✍️"
+            icon={PenLine}
             title={t('review.myEmpty')}
             description={t('review.myEmptyDesc')}
           />

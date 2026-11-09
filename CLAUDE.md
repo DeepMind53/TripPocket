@@ -42,6 +42,7 @@
 - **MUST** 새 실험 기능은 먼저 실험실(`data/labsStore.ts`)에 넣어 켜고 끌 수 있게 한다 (사용자 요청 2026-10-24).
 - **MUST** AI 추천은 근거(원문 id)가 있는 장소만 보여준다. AI 입력에 좌표·사용자 정보를 넣지 않는다 (`docs/14-ai-recommendations.md` §5, §8).
 - **MUST** 설정 UI는 `docs/12-quick-menu-settings-fx.md` §3.1 컨트롤 선택 원칙을 따른다 (즉시 적용, 저장 버튼 없음).
+- **MUST** 화면 디자인은 unslop 스킬(`.claude/skills/unslop/`, `/unslop` 폴리시 모드)로 통일한다. 기준과 체크리스트는 `docs/11-design-system.md` §13 — 굵기 400~600, 최소 11px, 토큰 색만, 선 아이콘, 느낌표 금지, 긴 글자 줄바꿈 확인. 디자인 변경으로 기능을 빼거나 바꾸지 않는다 (2026-11-09 사용자 요청).
 
 ## 4. 코드 스타일 요약
 

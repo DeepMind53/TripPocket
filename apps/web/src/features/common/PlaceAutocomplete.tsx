@@ -199,7 +199,7 @@ function PlaceOption({ place: p, onPick }: { place: PlaceSummary; onPick: () => 
       >
         <span
           aria-label={t(`placeSearch.source.${p.source}`)}
-          className="grid size-5 shrink-0 place-items-center rounded text-[11px] font-extrabold"
+          className="grid size-5 shrink-0 place-items-center rounded text-[11px] font-semibold"
           style={{ background: b.bg, color: b.fg }}
         >
           {b.letter}

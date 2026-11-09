@@ -439,7 +439,7 @@ function Group({
   const { t } = useTranslation();
   return (
     <section aria-label={title} className="flex flex-col gap-2">
-      <h2 className="px-1 text-caption font-bold text-fg-muted">{title}</h2>
+      <h2 className="px-1 text-caption font-semibold text-fg-muted">{title}</h2>
       <div className="flex flex-col gap-5 rounded-2xl border border-line bg-surface p-4">
         {children}
       </div>

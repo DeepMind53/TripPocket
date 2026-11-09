@@ -60,7 +60,7 @@ export function DestinationAlerts({
 
   return (
     <section aria-label={t('alerts.title')} className="flex flex-col gap-2">
-      <h2 className="text-caption font-bold text-fg-muted">{t('alerts.title')}</h2>
+      <h2 className="text-caption font-semibold text-fg-muted">{t('alerts.title')}</h2>
       <div className="flex flex-col gap-2 rounded-card border border-line p-3">
         {!current ? (
           <p className="text-caption text-fg-muted">{t('alerts.loading')}</p>

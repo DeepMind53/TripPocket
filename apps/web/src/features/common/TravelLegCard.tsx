@@ -24,7 +24,9 @@ export function TravelLegCard({
   const { t } = useTranslation();
   const b = leg.booking;
   const label = (
-    <span className="text-caption font-bold text-primary">{t(`quickMenu.leg.${leg.kind}`)}</span>
+    <span className="text-caption font-semibold text-primary">
+      {t(`quickMenu.leg.${leg.kind}`)}
+    </span>
   );
   const nextLine = next && (
     <span className="tabular truncate border-t border-dashed border-line pt-1.5 text-caption text-fg-sub">
@@ -51,7 +53,7 @@ export function TravelLegCard({
         {label}
         <span className="flex items-center gap-2">
           <Car aria-hidden="true" className="size-5 shrink-0 text-primary" />
-          <span className="tabular text-title-2 font-bold">{b.details?.plate ?? b.title}</span>
+          <span className="tabular text-title-2 font-semibold">{b.details?.plate ?? b.title}</span>
           {b.details?.carModel && (
             <span className="truncate text-caption text-fg-sub">{b.details.carModel}</span>
           )}

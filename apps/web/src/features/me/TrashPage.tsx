@@ -1,4 +1,4 @@
-import { RotateCcw } from 'lucide-react';
+import { RotateCcw, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useTrash, useTrips } from '../../data/hooks';
 import {
@@ -51,13 +51,15 @@ export function TrashPage() {
         <p className="text-caption whitespace-pre-line text-fg-muted">
           {t('trash.desc', { n: TRASH_DAYS })}
         </p>
-        {list && list.length === 0 && <EmptyState emoji="🗑️" title={t('trash.empty')} />}
+        {list && list.length === 0 && <EmptyState icon={Trash2} title={t('trash.empty')} />}
         {GROUPS.map(({ key, kinds }) => {
           const rows = (list ?? []).filter((e) => kinds.includes(e.kind));
           if (rows.length === 0) return null;
           return (
             <section key={key} aria-label={t(`trash.group.${key}`)} className="flex flex-col gap-2">
-              <h2 className="text-caption font-bold text-fg-muted">{t(`trash.group.${key}`)}</h2>
+              <h2 className="text-caption font-semibold text-fg-muted">
+                {t(`trash.group.${key}`)}
+              </h2>
               <ul className="flex flex-col divide-y divide-line rounded-card border border-line">
                 {rows.map((e) => (
                   <li key={`${e.kind}-${e.id}`} className="flex items-center gap-3 px-4 py-2.5">

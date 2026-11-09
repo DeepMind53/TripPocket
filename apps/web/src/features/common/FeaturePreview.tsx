@@ -1,4 +1,4 @@
-import { Footprints, Moon, MoonStar, Sun } from 'lucide-react';
+import { Footprints, Luggage, Map as MapIcon, Moon, MoonStar, Sun } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useTranslation } from '../../i18n';
 import { cn } from '../../shared/lib/cn';
@@ -26,10 +26,10 @@ export function FeaturePreview({ id }: { id: PreviewId }) {
         className="flex min-h-10 items-center gap-2 border-b border-line bg-bg-subtle/60 pl-4"
         style={{ boxShadow: 'inset 4px 0 0 #2F6BFF' }}
       >
-        <span className="rounded-full bg-[#2F6BFF] px-2.5 py-0.5 text-caption font-bold text-white">
+        <span className="rounded-full bg-[#2F6BFF] px-2.5 py-0.5 text-caption font-semibold text-white">
           {t('plan.dayN', { n: 2 })}
         </span>
-        <span className="text-body-2 font-bold">{t('sample.date')}</span>
+        <span className="text-body-2 font-semibold">{t('sample.date')}</span>
       </div>
       <div className={cn('flex flex-col p-3', opts.gap ?? 'gap-1.5')}>{children}</div>
     </div>
@@ -50,10 +50,10 @@ export function FeaturePreview({ id }: { id: PreviewId }) {
       className={cn(
         'flex items-center gap-2 rounded-btn bg-bg-subtle px-2 text-body-2',
         opts.tight ? 'py-1' : 'py-2',
-        opts.now && 'font-bold ring-2 ring-primary',
+        opts.now && 'font-semibold ring-2 ring-primary',
       )}
     >
-      <span className="grid size-6 place-items-center rounded-full bg-[#2F6BFF] text-micro font-bold text-white">
+      <span className="grid size-6 place-items-center rounded-full bg-[#2F6BFF] text-micro font-semibold text-white">
         {opts.done ? '✓' : n}
       </span>
       <span className="tabular w-11 text-caption text-fg-sub">
@@ -106,7 +106,9 @@ export function FeaturePreview({ id }: { id: PreviewId }) {
       return (
         <div className="flex flex-col gap-2">
           <div className="grid h-24 place-items-center rounded-2xl bg-[#E8F0E6] text-caption text-fg-sub dark:bg-[#1f2a22]">
-            🗺 1 · 2 · 3
+            <span className="flex items-center gap-1">
+              <MapIcon aria-hidden="true" className="size-4" />1 · 2 · 3
+            </span>
           </div>
           {day(<>{row(1, '10:00', t('sample.sensoji'))}</>)}
         </div>
@@ -156,7 +158,7 @@ export function FeaturePreview({ id }: { id: PreviewId }) {
       return day(
         <>
           <p className="flex items-center gap-2 rounded-btn bg-warning/10 px-3 py-2 text-caption text-fg-sub">
-            <span aria-hidden="true">🧳</span>
+            <Luggage aria-hidden="true" className="size-4 shrink-0 text-warning" />
             {t('labs.checkoutAt', { time: '11:00', name: t('sample.shinjukuHotel') })}
           </p>
           {row(1, '09:00', t('sample.breakfast'))}

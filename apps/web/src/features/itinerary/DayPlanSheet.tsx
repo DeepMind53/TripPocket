@@ -154,7 +154,7 @@ export function DayPlanSheet({
       <div className="flex flex-col gap-4 pb-2">
         {/* 오늘 컨디션 → 피로도 */}
         <section className="flex flex-col gap-2">
-          <h3 className="text-caption font-bold text-fg-muted">{t('planB.mood')}</h3>
+          <h3 className="text-caption font-semibold text-fg-muted">{t('planB.mood')}</h3>
           <div className="grid grid-cols-5 gap-1.5">
             {MOODS.map((m, i) => (
               <button
@@ -184,7 +184,7 @@ export function DayPlanSheet({
 
         {/* 보일 플랜 */}
         <section className="flex flex-col gap-2">
-          <h3 className="text-caption font-bold text-fg-muted">{t('planB.show')}</h3>
+          <h3 className="text-caption font-semibold text-fg-muted">{t('planB.show')}</h3>
           {pickRow(
             null,
             t('planB.auto'),
@@ -199,7 +199,7 @@ export function DayPlanSheet({
         {/* 플랜 만들기·고치기 */}
         {canEdit && (
           <section className="flex flex-col gap-2">
-            <h3 className="text-caption font-bold text-fg-muted">{t('planB.manage')}</h3>
+            <h3 className="text-caption font-semibold text-fg-muted">{t('planB.manage')}</h3>
             {info.plans.map((p) =>
               editing === p.id ? (
                 <PlanEditor

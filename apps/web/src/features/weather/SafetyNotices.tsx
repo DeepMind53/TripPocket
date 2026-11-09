@@ -41,7 +41,7 @@ function List({ codes }: { codes: string[] }) {
   if (!notices?.length) return null;
   return (
     <section aria-label={t('safetyNotice.title')} className="flex flex-col gap-1.5">
-      <h3 className="text-caption font-bold text-fg-muted">
+      <h3 className="text-caption font-semibold text-fg-muted">
         <InlineIcon icon={ShieldAlert} />
         {t('safetyNotice.title')}
       </h3>

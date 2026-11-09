@@ -39,7 +39,7 @@ export function TabBar({
               className={({ isActive }) =>
                 cn(
                   'flex flex-col items-center justify-center gap-0.5 text-micro',
-                  isActive ? 'font-bold text-primary' : 'font-medium text-fg-muted',
+                  isActive ? 'font-semibold text-primary' : 'font-medium text-fg-muted',
                 )
               }
             >

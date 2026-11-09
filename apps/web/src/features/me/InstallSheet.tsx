@@ -36,17 +36,17 @@ export function InstallSheet({
         ) : where === 'ios' ? (
           <ol className="flex flex-col gap-3 text-body-2">
             <li className="flex items-center gap-2">
-              <span className="font-bold text-primary">1</span>
+              <span className="font-semibold text-primary">1</span>
               {t('pwa.iosStep1')}
               <Share aria-hidden="true" className="size-5 text-primary" />
             </li>
             <li className="flex items-center gap-2">
-              <span className="font-bold text-primary">2</span>
+              <span className="font-semibold text-primary">2</span>
               {t('pwa.iosStep2')}
               <SquarePlus aria-hidden="true" className="size-5 text-primary" />
             </li>
             <li className="flex items-center gap-2">
-              <span className="font-bold text-primary">3</span>
+              <span className="font-semibold text-primary">3</span>
               {t('pwa.iosStep3')}
             </li>
           </ol>

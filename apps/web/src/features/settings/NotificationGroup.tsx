@@ -22,7 +22,7 @@ export function NotificationGroup() {
 
   return (
     <section aria-label={t('push.title')} className="flex flex-col gap-2">
-      <h2 className="px-1 text-caption font-bold text-fg-muted">{t('push.title')}</h2>
+      <h2 className="px-1 text-caption font-semibold text-fg-muted">{t('push.title')}</h2>
       <div className="flex flex-col gap-4 rounded-2xl border border-line bg-surface p-4">
         <div className="flex items-center justify-between gap-3">
           <span className="flex flex-col">

@@ -290,7 +290,7 @@ function TravelView({ trip, items: all }: { trip: Trip; items: ItineraryItem[] }
           }}
         />
         <span className="flex min-w-0 flex-1 flex-col">
-          <span className="truncate text-title-2 font-bold">
+          <span className="truncate text-title-2 font-semibold">
             {n ? t('travel.dayN', { n, date: formatMonthDay(today) }) : formatMonthDay(today)}
           </span>
           <span className="tabular text-caption text-fg-muted">
@@ -353,7 +353,7 @@ function TravelView({ trip, items: all }: { trip: Trip; items: ItineraryItem[] }
           aria-label={t('travel.morning')}
           className="flex flex-col gap-1 rounded-card bg-bg-subtle p-4"
         >
-          <span className="text-caption font-bold text-fg-muted">{t('travel.morning')}</span>
+          <span className="text-caption font-semibold text-fg-muted">{t('travel.morning')}</span>
           <span className="text-body-1 font-semibold">
             {t('travel.briefing', { n: dayItems.length, time: firstTimed?.startTime ?? '' })}
           </span>
@@ -367,13 +367,13 @@ function TravelView({ trip, items: all }: { trip: Trip; items: ItineraryItem[] }
           aria-label={t('travel.next')}
           className="flex flex-col gap-1.5 rounded-card border border-primary/40 bg-primary-weak/40 p-4"
         >
-          <span className="text-caption font-bold text-primary">
+          <span className="text-caption font-semibold text-primary">
             {t(phase === 'morning' ? 'travel.first' : 'travel.next')}
           </span>
           <span className="text-body-1 font-semibold">
             {next.title} · {next.startTime}
           </span>
-          <span className="tabular text-title-1 font-bold">
+          <span className="tabular text-title-1 font-semibold">
             {t(leave.inMin < 0 ? 'travel.leaveNow' : 'travel.leaveAt', { time: leave.at })}
           </span>
           <span className="tabular text-caption text-fg-sub">
@@ -404,11 +404,11 @@ function TravelView({ trip, items: all }: { trip: Trip; items: ItineraryItem[] }
           aria-label={t('travel.evening')}
           className="flex flex-col gap-2 rounded-card bg-bg-subtle p-4"
         >
-          <span className="text-caption font-bold text-fg-muted">{t('travel.evening')}</span>
+          <span className="text-caption font-semibold text-fg-muted">{t('travel.evening')}</span>
           <span className="text-body-1 font-semibold">
             {t('travel.recap', { n: dayItems.length, done: visitedCount })}
           </span>
-          <span className="border-t border-dashed border-line pt-2 text-caption font-bold text-fg-muted">
+          <span className="border-t border-dashed border-line pt-2 text-caption font-semibold text-fg-muted">
             {t('travel.tomorrow')}
           </span>
           {tomorrowFirst ? (
@@ -445,7 +445,7 @@ function TravelView({ trip, items: all }: { trip: Trip; items: ItineraryItem[] }
       {dayItems.length > 0 && (
         <section aria-label={t('travel.rest')} className="flex flex-col gap-1.5">
           <div className="flex items-center justify-between">
-            <h2 className="text-caption font-bold text-fg-muted">
+            <h2 className="text-caption font-semibold text-fg-muted">
               {t('travel.restN', { n: restItems.length })}
             </h2>
             {pastItems.length > 0 && (

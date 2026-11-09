@@ -61,7 +61,7 @@ export function TripLayout() {
       <div className="mx-auto min-h-dvh max-w-[560px]">
         <TopBar title={t('trips.notFound')} backTo="/trips" />
         <EmptyState
-          emoji="🧭"
+          icon={Compass}
           title={t('trips.notFound')}
           description={t('trips.notFoundDesc')}
           action={

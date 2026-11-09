@@ -6,7 +6,7 @@ import {
   todayIn,
   type SavedPlace,
 } from '@trippocket/shared';
-import { Map as MapIcon, MapPin, Trash2 } from 'lucide-react';
+import { Map as MapIcon, MapPin, Trash2, Heart } from 'lucide-react';
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useSavedPlaces, useTrips } from '../../data/hooks';
@@ -92,7 +92,7 @@ export function SavedPage() {
       <TopBar title={t('saved.title')} />
       {places && places.length === 0 ? (
         <EmptyState
-          emoji="❤️"
+          icon={Heart}
           title={t('saved.emptyTitle')}
           description={t('saved.emptyDesc')}
           {...(openTrip
@@ -146,7 +146,7 @@ export function SavedPage() {
           {current && (
             <section aria-label={label(current.code)} className="flex flex-col gap-1">
               <div className="flex items-center gap-1">
-                <h2 className="flex-1 text-caption font-bold text-fg-muted">
+                <h2 className="flex-1 text-caption font-semibold text-fg-muted">
                   {label(current.code)} · {list.length}
                 </h2>
                 <Button

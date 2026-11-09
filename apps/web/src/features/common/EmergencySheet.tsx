@@ -44,7 +44,7 @@ export function EmergencySheet({
           const data = emergencyFor(code);
           return (
             <section key={code} className="flex flex-col gap-2">
-              <h3 className="text-body-1 font-bold">
+              <h3 className="text-body-1 font-semibold">
                 <span aria-hidden="true">{flagEmoji(code)} </span>
                 {countryName(code)}
               </h3>
@@ -64,7 +64,7 @@ export function EmergencySheet({
                           <span className="text-caption text-fg-sub">
                             {t(`emergency.kind.${l.kind}`)}
                           </span>
-                          <span className="tabular text-body-1 font-bold">{l.number}</span>
+                          <span className="tabular text-body-1 font-semibold">{l.number}</span>
                           {l.note && (
                             <span className="text-micro text-fg-muted">
                               {t(`emergency.note.${l.note}`)}
@@ -83,14 +83,14 @@ export function EmergencySheet({
         })}
         {(abroad.length > 0 || countries.length === 0) && (
           <section className="flex flex-col gap-2">
-            <h3 className="text-body-1 font-bold">{t('emergency.consularTitle')}</h3>
+            <h3 className="text-body-1 font-semibold">{t('emergency.consularTitle')}</h3>
             <a
               href={telHref(CONSULAR_CALL_CENTER)}
               className="flex min-h-14 items-center gap-2 rounded-card bg-primary-weak px-3 py-2"
             >
               <Phone aria-hidden="true" className="size-4 shrink-0 text-primary" />
               <span className="flex min-w-0 flex-col">
-                <span className="tabular text-body-1 font-bold">{CONSULAR_CALL_CENTER}</span>
+                <span className="tabular text-body-1 font-semibold">{CONSULAR_CALL_CENTER}</span>
                 <span className="text-micro text-fg-sub">{t('emergency.consularDesc')}</span>
               </span>
             </a>

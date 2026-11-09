@@ -115,7 +115,7 @@ export function PrepCards({
         onClick={() => toggleOpen(!open)}
         className="tabular flex items-center gap-2 rounded-card border border-line bg-surface px-3 py-2.5 text-left"
       >
-        <span className="shrink-0 text-caption font-bold text-fg-muted">{t('prep.title')}</span>
+        <span className="shrink-0 text-caption font-semibold text-fg-muted">{t('prep.title')}</span>
         <span className="min-w-0 flex-1 truncate text-caption text-fg-sub">
           <InlineIcon icon={Luggage} />
           {packed}/{total} · <InlineIcon icon={Ticket} />
@@ -153,7 +153,7 @@ export function PrepCards({
                 <span className="text-caption text-fg-muted">{t('prep.packingEmpty')}</span>
               ) : (
                 <>
-                  <span className="tabular text-body-1 font-bold">
+                  <span className="tabular text-body-1 font-semibold">
                     {packed}/{total}
                   </span>
                   <span className="h-1.5 overflow-hidden rounded-full bg-bg-subtle">
@@ -249,7 +249,7 @@ export function PrepCards({
               <span className="flex items-center gap-1.5 text-caption font-semibold text-fg-sub">
                 <IdCard aria-hidden="true" className="size-4 text-primary" />
                 {t('essentials.title')}
-                <span className="tabular ml-auto pr-4 text-body-2 font-bold text-fg">
+                <span className="tabular ml-auto pr-4 text-body-2 font-semibold text-fg">
                   {essentials.done}/{essentials.total}
                 </span>
               </span>
@@ -319,7 +319,7 @@ function Card({
           aria-label={alertLabel ?? t('prep.needsAttention')}
           className={
             alert === 'red'
-              ? 'absolute top-3 right-3 size-2.5 animate-pulse rounded-full bg-danger'
+              ? 'absolute top-3 right-3 size-2.5 rounded-full bg-danger ring-2 ring-danger/20'
               : 'absolute top-3 right-3 size-2 rounded-full bg-warning'
           }
         />

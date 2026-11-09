@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { adminApi, type JoinRequest, type ManagedUser } from '../../data/api/admin';
 import { useAuth } from '../../data/authStore';
 import { useTranslation } from '../../i18n';
-import { X } from 'lucide-react';
+import { X, Lock } from 'lucide-react';
 import { Button, EmptyState, IconButton, Spinner, TopBar, toast } from '../../shared/ui';
 
 type Data = { requests: JoinRequest[]; users: ManagedUser[] };
@@ -36,7 +36,7 @@ export function AdminUsersPage() {
       <div className="flex flex-col gap-6 px-5 pt-2">{body}</div>
     </div>
   );
-  if (!isAdmin) return shell(<EmptyState emoji="🔒" title={t('admin.onlyAdmin')} />);
+  if (!isAdmin) return shell(<EmptyState icon={Lock} title={t('admin.onlyAdmin')} />);
   if (data === undefined) return shell(<Spinner />);
   if (data === null) return shell(<p className="text-body-2 text-fg-sub">{t('admin.offline')}</p>);
 
@@ -160,7 +160,7 @@ export function AdminUsersPage() {
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="flex flex-col gap-2">
-      <h2 className="text-caption font-bold text-fg-muted">{title}</h2>
+      <h2 className="text-caption font-semibold text-fg-muted">{title}</h2>
       <ul className="flex flex-col divide-y divide-line overflow-hidden rounded-card border border-line">
         {children}
       </ul>

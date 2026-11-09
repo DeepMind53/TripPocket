@@ -239,7 +239,7 @@ export function ItemDetailSheet({
 
           {inlineDirections && (
             <section aria-label={t('detail.directions')} className="flex flex-col gap-2">
-              <h3 className="text-body-2 font-bold">{t('detail.directions')}</h3>
+              <h3 className="text-body-2 font-semibold">{t('detail.directions')}</h3>
               <DirectionsPanel destination={dest} isDomestic={domestic} />
             </section>
           )}
@@ -448,7 +448,9 @@ function BookingSummary({
       className="flex flex-col gap-1.5 rounded-card border border-line bg-bg-subtle/60 p-3"
     >
       <div className="flex items-center justify-between gap-2">
-        <span className="text-caption font-bold text-fg-muted">{t(`bookingKind.${b.kind}`)}</span>
+        <span className="text-caption font-semibold text-fg-muted">
+          {t(`bookingKind.${b.kind}`)}
+        </span>
         {onOpen && (
           <button
             type="button"

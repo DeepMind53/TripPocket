@@ -23,14 +23,14 @@ export function MySafetyInfo() {
       <Phone aria-hidden="true" className="size-4 shrink-0 text-primary" />
       <span className="flex min-w-0 flex-col">
         <span className="truncate text-caption text-fg-sub">{label}</span>
-        <span className="tabular text-body-1 font-bold">{phone}</span>
+        <span className="tabular text-body-1 font-semibold">{phone}</span>
         {sub && <span className="truncate text-micro text-fg-muted">{sub}</span>}
       </span>
     </a>
   );
   return (
     <section className="flex flex-col gap-2">
-      <h3 className="text-body-1 font-bold">{t('emergency.mine')}</h3>
+      <h3 className="text-body-1 font-semibold">{t('emergency.mine')}</h3>
       {hasIns &&
         (ins.phone ? (
           call(

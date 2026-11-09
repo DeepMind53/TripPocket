@@ -24,7 +24,7 @@ export function LegalPage() {
         {kind === 'licenses' && (
           <>
             <section className="flex flex-col gap-2">
-              <h2 className="text-body-1 font-bold">{t('legal.dataSources')}</h2>
+              <h2 className="text-body-1 font-semibold">{t('legal.dataSources')}</h2>
               <ul className="flex flex-col divide-y divide-line">
                 {DATA_SOURCES.map((d) => (
                   <li key={d.name} className="flex flex-col py-2">
@@ -44,7 +44,7 @@ export function LegalPage() {
               </ul>
             </section>
             <section className="flex flex-col gap-2">
-              <h2 className="text-body-1 font-bold">
+              <h2 className="text-body-1 font-semibold">
                 {t('legal.software', { n: licenses.length })}
               </h2>
               <ul className="flex flex-col divide-y divide-line">
@@ -73,7 +73,7 @@ function Sections({ list }: { list: Section[] }) {
     <>
       {list.map((s) => (
         <section key={s.title} className="flex flex-col gap-1.5">
-          <h2 className="text-body-1 font-bold">{s.title}</h2>
+          <h2 className="text-body-1 font-semibold">{s.title}</h2>
           {s.body.map((p) => (
             <p key={p} className="whitespace-pre-line text-fg-sub">
               {p}

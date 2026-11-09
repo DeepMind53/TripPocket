@@ -125,7 +125,7 @@ export function BackupPage() {
         <ServerStorage />
 
         <section className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4">
-          <h2 className="text-body-1 font-bold">{t('backup.storage')}</h2>
+          <h2 className="text-body-1 font-semibold">{t('backup.storage')}</h2>
           {usage !== null && (
             <p className="text-body-2 text-fg-sub">
               {t('backup.usage', { size: formatBytes(usage) })}

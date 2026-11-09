@@ -24,7 +24,7 @@ export function PrintPage() {
   const days = getTripDays(trip.startDate, trip.endDate);
   const section = (date: LocalDate | null, title: string, list: ItineraryItem[]) => (
     <section key={date ?? 'wish'} className="print-avoid-break flex flex-col gap-1">
-      <h2 className="tabular border-b border-fg/40 pb-0.5 text-body-1 font-bold">{title}</h2>
+      <h2 className="tabular border-b border-fg/40 pb-0.5 text-body-1 font-semibold">{title}</h2>
       {list.length === 0 && <p className="text-caption text-fg-muted">{t('plan.emptyDay')}</p>}
       <ol className="flex flex-col">
         {list.map((i) => {

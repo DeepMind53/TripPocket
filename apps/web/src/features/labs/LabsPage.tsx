@@ -88,7 +88,7 @@ function SampleTest() {
   const [busy, setBusy] = useState(false);
   return (
     <section aria-label={t('labs.sample.title')} className="flex flex-col gap-2 pt-2">
-      <h2 className="text-caption font-bold text-fg-muted">{t('labs.sample.title')}</h2>
+      <h2 className="text-caption font-semibold text-fg-muted">{t('labs.sample.title')}</h2>
       <p className="text-caption text-fg-muted">{t('labs.sample.desc')}</p>
       <Button
         fullWidth

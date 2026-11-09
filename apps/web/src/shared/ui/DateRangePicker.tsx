@@ -175,10 +175,10 @@ const DayCell = memo(function DayCell({
           <span
             className={cn(
               'tabular relative grid size-7 shrink-0 place-items-center rounded-full text-body-2',
-              edge && 'bg-primary font-bold text-on-primary',
+              edge && 'bg-primary font-semibold text-on-primary',
               !edge && (wd === 0 || holiday) && 'text-danger',
               !edge && !holiday && wd === 6 && 'text-primary',
-              isToday && !edge && 'font-bold underline underline-offset-4',
+              isToday && !edge && 'font-semibold underline underline-offset-4',
             )}
           >
             {Number(date.slice(8))}
@@ -229,10 +229,10 @@ const DayCell = memo(function DayCell({
         onClick={() => onPick(date)}
         className={cn(
           'tabular grid size-11 place-items-center rounded-full text-body-2',
-          edge && 'bg-primary font-bold text-on-primary',
+          edge && 'bg-primary font-semibold text-on-primary',
           !edge && wd === 0 && 'text-danger',
           !edge && wd === 6 && 'text-primary',
-          isToday && !edge && 'font-bold underline underline-offset-4',
+          isToday && !edge && 'font-semibold underline underline-offset-4',
         )}
       >
         {Number(date.slice(8))}

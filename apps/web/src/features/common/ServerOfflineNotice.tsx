@@ -1,3 +1,4 @@
+import { Unplug } from 'lucide-react';
 import { useState } from 'react';
 import { refreshMe, useAuth } from '../../data/authStore';
 import { useTranslation } from '../../i18n';
@@ -27,7 +28,7 @@ export function ServerOfflineNotice({ inline = false }: { inline?: boolean }) {
   if (inline) return <OfflineNote text={t('offline.inline')} />;
   return (
     <EmptyState
-      emoji="🔌"
+      icon={Unplug}
       title={t('offline.title')}
       description={t('offline.desc')}
       action={

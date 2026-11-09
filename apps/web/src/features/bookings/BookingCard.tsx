@@ -93,7 +93,8 @@ export function BookingCard({
       {member && (
         <div className="flex items-center justify-between gap-2 border-t border-dashed border-line px-4 py-1.5">
           <span className="tabular min-w-0 truncate text-caption text-fg-sub">
-            {t('bookings.member')} <strong className="font-bold text-fg">{member.number}</strong>
+            {t('bookings.member')}{' '}
+            <strong className="font-semibold text-fg">{member.number}</strong>
             {member.tier && ` · ${member.tier}`}
           </span>
           <button
@@ -110,7 +111,7 @@ export function BookingCard({
         <div className="flex items-center justify-between gap-2 border-t border-dashed border-line px-4 py-1.5">
           <span className="tabular text-caption text-fg-sub">
             {t('bookings.confirmationNo')}{' '}
-            <strong className="font-bold whitespace-nowrap text-fg">{b.confirmationNo}</strong>
+            <strong className="font-semibold whitespace-nowrap text-fg">{b.confirmationNo}</strong>
           </span>
           <button
             type="button"

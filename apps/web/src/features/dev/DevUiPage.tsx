@@ -362,7 +362,7 @@ function Section({ title, hint, children }: { title: string; hint?: string; chil
   return (
     <section className="flex flex-col gap-3">
       <div>
-        <h2 className="text-caption font-bold tracking-wide text-fg-muted">{title}</h2>
+        <h2 className="text-caption font-semibold tracking-wide text-fg-muted">{title}</h2>
         {hint && <p className="text-caption text-fg-muted">{hint}</p>}
       </div>
       {children}
@@ -391,7 +391,7 @@ function AppMark({
   return (
     <span
       aria-hidden="true"
-      className="grid size-7 place-items-center rounded-lg text-caption font-extrabold"
+      className="grid size-7 place-items-center rounded-lg text-caption font-semibold"
       style={{ background: bg, color: dark ? '#191F28' : '#FFFFFF' }}
     >
       {children}

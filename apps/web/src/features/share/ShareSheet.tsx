@@ -109,7 +109,7 @@ export function ShareSheet({
         <p className="-mt-2 text-caption text-fg-muted">{t('share.exportHint')}</p>
 
         <section className="flex flex-col gap-3 rounded-card border border-line p-4">
-          <h3 className="flex items-center gap-2 text-body-1 font-bold">
+          <h3 className="flex items-center gap-2 text-body-1 font-semibold">
             <Link2 aria-hidden="true" className="size-5 text-primary" />
             {t('share.link')}
           </h3>
@@ -174,7 +174,7 @@ export function ShareSheet({
 
         {loggedIn && myRole === 'owner' && (
           <section className="flex flex-col gap-3 rounded-card border border-line p-4">
-            <h3 className="flex items-center gap-2 text-body-1 font-bold">
+            <h3 className="flex items-center gap-2 text-body-1 font-semibold">
               <UserPlus aria-hidden="true" className="size-5 text-primary" />
               {t('share.invite')}
             </h3>
@@ -210,7 +210,7 @@ export function ShareSheet({
             aria-label={t('share.requests')}
             className="flex flex-col gap-2 rounded-card bg-primary-weak/50 p-3"
           >
-            <h3 className="text-body-2 font-bold">
+            <h3 className="text-body-2 font-semibold">
               {t('share.requestsTitle', { n: requests.length })}
             </h3>
             <ul className="flex flex-col gap-2">
@@ -257,7 +257,7 @@ export function ShareSheet({
         )}
         {loggedIn && members && members.length > 0 && (
           <section className="flex flex-col gap-2">
-            <h3 className="flex items-center gap-2 text-body-2 font-bold text-fg-sub">
+            <h3 className="flex items-center gap-2 text-body-2 font-semibold text-fg-sub">
               <Users aria-hidden="true" className="size-4" />
               {t('share.members', { n: members.length })}
             </h3>

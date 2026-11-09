@@ -25,7 +25,7 @@ export function SharedPacking({
       aria-label={t('checklist.share.fromOthers')}
       className="flex flex-col gap-2 rounded-card bg-bg-subtle px-3 py-2.5"
     >
-      <h2 className="text-caption font-bold text-fg-sub">
+      <h2 className="text-caption font-semibold text-fg-sub">
         <InlineIcon icon={Users} />
         {t('checklist.share.fromOthers')}
       </h2>

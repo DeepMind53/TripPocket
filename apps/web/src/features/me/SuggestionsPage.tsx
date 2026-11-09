@@ -93,7 +93,7 @@ export function SuggestionsPage() {
         </Button>
 
         <section aria-label={t('suggest.mine')} className="flex flex-col gap-2 pt-2">
-          <h2 className="text-caption font-bold text-fg-muted">{t('suggest.mine')}</h2>
+          <h2 className="text-caption font-semibold text-fg-muted">{t('suggest.mine')}</h2>
           {list === 'offline' ? (
             <ServerOfflineNotice inline />
           ) : list && list.length === 0 ? (

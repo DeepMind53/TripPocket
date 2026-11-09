@@ -1,3 +1,21 @@
+import {
+  ArrowLeftRight,
+  BedDouble,
+  CalendarDays,
+  IdCard,
+  Languages,
+  ListChecks,
+  Luggage,
+  Plane,
+  Siren,
+  Sparkles,
+  Ticket,
+  TriangleAlert,
+  Users,
+  WifiOff,
+  Zap,
+  type LucideIcon,
+} from 'lucide-react';
 import { useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { useTranslation } from '../../i18n';
 import { cn } from '../../shared/lib/cn';
@@ -73,7 +91,7 @@ export function IntroCarousel() {
           >
             <span
               className={cn(
-                'block h-2 rounded-full transition-all',
+                'block h-2 rounded-full transition-[width,background-color] duration-200 ease-soft',
                 i === index ? 'w-5 bg-primary' : 'w-2 bg-line',
               )}
             />
@@ -95,7 +113,7 @@ function Phone({ children }: { children: ReactNode }) {
 
 const Pill = ({ color, children }: { color: string; children: ReactNode }) => (
   <span
-    className="rounded-full px-2 py-0.5 text-[10px] font-bold text-white"
+    className="rounded-full px-2 py-0.5 text-[10px] font-semibold text-white"
     style={{ background: color }}
   >
     {children}
@@ -124,7 +142,7 @@ function Row({
       style={{ '--kind': `var(--tp-kind-${kind})` } as CSSProperties}
     >
       <span
-        className="grid size-4 shrink-0 place-items-center rounded-full text-[9px] leading-none font-bold text-white"
+        className="grid size-4 shrink-0 place-items-center rounded-full text-[9px] leading-none font-semibold text-white"
         style={{ background: color }}
       >
         {n}
@@ -145,7 +163,7 @@ const CORAL = '#FF6B4A';
 function PlanMock() {
   return (
     <Phone>
-      <span className="text-[11px] font-bold">🇯🇵 도쿄 가을여행 · D-3</span>
+      <span className="text-[11px] font-semibold">🇯🇵 도쿄 가을여행 · D-3</span>
       <div className="flex gap-1 text-[9px]">
         <span className="rounded-full bg-primary-weak px-1.5 py-0.5 font-semibold text-primary">
           전체
@@ -163,7 +181,7 @@ function PlanMock() {
           style={{ boxShadow: `inset 3px 0 0 ${BLUE}` }}
         >
           <Pill color={BLUE}>1일차</Pill>
-          <span className="text-[11px] font-bold">10.27 (화)</span>
+          <span className="text-[11px] font-semibold">10.27 (화)</span>
         </div>
         <div className="flex flex-col gap-1 p-1.5">
           <Row
@@ -219,9 +237,9 @@ function MapMock() {
       </svg>
       <div className="flex flex-col gap-1 rounded-xl border border-line bg-surface p-1.5">
         <div className="flex items-center justify-between px-1 text-[10px]">
-          <span className="font-bold text-primary">‹</span>
+          <span className="font-semibold text-primary">‹</span>
           <span className="tabular text-fg-sub">1일차 · 10.27 (화) · 2 / 3</span>
-          <span className="font-bold text-primary">›</span>
+          <span className="font-semibold text-primary">›</span>
         </div>
         <Row n={2} color={BLUE} time="15:00" title="신주쿠 호텔" kind="lodging" label="숙소" />
       </div>
@@ -234,19 +252,22 @@ function BookingMock() {
     <Phone>
       <div className="flex flex-col gap-1.5 rounded-xl border border-line bg-surface p-2">
         <div className="flex justify-between text-[10px] text-fg-sub">
-          <span>✈ 대한항공 KE703</span>
+          <span className="flex items-center gap-1">
+            <Plane aria-hidden="true" className="inline size-3 align-[-2px]" />
+            대한항공 KE703
+          </span>
           <span>10.27 (화)</span>
         </div>
         <div className="tabular flex items-center gap-2">
           <span className="flex flex-col">
-            <span className="text-[18px] leading-none font-bold">ICN</span>
+            <span className="text-[18px] leading-none font-semibold">ICN</span>
             <span className="text-[10px] text-fg-sub">09:10 · T2</span>
           </span>
           <span className="h-px flex-1 border-t border-dashed border-fg-muted" />
-          <span className="text-[12px]">✈</span>
+          <Plane aria-hidden="true" className="inline size-3 align-[-2px]" />
           <span className="h-px flex-1 border-t border-dashed border-fg-muted" />
           <span className="flex flex-col items-end">
-            <span className="text-[18px] leading-none font-bold">NRT</span>
+            <span className="text-[18px] leading-none font-semibold">NRT</span>
             <span className="text-[10px] text-fg-sub">11:30 · T1</span>
           </span>
         </div>
@@ -255,14 +276,17 @@ function BookingMock() {
         </span>
       </div>
       <div className="flex flex-col gap-1 rounded-xl border border-line bg-surface p-2">
-        <div className="flex justify-between text-[11px] font-bold">
-          <span>🧳 준비물</span>
+        <div className="flex justify-between text-[11px] font-semibold">
+          <span className="flex items-center gap-1">
+            <Luggage aria-hidden="true" className="inline size-3 align-[-2px]" />
+            준비물
+          </span>
           <span className="tabular text-primary">12 / 30</span>
         </div>
         <div className="h-1.5 overflow-hidden rounded-full bg-bg-subtle">
           <div className="h-full w-2/5 rounded-full bg-primary" />
         </div>
-        <span className="text-[10px] text-fg-sub">☑ 여권 · ☑ 엔화 · ☐ 돼지코</span>
+        <span className="text-[10px] text-fg-sub">여권 · 엔화 챙김 · 돼지코 남음</span>
       </div>
     </Phone>
   );
@@ -277,9 +301,9 @@ function TogetherMock() {
   return (
     <Phone>
       <div className="flex items-center justify-between">
-        <span className="text-[11px] font-bold">🇯🇵 도쿄 가을여행</span>
+        <span className="text-[11px] font-semibold">🇯🇵 도쿄 가을여행</span>
         <span className="rounded-full bg-primary-weak px-2 py-0.5 text-[10px] font-semibold text-primary">
-          👥 3
+          <Users aria-hidden="true" className="inline size-3 align-[-2px]" /> 3
         </span>
       </div>
       <div className="flex flex-col divide-y divide-line rounded-xl border border-line bg-surface px-2 text-[10px]">
@@ -291,7 +315,10 @@ function TogetherMock() {
         ))}
       </div>
       <div className="flex flex-col gap-0.5 rounded-xl border border-line bg-surface p-2 leading-tight">
-        <span className="text-[11px] font-bold">✨ 신주쿠역 근처 맛집</span>
+        <span className="flex items-center gap-1 text-[11px] font-semibold">
+          <Sparkles aria-hidden="true" className="inline size-3 align-[-2px]" />
+          신주쿠역 근처 맛집
+        </span>
         <span className="text-[10px]">1 이치란 신주쿠점 · 블로그 7회</span>
         <span className="truncate text-[9px] text-fg-muted">진한 돈코츠 국물, 줄 서도 먹는 곳</span>
       </div>
@@ -301,18 +328,26 @@ function TogetherMock() {
 
 /** 빠른 메뉴: 긴급·환율·AI 추천·회화 2×2 + 여행 안 바로가기 4개 (실제 시트와 같은 순서, 2026-10-27) */
 function QuickMock() {
-  const links: [string, string, string, boolean][] = [
-    ['🚨', '긴급 연락처', '경찰·구급·영사콜센터', false],
-    ['💱', '환율', '원화로 바로 계산', false],
-    ['✨', 'AI 추천', '근처 맛집·핫플', true],
-    ['🗣', '번역·회화', '현지어로 크게 보여 주기', false],
+  const links: [LucideIcon, string, string, boolean][] = [
+    [Siren, '긴급 연락처', '경찰·구급·영사콜센터', false],
+    [ArrowLeftRight, '환율', '원화로 바로 계산', false],
+    [Sparkles, 'AI 추천', '근처 맛집·핫플', true],
+    [Languages, '번역·회화', '현지어로 크게 보여 주기', false],
   ];
-  const shortcuts = ['🛏 숙소로 길찾기', '🎫 예약번호', '🗓 다음 일정', '☑ 준비물'];
+  const shortcuts: [LucideIcon, string][] = [
+    [BedDouble, '숙소로 길찾기'],
+    [Ticket, '예약번호'],
+    [CalendarDays, '다음 일정'],
+    [ListChecks, '준비물'],
+  ];
   return (
     <Phone>
-      <span className="text-[11px] font-bold">⚡ 빠른 메뉴</span>
+      <span className="flex items-center gap-1 text-[11px] font-semibold">
+        <Zap aria-hidden="true" className="inline size-3 align-[-2px]" />
+        빠른 메뉴
+      </span>
       <div className="grid grid-cols-2 gap-1">
-        {links.map(([e, title, desc, ai]) => (
+        {links.map(([Icon, title, desc, ai]) => (
           <span
             key={title}
             className={cn(
@@ -320,20 +355,22 @@ function QuickMock() {
               ai ? 'bg-primary-weak' : 'bg-bg-subtle',
             )}
           >
-            <span className="truncate text-[10px] font-semibold">
-              {e} {title}
+            <span className="flex items-center gap-1 truncate text-[10px] font-semibold">
+              <Icon aria-hidden="true" className="inline size-3 align-[-2px]" />
+              {title}
             </span>
             <span className="truncate text-[9px] text-fg-muted">{desc}</span>
           </span>
         ))}
       </div>
-      <span className="text-[9px] font-bold text-fg-muted">바로가기</span>
+      <span className="text-[9px] font-semibold text-fg-muted">바로가기</span>
       <div className="grid grid-cols-2 gap-1">
-        {shortcuts.map((label) => (
+        {shortcuts.map(([Icon, label]) => (
           <span
             key={label}
-            className="truncate rounded-lg bg-bg-subtle px-2 py-0.5 text-[9px] font-semibold"
+            className="flex items-center gap-1 truncate rounded-lg bg-bg-subtle px-2 py-0.5 text-[9px] font-semibold"
           >
+            <Icon aria-hidden="true" className="inline size-3 align-[-2px]" />
             {label}
           </span>
         ))}
@@ -346,7 +383,7 @@ function QuickMock() {
 function VisitMock() {
   return (
     <Phone>
-      <span className="text-[11px] font-bold">🇯🇵 도쿄 가을여행 · 오늘</span>
+      <span className="text-[11px] font-semibold">🇯🇵 도쿄 가을여행 · 오늘</span>
       <div className="flex flex-col px-1 text-[9px] leading-tight">
         <span className="truncate text-[10px] font-semibold">다음 19:00 이치란 라멘</span>
         <span className="text-fg-sub">도보 35분 · 대중교통 14분</span>
@@ -374,29 +411,30 @@ function VisitMock() {
 }
 
 function AlertsMock() {
-  const notes: [string, string, string][] = [
-    ['✈', '내일 출발이에요', '여권·충전기 챙겼나요'],
-    ['🛂', '입국신고 할 때예요', 'Visit Japan Web 미리 등록'],
-    ['⚠️', '도쿄 가을여행 여행지 특보', '태풍 빨강 경보 · 공식 발표 확인'],
+  const notes: [LucideIcon, string, string][] = [
+    [Plane, '내일 출발이에요', '여권·충전기 챙겼나요'],
+    [IdCard, '입국신고 할 때예요', 'Visit Japan Web 미리 등록'],
+    [TriangleAlert, '도쿄 가을여행 여행지 특보', '태풍 빨강 경보 · 공식 발표 확인'],
   ];
   return (
     <Phone>
-      {notes.map(([e, title, sub]) => (
+      {notes.map(([Icon, title, sub]) => (
         <div
           key={title}
           className="flex items-center gap-2 rounded-xl border border-line bg-surface px-2 py-1"
         >
-          <span className="grid size-6 shrink-0 place-items-center rounded-lg bg-primary-weak text-[12px]">
-            {e}
+          <span className="grid size-6 shrink-0 place-items-center rounded-lg bg-primary-weak text-primary">
+            <Icon aria-hidden="true" className="size-3.5" />
           </span>
           <span className="flex min-w-0 flex-col leading-tight">
-            <span className="truncate text-[11px] font-bold">{title}</span>
+            <span className="truncate text-[11px] font-semibold">{title}</span>
             <span className="truncate text-[10px] text-fg-sub">{sub}</span>
           </span>
         </div>
       ))}
       <span className="self-center rounded-full bg-bg-subtle px-2 py-0.5 text-[10px] text-fg-sub">
-        📶 인터넷이 없어도 일정·예약은 그대로
+        <WifiOff aria-hidden="true" className="inline size-3 align-[-2px]" /> 인터넷이 없어도
+        일정·예약은 그대로
       </span>
     </Phone>
   );
@@ -406,7 +444,7 @@ function AlertsMock() {
 function RecordsMock() {
   return (
     <Phone>
-      <span className="text-[9px] font-bold text-fg-muted">나의 여행</span>
+      <span className="text-[9px] font-semibold text-fg-muted">나의 여행</span>
       <div className="grid grid-cols-3 gap-1.5">
         {(
           [
@@ -416,14 +454,14 @@ function RecordsMock() {
           ] as const
         ).map(([k, v]) => (
           <span key={k} className="flex flex-col items-center rounded-xl bg-bg-subtle py-1.5">
-            <span className="tabular text-[13px] font-bold">{v}</span>
+            <span className="tabular text-[13px] font-semibold">{v}</span>
             <span className="text-[9px] text-fg-muted">{k}</span>
           </span>
         ))}
       </div>
       <span className="text-[18px] leading-none">🇯🇵 🇹🇼 🇹🇭</span>
       <div className="flex flex-col gap-0.5 rounded-xl border border-line bg-surface p-2 leading-tight">
-        <span className="text-[11px] font-bold">🇯🇵 도쿄 가을여행 · 10.27~10.30</span>
+        <span className="text-[11px] font-semibold">🇯🇵 도쿄 가을여행 · 10.27~10.30</span>
         <span className="text-[10px] text-rating">★★★★★ 이치란 라멘</span>
         <span className="self-start rounded-full bg-primary-weak px-1.5 text-[9px] font-semibold text-primary">
           리뷰 남기면 +100P

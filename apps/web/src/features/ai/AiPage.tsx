@@ -293,13 +293,15 @@ export function AiPage() {
         )}
         {result && (
           <section aria-label={t('ai.results')} className="flex flex-col gap-5 pt-2">
-            <p className="text-body-1 font-bold">{t('ai.resultFor', { anchor: result.anchor })}</p>
+            <p className="text-body-1 font-semibold">
+              {t('ai.resultFor', { anchor: result.anchor })}
+            </p>
             {SHOWN.filter((c) => result.categories[c]).map((c) => {
               const r = result.categories[c]!;
               return (
                 <div key={c} className="flex flex-col gap-2">
                   <h2 className="flex items-baseline justify-between gap-2">
-                    <span className="text-body-1 font-bold">
+                    <span className="text-body-1 font-semibold">
                       {c === 'custom'
                         ? t('ai.keywordTitle', { keyword: result.keyword ?? '' })
                         : t(`ai.cat.${c}`)}
@@ -366,7 +368,7 @@ function RecCard({
   return (
     <li className="flex flex-col gap-1.5 rounded-card border border-line p-3">
       <div className="flex items-start gap-2">
-        <span className="tabular grid size-6 shrink-0 place-items-center rounded-full bg-primary text-micro font-bold text-on-primary">
+        <span className="tabular grid size-6 shrink-0 place-items-center rounded-full bg-primary text-micro font-semibold text-on-primary">
           {rank}
         </span>
         <div className="flex min-w-0 flex-1 flex-col">

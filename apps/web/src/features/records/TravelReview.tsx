@@ -1,3 +1,18 @@
+import {
+  BedDouble,
+  CalendarDays,
+  Coffee,
+  Footprints,
+  Globe,
+  MapPin,
+  Plane,
+  Repeat,
+  Route,
+  Sunrise,
+  TrainFront,
+  Zap,
+  type LucideIcon,
+} from 'lucide-react';
 import { flagEmoji, todayIn, type Trip } from '@trippocket/shared';
 import { useTripsData } from '../../data/hooks';
 import { travelStats } from '../../domain/tripStats';
@@ -30,26 +45,32 @@ export function TravelReview({ pastTrips }: { pastTrips: readonly Trip[] }) {
     r >= 1
       ? t(`travelReview.${key}`, { n: km(r) })
       : t(`travelReview.${key}Pct`, { n: Math.max(1, Math.round(r * 100)) });
-  const cards: { emoji: string; value: string; label: string; fun?: string | undefined }[] = [
+  const cards: {
+    icon?: LucideIcon;
+    flag?: string;
+    value: string;
+    label: string;
+    fun?: string | undefined;
+  }[] = [
     {
-      emoji: '🚶',
+      icon: Footprints,
       value: t('travelReview.km', { n: km(s.walkKm) }),
       label: t('travelReview.walk'),
       fun: s.walkKm > 0 ? ratio(s.walkKm / MARATHON_KM, 'walkFun') : t('travelReview.walkEmpty'),
     },
     {
-      emoji: '🚇',
+      icon: TrainFront,
       value: t('travelReview.km', { n: km(s.transitKm) }),
       label: t('travelReview.transit'),
       fun: ratio(s.transitKm / SEOUL_BUSAN_KM, 'transitFun'),
     },
     {
-      emoji: '✈️',
+      icon: Plane,
       value: t('travelReview.times', { n: s.flights }),
       label: t('travelReview.flights'),
     },
     {
-      emoji: '📍',
+      icon: MapPin,
       value: t('travelReview.count', { n: s.places }),
       label: t('travelReview.places'),
       ...(s.topKind
@@ -64,7 +85,7 @@ export function TravelReview({ pastTrips }: { pastTrips: readonly Trip[] }) {
     ...(s.topCountry
       ? [
           {
-            emoji: flagEmoji(s.topCountry.code),
+            flag: flagEmoji(s.topCountry.code),
             value: countryName(s.topCountry.code),
             label: t('travelReview.topCountry'),
             fun: t('travelReview.topCountryFun', { n: s.topCountry.trips }),
@@ -74,7 +95,7 @@ export function TravelReview({ pastTrips }: { pastTrips: readonly Trip[] }) {
     ...(s.longest
       ? [
           {
-            emoji: '🗓',
+            icon: CalendarDays,
             value: t('travelReview.days', { n: s.longest.days }),
             label: t('travelReview.longest'),
             fun: s.longest.title,
@@ -82,12 +103,12 @@ export function TravelReview({ pastTrips }: { pastTrips: readonly Trip[] }) {
         ]
       : []),
     {
-      emoji: '🛏',
+      icon: BedDouble,
       value: t('travelReview.nightsN', { n: s.nights }),
       label: t('travelReview.nights'),
     },
     {
-      emoji: '🌍',
+      icon: Globe,
       value: t('travelReview.tripsSplit', { overseas: s.overseas, domestic: s.domestic }),
       label: t('travelReview.split'),
       fun: t('travelReview.thisYear', { n: s.thisYear }),
@@ -95,7 +116,7 @@ export function TravelReview({ pastTrips }: { pastTrips: readonly Trip[] }) {
     ...(s.earliest
       ? [
           {
-            emoji: '🌅',
+            icon: Sunrise,
             value: s.earliest,
             label: t('travelReview.earliest'),
             fun: t('travelReview.latestFun', { time: s.latest ?? s.earliest }),
@@ -105,7 +126,7 @@ export function TravelReview({ pastTrips }: { pastTrips: readonly Trip[] }) {
     ...(s.busiestDay
       ? [
           {
-            emoji: '🏃',
+            icon: Zap,
             value: t('travelReview.count', { n: s.busiestDay.count }),
             label: t('travelReview.busiest'),
             fun: s.busiestDay.date.slice(2).replace(/-/g, '.'),
@@ -113,19 +134,19 @@ export function TravelReview({ pastTrips }: { pastTrips: readonly Trip[] }) {
         ]
       : []),
     {
-      emoji: '☕',
+      icon: Coffee,
       value: t('travelReview.cafeFood', { cafe: s.cafes, food: s.restaurants }),
       label: t('travelReview.cafeFoodLabel'),
     },
     {
-      emoji: '🔁',
+      icon: Repeat,
       value: t('travelReview.count', { n: s.revisits }),
       label: t('travelReview.revisits'),
     },
     ...(s.farthest
       ? [
           {
-            emoji: '🌏',
+            icon: Route,
             value: t('travelReview.km', { n: km(s.farthest.km) }),
             label: t('travelReview.farthest'),
             fun: s.farthest.title,
@@ -136,19 +157,23 @@ export function TravelReview({ pastTrips }: { pastTrips: readonly Trip[] }) {
 
   return (
     <section aria-label={t('travelReview.title')} className="flex flex-col gap-2">
-      <h2 className="text-caption font-bold text-fg-muted">{t('travelReview.title')}</h2>
+      <h2 className="text-caption font-semibold text-fg-muted">{t('travelReview.title')}</h2>
       <ul className="grid grid-cols-2 gap-2">
         {cards.map((c) => (
           <li
             key={c.label}
             className="flex flex-col gap-0.5 rounded-card border border-line bg-surface p-3"
           >
-            <span aria-hidden="true" className="text-[22px] leading-none">
-              {c.emoji}
-            </span>
-            <span className="tabular truncate text-title-2">{c.value}</span>
-            <span className="text-caption font-semibold text-fg-sub">{c.label}</span>
-            {c.fun && <span className="truncate text-micro text-fg-muted">{c.fun}</span>}
+            {c.icon ? (
+              <c.icon aria-hidden="true" className="mb-1 size-5 text-fg-muted" strokeWidth={1.75} />
+            ) : (
+              <span aria-hidden="true" className="mb-1 text-[20px] leading-none">
+                {c.flag}
+              </span>
+            )}
+            <span className="tabular text-title-2 text-pretty">{c.value}</span>
+            <span className="text-caption font-medium text-fg-sub">{c.label}</span>
+            {c.fun && <span className="line-clamp-2 text-micro text-fg-muted">{c.fun}</span>}
           </li>
         ))}
       </ul>

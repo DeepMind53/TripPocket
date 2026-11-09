@@ -100,7 +100,7 @@ export function DevAiPage() {
         )}
         {data && (
           <section className="flex flex-col gap-4">
-            <p className="text-body-1 font-bold">기준점: {data.anchor}</p>
+            <p className="text-body-1 font-semibold">기준점: {data.anchor}</p>
             {Object.entries(data.categories).map(([cat, c]) => (
               <div key={cat} className="flex flex-col gap-2 rounded-card border border-line p-3">
                 <p className="text-body-2 font-semibold">{c.queries.join(' / ')}</p>

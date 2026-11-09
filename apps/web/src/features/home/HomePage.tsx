@@ -15,7 +15,7 @@ import {
   type ItineraryItem,
   type Trip,
 } from '@trippocket/shared';
-import { BedDouble, CircleHelp, Copy, Navigation, Plus } from 'lucide-react';
+import { BedDouble, CircleHelp, Copy, Navigation, Plus, Luggage } from 'lucide-react';
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { useTranslation } from '../../i18n';
 import { Link, useNavigate } from 'react-router';
@@ -93,7 +93,7 @@ export function HomePage() {
       </header>
       {trips && !featured && (
         <EmptyState
-          emoji="🧳"
+          icon={Luggage}
           title={t('home.emptyTitle')}
           description={t('home.emptyDesc')}
           action={
@@ -140,7 +140,7 @@ export function HomePage() {
       {featured && (
         <section aria-label={t('home.myTrips')} className="flex flex-col gap-2 pt-6">
           <div className="flex items-center justify-between px-5">
-            <h2 className="text-body-1 font-bold">{t('home.myTrips')}</h2>
+            <h2 className="text-body-1 font-semibold">{t('home.myTrips')}</h2>
             <Button
               size="sm"
               variant="ghost"
@@ -180,7 +180,7 @@ function UpcomingTrip({ trip }: { trip: Trip }) {
       // 여행 중이면 민트(아래 파란 다음 일정 카드와 구분, 사용자 요청 2026-11-06), 아니면 여행 표지 색
       style={ongoing ? undefined : { background: trip.cover.color ?? '#2F6BFF' }}
     >
-      <span className="tabular self-start rounded-full bg-white/20 px-2.5 py-0.5 text-caption font-bold">
+      <span className="tabular self-start rounded-full bg-white/20 px-2.5 py-0.5 text-caption font-semibold">
         {formatTripBadge(trip.startDate, trip.endDate, todayIn(trip.timezone))}
       </span>
       <span className="flex items-center gap-3">
@@ -325,7 +325,7 @@ function OngoingTrip({ trip }: { trip: Trip }) {
           aria-label={t('home.todayItems', { n: todayItems.length })}
           className="flex flex-col"
         >
-          <h2 className="text-caption font-bold text-fg-muted">
+          <h2 className="text-caption font-semibold text-fg-muted">
             {t('home.todayItems', { n: todayItems.length })}
           </h2>
           {/* 지난 일정은 오른쪽 [미방문][방문] — 일정 탭·여행 모드와 같은 기록 (사용자 요청 2026-11-06) */}
@@ -344,7 +344,7 @@ function OngoingTrip({ trip }: { trip: Trip }) {
                   className={cn(
                     'min-w-0 flex-1 truncate text-body-2',
                     item.visit && 'text-fg-muted',
-                    item.id === next?.id && 'font-bold',
+                    item.id === next?.id && 'font-semibold',
                   )}
                 >
                   {item.title}
@@ -367,7 +367,7 @@ function OngoingTrip({ trip }: { trip: Trip }) {
           aria-label={t('home.lodgingTonight')}
           className="flex flex-col gap-2 rounded-card border border-line bg-surface p-4"
         >
-          <p className="flex items-center gap-2 text-caption font-bold text-fg-muted">
+          <p className="flex items-center gap-2 text-caption font-semibold text-fg-muted">
             <BedDouble aria-hidden="true" className="size-4 text-day-4" />
             {t('home.lodgingTonight')}
             <span className="tabular font-medium">

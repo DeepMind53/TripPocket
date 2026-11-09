@@ -1,3 +1,4 @@
+import { Lock } from 'lucide-react';
 import { useEffect, useState, type ReactNode } from 'react';
 import { statsApi, type StatRow, type StatsReport } from '../../data/api/admin';
 import { useAuth } from '../../data/authStore';
@@ -28,7 +29,7 @@ export function AdminStatsPage() {
       <div className="flex flex-col gap-7 px-5 pt-2">{body}</div>
     </div>
   );
-  if (!isAdmin) return shell(<EmptyState emoji="🔒" title={t('admin.onlyAdmin')} />);
+  if (!isAdmin) return shell(<EmptyState icon={Lock} title={t('admin.onlyAdmin')} />);
 
   const pct = (a: number, b: number) => (b > 0 ? Math.round((a / b) * 100) : 0);
   const ms = (v: number | null) => (v === null ? t('stats.over') : t('stats.under', { ms: v }));
@@ -220,7 +221,7 @@ export function AdminStatsPage() {
 function Section({ title, desc, children }: { title: string; desc?: string; children: ReactNode }) {
   return (
     <section className="flex flex-col gap-3">
-      <h2 className="text-body-1 font-bold">{title}</h2>
+      <h2 className="text-body-1 font-semibold">{title}</h2>
       {desc && <p className="-mt-2 text-caption whitespace-pre-line text-fg-muted">{desc}</p>}
       {children}
     </section>

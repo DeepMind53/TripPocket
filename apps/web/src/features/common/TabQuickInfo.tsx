@@ -102,7 +102,7 @@ export function TabQuickInfo() {
 
   return (
     <section aria-label={t(`quickTab.title.${tab}`)} className="flex flex-col gap-2">
-      <h3 className="text-caption font-bold text-fg-muted">{t(`quickTab.title.${tab}`)}</h3>
+      <h3 className="text-caption font-semibold text-fg-muted">{t(`quickTab.title.${tab}`)}</h3>
       {info.to ? (
         <Link to={info.to} replace className={box}>
           {body}

@@ -29,7 +29,7 @@ export function ReportsSection({
   const [showOther, setShowOther] = useState(false);
   return (
     <section aria-label={t('lodgingPrice.reports.title')} className="flex flex-col gap-2">
-      <h3 className="text-body-1 font-bold">{t('lodgingPrice.reports.title')}</h3>
+      <h3 className="text-body-1 font-semibold">{t('lodgingPrice.reports.title')}</h3>
       {state.status === 'loading' && (
         <p className="text-caption text-fg-muted">{t('lodgingPrice.reports.loading')}</p>
       )}
@@ -135,7 +135,7 @@ function Row({
       <span className="flex min-w-0 flex-1 flex-col">
         <span className="flex items-center gap-1.5">
           {best && (
-            <span className="shrink-0 rounded-full bg-primary-weak px-1.5 text-micro font-bold text-primary">
+            <span className="shrink-0 rounded-full bg-primary-weak px-1.5 text-micro font-semibold text-primary">
               {t('lodgingPrice.reports.best')}
             </span>
           )}
@@ -153,7 +153,7 @@ function Row({
         )}
       </span>
       <span className="flex shrink-0 flex-col items-end">
-        <span className="tabular text-body-2 font-bold">{price}</span>
+        <span className="tabular text-body-2 font-semibold">{price}</span>
         <span className="tabular text-micro text-fg-muted">
           {r.mine
             ? t('lodgingPrice.reports.mineOn', { date: formatMonthDay(r.seenOn) })

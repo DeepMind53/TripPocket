@@ -1,3 +1,4 @@
+import { Lock } from 'lucide-react';
 import { useEffect, useState, type ReactNode } from 'react';
 import { apiUsageApi, type ApiUsage, type ApiUsageReport } from '../../data/api/admin';
 import { remainingRatio, remainingTone } from '../../domain/apiRemaining';
@@ -37,7 +38,7 @@ export function ApiUsagePage() {
       <div className="flex flex-col gap-6 px-5 pt-2">{body}</div>
     </div>
   );
-  if (!isAdmin) return shell(<EmptyState emoji="🔒" title={t('admin.onlyAdmin')} />);
+  if (!isAdmin) return shell(<EmptyState icon={Lock} title={t('admin.onlyAdmin')} />);
   if (data === undefined) return shell(<Spinner />);
   if (data === null) return shell(<p className="text-body-2 text-fg-sub">{t('admin.offline')}</p>);
 
@@ -47,7 +48,7 @@ export function ApiUsagePage() {
     const rows = apis.filter((a) => !hasLimit(a));
     return (
       <section className="flex flex-col gap-3">
-        <h2 className="text-caption font-bold text-fg-muted">{t(`apiUsage.${group}`)}</h2>
+        <h2 className="text-caption font-semibold text-fg-muted">{t(`apiUsage.${group}`)}</h2>
         {group === 'free' && <p className="text-caption text-fg-muted">{t('apiUsage.freeDesc')}</p>}
         {/* 남은 무료량이 적은 것부터 (사용자 요청 2026-10-27) */}
         {apis
@@ -131,7 +132,7 @@ function LimitCard({
         </div>
         <span
           className={cn(
-            'shrink-0 rounded-full px-2 py-0.5 text-micro font-bold',
+            'shrink-0 rounded-full px-2 py-0.5 text-micro font-semibold',
             state === 'running' ? 'bg-success/15 text-success' : 'bg-warning/20 text-warning',
           )}
         >

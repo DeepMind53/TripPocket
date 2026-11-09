@@ -28,7 +28,7 @@ export function WeatherPackingTips({
       aria-label={t('labs.packTitle')}
       className="flex flex-col gap-2 rounded-card bg-bg-subtle px-3 py-2.5"
     >
-      <h2 className="text-caption font-bold text-fg-sub">
+      <h2 className="text-caption font-semibold text-fg-sub">
         <InlineIcon icon={CloudSun} />
         {t('labs.packTitle')}
       </h2>

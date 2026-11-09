@@ -1,3 +1,4 @@
+import { Compass } from 'lucide-react';
 import { useTranslation } from '../i18n';
 import { Link } from 'react-router';
 import { EmptyState } from '../shared/ui';
@@ -8,7 +9,7 @@ export function NotFoundPage() {
     <main className="mx-auto min-h-dvh max-w-[560px] pt-16">
       <EmptyState
         asPageTitle
-        emoji="🧭"
+        icon={Compass}
         title={t('notFound.title')}
         description={t('notFound.desc')}
         action={

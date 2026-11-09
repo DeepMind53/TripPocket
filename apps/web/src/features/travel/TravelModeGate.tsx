@@ -37,7 +37,7 @@ export function TravelModeGate({ trip }: { trip: Trip }) {
       aria-label={t('travel.askTitle')}
       className="mx-5 mt-2 flex flex-col gap-2 rounded-card border border-primary/40 bg-primary-weak/40 p-4"
     >
-      <span className="text-body-1 font-bold">{t('travel.askTitle')}</span>
+      <span className="text-body-1 font-semibold">{t('travel.askTitle')}</span>
       <span className="text-caption whitespace-pre-line text-fg-sub">{t('travel.askDesc')}</span>
       {/* 넘어가기는 왼쪽 회색, 확인은 오른쪽 파랑 (앱 전체 같은 순서) */}
       <div className="grid grid-cols-2 gap-2">

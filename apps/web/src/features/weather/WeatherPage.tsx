@@ -76,7 +76,7 @@ export function WeatherPage() {
           aria-label={t('weatherPage.dest', { place: dest?.name ?? trip.title })}
           className="flex flex-col gap-2"
         >
-          <h2 className="text-caption font-bold text-fg-muted">
+          <h2 className="text-caption font-semibold text-fg-muted">
             {t('weatherPage.dest', { place: dest?.name ?? trip.title })}
           </h2>
           <ul className="flex flex-col divide-y divide-line rounded-card border border-line">
@@ -99,7 +99,9 @@ export function WeatherPage() {
 
         {flights.length > 0 && (
           <section aria-label={t('weatherPage.airports')} className="flex flex-col gap-2">
-            <h2 className="text-caption font-bold text-fg-muted">{t('weatherPage.airports')}</h2>
+            <h2 className="text-caption font-semibold text-fg-muted">
+              {t('weatherPage.airports')}
+            </h2>
             <ul className="flex flex-col divide-y divide-line rounded-card border border-line">
               {flights.map((b) => (
                 <FlightWeather key={b.id} flight={b} />

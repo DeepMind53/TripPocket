@@ -1,3 +1,4 @@
+import { BookOpen } from 'lucide-react';
 import { getTripStatus, nightsBetween, todayIn } from '@trippocket/shared';
 import { Link } from 'react-router';
 import { useTrips } from '../../data/hooks';
@@ -35,7 +36,7 @@ export function RecordsPage() {
       <TopBar title={t('records.title')} />
       <div className="flex flex-col gap-6 px-5 pt-2">
         <section aria-label={t('records.stats')} className="flex flex-col gap-3">
-          <h2 className="text-caption font-bold text-fg-muted">{t('records.stats')}</h2>
+          <h2 className="text-caption font-semibold text-fg-muted">{t('records.stats')}</h2>
           <div className="grid grid-cols-3 gap-2">
             <Stat label={t('records.trips')} value={t('records.tripsN', { n: past.length })} />
             <Stat label={t('records.days')} value={t('records.daysN', { n: days })} />
@@ -51,10 +52,10 @@ export function RecordsPage() {
         <VisitLog trips={trips ?? []} />
 
         <section aria-label={t('records.pastTitle')} className="flex flex-col gap-2">
-          <h2 className="text-caption font-bold text-fg-muted">{t('records.pastTitle')}</h2>
+          <h2 className="text-caption font-semibold text-fg-muted">{t('records.pastTitle')}</h2>
           {trips && past.length === 0 ? (
             <EmptyState
-              emoji="📔"
+              icon={BookOpen}
               title={t('records.empty')}
               description={t('records.emptyDesc')}
             />

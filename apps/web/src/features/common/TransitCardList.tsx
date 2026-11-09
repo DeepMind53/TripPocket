@@ -62,7 +62,7 @@ function CardView({ card: c }: { card: TransitCard }) {
           role="img"
           aria-label={t('localInfo.drawn', { name: c.name })}
           style={{ backgroundColor: c.color }}
-          className="grid aspect-[1.586] w-full max-w-72 place-items-center self-center rounded-card p-4 text-center text-body-1 font-bold text-white shadow-sm"
+          className="grid aspect-[1.586] w-full max-w-72 place-items-center self-center rounded-card p-4 text-center text-body-1 font-semibold text-white shadow-sm"
         >
           {c.name}
         </div>

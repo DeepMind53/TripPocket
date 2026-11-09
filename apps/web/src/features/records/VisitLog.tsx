@@ -25,7 +25,7 @@ export function VisitLog({ trips }: { trips: readonly Trip[] }) {
   const skipped = items.length - visited;
   return (
     <section aria-label={t('visit.logTitle')} className="flex flex-col gap-2">
-      <h2 className="text-caption font-bold text-fg-muted">{t('visit.logTitle')}</h2>
+      <h2 className="text-caption font-semibold text-fg-muted">{t('visit.logTitle')}</h2>
       <p className="tabular text-body-2 text-fg-sub">
         {t('visit.logCounts', { visited, skipped })}
       </p>

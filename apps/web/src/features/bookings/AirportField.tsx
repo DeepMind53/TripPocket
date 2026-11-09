@@ -89,7 +89,7 @@ export function AirportField({
                 onClick={() => pick(a)}
                 className="flex w-full items-center gap-2 px-3 py-2 text-left active:bg-bg-subtle"
               >
-                <span className="tabular w-10 shrink-0 font-bold text-primary">{a.iata}</span>
+                <span className="tabular w-10 shrink-0 font-semibold text-primary">{a.iata}</span>
                 <span className="flex min-w-0 flex-col">
                   <span className="truncate text-body-2">
                     {flagEmoji(a.countryCode)} {a.name}

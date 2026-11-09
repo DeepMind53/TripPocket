@@ -35,7 +35,7 @@ export function ServerStorage() {
       aria-label={t('storage.title')}
       className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4"
     >
-      <h2 className="text-body-1 font-bold">{t('storage.title')}</h2>
+      <h2 className="text-body-1 font-semibold">{t('storage.title')}</h2>
       {s === 'off' ? (
         <p className="text-body-2 whitespace-pre-line text-fg-sub">{t('storage.offline')}</p>
       ) : !s ? (
@@ -101,9 +101,9 @@ function UsageBar({
       <span className="flex items-baseline justify-between gap-2 text-caption">
         <span className="min-w-0 truncate font-semibold">{label}</span>
         <span className="tabular shrink-0">
-          <span className="font-bold text-danger">{formatBytes(used)}</span>
+          <span className="font-semibold text-danger">{formatBytes(used)}</span>
           <span className="text-fg-muted"> / </span>
-          <span className="font-bold text-primary">{formatBytes(limit)}</span>
+          <span className="font-semibold text-primary">{formatBytes(limit)}</span>
         </span>
       </span>
       <div

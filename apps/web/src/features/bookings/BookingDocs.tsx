@@ -40,7 +40,7 @@ export function BookingDocs({
   if (compact && docs.length === 0) return null;
   return (
     <section aria-label={t('docs.title')} className="flex flex-col gap-1.5">
-      <h3 className="flex items-center gap-1 text-caption font-bold text-fg-muted">
+      <h3 className="flex items-center gap-1 text-caption font-semibold text-fg-muted">
         <Paperclip aria-hidden="true" className="size-3.5" />
         {t('docs.title')}
       </h3>

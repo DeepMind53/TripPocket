@@ -86,7 +86,7 @@ export function Stepper({ value, onChange, min, max, step = 1, format, label }: 
       >
         <Minus aria-hidden="true" className="size-4" />
       </button>
-      <output aria-live="polite" className="tabular min-w-14 text-center text-body-1 font-bold">
+      <output aria-live="polite" className="tabular min-w-14 text-center text-body-1 font-semibold">
         {display}
       </output>
       <button

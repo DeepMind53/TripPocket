@@ -12,7 +12,7 @@ export function MapAppMark({ app }: { app: MapApp }) {
   return (
     <span
       aria-hidden="true"
-      className="grid size-7 shrink-0 place-items-center rounded-lg text-caption font-extrabold"
+      className="grid size-7 shrink-0 place-items-center rounded-lg text-caption font-semibold"
       style={{ background: m.bg, color: m.fg }}
     >
       {m.letter}

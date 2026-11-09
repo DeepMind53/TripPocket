@@ -1,3 +1,4 @@
+import { Mail, MailOpen } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Navigate, useNavigate, useParams, Link } from 'react-router';
 import { shareApi } from '../../data/api/share';
@@ -43,7 +44,7 @@ export function InvitePage() {
     return (
       <EmptyState
         asPageTitle
-        emoji="📨"
+        icon={Mail}
         title={t('share.requestSent')}
         description={t('share.requestSentDesc')}
         action={
@@ -60,7 +61,7 @@ export function InvitePage() {
   if (failed)
     return (
       <EmptyState
-        emoji="✉️"
+        icon={MailOpen}
         title={t('share.inviteInvalid')}
         description={t('share.inviteInvalidDesc')}
       />

@@ -66,7 +66,7 @@ export function AccountCard() {
           title={me.nickname}
           className="flex h-10 min-w-0 items-center justify-center gap-1"
         >
-          <span className="truncate text-body-1 font-bold">{me.nickname}</span>
+          <span className="truncate text-body-1 font-semibold">{me.nickname}</span>
           <Pencil aria-hidden="true" className="size-3.5 shrink-0 text-fg-muted" />
         </button>
         <span className="flex min-w-0 items-center justify-center gap-1 overflow-hidden">
@@ -88,7 +88,7 @@ export function AccountCard() {
           type="button"
           onClick={() => open('points')}
           aria-label={t('points.label', { n: (me.points ?? 0).toLocaleString() })}
-          className="tabular flex h-8 min-w-0 items-center justify-center rounded-full bg-primary-weak px-1.5 text-caption font-bold text-primary"
+          className="tabular flex h-8 min-w-0 items-center justify-center rounded-full bg-primary-weak px-1.5 text-caption font-semibold text-primary"
         >
           <span className="truncate">🅟 {(me.points ?? 0).toLocaleString()}P</span>
         </button>
@@ -178,7 +178,7 @@ export function AccountCard() {
                   </span>
                   <span
                     className={cn(
-                      'tabular shrink-0 text-body-2 font-bold',
+                      'tabular shrink-0 text-body-2 font-semibold',
                       h.delta > 0 ? 'text-primary' : 'text-fg-muted',
                     )}
                   >
@@ -253,7 +253,7 @@ function ProviderName({ provider }: { provider: string }) {
   const { t } = useTranslation();
   if (provider === 'google')
     return (
-      <span aria-label="Google" className="truncate text-caption font-bold whitespace-nowrap">
+      <span aria-label="Google" className="truncate text-caption font-semibold whitespace-nowrap">
         {[...'Google'].map((ch, i) => (
           <span key={i} aria-hidden="true" style={{ color: GOOGLE_COLORS[i] }}>
             {ch}
@@ -263,12 +263,14 @@ function ProviderName({ provider }: { provider: string }) {
     );
   if (provider === 'kakao')
     return (
-      <span className="truncate rounded-full bg-[#FEE500] px-2 py-0.5 text-caption font-bold text-[#191919]">
+      <span className="truncate rounded-full bg-[#FEE500] px-2 py-0.5 text-caption font-semibold text-[#191919]">
         {t('login.name.kakao')}
       </span>
     );
   if (provider === 'naver')
-    return <span className="text-caption font-bold text-[#03C75A]">{t('login.name.naver')}</span>;
+    return (
+      <span className="text-caption font-semibold text-[#03C75A]">{t('login.name.naver')}</span>
+    );
   return <span className="text-caption text-fg-muted">{provider}</span>;
 }
 

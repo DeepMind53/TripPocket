@@ -1084,12 +1084,12 @@ function DaySection({
                 className="flex min-h-9 items-center gap-2"
               >
                 <span
-                  className="rounded-full px-2.5 py-0.5 text-caption font-bold whitespace-nowrap text-white"
+                  className="rounded-full px-2.5 py-0.5 text-caption font-semibold whitespace-nowrap text-white"
                   style={{ background: color }}
                 >
                   {t('plan.dayN', { n: index + 1 })}
                 </span>
-                <span className="text-body-1 font-bold whitespace-nowrap">
+                <span className="text-body-1 font-semibold whitespace-nowrap">
                   {formatMonthDay(date)}
                 </span>
                 <ChevronDown aria-hidden="true" className="size-4 text-fg-muted" />
@@ -1097,17 +1097,17 @@ function DaySection({
             ) : date ? (
               <>
                 <span
-                  className="rounded-full px-2.5 py-0.5 text-caption font-bold whitespace-nowrap text-white"
+                  className="rounded-full px-2.5 py-0.5 text-caption font-semibold whitespace-nowrap text-white"
                   style={{ background: color }}
                 >
                   {t('plan.dayN', { n: index + 1 })}
                 </span>
-                <span className="text-body-1 font-bold whitespace-nowrap">
+                <span className="text-body-1 font-semibold whitespace-nowrap">
                   {formatMonthDay(date)}
                 </span>
               </>
             ) : (
-              <span className="text-body-1 font-bold">{title}</span>
+              <span className="text-body-1 font-semibold">{title}</span>
             )}
             {isToday && (
               <span className="rounded-full bg-primary-weak px-2 py-0.5 text-micro whitespace-nowrap text-primary">
@@ -1163,7 +1163,7 @@ function DaySection({
         airWarnings(weather?.air).map((w) => (
           <p
             key={w.key}
-            className="mx-3 mt-2 rounded-btn bg-warning/10 px-3 py-2 text-caption whitespace-pre-line text-fg-sub"
+            className="mx-2 mt-2 rounded-btn bg-warning/10 px-3 py-2 text-caption whitespace-pre-line text-fg-sub"
           >
             <InlineIcon icon={w.key.startsWith('uv') ? SunMedium : Haze} className="text-warning" />
             {t(`air.${w.key}`, { v: w.v })}
@@ -1173,7 +1173,7 @@ function DaySection({
       {tips.map((k) => (
         <p
           key={k}
-          className="mx-3 mt-2 rounded-btn bg-bg-subtle px-3 py-2 text-caption whitespace-pre-line text-fg-sub"
+          className="mx-2 mt-2 rounded-btn bg-bg-subtle px-3 py-2 text-caption whitespace-pre-line text-fg-sub"
         >
           <InlineIcon icon={PLACE_TIP_ICON[k]} />
           {t(`placeTips.${k}`)}
@@ -1190,7 +1190,7 @@ function DaySection({
       {outs.map((o, i) => (
         <p
           key={`out-${i}-${o.title}`}
-          className="mx-3 mt-2 flex items-center gap-2 rounded-btn bg-warning/10 px-3 py-2 text-caption text-fg-sub"
+          className="mx-2 mt-2 flex items-center gap-2 rounded-btn bg-warning/10 px-3 py-2 text-caption text-fg-sub"
         >
           <Luggage aria-hidden="true" className="size-4 shrink-0 text-primary" />
           {o.time
@@ -1200,7 +1200,7 @@ function DaySection({
       ))}
       {/* 실험실: 그날 장소 1km 안의 가고 싶은 곳 */}
       {nearby.length > 0 && (
-        <p className="mx-3 mt-2 truncate rounded-btn bg-primary-weak px-3 py-2 text-caption text-primary">
+        <p className="mx-2 mt-2 line-clamp-2 rounded-btn bg-primary-weak px-3 py-2 text-caption text-primary">
           {t('labs.nearbyWish', {
             names: nearby
               .slice(0, 3)
@@ -1212,13 +1212,13 @@ function DaySection({
       )}
       {/* 그날 아침 숙소 조식 (사용자 요청 2026-10-26) */}
       {breakfast && (
-        <p className="mx-3 mt-2 flex items-center gap-2 rounded-btn bg-bg-subtle px-3 py-2 text-caption text-fg-sub">
+        <p className="mx-2 mt-2 flex items-center gap-2 rounded-btn bg-bg-subtle px-3 py-2 text-caption text-fg-sub">
           <EggFried aria-hidden="true" className="size-4 shrink-0 text-primary" />
           {t('plan.breakfast', { name: breakfast.title })}
         </p>
       )}
       {bookingRows.length > 0 && (
-        <ul aria-label={t('plan.bookingsLabel')} className="flex flex-col gap-1 px-3 pt-2">
+        <ul aria-label={t('plan.bookingsLabel')} className="flex flex-col gap-1 px-2 pt-2">
           {bookingRows.map((row) => (
             <BookingLine key={`${row.booking.id}-${row.part}`} row={row} onOpen={onBooking} />
           ))}
@@ -1231,7 +1231,7 @@ function DaySection({
       )}
       <ol
         className={cn(
-          'flex flex-col px-3 py-2',
+          'flex flex-col px-2 py-2',
           compact ? 'gap-0.5 [&_[data-item-row]]:py-1.5' : 'gap-1.5',
         )}
       >
@@ -1306,7 +1306,7 @@ function DaySection({
         <button
           type="button"
           onClick={onAdd}
-          className="mx-3 mb-3 flex h-11 items-center justify-center gap-1 rounded-btn border border-dashed border-line text-body-2 font-semibold text-fg-sub"
+          className="mx-2 mb-2 flex h-11 items-center justify-center gap-1 rounded-btn border border-dashed border-line text-body-2 font-medium text-fg-sub"
         >
           <Plus aria-hidden="true" className="size-4" />
           {t('plan.addItem')}
@@ -1320,7 +1320,7 @@ function DaySection({
             title: lodging.booking.title,
             night: lodging.night,
           })}
-          className="mx-3 mb-3 -mt-1 flex items-center gap-2 rounded-btn bg-bg-subtle px-3 py-2.5 text-left"
+          className="mx-2 mb-2 -mt-1 flex items-center gap-2 rounded-btn bg-bg-subtle px-3 py-2.5 text-left"
         >
           <BedDouble aria-hidden="true" className="size-4 shrink-0 text-day-4" />
           <span className="text-caption font-semibold text-fg-sub">{t('plan.lodging')}</span>
@@ -1359,7 +1359,7 @@ function BookingLine({ row, onOpen }: { row: BookingRow; onOpen: () => void }) {
           {b.confirmationNo && (
             <span className="tabular border-t border-dashed border-line pt-1.5 text-caption text-fg-sub">
               {t('bookings.confirmationNo')}{' '}
-              <strong className="font-bold text-fg">{b.confirmationNo}</strong>
+              <strong className="font-semibold text-fg">{b.confirmationNo}</strong>
             </span>
           )}
         </button>
@@ -1478,7 +1478,7 @@ function ItemRow({
           <button
             type="button"
             onClick={onConfirmFlight}
-            className="h-8 shrink-0 rounded-full bg-primary px-4 text-caption font-bold text-on-primary"
+            className="h-8 shrink-0 rounded-full bg-primary px-4 text-caption font-semibold text-on-primary"
           >
             {t('flightCheck.confirm')}
           </button>
@@ -1491,7 +1491,7 @@ function ItemRow({
           {marked && (
             <span
               aria-hidden="true"
-              className="pointer-events-none absolute inset-0 grid place-items-center text-title-2 font-bold text-fg-sub"
+              className="pointer-events-none absolute inset-0 grid place-items-center text-title-2 font-semibold text-fg-sub"
             >
               {t('visit.record.skipped')}
             </span>
@@ -1518,7 +1518,7 @@ function ItemRow({
   const badge = (
     <span
       aria-hidden="true"
-      className="tabular grid size-6 shrink-0 place-items-center rounded-full text-micro font-bold text-white"
+      className="tabular grid size-6 shrink-0 place-items-center rounded-full text-micro font-semibold text-white"
       style={{ background: color }}
     >
       {item.done ? <Check className="size-3.5" /> : n}
@@ -1541,7 +1541,7 @@ function ItemRow({
         className={cn(
           'kind-tint flex w-full items-start gap-3 rounded-btn border border-dashed border-fg-muted/60 px-2 py-3 text-left active:bg-bg-subtle',
           item.done && !marked && !visitedLook && 'opacity-50',
-          now && 'kind-now border-transparent font-bold',
+          now && 'kind-now border-transparent font-semibold',
           marked && 'visit-mark',
           onConfirmFlight && 'flight-alert border-transparent',
         )}
@@ -1561,7 +1561,7 @@ function ItemRow({
           {booking.confirmationNo && (
             <span className="tabular border-t border-dashed border-line pt-1.5 text-caption text-fg-sub">
               {t('bookings.confirmationNo')}{' '}
-              <strong className="font-bold text-fg">{booking.confirmationNo}</strong>
+              <strong className="font-semibold text-fg">{booking.confirmationNo}</strong>
             </span>
           )}
         </span>
@@ -1605,7 +1605,7 @@ function ItemRow({
             className={cn(
               'line-clamp-4 text-body-2',
               item.done && 'line-through',
-              now && 'font-bold',
+              now && 'font-semibold',
             )}
           >
             {item.memo ?? item.title}
@@ -1616,7 +1616,7 @@ function ItemRow({
               className={cn(
                 'text-body-1',
                 item.done && !visitedLook && 'line-through',
-                now && 'font-bold',
+                now && 'font-semibold',
               )}
             >
               {item.title}
@@ -1789,7 +1789,7 @@ function EmptyDayRow({
     >
       <h2 aria-label={title} className="tabular flex flex-1 items-center gap-2">
         <span
-          className="rounded-full px-2.5 py-0.5 text-caption font-bold whitespace-nowrap text-white"
+          className="rounded-full px-2.5 py-0.5 text-caption font-semibold whitespace-nowrap text-white"
           style={{ background: color }}
         >
           {t('plan.dayN', { n: index + 1 })}

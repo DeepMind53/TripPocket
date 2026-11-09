@@ -109,7 +109,7 @@ export function MePage() {
 function MenuGroup({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section aria-label={title} className="flex flex-col gap-1.5">
-      <h2 className="px-1 text-caption font-bold text-fg-muted">{title}</h2>
+      <h2 className="px-1 text-caption font-semibold text-fg-muted">{title}</h2>
       <ul className="flex flex-col divide-y divide-line overflow-hidden rounded-card border border-line">
         {children}
       </ul>

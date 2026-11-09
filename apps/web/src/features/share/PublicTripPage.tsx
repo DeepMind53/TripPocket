@@ -1,3 +1,4 @@
+import { Link2 } from 'lucide-react';
 import { getTripDays, type PublicTrip } from '@trippocket/shared';
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router';
@@ -30,7 +31,7 @@ export function PublicTripPage() {
     return (
       <EmptyState
         asPageTitle
-        emoji="🔗"
+        icon={Link2}
         title={t('share.publicGone')}
         description={t('share.publicGoneDesc')}
         action={
@@ -63,7 +64,7 @@ export function PublicTripPage() {
           if (day.length === 0 && bk.length === 0) return null;
           return (
             <section key={date} className="overflow-hidden rounded-2xl border border-line">
-              <h2 className="tabular bg-bg-subtle px-4 py-2.5 text-body-1 font-bold">
+              <h2 className="tabular bg-bg-subtle px-4 py-2.5 text-body-1 font-semibold">
                 {t('plan.dayN', { n: i + 1 })} · {formatMonthDay(date)}
               </h2>
               <ul className="flex flex-col divide-y divide-line px-4">
