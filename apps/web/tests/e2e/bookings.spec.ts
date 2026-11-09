@@ -57,5 +57,10 @@ test('예약: 기차·버스는 날짜|교통편, 출발 시각|출발역, 도�
   expect(overflow).toBeLessThanOrEqual(1);
   await page.screenshot({ path: 'test-results/train-form-320.png' });
   await sheet.getByRole('button', { name: '예약 추가' }).click();
-  await expect(page.getByText('동대구역 13:32 -> 수원역 15:44')).toBeVisible();
+  // 탑승권 모양 (사용자 결정 2026-11-10): 출발역·도착역 크게, 아래 시각 — 320px에서도 카드가 넘치지 않는다
+  const card = page.getByRole('button', { name: /KTX/ });
+  for (const s of ['동대구역', '13:32', '수원역', '15:44'])
+    await expect(card.getByText(s, { exact: true })).toBeVisible();
+  const cardOverflow = await card.evaluate((el) => el.scrollWidth - el.clientWidth);
+  expect(cardOverflow).toBeLessThanOrEqual(1);
 });

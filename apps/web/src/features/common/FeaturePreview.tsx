@@ -22,11 +22,9 @@ export function FeaturePreview({ id }: { id: PreviewId }) {
         opts.dim && 'opacity-60',
       )}
     >
-      <div
-        className="flex min-h-10 items-center gap-2 border-b border-line bg-bg-subtle/60 pl-4"
-        style={{ boxShadow: 'inset 4px 0 0 #2F6BFF' }}
-      >
-        <span className="rounded-full bg-[#2F6BFF] px-2.5 py-0.5 text-caption font-semibold text-white">
+      {/* 일정 화면 2단계 모양 (docs/29 §13.2): 노선 진한 색 일차 알약 + 아래 선 */}
+      <div className="flex min-h-10 items-center gap-2 border-b border-line pl-4">
+        <span className="rounded-full bg-day-2-ink px-2.5 py-0.5 text-caption font-semibold text-on-primary">
           {t('plan.dayN', { n: 2 })}
         </span>
         <span className="text-body-2 font-semibold">{t('sample.date')}</span>
@@ -48,12 +46,21 @@ export function FeaturePreview({ id }: { id: PreviewId }) {
   ) => (
     <div
       className={cn(
-        'flex items-center gap-2 rounded-btn bg-bg-subtle px-2 text-body-2',
+        'flex items-center gap-2 rounded-btn px-2 text-body-2',
         opts.tight ? 'py-1' : 'py-2',
-        opts.now && 'font-semibold ring-2 ring-primary',
+        opts.now &&
+          'bg-[color-mix(in_srgb,var(--tp-day-2)_8%,var(--tp-surface))] font-semibold shadow-[inset_0_0_0_2px_var(--tp-day-2-ink)]',
       )}
     >
-      <span className="grid size-6 place-items-center rounded-full bg-[#2F6BFF] text-micro font-semibold text-white">
+      {/* 노선 역 점: 흰 바탕 + 노선 색 테두리, 진행 중이면 채움 */}
+      <span
+        className={cn(
+          'grid size-6 place-items-center rounded-full border-[3px] font-mono text-micro leading-none',
+          opts.now
+            ? 'border-day-2-ink bg-day-2-ink text-on-primary'
+            : 'border-day-2 bg-surface text-day-2-ink',
+        )}
+      >
         {opts.done ? '✓' : n}
       </span>
       <span className="tabular w-11 text-caption text-fg-sub">

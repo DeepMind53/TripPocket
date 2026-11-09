@@ -233,10 +233,14 @@ function SortableRow({ item, n, color }: { item: ItineraryItem; n: number; color
       >
         <GripVertical aria-hidden="true" className="size-5" />
       </button>
+      {/* 노선 역 점 (docs/29 §4.1) — 일정 화면과 같은 모양, 번호는 진한 노선 색 */}
       <span
         aria-hidden="true"
-        className="tabular grid size-6 shrink-0 place-items-center rounded-full text-micro text-white"
-        style={{ background: color }}
+        className="grid size-6 shrink-0 place-items-center rounded-full border-[3px] bg-surface font-mono text-micro leading-none"
+        style={{
+          borderColor: color,
+          color: color.replace(/^var\(--tp-day-(\d)\)$/, 'var(--tp-day-$1-ink)'),
+        }}
       >
         {n}
       </span>
