@@ -1,4 +1,10 @@
-import type { ItineraryItem } from '@trippocket/shared';
+/** 미니맵에 필요한 일정 칸만 (샘플 미리보기도 같은 부품을 쓴다) */
+export interface MiniMapItem {
+  kind: string;
+  place?:
+    | { coords?: { lat: number; lng: number } | undefined; coordsSource?: string | undefined }
+    | undefined;
+}
 
 const W = 56;
 const H = 28;
@@ -9,7 +15,7 @@ const PAD = 4;
  * 지도 API 없이 좌표만 쓴다 (요청 0). Google에서 받은 좌표는 Google 지도에만 (docs/10 §2.1) → 빼고 그린다.
  * 그림이라 스크린리더에는 숨긴다 (같은 정보가 아래 목록에 있음)
  */
-export function DayMiniMap({ items }: { items: readonly ItineraryItem[] }) {
+export function DayMiniMap({ items }: { items: readonly MiniMapItem[] }) {
   const pts = items
     .filter((i) => i.kind !== 'note' && i.place?.coords && i.place.coordsSource !== 'google')
     .map((i) => i.place!.coords!);

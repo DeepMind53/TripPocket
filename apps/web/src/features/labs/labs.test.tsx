@@ -34,7 +34,7 @@ beforeEach(async () => {
 });
 
 describe('실험실', () => {
-  it('마이 → 실험실: 2026-11-10 새 실험 5개(나머지는 정식), 켜면 이 기기에 저장', async () => {
+  it('마이 → 실험실: 2026-11-10 새 실험 7개(나머지는 정식), 모두 [샘플], 켜면 이 기기에 저장', async () => {
     const user = userEvent.setup();
     render(<RouterProvider router={createMemoryRouter(routes, { initialEntries: ['/me'] })} />);
     await user.click(await screen.findByRole('link', { name: '실험실' }));
@@ -42,8 +42,18 @@ describe('실험실', () => {
     expect(sw).toHaveAttribute('aria-checked', 'false');
     await user.click(sw);
     expect(JSON.parse(localStorage.getItem('tp-labs')!)).toEqual({ dayNote: true });
-    expect(LABS).toEqual(['dayMiniMap', 'nextStopDayColor', 'stampImage', 'sunsetDark', 'dayNote']);
-    expect(screen.getAllByRole('switch')).toHaveLength(5);
+    expect(LABS).toEqual([
+      'dayMiniMap',
+      'nextStopDayColor',
+      'stampImage',
+      'sunsetDark',
+      'dayNote',
+      'tripRouteMap',
+      'tripCard',
+    ]);
+    expect(screen.getAllByRole('switch')).toHaveLength(7);
+    // 실험마다 [샘플] (사용자 요청 2026-11-10)
+    expect(screen.getAllByRole('button', { name: / 샘플$/ })).toHaveLength(7);
     // 정식이 됐거나 뺀 것은 실험실에 없다
     for (const name of [
       /현지 공휴일/,

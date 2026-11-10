@@ -141,6 +141,10 @@ import { confirmDelete } from '../../shared/ui';
 const EditModeList = lazy(() => import('./EditModeList'));
 // 지도도 열 때만
 const TripMap = lazy(async () => ({ default: (await import('./TripMap')).TripMap }));
+// 실험실 "여행 전체 노선도" — 누를 때만
+const TripRouteSheet = lazy(async () => ({
+  default: (await import('./TripRouteSheet')).TripRouteSheet,
+}));
 
 /** 화면에 보여줄 날: 'all' | 'wish' | 일차 번호(1부터) */
 type DayFilter = 'all' | 'wish' | number;
@@ -207,6 +211,8 @@ function PlanView({
   const today = todayIn(trip.timezone);
   // 실험실 "하루 한 줄 기록" (2026-11-10)
   const dayNoteOn = useLab('dayNote');
+  const routeMapOn = useLab('tripRouteMap');
+  const [routeOpen, setRouteOpen] = useState(false);
   const dimPast = useSettings((st) => st.dimPastItems);
   // 2026-10-27 정식: 하루 일정 글로 복사·하루 동선 지도 (날짜 메뉴)
   const copyDayOn = true;
@@ -603,16 +609,40 @@ function PlanView({
           {editing ? (
             <p className="flex-1 text-caption text-fg-muted">{t('plan.editHint')}</p>
           ) : (
-            <Chip
-              selected={mapOpen}
-              leading={<MapIcon aria-hidden="true" className="size-4" />}
-              onClick={() => {
-                setMapOpen(!mapOpen);
-                setMapLarge(false);
-              }}
-            >
-              {t('map.toggle')}
-            </Chip>
+            <span className="flex gap-2">
+              <Chip
+                selected={mapOpen}
+                leading={<MapIcon aria-hidden="true" className="size-4" />}
+                onClick={() => {
+                  setMapOpen(!mapOpen);
+                  setMapLarge(false);
+                }}
+              >
+                {t('map.toggle')}
+              </Chip>
+              {/* 실험실: 여행 전체 노선도 (2026-11-10) */}
+              {routeMapOn && (
+                <Chip
+                  leading={<Route aria-hidden="true" className="size-4" />}
+                  onClick={() => setRouteOpen(true)}
+                >
+                  {t('routeMap.open')}
+                </Chip>
+              )}
+            </span>
+          )}
+          {routeOpen && (
+            <Suspense fallback={null}>
+              <TripRouteSheet
+                open={routeOpen}
+                onOpenChange={setRouteOpen}
+                days={days.map((d, index) => ({
+                  index,
+                  date: formatMonthDay(d),
+                  stops: items.filter((i) => i.date === d && i.kind !== 'note').map((i) => i.title),
+                }))}
+              />
+            </Suspense>
           )}
           {/* 여행 당일: 지금 위치에서 다음 일정까지 (사용자 요청 2026-10-27) */}
           {!editing && nextStopItem && nowTime && (

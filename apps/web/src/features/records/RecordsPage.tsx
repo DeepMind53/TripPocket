@@ -9,6 +9,7 @@ import { TripList } from '../trips/TripsPage';
 import { TravelReview } from './TravelReview';
 import { VisitLog } from './VisitLog';
 import { DayNoteLog } from './DayNoteLog';
+import { TripCardSave } from './TripCardSave';
 
 /**
  * 기록 탭 (2026-10-24 사용자 선택): 다녀온 여행 모음 + 나의 여행 통계(여행 횟수·여행한 날·가 본 나라).
@@ -55,6 +56,7 @@ export function RecordsPage() {
         <TravelReview pastTrips={past} />
         <VisitLog trips={trips ?? []} />
         <DayNoteLog trips={trips ?? []} />
+        <TripCardSave pastTrips={past} />
 
         <section aria-label={t('records.pastTitle')} className="flex flex-col gap-2">
           <h2 className="text-body-1 font-semibold">{t('records.pastTitle')}</h2>

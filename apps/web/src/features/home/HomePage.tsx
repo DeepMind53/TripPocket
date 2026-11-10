@@ -381,10 +381,8 @@ function OngoingTrip({ trip }: { trip: Trip }) {
           label={t('home.nextItem')}
           kicker={t('home.nextItem')}
           title={next.title}
+          // 남은 시간만 (뒤 시각·주소는 뺐다 — "분"이 다음 줄로 밀려서, 사용자 요청 2026-11-10)
           countdown={countdown(next)}
-          countdownSuffix={
-            [time(next.startTime), next.place?.address].filter(Boolean).join(' · ') || undefined
-          }
           progress={prevStop && next.startTime ? progressBetween(prevStop, next, now) : null}
           progressLabel={prevStop ? `${prevStop.title} → ${next.title}` : undefined}
           from={prevStop?.title}

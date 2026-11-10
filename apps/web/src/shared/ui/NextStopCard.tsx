@@ -56,18 +56,21 @@ export function NextStopCard({
         {title}
       </p>
       {countdown && (
-        <p className="flex items-baseline gap-1.5">
+        // 큰 남은 시간은 한 줄로 (글자 중간에서 줄이 바뀌지 않게), 옆 글은 모자라면 통째로 다음 줄 (2026-11-10)
+        <p className="flex flex-wrap items-baseline gap-x-1.5 gap-y-1">
           <span
             className={
               size === 'lg'
-                ? 'tabular text-[3.25rem] leading-none font-semibold tracking-[-0.04em]'
-                : 'tabular text-count-xl'
+                ? 'tabular text-[min(3.25rem,10.5vw)] leading-none font-semibold tracking-[-0.04em] whitespace-nowrap'
+                : 'tabular text-count-xl whitespace-nowrap'
             }
           >
             {countdown}
           </span>
           {countdownSuffix && (
-            <span className="tabular text-body-2 opacity-90">{countdownSuffix}</span>
+            <span className="tabular text-body-2 whitespace-nowrap opacity-90">
+              {countdownSuffix}
+            </span>
           )}
         </p>
       )}

@@ -27,7 +27,14 @@ export type PreviewId =
   | 'flightDelay'
   | 'travelMode'
   | 'tripMode'
-  | 'lodgingPrice';
+  | 'lodgingPrice'
+  | 'dayMiniMap'
+  | 'nextStopDayColor'
+  | 'stampImage'
+  | 'sunsetDark'
+  | 'dayNote'
+  | 'tripRouteMap'
+  | 'tripCard';
 
 const IDS: readonly string[] = [
   'dimPastItems',
@@ -58,6 +65,13 @@ const IDS: readonly string[] = [
   'travelMode',
   'tripMode',
   'lodgingPrice',
+  'dayMiniMap',
+  'nextStopDayColor',
+  'stampImage',
+  'sunsetDark',
+  'dayNote',
+  'tripRouteMap',
+  'tripCard',
 ];
 
 export const hasPreview = (id: string): id is PreviewId => IDS.includes(id);

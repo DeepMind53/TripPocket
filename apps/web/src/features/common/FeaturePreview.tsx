@@ -1,4 +1,14 @@
-import { Footprints, Luggage, Map as MapIcon, Moon, MoonStar, Sun } from 'lucide-react';
+import {
+  Footprints,
+  ImageDown,
+  Luggage,
+  Map as MapIcon,
+  Moon,
+  MoonStar,
+  Navigation,
+  PenLine,
+  Sun,
+} from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useTranslation } from '../../i18n';
 import { cn } from '../../shared/lib/cn';
@@ -8,6 +18,28 @@ import { CautionIcons } from './CautionIcons';
 import { NearbyFind } from './NearbyFind';
 import { TransitGuide } from './TransitGuide';
 import type { PreviewId } from './previewIds';
+import { NextStopCard, Stamp } from '../../shared/ui';
+import { routeColor, routeStyle } from '../../shared/ui/routeColor';
+import { DayMiniMap } from '../itinerary/DayMiniMap';
+import { TripRouteView } from '../itinerary/TripRouteView';
+import { tripCardSvg } from '../records/tripCard';
+
+/** 샘플 하루 동선 (도쿄 아사쿠사 → 스카이트리 → 우에노 → 신주쿠, 좌표는 미리보기 그림용) */
+const SAMPLE_STOPS = [
+  { kind: 'place', place: { coords: { lat: 35.7148, lng: 139.7967 } } },
+  { kind: 'place', place: { coords: { lat: 35.7101, lng: 139.8107 } } },
+  { kind: 'place', place: { coords: { lat: 35.7101, lng: 139.7745 } } },
+  { kind: 'food', place: { coords: { lat: 35.6938, lng: 139.7034 } } },
+];
+
+/** 저장될 그림을 그대로 보여 준다 (SVG 글 → img) */
+const svgImg = (svg: string, alt: string) => (
+  <img
+    src={`data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`}
+    alt={alt}
+    className="w-full rounded-card border border-line"
+  />
+);
 
 /**
  * 켜면 어떻게 보이는지 [샘플] 미리보기 (사용자 요청 2026-10-27 — 실험실·설정 "일정").
@@ -295,6 +327,128 @@ export function FeaturePreview({ id }: { id: PreviewId }) {
       return info(t('travel.title'), t('sample.travelMode'));
     case 'lodgingPrice':
       return info(t('lodgingPrice.title'), t('sample.lodgingPrice'));
+    case 'dayMiniMap':
+      return (
+        <div className="flex min-h-12 items-center gap-2 rounded-2xl border border-line bg-surface px-4">
+          <span
+            className="rounded-full px-2.5 py-0.5 text-caption font-semibold text-on-primary"
+            style={{ background: routeColor(1).ink }}
+          >
+            {t('plan.dayN', { n: 2 })}
+          </span>
+          <span className="flex-1 text-body-2 font-semibold">{t('sample.date')}</span>
+          <span style={routeStyle(1)} className="flex">
+            <DayMiniMap items={SAMPLE_STOPS} />
+          </span>
+        </div>
+      );
+    case 'nextStopDayColor':
+      return (
+        <NextStopCard
+          tone={routeColor(1).ink}
+          label={t('home.nextItem')}
+          kicker={t('home.nextItem')}
+          title={t('sample.skytree')}
+          countdown={t('home.inMinutes', { n: 25 })}
+          countdownSuffix="13:00"
+          actions={
+            <span className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-btn bg-on-primary px-3 text-body-2 font-medium text-primary">
+              <Navigation aria-hidden="true" className="size-4" />
+              {t('home.directions')}
+            </span>
+          }
+        />
+      );
+    case 'stampImage':
+      return (
+        <div className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-3">
+          <div className="grid grid-cols-3 gap-3 px-1">
+            {(['japan', 'vietnam', 'tokyo'] as const).map((k, i) => (
+              <Stamp
+                key={k}
+                city={t(`sample.${k}`)}
+                period={t('records.tripsN', { n: 3 - i })}
+                dayIndex={i}
+                seed={k}
+                label={t(`sample.${k}`)}
+              />
+            ))}
+          </div>
+          <span className="mx-auto flex h-11 items-center gap-1.5 px-4 text-caption font-medium text-fg-sub">
+            <ImageDown aria-hidden="true" className="size-4" />
+            {t('records.stampSave')}
+          </span>
+        </div>
+      );
+    case 'sunsetDark':
+      return (
+        <div className="grid grid-cols-2 gap-2">
+          <div className="flex flex-col gap-1 rounded-card border border-line bg-[#ffffff] p-3 text-[#1f2328]">
+            <Sun aria-hidden="true" className="size-5 text-warning" />
+            <span className="tabular text-body-2 font-medium">06:21</span>
+            <span className="text-caption">{t('plan.sunrise')}</span>
+          </div>
+          <div className="flex flex-col gap-1 rounded-card border border-[#2a2f36] bg-[#16191d] p-3 text-[#e6e8eb]">
+            <Moon aria-hidden="true" className="size-5 text-[#9db4ff]" />
+            <span className="tabular text-body-2 font-medium">16:38</span>
+            <span className="text-caption">{t('plan.sunset')}</span>
+          </div>
+          <p className="col-span-2 text-caption whitespace-pre-line text-fg-sub">
+            {t('sample.sunsetDark')}
+          </p>
+        </div>
+      );
+    case 'dayNote':
+      return day(
+        <>
+          {row(1, '10:00', t('sample.sensoji'), { done: true })}
+          {row(2, '18:30', t('sample.ichiran'), { done: true })}
+          <span className="flex h-11 items-center gap-2 rounded-btn bg-bg-subtle px-3 text-body-2">
+            <PenLine aria-hidden="true" className="size-4 shrink-0 text-fg-muted" />
+            {t('sample.dayNote')}
+          </span>
+        </>,
+      );
+    case 'tripRouteMap':
+      return (
+        <div className="rounded-2xl border border-line bg-surface p-3">
+          <TripRouteView
+            days={[
+              {
+                index: 0,
+                date: t('sample.date'),
+                stops: [t('sample.airport'), t('sample.shinjukuHotel'), t('sample.ichiran')],
+              },
+              {
+                index: 1,
+                date: t('sample.date2'),
+                stops: [
+                  t('sample.sensoji'),
+                  t('sample.skytree'),
+                  t('sample.ameyoko'),
+                  t('sample.shinjukuWalk'),
+                ],
+              },
+            ]}
+          />
+        </div>
+      );
+    case 'tripCard':
+      return svgImg(
+        tripCardSvg({
+          title: t('sample.tokyo'),
+          cities: `${t('sample.tokyo')} · ${t('sample.japan')}`,
+          range: '2026.10.27 – 10.31',
+          days: 5,
+          brand: 'TripPocket',
+          facts: [
+            [t('records.days'), t('travelReview.days', { n: 5 })],
+            [t('travelReview.places'), t('travelReview.count', { n: 14 })],
+            [t('tripCard.moved'), t('travelReview.km', { n: 38 })],
+          ],
+        }),
+        t('tripCard.title'),
+      );
     case 'placeTips':
       return day(
         <>
