@@ -62,12 +62,23 @@ it('실험을 켜면 빠른 메뉴 [영수증]으로 찍은 사진이 지금 일
   );
   await user.click(await screen.findByRole('button', { name: '빠른 메뉴' }));
   const sheet = await screen.findByRole('dialog', { name: '빠른 메뉴' });
-  const receipt = within(sheet).getByRole('button', { name: /영수증/ });
-  const input = receipt.querySelector('input[type=file]') as HTMLInputElement;
-  expect(input).toHaveAttribute('capture', 'environment');
-  await user.upload(input, new File(['jpg'], 'r.jpg', { type: 'image/jpeg' }));
+  // 칸을 둘로: 카메라로 찍기 / 휴대폰 사진에서 고르기 (여러 장)
+  const shoot = within(sheet).getByRole('button', { name: '영수증 카메라로 찍기' });
+  const pick = within(sheet).getByRole('button', { name: '영수증 휴대폰 사진에서 고르기' });
+  expect(shoot.querySelector('input')).toHaveAttribute('capture', 'environment');
+  expect(pick.querySelector('input')).not.toHaveAttribute('capture');
+  expect(pick.querySelector('input')).toHaveAttribute('multiple');
+  await user.upload(
+    shoot.querySelector('input') as HTMLInputElement,
+    new File(['jpg'], 'r.jpg', { type: 'image/jpeg' }),
+  );
   await waitFor(async () => expect(await db.photos.count()).toBe(1));
   expect(useToastStore.getState().items.map((x) => x.message)).toContain('이치란에 붙였어요');
+  await user.upload(pick.querySelector('input') as HTMLInputElement, [
+    new File(['a'], 'a.jpg', { type: 'image/jpeg' }),
+    new File(['b'], 'b.jpg', { type: 'image/jpeg' }),
+  ]);
+  await waitFor(async () => expect(await db.photos.count()).toBe(3));
   const [p] = await db.photos.toArray();
   const items = await itemRepo.listByTrip(trip.id);
   expect(items.find((i) => i.id === p!.itemId)?.title).toBe('이치란');

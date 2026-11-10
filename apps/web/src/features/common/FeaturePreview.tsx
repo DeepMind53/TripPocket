@@ -7,8 +7,8 @@ import {
   Moon,
   MoonStar,
   Navigation,
+  Image as ImageIcon,
   PenLine,
-  ReceiptText,
   Sun,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
@@ -452,24 +452,26 @@ export function FeaturePreview({ id }: { id: PreviewId }) {
         t('tripCard.title'),
       );
     case 'tripPhotos':
-      // 빠른 메뉴 두 칸 + 일정 상세 영수증 표 (그림 대신 실제 화면 모양)
+      // 빠른 메뉴 칸: [찍기][고르기] 둘로 + 일정 상세 영수증 표 (실제 화면 모양)
       return (
         <div className="flex flex-col gap-3">
           <div className="grid grid-cols-2 gap-2">
             {(['photo', 'receipt'] as const).map((k) => (
-              <span
-                key={k}
-                className="flex min-h-20 flex-col justify-center gap-0.5 rounded-card bg-bg-subtle px-3 py-2.5"
-              >
-                <span className="flex items-center gap-1.5">
-                  {k === 'photo' ? (
-                    <Camera aria-hidden="true" className="size-5 text-primary" />
-                  ) : (
-                    <ReceiptText aria-hidden="true" className="size-5 text-primary" />
-                  )}
-                  <span className="text-body-2 font-semibold">{t(`quickMenu.${k}`)}</span>
-                </span>
-                <span className="text-micro text-fg-muted">{t(`quickMenu.${k}Desc`)}</span>
+              <span key={k} className="flex gap-1.5">
+                {(['shoot', 'pick'] as const).map((m) => (
+                  <span
+                    key={m}
+                    className="flex min-h-20 flex-1 flex-col items-center justify-center gap-1 rounded-card bg-bg-subtle py-2.5"
+                  >
+                    {m === 'shoot' ? (
+                      <Camera aria-hidden="true" className="size-5 text-primary" />
+                    ) : (
+                      <ImageIcon aria-hidden="true" className="size-5 text-primary" />
+                    )}
+                    <span className="text-body-2 font-semibold">{t(`quickMenu.${k}`)}</span>
+                    <span className="text-micro text-fg-muted">{t(`quickMenu.${m}`)}</span>
+                  </span>
+                ))}
               </span>
             ))}
           </div>

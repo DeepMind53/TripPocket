@@ -23,7 +23,7 @@ export function PhotoCaptureButtons({ trip }: { trip?: Trip | undefined }) {
       (tr) => getTripStatus(tr.startDate, tr.endDate, todayIn(tr.timezone)) === 'ongoing',
     );
 
-  const save = async (file: File, kind: 'photo' | 'receipt') => {
+  const save = async (files: File[], kind: 'photo' | 'receipt') => {
     if (!target) return toast(t('photos.noTrip'));
     const today = todayIn(target.timezone);
     const items = (await itemRepo.listByTrip(target.id)).filter((i) => i.date === today);
@@ -31,9 +31,15 @@ export function PhotoCaptureButtons({ trip }: { trip?: Trip | undefined }) {
     const item = items.find((i) => i.id === itemId);
     if (!item) return toast(t('photos.noItem'));
     try {
-      const blob = await shrinkImage(file);
-      await photoRepo.add({ tripId: target.id, itemId: item.id, kind, blob });
-      toast(t('photos.attached', { title: item.title }));
+      for (const file of files) {
+        const blob = await shrinkImage(file);
+        await photoRepo.add({ tripId: target.id, itemId: item.id, kind, blob });
+      }
+      toast(
+        files.length > 1
+          ? t('photos.attachedN', { title: item.title, n: files.length })
+          : t('photos.attached', { title: item.title }),
+      );
     } catch {
       toast(t('photos.failed'));
     }
@@ -41,8 +47,8 @@ export function PhotoCaptureButtons({ trip }: { trip?: Trip | undefined }) {
 
   return (
     <>
-      <CaptureTile kind="photo" onFile={(f) => void save(f, 'photo')} />
-      <CaptureTile kind="receipt" onFile={(f) => void save(f, 'receipt')} />
+      <CaptureTile kind="photo" onFiles={(f) => void save(f, 'photo')} />
+      <CaptureTile kind="receipt" onFiles={(f) => void save(f, 'receipt')} />
     </>
   );
 }
