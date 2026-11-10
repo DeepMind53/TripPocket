@@ -327,21 +327,6 @@ export function FeaturePreview({ id }: { id: PreviewId }) {
       return info(t('travel.title'), t('sample.travelMode'));
     case 'lodgingPrice':
       return info(t('lodgingPrice.title'), t('sample.lodgingPrice'));
-    case 'dayMiniMap':
-      return (
-        <div className="flex min-h-12 items-center gap-2 rounded-2xl border border-line bg-surface px-4">
-          <span
-            className="rounded-full px-2.5 py-0.5 text-caption font-semibold text-on-primary"
-            style={{ background: routeColor(1).ink }}
-          >
-            {t('plan.dayN', { n: 2 })}
-          </span>
-          <span className="flex-1 text-body-2 font-semibold">{t('sample.date')}</span>
-          <span style={routeStyle(1)} className="flex">
-            <DayMiniMap items={SAMPLE_STOPS} />
-          </span>
-        </div>
-      );
     case 'nextStopDayColor':
       return (
         <NextStopCard
@@ -409,28 +394,43 @@ export function FeaturePreview({ id }: { id: PreviewId }) {
           </span>
         </>,
       );
-    case 'tripRouteMap':
+    case 'routeMap':
+      // 일차 머리 미니맵 → 누르면 여행 전체 노선도 (2026-11-10)
       return (
-        <div className="rounded-2xl border border-line bg-surface p-3">
-          <TripRouteView
-            days={[
-              {
-                index: 0,
-                date: t('sample.date'),
-                stops: [t('sample.airport'), t('sample.shinjukuHotel'), t('sample.ichiran')],
-              },
-              {
-                index: 1,
-                date: t('sample.date2'),
-                stops: [
-                  t('sample.sensoji'),
-                  t('sample.skytree'),
-                  t('sample.ameyoko'),
-                  t('sample.shinjukuWalk'),
-                ],
-              },
-            ]}
-          />
+        <div className="flex flex-col gap-2">
+          <div className="flex min-h-12 items-center gap-2 rounded-2xl border border-line bg-surface px-4">
+            <span
+              className="rounded-full px-2.5 py-0.5 text-caption font-semibold text-on-primary"
+              style={{ background: routeColor(1).ink }}
+            >
+              {t('plan.dayN', { n: 2 })}
+            </span>
+            <span className="flex-1 text-body-2 font-semibold">{t('sample.date')}</span>
+            <span style={routeStyle(1)} className="flex">
+              <DayMiniMap items={SAMPLE_STOPS} />
+            </span>
+          </div>
+          <div className="rounded-2xl border border-line bg-surface p-3">
+            <TripRouteView
+              days={[
+                {
+                  index: 0,
+                  date: t('sample.date'),
+                  stops: [t('sample.airport'), t('sample.shinjukuHotel'), t('sample.ichiran')],
+                },
+                {
+                  index: 1,
+                  date: t('sample.date2'),
+                  stops: [
+                    t('sample.sensoji'),
+                    t('sample.skytree'),
+                    t('sample.ameyoko'),
+                    t('sample.shinjukuWalk'),
+                  ],
+                },
+              ]}
+            />
+          </div>
         </div>
       );
     case 'tripCard':

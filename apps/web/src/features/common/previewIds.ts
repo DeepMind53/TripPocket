@@ -28,12 +28,11 @@ export type PreviewId =
   | 'travelMode'
   | 'tripMode'
   | 'lodgingPrice'
-  | 'dayMiniMap'
+  | 'routeMap'
   | 'nextStopDayColor'
   | 'stampImage'
   | 'sunsetDark'
   | 'dayNote'
-  | 'tripRouteMap'
   | 'tripCard';
 
 const IDS: readonly string[] = [
@@ -65,12 +64,11 @@ const IDS: readonly string[] = [
   'travelMode',
   'tripMode',
   'lodgingPrice',
-  'dayMiniMap',
+  'routeMap',
   'nextStopDayColor',
   'stampImage',
   'sunsetDark',
   'dayNote',
-  'tripRouteMap',
   'tripCard',
 ];
 

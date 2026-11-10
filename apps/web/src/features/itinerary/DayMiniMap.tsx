@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+
 /** 미니맵에 필요한 일정 칸만 (샘플 미리보기도 같은 부품을 쓴다) */
 export interface MiniMapItem {
   kind: string;
@@ -15,11 +17,18 @@ const PAD = 4;
  * 지도 API 없이 좌표만 쓴다 (요청 0). Google에서 받은 좌표는 Google 지도에만 (docs/10 §2.1) → 빼고 그린다.
  * 그림이라 스크린리더에는 숨긴다 (같은 정보가 아래 목록에 있음)
  */
-export function DayMiniMap({ items }: { items: readonly MiniMapItem[] }) {
+export function DayMiniMap({
+  items,
+  fallback = null,
+}: {
+  items: readonly MiniMapItem[];
+  /** 그릴 점이 2개보다 적을 때 대신 보일 것 */
+  fallback?: ReactNode;
+}) {
   const pts = items
     .filter((i) => i.kind !== 'note' && i.place?.coords && i.place.coordsSource !== 'google')
     .map((i) => i.place!.coords!);
-  if (pts.length < 2) return null;
+  if (pts.length < 2) return fallback;
   const lats = pts.map((p) => p.lat);
   const lngs = pts.map((p) => p.lng);
   const [minLat, maxLat] = [Math.min(...lats), Math.max(...lats)];

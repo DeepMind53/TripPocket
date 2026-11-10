@@ -80,6 +80,8 @@ export interface Settings {
   flightDelay: boolean;
   /** 여행 모드 — 여행 중 오늘·내일만 크게 (2026-11-10 실험실에서 정식, 이동 수단 travelMode와 다른 키) */
   tripMode: boolean;
+  /** 노선도 — 일차 머리 미니맵, 누르면 여행 전체 노선도 (2026-11-10 실험실 두 개를 합쳐 정식) */
+  routeMap: boolean;
   /** ⚡ 빠른 메뉴 버튼 보이기 */
   quickButton: boolean;
   /** AI 추천을 열 때 처음 골라 둘 카테고리 */
@@ -120,6 +122,7 @@ export const PLAN_FEATURES = [
   'festivals',
   'flightDelay',
   'tripMode',
+  'routeMap',
 ] as const;
 export type PlanFeature = (typeof PLAN_FEATURES)[number];
 
@@ -136,6 +139,7 @@ export const PLAN_FEATURE_GROUPS: readonly { id: string; keys: readonly PlanFeat
       'sunTimes',
       'planB',
       'tripMode',
+      'routeMap',
     ],
   },
   {
@@ -221,6 +225,7 @@ export const SETTINGS_DEFAULTS: Settings = {
   festivals: false,
   flightDelay: false,
   tripMode: false,
+  routeMap: false,
   quickButton: true,
   aiCats: ['food', 'cafe'],
   aiAnchor: 'text',
@@ -274,6 +279,7 @@ const VALID: { [K in keyof Settings]: (v: unknown) => v is Settings[K] } = {
   festivals: (v): v is boolean => typeof v === 'boolean',
   flightDelay: (v): v is boolean => typeof v === 'boolean',
   tripMode: (v): v is boolean => typeof v === 'boolean',
+  routeMap: (v): v is boolean => typeof v === 'boolean',
   quickButton: (v): v is boolean => typeof v === 'boolean',
   aiCats: (v): v is Settings['aiCats'] =>
     Array.isArray(v) &&

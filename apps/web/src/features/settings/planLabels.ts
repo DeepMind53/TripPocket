@@ -29,4 +29,5 @@ export const PLAN_LABELS = {
   festivals: 'labs.item.festivals.name',
   flightDelay: 'labs.item.flightDelay.name',
   tripMode: 'labs.item.travelMode.name',
+  routeMap: 'settings.routeMap',
 } as const satisfies Record<PlanFeature, string>;

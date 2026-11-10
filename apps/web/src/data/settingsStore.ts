@@ -59,6 +59,9 @@ const GRADUATED_LABS = {
   festivals: 'festivals',
   flightDelay: 'flightDelay',
   travelMode: 'tripMode',
+  // 일차 노선 미니맵·여행 전체 노선도 → 설정 "노선도" 하나로 (2026-11-10)
+  dayMiniMap: 'routeMap',
+  tripRouteMap: 'routeMap',
 } as const;
 
 function migrateGraduatedLabs(): void {
@@ -72,7 +75,7 @@ function migrateGraduatedLabs(): void {
     (id) => labs[id] === true,
   );
   if (on.length === 0) return;
-  const keys = on.map((id) => GRADUATED_LABS[id]);
+  const keys = [...new Set(on.map((id) => GRADUATED_LABS[id]))];
   const cur = currentSettings();
   updateSettings({
     ...Object.fromEntries(keys.map((k) => [k, true])),

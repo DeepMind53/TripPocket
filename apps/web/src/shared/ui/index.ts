@@ -34,3 +34,4 @@ export { GateProgress } from './GateProgress';
 export { Stamp } from './Stamp';
 export { stampLook } from './stampLook';
 export { RouteBar } from './RouteBar';
+export { RollingSlot } from './RollingSlot';

@@ -249,10 +249,26 @@
   animation: tp-toast-in 200ms var(--ease-soft);
 }
 
+/* 일정 날짜 머리 오른쪽: 날씨·오늘·Plan B를 3초마다 위에서 아래로 굴려 바꾼다 (사용자 요청 2026-11-10) */
+@keyframes tp-roll-in {
+  from {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.tp-roll {
+  animation: tp-roll-in 320ms var(--ease-soft);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .tp-sheet[data-state],
   .tp-scrim[data-state],
-  .tp-toast {
+  .tp-toast,
+  .tp-roll {
     animation-duration: 1ms;
   }
 }

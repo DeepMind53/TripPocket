@@ -135,7 +135,7 @@ import { usePlanView, type DayPlanInfo } from './usePlanView';
 import { distanceKm, formatDistance, walkMinutes } from '@trippocket/shared';
 import { DayWeatherBadge } from '../common/DayWeatherBadge';
 import { useTripWeather, type TripDayWeather } from '../common/useTripWeather';
-import { confirmDelete } from '../../shared/ui';
+import { confirmDelete, RollingSlot } from '../../shared/ui';
 
 // 드래그 편집은 편집 모드에 들어갈 때만 불러온다 (dnd-kit 포함)
 const EditModeList = lazy(() => import('./EditModeList'));
@@ -211,7 +211,7 @@ function PlanView({
   const today = todayIn(trip.timezone);
   // 실험실 "하루 한 줄 기록" (2026-11-10)
   const dayNoteOn = useLab('dayNote');
-  const routeMapOn = useLab('tripRouteMap');
+  // 설정 "노선도" (2026-11-10): 일차 머리 미니맵을 누르면 여행 전체 노선도
   const [routeOpen, setRouteOpen] = useState(false);
   const dimPast = useSettings((st) => st.dimPastItems);
   // 2026-10-27 정식: 하루 일정 글로 복사·하루 동선 지도 (날짜 메뉴)
@@ -609,27 +609,16 @@ function PlanView({
           {editing ? (
             <p className="flex-1 text-caption text-fg-muted">{t('plan.editHint')}</p>
           ) : (
-            <span className="flex gap-2">
-              <Chip
-                selected={mapOpen}
-                leading={<MapIcon aria-hidden="true" className="size-4" />}
-                onClick={() => {
-                  setMapOpen(!mapOpen);
-                  setMapLarge(false);
-                }}
-              >
-                {t('map.toggle')}
-              </Chip>
-              {/* 실험실: 여행 전체 노선도 (2026-11-10) */}
-              {routeMapOn && (
-                <Chip
-                  leading={<Route aria-hidden="true" className="size-4" />}
-                  onClick={() => setRouteOpen(true)}
-                >
-                  {t('routeMap.open')}
-                </Chip>
-              )}
-            </span>
+            <Chip
+              selected={mapOpen}
+              leading={<MapIcon aria-hidden="true" className="size-4" />}
+              onClick={() => {
+                setMapOpen(!mapOpen);
+                setMapLarge(false);
+              }}
+            >
+              {t('map.toggle')}
+            </Chip>
           )}
           {routeOpen && (
             <Suspense fallback={null}>
@@ -800,6 +789,7 @@ function PlanView({
                           : undefined
                       }
                       hideWhenEmpty={filter === 'all' && date === null}
+                      onRouteMap={() => setRouteOpen(true)}
                       noteTrip={dayNoteOn && canEdit && date && date <= today ? trip : undefined}
                     />
                   ),
@@ -1019,7 +1009,10 @@ function DaySection({
   plan,
   onPlans,
   noteTrip,
+  onRouteMap,
 }: {
+  /** 설정 "노선도": 미니맵을 누르면 여행 전체 노선도 */
+  onRouteMap: () => void;
   /** 실험실 "하루 한 줄 기록": 오늘·지난 날이면 그 여행 (아니면 칸 없음) */
   noteTrip?: Trip | undefined;
   /** Plan B (실험실): 그날 플랜 정보 · 날짜 머리글을 누르면 플랜 시트 */
@@ -1093,7 +1086,7 @@ function DaySection({
   );
   const today = todayIn(timezone);
   const past = visitOn ? pastItemIds(items, today, timeIn(timezone, now) ?? '00:00') : null;
-  const miniMapOn = useLab('dayMiniMap');
+  const miniMapOn = useSettings((st) => st.routeMap);
   // 여행 중 오늘: 지난 일정은 여행 모드처럼 접어 둔다 — [지난 일정 N]으로 펼침 (사용자 요청 2026-11-10)
   const [pastOpen, setPastOpen] = useState(false);
   const todayPast = isToday ? pastItemIds(items, today, timeIn(timezone, now) ?? '00:00') : null;
@@ -1166,26 +1159,46 @@ function DaySection({
             ) : (
               <span className="text-body-1 font-semibold">{title}</span>
             )}
-            {isToday && (
-              <span className="rounded-full bg-primary-weak px-2 py-0.5 text-micro whitespace-nowrap text-primary">
-                {t('date.today')}
-              </span>
-            )}
-            {plan?.plan && (
-              <span className="rounded-full bg-warning/15 px-2 py-0.5 text-micro whitespace-nowrap text-fg">
-                {t(plan.by === 'auto' ? 'planB.badgeAuto' : 'planB.badgePick', {
-                  name: plan.plan.name,
-                })}
-              </span>
-            )}
           </h2>
-          {/* 실험실: 일차 노선 미니맵 (2026-11-10) */}
+          {/* 설정 "노선도" (2026-11-10): 그날 동선 미니맵 — 누르면 여행 전체 노선도. 좌표가 모자라면 노선 아이콘 */}
           {miniMapOn && date && (
-            <span style={routeStyle(index)} className="flex">
-              <DayMiniMap items={items} />
-            </span>
+            <button
+              type="button"
+              onClick={onRouteMap}
+              aria-label={t('routeMap.openAll')}
+              style={routeStyle(index)}
+              className="grid min-h-11 min-w-11 place-items-center"
+            >
+              <DayMiniMap
+                items={items}
+                fallback={<Route aria-hidden="true" className="size-5 text-[var(--route-ink)]" />}
+              />
+            </button>
           )}
-          <DayWeatherBadge weather={weather} />
+          {/* 날씨·오늘·Plan B를 한 칸에서 3초마다 번갈아 (날짜 아래 줄에 쌓이지 않게, 사용자 요청 2026-11-10) */}
+          <RollingSlot
+            items={[
+              weather && <DayWeatherBadge key="w" weather={weather} />,
+              isToday && (
+                <span
+                  key="today"
+                  className="rounded-full bg-primary-weak px-2 py-0.5 text-micro whitespace-nowrap text-primary"
+                >
+                  {t('date.today')}
+                </span>
+              ),
+              plan?.plan && (
+                <span
+                  key="plan"
+                  className="max-w-36 truncate rounded-full bg-warning/15 px-2 py-0.5 text-micro whitespace-nowrap text-fg"
+                >
+                  {t(plan.by === 'auto' ? 'planB.badgeAuto' : 'planB.badgePick', {
+                    name: plan.plan.name,
+                  })}
+                </span>
+              ),
+            ].filter(Boolean)}
+          />
           {((canEdit && items.length > 1) ||
             ((copyDayOn || dayRouteOn || (dupOn && canEdit)) && items.length > 0)) && (
             <IconButton
