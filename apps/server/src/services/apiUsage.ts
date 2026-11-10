@@ -80,6 +80,8 @@ export interface ApiDef {
   pool?: ApiId;
   /** 묶음 전용 항목 (직접 부르지 않음 — 관리자 화면에서 합산·중지) */
   poolOnly?: true;
+  /** 서비스 회사가 공지한 종료일 (YYYY-MM-DD) — 관리자 화면에 미리 알림, 그 전에 다른 것으로 옮긴다 */
+  retires?: string;
 }
 
 export const APIS: readonly ApiDef[] = [
@@ -139,7 +141,8 @@ export const APIS: readonly ApiDef[] = [
   // Gemini 무료 등급(결제 없는 프로젝트): Flash-Lite 하루 500~1,000회, 태평양 자정에 초기화
   { id: 'gemini', group: 'free', freeDaily: 500, tz: 'America/Los_Angeles' },
   // 영수증 백업 (ADR-0012): Azure AI Vision Read F0 — 월 5,000건·분당 20건 무료, 넘으면 막힐 뿐 (무료 등급)
-  { id: 'azure_read', group: 'free', freeMonthly: 5000, tz: 'UTC' },
+  // Image Analysis 4.0은 2028-09-25 종료 예정 (Microsoft Learn 공지, 2026-11-11 확인) — 그 전에 다른 읽기 서비스로 옮긴다
+  { id: 'azure_read', group: 'free', freeMonthly: 5000, tz: 'UTC', retires: '2028-09-25' },
   // Workers AI 무료 플랜: 하루 1만 Neurons(UTC 자정) ≈ 이 앱 분석 약 50회. 유료 플랜으로 올리면 과금되므로 하루 상한 유지
   { id: 'workers-ai', group: 'free', freeDaily: 50, tz: 'UTC' },
   // Groq 무료: 하루 1,000회 (조직 단위)
@@ -354,6 +357,7 @@ export function usageReport() {
         browser: a.browser === true,
         pool: a.pool ?? null,
         poolOnly: a.poolOnly === true,
+        retires: a.retires ?? null,
         autoStopped: stop !== null,
         autoStoppedBy: stop,
       };

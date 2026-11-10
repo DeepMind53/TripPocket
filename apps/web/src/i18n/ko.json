@@ -1281,6 +1281,9 @@
     "today": "오늘 {{n}}",
     "counts": "이번 달 {{month}}회 · 오늘 {{today}}회",
     "autoLimit": "월 자동 중지",
+    "freeMonth": "무료 월 {{n}}",
+    "freeDay": "무료 하루 {{n}}",
+    "retires": "{{date}} 서비스 종료 예정",
     "dailyChart": "이번 달 하루별 사용량",
     "name": {
       "google_places_search": "Google 장소 검색",
@@ -1368,7 +1371,7 @@
       "google_details_basic": "자동완성에서 고른 장소 · Essentials · 월 10,000회 무료",
       "google_routes": "걷기·대중교통 1번에 2건 · Essentials · 월 10,000회 무료",
       "google_vision": "영수증 1장에 1건 · 월 1,000장 무료, 넘으면 1,000장당 $1.50",
-      "azure_read": "Google 무료량이 끝나면 대신 · 월 5,000장 무료 (요금 없음)",
+      "azure_read": "Google 무료량이 끝나면 대신 · 분당 20장 · 넘으면 멈출 뿐 (요금 없음)",
       "geoapify": "Google 백업까지 멈추면 · 하루 3,000회 무료 (요금 없음)",
       "openfreemap": "Google·네이버 지도를 못 쓸 때 · 무료·한도 없음",
       "kakao_maps_js": "국내 일정 지도(카카오 선택 시)\n하루 30만 건 무료 · 월은 카카오 합산",

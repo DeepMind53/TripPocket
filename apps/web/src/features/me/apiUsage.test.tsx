@@ -23,6 +23,7 @@ const row = (id: string, group: 'paid' | 'free', over: object = {}) => ({
   browser: false,
   pool: null,
   poolOnly: false,
+  retires: null,
   autoStopped: false,
   autoStoppedBy: null,
   ...over,
@@ -68,6 +69,7 @@ it('관리자: 마이 → API 사용량, 과금 가능 API는 % 게이지·상�
             autoStopped: true,
             autoStoppedBy: 'day',
           }),
+          row('azure_read', 'free', { freeMonthly: 5000, retires: '2028-09-25' }),
           row('nager_date', 'free', { used: 30, today: 3 }),
           row('oauth_kakao', 'free', { used: 4, today: 2, pausable: false }),
         ],
@@ -94,6 +96,9 @@ it('관리자: 마이 → API 사용량, 과금 가능 API는 % 게이지·상�
     screen.getByRole('meter', { name: '카카오 키워드 장소 검색 오늘 무료 사용량 대비' }),
   ).toHaveAttribute('aria-valuenow', '90');
   expect(screen.getByText('이번 달 30회 · 오늘 3회')).toBeInTheDocument(); // 한도 없는 무료 API
+  // 무료 사용량 숫자 한 줄 + 종료 예정 (2026-11-11)
+  expect(screen.getAllByText('무료 월 5,000').length).toBeGreaterThan(0);
+  expect(screen.getByText('2028.09.25 서비스 종료 예정')).toBeInTheDocument();
   // 로그인은 멈출 수 없고 기록만
   expect(screen.getByText(/기록만/)).toBeInTheDocument();
   expect(screen.queryByRole('button', { name: '카카오 로그인 중지' })).not.toBeInTheDocument();

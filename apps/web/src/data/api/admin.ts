@@ -54,6 +54,8 @@ export interface ApiUsage {
   /** 월 무료량을 함께 쓰는 묶음 id (예: kakao_map) */
   pool: string | null;
   poolOnly: boolean;
+  /** 서비스 종료 예정일 (YYYY-MM-DD) */
+  retires: string | null;
   autoStopped: boolean;
   autoStoppedBy: 'month' | 'day' | null;
 }

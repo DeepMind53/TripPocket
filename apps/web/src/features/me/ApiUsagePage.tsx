@@ -69,6 +69,7 @@ export function ApiUsagePage() {
                 <span className="flex min-w-0 flex-1 flex-col">
                   <span className="text-body-2 font-medium">{apiName(t, a.id)}</span>
                   <span className="text-caption text-fg-muted">{apiNote(t, a.id)}</span>
+                  <RetireLine retires={a.retires} />
                   <span className="tabular text-caption text-fg-muted">
                     {t('apiUsage.counts', {
                       month: a.used.toLocaleString(),
@@ -129,6 +130,8 @@ function LimitCard({
         <div className="flex min-w-0 flex-1 flex-col">
           <h3 className="text-body-1 font-semibold">{apiName(t, a.id)}</h3>
           <p className="text-caption text-fg-muted">{apiNote(t, a.id)}</p>
+          <FreeLine api={a} />
+          <RetireLine retires={a.retires} />
         </div>
         <span
           className={cn(
@@ -178,6 +181,36 @@ function LimitCard({
         </span>
       </div>
     </article>
+  );
+}
+
+/** 무료 사용량 한 줄 ("무료 월 1,000 · 하루 300,000") — 표·막대와 별도로 숫자로 (사용자 요청 2026-11-11) */
+function FreeLine({ api: a }: { api: ApiUsage }) {
+  const { t } = useTranslation();
+  const parts = [
+    a.freeMonthly !== null && t('apiUsage.freeMonth', { n: a.freeMonthly.toLocaleString() }),
+    a.freeDaily !== null && t('apiUsage.freeDay', { n: a.freeDaily.toLocaleString() }),
+  ].filter((x): x is string => typeof x === 'string');
+  if (!parts.length) return null;
+  return <p className="tabular text-caption text-fg-sub">{parts.join(' · ')}</p>;
+}
+
+/** 서비스 종료 예정 — 1년 안이면 주황 (사용자 요청 2026-11-11) */
+function RetireLine({ retires }: { retires: string | null }) {
+  const { t } = useTranslation();
+  // 화면을 연 시각 기준 (그리는 중에 시계를 다시 읽지 않게)
+  const [now] = useState(() => Date.now());
+  if (!retires) return null;
+  const soon = Date.parse(retires) - now < 365 * 86_400_000;
+  return (
+    <span
+      className={cn(
+        'tabular mt-0.5 self-start rounded-full px-2 py-0.5 text-micro font-semibold',
+        soon ? 'bg-warning/20 text-warning' : 'bg-bg-subtle text-fg-sub',
+      )}
+    >
+      {t('apiUsage.retires', { date: retires.replace(/-/g, '.') })}
+    </span>
   );
 }
 

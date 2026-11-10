@@ -113,7 +113,7 @@ Tailscale Funnel https://jin-server.tail0844c0.ts.net ─▶ 홈 PC 127.0.0.1:87
 | google_details_basic | 과금 가능 | 월 10,000 | 자동완성에서 고른 장소의 주소·좌표 — Place Details **Essentials** (FieldMask: formattedAddress,location) |
 | google_routes | 과금 가능 | 월 10,000 | 다음 일정 바·구간 시간: Compute Routes Essentials(걷기·대중교통 2건씩, FieldMask: routes.duration). Google 좌표가 낀 구간만 — 나머지는 Geoapify 먼저. 둘 다 없으면 웹이 직선거리로 어림(팝업 없음). `services/routes.ts`·`POST /api/routes/eta` |
 | google_vision | 과금 가능 | 월 1,000 | 영수증 글자 인식(ADR-0012): Document Text Detection, [영수증 분석]을 누를 때만, 한 사람 하루 20장. 키 `GOOGLE_VISION_KEY`(없으면 `GOOGLE_PLACES_KEY`). `services/ocr.ts`·`POST /api/ocr` |
-| azure_read | 무료 | 월 5,000 | 영수증 백업: Azure AI Vision Read F0 (분당 20). 키 `AZURE_VISION_ENDPOINT`·`AZURE_VISION_KEY`. 둘 다 안 되면 웹이 기기 안 Tesseract.js |
+| azure_read | 무료 | 월 5,000 | 영수증 백업: Azure AI Vision Read F0 (분당 20). **2028-09-25 서비스 종료 예정**(Image Analysis 4.0, `APIS`의 `retires` → 관리자 화면에 표시). 키 `AZURE_VISION_ENDPOINT`·`AZURE_VISION_KEY`. 둘 다 안 되면 웹이 기기 안 Tesseract.js |
 | geoapify | 무료 | 하루 3,000 | Google 백업까지 멈추면 검색·택시 카드(역지오코딩), 출발 시각(걷기·approximated_transit). OSM 데이터, 출처 표기 필수. 키 `GEOAPIFY_KEY` |
 | openfreemap | 무료 | 없음 | 지도 백업(MapLibre). Google·네이버 지도를 못 쓸 때. 기록만. 브라우저 |
 | naver_maps_js | 과금 가능 | 하루·월 6,000,000 | NCP Maps Web Dynamic Map, **대표 계정만** 무료 이용량 (2026-10-24 콘솔 확인: 대표 계정). 브라우저 |
