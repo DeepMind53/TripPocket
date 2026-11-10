@@ -1124,7 +1124,7 @@ function DaySection({
           그날 일정이 보이는 동안 화면 위(고정 영역 아래)에 붙어 있고, 다음 날로 넘어가면 다음 날 머리로 바뀐다 (2026-10-27) */}
       <div className="sticky top-[var(--day-top,0px)] z-[5] -mx-5 bg-bg/95 px-5 backdrop-blur">
         <div className="flex min-h-12 items-center gap-2 border-b border-line">
-          <h2 aria-label={title} className="tabular flex flex-1 flex-wrap items-center gap-2 py-2">
+          <h2 aria-label={title} className="tabular flex min-w-0 flex-wrap items-center gap-2 py-2">
             {date && onPlans ? (
               // Plan B (실험실): 날짜를 누르면 플랜 고르기·만들기
               <button
@@ -1175,6 +1175,8 @@ function DaySection({
               />
             </button>
           )}
+          {/* 노선도 버튼은 날짜 바로 옆, 나머지는 오른쪽 끝으로 (사용자 요청 2026-11-10) */}
+          <span aria-hidden="true" className="flex-1" />
           {/* 날씨·오늘·Plan B를 한 칸에서 3초마다 번갈아 (날짜 아래 줄에 쌓이지 않게, 사용자 요청 2026-11-10) */}
           <RollingSlot
             items={[
