@@ -38,7 +38,7 @@ it('위치를 허락하면 다음 일정까지 도보·대중교통 시간과 �
   });
   const user = userEvent.setup();
   render(<NextStopBar next={next} now="13:00" />);
-  await user.click(screen.getByRole('button', { name: '이동 시간 검색' }));
+  await user.click(screen.getByRole('button', { name: '다음 목적지 이동시간' }));
   // 3줄: 다음 일정 / 도보·대중교통 시간 / 여유 10분 두고 출발 시각 (대중교통 20분 + 10분 → 13:00 = 지금)
   expect(await screen.findByText('도보 40분 · 대중교통 20분')).toBeInTheDocument();
   expect(screen.getByText('지금 바로 출발하세요')).toBeInTheDocument();
@@ -64,7 +64,7 @@ it('길 정보를 못 받으면 직선거리 어림으로 대신하고 한도 �
     },
   });
   render(<NextStopBar next={next} now="12:00" />);
-  await userEvent.setup().click(screen.getByRole('button', { name: '이동 시간 검색' }));
+  await userEvent.setup().click(screen.getByRole('button', { name: '다음 목적지 이동시간' }));
   expect(await screen.findByText(/^도보 \d+분 \(어림\)/)).toBeInTheDocument();
   expect(screen.getByText(/^\d{2}:\d{2} 전 출발 여유 10분$/)).toBeInTheDocument();
   expect(useLimitNotice.getState().notice).toBeNull();
@@ -86,7 +86,7 @@ it('대중교통이 없으면(일본) 지도 앱 링크, 도보가 없으면(한
     },
   });
   const { unmount } = render(<NextStopBar next={next} now="10:00" />);
-  await userEvent.setup().click(screen.getByRole('button', { name: '이동 시간 검색' }));
+  await userEvent.setup().click(screen.getByRole('button', { name: '다음 목적지 이동시간' }));
   expect(await screen.findByText(/^도보 150분 · 대중교통 검색 불가/)).toBeInTheDocument();
   const link = screen.getByRole('link', { name: '지도' });
   expect(link.getAttribute('href')).toContain('travelmode=transit');
@@ -100,7 +100,7 @@ it('대중교통이 없으면(일본) 지도 앱 링크, 도보가 없으면(한
       now="10:00"
     />,
   );
-  await userEvent.setup().click(screen.getByRole('button', { name: '이동 시간 검색' }));
+  await userEvent.setup().click(screen.getByRole('button', { name: '다음 목적지 이동시간' }));
   expect(await screen.findByText(/^도보 \d+분 \(어림\) · 대중교통 28분$/)).toBeInTheDocument();
   expect(screen.queryByRole('link', { name: '지도' })).not.toBeInTheDocument();
 });
@@ -124,7 +124,7 @@ it('비행기로 갈 만큼 먼 곳(다른 나라)이면 도보·대중교통 �
     },
   });
   render(<NextStopBar next={next} now="10:00" />);
-  await userEvent.setup().click(screen.getByRole('button', { name: '이동 시간 검색' }));
+  await userEvent.setup().click(screen.getByRole('button', { name: '다음 목적지 이동시간' }));
   expect(await screen.findByText('멀리 있어요 · 이동 시간은 계산하지 않아요')).toBeInTheDocument();
   expect(screen.queryByText(/도보/)).toBeNull();
   expect(calls).toEqual([]);
@@ -144,7 +144,7 @@ it('도보가 200분 이상이면 "도보 검색 불가", 출발 시각은 대�
     },
   });
   render(<NextStopBar next={next} now="11:00" />);
-  await userEvent.setup().click(screen.getByRole('button', { name: '이동 시간 검색' }));
+  await userEvent.setup().click(screen.getByRole('button', { name: '다음 목적지 이동시간' }));
   expect(await screen.findByText(/^도보 검색 불가 · 대중교통 40분/)).toBeInTheDocument();
   expect(screen.getByRole('link', { name: '지도' })).toBeInTheDocument();
   // 13:30 - 40분 - 여유 10분 = 12:40
@@ -178,10 +178,10 @@ it('누르기 전에는 위치도 길도 묻지 않고, 누를 때마다 한 번
   await new Promise((r) => setTimeout(r, 50));
   expect(asked).toBe(0);
   expect(calls).toEqual([]);
-  await user.click(screen.getByRole('button', { name: '이동 시간 검색' }));
+  await user.click(screen.getByRole('button', { name: '다음 목적지 이동시간' }));
   expect(await screen.findByText(/^도보 20분 · 대중교통 10분/)).toBeInTheDocument();
   await new Promise((r) => setTimeout(r, 50));
   expect(calls).toHaveLength(1);
-  await user.click(screen.getByRole('button', { name: '이동 시간 다시 검색' }));
+  await user.click(screen.getByRole('button', { name: '다음 목적지 이동시간 다시 검색' }));
   await waitFor(() => expect(calls).toHaveLength(2));
 });

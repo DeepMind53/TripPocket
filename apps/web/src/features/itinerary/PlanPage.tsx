@@ -1094,6 +1094,10 @@ function DaySection({
   const today = todayIn(timezone);
   const past = visitOn ? pastItemIds(items, today, timeIn(timezone, now) ?? '00:00') : null;
   const miniMapOn = useLab('dayMiniMap');
+  // 여행 중 오늘: 지난 일정은 여행 모드처럼 접어 둔다 — [지난 일정 N]으로 펼침 (사용자 요청 2026-11-10)
+  const [pastOpen, setPastOpen] = useState(false);
+  const todayPast = isToday ? pastItemIds(items, today, timeIn(timezone, now) ?? '00:00') : null;
+  const folded = todayPast && !pastOpen ? todayPast : null;
   // 그날 노선 선 위치를 실제 번호 원 가운데로 맞춘다 (2026-11-10)
   const routeRef = useRef<HTMLOListElement | null>(null);
   useRouteLine(routeRef);
@@ -1299,39 +1303,59 @@ function DaySection({
           date && ROUTE_LINE_CLASS,
         )}
       >
+        {todayPast && todayPast.size > 0 && (
+          <li>
+            <button
+              type="button"
+              aria-expanded={pastOpen}
+              onClick={() => setPastOpen(!pastOpen)}
+              className="flex h-9 items-center gap-1 pl-1 text-caption font-semibold text-fg-sub"
+            >
+              {t('travel.pastN', { n: todayPast.size })}
+              <ChevronDown
+                aria-hidden="true"
+                className={cn('size-4 transition-transform', pastOpen && 'rotate-180')}
+              />
+            </button>
+          </li>
+        )}
         {items.map((item, i) => (
           <Fragment key={item.id}>
-            {sun && sunSlot(items, sun.rise) === i && (
-              <SunLine kind="rise" label={t('plan.sunrise')} time={sun.rise} />
+            {folded?.has(item.id) ? null : (
+              <>
+                {sun && sunSlot(items, sun.rise) === i && (
+                  <SunLine kind="rise" label={t('plan.sunrise')} time={sun.rise} />
+                )}
+                {sun && sunSlot(items, sun.set) === i && (
+                  <SunLine kind="set" label={t('plan.sunset')} time={sun.set} />
+                )}
+                <ItemRow
+                  item={item}
+                  // 메모·예약에서 넘어온 일정(항공·숙소·교통)에는 날씨 주의를 넣지 않는다 (사용자 요청 2026-11-10)
+                  cautions={
+                    item.kind === 'note' || item.bookingId || !forecast
+                      ? undefined
+                      : weatherCautionsAt(forecast, item.startTime, item.endTime)
+                  }
+                  n={i + 1}
+                  dayIndex={date ? index : null}
+                  past={!!past?.has(item.id) || !!item.done}
+                  now={item.id === nowId}
+                  booking={item.bookingId ? bookingById.get(item.bookingId) : undefined}
+                  onOpen={() => onOpen(item)}
+                  // 고른 뒤에도 버튼은 남고 고른 것만 칠해진다 (사용자 요청 2026-11-06)
+                  onVisit={past?.has(item.id) ? (v) => onVisitItem(item, v) : undefined}
+                  history={historyOf(item)}
+                  onConfirmFlight={(() => {
+                    const b = item.bookingId ? bookingById.get(item.bookingId) : undefined;
+                    return b && item.transport && recheck.has(b.id)
+                      ? () => confirmFlight(b.id, flightSignature(b))
+                      : undefined;
+                  })()}
+                />
+                {legs && <LegLine from={item} to={items[i + 1]} />}
+              </>
             )}
-            {sun && sunSlot(items, sun.set) === i && (
-              <SunLine kind="set" label={t('plan.sunset')} time={sun.set} />
-            )}
-            <ItemRow
-              item={item}
-              // 메모·예약에서 넘어온 일정(항공·숙소·교통)에는 날씨 주의를 넣지 않는다 (사용자 요청 2026-11-10)
-              cautions={
-                item.kind === 'note' || item.bookingId || !forecast
-                  ? undefined
-                  : weatherCautionsAt(forecast, item.startTime, item.endTime)
-              }
-              n={i + 1}
-              dayIndex={date ? index : null}
-              past={!!past?.has(item.id) || !!item.done}
-              now={item.id === nowId}
-              booking={item.bookingId ? bookingById.get(item.bookingId) : undefined}
-              onOpen={() => onOpen(item)}
-              // 고른 뒤에도 버튼은 남고 고른 것만 칠해진다 (사용자 요청 2026-11-06)
-              onVisit={past?.has(item.id) ? (v) => onVisitItem(item, v) : undefined}
-              history={historyOf(item)}
-              onConfirmFlight={(() => {
-                const b = item.bookingId ? bookingById.get(item.bookingId) : undefined;
-                return b && item.transport && recheck.has(b.id)
-                  ? () => confirmFlight(b.id, flightSignature(b))
-                  : undefined;
-              })()}
-            />
-            {legs && <LegLine from={item} to={items[i + 1]} />}
           </Fragment>
         ))}
         {sun && items.length > 0 && sunSlot(items, sun.rise) === items.length && (

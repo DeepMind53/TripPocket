@@ -79,14 +79,14 @@ it('여행 모드: 여행 중이면 한 번 묻고, 시작하면 지금·다음 
   expect(within(nextBox).getByText(/^\d+분 \d+초$/)).toBeInTheDocument();
   expect(within(nextBox).getByText('후 출발')).toBeInTheDocument();
   // 오른쪽 [도보][대중교통] + [현재 위치]
-  const legs = within(nextBox).getByRole('group', { name: '이동 수단' });
-  expect(within(legs).getByRole('button', { name: /현재 위치/ })).toBeInTheDocument();
+  const legs = within(nextBox).getByRole('radiogroup', { name: '이동 수단' });
+  expect(within(nextBox).getByRole('button', { name: /현재 위치/ })).toBeInTheDocument();
   // 길 조회가 비면 도보 직선거리 어림으로, 대중교통은 누를 수 없다
-  expect(await within(legs).findByRole('button', { name: /도보/ })).toHaveAttribute(
-    'aria-pressed',
+  expect(await within(legs).findByRole('radio', { name: /도보/ })).toHaveAttribute(
+    'aria-checked',
     'true',
   );
-  expect(within(legs).getByRole('button', { name: /대중교통/ })).toBeDisabled();
+  expect(within(legs).getByRole('radio', { name: /대중교통/ })).toBeDisabled();
   expect(within(nextBox).getByText(/^\(도보 직선거리 약 \d+분\)$/)).toBeInTheDocument();
   expect(within(nextBox).getByRole('button', { name: '길찾기' })).toBeInTheDocument();
   // 오늘/내일 탭은 없다 (Q1)

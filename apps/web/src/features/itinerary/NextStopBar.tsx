@@ -7,7 +7,8 @@ import {
 } from '@trippocket/shared';
 import { LocateFixed, RotateCw } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { routeEta } from '../../data/api/routes';
+import { routeEtaResult } from '../../data/api/routes';
+import { toast } from '../../shared/ui/toastStore';
 import { FAR_LEG_KM, LEAVE_MARGIN_MIN, departurePlan } from '../../domain/dayTools';
 import { useTranslation } from '../../i18n';
 import { useCurrentPosition } from '../../shared/hooks/useCurrentPosition';
@@ -51,9 +52,12 @@ export function NextStopBar({ next, now }: { next: ItineraryItem; now: string })
     // (2026-10-27: 한국에서 일본 샘플을 보면 도보 19909분이 떴음).
     // 다음 일정이 항공편이어도 공항까지는 땅길 — 그대로 찾는다
     const far = distanceKm(here, to) > FAR_LEG_KM;
-    const done = (eta: RouteEta | null) =>
-      alive && setFound({ nextId: next.id, press, here, eta, far });
-    void (far ? Promise.resolve(null) : routeEta(here, to, google, true)).then(done);
+    // 여행 모드와 같은 하루 50번 한도 (서버가 센다) — 다 쓰면 직선거리 어림으로
+    void (far ? Promise.resolve(null) : routeEtaResult(here, to, google, true)).then((r) => {
+      if (!alive) return;
+      if (r?.limited) toast(t('travel.routeLimit'));
+      setFound({ nextId: next.id, press, here, eta: r?.eta ?? null, far });
+    });
     return () => {
       alive = false;
     };
@@ -64,11 +68,6 @@ export function NextStopBar({ next, now }: { next: ItineraryItem; now: string })
     setPress((n) => n + 1);
     request();
   };
-  const title = (
-    <span className="truncate font-semibold">
-      {t('nextStop.title', { time: next.startTime!, title: next.title })}
-    </span>
-  );
   const current = found && found.nextId === next.id ? found : null;
   // 위치를 못 받으면(거부·시간 초과) 멈추고 다시 누를 수 있게
   const failed = state.status === 'denied' || state.status === 'unavailable';
@@ -77,9 +76,9 @@ export function NextStopBar({ next, now }: { next: ItineraryItem; now: string })
   // 아직 안 눌렀거나 다음 일정이 바뀜: 제목 + [이동 시간 검색]
   if (!current)
     return (
+      // 지도 버튼 옆: 다음 일정 시각·장소 글은 빼고 버튼만 (사용자 요청 2026-11-10)
       <div className="flex min-w-0 flex-1 items-center gap-2 text-micro leading-tight">
         <span className="flex min-w-0 flex-1 flex-col">
-          {title}
           {state.status === 'denied' && (
             <span className="truncate text-fg-muted">{t('nextStop.denied')}</span>
           )}
@@ -119,7 +118,6 @@ export function NextStopBar({ next, now }: { next: ItineraryItem; now: string })
         className="flex min-w-0 flex-1 items-center gap-2 text-micro leading-tight"
       >
         <span className="flex min-w-0 flex-1 flex-col">
-          {title}
           <span className="truncate text-fg-muted">{t('nextStop.far')}</span>
         </span>
         {again}
@@ -143,7 +141,6 @@ export function NextStopBar({ next, now }: { next: ItineraryItem; now: string })
   return (
     <div role="status" className="flex min-w-0 flex-1 items-center gap-2 text-micro leading-tight">
       <span className="flex min-w-0 flex-1 flex-col">
-        {title}
         <span className="truncate text-fg-sub">
           {[
             shown.walk !== undefined

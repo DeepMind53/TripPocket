@@ -267,6 +267,9 @@ describe('예약', () => {
     expect(within(flight).getByText('PUS')).toBeInTheDocument();
     expect(within(flight).getByText('BKK')).toBeInTheDocument();
     const day2 = screen.getByRole('region', { name: '2일차 · 10.25 (일)' });
+    // 오늘이 2일차면 지난 일정은 접혀 있다 — 펼쳐서 본다 (2026-11-10)
+    const fold = within(day2).queryByRole('button', { name: /^지난 일정 \d+$/ });
+    if (fold) await userEvent.setup().click(fold);
     expect(within(day2).getByRole('button', { name: /수완나품국제공항 도착/ })).toHaveClass(
       'border-dashed',
     );

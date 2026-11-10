@@ -111,7 +111,9 @@ describe('일정 화면', () => {
     expect(senso).toMatchObject({ visit: 'visited', done: true });
 
     const day2 = day('2일차 · 10.25 (일)');
-    // 끝난 라멘에만 버튼, 아직인 카페에는 없음
+    // 여행 중 오늘은 지난 일정이 접혀 있다 (사용자 요청 2026-11-10) — 펼치면 끝난 라멘에만 버튼, 아직인 카페에는 없음
+    expect(within(day2).queryByText('라멘')).toBeNull();
+    await user.click(within(day2).getByRole('button', { name: '지난 일정 1' }));
     expect(within(day2).getAllByRole('button', { name: '미방문' })).toHaveLength(1);
     await user.click(within(day2).getByRole('button', { name: '미방문' }));
     const ramen = await within(day2).findByRole('button', { name: /라멘, 미방문 기록/ });

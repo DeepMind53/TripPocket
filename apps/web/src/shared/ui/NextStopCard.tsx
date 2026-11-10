@@ -24,8 +24,6 @@ export interface NextStopCardProps {
   size?: 'md' | 'lg';
   /** 남은 시간 아래 작은 줄 ("(도보 약 30분 또는 대중교통 약 5분)") */
   note?: ReactNode | undefined;
-  /** 남은 시간 오른쪽 칸 (여행 모드 도보·대중교통 고르기) */
-  aside?: ReactNode | undefined;
   /** 카드 바탕색 (CSS 색) — 실험실 '다음 역 카드 노선 색'은 그날 노선 진한 색. 없으면 파랑 */
   tone?: string | undefined;
 }
@@ -48,7 +46,6 @@ export function NextStopCard({
   size = 'md',
   tone,
   note,
-  aside,
 }: NextStopCardProps) {
   const pct = progress === null ? null : Math.round(Math.min(1, Math.max(0, progress)) * 100);
   return (
@@ -62,7 +59,7 @@ export function NextStopCard({
         {title}
       </p>
       {countdown && (
-        <div className="flex items-start gap-3">
+        <div className="flex items-start">
           {/* 큰 남은 시간은 한 줄로 (글자 중간에서 줄이 바뀌지 않게), 옆 글은 모자라면 통째로 다음 줄 (2026-11-10).
               여행 모드는 남은 칸 너비만큼 글자를 키운다 (@container) */}
           <div className="@container flex min-w-0 flex-1 flex-col gap-1.5">
@@ -84,7 +81,6 @@ export function NextStopCard({
             </p>
             {note && <p className="tabular text-caption text-pretty opacity-90">{note}</p>}
           </div>
-          {aside}
         </div>
       )}
       {pct !== null && (

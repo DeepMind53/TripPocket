@@ -30,7 +30,8 @@ interface FabPos {
 }
 // y = 1 → 아래 한계(하단 탭 위)에 붙음
 const DEFAULT: FabPos = { side: 'right', y: 1 };
-const SETTLE_MS = 800;
+// 스크롤을 멈추고 이만큼 뒤에 원래 크기·밝기로 (사용자 요청 2026-11-10)
+const SETTLE_MS = 2000;
 
 function load(): FabPos {
   try {
@@ -61,18 +62,15 @@ export function resetQuickButtonPosition(): void {
   save(DEFAULT);
 }
 
-function useScrollingDown(): boolean {
+/** 위·아래 어느 쪽이든 스크롤하는 동안 작고 흐리게, 멈추고 2초 뒤 원래대로 (사용자 요청 2026-11-10, 전에는 아래로만) */
+function useScrolling(): boolean {
   const [on, setOn] = useState(false);
   useEffect(() => {
-    let last = window.scrollY;
     let timer = 0;
     const onScroll = () => {
-      const y = window.scrollY;
-      const down = y > last;
-      last = y;
       window.clearTimeout(timer);
-      setOn(down);
-      if (down) timer = window.setTimeout(() => setOn(false), SETTLE_MS);
+      setOn(true);
+      timer = window.setTimeout(() => setOn(false), SETTLE_MS);
     };
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => {
@@ -129,7 +127,7 @@ export function FloatingQuickButton({
   }, [hint]);
   const pos = usePos();
   const vp = useViewport();
-  const compact = useScrollingDown();
+  const compact = useScrolling();
   const [drag, setDrag] = useState<{ x: number; y: number } | null>(null);
   const start = useRef<{ x: number; y: number; moved: boolean } | null>(null);
   /** 끌기로 끝난 누름은 클릭(메뉴 열기)으로 치지 않는다 */
