@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { sunSlot, sunTimes } from './sun';
+import { afterDark, sunSlot, sunTimes } from './sun';
 
 const min = (hm: string) => Number(hm.slice(0, 2)) * 60 + Number(hm.slice(3));
 const near = (got: string, want: string) =>
@@ -34,4 +34,12 @@ describe('일출·일몰 줄 자리', () => {
     expect(sunSlot(items, '19:00')).toBe(4);
     expect(sunSlot([], '06:00')).toBe(0);
   });
+});
+
+it('해 질 녘 자동 다크: 해 진 뒤~해 뜨기 전만 어둡게', () => {
+  const sun = { rise: '06:30', set: '17:20' };
+  expect(afterDark('05:59', sun)).toBe(true);
+  expect(afterDark('06:30', sun)).toBe(false);
+  expect(afterDark('17:19', sun)).toBe(false);
+  expect(afterDark('17:20', sun)).toBe(true);
 });

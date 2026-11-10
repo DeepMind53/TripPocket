@@ -17,7 +17,6 @@ import {
   type Trip,
 } from '@trippocket/shared';
 import { BadgePercent, CalendarRange, EggFried, Trash2 } from 'lucide-react';
-import { useLab } from '../../data/labsStore';
 import { LodgingPriceSheet } from '../lodging/LodgingPriceSheet';
 import { StayRangeSheet } from './StayRangeSheet';
 import { BookingDocs } from './BookingDocs';
@@ -172,7 +171,6 @@ function BookingForm({
   const timeStep = useSettings((st) => st.timeStepMin) * 60;
   const [saving, setSaving] = useState(false);
   const [stayOpen, setStayOpen] = useState(false);
-  const priceLab = useLab('lodgingPrice');
   const [priceOpen, setPriceOpen] = useState(false);
   // 덜 쓰는 칸은 접어 둔다 (docs/20 U4) — 고칠 때 값이 있으면 펼쳐서
   const d0 = b?.details;
@@ -775,7 +773,7 @@ function BookingForm({
                 idPrefix="bk-out"
               />
               {/* 실험실 "숙소 최저가": 쓰던 칸이 사라지지 않게 시트로 (docs/28 Q5) */}
-              {priceLab && (
+              {
                 <>
                   <Button
                     type="button"
@@ -798,7 +796,7 @@ function BookingForm({
                     }}
                   />
                 </>
-              )}
+              }
               {/* 조식 포함 — 날짜별로 (사용자 요청 2026-10-26) */}
               <div className="flex flex-col gap-2 rounded-card bg-bg-subtle px-3 py-2.5">
                 <div className="flex items-center justify-between gap-3">

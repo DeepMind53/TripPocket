@@ -46,6 +46,44 @@ export async function loadSettings(): Promise<void> {
   const s = parseSettings({ travelMode: legacy?.mode, ...(raw as object | null) });
   applyDevice(s);
   useSettings.setState({ ...s, loaded: true });
+  migrateGraduatedLabs();
+}
+
+/**
+ * 2026-11-10 실험실 → 설정 "일정"으로 옮긴 기능: 이 기기 실험실에서 켜 두었으면 설정도 켜고(안내 팝업은 다시 묻지 않음),
+ * 실험실 저장에서는 지운다. 여행 모드는 이동 수단(travelMode)과 겹치지 않게 tripMode
+ */
+const GRADUATED_LABS = {
+  offlineReady: 'offlineReady',
+  safetyNotice: 'safetyNotice',
+  festivals: 'festivals',
+  flightDelay: 'flightDelay',
+  travelMode: 'tripMode',
+} as const;
+
+function migrateGraduatedLabs(): void {
+  let labs: Record<string, unknown>;
+  try {
+    labs = JSON.parse(localStorage.getItem('tp-labs') ?? '{}') as Record<string, unknown>;
+  } catch {
+    return;
+  }
+  const on = (Object.keys(GRADUATED_LABS) as (keyof typeof GRADUATED_LABS)[]).filter(
+    (id) => labs[id] === true,
+  );
+  if (on.length === 0) return;
+  const keys = on.map((id) => GRADUATED_LABS[id]);
+  const cur = currentSettings();
+  updateSettings({
+    ...Object.fromEntries(keys.map((k) => [k, true])),
+    planPromptSeen: [...new Set([...cur.planPromptSeen, ...keys])],
+  });
+  try {
+    for (const id of Object.keys(GRADUATED_LABS)) delete labs[id];
+    localStorage.setItem('tp-labs', JSON.stringify(labs));
+  } catch {
+    // 못 지워도 다음 실행 때 같은 값으로 한 번 더 켤 뿐
+  }
 }
 
 /** 계정과 맞추기용: 마지막으로 바꾼 시각 + 아직 안 올렸는지 (data/settingsSync.ts) */

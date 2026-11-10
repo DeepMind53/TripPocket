@@ -1,6 +1,6 @@
+import { useSettings } from '../../data/settingsStore';
 import { todayIn } from '@trippocket/shared';
 import { InlineIcon } from '../../shared/ui/InlineIcon';
-import { useLab } from '../../data/labsStore';
 import { setTravelMode } from '../../data/travelModeStore';
 import {
   CalendarDays,
@@ -53,7 +53,7 @@ export function TripLayout() {
   const [menuOpen, setMenuOpen, switchMenuTo] = useRouteSheet('trip-menu');
   const [shareOpen, setShareOpen] = useRouteSheet('trip-share');
   const [searchOpen, setSearchOpen] = useRouteSheet('trip-search');
-  const travelLab = useLab('travelMode');
+  const travelLab = useSettings((s) => s.tripMode);
   useBottomInset(trip ? TAB_BAR_HEIGHT : 0);
 
   if (trip === null) {

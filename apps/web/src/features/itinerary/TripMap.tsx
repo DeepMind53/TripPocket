@@ -1,3 +1,4 @@
+import { dayInkHex } from '../../shared/ui/routeColor';
 import type { ItineraryItem, LocalDate, Trip } from '@trippocket/shared';
 import { useDomesticMap } from '../../data/mapChoice';
 import { DomesticMapChoice } from '../common/DomesticMapChoice';
@@ -38,18 +39,8 @@ const dayHex = (index: number) =>
   getComputedStyle(document.documentElement)
     .getPropertyValue(`--tp-day-${(index % 8) + 1}`)
     .trim() || '#2F6BFF';
-/** 핀 번호 글자색 — 핀은 테마와 상관없이 흰 바탕이라 라이트 값 (tokens.css --tp-day-N-ink, 4.5:1) */
-const PIN_INK = [
-  '#2c64ed',
-  '#b84d35',
-  '#0c7d72',
-  '#854fdb',
-  '#956516',
-  '#c03c74',
-  '#2d7d46',
-  '#5a6b85',
-] as const;
-const pinInk = (index: number) => PIN_INK[((index % 8) + 8) % 8]!;
+/** 핀 번호 글자색 — 핀은 테마와 상관없이 흰 바탕이라 라이트 값 (4.5:1) */
+const pinInk = dayInkHex;
 
 /**
  * S-10 위쪽 지도 (17단계): 일차별 색 번호 핀 + 순서선, 핀을 누르면 그 일정 상세.

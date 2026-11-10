@@ -3,7 +3,6 @@ import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { routes } from '../../app/router';
 import { resetLocalDb } from '../../data/dev';
-import { setLab } from '../../data/labsStore';
 import { resetReportGuards } from '../../data/lodgingReports';
 import { resetAgodaLookup } from '../../data/agodaLookup';
 import { resetHotelPrices } from '../../data/hotelPrices';
@@ -36,7 +35,6 @@ beforeEach(async () => {
     end: { date: '2026-11-27', time: '11:00' },
   });
 });
-afterEach(() => setLab('lodgingPrice', false, { silent: true }));
 
 const show = (path: string) => {
   const router = createMemoryRouter(routes, { initialEntries: [path] });
@@ -49,15 +47,8 @@ const show = (path: string) => {
   return router;
 };
 
-describe('숙소 최저가 (실험실, docs/28)', () => {
-  it('실험실을 끄면 예약 카드에 버튼이 없다', async () => {
-    show(`/trips/${tripId}/bookings`);
-    await screen.findByText('호텔 그레이스리 신주쿠');
-    expect(screen.queryByRole('link', { name: /최저가 비교/ })).toBeNull();
-  });
-
+describe('숙소 최저가 (2026-11-10 정식, docs/28)', () => {
   it('예약 카드 → 이름·날짜가 채워지고, 아고다 링크를 붙이면 경로 21곳 링크 (요청은 기록 목록 1번)', async () => {
-    setLab('lodgingPrice', true, { silent: true });
     const fetchSpy = vi.fn(async (url: string) =>
       Response.json(String(url).startsWith('/api/lodging/reports') ? { reports: [] } : {}),
     );
@@ -138,7 +129,6 @@ describe('숙소 최저가 (실험실, docs/28)', () => {
   });
 
   it('아고다 링크가 없으면 이름으로 자동 찾기 → 다른 후보 고르기 (누를 때만 다시)', async () => {
-    setLab('lodgingPrice', true, { silent: true });
     const fetchSpy = vi.fn(async (url: string) => {
       const u = String(url);
       if (u.startsWith('/api/lodging/lookup'))
@@ -189,7 +179,6 @@ describe('숙소 최저가 (실험실, docs/28)', () => {
   });
 
   it('자동 찾기를 못 하면 링크 칸을 열고 안내, 날짜가 거꾸로면 검색 잠금', async () => {
-    setLab('lodgingPrice', true, { silent: true });
     vi.stubGlobal('fetch', async (url: string) =>
       String(url).startsWith('/api/lodging/lookup')
         ? Response.json({ candidates: [] })
@@ -216,7 +205,6 @@ describe('숙소 최저가 (실험실, docs/28)', () => {
   });
 
   it('가격 적기: 저장 1번 → 목록에 바로 붙음(다시 불러오지 않음), 내 기록 삭제, 돌아오면 [적기] 한 번', async () => {
-    setLab('lodgingPrice', true, { silent: true });
     const saved = {
       id: 'r1',
       hotelKey: 'name:신주쿠|',
@@ -299,7 +287,6 @@ describe('숙소 최저가 (실험실, docs/28)', () => {
   });
 
   it('기록을 못 불러오면 멈추고, 연타는 앞에서 막는다', async () => {
-    setLab('lodgingPrice', true, { silent: true });
     const fetchSpy = vi.fn(async (_url: string) => new Response('x', { status: 500 }));
     vi.stubGlobal('fetch', fetchSpy);
     const count = (path: string) =>
@@ -331,7 +318,6 @@ describe('숙소 최저가 (실험실, docs/28)', () => {
   });
 
   it('구글 호텔 참고 가격: 싼 순 5곳 + 접힌 나머지, 같은 조건은 다시 묻지 않음, 무료량이 끝나면 구글 호텔 창 열기', async () => {
-    setLab('lodgingPrice', true, { silent: true });
     let quota = false;
     const prices = Array.from({ length: 7 }, (_, i) => ({
       source: `site${i}`,
@@ -394,14 +380,12 @@ describe('숙소 최저가 (실험실, docs/28)', () => {
     }
   });
 
-  it('빠른 메뉴 바로가기는 실험을 켰을 때만 고를 수 있다', async () => {
+  it('빠른 메뉴 바로가기에서 늘 고를 수 있다', async () => {
     const user = userEvent.setup();
     show(`/trips/${tripId}/plan`);
     await user.click(await screen.findByRole('button', { name: '빠른 메뉴' }));
     await user.click(await screen.findByRole('button', { name: '편집' }));
     const sheet = await screen.findByRole('dialog', { name: /바로가기/ });
-    expect(within(sheet).queryByRole('button', { name: /숙소 최저가/ })).toBeNull();
-    setLab('lodgingPrice', true, { silent: true });
     expect(await within(sheet).findByRole('button', { name: /숙소 최저가/ })).toBeInTheDocument();
   });
 });

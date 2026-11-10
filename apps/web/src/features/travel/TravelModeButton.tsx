@@ -1,6 +1,6 @@
+import { useSettings } from '../../data/settingsStore';
 import { Compass } from 'lucide-react';
 import { useNavigate } from 'react-router';
-import { useLab } from '../../data/labsStore';
 import { setTravelMode } from '../../data/travelModeStore';
 import { useTranslation } from '../../i18n';
 import { cn } from '../../shared/lib/cn';
@@ -21,7 +21,7 @@ export function TravelModeButton({
   /** 홈 머리처럼 좁은 칸: 글씨·여백을 줄인다 (아이폰에서 잘리던 문제, 2026-11-06) */
   compact?: boolean;
 }) {
-  const on = useLab('travelMode');
+  const on = useSettings((s) => s.tripMode);
   const { t } = useTranslation();
   const navigate = useNavigate();
   if (!on || !tripId) return null;

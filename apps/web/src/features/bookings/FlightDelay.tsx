@@ -1,9 +1,9 @@
+import { useSettings } from '../../data/settingsStore';
 import { InlineIcon } from '../../shared/ui/InlineIcon';
 import { Timer } from 'lucide-react';
 import { todayIn, type Booking } from '@trippocket/shared';
 import { useEffect, useState } from 'react';
 import { api } from '../../data/api/client';
-import { useLab } from '../../data/labsStore';
 import { useTranslation } from '../../i18n';
 
 interface Status {
@@ -17,7 +17,7 @@ interface Status {
  * 무료 월 1,000회라 출발 당일 카드를 볼 때만 묻는다 (서버가 10분 기억). 편명만 보낸다
  */
 export function FlightDelay({ booking: b }: { booking: Booking }) {
-  const on = useLab('flightDelay');
+  const on = useSettings((s) => s.flightDelay);
   const no = b.details?.flightNo?.replace(/\s+/g, '').toUpperCase();
   const today = todayIn(b.start.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone);
   if (!on || !no || b.start.date !== today) return null;

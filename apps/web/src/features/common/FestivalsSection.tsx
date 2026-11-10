@@ -1,9 +1,9 @@
+import { useSettings } from '../../data/settingsStore';
 import { InlineIcon } from '../../shared/ui/InlineIcon';
 import type { Trip } from '@trippocket/shared';
 import { PartyPopper, Plus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { api } from '../../data/api/client';
-import { useLab } from '../../data/labsStore';
 import { itemRepo } from '../../data/repositories/itemRepo';
 import { isDomesticTrip } from '../../domain/tripPlace';
 import { useTranslation } from '../../i18n';
@@ -24,7 +24,7 @@ interface Festival {
  * 한국관광공사 자료. [+]를 누르면 "가고 싶은 곳"에 넣는다. 보내는 것은 여행지 도시 좌표·날짜뿐
  */
 export function FestivalsSection({ trip }: { trip: Trip }) {
-  const on = useLab('festivals');
+  const on = useSettings((s) => s.festivals);
   const near = trip.destinations.find((d) => d.coords)?.coords;
   if (!on || !near || !isDomesticTrip(trip)) return null;
   return <List trip={trip} near={near} />;

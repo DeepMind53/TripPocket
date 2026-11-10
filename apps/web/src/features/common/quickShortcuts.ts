@@ -59,8 +59,8 @@ export const SHORTCUT_IDS = [
 ] as const;
 export type ShortcutId = (typeof SHORTCUT_IDS)[number];
 
-/** 실험실 기능 바로가기: 그 실험을 켰을 때만 고르고 보인다 */
-export const SHORTCUT_LAB: Partial<Record<ShortcutId, LabId>> = { lodgingPrice: 'lodgingPrice' };
+/** 실험실 기능 바로가기: 그 실험을 켰을 때만 고르고 보인다 (숙소 최저가는 2026-11-10 정식 — 늘 보인다) */
+export const SHORTCUT_LAB: Partial<Record<ShortcutId, LabId>> = {};
 
 export const DEFAULT_SHORTCUTS: ShortcutId[] = ['lodging', 'bookingNo', 'nextItem', 'checklist'];
 export const SHORTCUT_SLOTS = 4;

@@ -45,7 +45,8 @@ import { useRouteSheet } from '../../shared/hooks/useRouteSheet';
 import { cn } from '../../shared/lib/cn';
 import { formatMonthDay } from '../../shared/lib/dateFormat';
 import type { Destination } from '../../shared/lib/directions';
-import { Button, IconButton, NextStopCard, Skeleton, toast } from '../../shared/ui';
+import { Button, IconButton, NextStopCard, Skeleton, routeColor, toast } from '../../shared/ui';
+import { useLab } from '../../data/labsStore';
 import { InlineIcon } from '../../shared/ui/InlineIcon';
 import { DayWeatherBadge } from '../common/DayWeatherBadge';
 import { DirectionsSheet } from '../common/DirectionsSheet';
@@ -132,6 +133,8 @@ function TravelView({ trip, items: all }: { trip: Trip; items: ItineraryItem[] }
   const current = dayItems.find((i) => i.id === nowId);
   const next = nextStop(dayItems, now);
   const n = dayNumberOf(trip.startDate, trip.endDate, today);
+  // 실험실: 다음 역 카드를 그날 노선 색으로 (2026-11-10)
+  const dayColorOn = useLab('nextStopDayColor');
   const domestic = isDomesticTrip(trip);
   // 오늘 밤 숙소 → 없으면 첫 숙소 (빠른 메뉴 "숙소로 길찾기"와 같은 규칙)
   const stay =
@@ -366,6 +369,7 @@ function TravelView({ trip, items: all }: { trip: Trip; items: ItineraryItem[] }
       {next && leave && (
         <NextStopCard
           size="lg"
+          tone={dayColorOn && n ? routeColor(n - 1).ink : undefined}
           label={t('travel.next')}
           kicker={t(phase === 'morning' ? 'travel.first' : 'travel.next')}
           title={`${next.title} · ${next.startTime}`}

@@ -70,3 +70,8 @@ export function sunSlot(
   const i = items.findIndex((it) => !!it.startTime && it.startTime > time);
   return i === -1 ? items.length : i;
 }
+
+/** 해 질 녘 자동 다크 (실험실 sunsetDark, 2026-11-10): 현지 "HH:mm"이 해 진 뒤~해 뜨기 전이면 true */
+export function afterDark(now: string, sun: { rise: string; set: string }): boolean {
+  return now < sun.rise || now >= sun.set;
+}

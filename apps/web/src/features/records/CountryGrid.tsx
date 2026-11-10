@@ -1,7 +1,9 @@
 import { flagEmoji } from '@trippocket/shared';
+import { ImageDown } from 'lucide-react';
 import { useState } from 'react';
+import { useLab } from '../../data/labsStore';
 import { useTranslation } from '../../i18n';
-import { Stamp } from '../../shared/ui';
+import { Stamp, toast } from '../../shared/ui';
 
 /** 처음 보이는 나라 수 (3줄 × 3) — 넘으면 "+ 더보기" */
 const SHOWN = 9;
@@ -29,6 +31,28 @@ export function CountryGrid({
   const [all, setAll] = useState(false);
   const sorted = [...codes].sort((a, b) => (counts.get(b) ?? 0) - (counts.get(a) ?? 0));
   const shown = all ? sorted : sorted.slice(0, SHOWN);
+  // 실험실 "여권 도장 이미지 저장" (2026-11-10): 가 본 나라 도장 전부를 그림 한 장으로 — 누를 때만 그리는 코드를 불러온다
+  const imageOn = useLab('stampImage');
+  const [saving, setSaving] = useState(false);
+  const saveImage = () => {
+    setSaving(true);
+    void Promise.all([import('./stampSheet'), import('../backup/backupUtils')])
+      .then(async ([sheet, files]) => {
+        const svg = sheet.stampSheetSvg(
+          sorted.map((c) => ({
+            city: countryName(c),
+            period: t('records.tripsN', { n: counts.get(c) ?? 0 }),
+            seed: c,
+          })),
+          t('records.countries'),
+        );
+        const png = await sheet.svgToPng(svg);
+        if (await files.saveFile('trippocket-stamps.png', png, t('records.countries'), 'image/png'))
+          toast(t('records.stampSaved'));
+      })
+      .catch(() => toast(t('records.stampFailed')))
+      .finally(() => setSaving(false));
+  };
   return (
     <div className="flex flex-col gap-2">
       <ul aria-label={t('records.countries')} className="grid grid-cols-3 gap-3 px-1">
@@ -55,6 +79,17 @@ export function CountryGrid({
           className="mx-auto h-9 rounded-full px-4 text-caption font-semibold text-fg-sub"
         >
           {all ? t('saved.less') : t('records.moreCountries', { n: sorted.length - SHOWN })}
+        </button>
+      )}
+      {imageOn && sorted.length > 0 && (
+        <button
+          type="button"
+          disabled={saving}
+          onClick={saveImage}
+          className="mx-auto flex h-11 items-center gap-1.5 rounded-full px-4 text-caption font-medium text-fg-sub disabled:opacity-50"
+        >
+          <ImageDown aria-hidden="true" className="size-4" />
+          {t('records.stampSave')}
         </button>
       )}
     </div>

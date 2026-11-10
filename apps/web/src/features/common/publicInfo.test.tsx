@@ -2,7 +2,7 @@ import type { Booking, Trip } from '@trippocket/shared';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { resetLocalDb } from '../../data/dev';
-import { setLab } from '../../data/labsStore';
+import { updateSettings } from '../../data/settingsStore';
 import { itemRepo } from '../../data/repositories/itemRepo';
 import { tripRepo } from '../../data/repositories/tripRepo';
 import { FlightDelay } from '../bookings/FlightDelay';
@@ -14,8 +14,7 @@ beforeEach(async () => {
   await resetLocalDb();
 });
 afterEach(() => {
-  for (const id of ['safetyNotice', 'festivals', 'flightDelay'] as const)
-    setLab(id, false, { silent: true });
+  updateSettings({ safetyNotice: false, festivals: false, flightDelay: false });
   vi.unstubAllGlobals();
 });
 
@@ -27,14 +26,14 @@ it('외교부 안전공지: 켜면 여행 나라(한국 빼고) 공지를 보여
   });
   const { rerender } = render(<SafetyNotices countries={['JP', 'KR']} />);
   expect(screen.queryByText('안전 유의 공지')).toBeNull();
-  setLab('safetyNotice', true, { silent: true });
+  updateSettings({ safetyNotice: true });
   rerender(<SafetyNotices countries={['JP', 'KR']} />);
   expect(await screen.findByText('안전 유의 공지')).toBeInTheDocument();
   expect(urls).toEqual(['/api/info/safety/JP']);
 });
 
 it('축제·행사: 국내 여행이면 근처 행사, [+]로 가고 싶은 곳에', async () => {
-  setLab('festivals', true, { silent: true });
+  updateSettings({ festivals: true });
   vi.stubGlobal('fetch', async () =>
     Response.json({
       festivals: [
@@ -72,7 +71,7 @@ it('축제·행사: 국내 여행이면 근처 행사, [+]로 가고 싶은 곳�
 });
 
 it('항공편 지연: 출발 당일에만, 지연 분을 보여 준다', async () => {
-  setLab('flightDelay', true, { silent: true });
+  updateSettings({ flightDelay: true });
   vi.stubGlobal('fetch', async () =>
     Response.json({ status: { status: 'scheduled', depDelay: 35 } }),
   );

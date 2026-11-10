@@ -1,3 +1,4 @@
+import { useLab } from '../../data/labsStore';
 import { applyVisit } from '../../data/skippedToSaved';
 import { pastItemIds } from '../../domain/dayTools';
 import type { Visit } from '../../domain/visit';
@@ -33,6 +34,7 @@ import {
   RouteBar,
   RouteLine,
   RouteStop,
+  routeColor,
   toast,
 } from '../../shared/ui';
 import { Wordmark } from './Wordmark';
@@ -321,6 +323,8 @@ function OngoingTrip({ trip }: { trip: Trip }) {
   const next = nextItem(todayItems, now);
   // 지난 일정 (방문·미방문을 고를 수 있는 것) — 일정 탭과 같은 규칙
   const past = pastItemIds(todayItems, today, now);
+  // 실험실: 다음 역 카드를 그날 노선 색으로 (2026-11-10)
+  const dayColorOn = useLab('nextStopDayColor');
   // 지난 일정 접기 (사용자 결정 2026-11-10) — 다음 일정·남은 일정이 바로 보이게
   const [pastOpen, setPastOpen] = useState(false);
   const pastList = todayItems.filter((i) => past.has(i.id));
@@ -373,6 +377,7 @@ function OngoingTrip({ trip }: { trip: Trip }) {
       {next ? (
         // 다음 일정 카드 (docs/29 §4.4, 사용자 결정 Q3 파랑 채움): 남은 시간 크게 + 지난 일정 → 다음 일정 진행 막대
         <NextStopCard
+          tone={dayColorOn ? routeColor(day - 1).ink : undefined}
           label={t('home.nextItem')}
           kicker={t('home.nextItem')}
           title={next.title}

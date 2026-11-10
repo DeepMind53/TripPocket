@@ -24,8 +24,11 @@ const ICON: Record<WeatherCaution, { Icon: LucideIcon; color: string }> = {
   hot: { Icon: ThermometerSun, color: 'text-danger' },
 };
 
+/** 시간 아래에는 두 개까지, 나머지는 옆에 +N (사용자 요청 2026-11-10) */
+const SHOWN = 2;
+
 /**
- * 일정 시간 아래 한 줄 — 여러 개면 모두 나란히.
+ * 일정 시간 아래 한 줄 — 두 개까지 나란히, 더 있으면 +N.
  * 누르면 일정 상세 대신 왜 떴는지·어떻게 하면 좋은지 짧게 보여 준다 (사용자 요청 2026-11-02).
  * 일정 버튼 안에 있어 키보드로는 일정 이름(aria-label)으로 읽히고, 손가락으로 누를 때만 따로 연다
  */
@@ -45,14 +48,19 @@ export function CautionIcons({ cautions }: { cautions?: readonly WeatherCaution[
           e.preventDefault();
           setOpen(true);
         }}
-        className="mt-1 flex cursor-pointer flex-wrap items-center gap-1"
+        className="mt-1 flex cursor-pointer items-center gap-1"
       >
-        {cautions.map((c) => {
+        {cautions.slice(0, SHOWN).map((c) => {
           const { Icon, color } = ICON[c];
           return (
             <Icon key={c} aria-hidden="true" strokeWidth={2.4} className={`size-[18px] ${color}`} />
           );
         })}
+        {cautions.length > SHOWN && (
+          <span aria-hidden="true" className="tabular text-micro font-medium text-fg-sub">
+            {t('weatherCaution.more', { n: cautions.length - SHOWN })}
+          </span>
+        )}
       </span>
       {open && (
         <span

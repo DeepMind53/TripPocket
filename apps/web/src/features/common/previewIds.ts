@@ -26,6 +26,7 @@ export type PreviewId =
   | 'festivals'
   | 'flightDelay'
   | 'travelMode'
+  | 'tripMode'
   | 'lodgingPrice';
 
 const IDS: readonly string[] = [
@@ -55,6 +56,7 @@ const IDS: readonly string[] = [
   'festivals',
   'flightDelay',
   'travelMode',
+  'tripMode',
   'lodgingPrice',
 ];
 

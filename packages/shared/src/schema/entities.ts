@@ -85,6 +85,10 @@ export const TripSchema = z
     sample: z.optional(z.boolean()),
     /** Plan B (실험실, 2026-11-03) — 날짜별 대안 플랜 */
     dayPlans: z.optional(z.array(DayPlanSchema).check(z.maxLength(100))),
+    /** 하루 한 줄 기록 (실험실, 2026-11-10) — 날짜마다 한 줄, 기록 탭에서 모아 본다. 없어도 되는 칸이라 옛 백업·기기와 호환 */
+    dayNotes: z.optional(
+      z.array(z.object({ date: LocalDateSchema, text: nonEmpty(140) })).check(z.maxLength(60)),
+    ),
   })
   .check(
     // 날짜 형식 오류는 각 필드에서 따로 알리므로 여기서는 둘 다 올바를 때만 비교

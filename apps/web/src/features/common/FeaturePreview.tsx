@@ -291,6 +291,7 @@ export function FeaturePreview({ id }: { id: PreviewId }) {
         'bg-warning/10 text-warning font-semibold',
       );
     case 'travelMode':
+    case 'tripMode':
       return info(t('travel.title'), t('sample.travelMode'));
     case 'lodgingPrice':
       return info(t('lodgingPrice.title'), t('sample.lodgingPrice'));

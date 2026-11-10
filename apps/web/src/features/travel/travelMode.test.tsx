@@ -2,10 +2,10 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { routes } from '../../app/router';
-import { setLab } from '../../data/labsStore';
 import { resetLocalDb } from '../../data/dev';
 import { itemRepo } from '../../data/repositories/itemRepo';
 import { tripRepo } from '../../data/repositories/tripRepo';
+import { updateSettings } from '../../data/settingsStore';
 import { useTravelMode } from '../../data/travelModeStore';
 import { useToastStore } from '../../shared/ui/toastStore';
 
@@ -15,12 +15,12 @@ beforeEach(async () => {
   await resetLocalDb();
   localStorage.removeItem('tp-travel-mode');
   useTravelMode.setState({ on: {}, asked: {}, sun: false, remind: false });
-  setLab('travelMode', true, { silent: true });
+  updateSettings({ tripMode: true });
   vi.useFakeTimers({ toFake: ['Date'] });
   vi.stubGlobal('fetch', async () => Response.json({}));
 });
 afterEach(() => {
-  setLab('travelMode', false, { silent: true });
+  updateSettings({ tripMode: false });
   vi.useRealTimers();
   vi.unstubAllGlobals();
 });

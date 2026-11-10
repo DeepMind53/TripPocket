@@ -22,6 +22,8 @@ export interface NextStopCardProps {
   actions?: ReactNode | undefined;
   /** 여행 모드처럼 더 크게 */
   size?: 'md' | 'lg';
+  /** 카드 바탕색 (CSS 색) — 실험실 '다음 역 카드 노선 색'은 그날 노선 진한 색. 없으면 파랑 */
+  tone?: string | undefined;
 }
 
 /**
@@ -40,11 +42,13 @@ export function NextStopCard({
   to,
   actions,
   size = 'md',
+  tone,
 }: NextStopCardProps) {
   const pct = progress === null ? null : Math.round(Math.min(1, Math.max(0, progress)) * 100);
   return (
     <section
       aria-label={label}
+      style={tone ? { background: tone } : undefined}
       className="flex flex-col gap-1.5 rounded-card bg-primary p-4 text-on-primary"
     >
       <p className="text-caption opacity-85">{kicker}</p>

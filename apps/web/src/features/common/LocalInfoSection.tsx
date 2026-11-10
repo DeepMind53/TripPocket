@@ -22,7 +22,6 @@ import { cityLocalFor } from '../../data/cityLocal';
 import { transitGuideFor, type CountryTransit } from '../../data/transitGuide';
 import { t as tr, useTranslation, type TKey } from '../../i18n';
 import { formatMonthDay } from '../../shared/lib/dateFormat';
-import { useLab } from '../../data/labsStore';
 import { ArrivalRoute } from './ArrivalRoute';
 import { FestivalsSection } from './FestivalsSection';
 import { NearbyFind } from './NearbyFind';
@@ -76,7 +75,7 @@ export function LocalInfoSection({ tripId }: { tripId: string }) {
   const guideOn = useSettings((s) => s.transitGuide);
   const nearbyOn = useSettings((s) => s.nearbyFind);
   const arrivalOn = useSettings((s) => s.arrivalRoute);
-  const festivalsOn = useLab('festivals');
+  const festivalsOn = useSettings((s) => s.festivals);
   if (!trip || (!transitOn && !payOn && !voucherOn)) return null;
   const all = tripCountries(trip);
   const countries = all.filter((c) => c !== 'KR');

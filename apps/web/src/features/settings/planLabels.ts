@@ -23,4 +23,10 @@ export const PLAN_LABELS = {
   transitGuide: 'settings.transitGuide',
   nearbyFind: 'settings.nearbyFind',
   arrivalRoute: 'settings.arrivalRoute',
+  // 2026-11-10 실험실에서 정식 — 이름은 실험실에서 쓰던 문구 그대로
+  offlineReady: 'labs.item.offlineReady.name',
+  safetyNotice: 'labs.item.safetyNotice.name',
+  festivals: 'labs.item.festivals.name',
+  flightDelay: 'labs.item.flightDelay.name',
+  tripMode: 'labs.item.travelMode.name',
 } as const satisfies Record<PlanFeature, string>;

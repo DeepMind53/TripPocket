@@ -3,7 +3,6 @@ import { InlineIcon } from '../../shared/ui/InlineIcon';
 import { nightsBetween, todayIn, type Booking } from '@trippocket/shared';
 import { Link } from 'react-router';
 import { notchArcClass, TICKET_NOTCH_STYLE, useTicketNotch } from '../../shared/ui/useTicketNotch';
-import { useLab } from '../../data/labsStore';
 import {
   BadgePercent,
   BedDouble,
@@ -37,7 +36,6 @@ export function BookingCard({
 }) {
   const { t } = useTranslation();
   const b = booking;
-  const priceLab = useLab('lodgingPrice');
   // 마이 → 개인정보의 항공사 회원번호 (예약 항공사·편명과 맞을 때, 2026-11-02)
   const member = useTravelProfile((p) =>
     b.kind === 'flight'
@@ -100,7 +98,7 @@ export function BookingCard({
         </div>
       )}
       {/* 실험실 "숙소 최저가": 이 숙소 이름·날짜로 아고다 경로별·예약 앱 링크 (docs/28 Q5) */}
-      {b.kind === 'lodging' && priceLab && (
+      {b.kind === 'lodging' && (
         <div className="flex justify-end border-t border-dashed border-line px-4">
           <Link
             to={`/lodging-price?trip=${b.tripId}&booking=${b.id}`}

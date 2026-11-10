@@ -51,6 +51,8 @@ import {
   FAR_LEG_KM,
 } from '../../domain/dayTools';
 import { NextStopBar } from './NextStopBar';
+import { DayMiniMap } from './DayMiniMap';
+import { useLab } from '../../data/labsStore';
 import { earlierVisits, type Visit } from '../../domain/visit';
 import { applyVisit } from '../../data/skippedToSaved';
 import { VisitToggle } from '../common/VisitToggle';
@@ -128,6 +130,7 @@ import { weatherCautionsAt, type WeatherCaution } from '../../domain/weather';
 import { CautionIcons } from '../common/CautionIcons';
 import { useTripHolidays } from './useTripHolidays';
 import { DayPlanSheet } from './DayPlanSheet';
+import { DayNoteField } from './DayNoteField';
 import { usePlanView, type DayPlanInfo } from './usePlanView';
 import { distanceKm, formatDistance, walkMinutes } from '@trippocket/shared';
 import { DayWeatherBadge } from '../common/DayWeatherBadge';
@@ -202,6 +205,8 @@ function PlanView({
   const rowBookings = bookings.filter((b) => !linked.has(b.id));
   const bookingById = new Map(bookings.map((b) => [b.id, b]));
   const today = todayIn(trip.timezone);
+  // 실험실 "하루 한 줄 기록" (2026-11-10)
+  const dayNoteOn = useLab('dayNote');
   const dimPast = useSettings((st) => st.dimPastItems);
   // 2026-10-27 정식: 하루 일정 글로 복사·하루 동선 지도 (날짜 메뉴)
   const copyDayOn = true;
@@ -765,6 +770,7 @@ function PlanView({
                           : undefined
                       }
                       hideWhenEmpty={filter === 'all' && date === null}
+                      noteTrip={dayNoteOn && canEdit && date && date <= today ? trip : undefined}
                     />
                   ),
                 )
@@ -982,7 +988,10 @@ function DaySection({
   holiday,
   plan,
   onPlans,
+  noteTrip,
 }: {
+  /** 실험실 "하루 한 줄 기록": 오늘·지난 날이면 그 여행 (아니면 칸 없음) */
+  noteTrip?: Trip | undefined;
   /** Plan B (실험실): 그날 플랜 정보 · 날짜 머리글을 누르면 플랜 시트 */
   plan?: DayPlanInfo | undefined;
   onPlans?: (() => void) | undefined;
@@ -1054,6 +1063,7 @@ function DaySection({
   );
   const today = todayIn(timezone);
   const past = visitOn ? pastItemIds(items, today, timeIn(timezone, now) ?? '00:00') : null;
+  const miniMapOn = useLab('dayMiniMap');
   // 그날 노선 선 위치를 실제 번호 원 가운데로 맞춘다 (2026-11-10)
   const routeRef = useRef<HTMLOListElement | null>(null);
   useRouteLine(routeRef);
@@ -1135,6 +1145,12 @@ function DaySection({
               </span>
             )}
           </h2>
+          {/* 실험실: 일차 노선 미니맵 (2026-11-10) */}
+          {miniMapOn && date && (
+            <span style={routeStyle(index)} className="flex">
+              <DayMiniMap items={items} />
+            </span>
+          )}
           <DayWeatherBadge weather={weather} />
           {((canEdit && items.length > 1) ||
             ((copyDayOn || dayRouteOn || (dupOn && canEdit)) && items.length > 0)) && (
@@ -1263,8 +1279,9 @@ function DaySection({
             )}
             <ItemRow
               item={item}
+              // 메모·예약에서 넘어온 일정(항공·숙소·교통)에는 날씨 주의를 넣지 않는다 (사용자 요청 2026-11-10)
               cautions={
-                item.kind === 'note' || !forecast
+                item.kind === 'note' || item.bookingId || !forecast
                   ? undefined
                   : weatherCautionsAt(forecast, item.startTime, item.endTime)
               }
@@ -1321,6 +1338,13 @@ function DaySection({
             </li>
           )}
       </ol>
+      {noteTrip && date && (
+        <DayNoteField
+          key={noteTrip.dayNotes?.find((n) => n.date === date)?.text ?? ''}
+          trip={noteTrip}
+          date={date}
+        />
+      )}
       {canEdit && (
         <button
           type="button"

@@ -70,6 +70,16 @@ export interface Settings {
   nearbyFind: boolean;
   /** 빠른 메뉴 공항 → 숙소 길찾기 (2026-11-03 실험실에서 정식) */
   arrivalRoute: boolean;
+  /** 출발 7일 전부터 홈에 바우처·지도 준비 안내 (2026-11-10 실험실에서 정식) */
+  offlineReady: boolean;
+  /** 날씨 정보 화면에 여행 나라 외교부 안전공지 (2026-11-10 실험실에서 정식) */
+  safetyNotice: boolean;
+  /** 국내 여행이면 빠른 메뉴에 그 기간 축제·행사 (2026-11-10 실험실에서 정식) */
+  festivals: boolean;
+  /** 출발 당일 항공 예약 카드에 지연 정보 (2026-11-10 실험실에서 정식) */
+  flightDelay: boolean;
+  /** 여행 모드 — 여행 중 오늘·내일만 크게 (2026-11-10 실험실에서 정식, 이동 수단 travelMode와 다른 키) */
+  tripMode: boolean;
   /** ⚡ 빠른 메뉴 버튼 보이기 */
   quickButton: boolean;
   /** AI 추천을 열 때 처음 골라 둘 카테고리 */
@@ -105,6 +115,11 @@ export const PLAN_FEATURES = [
   'transitGuide',
   'nearbyFind',
   'arrivalRoute',
+  'offlineReady',
+  'safetyNotice',
+  'festivals',
+  'flightDelay',
+  'tripMode',
 ] as const;
 export type PlanFeature = (typeof PLAN_FEATURES)[number];
 
@@ -120,13 +135,34 @@ export const PLAN_FEATURE_GROUPS: readonly { id: string; keys: readonly PlanFeat
       'legDistance',
       'sunTimes',
       'planB',
+      'tripMode',
     ],
   },
   {
     id: 'notice',
-    keys: ['nearbyWish', 'checkoutNotice', 'lateNight', 'dayRecap', 'placeTips', 'missingStay'],
+    keys: [
+      'nearbyWish',
+      'checkoutNotice',
+      'lateNight',
+      'dayRecap',
+      'placeTips',
+      'missingStay',
+      'offlineReady',
+      'flightDelay',
+    ],
   },
-  { id: 'local', keys: ['weatherMark', 'airQuality', 'localHoliday', 'jetLag', 'cityIntro'] },
+  {
+    id: 'local',
+    keys: [
+      'weatherMark',
+      'airQuality',
+      'localHoliday',
+      'jetLag',
+      'cityIntro',
+      'safetyNotice',
+      'festivals',
+    ],
+  },
   { id: 'quick', keys: ['transitGuide', 'nearbyFind', 'arrivalRoute'] },
 ];
 
@@ -180,6 +216,11 @@ export const SETTINGS_DEFAULTS: Settings = {
   transitGuide: false,
   nearbyFind: false,
   arrivalRoute: false,
+  offlineReady: false,
+  safetyNotice: false,
+  festivals: false,
+  flightDelay: false,
+  tripMode: false,
   quickButton: true,
   aiCats: ['food', 'cafe'],
   aiAnchor: 'text',
@@ -228,6 +269,11 @@ const VALID: { [K in keyof Settings]: (v: unknown) => v is Settings[K] } = {
   transitGuide: (v): v is boolean => typeof v === 'boolean',
   nearbyFind: (v): v is boolean => typeof v === 'boolean',
   arrivalRoute: (v): v is boolean => typeof v === 'boolean',
+  offlineReady: (v): v is boolean => typeof v === 'boolean',
+  safetyNotice: (v): v is boolean => typeof v === 'boolean',
+  festivals: (v): v is boolean => typeof v === 'boolean',
+  flightDelay: (v): v is boolean => typeof v === 'boolean',
+  tripMode: (v): v is boolean => typeof v === 'boolean',
   quickButton: (v): v is boolean => typeof v === 'boolean',
   aiCats: (v): v is Settings['aiCats'] =>
     Array.isArray(v) &&

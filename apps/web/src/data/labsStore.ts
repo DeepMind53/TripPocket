@@ -7,15 +7,16 @@ import { countUse } from '../shared/lib/usageCount';
  * 정식 기능이 되면 LABS에서 빼고 useLab 호출을 지운다 (docs/code-map.md §3)
  */
 export const LABS = [
-  'offlineReady',
-  // 2026-11-03 무료 API 2·3단계 (docs/26): 외교부 안전공지·국내 축제·행사·항공편 지연
-  'safetyNotice',
-  'festivals',
-  'flightDelay',
-  // 2026-11-03 여행 모드 (docs/25 추천안 D1~D6)
-  'travelMode',
-  // 2026-11-09 숙소 최저가 (docs/28, ADR-0010)
-  'lodgingPrice',
+  // 2026-11-10 새 실험 (사용자 선택, 서버·외부 요청 없음): 일차 노선 미니맵·다음 역 카드 노선 색·여권 도장 이미지 저장·
+  // 해 질 녘 자동 다크·하루 한 줄 기록
+  'dayMiniMap',
+  'nextStopDayColor',
+  'stampImage',
+  'sunsetDark',
+  'dayNote',
+  // 2026-11-10 정식(설정 "일정", 사용자 요청): 오프라인 준비·외교부 안전공지·축제와 행사·항공편 지연·여행 모드(tripMode).
+  // 숙소 최저가는 설정 없이 늘 켜짐. 켜 두었던 기기는 settingsStore.migrateGraduatedLabs가 설정으로 옮긴다
+  // 2026-11-09 숙소 최저가 (docs/28, ADR-0010) · 2026-11-03 여행 모드 (docs/25) · 무료 API 2·3단계 (docs/26)
   // 2026-11-03 정식(설정 "일정", 사용자 요청): 대중교통 안내·근처 찾기·공항 → 숙소·숙소 없는 밤·장소 맞춤 팁·
   // 미세먼지 안내·여행지 소개·Plan B. 오프라인 준비만 실험실에 남김.
   // 2026-11-03 뺐다(사용자 결정): 좌측 통행·수돗물·필요한 연차·처음 가는 나라·무료 취소 마감·현장 결제·이른 출발.

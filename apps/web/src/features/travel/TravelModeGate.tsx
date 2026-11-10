@@ -1,7 +1,7 @@
+import { useSettings } from '../../data/settingsStore';
 import { todayIn, type Trip } from '@trippocket/shared';
 import { useEffect } from 'react';
 import { Navigate } from 'react-router';
-import { useLab } from '../../data/labsStore';
 import { declineTravelMode, setTravelMode, useTravelMode } from '../../data/travelModeStore';
 import { useTranslation } from '../../i18n';
 import { Button } from '../../shared/ui';
@@ -14,7 +14,7 @@ import { toast } from '../../shared/ui/toastStore';
  * - 돌아온 다음 날부터는 저절로 끄고 기록(회고)을 권한다 (D6)
  */
 export function TravelModeGate({ trip }: { trip: Trip }) {
-  const lab = useLab('travelMode');
+  const lab = useSettings((s) => s.tripMode);
   const on = useTravelMode((s) => s.on[trip.id] === true);
   const asked = useTravelMode((s) => s.asked[trip.id] === true);
   const { t } = useTranslation();

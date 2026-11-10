@@ -9,6 +9,31 @@ export function routeColor(dayIndex: number): { line: string; ink: string } {
   return { line: `var(--tp-day-${n})`, ink: `var(--tp-day-${n}-ink)` };
 }
 
+/**
+ * 흰 바탕에 그리는 그림(지도 핀·도장 이미지)용 노선 색 실제 값 — 테마와 상관없이 라이트 값 (tokens.css와 같게)
+ */
+export const DAY_LINE_HEX = [
+  '#2f6bff',
+  '#ff6b4a',
+  '#12b5a5',
+  '#9b5cff',
+  '#f5a524',
+  '#e5488a',
+  '#3ba55c',
+  '#5a6b85',
+] as const;
+export const DAY_INK_HEX = [
+  '#2c64ed',
+  '#b84d35',
+  '#0c7d72',
+  '#854fdb',
+  '#956516',
+  '#c03c74',
+  '#2d7d46',
+  '#5a6b85',
+] as const;
+export const dayInkHex = (dayIndex: number) => DAY_INK_HEX[((dayIndex % 8) + 8) % 8]!;
+
 /** 노선 부품에 넘기는 style — 안쪽은 var(--route)·var(--route-ink)로 칠한다 */
 export function routeStyle(dayIndex: number | null | undefined): CSSProperties {
   if (dayIndex == null)

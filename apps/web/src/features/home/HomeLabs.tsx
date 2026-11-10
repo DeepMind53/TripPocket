@@ -2,7 +2,6 @@ import { todayIn, type Booking, type Trip } from '@trippocket/shared';
 import { InlineIcon } from '../../shared/ui/InlineIcon';
 import { Clock, Download, Map, type LucideIcon } from 'lucide-react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useLab } from '../../data/labsStore';
 import { attachmentRepo } from '../../data/repositories/attachmentRepo';
 import { useSettings } from '../../data/settingsStore';
 import { vouchersNotSaved } from '../../domain/localInfo';
@@ -32,7 +31,7 @@ export function HomeLabs({
     !ongoing &&
     trip.startDate >= today &&
     Date.parse(trip.startDate) - Date.parse(today) <= 7 * 86_400_000;
-  const offlineOn = useLab('offlineReady') && soon;
+  const offlineOn = useSettings((s) => s.offlineReady) && soon;
   const introOn = useSettings((s) => s.cityIntro);
   const city = trip.destinations[0]?.name;
   const docs = useLiveQuery(

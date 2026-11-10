@@ -34,24 +34,16 @@ beforeEach(async () => {
 });
 
 describe('실험실', () => {
-  it('마이 → 실험실: 오프라인 준비만 남음(나머지는 2026-11-03 정식), 켜면 이 기기에 저장, [샘플]', async () => {
+  it('마이 → 실험실: 2026-11-10 새 실험 5개(나머지는 정식), 켜면 이 기기에 저장', async () => {
     const user = userEvent.setup();
     render(<RouterProvider router={createMemoryRouter(routes, { initialEntries: ['/me'] })} />);
     await user.click(await screen.findByRole('link', { name: '실험실' }));
-    const sw = await screen.findByRole('switch', { name: /오프라인 준비/ });
+    const sw = await screen.findByRole('switch', { name: /하루 한 줄 기록/ });
     expect(sw).toHaveAttribute('aria-checked', 'false');
     await user.click(sw);
-    expect(JSON.parse(localStorage.getItem('tp-labs')!)).toEqual({ offlineReady: true });
-    expect(LABS).toEqual([
-      'offlineReady',
-      'safetyNotice',
-      'festivals',
-      'flightDelay',
-      'travelMode',
-      'lodgingPrice',
-    ]);
-    expect(screen.getAllByRole('switch')).toHaveLength(6);
-    expect(screen.getAllByRole('button', { name: / 샘플$/ })).toHaveLength(6);
+    expect(JSON.parse(localStorage.getItem('tp-labs')!)).toEqual({ dayNote: true });
+    expect(LABS).toEqual(['dayMiniMap', 'nextStopDayColor', 'stampImage', 'sunsetDark', 'dayNote']);
+    expect(screen.getAllByRole('switch')).toHaveLength(5);
     // 정식이 됐거나 뺀 것은 실험실에 없다
     for (const name of [
       /현지 공휴일/,
@@ -69,7 +61,7 @@ describe('실험실', () => {
       /Plan B/,
     ])
       expect(screen.queryByRole('switch', { name })).toBeNull();
-    setLab('offlineReady', false);
+    setLab('dayNote', false);
   });
 
   it('정식: 날씨 주의 그림·현지 공휴일·늦은 귀가 + 실험: 장소 맞춤 팁', async () => {
@@ -564,14 +556,19 @@ describe('실험실', () => {
     expect(within(sheet).getByText('오늘 11:00 체크아웃 · 신주쿠 호텔')).toBeInTheDocument();
     await user.click(within(sheet).getByRole('button', { name: '이 기능 끄기' }));
     expect(useSettings.getState().checkoutNotice).toBe(false);
-    // 일정 표시 항목 9개 모두 샘플 버튼
-    expect(screen.getAllByRole('button', { name: / 샘플$/ })).toHaveLength(21);
+    // 설정 "일정" 항목 모두 샘플 버튼 (2026-11-10 정식 5개 더해 26)
+    expect(screen.getAllByRole('button', { name: / 샘플$/ })).toHaveLength(26);
     updateSettings({ checkoutNotice: true });
   });
 
   it('시차(정식) · 교통카드·결제·바우처(정식) · 실험: 오프라인 준비·숙소 없는 밤·대중교통 안내·근처 찾기·공항 → 숙소', async () => {
-    setLab('offlineReady', true);
-    updateSettings({ missingStay: true, transitGuide: true, nearbyFind: true, arrivalRoute: true });
+    updateSettings({
+      offlineReady: true,
+      missingStay: true,
+      transitGuide: true,
+      nearbyFind: true,
+      arrivalRoute: true,
+    });
     vi.stubGlobal('fetch', async (url: string) =>
       String(url).includes('nager')
         ? Response.json([])
@@ -643,8 +640,8 @@ describe('실험실', () => {
         'google.com/maps/search',
       );
     } finally {
-      setLab('offlineReady', false);
       updateSettings({
+        offlineReady: false,
         missingStay: false,
         transitGuide: false,
         nearbyFind: false,

@@ -1,8 +1,8 @@
+import { useSettings } from '../../data/settingsStore';
 import { InlineIcon } from '../../shared/ui/InlineIcon';
 import { ShieldAlert } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { api } from '../../data/api/client';
-import { useLab } from '../../data/labsStore';
 import { useTranslation } from '../../i18n';
 
 interface Notice {
@@ -16,7 +16,7 @@ interface Notice {
  * 나라 코드만 보낸다. 공지 원문은 외교부 해외안전여행에서
  */
 export function SafetyNotices({ countries }: { countries: readonly string[] }) {
-  const on = useLab('safetyNotice');
+  const on = useSettings((s) => s.safetyNotice);
   const key = [...new Set(countries.filter((c) => c !== 'KR'))].sort().join(',');
   if (!on || !key) return null;
   return <List key={key} codes={key.split(',')} />;
