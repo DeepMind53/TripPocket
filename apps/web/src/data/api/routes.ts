@@ -30,38 +30,87 @@ function save(store: Store): void {
   }
 }
 
+/** 오늘 남은 길 조회 수 (서버가 알려 준 마지막 값, 한국 날짜 기준 — 한 사람 하루 50번, 2026-11-10) */
+const LEFT_KEY = 'tp-route-left';
+const kstDay = () =>
+  new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul' }).format(new Date());
+
+export function routeLeftToday(): number | null {
+  try {
+    const v = JSON.parse(localStorage.getItem(LEFT_KEY) ?? 'null') as {
+      day: string;
+      left: number;
+    } | null;
+    return v && v.day === kstDay() ? v.left : null;
+  } catch {
+    return null;
+  }
+}
+
+function rememberLeft(left: number | undefined): void {
+  if (left === undefined) return;
+  try {
+    localStorage.setItem(LEFT_KEY, JSON.stringify({ day: kstDay(), left }));
+  } catch {
+    // 표시만 못 할 뿐
+  }
+}
+
+/** 길 조회 결과: 오늘 한도를 다 썼으면 limited (화면은 직선거리 어림으로) */
+export type RouteEtaResult = { eta: RouteEta | null; limited: boolean };
+
 /**
- * 두 일정 장소 사이 걸어서·대중교통 소요 시간 (실험실 "출발 시각", 서버가 Google Routes·Geoapify로).
- * google = 둘 중 하나라도 Google에서 받은 좌표. 실패하면 null (화면은 직선거리 어림으로)
+ * 두 일정 장소 사이 걸어서·대중교통 소요 시간 (서버가 Google Routes·Geoapify로).
+ * google = 둘 중 하나라도 Google에서 받은 좌표. 실패하면 eta null (화면은 직선거리 어림으로)
  */
-export async function routeEta(
+export async function routeEtaResult(
   from: Coords,
   to: Coords,
   google: boolean,
   /** 출발점이 지금 내 위치: 약 100m로 줄여 보내고, 기기·서버 어디에도 보관하지 않는다 */
   live = false,
-): Promise<RouteEta | null> {
+): Promise<RouteEtaResult> {
+  const ask = async (body: object): Promise<RouteEtaResult> => {
+    const res = await api<RouteEta>('/api/routes/eta', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+    if (res.ok) {
+      rememberLeft(res.data.left);
+      return { eta: res.data, limited: false };
+    }
+    if (res.code === 'route_daily') {
+      rememberLeft(0);
+      return { eta: null, limited: true };
+    }
+    return { eta: null, limited: false };
+  };
   if (live) {
     const round = (c: Coords) => ({
       lat: Math.round(c.lat * 1000) / 1000,
       lng: Math.round(c.lng * 1000) / 1000,
     });
-    const res = await api<RouteEta>('/api/routes/eta', {
-      method: 'POST',
-      body: JSON.stringify({ from: round(from), to, google, live: true }),
-    });
-    return res.ok ? res.data : null;
+    return ask({ from: round(from), to, google, live: true });
   }
   const k = pairKey(from, to);
   const store = load();
   const hit = store[k];
-  if (hit && Date.now() - hit.at < KEEP_MS) return hit.eta;
-  const res = await api<RouteEta>('/api/routes/eta', {
-    method: 'POST',
-    body: JSON.stringify({ from, to, google }),
-  });
-  if (!res.ok) return null;
-  store[k] = { at: Date.now(), eta: res.data };
-  save(store);
-  return res.data;
+  if (hit && Date.now() - hit.at < KEEP_MS) return { eta: hit.eta, limited: false };
+  const r = await ask({ from, to, google });
+  if (r.eta) {
+    const { left: _left, ...eta } = r.eta;
+    store[k] = { at: Date.now(), eta };
+    save(store);
+  }
+  return r;
+}
+
+/** 소요 시간만 (일정 화면 "다음 일정" 줄) */
+export async function routeEta(
+  from: Coords,
+  to: Coords,
+  google: boolean,
+  live = false,
+): Promise<RouteEta | null> {
+  return (await routeEtaResult(from, to, google, live)).eta;
 }

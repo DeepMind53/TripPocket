@@ -5,6 +5,7 @@ import type { Db } from '../db/database';
 import { requireUser } from '../auth/session';
 import { apiAllowed } from '../services/apiUsage';
 import { geoapifyEta, googleEta } from '../services/routes';
+import { ROUTE_DAILY_LIMIT, routeUsageRepo } from '../repositories/routeUsageRepo';
 
 /**
  * 두 곳 사이 걸어서·대중교통 소요 시간 (일정 화면 "다음 일정" 바·구간 시간).
@@ -15,11 +16,19 @@ export function routeEtaRoutes(app: FastifyInstance, config: Config, db: Db): vo
     preHandler: requireUser(db),
     config: { rateLimit: { max: 30, timeWindow: '1 minute' } },
   };
+  const usage = routeUsageRepo(db);
   app.post('/api/routes/eta', auth, async (req, reply) => {
     const body = RouteEtaBody.safeParse(req.body);
     if (!body.success) return reply.code(400).send({ error: 'bad_request' });
     const { from, to, google, live = false } = body.data;
     reply.header('cache-control', 'no-store');
+    // 한 사람 하루 50번 (자동 + 현재 위치, 2026-11-10). 다 쓰면 웹은 직선거리 어림으로 — 한도 팝업은 띄우지 않는다
+    const userId = req.user!.userId;
+    const n = usage.used(userId);
+    if (n >= ROUTE_DAILY_LIMIT)
+      return reply.code(429).send({ error: 'route_daily', limit: ROUTE_DAILY_LIMIT, left: 0 });
+    usage.bump(userId);
+    const left = ROUTE_DAILY_LIMIT - n - 1;
     const gkey = config.GOOGLE_PLACES_KEY;
     const okey = config.GEOAPIFY_KEY;
     // 실제 길 기준 시간: 걷기·대중교통 모두 Google Routes가 먼저 (2026-10-27).
@@ -43,12 +52,12 @@ export function routeEtaRoutes(app: FastifyInstance, config: Config, db: Db): vo
         req.log.warn(`geoapify routing 실패: ${String(e)}`);
       }
     }
-    if (eta && (eta.walk !== undefined || eta.transit !== undefined)) return eta;
+    if (eta && (eta.walk !== undefined || eta.transit !== undefined)) return { ...eta, left };
     return (
       reply
         .code(503)
         // 웹이 직선거리 어림으로 대신하므로 한도 팝업(api_paused)을 띄우지 않는다 (대체 기능 있음, 2026-10-27)
-        .send({ error: 'no_route', api: google ? 'google_routes' : 'geoapify' })
+        .send({ error: 'no_route', api: google ? 'google_routes' : 'geoapify', left })
     );
   });
 }

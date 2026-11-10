@@ -45,6 +45,47 @@ export function leaveAt(
   return { at: hhmm(at), inMin: at - mins(now) };
 }
 
+/** 나갈 때까지 남은 초 (지금 = 현지 하루의 몇 번째 초). 음수면 이미 지남 — 큰 "88분 38초 후 출발" */
+export function leaveInSeconds(
+  start: string,
+  nowSec: number,
+  travelMin: number | undefined,
+): number {
+  return (mins(start) - (travelMin ?? 0) - LEAVE_MARGIN_MIN) * 60 - nowSec;
+}
+
+export type LegMode = 'walk' | 'transit';
+
+/**
+ * 다음 일정까지 고를 수 있는 이동 (사용자 요청 2026-11-10): 길 조회 결과가 있으면 그 값, 도보가 없거나
+ * 조회가 실패하면 직선거리 어림(straight = true). 대중교통은 조회로만
+ */
+export function legOptions(
+  eta: { walk?: number | undefined; transit?: number | undefined } | null,
+  straightWalkMin: number | undefined,
+): { walk?: { min: number; straight: boolean }; transit?: number } {
+  const walk =
+    eta?.walk !== undefined
+      ? { min: eta.walk, straight: false }
+      : straightWalkMin !== undefined
+        ? { min: straightWalkMin, straight: true }
+        : undefined;
+  return {
+    ...(walk ? { walk } : {}),
+    ...(eta?.transit !== undefined ? { transit: eta.transit } : {}),
+  };
+}
+
+/** 고른 수단이 없으면 대중교통 → 도보 순 (대중교통 조회가 실패하면 저절로 도보) */
+export function pickLegMode(
+  opts: { walk?: unknown; transit?: unknown },
+  chosen: LegMode | null,
+): LegMode | null {
+  if (chosen && opts[chosen] !== undefined) return chosen;
+  if (opts.transit !== undefined) return 'transit';
+  return opts.walk !== undefined ? 'walk' : null;
+}
+
 /** 오늘 주의 한 줄용: 지금 시각 뒤로 처음 비·눈·뇌우가 오는 시 (시간별 예보가 없으면 하루 예보로 -1) */
 export function rainFrom(w: DayWeather | undefined, now: string): number | null {
   if (!w) return null;

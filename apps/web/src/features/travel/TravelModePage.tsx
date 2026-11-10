@@ -1,7 +1,10 @@
 import {
   addDays,
   dayNumberOf,
+  distanceKm,
   todayIn,
+  walkMinutes,
+  type RouteEta,
   type Coords,
   type ItineraryItem,
   type Trip,
@@ -26,7 +29,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import { useNavigate, useParams } from 'react-router';
-import { routeEta } from '../../data/api/routes';
+import { routeEtaResult, routeLeftToday } from '../../data/api/routes';
 import { useTrip, useTripBookings, useTripItems } from '../../data/hooks';
 import { applyVisit } from '../../data/skippedToSaved';
 import { VisitToggle } from '../common/VisitToggle';
@@ -34,17 +37,36 @@ import { setTravelMode, setTravelPrefs, useTravelMode } from '../../data/travelM
 import { airWarnings } from '../../domain/air';
 import { currentItemId, nextStop, pastItemIds } from '../../domain/dayTools';
 import { lodgingForNight } from '../../domain/lodging';
-import { dayPhase, leaveAt, rainFrom, type DayPhase } from '../../domain/travelDay';
+import {
+  dayPhase,
+  leaveAt,
+  legOptions,
+  pickLegMode,
+  rainFrom,
+  type DayPhase,
+  type LegMode,
+} from '../../domain/travelDay';
 import { travelLegsAhead } from '../../domain/travelLeg';
 import { isDomesticTrip } from '../../domain/tripPlace';
-import { formatTemps } from '../../domain/weather';
+import { formatTemps, hourWeather, weatherLook } from '../../domain/weather';
 import { useTranslation } from '../../i18n';
 import { timeIn, useMinuteClock } from '../../shared/hooks/useMinuteClock';
 import { useRouteSheet } from '../../shared/hooks/useRouteSheet';
+import { useCurrentPosition } from '../../shared/hooks/useCurrentPosition';
+import { DepartCountdown } from './DepartCountdown';
+import { LegControls } from './LegControls';
 import { cn } from '../../shared/lib/cn';
 import { formatMonthDay } from '../../shared/lib/dateFormat';
 import type { Destination } from '../../shared/lib/directions';
-import { Button, IconButton, NextStopCard, Skeleton, routeColor, toast } from '../../shared/ui';
+import {
+  Button,
+  IconButton,
+  NextStopCard,
+  Skeleton,
+  WeatherIcon,
+  routeColor,
+  toast,
+} from '../../shared/ui';
 import { useLab } from '../../data/labsStore';
 import { InlineIcon } from '../../shared/ui/InlineIcon';
 import { DayWeatherBadge } from '../common/DayWeatherBadge';
@@ -138,37 +160,75 @@ function TravelView({ trip, items: all }: { trip: Trip; items: ItineraryItem[] }
     lodgingForNight(bookings, today)?.booking ?? bookings.find((b) => b.kind === 'lodging');
   const w = weather[today];
 
-  // 다음 일정까지 이동 시간 (Q4): 앞 일정 장소 → 다음 장소, 일정마다 한 번 (기기에 7일 보관, 무료량 안에서만)
+  // 다음 일정까지 이동 (Q4 + 사용자 요청 2026-11-10): 다음 일정 차례가 되면 앞 일정 장소 → 다음 장소를 1번만 자동 조회
+  // (기기에 7일 보관). 지난 일정은 nextStop이 고르지 않아 조회하지 않는다. 실패·한도면 도보 직선거리 어림으로.
+  // [현재 위치]는 다음 일정마다 1번 — 지금 위치 → 다음 장소. 한 사람 하루 50번(자동 + 현재 위치)은 서버가 센다
   const prev = next
     ? [...dayItems]
         .filter((i) => i.place?.coords && i.startTime && i.startTime < next.startTime!)
         .pop()
     : undefined;
-  const from: Coords | undefined = prev?.place?.coords;
   const to = next?.place?.coords;
-  const pair = from && to ? `${from.lat},${from.lng}>${to.lat},${to.lng}` : '';
-  const [eta, setEta] = useState<{ pair: string; min?: number; transit: boolean } | null>(null);
+  const google = next?.place?.coordsSource === 'google' || prev?.place?.coordsSource === 'google';
+  const [route, setRoute] = useState<{
+    key: string;
+    eta: RouteEta | null;
+    from: Coords;
+    live: boolean;
+  } | null>(null);
+  const [left, setLeft] = useState(routeLeftToday);
+  const autoFrom: Coords | undefined = prev?.place?.coords;
+  const key = next && to ? next.id : '';
   useEffect(() => {
-    if (!pair || !from || !to || eta?.pair === pair) return;
+    if (!key || !autoFrom || !to || route?.key === key) return;
     let alive = true;
-    const google = next?.place?.coordsSource === 'google' || prev?.place?.coordsSource === 'google';
-    void routeEta(from, to, google).then((r) => {
+    void routeEtaResult(autoFrom, to, google).then((r) => {
       if (!alive) return;
-      const transit = r?.transit;
-      const walk = r?.walk;
-      const best = [walk, transit].filter((x): x is number => x !== undefined);
-      setEta({
-        pair,
-        ...(best.length ? { min: Math.min(...best) } : {}),
-        transit: transit !== undefined && (walk === undefined || transit < walk),
-      });
+      setRoute({ key, eta: r.eta, from: autoFrom, live: false });
+      setLeft(routeLeftToday());
     });
     return () => {
       alive = false;
     };
-  }, [pair]); // eslint-disable-line react-hooks/exhaustive-deps -- 다음 일정(두 장소)이 바뀔 때만
-  const travelMin = eta?.pair === pair ? eta.min : undefined;
+  }, [key]); // eslint-disable-line react-hooks/exhaustive-deps -- 다음 일정이 바뀔 때만
+  const mine = route?.key === key ? route : null;
+  const legFrom = mine?.from ?? autoFrom;
+  const opts = legOptions(
+    mine?.eta ?? null,
+    legFrom && to ? walkMinutes(distanceKm(legFrom, to)) : undefined,
+  );
+  const [chosen, setChosen] = useState<LegMode | null>(null);
+  const mode = pickLegMode(opts, chosen);
+  const travelMin =
+    mode === 'transit' ? opts.transit : mode === 'walk' ? opts.walk?.min : undefined;
   const leave = next?.startTime ? leaveAt(next.startTime, now, travelMin) : null;
+  // [현재 위치]: 누른 뒤 위치를 받으면 1번만 조회
+  const { state: here, request: askHere } = useCurrentPosition(false);
+  const [hereFor, setHereFor] = useState<string | null>(null);
+  useEffect(() => {
+    if (!hereFor || hereFor !== key || here.status === 'asking' || here.status === 'idle') return;
+    if (here.status !== 'ok' || !to) {
+      toast(t('travel.hereFail'));
+      return;
+    }
+    const at = here.coords;
+    let alive = true;
+    void routeEtaResult(at, to, google, true).then((r) => {
+      if (!alive) return;
+      setLeft(routeLeftToday());
+      if (r.limited) toast(t('travel.routeLimit'));
+      else if (!r.eta) toast(t('travel.routeFail'));
+      setRoute({ key, eta: r.eta, from: at, live: true });
+    });
+    return () => {
+      alive = false;
+    };
+  }, [here, hereFor]); // eslint-disable-line react-hooks/exhaustive-deps -- 누름·위치가 바뀔 때만
+  const legNote = [
+    opts.walk &&
+      t(opts.walk.straight ? 'travel.etaWalkLine' : 'travel.etaWalk', { min: opts.walk.min }),
+    opts.transit !== undefined && t('travel.etaTransit', { min: opts.transit }),
+  ].filter((x): x is string => typeof x === 'string');
 
   // 나갈 시각 알림 (앱이 열려 있을 때 — 브라우저 알림 권한을 허락한 경우)
   useEffect(() => {
@@ -232,6 +292,25 @@ function TravelView({ trip, items: all }: { trip: Trip; items: ItineraryItem[] }
       <VisitToggle value={i.visit} label={i.title} onChange={(v) => void markVisit(i, v)} />
     );
 
+  // 남은 일정: 방문 버튼 자리에 그 시각 날씨 (예보가 있는 날만, 작년 기록은 빼고 — 사용자 요청 2026-11-10)
+  const hourMark = (i: ItineraryItem) => {
+    const h = w && !w.year ? hourWeather(w, i.startTime) : null;
+    if (!h) return null;
+    const look = weatherLook(h.code);
+    return (
+      <span
+        role="img"
+        aria-label={t('travel.hourWeather', { look: look.label, temp: h.temp })}
+        className="flex shrink-0 items-center gap-1"
+      >
+        <WeatherIcon kind={look.kind} className="size-5" />
+        <span aria-hidden="true" className="tabular text-caption text-fg-sub">
+          {h.temp}°
+        </span>
+      </span>
+    );
+  };
+
   const row = (i: ItineraryItem) => (
     <li key={i.id} className="flex min-h-12 items-center gap-2 px-3 py-2">
       <span className="tabular w-12 shrink-0 text-caption text-fg-muted">
@@ -245,7 +324,7 @@ function TravelView({ trip, items: all }: { trip: Trip; items: ItineraryItem[] }
       >
         {i.title}
       </span>
-      {visitButtons(i)}
+      {past.has(i.id) ? visitButtons(i) : hourMark(i)}
     </li>
   );
 
@@ -364,17 +443,39 @@ function TravelView({ trip, items: all }: { trip: Trip; items: ItineraryItem[] }
           label={t('travel.next')}
           kicker={t(phase === 'morning' ? 'travel.first' : 'travel.next')}
           title={`${next.title} · ${next.startTime}`}
-          countdown={t(leave.inMin < 0 ? 'travel.leaveNow' : 'travel.leaveAt', {
-            time: leave.at,
-          })}
-          countdownSuffix={
-            [
-              leave.inMin >= 0 && t('travel.leaveIn', { min: leave.inMin }),
-              travelMin !== undefined &&
-                t(eta?.transit ? 'travel.byTransit' : 'travel.byWalk', { min: travelMin }),
-            ]
-              .filter(Boolean)
-              .join(' · ') || undefined
+          // "88분 38초 후 출발" 하나만 크게 — 고른 수단으로 계산 (사용자 요청 2026-11-10, 전에는 "21:19에 나가요")
+          countdown={
+            <DepartCountdown
+              start={next.startTime!}
+              timezone={trip.timezone}
+              travelMin={travelMin}
+            />
+          }
+          note={
+            legNote.length > 0
+              ? t('travel.etaNote', {
+                  text:
+                    legNote.length === 2
+                      ? t('travel.etaBoth', { a: legNote[0]!, b: legNote[1]! })
+                      : legNote[0]!,
+                })
+              : undefined
+          }
+          aside={
+            to ? (
+              <LegControls
+                mode={mode}
+                onMode={setChosen}
+                hasWalk={opts.walk !== undefined}
+                hasTransit={opts.transit !== undefined}
+                hereDisabled={hereFor === key || left === 0}
+                left={left}
+                onHere={() => {
+                  setHereFor(key);
+                  askHere();
+                }}
+              />
+            ) : undefined
           }
           actions={
             (next.place?.coords || next.place?.address || next.place?.name) && (

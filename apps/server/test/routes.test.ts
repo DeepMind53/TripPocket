@@ -78,7 +78,7 @@ describe('출발 시각 (두 장소 소요 시간)', () => {
   it('Google Routes가 멈추면 Google 좌표가 아닐 때만 무료 Geoapify: 걷기 + 대중교통 어림', async () => {
     used('google_routes', 9500, 'America/Los_Angeles');
     const res = await eta({ from, to, google: false });
-    expect(res.json()).toEqual({ walk: 50, transit: 30, source: 'osm' });
+    expect(res.json()).toMatchObject({ walk: 50, transit: 30, source: 'osm' });
     expect(calls.map((c) => new URL(c.url).searchParams.get('mode'))).toEqual([
       'walk',
       'approximated_transit',
@@ -90,11 +90,11 @@ describe('출발 시각 (두 장소 소요 시간)', () => {
 
   it('실제 길 시간은 Google Routes가 먼저 — 걷기·대중교통 둘 다 (시간 필드만 요청)', async () => {
     const plain = await eta({ from, to, google: false });
-    expect(plain.json()).toEqual({ walk: 60, transit: 25, source: 'google' });
+    expect(plain.json()).toMatchObject({ walk: 60, transit: 25, source: 'google' });
     clearRouteCache();
     calls.length = 0;
     const res = await eta({ from, to, google: true });
-    expect(res.json()).toEqual({ walk: 60, transit: 25, source: 'google' });
+    expect(res.json()).toMatchObject({ walk: 60, transit: 25, source: 'google' });
     expect(calls.every((c) => c.url.includes('routes.googleapis.com'))).toBe(true);
     expect(calls[0]!.headers['X-Goog-FieldMask']).toBe('routes.duration');
     expect(calls.map((c) => JSON.parse(c.body).travelMode)).toEqual(['WALK', 'TRANSIT']);
@@ -128,23 +128,39 @@ describe('출발 시각 (두 장소 소요 시간)', () => {
         return Response.json(body.includes('TRANSIT') ? { routes: [{ duration: '1680s' }] } : {});
       return Response.json({ features: [{ properties: { time: 7920 } }] });
     });
-    expect((await eta({ from, to, google: false })).json()).toEqual({
+    expect((await eta({ from, to, google: false })).json()).toMatchObject({
       walk: 132,
       transit: 28,
       source: 'google',
     });
     clearRouteCache();
     // Google 좌표면 채우지 않고 Google 것만
-    expect((await eta({ from, to, google: true })).json()).toEqual({
-      transit: 28,
-      source: 'google',
-    });
+    const onlyGoogle = (await eta({ from, to, google: true })).json() as { walk?: number };
+    expect(onlyGoogle).toMatchObject({ transit: 28, source: 'google' });
+    expect(onlyGoogle.walk).toBeUndefined();
   });
 
   it('내 위치에서 출발(live)이면 서버 메모리에도 남기지 않는다 — 같은 요청도 다시 묻는다', async () => {
     await eta({ from, to, google: false, live: true });
     await eta({ from, to, google: false, live: true });
     // Google 걷기·대중교통 2건씩
+    expect(calls).toHaveLength(4);
+  });
+
+  it('한 사람 하루 50번 (자동 + 현재 위치 합계): 남은 수를 알려 주고, 다 쓰면 429 route_daily (팝업 없음)', async () => {
+    const first = (await eta({ from, to, google: false, live: true })).json() as { left: number };
+    expect(first.left).toBe(49);
+    // 오늘 48번을 더 쓴 것으로 (1분 30번 요청 제한은 따로 있다)
+    const day = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul' }).format(new Date());
+    db.prepare(
+      "UPDATE places_usage SET count = 49 WHERE user_id = 'u1' AND date = ? AND kind = 'route_eta'",
+    ).run(day);
+    const last = (await eta({ from, to, google: false, live: true })).json() as { left: number };
+    expect(last.left).toBe(0);
+    const over = await eta({ from, to, google: false, live: true });
+    expect(over.statusCode).toBe(429);
+    expect(over.json()).toEqual({ error: 'route_daily', limit: 50, left: 0 });
+    // 한도를 넘은 요청은 외부 API를 부르지 않는다 (두 번 × 걷기·대중교통)
     expect(calls).toHaveLength(4);
   });
 });

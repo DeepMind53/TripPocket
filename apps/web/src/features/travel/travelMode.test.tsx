@@ -41,6 +41,7 @@ async function osaka() {
     title: '도톤보리',
     startTime: '09:00',
     endTime: '10:30',
+    place: { name: '도톤보리', coords: { lat: 34.6687, lng: 135.5013 } },
   });
   await itemRepo.create({
     tripId: trip.id,
@@ -48,7 +49,8 @@ async function osaka() {
     kind: 'place',
     title: '오사카성',
     startTime: '11:00',
-    place: { name: '오사카성' },
+    // 출발 계산 확인용으로 도톤보리 바로 옆 (직선 약 150m)
+    place: { name: '오사카성', coords: { lat: 34.67, lng: 135.502 } },
   });
   await itemRepo.create({
     tripId: trip.id,
@@ -71,11 +73,21 @@ it('여행 모드: 여행 중이면 한 번 묻고, 시작하면 지금·다음 
   const ask = await screen.findByRole('region', { name: '여행 모드로 볼까요?' });
   await user.click(within(ask).getByRole('button', { name: '시작' }));
 
-  // 다음 일정: 나갈 시각이 크게 (시작 11:00 − 여유 10분), 남은 분은 작게
+  // 다음 일정: "N분 N초 후 출발" 하나만 크게 (시작 11:00 − 이동 − 여유 10분, 사용자 요청 2026-11-10)
   const nextBox = await screen.findByRole('region', { name: '다음' });
   expect(screen.getByText(/^1일차 · 11.03 \(화\)$/)).toBeInTheDocument();
-  expect(within(nextBox).getByText('10:50에 나가요')).toBeInTheDocument();
-  expect(within(nextBox).getByText('15분 남음')).toBeInTheDocument();
+  expect(within(nextBox).getByText(/^\d+분 \d+초$/)).toBeInTheDocument();
+  expect(within(nextBox).getByText('후 출발')).toBeInTheDocument();
+  // 오른쪽 [도보][대중교통] + [현재 위치]
+  const legs = within(nextBox).getByRole('group', { name: '이동 수단' });
+  expect(within(legs).getByRole('button', { name: /현재 위치/ })).toBeInTheDocument();
+  // 길 조회가 비면 도보 직선거리 어림으로, 대중교통은 누를 수 없다
+  expect(await within(legs).findByRole('button', { name: /도보/ })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  expect(within(legs).getByRole('button', { name: /대중교통/ })).toBeDisabled();
+  expect(within(nextBox).getByText(/^\(도보 직선거리 약 \d+분\)$/)).toBeInTheDocument();
   expect(within(nextBox).getByRole('button', { name: '길찾기' })).toBeInTheDocument();
   // 오늘/내일 탭은 없다 (Q1)
   expect(screen.queryByRole('tab')).toBeNull();

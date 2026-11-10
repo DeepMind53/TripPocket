@@ -8,6 +8,8 @@ export interface RouteEta {
   walk?: number | undefined;
   transit?: number | undefined;
   source: 'google' | 'osm';
+  /** 오늘 남은 길 조회 수 (한 사람 하루 50번, 2026-11-10) — 기기에 보관한 결과에는 없다 */
+  left?: number | undefined;
 }
 
 /**

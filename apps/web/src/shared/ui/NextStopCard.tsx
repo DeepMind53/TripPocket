@@ -8,7 +8,7 @@ export interface NextStopCardProps {
   /** 다음 장소 이름 */
   title: ReactNode;
   /** 큰 남은 시간 ("38분") — 없으면 줄을 숨긴다 */
-  countdown?: string | null | undefined;
+  countdown?: ReactNode | null | undefined;
   /** 남은 시간 옆 ("뒤 14:00") */
   countdownSuffix?: ReactNode | undefined;
   /** 지난 역 → 다음 역 진행 (0~1). null이면 막대 없음 */
@@ -22,6 +22,10 @@ export interface NextStopCardProps {
   actions?: ReactNode | undefined;
   /** 여행 모드처럼 더 크게 */
   size?: 'md' | 'lg';
+  /** 남은 시간 아래 작은 줄 ("(도보 약 30분 또는 대중교통 약 5분)") */
+  note?: ReactNode | undefined;
+  /** 남은 시간 오른쪽 칸 (여행 모드 도보·대중교통 고르기) */
+  aside?: ReactNode | undefined;
   /** 카드 바탕색 (CSS 색) — 실험실 '다음 역 카드 노선 색'은 그날 노선 진한 색. 없으면 파랑 */
   tone?: string | undefined;
 }
@@ -43,6 +47,8 @@ export function NextStopCard({
   actions,
   size = 'md',
   tone,
+  note,
+  aside,
 }: NextStopCardProps) {
   const pct = progress === null ? null : Math.round(Math.min(1, Math.max(0, progress)) * 100);
   return (
@@ -56,23 +62,30 @@ export function NextStopCard({
         {title}
       </p>
       {countdown && (
-        // 큰 남은 시간은 한 줄로 (글자 중간에서 줄이 바뀌지 않게), 옆 글은 모자라면 통째로 다음 줄 (2026-11-10)
-        <p className="flex flex-wrap items-baseline gap-x-1.5 gap-y-1">
-          <span
-            className={
-              size === 'lg'
-                ? 'tabular text-[min(3.25rem,10.5vw)] leading-none font-semibold tracking-[-0.04em] whitespace-nowrap'
-                : 'tabular text-count-xl whitespace-nowrap'
-            }
-          >
-            {countdown}
-          </span>
-          {countdownSuffix && (
-            <span className="tabular text-body-2 whitespace-nowrap opacity-90">
-              {countdownSuffix}
-            </span>
-          )}
-        </p>
+        <div className="flex items-start gap-3">
+          {/* 큰 남은 시간은 한 줄로 (글자 중간에서 줄이 바뀌지 않게), 옆 글은 모자라면 통째로 다음 줄 (2026-11-10).
+              여행 모드는 남은 칸 너비만큼 글자를 키운다 (@container) */}
+          <div className="@container flex min-w-0 flex-1 flex-col gap-1.5">
+            <p className="flex flex-wrap items-baseline gap-x-1.5 gap-y-1">
+              <span
+                className={
+                  size === 'lg'
+                    ? 'tabular text-[min(3.25rem,16cqi)] leading-none font-semibold tracking-[-0.04em] whitespace-nowrap'
+                    : 'tabular text-count-xl whitespace-nowrap'
+                }
+              >
+                {countdown}
+              </span>
+              {countdownSuffix && (
+                <span className="tabular text-body-2 whitespace-nowrap opacity-90">
+                  {countdownSuffix}
+                </span>
+              )}
+            </p>
+            {note && <p className="tabular text-caption text-pretty opacity-90">{note}</p>}
+          </div>
+          {aside}
+        </div>
       )}
       {pct !== null && (
         <div className="mt-1 flex flex-col gap-1">

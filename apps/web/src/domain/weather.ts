@@ -103,3 +103,15 @@ export function weatherCautionsAt(
   const order: WeatherCaution[] = ['rain', 'storm', 'snow', 'fog', 'cold', 'freezing', 'hot'];
   return order.filter((c) => out.has(c));
 }
+
+/** 그 시각(시 단위) 예보 — 시간별 예보가 없으면 null (여행 모드 남은 일정 줄, 사용자 요청 2026-11-10) */
+export function hourWeather(
+  w: DayWeather | undefined,
+  time: string | undefined,
+): { code: number; temp: number } | null {
+  if (!w?.hours || !time) return null;
+  const h = Number(time.slice(0, 2));
+  const code = w.hours.code[h];
+  const temp = w.hours.temp[h];
+  return code === undefined || temp === undefined ? null : { code, temp: Math.round(temp) };
+}
