@@ -33,7 +33,8 @@ export type PreviewId =
   | 'stampImage'
   | 'sunsetDark'
   | 'dayNote'
-  | 'tripCard';
+  | 'tripCard'
+  | 'tripPhotos';
 
 const IDS: readonly string[] = [
   'dimPastItems',
@@ -70,6 +71,7 @@ const IDS: readonly string[] = [
   'sunsetDark',
   'dayNote',
   'tripCard',
+  'tripPhotos',
 ];
 
 export const hasPreview = (id: string): id is PreviewId => IDS.includes(id);

@@ -626,9 +626,10 @@ function TravelView({ trip, items: all }: { trip: Trip; items: ItineraryItem[] }
         <button
           type="button"
           onClick={toStay}
-          className="flex h-14 flex-col items-center justify-center gap-0.5 rounded-btn bg-primary-weak text-micro font-semibold text-primary"
+          // 다른 칸과 같은 회색, 누를 때만 파랑 (사용자 요청 2026-11-11)
+          className="flex h-14 flex-col items-center justify-center gap-0.5 rounded-btn bg-bg-subtle text-micro font-semibold active:bg-primary-weak active:text-primary"
         >
-          <Bed aria-hidden="true" className="size-5" />
+          <Bed aria-hidden="true" className="size-5 text-primary" />
           {t('travel.toStay')}
         </button>
         {THUMBS[phase].map(({ id, icon: Icon }) => (

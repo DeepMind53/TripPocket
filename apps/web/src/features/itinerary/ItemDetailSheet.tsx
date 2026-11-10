@@ -16,7 +16,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { lazy, Suspense, useState, type ReactNode } from 'react';
-import { isReviewKind } from '@trippocket/shared';
+import { isReviewKind, COUNTRY_CURRENCY } from '@trippocket/shared';
 import { ItemReviews } from '../reviews/ItemReviews';
 import { useItemReviews } from '../reviews/useItemReviews';
 
@@ -33,6 +33,7 @@ import { BookingDocs } from '../bookings/BookingDocs';
 import { TaxiCard } from '../phrases/TaxiCard';
 import { KIND_ICON } from './itemKinds';
 import { MemoFx } from './MemoFx';
+import { ItemPhotos } from '../photos/ItemPhotos';
 
 export interface ItemDetailSheetProps {
   open: boolean;
@@ -270,6 +271,12 @@ export function ItemDetailSheet({
               </Info>
             )}
           </dl>
+
+          {/* 실험실 "사진·영수증" (2026-11-11): 붙은 사진이 있을 때만 */}
+          <ItemPhotos
+            item={item}
+            currency={countryCode ? COUNTRY_CURRENCY[countryCode] : undefined}
+          />
 
           {reviewKind && <ItemReviews data={reviews} kind={reviewKind} />}
 

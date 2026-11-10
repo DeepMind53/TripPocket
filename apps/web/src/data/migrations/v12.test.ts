@@ -19,7 +19,7 @@ it('저장소 v11 → v12: 예전 기차 예약(주소 없음)도 그대로 읽�
   });
   old.close();
   const db = new TripPocketDB(NAME);
-  expect(db.verno).toBe(12);
+  expect(db.verno).toBeGreaterThanOrEqual(12);
   const row = await db.bookings.get('b');
   expect(row?.start).toEqual({ date: '2026-11-12', time: '08:00', place: '서울역' });
   expect(row?.start.address).toBeUndefined();

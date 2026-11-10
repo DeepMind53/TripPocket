@@ -48,6 +48,11 @@ const Env = z.object({
   NAVER_SEARCH_SECRET: z.optional(z.string()),
   /** Google Places API (New) 서버 키 — 브라우저에 절대 넣지 않음, API 제한 = Places API (New) */
   GOOGLE_PLACES_KEY: z.optional(z.string()),
+  /** 영수증 글자 인식 (Cloud Vision). 없으면 GOOGLE_PLACES_KEY — 그 키에 Vision API 허용 필요 (ADR-0012) */
+  GOOGLE_VISION_KEY: z.optional(z.string()),
+  /** 영수증 백업 (Azure AI Vision Read F0, 월 5,000장 무료): 리소스 주소(https://<이름>.cognitiveservices.azure.com)·키 */
+  AZURE_VISION_ENDPOINT: z.optional(z.string()),
+  AZURE_VISION_KEY: z.optional(z.string()),
   /** Geoapify 서버 키 (무료 플랜) — Google 무료량이 끝났을 때 해외 검색·택시 카드 백업 (docs/23). 없으면 건너뜀 */
   GEOAPIFY_KEY: z.optional(z.string()),
   /**

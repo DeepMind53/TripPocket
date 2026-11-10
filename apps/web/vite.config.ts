@@ -32,6 +32,8 @@ function serviceWorker(): Plugin {
         )
         // 무료 지도 백업(MapLibre, 약 1.5MB)은 인터넷이 될 때만 쓰므로 미리 받지 않는다 (docs/23 §4)
         .filter((f) => !/(^|\/)(osmMap|maplibre-gl-worker)-/.test(f))
+        // 기기 안 영수증 글자 인식(약 4MB)도 [분석]을 누를 때만 (ADR-0012)
+        .filter((f) => !/(^|\/)(deviceOcr|worker\.min|tesseract-core)/.test(f))
         .map((f) => `/${f}`)
         .filter((f) => f !== '/index.html')
         .concat('/', '/boot.js', '/manifest.webmanifest', ...icons, ...transit)

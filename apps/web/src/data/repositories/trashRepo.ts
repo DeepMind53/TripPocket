@@ -147,6 +147,9 @@ export const trashRepo = {
       await (table as typeof db.items).bulkDelete(ids);
       n += ids.length;
     }
+    // 아예 지운 일정에 붙어 있던 기기 전용 사진·영수증도 (ADR-0012)
+    const left = new Set((await db.items.toCollection().primaryKeys()) as string[]);
+    await db.photos.filter((p) => !left.has(p.itemId)).delete();
     return n;
   },
 };

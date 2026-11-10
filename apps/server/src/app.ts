@@ -22,6 +22,7 @@ import { aiRoutes } from './routes/ai';
 import { meRoutes } from './routes/me';
 import { placesRoutes } from './routes/places';
 import { routeEtaRoutes } from './routes/routes';
+import { ocrRoutes } from './routes/ocr';
 import { shareRoutes } from './routes/share';
 import { syncRoutes } from './routes/sync';
 import { statsRoutes } from './routes/stats';
@@ -125,6 +126,7 @@ export async function buildApp(config: Config, db: Db): Promise<FastifyInstance>
   shareRoutes(app, db);
   placesRoutes(app, config, db);
   routeEtaRoutes(app, config, db);
+  ocrRoutes(app, config, db);
   flightRoutes(app, config, db);
   reviewRoutes(app, db);
   lodgingRoutes(app, db, config);

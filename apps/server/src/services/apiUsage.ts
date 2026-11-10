@@ -38,6 +38,8 @@ export type ApiId =
   | 'airkorea'
   | 'airlabs'
   | 'overpass'
+  | 'google_vision'
+  | 'azure_read'
   | 'open_meteo'
   | 'nager_date'
   | 'jsdelivr'
@@ -94,6 +96,8 @@ export const APIS: readonly ApiDef[] = [
   { id: 'google_details_basic', group: 'paid', freeMonthly: 10000, tz: 'America/Los_Angeles' },
   // 출발 시각(실험실, 2026-10-26): Routes API Compute Routes Essentials 월 1만 무료 — 걷기·대중교통 2건씩
   { id: 'google_routes', group: 'paid', freeMonthly: 10000, tz: 'America/Los_Angeles' },
+  // 영수증 글자 인식 (ADR-0012, 2026-11-11): Cloud Vision Document Text Detection 월 1,000장 무료, 넘으면 1,000장당 $1.50
+  { id: 'google_vision', group: 'paid', freeMonthly: 1000, tz: 'America/Los_Angeles' },
   {
     id: 'google_maps_js',
     group: 'paid',
@@ -134,6 +138,8 @@ export const APIS: readonly ApiDef[] = [
   // ── 무료 (결제 수단 없음 → 넘으면 거절될 뿐) ──
   // Gemini 무료 등급(결제 없는 프로젝트): Flash-Lite 하루 500~1,000회, 태평양 자정에 초기화
   { id: 'gemini', group: 'free', freeDaily: 500, tz: 'America/Los_Angeles' },
+  // 영수증 백업 (ADR-0012): Azure AI Vision Read F0 — 월 5,000건·분당 20건 무료, 넘으면 막힐 뿐 (무료 등급)
+  { id: 'azure_read', group: 'free', freeMonthly: 5000, tz: 'UTC' },
   // Workers AI 무료 플랜: 하루 1만 Neurons(UTC 자정) ≈ 이 앱 분석 약 50회. 유료 플랜으로 올리면 과금되므로 하루 상한 유지
   { id: 'workers-ai', group: 'free', freeDaily: 50, tz: 'UTC' },
   // Groq 무료: 하루 1,000회 (조직 단위)

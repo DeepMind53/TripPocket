@@ -34,6 +34,25 @@ export interface AttachmentRow {
   serverFullAt?: string | undefined;
 }
 
+/**
+ * 일정 사진·영수증 (실험실 "사진·영수증", ADR-0012 — 2026-11-11). **이 기기에만**: 서버·동기화·백업 JSON 어디에도 넣지 않는다.
+ * 영수증은 읽은 글(text)만 저장하고 품목·금액은 볼 때 계산한다 (금액 저장 안 함 규칙)
+ */
+export interface PhotoRow {
+  id: string;
+  tripId: string;
+  /** 붙은 일정 — 편집에서 다른 일정으로 옮길 수 있다 */
+  itemId: string;
+  kind: 'photo' | 'receipt';
+  /** 약 1600px JPEG */
+  blob: Blob;
+  createdAt: string;
+  /** 영수증에서 읽은 글 (분석 전이면 없음, 사용자가 고칠 수 있다) */
+  text?: string | undefined;
+  /** 글을 읽은 곳 */
+  textSource?: 'google' | 'azure' | 'device' | undefined;
+}
+
 export interface KeyValueRow {
   key: string;
   value: unknown;
@@ -55,6 +74,7 @@ export class TripPocketDB extends Dexie {
   settings!: EntityTable<KeyValueRow, 'key'>;
   syncState!: EntityTable<KeyValueRow, 'key'>;
   attachments!: EntityTable<AttachmentRow, 'id'>;
+  photos!: EntityTable<PhotoRow, 'id'>;
 
   constructor(name = 'trippocket') {
     super(name);
@@ -89,6 +109,8 @@ export class TripPocketDB extends Dexie {
     this.version(11).stores({});
     // v12 (2026-11-03): 예약 출발·도착 지점 주소(start·end.address) — 인덱스 없음, 예전 행은 그대로
     this.version(12).stores({});
+    // v13 (2026-11-11): 일정 사진·영수증 — 이 기기 전용 표 (동기화·백업 대상 아님, ADR-0012)
+    this.version(13).stores({ photos: 'id, tripId, itemId' });
   }
 }
 

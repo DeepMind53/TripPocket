@@ -1,4 +1,5 @@
 import {
+  Camera,
   Footprints,
   ImageDown,
   Luggage,
@@ -7,6 +8,7 @@ import {
   MoonStar,
   Navigation,
   PenLine,
+  ReceiptText,
   Sun,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
@@ -448,6 +450,48 @@ export function FeaturePreview({ id }: { id: PreviewId }) {
           ],
         }),
         t('tripCard.title'),
+      );
+    case 'tripPhotos':
+      // 빠른 메뉴 두 칸 + 일정 상세 영수증 표 (그림 대신 실제 화면 모양)
+      return (
+        <div className="flex flex-col gap-3">
+          <div className="grid grid-cols-2 gap-2">
+            {(['photo', 'receipt'] as const).map((k) => (
+              <span
+                key={k}
+                className="flex min-h-20 flex-col justify-center gap-0.5 rounded-card bg-bg-subtle px-3 py-2.5"
+              >
+                <span className="flex items-center gap-1.5">
+                  {k === 'photo' ? (
+                    <Camera aria-hidden="true" className="size-5 text-primary" />
+                  ) : (
+                    <ReceiptText aria-hidden="true" className="size-5 text-primary" />
+                  )}
+                  <span className="text-body-2 font-semibold">{t(`quickMenu.${k}`)}</span>
+                </span>
+                <span className="text-micro text-fg-muted">{t(`quickMenu.${k}Desc`)}</span>
+              </span>
+            ))}
+          </div>
+          <ul className="flex flex-col divide-y divide-line rounded-card border border-line bg-surface">
+            {(
+              [
+                [t('sample.ichiran'), '980'],
+                [t('sample.receiptItem'), '210'],
+              ] as const
+            ).map(([name, price]) => (
+              <li key={name} className="flex gap-3 px-3 py-2 text-body-2">
+                <span className="flex-1">{name}</span>
+                <span className="tabular">{price}</span>
+              </li>
+            ))}
+            <li className="flex gap-3 bg-bg-subtle px-3 py-2 text-body-2 font-semibold">
+              <span className="flex-1">{t('photos.total')}</span>
+              <span className="tabular">1,190</span>
+            </li>
+          </ul>
+          <p className="text-caption text-fg-muted">{t('photos.localOnly')}</p>
+        </div>
       );
     case 'placeTips':
       return day(

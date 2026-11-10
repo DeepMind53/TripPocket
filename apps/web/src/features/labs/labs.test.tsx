@@ -43,10 +43,17 @@ describe('실험실', () => {
     await user.click(sw);
     expect(JSON.parse(localStorage.getItem('tp-labs')!)).toEqual({ dayNote: true });
     // 일차 노선 미니맵·여행 전체 노선도는 설정 "노선도"로 정식 (2026-11-10)
-    expect(LABS).toEqual(['nextStopDayColor', 'stampImage', 'sunsetDark', 'dayNote', 'tripCard']);
-    expect(screen.getAllByRole('switch')).toHaveLength(5);
+    expect(LABS).toEqual([
+      'nextStopDayColor',
+      'stampImage',
+      'sunsetDark',
+      'dayNote',
+      'tripCard',
+      'tripPhotos',
+    ]);
+    expect(screen.getAllByRole('switch')).toHaveLength(6);
     // 실험마다 [샘플] (사용자 요청 2026-11-10)
-    expect(screen.getAllByRole('button', { name: / 샘플$/ })).toHaveLength(5);
+    expect(screen.getAllByRole('button', { name: / 샘플$/ })).toHaveLength(6);
     // 정식이 됐거나 뺀 것은 실험실에 없다
     for (const name of [
       /현지 공휴일/,

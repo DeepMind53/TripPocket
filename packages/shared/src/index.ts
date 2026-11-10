@@ -101,6 +101,7 @@ export {
   type PlaceSummary,
 } from './places/placeSearch';
 export { RouteEtaBody, type Coords, type RouteEta } from './places/route';
+export { OCR_DAILY_LIMIT, OCR_MAX_BYTES, type OcrResult } from './ocr';
 export {
   alertQuery,
   MAX_ALERT_POINTS,

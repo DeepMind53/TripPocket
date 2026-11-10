@@ -33,6 +33,7 @@ import { SavedSpotsButtons } from './SavedSpotsButtons';
 import { ShortcutEditSheet } from './ShortcutEditSheet';
 import { TabQuickInfo } from './TabQuickInfo';
 import { TravelModeButton } from '../travel/TravelModeButton';
+import { PhotoCaptureButtons } from '../photos/PhotoCaptureButtons';
 import {
   SHORTCUT_ICON,
   SHORTCUT_LAB,
@@ -40,7 +41,7 @@ import {
   useQuickShortcuts,
   type ShortcutId,
 } from './quickShortcuts';
-import { useLabs } from '../../data/labsStore';
+import { useLab, useLabs } from '../../data/labsStore';
 import { openDirectionsDirect } from './openDirections';
 import { isDomesticTrip } from '../../domain/tripPlace';
 
@@ -114,6 +115,7 @@ function TripQuickMenu({
   const [sosOpen, setSosOpen] = useRouteSheet('quick-emergency');
   const [dest, setDest] = useState<Destination | null>(null);
   const [carOpen, setCarOpen] = useState(false);
+  const photosOn = useLab('tripPhotos');
 
   const today = trip ? todayIn(trip.timezone) : '';
   const withNo = bookings.filter((b) => b.confirmationNo);
@@ -177,6 +179,12 @@ function TripQuickMenu({
         {travel ? (
           // 여행 모드는 짧게: 위치 저장·저장한 위치 + 현지 생활 정보만 (사용자 요청 2026-11-10)
           <div className="flex flex-col gap-5">
+            {/* 실험실 "사진·영수증"은 여행 모드에서도 (사용자 요청 2026-11-11) */}
+            {photosOn && trip && (
+              <div className="grid grid-cols-2 gap-2">
+                <PhotoCaptureButtons trip={trip} />
+              </div>
+            )}
             {trip && <SavedSpotsButtons trip={trip} horizontal />}
             <LocalInfoSection tripId={tripId} />
           </div>
@@ -272,6 +280,7 @@ function QuickMenuContent({
   const theme = useSettings((st) => st.theme);
   const app = useSettings((st) => st.directionsApp);
   const mode = useSettings((st) => st.travelMode);
+  const photosOn = labs.tripPhotos === true;
 
   return (
     <div className="flex flex-col gap-5">
@@ -323,6 +332,8 @@ function QuickMenuContent({
           </span>
           <span className="text-micro text-fg-muted">{t('quickMenu.phrasesDesc')}</span>
         </Link>
+        {/* 실험실 "사진·영수증" (2026-11-11): AI 추천 아래 사진, 번역·회화 아래 영수증 */}
+        {photosOn && <PhotoCaptureButtons trip={trip} />}
       </div>
 
       {/* 바로가기 위: 지금 이동 정보(출국편 → 렌터카 반납 전까지 → 귀국편) + 위치 저장 2개 (사용자 요청 2026-11-03) */}
