@@ -33,8 +33,8 @@ import { MAP_KEYS } from '../../shared/maps';
 import { FeaturePreview } from '../common/FeaturePreview';
 import type { PreviewId } from '../common/previewIds';
 
-/** 작게·보통·크게 (사용자 요청 2026-11-10 — 보통이 가운데) */
-const FONT_SCALES = [0.9, 1, 1.15] as const;
+/** 작게·보통·크게 (사용자 요청 2026-11-10 — 예전 90%가 새 보통, 그 90%·110%) */
+const FONT_SCALES = [0.81, 0.9, 0.99] as const;
 
 /**
  * S-23 설정 (docs/12 §3). 바꾸면 바로 적용, 저장 버튼 없음.
@@ -130,7 +130,7 @@ export function SettingsPage() {
                   max={FONT_SCALES.length - 1}
                   step={1}
                   showTicks
-                  onChange={(i) => updateSettings({ fontScale: FONT_SCALES[i] ?? 1 })}
+                  onChange={(i) => updateSettings({ fontScale: FONT_SCALES[i] ?? 0.9 })}
                 />
               </div>
               <span aria-hidden="true" className="text-title-2">

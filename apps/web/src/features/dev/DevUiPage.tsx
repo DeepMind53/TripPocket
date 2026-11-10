@@ -34,7 +34,7 @@ export function DevUiPage() {
   const [loading, setLoading] = useState(false);
 
   const fontNames = ['작게', '보통', '크게'] as const;
-  const fontScales = [0.9, 1, 1.15] as const;
+  const fontScales = [0.81, 0.9, 0.99] as const;
 
   function toggleCategory(id: string) {
     setCategories((prev) => (prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]));

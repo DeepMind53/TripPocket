@@ -25,8 +25,9 @@ export const useSettings = create<SettingsState>(() => ({ ...SETTINGS_DEFAULTS, 
 function applyDevice(s: Settings) {
   setDateStyle(s.dateFormat);
   applyTheme(s.theme);
-  document.documentElement.style.fontSize =
-    s.fontScale === 1 ? '' : `${Math.round(s.fontScale * 100)}%`;
+  // 글자 크기 3단계 (2026-11-10): 기본(보통)도 90%라 늘 적어 둔다
+  document.documentElement.style.fontSize = `${Math.round(s.fontScale * 100)}%`;
+  // 큰 글씨 배치(tight)는 115% 이상에서였다 — 가장 큰 단계가 99%라 이제 좁은 화면(≤340px)에서만
   document.documentElement.toggleAttribute('data-big-text', s.fontScale >= 1.15);
   try {
     localStorage.setItem(BOOT_KEY, JSON.stringify({ theme: s.theme, fontScale: s.fontScale }));

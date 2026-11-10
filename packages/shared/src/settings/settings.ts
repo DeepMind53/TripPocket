@@ -4,8 +4,11 @@
  */
 export interface Settings {
   theme: 'light' | 'dark' | 'system';
-  /** 작게·보통·크게 3단계 (사용자 요청 2026-11-10, 전에는 아주 크게 1.3까지 4단계) */
-  fontScale: 0.9 | 1 | 1.15;
+  /**
+   * 화면 글자 배율(html font-size). 작게·보통·크게 3단계 (사용자 요청 2026-11-10):
+   * 예전 가장 작은 90%를 새 "보통"으로, 그 90%·110%를 작게·크게 → 0.81 · 0.9 · 0.99
+   */
+  fontScale: 0.81 | 0.9 | 0.99;
   timeFormat: '24h' | '12h';
   haptics: boolean;
   /** 국내 길찾기 앱 — 해외는 늘 Google 지도 (2026-10-27). 예전 값 'google'은 기본값으로 */
@@ -143,7 +146,7 @@ export function mergePlanSeen(a: readonly PlanFeature[], b: readonly PlanFeature
 
 export const SETTINGS_DEFAULTS: Settings = {
   theme: 'system',
-  fontScale: 1,
+  fontScale: 0.9,
   timeFormat: '24h',
   haptics: true,
   directionsApp: 'ask',
@@ -192,7 +195,7 @@ const oneOf =
 /** 항목별 검사 */
 const VALID: { [K in keyof Settings]: (v: unknown) => v is Settings[K] } = {
   theme: oneOf('light', 'dark', 'system'),
-  fontScale: oneOf(0.9, 1, 1.15),
+  fontScale: oneOf(0.81, 0.9, 0.99),
   timeFormat: oneOf('24h', '12h'),
   haptics: (v): v is boolean => typeof v === 'boolean',
   directionsApp: oneOf('naver', 'kakao', 'ask'),
@@ -243,8 +246,11 @@ const VALID: { [K in keyof Settings]: (v: unknown) => v is Settings[K] } = {
 /** 저장된 값(무엇이든) → 올바른 설정. 모르는 키는 버리고, 틀린 값은 기본값 */
 export function parseSettings(raw: unknown): Settings {
   const src0 = typeof raw === 'object' && raw !== null ? (raw as Record<string, unknown>) : {};
-  // 예전 "아주 크게"(1.3)는 지금 가장 큰 "크게"(1.15)로 — 옛 백업·다른 기기 설정도 그대로 읽힌다 (2026-11-10)
-  const src = src0.fontScale === 1.3 ? { ...src0, fontScale: 1.15 } : src0;
+  // 예전 글자 배율 (0.9 · 1 · 1.15 · 1.3) → 새 3단계 (2026-11-10): 예전 보통(1)은 새 보통(0.9),
+  // 예전 크게·아주 크게는 새 크게(0.99). 예전 작게(0.9)는 값 그대로 새 보통 — 옛 백업·기기 설정도 읽힌다
+  const legacy: Record<string, number> = { '1': 0.9, '1.15': 0.99, '1.3': 0.99 };
+  const mapped = legacy[String(src0.fontScale)];
+  const src = mapped !== undefined ? { ...src0, fontScale: mapped } : src0;
   const out = { ...SETTINGS_DEFAULTS };
   const current = src.planPromptV === 1;
   for (const key of Object.keys(VALID) as (keyof Settings)[]) {

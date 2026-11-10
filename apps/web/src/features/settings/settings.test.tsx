@@ -52,14 +52,17 @@ describe('설정 저장소', () => {
     await loadSettings();
     const s = useSettings.getState();
     expect(s.travelMode).toBe('walk');
-    expect(s.fontScale).toBe(1);
+    expect(s.fontScale).toBe(0.9);
     expect(s.theme).toBe('light');
     expect(document.documentElement.dataset.theme).toBe('light');
   });
 
   it('글자 크기는 화면 전체 배율', () => {
-    updateSettings({ fontScale: 1.15 });
-    expect(document.documentElement.style.fontSize).toBe('115%');
+    // 작게·보통·크게 = 81%·90%·99% (2026-11-10)
+    updateSettings({ fontScale: 0.99 });
+    expect(document.documentElement.style.fontSize).toBe('99%');
+    updateSettings({ fontScale: 0.9 });
+    expect(document.documentElement.style.fontSize).toBe('90%');
   });
 
   it('시간 표기', () => {

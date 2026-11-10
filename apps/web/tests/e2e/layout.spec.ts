@@ -191,19 +191,17 @@ test('일정 → 예약 탭 → 일정으로 돌아오면 보던 위치 그대�
   await expect.poll(() => page.evaluate(() => Math.round(window.scrollY))).toBeGreaterThan(300);
 });
 
-// 큰 글씨(115%)에서도 가로 넘침·잘린 탭 글자가 없다 (docs/20 U9)
-test('글자 크기 가장 크게(115%): 주요 화면 가로 넘침 없음, 탭 이름이 잘리지 않음', async ({
+// 큰 글씨(99%)에서도 가로 넘침·잘린 탭 글자가 없다 (docs/20 U9)
+test('글자 크기 가장 크게(99%): 주요 화면 가로 넘침 없음, 탭 이름이 잘리지 않음', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 360, height: 760 });
   const trip = await seedTrip(page);
-  // 설정 → 글자 크기 가장 크게 (115%)
+  // 설정 → 글자 크기 가장 크게 (99%)
   await page.goto('/settings');
   await page.getByRole('slider', { name: '글자 크기' }).focus();
   await page.keyboard.press('End');
-  await expect
-    .poll(() => page.evaluate(() => document.documentElement.style.fontSize))
-    .toBe('115%');
+  await expect.poll(() => page.evaluate(() => document.documentElement.style.fontSize)).toBe('99%');
   for (const path of [
     '/',
     '/records',
@@ -218,8 +216,8 @@ test('글자 크기 가장 크게(115%): 주요 화면 가로 넘침 없음, 탭
   ]) {
     await page.goto(path);
     await page.waitForLoadState('networkidle');
-    expect(await page.evaluate(() => document.documentElement.style.fontSize), path).toBe('115%');
-    await noHorizontalOverflow(page, `${path} (115%)`);
+    expect(await page.evaluate(() => document.documentElement.style.fontSize), path).toBe('99%');
+    await noHorizontalOverflow(page, `${path} (99%)`);
     const clipped = await page.evaluate(() =>
       [...document.querySelectorAll('nav a')]
         .filter((a) => a.scrollWidth > a.clientWidth + 1 || a.scrollHeight > a.clientHeight + 1)

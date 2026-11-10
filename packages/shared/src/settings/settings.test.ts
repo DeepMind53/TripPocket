@@ -22,17 +22,21 @@ describe('설정 검사', () => {
       unknown: 1,
     });
     expect(s.theme).toBe('dark');
-    expect(s.fontScale).toBe(1);
+    expect(s.fontScale).toBe(0.9);
     expect(s.timeStepMin).toBe(15);
     expect(s.backupReminderDays).toBe(21);
     expect(s.haptics).toBe(true);
     expect('unknown' in s).toBe(false);
   });
 
-  it('글자 크기는 작게·보통·크게 3단계, 예전 아주 크게(1.3)는 크게로 (2026-11-10)', () => {
-    expect(parseSettings({ fontScale: 0.9 }).fontScale).toBe(0.9);
-    expect(parseSettings({ fontScale: 1.15 }).fontScale).toBe(1.15);
-    expect(parseSettings({ fontScale: 1.3 }).fontScale).toBe(1.15);
+  it('글자 크기는 작게·보통·크게 = 0.81·0.9·0.99, 예전 값은 새 단계로 (2026-11-10)', () => {
+    for (const v of [0.81, 0.9, 0.99] as const)
+      expect(parseSettings({ fontScale: v }).fontScale).toBe(v);
+    expect(parseSettings({}).fontScale).toBe(0.9);
+    // 예전: 작게 0.9 → 새 보통(같은 크기), 보통 1 → 새 보통, 크게 1.15·아주 크게 1.3 → 새 크게
+    expect(parseSettings({ fontScale: 1 }).fontScale).toBe(0.9);
+    expect(parseSettings({ fontScale: 1.15 }).fontScale).toBe(0.99);
+    expect(parseSettings({ fontScale: 1.3 }).fontScale).toBe(0.99);
   });
 
   it('일정 기능: 처음엔 모두 끔, 옛 설정도 끄고 다시 묻는다, 새 설정은 그대로 (2026-11-02)', () => {

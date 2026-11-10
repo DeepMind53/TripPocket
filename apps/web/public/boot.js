@@ -3,12 +3,12 @@
 try {
   var b = JSON.parse(localStorage.getItem('tp-boot') || '{}');
   if (b.theme === 'light' || b.theme === 'dark') document.documentElement.dataset.theme = b.theme;
-  // 글자 크기는 최대 "크게"(1.15) — 예전 "아주 크게"(1.3)가 남아 있어도 크게로 (2026-11-10)
-  if (typeof b.fontScale === 'number' && b.fontScale > 1.15) b.fontScale = 1.15;
-  if (typeof b.fontScale === 'number' && b.fontScale !== 1)
-    document.documentElement.style.fontSize = Math.round(b.fontScale * 100) + '%';
-  if (typeof b.fontScale === 'number' && b.fontScale >= 1.15)
-    document.documentElement.toggleAttribute('data-big-text', true);
+  // 글자 크기 3단계 0.81·0.9·0.99, 기본 0.9 (2026-11-10). 예전 값: 1 → 0.9, 1.15·1.3 → 0.99 (shared parseSettings와 같게)
+  var f = typeof b.fontScale === 'number' ? b.fontScale : 0.9;
+  if (f === 1) f = 0.9;
+  else if (f > 1) f = 0.99;
+  document.documentElement.style.fontSize = Math.round(f * 100) + '%';
 } catch {
   // 저장소를 못 읽어도 기본 테마로 동작
+  document.documentElement.style.fontSize = '90%';
 }
