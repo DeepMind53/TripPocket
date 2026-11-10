@@ -17,7 +17,6 @@ import {
   Languages,
   ListChecks,
   Navigation,
-  Siren,
   Sun,
   Ticket,
   TriangleAlert,
@@ -50,7 +49,6 @@ import { useLab } from '../../data/labsStore';
 import { InlineIcon } from '../../shared/ui/InlineIcon';
 import { DayWeatherBadge } from '../common/DayWeatherBadge';
 import { DirectionsSheet } from '../common/DirectionsSheet';
-import { EmergencySheet } from '../common/EmergencySheet';
 import { openDirectionsDirect } from '../common/openDirections';
 import { QuickMenuButton } from '../common/QuickMenu';
 import { TravelLegCard } from '../common/TravelLegCard';
@@ -120,7 +118,6 @@ function TravelView({ trip, items: all }: { trip: Trip; items: ItineraryItem[] }
   const { sun, remind, sunAsked } = useTravelMode();
   const online = useOnline();
   const [dirOpen, setDirOpen] = useRouteSheet('travel-directions');
-  const [sosOpen, setSosOpen] = useRouteSheet('travel-emergency');
   const [dest, setDest] = useState<Destination | null>(null);
   const [pastOpen, setPastOpen] = useState(false);
   const today = todayIn(trip.timezone);
@@ -140,9 +137,6 @@ function TravelView({ trip, items: all }: { trip: Trip; items: ItineraryItem[] }
   const stay =
     lodgingForNight(bookings, today)?.booking ?? bookings.find((b) => b.kind === 'lodging');
   const w = weather[today];
-  const countries = [
-    ...new Set(trip.destinations.map((d) => d.countryCode).filter((c): c is string => !!c)),
-  ];
 
   // 다음 일정까지 이동 시간 (Q4): 앞 일정 장소 → 다음 장소, 일정마다 한 번 (기기에 7일 보관, 무료량 안에서만)
   const prev = next
@@ -292,15 +286,18 @@ function TravelView({ trip, items: all }: { trip: Trip; items: ItineraryItem[] }
             void navigate(`/trips/${trip.id}/plan`, { replace: true });
           }}
         />
-        <span className="flex min-w-0 flex-1 flex-col">
-          <span className="truncate text-title-2 font-semibold">
+        {/* 왼쪽: 일차·날짜, 아래 날씨 / 오른쪽 남은 칸: 현지 시각을 칸 너비만큼 크게 — 머리 높이는 그대로 (사용자 요청 2026-11-10) */}
+        <span className="flex shrink-0 flex-col items-start">
+          <span className="text-title-2 font-semibold whitespace-nowrap">
             {n ? t('travel.dayN', { n, date: formatMonthDay(today) }) : formatMonthDay(today)}
           </span>
-          <span className="tabular text-caption text-fg-muted">
+          <DayWeatherBadge weather={w} />
+        </span>
+        <span className="@container flex h-14 min-w-0 flex-1 items-center justify-end">
+          <span className="tabular text-[min(2.75rem,17cqi)] leading-none font-semibold whitespace-nowrap text-fg-sub">
             {t('travel.localTime', { time: now })}
           </span>
         </span>
-        <DayWeatherBadge weather={w} />
         <IconButton
           label={t('travel.sun')}
           aria-pressed={sun}
@@ -308,13 +305,7 @@ function TravelView({ trip, items: all }: { trip: Trip; items: ItineraryItem[] }
           tone={sun ? 'tint' : 'plain'}
           onClick={() => setTravelPrefs({ sun: !sun, sunAsked: true })}
         />
-        {/* 긴급 연락처는 늘 오른쪽 위 (D1, 인터넷 없어도) */}
-        <IconButton
-          label={t('emergency.title')}
-          icon={<Siren />}
-          tone="cancel"
-          onClick={() => setSosOpen(true)}
-        />
+        {/* 오른쪽 위 긴급 연락처 버튼은 뺐다 (사용자 요청 2026-11-10, 전에는 D1) */}
       </header>
 
       {!online && (
@@ -528,14 +519,13 @@ function TravelView({ trip, items: all }: { trip: Trip; items: ItineraryItem[] }
           </button>
         ))}
       </nav>
-      <QuickMenuButton inTrip />
+      <QuickMenuButton inTrip travel />
       <DirectionsSheet
         open={dirOpen}
         onOpenChange={setDirOpen}
         destination={dest}
         isDomestic={domestic}
       />
-      <EmergencySheet open={sosOpen} onOpenChange={setSosOpen} countries={countries} />
     </div>
   );
 }

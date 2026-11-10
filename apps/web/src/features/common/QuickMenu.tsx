@@ -17,7 +17,14 @@ export const preloadQuickMenu = () =>
 const Lazy = lazy(async () => ({ default: await preloadQuickMenu() }));
 
 /** ⚡ 플로팅 버튼(끌어서 옮김) + 빠른 메뉴 시트 (docs/12 §1). 화면마다 같은 자리에 뜬다 */
-export function QuickMenuButton({ inTrip = false }: { inTrip?: boolean }) {
+export function QuickMenuButton({
+  inTrip = false,
+  travel = false,
+}: {
+  inTrip?: boolean;
+  /** 여행 모드: 위치 저장·저장한 위치·현지 생활 정보만 (사용자 요청 2026-11-10) */
+  travel?: boolean;
+}) {
   const { t } = useTranslation();
   const [open, setOpen] = useRouteSheet(SHEET_KEY);
   const [used, setUsed] = useState(open);
@@ -27,7 +34,7 @@ export function QuickMenuButton({ inTrip = false }: { inTrip?: boolean }) {
     const idle = window.requestIdleCallback ?? ((cb: () => void) => window.setTimeout(cb, 2000));
     idle(() => void preloadQuickMenu());
   }, []);
-  const props = { inTrip, open, setOpen };
+  const props = { inTrip, travel, open, setOpen };
   // 설정에서 ⚡ 버튼을 끌 수 있다 (빠른 메뉴는 설정 화면의 "빠른 메뉴 열기"로)
   const visible = useSettings((s) => s.quickButton);
   return (

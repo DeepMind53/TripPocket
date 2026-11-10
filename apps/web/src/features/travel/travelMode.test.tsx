@@ -92,8 +92,20 @@ it('여행 모드: 여행 중이면 한 번 묻고, 시작하면 지금·다음 
     ),
   );
 
-  // 긴급 연락처는 늘 오른쪽 위
-  expect(screen.getByRole('button', { name: '긴급 연락처' })).toBeInTheDocument();
+  // 오른쪽 위 긴급 연락처 버튼은 없다, 머리에 현지 시각 (사용자 요청 2026-11-10)
+  expect(screen.queryByRole('button', { name: '긴급 연락처' })).toBeNull();
+  expect(screen.getByText(/^현지 \d{2}:\d{2}$/)).toBeInTheDocument();
+
+  // 빠른 메뉴는 짧게: 위치 저장·저장한 위치·현지 생활 정보만
+  await user.click(screen.getByRole('button', { name: '빠른 메뉴' }));
+  const menu = await screen.findByRole('dialog', { name: '빠른 메뉴' });
+  expect(await within(menu).findByRole('button', { name: /현재 위치 저장/ })).toBeInTheDocument();
+  expect(within(menu).getByRole('button', { name: /저장한 위치/ })).toBeInTheDocument();
+  expect(within(menu).getByText('현지 생활 정보')).toBeInTheDocument();
+  for (const name of [/긴급 연락처/, /환율/, /바로가기/, /빠른 설정/])
+    expect(within(menu).queryByRole('button', { name })).toBeNull();
+  await user.keyboard('{Escape}');
+  await waitFor(() => expect(screen.queryByRole('dialog', { name: '빠른 메뉴' })).toBeNull());
 
   // 숙소가 없으면 알려 준다 (숙소로 길찾기는 늘 맨 앞)
   await user.click(screen.getByRole('button', { name: '숙소로 길찾기' }));

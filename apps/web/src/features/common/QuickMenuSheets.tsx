@@ -50,17 +50,19 @@ import { isDomesticTrip } from '../../domain/tripPlace';
  */
 export function QuickMenuSheets({
   inTrip,
+  travel = false,
   open,
   setOpen,
 }: {
   inTrip: boolean;
+  travel?: boolean;
   open: boolean;
   setOpen: (open: boolean) => void;
 }) {
   const { t } = useTranslation();
   const trips = useTrips();
   const [sosOpen, setSosOpen] = useRouteSheet('quick-emergency');
-  if (inTrip) return <TripQuickMenu open={open} setOpen={setOpen} />;
+  if (inTrip) return <TripQuickMenu open={open} setOpen={setOpen} travel={travel} />;
   // 여행 밖: 진행 중이거나 가장 가까운 다가오는 여행의 나라
   const soon = (trips ?? [])
     .filter((tr) => getTripStatus(tr.startDate, tr.endDate, todayIn(tr.timezone)) !== 'past')
@@ -93,7 +95,15 @@ function tripCountries(trip: Trip | null | undefined): string[] {
  * 여행 안의 빠른 메뉴: 바로가기 4개가 실제로 동작한다.
  * 길찾기·예약번호 시트는 메뉴 시트 밖에 두어, 메뉴가 닫혀도 열리고 뒤로가기로 메뉴에 돌아온다.
  */
-function TripQuickMenu({ open, setOpen }: { open: boolean; setOpen: (open: boolean) => void }) {
+function TripQuickMenu({
+  open,
+  setOpen,
+  travel,
+}: {
+  open: boolean;
+  setOpen: (open: boolean) => void;
+  travel: boolean;
+}) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { tripId = '' } = useParams();
@@ -156,7 +166,7 @@ function TripQuickMenu({ open, setOpen }: { open: boolean; setOpen: (open: boole
         // 여행지 현지 날짜·시각 (일정 제목 아래에서는 가려 보이지 않아 여기로, 사용자 요청 2026-10-27)
         // 여행 모드 켜기는 제목 바로 오른쪽에 작게 (사용자 요청 2026-11-04)
         headerAside={
-          trip && open ? (
+          trip && open && !travel ? (
             <span className="flex items-center gap-2">
               <TravelModeButton tripId={trip.id} replace />
               <LocalNow timezone={trip.timezone} />
@@ -164,13 +174,21 @@ function TripQuickMenu({ open, setOpen }: { open: boolean; setOpen: (open: boole
           ) : undefined
         }
       >
-        <QuickMenuContent
-          shortcuts={shortcuts}
-          trip={trip ?? undefined}
-          leg={leg}
-          nextLeg={nextLeg}
-          onEmergency={() => setSosOpen(true)}
-        />
+        {travel ? (
+          // 여행 모드는 짧게: 위치 저장·저장한 위치 + 현지 생활 정보만 (사용자 요청 2026-11-10)
+          <div className="flex flex-col gap-5">
+            {trip && <SavedSpotsButtons trip={trip} horizontal />}
+            <LocalInfoSection tripId={tripId} />
+          </div>
+        ) : (
+          <QuickMenuContent
+            shortcuts={shortcuts}
+            trip={trip ?? undefined}
+            leg={leg}
+            nextLeg={nextLeg}
+            onEmergency={() => setSosOpen(true)}
+          />
+        )}
       </BottomSheet>
       <CarCard car={car} open={carOpen} onClose={() => setCarOpen(false)} />
       <EmergencySheet open={sosOpen} onOpenChange={setSosOpen} countries={tripCountries(trip)} />
