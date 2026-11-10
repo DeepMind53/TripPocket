@@ -15,17 +15,7 @@ import {
   type ItineraryItem,
   type Trip,
 } from '@trippocket/shared';
-import {
-  BedDouble,
-  ChevronDown,
-  CircleHelp,
-  Copy,
-  Navigation,
-  Plane,
-  Plus,
-  Luggage,
-  TrainFront,
-} from 'lucide-react';
+import { BedDouble, ChevronDown, CircleHelp, Copy, Navigation, Plus, Luggage } from 'lucide-react';
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { useTranslation } from '../../i18n';
 import { Link, useNavigate } from 'react-router';
@@ -43,11 +33,13 @@ import {
   RouteBar,
   RouteLine,
   RouteStop,
-  TicketCard,
   toast,
 } from '../../shared/ui';
-import { formatMonthDay } from '../../shared/lib/dateFormat';
 import { Wordmark } from './Wordmark';
+// 예약 탭과 같은 카드 — 공항 정보·지연·수하물까지 딸려 와 무거워서 출발 전 다음 이동이 있을 때만 불러온다 (첫 화면 크기)
+const BookingCard = lazy(async () => ({
+  default: (await import('../bookings/BookingCard')).BookingCard,
+}));
 import { TravelModeButton } from '../travel/TravelModeButton';
 import { TripList } from '../trips/TripsPage';
 
@@ -286,12 +278,11 @@ function OngoingStrip({ trip }: { trip: Trip }) {
 }
 
 /**
- * 출발 전 다음 이동 탑승권 (docs/29 §7.1, 사용자 결정 2026-11-10 "넣기"): 오늘 이후 첫 항공·기차 예약.
- * 문구는 예약 탭과 같은 키, 예약번호는 눌러 복사
+ * 출발 전 다음 이동 (docs/29 §7.1, 사용자 결정 2026-11-10 "넣기"): 오늘 이후 첫 항공·기차 예약.
+ * 예약 탭과 똑같은 카드 (사용자 요청 2026-11-10) — 누르면 예약 탭의 그 예약으로 (?focus=)
  */
 function NextTransport({ trip }: { trip: Trip }) {
-  const { t } = useTranslation();
-  const { time } = useTimeText();
+  const navigate = useNavigate();
   const bookings = useTripBookings(trip.id) ?? [];
   const today = todayIn(trip.timezone);
   const b = bookings
@@ -302,37 +293,17 @@ function NextTransport({ trip }: { trip: Trip }) {
       ),
     )[0];
   if (!b) return null;
-  const flight = b.kind === 'flight';
-  const end = (place: string | undefined, at: string | undefined, terminal?: string) => ({
-    code: place || '—',
-    sub: [time(at) ?? '--:--', terminal].filter(Boolean).join(' · '),
-  });
   return (
-    <TicketCard
-      header={`${[b.provider, b.details?.flightNo].filter(Boolean).join(' ') || b.title} · ${formatMonthDay(b.start.date)}`}
-      from={end(b.start.place, b.start.time, b.details?.terminal)}
-      to={end(b.end?.place, b.end?.time, b.details?.arrivalTerminal)}
-      via={flight ? <Plane /> : <TrainFront />}
-      codeSize={flight ? 'code' : 'name'}
-      cells={[
-        ...(b.confirmationNo
-          ? [
-              {
-                label: t('bookings.confirmationNo'),
-                value: b.confirmationNo,
-                accent: true,
-                'aria-label': t('bookings.copyNo', { no: b.confirmationNo }),
-                onClick: () => void copyText(b.confirmationNo as string, t('bookings.copied')),
-              },
-            ]
-          : []),
-        ...(b.details?.seat ? [{ label: t('bookings.seat'), value: b.details.seat }] : []),
-        ...(b.details?.baggage ? [{ label: t('bookings.baggage'), value: b.details.baggage }] : []),
-      ]}
-    />
+    <ul className="flex flex-col">
+      <Suspense fallback={null}>
+        <BookingCard
+          booking={b}
+          onOpen={() => void navigate(`/trips/${trip.id}/bookings?focus=${b.id}`)}
+        />
+      </Suspense>
+    </ul>
   );
 }
-
 function OngoingTrip({ trip }: { trip: Trip }) {
   const { time } = useTimeText();
   const { t } = useTranslation();

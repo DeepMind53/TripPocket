@@ -1629,11 +1629,7 @@ function ItemRow({
           ) : (
             <FlightTicket booking={booking} />
           )}
-          {cautions && cautions.length > 0 && (
-            <span className="flex">
-              <CautionIcons cautions={cautions} />
-            </span>
-          )}
+          {/* 탑승권 줄에는 날씨 주의 표시를 넣지 않는다 (사용자 요청 2026-11-10) */}
           {booking.confirmationNo && (
             <span className="tabular border-t border-dashed border-line pt-1.5 text-caption text-fg-sub">
               {t('bookings.confirmationNo')}{' '}
