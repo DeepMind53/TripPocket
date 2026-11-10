@@ -5,8 +5,16 @@ import { PlaceAutocomplete } from '../common/PlaceAutocomplete';
 import { SavedPick } from '../saved/SavedPick';
 import { PlaceHours } from './PlaceHours';
 import { useSettings } from '../../data/settingsStore';
-import { ITEM_KINDS, type ItemKind, type ItineraryItem, type LocalDate } from '@trippocket/shared';
-import { useState, type ReactNode } from 'react';
+import {
+  COUNTRY_CURRENCY,
+  ITEM_KINDS,
+  type ItemKind,
+  type ItineraryItem,
+  type LocalDate,
+} from '@trippocket/shared';
+import { useRef, useState, type ReactNode } from 'react';
+import { MemoFx } from './MemoFx';
+import { MoneyButtons } from './MoneyButtons';
 import { useTranslation } from '../../i18n';
 import { itemRepo } from '../../data/repositories/itemRepo';
 import { BottomSheet, Button, CancelSaveRow, Chip, TimeInput, toast } from '../../shared/ui';
@@ -85,6 +93,26 @@ function ItemForm({
   const trip = useTrip(tripId);
   const near = trip?.destinations.find((d) => d.coords)?.coords;
   const [memo, setMemo] = useState(item?.memo ?? '');
+  // 메모 옆 금액 버튼 (2026-11-10): 여행 나라(한국 빼고 첫 나라) 돈
+  const memoRef = useRef<HTMLTextAreaElement | null>(null);
+  const foreign = trip?.destinations.find(
+    (d) => d.countryCode && d.countryCode !== 'KR',
+  )?.countryCode;
+  const tripCurrency = foreign ? COUNTRY_CURRENCY[foreign] : 'KRW';
+  const insertMoney = (text: string) => {
+    const el = memoRef.current;
+    const at = el?.selectionStart ?? memo.length;
+    const end = el?.selectionEnd ?? at;
+    const before = memo.slice(0, at);
+    const pad = before && !/\s$/.test(before) ? ' ' : '';
+    const next = `${before}${pad}${text}${memo.slice(end)}`.slice(0, 2000);
+    setMemo(next);
+    requestAnimationFrame(() => {
+      const pos = before.length + pad.length + text.length;
+      el?.focus();
+      el?.setSelectionRange(pos, pos);
+    });
+  };
   const [url, setUrl] = useState(item?.url ?? '');
   const [saving, setSaving] = useState(false);
 
@@ -270,16 +298,25 @@ function ItemForm({
         </Field>
       )}
 
-      <Field label={t('form.memo')}>
+      {/* 메모 옆 [원][달러][여행 나라 돈] — 넣은 금액의 환전 가격은 아래에 그때 환율로 (저장 안 함) */}
+      <div className="flex flex-col gap-1.5">
+        <div className="flex items-center justify-between gap-2">
+          <label htmlFor="item-memo" className="text-caption font-semibold text-fg-sub">
+            {t('form.memo')}
+          </label>
+          <MoneyButtons tripCurrency={tripCurrency} onInsert={insertMoney} />
+        </div>
         <textarea
           id="item-memo"
+          ref={memoRef}
           value={memo}
           maxLength={2000}
           rows={isNote ? 5 : 3}
           onChange={(e) => setMemo(e.target.value)}
           className={`${inputClass} h-auto py-2`}
         />
-      </Field>
+        <MemoFx memo={memo} countryCode={foreign} />
+      </div>
 
       <Field label={t('form.url')}>
         <input

@@ -1444,7 +1444,7 @@
     "turnOn": "이 기능 켜기",
     "turnOff": "이 기능 끄기",
     "memoFxLabel": "메모 속 금액 원화 환산",
-    "memoFxWon": "{{won}}원",
+    "memoFxRow": "{{from}} (≈ {{to}})",
     "toLodging": "숙소까지 {{distance}} · 걸어서 약 {{min}}분",
     "dayRoute": "하루 동선 지도로 보기",
     "dayRouteDesc": "장소 순서대로 Google 지도 길찾기",
@@ -2295,6 +2295,14 @@
     "BWP": "보츠와나 풀라",
     "ZMW": "잠비아 콰차",
     "RWF": "르완다 프랑"
+  },
+  "money": {
+    "group": "메모에 금액 넣기",
+    "addOf": "{{name}} 금액 넣기",
+    "title": "{{name}} 금액",
+    "amount": "금액",
+    "preview": "(≈ {{to}})",
+    "insert": "메모에 넣기"
   },
   "routeMap": {
     "openAll": "여행 전체 노선도 보기",

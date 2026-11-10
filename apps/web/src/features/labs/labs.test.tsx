@@ -470,7 +470,7 @@ describe('실험실', () => {
       expect(day.querySelector('ol')?.className).toContain('gap-0.5');
       // 메모 외화 → 원화 (상세)
       await user.click(within(day).getByRole('button', { name: /센소지/ }));
-      expect(await screen.findByText('¥200 ≈ 1,840원', { exact: false })).toBeInTheDocument();
+      expect(await screen.findByText('¥200 (≈ 1,840원)', { exact: false })).toBeInTheDocument();
     } finally {
       updateSettings({ compactList: false });
       vi.useRealTimers();

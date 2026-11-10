@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { memoAmounts } from './memoFx';
+import { convertMoney, memoAmounts, moneyCodes, moneyText } from './memoFx';
 
 describe('메모 속 외화', () => {
   it('기호·단위로 금액과 통화를 찾는다', () => {
@@ -26,5 +26,49 @@ describe('메모 속 외화', () => {
     ]);
     expect(memoAmounts('숙소 101동 1203호', 'VND')).toEqual([]);
     expect(memoAmounts('아파트 3000동 앞', 'KRW')).toEqual([]);
+  });
+});
+
+describe('메모 금액 버튼·환산 (2026-11-10)', () => {
+  it('버튼: 원·달러는 늘, 여행 나라 돈은 뒤에', () => {
+    expect(moneyCodes('JPY')).toEqual(['KRW', 'USD', 'JPY']);
+    expect(moneyCodes('CNY')).toEqual(['KRW', 'USD', 'CNY']);
+    expect(moneyCodes('USD')).toEqual(['KRW', 'USD']);
+    expect(moneyCodes('KRW')).toEqual(['KRW', 'USD']);
+  });
+  it('넣는 글은 다시 읽을 수 있는 모양 (달러는 US$)', () => {
+    expect(moneyText('JPY', 1000)).toBe('1,000엔');
+    expect(moneyText('USD', 12.5)).toBe('US$12.5');
+    expect(moneyText('KRW', 9200)).toBe('9,200원');
+    expect(memoAmounts('₩ 5,000 · 3000원')).toEqual([
+      { text: '₩ 5,000', code: 'KRW', amount: 5000 },
+      { text: '3000원', code: 'KRW', amount: 3000 },
+    ]);
+    for (const c of ['JPY', 'USD', 'KRW', 'CNY'])
+      expect(memoAmounts(moneyText(c, 1000)!, 'TWD')[0]!.code).toBe(c);
+  });
+  it('외화는 원화로, 원화는 여행 나라 돈으로', () => {
+    const rates = { JPY: 9.2, USD: 1380, CNY: 190 };
+    expect(convertMoney({ code: 'JPY', amount: 1000 }, rates, 'JPY')).toEqual({
+      code: 'KRW',
+      amount: 9200,
+    });
+    expect(convertMoney({ code: 'USD', amount: 10 }, rates, 'JPY')).toEqual({
+      code: 'KRW',
+      amount: 13800,
+    });
+    expect(convertMoney({ code: 'KRW', amount: 9200 }, rates, 'JPY')).toEqual({
+      code: 'JPY',
+      amount: 1000,
+    });
+    expect(convertMoney({ code: 'KRW', amount: 19000 }, rates, 'CNY')).toEqual({
+      code: 'CNY',
+      amount: 100,
+    });
+    expect(convertMoney({ code: 'KRW', amount: 1380 }, rates, 'KRW')).toEqual({
+      code: 'USD',
+      amount: 1,
+    });
+    expect(convertMoney({ code: 'THB', amount: 1 }, rates, 'THB')).toBeNull();
   });
 });

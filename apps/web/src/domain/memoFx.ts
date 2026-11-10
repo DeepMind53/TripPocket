@@ -14,12 +14,13 @@ const N = String.raw`(\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?)`;
 
 /** 앞에 붙는 기호 → 통화 (¥·$는 여행 나라에 따라 따로) */
 const PREFIX: [string, string][] = [
+  // US$는 S$보다 먼저 ("US$" 안의 "S$"를 싱가포르 달러로 읽지 않게)
+  [String.raw`US\$`, 'USD'],
   [String.raw`NT\$`, 'TWD'],
   [String.raw`HK\$`, 'HKD'],
   [String.raw`S\$`, 'SGD'],
   [String.raw`A\$`, 'AUD'],
   [String.raw`C\$`, 'CAD'],
-  [String.raw`US\$`, 'USD'],
   ['€', 'EUR'],
   ['£', 'GBP'],
   ['฿', 'THB'],
@@ -73,7 +74,9 @@ export function memoAmounts(text: string, tripCurrency?: string): MemoAmount[] {
   for (const [sym, code] of PREFIX) scan(`${sym}\\s?${N}`, code);
   scan(`¥\\s?${N}`, yen);
   scan(`(?<![A-Za-z])\\$\\s?${N}`, dollar);
-  for (const [word, code] of SUFFIX) {
+  // 원화 (2026-11-10): 해외 여행이면 여행 나라 돈으로 바꿔 보여 준다
+  scan(`₩\\s?${N}`, 'KRW');
+  for (const [word, code] of [...SUFFIX, ['원', 'KRW'] as [string, string]]) {
     // "동"은 아파트·건물 동(101동)과 겹친다 → 베트남 여행일 때만
     if (word === '동' && tripCurrency !== 'VND') continue;
     scan(`${N}\\s?${word}(?![가-힣])`, word === '달러' ? dollar : code);
@@ -82,4 +85,50 @@ export function memoAmounts(text: string, tripCurrency?: string): MemoAmount[] {
     .filter((f) => !(f.text.endsWith('동') && f.amount < 1000))
     .sort((a, b) => a.at - b.at)
     .map(({ text: t, code, amount }) => ({ text: t, code, amount }));
+}
+
+/** 금액 넣기 버튼이 메모에 적는 모양 — memoAmounts가 다시 읽을 수 있는 것만 (달러는 여행 나라와 겹치지 않게 US$) */
+export function moneyText(code: string, amount: number): string | null {
+  const n = amount.toLocaleString('ko-KR', { maximumFractionDigits: 2 });
+  if (code === 'USD') return `US$${n}`;
+  const word = SUFFIX.find(([, c]) => c === code)?.[0] ?? (code === 'KRW' ? '원' : undefined);
+  return word ? `${n}${word}` : null;
+}
+
+/** 버튼 이름 ("엔", "위안") — 넣을 수 없는 통화면 null */
+export function moneyLabel(code: string): string | null {
+  if (code === 'KRW') return '원';
+  if (code === 'USD') return '달러';
+  return SUFFIX.find(([, c]) => c === code)?.[0] ?? null;
+}
+
+/**
+ * 메모 금액 버튼 (사용자 요청 2026-11-10): 원·달러는 늘, 여행 나라 돈이 따로 있으면 뒤에 (일본 = 원·달러·엔, 중국 = 원·달러·위안)
+ */
+export function moneyCodes(tripCurrency: string | undefined): string[] {
+  const local =
+    tripCurrency && tripCurrency !== 'KRW' && tripCurrency !== 'USD' && moneyLabel(tripCurrency)
+      ? [tripCurrency]
+      : [];
+  return ['KRW', 'USD', ...local];
+}
+
+/**
+ * 괄호 안 환전 가격: 외화 → 원화, 원화 → 여행 나라 돈 (국내·달러 나라면 달러). rates = 1단위당 원.
+ * 바꿀 환율이 없으면 null
+ */
+export function convertMoney(
+  a: { code: string; amount: number },
+  rates: Record<string, number>,
+  tripCurrency: string | undefined,
+): { code: string; amount: number } | null {
+  if (a.code !== 'KRW') {
+    const r = rates[a.code];
+    return r ? { code: 'KRW', amount: Math.round(a.amount * r) } : null;
+  }
+  const to = tripCurrency && tripCurrency !== 'KRW' ? tripCurrency : 'USD';
+  const r = rates[to];
+  if (!r) return null;
+  const v = a.amount / r;
+  return { code: to, amount: v >= 100 ? Math.round(v) : Math.round(v * 100) / 100 };
 }
