@@ -1,7 +1,7 @@
 import { Plane } from 'lucide-react';
 import type { CSSProperties, ReactNode } from 'react';
 import { cn } from '../lib/cn';
-import { TICKET_NOTCH_STYLE, useTicketNotch } from './useTicketNotch';
+import { notchArcClass, TICKET_NOTCH_STYLE, useTicketNotch } from './useTicketNotch';
 
 export interface TicketEnd {
   /** 공항 코드("ICN") 또는 역 이름 */
@@ -68,8 +68,17 @@ export function TicketCard({
     <div
       ref={cardRef}
       style={pass ? TICKET_NOTCH_STYLE : undefined}
-      className={cn('relative rounded-card border border-line bg-surface shadow-card', className)}
+      className={cn(
+        'relative overflow-hidden rounded-card border border-line bg-surface shadow-card',
+        className,
+      )}
     >
+      {pass && (
+        <>
+          <span aria-hidden="true" className={notchArcClass('left')} />
+          <span aria-hidden="true" className={notchArcClass('right')} />
+        </>
+      )}
       <div className="flex flex-col gap-2 px-4 pt-3 pb-3">
         {header && <p className="truncate text-caption text-fg-muted">{header}</p>}
         {pass ? (

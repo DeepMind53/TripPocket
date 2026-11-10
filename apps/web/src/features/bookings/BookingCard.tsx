@@ -2,7 +2,7 @@ import { useTimeText } from '../../shared/hooks/useTimeText';
 import { InlineIcon } from '../../shared/ui/InlineIcon';
 import { nightsBetween, todayIn, type Booking } from '@trippocket/shared';
 import { Link } from 'react-router';
-import { TICKET_NOTCH_STYLE, useTicketNotch } from '../../shared/ui/useTicketNotch';
+import { notchArcClass, TICKET_NOTCH_STYLE, useTicketNotch } from '../../shared/ui/useTicketNotch';
 import { useLab } from '../../data/labsStore';
 import {
   BadgePercent,
@@ -55,6 +55,13 @@ export function BookingCard({
       style={ticket ? TICKET_NOTCH_STYLE : undefined}
       className={`relative overflow-hidden rounded-card border bg-surface shadow-card [&>[data-perf]+*]:border-t-transparent [&>[data-perf]:last-child]:hidden ${highlight ? 'border-primary ring-2 ring-primary' : 'border-line'}`}
     >
+      {/* 홈 가장자리 반원 테두리 (2026-11-10) */}
+      {ticket && (
+        <>
+          <span aria-hidden="true" className={notchArcClass('left')} />
+          <span aria-hidden="true" className={notchArcClass('right')} />
+        </>
+      )}
       <button
         type="button"
         onClick={onOpen}

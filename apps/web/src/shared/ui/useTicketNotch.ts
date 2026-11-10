@@ -2,7 +2,15 @@ import { useLayoutEffect, useRef, type CSSProperties } from 'react';
 
 /** 양 끝 반원 홈(반지름 8px)을 카드에서 도려내는 마스크 — 두 원을 뺀 나머지만 보인다 */
 const hole = (x: string) =>
-  `radial-gradient(circle 8px at ${x} var(--perf-y, -20px), transparent 7.5px, #000 8px)`;
+  `radial-gradient(circle 8px at ${x} calc(var(--perf-y, -20px) + 1px), transparent 7.5px, #000 8px)`;
+
+/**
+ * 홈 가장자리 반원 테두리 (사용자 요청 2026-11-10 "테두리는 있어야"): 반지름 9px 원 테두리를 홈 가운데에 얹는다.
+ * 안쪽 8px까지는 마스크로 뚫려 있어 테두리는 홈 바로 바깥(8~9px)에만 보이고, 카드 밖 절반은 카드 클립으로 잘린다.
+ * 카드 안 맨 앞에 두 개 (왼쪽·오른쪽) 그린다. 마스크는 테두리 상자 기준, 이 원은 안쪽 상자 기준이라 1px(카드 테두리)씩 맞춘다
+ */
+export const notchArcClass = (side: 'left' | 'right') =>
+  `pointer-events-none absolute top-[calc(var(--perf-y,-20px)-9px)] size-[18px] rounded-full border border-line ${side === 'left' ? '-left-[10px]' : '-right-[10px]'}`;
 
 export const TICKET_NOTCH_STYLE: CSSProperties = {
   WebkitMaskImage: `${hole('0')}, ${hole('100%')}`,
