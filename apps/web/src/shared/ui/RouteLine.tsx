@@ -1,6 +1,7 @@
-import type { ReactNode } from 'react';
+import { useRef, type ReactNode } from 'react';
 import { cn } from '../lib/cn';
 import { routeStyle } from './routeColor';
+import { ROUTE_LINE_CLASS, useRouteLine } from './useRouteLine';
 
 export interface RouteLineProps {
   /** 스크린리더 이름 (예: "2일차 노선") */
@@ -13,12 +14,19 @@ export interface RouteLineProps {
 }
 
 /**
- * 하루 일정 노선 (docs/29 §4.1): 세로 선(일차 색) 위에 역(RouteStop)과 환승 표시(TransferChip)가 이어진다.
- * 선은 각 줄이 왼쪽 24px 칸에 스스로 그려, 줄 사이에 무엇이 끼어도 끊기지 않는다
+ * 하루 일정 노선 (docs/29 §4.1): 첫 역부터 마지막 역까지 선 하나(일차 색), 그 위에 역 점(RouteStop)이 얹힌다.
+ * 선 위치는 실제 점 가운데를 재서 맞춘다 (사용자 요청 2026-11-10 — 토막 선이 끊기고 가운데가 어긋남)
  */
 export function RouteLine({ label, dayIndex, className, children }: RouteLineProps) {
+  const ref = useRef<HTMLOListElement | null>(null);
+  useRouteLine(ref);
   return (
-    <ol aria-label={label} style={routeStyle(dayIndex)} className={cn('flex flex-col', className)}>
+    <ol
+      ref={ref}
+      aria-label={label}
+      style={routeStyle(dayIndex)}
+      className={cn('flex flex-col', ROUTE_LINE_CLASS, className)}
+    >
       {children}
     </ol>
   );

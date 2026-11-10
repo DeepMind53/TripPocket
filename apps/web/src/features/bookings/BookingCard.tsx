@@ -2,6 +2,7 @@ import { useTimeText } from '../../shared/hooks/useTimeText';
 import { InlineIcon } from '../../shared/ui/InlineIcon';
 import { nightsBetween, todayIn, type Booking } from '@trippocket/shared';
 import { Link } from 'react-router';
+import { TICKET_NOTCH_STYLE, useTicketNotch } from '../../shared/ui/useTicketNotch';
 import { useLab } from '../../data/labsStore';
 import {
   BadgePercent,
@@ -43,10 +44,16 @@ export function BookingCard({
       ? membershipFor(p.memberships, { provider: b.provider, flightNo: b.details?.flightNo })
       : undefined,
   );
+  const ticket = b.kind === 'flight' || b.kind === 'train';
+  // 탑승권 양 끝 반원 홈: 카드를 실제로 도려낸다 (마스크) — 구멍을 덧그리면 카드 테두리 선이 홈 안에 남는다 (사용자 제보 2026-11-10).
+  // 홈 높이 = 절취선 위치라 실제 위치를 재서 --perf-y로
+  const { cardRef, perfRef } = useTicketNotch<HTMLLIElement, HTMLDivElement>();
   return (
     <li
+      ref={cardRef}
       id={`booking-${b.id}`}
-      className={`overflow-hidden rounded-card border bg-surface shadow-card [&>[data-perf]+*]:border-t-transparent ${highlight ? 'border-primary ring-2 ring-primary' : 'border-line'}`}
+      style={ticket ? TICKET_NOTCH_STYLE : undefined}
+      className={`relative overflow-hidden rounded-card border bg-surface shadow-card [&>[data-perf]+*]:border-t-transparent [&>[data-perf]:last-child]:hidden ${highlight ? 'border-primary ring-2 ring-primary' : 'border-line'}`}
     >
       <button
         type="button"
@@ -62,17 +69,15 @@ export function BookingCard({
           <BasicBody booking={b} />
         )}
       </button>
-      {/* 탑승권 절취선 (docs/29 §4.5, 사용자 결정 Q11: 항공·기차·버스만) — 양 끝 반원 구멍은 카드 밖 바탕색.
+      {/* 탑승권 절취선 (docs/29 §4.5, 사용자 결정 Q11: 항공·기차·버스만) — 양 끝 홈은 위 마스크가 도려낸다.
           바로 아래 줄의 점선 위 테두리는 이 선과 겹치지 않게 숨긴다 */}
-      {(b.kind === 'flight' || b.kind === 'train') && (
+      {ticket && (
         <div
+          ref={perfRef}
           data-perf=""
           aria-hidden="true"
-          className="relative mx-4 border-t-[1.5px] border-dashed border-line"
-        >
-          <span className="absolute -top-[8px] -left-[23px] size-3.5 rounded-full border border-line bg-bg" />
-          <span className="absolute -top-[8px] -right-[23px] size-3.5 rounded-full border border-line bg-bg" />
-        </div>
+          className="mx-4 border-t-[1.5px] border-dashed border-line"
+        />
       )}
       {b.details?.voucherUrl && (
         <div className="flex justify-end border-t border-dashed border-line px-4">

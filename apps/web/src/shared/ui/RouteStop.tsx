@@ -17,7 +17,7 @@ export interface RouteStopProps {
   time?: string | undefined;
   /** 시각 오른쪽 (방문 표시 버튼 등) */
   trailing?: ReactNode;
-  /** 마지막 역이면 아래로 선을 긋지 않는다 */
+  /** 예전: 마지막 역 아래 선 생략. 이제 선은 RouteLine이 첫~마지막 점까지 하나로 그어 쓰지 않는다 (호환용) */
   last?: boolean;
   /** 촘촘히 보기 (설정 compactList) — 점 20·줄 44 */
   dense?: boolean;
@@ -38,7 +38,6 @@ export function RouteStop({
   meta,
   time,
   trailing,
-  last = false,
   dense = false,
   onClick,
   'aria-label': ariaLabel,
@@ -85,23 +84,20 @@ export function RouteStop({
           : 'grid-cols-[24px_minmax(0,1fr)_auto]',
       )}
     >
-      {/* 점 + 아래로 이어지는 선 */}
+      {/* 역 점 — 선은 RouteLine이 첫 점~마지막 점까지 하나로 긋고, 점(불투명)이 그 위를 덮는다 */}
       <span aria-hidden="true" className="relative flex justify-center">
-        {!last && (
-          <span
-            className="absolute top-3 -bottom-px left-1/2 w-[var(--tp-route-width)] -translate-x-1/2 rounded-full bg-[var(--route)]"
-            style={past ? { opacity: 'var(--tp-past-opacity)' } : undefined}
-          />
-        )}
         <span
+          data-route-dot=""
+          {...(past ? { 'data-route-past': '' } : {})}
           className={cn(
-            'relative z-[1] mt-0.5 grid place-items-center border-[3px] border-[var(--route)] font-mono text-micro leading-none',
+            'relative z-[1] mt-0.5 grid place-items-center border-[3px] font-mono text-micro leading-none',
             dense ? 'size-5' : 'size-6',
             memo ? 'rounded-md border-2' : 'rounded-full',
             next
               ? 'border-[var(--route-ink)] bg-[var(--route-ink)] text-on-primary shadow-[0_0_0_4px_color-mix(in_srgb,var(--route)_22%,transparent)]'
-              : 'bg-surface text-[var(--route-ink)]',
-            past && 'opacity-45',
+              : past
+                ? 'border-[color-mix(in_srgb,var(--route)_40%,var(--tp-surface))] bg-surface text-fg-muted'
+                : 'border-[var(--route)] bg-surface text-[var(--route-ink)]',
           )}
         >
           {mark === 'visited' ? (

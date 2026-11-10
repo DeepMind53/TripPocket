@@ -7,7 +7,7 @@ export interface TransferChipProps {
   children: ReactNode;
   /** 수단 아이콘 (lucide 요소). 기본 걷기 */
   icon?: ReactNode;
-  /** 지난 구간이면 선을 흐리게 */
+  /** 예전: 지난 구간 선 흐림. 이제 RouteLine이 지난 역 점(data-route-past)까지 흐리게 그어 쓰지 않는다 (호환용) */
   past?: boolean;
   /** 누르면 (길찾기 시트 등) */
   onClick?: () => void;
@@ -21,7 +21,6 @@ export interface TransferChipProps {
 export function TransferChip({
   children,
   icon,
-  past = false,
   onClick,
   'aria-label': ariaLabel,
 }: TransferChipProps) {
@@ -37,12 +36,8 @@ export function TransferChip({
     'inline-flex min-w-0 max-w-full items-center gap-1 self-center rounded-full bg-bg-subtle px-2.5 py-0.5 text-caption text-fg-sub';
   return (
     <li className="relative grid min-h-8 grid-cols-[24px_minmax(0,1fr)] gap-x-3 pb-2">
-      <span aria-hidden="true" className="relative flex justify-center">
-        <span
-          className="absolute -top-px -bottom-px left-1/2 w-[var(--tp-route-width)] -translate-x-1/2 bg-[var(--route)]"
-          style={past ? { opacity: 'var(--tp-past-opacity)' } : undefined}
-        />
-      </span>
+      {/* 선은 RouteLine이 하나로 긋는다 — 이 칸은 비워 둔다 */}
+      <span aria-hidden="true" />
       {onClick ? (
         <button
           type="button"

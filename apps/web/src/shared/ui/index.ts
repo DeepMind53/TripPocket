@@ -24,6 +24,7 @@ export { Skeleton } from './Skeleton';
 // 디자인 개편 "여행 노선" 공통 부품 (docs/29 §4)
 export { routeColor, routeStyle } from './routeColor';
 export { RouteLine } from './RouteLine';
+export { ROUTE_LINE_CLASS, useRouteLine } from './useRouteLine';
 export { RouteStop, type RouteStopState } from './RouteStop';
 export { TransferChip } from './TransferChip';
 export { DayLineTabs, type DayLineTab } from './DayLineTabs';

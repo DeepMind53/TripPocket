@@ -105,6 +105,8 @@ import {
   ScrollRow,
   routeColor,
   routeStyle,
+  ROUTE_LINE_CLASS,
+  useRouteLine,
 } from '../../shared/ui';
 import { DirectionsSheet } from '../common/DirectionsSheet';
 import { openDirectionsDirect } from '../common/openDirections';
@@ -1052,6 +1054,9 @@ function DaySection({
   );
   const today = todayIn(timezone);
   const past = visitOn ? pastItemIds(items, today, timeIn(timezone, now) ?? '00:00') : null;
+  // 그날 노선 선 위치를 실제 번호 원 가운데로 맞춘다 (2026-11-10)
+  const routeRef = useRef<HTMLOListElement | null>(null);
+  useRouteLine(routeRef);
   if (hideWhenEmpty && items.length === 0) return null;
   // 오늘 진행률 (2026-10-27 정식): 메모는 빼고, 방문(파랑)·미방문(빨강)을 칸에 채운다
   const tracked = items.filter((i) => i.kind !== 'note');
@@ -1237,26 +1242,24 @@ function DaySection({
           {date ? t('plan.emptyDay') : t('plan.wishEmpty')}
         </p>
       )}
-      {/* 노선 (docs/29 §4.1): 줄마다 왼쪽에 일차 색 선을 이어 그린다 — 색은 --route·--route-ink */}
+      {/* 노선 (docs/29 §4.1, 사용자 요청 2026-11-10): 첫 번호~마지막 번호 가운데를 잇는 선 하나, 번호 원이 그 위를 덮는다.
+          가고 싶은 곳은 노선 없음 */}
       <ol
+        ref={routeRef}
         style={routeStyle(date ? index : null)}
         className={cn(
           'flex flex-col py-2',
           compact ? 'gap-0.5 [&_[data-item-row]]:py-1.5' : 'gap-1.5',
+          date && ROUTE_LINE_CLASS,
         )}
       >
         {items.map((item, i) => (
           <Fragment key={item.id}>
             {sun && sunSlot(items, sun.rise) === i && (
-              <SunLine
-                kind="rise"
-                label={t('plan.sunrise')}
-                time={sun.rise}
-                line={!!date && i > 0}
-              />
+              <SunLine kind="rise" label={t('plan.sunrise')} time={sun.rise} />
             )}
             {sun && sunSlot(items, sun.set) === i && (
-              <SunLine kind="set" label={t('plan.sunset')} time={sun.set} line={!!date && i > 0} />
+              <SunLine kind="set" label={t('plan.sunset')} time={sun.set} />
             )}
             <ItemRow
               item={item}
@@ -1267,7 +1270,6 @@ function DaySection({
               }
               n={i + 1}
               dayIndex={date ? index : null}
-              last={i === items.length - 1}
               past={!!past?.has(item.id) || !!item.done}
               now={item.id === nowId}
               booking={item.bookingId ? bookingById.get(item.bookingId) : undefined}
@@ -1282,9 +1284,7 @@ function DaySection({
                   : undefined;
               })()}
             />
-            {legs && (
-              <LegLine from={item} to={items[i + 1]} past={!!past?.has(item.id)} line={!!date} />
-            )}
+            {legs && <LegLine from={item} to={items[i + 1]} />}
           </Fragment>
         ))}
         {sun && items.length > 0 && sunSlot(items, sun.rise) === items.length && (
@@ -1427,19 +1427,7 @@ function BookingLine({ row, onOpen }: { row: BookingRow; onOpen: () => void }) {
 /** 실험실 "빠듯한 일정 알림": 걸어서 걸리는 시간이 두 일정 시각 차이보다 길 때 */
 
 /** 실험실 "다음 장소까지 거리": 두 일정 모두 좌표가 있을 때만 직선거리·도보 어림 */
-function LegLine({
-  from,
-  to,
-  past = false,
-  line = false,
-}: {
-  from: ItineraryItem;
-  to: ItineraryItem | undefined;
-  /** 지난 구간이면 노선을 흐리게 */
-  past?: boolean;
-  /** 날짜 있는 날이면 노선을 이어 그린다 (가고 싶은 곳은 노선 없음) */
-  line?: boolean;
-}) {
+function LegLine({ from, to }: { from: ItineraryItem; to: ItineraryItem | undefined }) {
   const { t } = useTranslation();
   const a = from.place?.coords;
   const b = to?.place?.coords;
@@ -1450,7 +1438,6 @@ function LegLine({
   // 환승 알약 모양 (docs/29 §4.2) — 문구는 그대로 (사용자 결정 2026-11-10)
   return (
     <li className="relative flex items-center py-0.5 pl-12">
-      {line && <RouteSeg past={past} full />}
       <span className="inline-flex min-w-0 items-center gap-1 rounded-full bg-bg-subtle px-2.5 py-0.5 text-caption text-fg-sub">
         <Footprints aria-hidden="true" className="size-3.5 shrink-0" />
         <span className="tabular truncate">
@@ -1461,28 +1448,10 @@ function LegLine({
   );
 }
 
-/**
- * 노선 선 한 토막 (docs/29 §4.1): 줄 왼쪽 점 가운데(22px)에 일차 색 선.
- * full = 줄 전체(역 사이 줄), 아니면 점 가운데부터 아래로(역 줄). 다음 줄과 겹치게 조금 더 내려 끊기지 않게
- */
-function RouteSeg({ past = false, full = false }: { past?: boolean; full?: boolean }) {
-  return (
-    <span
-      aria-hidden="true"
-      className={cn(
-        'pointer-events-none absolute left-[22px] w-[var(--tp-route-width)] rounded-full bg-[var(--route)]',
-        full ? '-top-2 -bottom-2' : 'top-6 -bottom-3',
-      )}
-      style={past ? { opacity: 'var(--tp-past-opacity)' } : undefined}
-    />
-  );
-}
-
 function ItemRow({
   item,
   n,
   dayIndex,
-  last = false,
   past = false,
   now,
   booking,
@@ -1499,8 +1468,6 @@ function ItemRow({
 
   /** 일차 번호(0부터) — 노선 색. null이면 회색·노선 없음 (가고 싶은 곳) */
   dayIndex: number | null;
-  /** 그날 마지막 일정이면 아래로 노선을 긋지 않는다 */
-  last?: boolean;
   /** 지난 일정 — 아래 노선 토막과 점을 흐리게 */
   past?: boolean;
   /** 여행 당일 지금 진행 중: 노선 점 채움·고리 + 진한 테두리 (깜빡임 없음 — 사용자 결정 2026-11-10, 전에는 2026-10-26 깜빡임) */
@@ -1530,7 +1497,6 @@ function ItemRow({
   const visitedLook = item.visit === 'visited';
   const wrap = (row: ReactNode) => (
     <li className="relative flex flex-col gap-1">
-      {dayIndex !== null && !last && <RouteSeg past={past} />}
       {onConfirmFlight && (
         <div
           role="alert"
@@ -1578,17 +1544,20 @@ function ItemRow({
     </li>
   );
   // 노선 역 점 (docs/29 §4.1): 흰 바탕 + 노선 색 테두리 + 진한 노선 색 번호, 진행 중이면 채움 + 바깥 고리.
-  // 메모는 둥근 네모 (정류장 아님), 지난 일정은 흐리게
+  // 메모는 둥근 네모 (정류장 아님), 지난 일정은 옅은 색. 점은 불투명 — 그날 선(DaySection ol)을 덮는다 (2026-11-10)
   const badge = (
     <span
       aria-hidden="true"
+      data-route-dot=""
+      {...(past && !now ? { 'data-route-past': '' } : {})}
       className={cn(
         'relative z-[1] grid size-6 shrink-0 place-items-center border-[3px] font-mono text-micro leading-none',
         item.kind === 'note' ? 'rounded-md border-2' : 'rounded-full',
         now
           ? 'border-[var(--route-ink)] bg-[var(--route-ink)] text-on-primary shadow-[0_0_0_4px_color-mix(in_srgb,var(--route)_22%,transparent)]'
-          : 'border-[var(--route)] bg-surface text-[var(--route-ink)]',
-        past && !now && 'opacity-60',
+          : past
+            ? 'border-[color-mix(in_srgb,var(--route)_40%,var(--tp-surface))] bg-surface text-fg-muted'
+            : 'border-[var(--route)] bg-surface text-[var(--route-ink)]',
       )}
     >
       {item.done ? <Check className="size-3" strokeWidth={3} /> : n}
@@ -1807,7 +1776,6 @@ function MapPager({
           item={entry.item}
           n={entry.n}
           dayIndex={entry.dayIndex}
-          last
           now={false}
           onOpen={() => onOpen(entry.item)}
         />
@@ -1923,18 +1891,7 @@ function EmptyRun({ from, to, onOpen }: { from: Section; to: Section; onOpen: ()
 }
 
 /** "------ 일몰 17:40 ------" — 좌우 '-'는 화면 폭만큼 채우고 넘치면 잘린다. 일정이 아니라 옮기거나 지울 수 없음 */
-function SunLine({
-  kind,
-  label,
-  time,
-  line = false,
-}: {
-  kind: 'rise' | 'set';
-  label: string;
-  time: string;
-  /** 역 사이에 끼면 노선을 이어 그린다 */
-  line?: boolean;
-}) {
+function SunLine({ kind, label, time }: { kind: 'rise' | 'set'; label: string; time: string }) {
   const dashes = '-'.repeat(120);
   // 글자 양옆에 일출 = 해, 일몰 = 달 (사용자 요청 2026-10-27)
   const icon =
@@ -1949,7 +1906,6 @@ function SunLine({
       // 노선 오른쪽부터 (선 위로 '-'가 지나가지 않게, docs/29 §7.5)
       className="tabular relative flex items-center gap-1.5 pr-1 pl-12 text-micro text-fg-muted select-none"
     >
-      {line && <RouteSeg full />}
       <span
         aria-hidden="true"
         className="flex min-w-0 flex-1 justify-end overflow-hidden whitespace-nowrap"

@@ -1,6 +1,7 @@
 import { Plane } from 'lucide-react';
 import type { CSSProperties, ReactNode } from 'react';
 import { cn } from '../lib/cn';
+import { TICKET_NOTCH_STYLE, useTicketNotch } from './useTicketNotch';
 
 export interface TicketEnd {
   /** 공항 코드("ICN") 또는 역 이름 */
@@ -37,7 +38,7 @@ export interface TicketCardProps {
   footer?: ReactNode;
   /** 카드 아래 접히는 부가 정보 */
   children?: ReactNode;
-  /** 카드 바깥 배경 토큰 — 절취선 반원 구멍 색 (기본 bg) */
+  /** 예전: 반원 구멍 색. 이제 카드를 도려내 바탕색이 저절로 보인다 (호환용) */
   hole?: 'bg' | 'bg-subtle';
   className?: string;
 }
@@ -56,14 +57,19 @@ export function TicketCard({
   cells,
   footer,
   children,
-  hole = 'bg',
   className,
 }: TicketCardProps) {
   const pass = !!(from && to);
   const codeClass =
     codeSize === 'code' ? 'font-mono text-code-xl tight:text-title-1' : 'text-title-2';
+  // 양 끝 홈은 카드를 도려낸다 (덧그리면 테두리 선이 남음, 2026-11-10)
+  const { cardRef, perfRef } = useTicketNotch<HTMLDivElement, HTMLDivElement>();
   return (
-    <div className={cn('rounded-card border border-line bg-surface shadow-card', className)}>
+    <div
+      ref={cardRef}
+      style={pass ? TICKET_NOTCH_STYLE : undefined}
+      className={cn('relative rounded-card border border-line bg-surface shadow-card', className)}
+    >
       <div className="flex flex-col gap-2 px-4 pt-3 pb-3">
         {header && <p className="truncate text-caption text-fg-muted">{header}</p>}
         {pass ? (
@@ -89,23 +95,10 @@ export function TicketCard({
       </div>
       {pass ? (
         <div
+          ref={perfRef}
           aria-hidden="true"
-          className="relative mx-3 border-t-[1.5px] border-dashed border-line"
-        >
-          {(['-left-5', '-right-5'] as const).map((side) => (
-            <span
-              key={side}
-              className={cn(
-                'absolute -top-[8px] size-3.5 rounded-full border border-line',
-                side,
-                hole === 'bg' ? 'bg-bg' : 'bg-bg-subtle',
-                side === '-left-5'
-                  ? '[clip-path:inset(0_0_0_50%)]'
-                  : '[clip-path:inset(0_50%_0_0)]',
-              )}
-            />
-          ))}
-        </div>
+          className="mx-4 border-t-[1.5px] border-dashed border-line"
+        />
       ) : (
         <div aria-hidden="true" className="mx-4 border-t border-line" />
       )}
