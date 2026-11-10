@@ -17,7 +17,9 @@ test('설정: 다크 테마·글자 크기는 새로고침해도 바로 적용, 
   await page.reload();
   // index.html이 그리기 전에 적용 (깜빡임 없음)
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
-  expect(await page.evaluate(() => document.documentElement.style.fontSize)).toBe('99%');
+  expect(
+    await page.evaluate(() => document.documentElement.style.getPropertyValue('--tp-font')),
+  ).toBe('0.99');
 
   await page.goto('/trips');
   await page.getByText('도쿄 가을여행').click();

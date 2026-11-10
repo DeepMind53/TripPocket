@@ -75,36 +75,37 @@
     'JetBrains Mono Sub', ui-monospace, 'SF Mono', 'Roboto Mono', Menlo, Consolas,
     'Pretendard Variable', monospace;
 
-  /* 타입 스케일 (docs/11 §4) */
-  --text-display: 1.75rem;
-  --text-display--line-height: 2.25rem;
+  /* 타입 스케일 (docs/11 §4). 글자 크기 설정은 --tp-font 배율(작게 0.81·보통 0.9·크게 0.99, 2026-11-10)로 글자만 바꾼다 —
+     버튼·간격(rem)은 그대로라 누르는 영역 44px가 유지된다. 캡션·마이크로는 최소 11px (docs/11 §13-2) */
+  --text-display: calc(1.75rem * var(--tp-font));
+  --text-display--line-height: calc(2.25rem * var(--tp-font));
   --text-display--font-weight: 600;
   --text-display--letter-spacing: -0.02em; /* Pretendard 큰 글자는 살짝 좁혀야 단정 (2026-11-09) */
-  --text-title-1: 1.375rem;
-  --text-title-1--line-height: 1.875rem;
+  --text-title-1: calc(1.375rem * var(--tp-font));
+  --text-title-1--line-height: calc(1.875rem * var(--tp-font));
   --text-title-1--font-weight: 600;
   --text-title-1--letter-spacing: -0.02em; /* Pretendard 큰 글자는 살짝 좁혀야 단정 (2026-11-09) */
-  --text-title-2: 1.125rem;
-  --text-title-2--line-height: 1.625rem;
+  --text-title-2: calc(1.125rem * var(--tp-font));
+  --text-title-2--line-height: calc(1.625rem * var(--tp-font));
   --text-title-2--font-weight: 600;
   --text-title-2--letter-spacing: -0.02em; /* Pretendard 큰 글자는 살짝 좁혀야 단정 (2026-11-09) */
-  --text-body-1: 1rem;
-  --text-body-1--line-height: 1.5rem;
+  --text-body-1: calc(1rem * var(--tp-font));
+  --text-body-1--line-height: calc(1.5rem * var(--tp-font));
   --text-body-1--font-weight: 500;
-  --text-body-2: 0.9375rem;
-  --text-body-2--line-height: 1.375rem;
-  --text-caption: 0.8125rem;
-  --text-caption--line-height: 1.125rem;
-  --text-micro: 0.6875rem;
-  --text-micro--line-height: 0.875rem;
+  --text-body-2: calc(0.9375rem * var(--tp-font));
+  --text-body-2--line-height: calc(1.375rem * var(--tp-font));
+  --text-caption: max(11px, calc(0.8125rem * var(--tp-font)));
+  --text-caption--line-height: max(15px, calc(1.125rem * var(--tp-font)));
+  --text-micro: max(11px, calc(0.6875rem * var(--tp-font)));
+  --text-micro--line-height: max(14px, calc(0.875rem * var(--tp-font)));
   --text-micro--font-weight: 500;
   /* 탑승권 출발·도착 코드, 다음 역 남은 시간 (docs/29 §3.3) */
-  --text-code-xl: 1.75rem;
-  --text-code-xl--line-height: 2rem;
+  --text-code-xl: calc(1.75rem * var(--tp-font));
+  --text-code-xl--line-height: calc(2rem * var(--tp-font));
   --text-code-xl--font-weight: 500;
   --text-code-xl--letter-spacing: -0.02em;
-  --text-count-xl: 2.125rem;
-  --text-count-xl--line-height: 2.375rem;
+  --text-count-xl: calc(2.125rem * var(--tp-font));
+  --text-count-xl--line-height: calc(2.375rem * var(--tp-font));
   --text-count-xl--font-weight: 600;
   --text-count-xl--letter-spacing: -0.03em;
 
@@ -176,6 +177,12 @@
   /* 숫자(시간·거리)는 자릿수 정렬 */
   .tabular {
     font-variant-numeric: tabular-nums;
+  }
+  /* 입력창 글자는 글자 크기 설정과 상관없이 16px 이상 — 아이폰이 눌렀을 때 화면을 확대하지 않게 (docs/11 §4) */
+  input:not([type='checkbox'], [type='radio'], [type='range']),
+  textarea,
+  select {
+    font-size: max(16px, 1em) !important;
   }
   :focus-visible {
     outline: 2px solid var(--tp-primary);

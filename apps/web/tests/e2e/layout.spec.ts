@@ -201,7 +201,9 @@ test('글자 크기 가장 크게(99%): 주요 화면 가로 넘침 없음, 탭 
   await page.goto('/settings');
   await page.getByRole('slider', { name: '글자 크기' }).focus();
   await page.keyboard.press('End');
-  await expect.poll(() => page.evaluate(() => document.documentElement.style.fontSize)).toBe('99%');
+  await expect
+    .poll(() => page.evaluate(() => document.documentElement.style.getPropertyValue('--tp-font')))
+    .toBe('0.99');
   for (const path of [
     '/',
     '/records',
@@ -216,7 +218,10 @@ test('글자 크기 가장 크게(99%): 주요 화면 가로 넘침 없음, 탭 
   ]) {
     await page.goto(path);
     await page.waitForLoadState('networkidle');
-    expect(await page.evaluate(() => document.documentElement.style.fontSize), path).toBe('99%');
+    expect(
+      await page.evaluate(() => document.documentElement.style.getPropertyValue('--tp-font')),
+      path,
+    ).toBe('0.99');
     await noHorizontalOverflow(page, `${path} (99%)`);
     const clipped = await page.evaluate(() =>
       [...document.querySelectorAll('nav a')]

@@ -25,8 +25,10 @@ export const useSettings = create<SettingsState>(() => ({ ...SETTINGS_DEFAULTS, 
 function applyDevice(s: Settings) {
   setDateStyle(s.dateFormat);
   applyTheme(s.theme);
-  // 글자 크기 3단계 (2026-11-10): 기본(보통)도 90%라 늘 적어 둔다
-  document.documentElement.style.fontSize = `${Math.round(s.fontScale * 100)}%`;
+  // 글자 크기 3단계 (2026-11-10): 글자 토큰만 --tp-font 배율로 바꾼다 — 화면 전체 배율(html font-size)은 쓰지 않아
+  // 버튼·간격은 그대로 (전체 배율로 줄였더니 누르는 영역이 44px 밑으로 내려감, CI 실행 219)
+  document.documentElement.style.fontSize = '';
+  document.documentElement.style.setProperty('--tp-font', String(s.fontScale));
   // 큰 글씨 배치(tight)는 115% 이상에서였다 — 가장 큰 단계가 99%라 이제 좁은 화면(≤340px)에서만
   document.documentElement.toggleAttribute('data-big-text', s.fontScale >= 1.15);
   try {

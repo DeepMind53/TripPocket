@@ -50,8 +50,10 @@ for (const [width, scale] of [
       await page.getByRole('slider', { name: '글자 크기' }).focus();
       await page.keyboard.press('End');
       await expect
-        .poll(() => page.evaluate(() => document.documentElement.style.fontSize))
-        .toBe('99%');
+        .poll(() =>
+          page.evaluate(() => document.documentElement.style.getPropertyValue('--tp-font')),
+        )
+        .toBe('0.99');
     }
     const found: Record<string, string[]> = {};
     for (const path of [

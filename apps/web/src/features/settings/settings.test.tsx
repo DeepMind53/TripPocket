@@ -58,11 +58,13 @@ describe('설정 저장소', () => {
   });
 
   it('글자 크기는 화면 전체 배율', () => {
-    // 작게·보통·크게 = 81%·90%·99% (2026-11-10)
+    // 작게·보통·크게 = 0.81·0.9·0.99 (2026-11-10) — 글자 토큰 배율만, 화면 전체 배율(버튼·간격)은 그대로
+    const root = document.documentElement;
     updateSettings({ fontScale: 0.99 });
-    expect(document.documentElement.style.fontSize).toBe('99%');
+    expect(root.style.getPropertyValue('--tp-font')).toBe('0.99');
+    expect(root.style.fontSize).toBe('');
     updateSettings({ fontScale: 0.9 });
-    expect(document.documentElement.style.fontSize).toBe('90%');
+    expect(root.style.getPropertyValue('--tp-font')).toBe('0.9');
   });
 
   it('시간 표기', () => {

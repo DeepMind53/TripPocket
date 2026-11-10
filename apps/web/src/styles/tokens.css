@@ -44,6 +44,8 @@
   --tp-day-6-ink: #c03c74;
   --tp-day-7-ink: #2d7d46;
   --tp-day-8-ink: #5a6b85;
+  /* 글자 크기 배율 — 설정 작게 0.81·보통 0.9·크게 0.99 (2026-11-10). settingsStore·boot.js가 바꾼다 */
+  --tp-font: 0.9;
   /* 노선 모양 (docs/29 §3.2) */
   --tp-route-width: 4px;
   --tp-past-opacity: 0.3;

@@ -91,7 +91,7 @@ export function EssentialsPage() {
                         href={e.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 self-start text-caption font-semibold text-primary"
+                        className="inline-flex min-h-11 items-center gap-1 self-start text-caption font-semibold text-primary"
                       >
                         {t('essentials.eventOpen')}
                         <ExternalLink aria-hidden="true" className="size-3.5" />
@@ -252,7 +252,7 @@ function EssentialLine({
             href={item.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-0.5 inline-flex items-center gap-1 self-start text-caption font-semibold text-primary"
+            className="inline-flex min-h-11 items-center gap-1 self-start text-caption font-semibold text-primary"
           >
             {t(
               row.key.startsWith(`${COMMON_KEY}:`) ? 'essentials.open' : 'essentials.openOfficial',

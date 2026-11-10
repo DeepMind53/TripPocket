@@ -3,12 +3,12 @@
 try {
   var b = JSON.parse(localStorage.getItem('tp-boot') || '{}');
   if (b.theme === 'light' || b.theme === 'dark') document.documentElement.dataset.theme = b.theme;
-  // 글자 크기 3단계 0.81·0.9·0.99, 기본 0.9 (2026-11-10). 예전 값: 1 → 0.9, 1.15·1.3 → 0.99 (shared parseSettings와 같게)
+  // 글자 크기 3단계 0.81·0.9·0.99, 기본 0.9 (2026-11-10) — 글자 토큰 배율(--tp-font)만, 화면 전체 배율은 쓰지 않는다.
+  // 예전 값: 1 → 0.9, 1.15·1.3 → 0.99 (shared parseSettings와 같게)
   var f = typeof b.fontScale === 'number' ? b.fontScale : 0.9;
   if (f === 1) f = 0.9;
   else if (f > 1) f = 0.99;
-  document.documentElement.style.fontSize = Math.round(f * 100) + '%';
+  document.documentElement.style.setProperty('--tp-font', String(f));
 } catch {
-  // 저장소를 못 읽어도 기본 테마로 동작
-  document.documentElement.style.fontSize = '90%';
+  // 저장소를 못 읽어도 기본 테마·기본 글자 크기(tokens.css --tp-font)로 동작
 }
