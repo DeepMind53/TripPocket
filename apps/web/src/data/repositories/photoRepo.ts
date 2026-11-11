@@ -27,6 +27,16 @@ export const photoRepo = {
     await db.photos.update(id, { text, textSource: source });
   },
 
+  /** 사진 분류 묶음 */
+  async setTag(id: string, tag: NonNullable<PhotoRow['tag']>): Promise<void> {
+    await db.photos.update(id, { tag });
+  },
+
+  /** 기록 탭 사진 모아보기 — 찍은 순 */
+  listAll(): Promise<PhotoRow[]> {
+    return db.photos.orderBy('id').toArray();
+  },
+
   async remove(id: string): Promise<void> {
     await db.photos.delete(id);
   },

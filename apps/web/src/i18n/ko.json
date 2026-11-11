@@ -1338,7 +1338,9 @@
       "airkorea": "에어코리아 대기오염",
       "airlabs": "AirLabs 항공편",
       "agoda_lookup": "아고다 숙소 자동 찾기",
-      "serpapi_hotels": "SerpApi 구글 호텔"
+      "serpapi_hotels": "SerpApi 구글 호텔",
+      "google_vision_landmark": "Google Vision (사진 속 장소)",
+      "google_vision_labels": "Google Vision (사진 분류)"
     },
     "note": {
       "google_places_search": "해외 장소 검색 · 월 5,000회 무료",
@@ -1374,7 +1376,7 @@
       "google_autocomplete": "장소 검색 무료량이 끝나면 대신 · 월 10,000회 무료",
       "google_details_basic": "자동완성에서 고른 장소 · Essentials · 월 10,000회 무료",
       "google_routes": "걷기·대중교통 1번에 2건 · Essentials · 월 10,000회 무료",
-      "google_vision": "영수증 1장에 1건 · 월 1,000장 무료, 넘으면 1,000장당 $1.50",
+      "google_vision": "영수증·사진 번역 1장에 1건 · 월 1,000장 무료, 넘으면 1,000장당 $1.50",
       "azure_read": "Google 무료량이 끝나면 대신 · 분당 20장 · 넘으면 멈출 뿐 (요금 없음)",
       "geoapify": "Google 백업까지 멈추면 · 하루 3,000회 무료 (요금 없음)",
       "openfreemap": "Google·네이버 지도를 못 쓸 때 · 무료·한도 없음",
@@ -1389,7 +1391,9 @@
       "airkorea": "국내 오늘 미세먼지 · 활용신청 필요",
       "airlabs": "출발 당일 지연 · 무료 월 1,000회",
       "agoda_lookup": "숙소 최저가 · 스스로 정한 하루 100회 · 서버가 30일 저장",
-      "serpapi_hotels": "숙소 참고 가격 · 무료 월 250회 · 검색 1번에 최대 2회"
+      "serpapi_hotels": "숙소 참고 가격 · 무료 월 250회 · 검색 1번에 최대 2회",
+      "google_vision_landmark": "누를 때만 · 월 1,000장 무료, 넘으면 1,000장당 $1.50",
+      "google_vision_labels": "분류하기를 누를 때만 · 월 1,000장 무료, 넘으면 1,000장당 $1.50"
     },
     "autoStoppedDay": "오늘 자동 중지",
     "monthMeter": "이번 달",
@@ -1451,6 +1455,18 @@
       "tripCard": {
         "name": "여행 요약 카드 저장",
         "desc": "다녀온 여행을\n탑승권 모양 그림으로 저장해요"
+      },
+      "photoTranslate": {
+        "name": "사진으로 번역",
+        "desc": "메뉴판·안내문을 찍으면\n한국어로 옮겨 줘요"
+      },
+      "photoLandmark": {
+        "name": "사진 속 장소 알아보기",
+        "desc": "일정 사진이 어디인지\n알려 주고 가고 싶은 곳에"
+      },
+      "photoLabels": {
+        "name": "사진 분류",
+        "desc": "기록 탭에서 사진을\n음식·풍경·건물로 나눠요"
       }
     },
     "checkoutAt": "오늘 {{time}} 체크아웃 · {{name}}",
@@ -2205,7 +2221,9 @@
     "lodgingPrice": "아고다 경로 21곳 · 예약 앱 6곳\n눌러서 각 앱 가격을 확인해요",
     "date2": "10.29 (목)",
     "sunsetDark": "도쿄 해 지는 시각 16:38\n그 뒤로 화면이 어두워져요",
-    "dayNote": "야경이 정말 예뻤어요"
+    "dayNote": "야경이 정말 예뻤어요",
+    "menuKo1": "라멘 980엔",
+    "menuKo2": "면 추가 210엔"
   },
   "currencyName": {
     "USD": "미국 달러",
@@ -2970,5 +2988,43 @@
         "daily": "오늘 참고 가격을 다 봤어요"
       }
     }
+  },
+  "photoTranslate": {
+    "title": "사진으로 번역",
+    "tile": "메뉴판",
+    "reading": "글자를 읽고 옮기는 중",
+    "note": "누를 때만 그 사진을 보내요\n사진과 번역은 저장하지 않아요",
+    "limit": "오늘 사진 번역을 다 썼어요\n내일 다시 쓸 수 있어요",
+    "failed": "번역하지 못했어요\n잠시 뒤 다시 해 주세요",
+    "empty": "사진에서 글자를 찾지 못했어요",
+    "noAi": "번역이 안 된 줄은 원문 그대로예요\n잠시 뒤 다시 해 보세요"
+  },
+  "landmark": {
+    "title": "사진 속 장소",
+    "find": "어디인지 알아보기",
+    "none": "알아보지 못했어요\n유명한 곳이 잘 보이게 찍어 보세요",
+    "score": "확신 {{n}}%",
+    "add": "담기",
+    "addOf": "{{name}} 가고 싶은 곳에 넣기",
+    "added": "가고 싶은 곳에 넣었어요",
+    "note": "누를 때만 이 사진을 보내요",
+    "limit": "오늘 장소 알아보기를 다 썼어요",
+    "failed": "알아보지 못했어요\n잠시 뒤 다시 해 주세요"
+  },
+  "album": {
+    "title": "사진 모아보기",
+    "all": "전체 {{n}}",
+    "tag": {
+      "food": "음식 {{n}}",
+      "scenery": "풍경 {{n}}",
+      "building": "건물 {{n}}",
+      "people": "사람 {{n}}",
+      "other": "기타 {{n}}"
+    },
+    "classify": "사진 {{n}}장 분류하기",
+    "note": "누르면 아직 안 나눈 사진만 보내요",
+    "done": "분류했어요",
+    "limit": "오늘 분류를 다 썼어요\n나머지는 내일 나눌게요",
+    "failed": "분류하지 못했어요\n잠시 뒤 다시 해 주세요"
   }
 }

@@ -9,14 +9,20 @@ import { useTranslation } from '../../i18n';
 export function CaptureTile({
   kind,
   onFiles,
+  label,
+  multiple = true,
 }: {
   kind: 'photo' | 'receipt';
   onFiles: (files: File[]) => void;
+  /** 칸 이름 (없으면 사진·영수증) — 사진으로 번역 등 다른 곳에서도 같은 칸 */
+  label?: string;
+  /** 고르기에서 여러 장 */
+  multiple?: boolean;
 }) {
   const { t } = useTranslation();
   const shoot = useRef<HTMLInputElement | null>(null);
   const pick = useRef<HTMLInputElement | null>(null);
-  const name = t(`quickMenu.${kind}`);
+  const name = label ?? t(`quickMenu.${kind}`);
   const half = (mode: 'shoot' | 'pick') => {
     const Icon = mode === 'shoot' ? Camera : ImageIcon;
     const ref = mode === 'shoot' ? shoot : pick;
@@ -37,7 +43,7 @@ export function CaptureTile({
           type="file"
           accept="image/*"
           // 찍기만 바로 뒤 카메라, 고르기는 사진 앱(여러 장)
-          {...(mode === 'shoot' ? { capture: 'environment' } : { multiple: true })}
+          {...(mode === 'shoot' ? { capture: 'environment' } : { multiple })}
           hidden
           aria-hidden="true"
           tabIndex={-1}

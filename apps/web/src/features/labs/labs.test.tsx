@@ -50,10 +50,13 @@ describe('실험실', () => {
       'dayNote',
       'tripCard',
       'tripPhotos',
+      'photoTranslate',
+      'photoLandmark',
+      'photoLabels',
     ]);
-    expect(screen.getAllByRole('switch')).toHaveLength(6);
+    expect(screen.getAllByRole('switch')).toHaveLength(9);
     // 실험마다 [샘플] (사용자 요청 2026-11-10)
-    expect(screen.getAllByRole('button', { name: / 샘플$/ })).toHaveLength(6);
+    expect(screen.getAllByRole('button', { name: / 샘플$/ })).toHaveLength(9);
     // 정식이 됐거나 뺀 것은 실험실에 없다
     for (const name of [
       /현지 공휴일/,

@@ -39,6 +39,8 @@ export type ApiId =
   | 'airlabs'
   | 'overpass'
   | 'google_vision'
+  | 'google_vision_landmark'
+  | 'google_vision_labels'
   | 'azure_read'
   | 'open_meteo'
   | 'nager_date'
@@ -100,6 +102,9 @@ export const APIS: readonly ApiDef[] = [
   { id: 'google_routes', group: 'paid', freeMonthly: 10000, tz: 'America/Los_Angeles' },
   // 영수증 글자 인식 (ADR-0012, 2026-11-11): Cloud Vision Document Text Detection 월 1,000장 무료, 넘으면 1,000장당 $1.50
   { id: 'google_vision', group: 'paid', freeMonthly: 1000, tz: 'America/Los_Angeles' },
+  // 사진 속 장소·사진 분류 (2026-11-11 실험실): 기능마다 월 1,000장 따로 무료, 넘으면 1,000장당 $1.50
+  { id: 'google_vision_landmark', group: 'paid', freeMonthly: 1000, tz: 'America/Los_Angeles' },
+  { id: 'google_vision_labels', group: 'paid', freeMonthly: 1000, tz: 'America/Los_Angeles' },
   {
     id: 'google_maps_js',
     group: 'paid',

@@ -26,6 +26,12 @@ CLAUDE.md는 사용자 데이터를 ADR-0004 범위 밖으로 보내지 못하�
 5. **가계부와 구분:** 저장하는 것은 사진과 읽은 글이다. 품목·금액·합계는 화면에서 글로부터 계산해 보여 줄 뿐 지출·예산·정산으로 쌓지 않는다
 6. 개인정보 처리방침·출처에 Google Cloud Vision·Azure AI Vision·Tesseract.js를 적는다
 
+## 추가 (2026-11-11, 사용자 선택): 사진 기능 3개 — 같은 원칙
+- **사진으로 번역** (`photoTranslate`): 번역·회화 화면에서 찍거나 고른 사진 → `POST /api/vision/translate` → Google 글자 읽기(안 되면 Azure) → 읽은 글 줄만 무료 AI(Gemini → Workers AI → Groq)로 한국어. 사진·번역 모두 저장 안 함. 하루 20장
+- **사진 속 장소** (`photoLandmark`): 일정 사진 크게 보기 → `POST /api/vision/landmark` → Landmark Detection. 이름·확신도만 돌려주고 좌표는 버린다(Google 좌표는 Google 지도에만). [담기]는 이름만 가고 싶은 곳에. 하루 20장, `google_vision_landmark`(월 1,000 무료)
+- **사진 분류** (`photoLabels`): 기록 탭 사진 모아보기 [분류하기] → 아직 안 나눈 사진만 `POST /api/vision/labels` → Label Detection → 기기에서 음식·풍경·건물·사람·기타로(`domain/photoTags.ts`), 묶음만 기기에 저장(Dexie v14 `tag`). 영수증은 보내지 않는다. 하루 60장, `google_vision_labels`(월 1,000 무료)
+- Cloud Vision은 기능마다 월 1,000건 따로 무료라 영수증 읽기와 무료량을 나눠 쓰지 않는다. 사진 번역 글자 읽기는 영수증과 같은 `google_vision`을 쓴다
+
 ## 검토한 대안
 | 대안 | 장점 | 단점 |
 |---|---|---|

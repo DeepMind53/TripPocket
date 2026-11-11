@@ -17,6 +17,10 @@ export const LABS = [
   'tripCard',
   // 2026-11-11 사진·영수증 (ADR-0012): 빠른 메뉴로 찍어 지금 일정에 붙이기, 영수증 글자 읽기 — 사진은 기기에만
   'tripPhotos',
+  // 2026-11-11 사진 기능 3개 (사용자 선택, ADR-0012): 사진으로 번역·사진 속 장소·사진 분류 — 누를 때만 보냄
+  'photoTranslate',
+  'photoLandmark',
+  'photoLabels',
   // 2026-11-10 정식(설정 "일정", 사용자 요청): 오프라인 준비·외교부 안전공지·축제와 행사·항공편 지연·여행 모드(tripMode).
   // 숙소 최저가는 설정 없이 늘 켜짐. 켜 두었던 기기는 settingsStore.migrateGraduatedLabs가 설정으로 옮긴다
   // 2026-11-09 숙소 최저가 (docs/28, ADR-0010) · 2026-11-03 여행 모드 (docs/25) · 무료 API 2·3단계 (docs/26)

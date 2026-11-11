@@ -34,6 +34,44 @@ export async function googleOcr(image: Buffer, apiKey: string): Promise<string> 
   return r?.fullTextAnnotation?.text ?? '';
 }
 
+/** Cloud Vision 한 기능만 (장소 알아보기·사진 분류) — 이름과 점수만 돌려준다 (좌표는 버린다) */
+export async function googleVisionNames(
+  image: Buffer,
+  apiKey: string,
+  feature: 'LANDMARK_DETECTION' | 'LABEL_DETECTION',
+): Promise<{ name: string; score: number }[]> {
+  const id = feature === 'LANDMARK_DETECTION' ? 'google_vision_landmark' : 'google_vision_labels';
+  guardApi(id);
+  trackApi(id);
+  const res = await fetch('https://vision.googleapis.com/v1/images:annotate', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'x-goog-api-key': apiKey },
+    body: JSON.stringify({
+      requests: [
+        {
+          image: { content: image.toString('base64') },
+          features: [{ type: feature, maxResults: 10 }],
+        },
+      ],
+    }),
+    signal: timeout(),
+  });
+  if (!res.ok) throw new Error(`vision ${res.status}`);
+  const d = (await res.json()) as {
+    responses?: {
+      landmarkAnnotations?: { description?: string; score?: number }[];
+      labelAnnotations?: { description?: string; score?: number }[];
+      error?: { message?: string };
+    }[];
+  };
+  const r = d.responses?.[0];
+  if (r?.error) throw new Error(`vision ${r.error.message ?? 'error'}`);
+  const list = feature === 'LANDMARK_DETECTION' ? r?.landmarkAnnotations : r?.labelAnnotations;
+  return (list ?? [])
+    .filter((x): x is { description: string; score?: number } => !!x.description)
+    .map((x) => ({ name: x.description, score: Math.round((x.score ?? 0) * 100) / 100 }));
+}
+
 /** Azure AI Vision Image Analysis 4.0 Read (F0 무료 등급) — 줄 단위 글을 이어 붙인다 */
 export async function azureOcr(image: Buffer, endpoint: string, apiKey: string): Promise<string> {
   guardApi('azure_read');

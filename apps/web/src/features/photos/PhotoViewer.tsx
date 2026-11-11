@@ -9,6 +9,7 @@ import { parseReceipt } from '../../domain/receipt';
 import { useTranslation } from '../../i18n';
 import { formatMonthDay } from '../../shared/lib/dateFormat';
 import { BottomSheet, Button, confirmDelete, toast } from '../../shared/ui';
+import { LandmarkFinder } from './LandmarkFinder';
 
 const money = (n: number) => n.toLocaleString('ko-KR', { maximumFractionDigits: 2 });
 
@@ -125,6 +126,9 @@ export function PhotoViewer({
             </label>
           </section>
         )}
+
+        {/* 실험실 "사진 속 장소" (2026-11-11) */}
+        <LandmarkFinder photo={photo} />
 
         {/* 다른 일정으로 옮기기: 날짜 → 그날 일정 */}
         <fieldset className="flex flex-col gap-2">

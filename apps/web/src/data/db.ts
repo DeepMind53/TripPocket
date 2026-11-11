@@ -51,6 +51,8 @@ export interface PhotoRow {
   text?: string | undefined;
   /** 글을 읽은 곳 */
   textSource?: 'google' | 'azure' | 'device' | undefined;
+  /** 사진 분류 묶음 (실험실 photoLabels — 누른 사진만, domain/photoTags.ts) */
+  tag?: 'food' | 'scenery' | 'building' | 'people' | 'other' | undefined;
 }
 
 export interface KeyValueRow {
@@ -111,6 +113,8 @@ export class TripPocketDB extends Dexie {
     this.version(12).stores({});
     // v13 (2026-11-11): 일정 사진·영수증 — 이 기기 전용 표 (동기화·백업 대상 아님, ADR-0012)
     this.version(13).stores({ photos: 'id, tripId, itemId' });
+    // v14 (2026-11-11): 사진 분류 묶음(tag) — 인덱스 없음, 예전 사진은 분류 전으로 본다
+    this.version(14).stores({});
   }
 }
 

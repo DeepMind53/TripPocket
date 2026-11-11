@@ -103,6 +103,12 @@ export {
 export { RouteEtaBody, type Coords, type RouteEta } from './places/route';
 export { OCR_DAILY_LIMIT, OCR_MAX_BYTES, type OcrResult } from './ocr';
 export {
+  VISION_DAILY,
+  type PhotoTranslation,
+  type VisionFeature,
+  type VisionNames,
+} from './vision';
+export {
   alertQuery,
   MAX_ALERT_POINTS,
   notableAlerts,
