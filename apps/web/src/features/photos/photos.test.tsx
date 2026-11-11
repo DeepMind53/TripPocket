@@ -4,7 +4,6 @@ import { createMemoryRouter, RouterProvider } from 'react-router';
 import { routes } from '../../app/router';
 import { db } from '../../data/db';
 import { resetLocalDb } from '../../data/dev';
-import { setLab } from '../../data/labsStore';
 import { itemRepo } from '../../data/repositories/itemRepo';
 import { photoRepo } from '../../data/repositories/photoRepo';
 import { tripRepo } from '../../data/repositories/tripRepo';
@@ -18,7 +17,6 @@ beforeEach(async () => {
   vi.setSystemTime(new Date('2026-11-12T03:30:00Z')); // 도쿄 12:30
 });
 afterEach(() => {
-  setLab('tripPhotos', false, { silent: true });
   vi.useRealTimers();
   vi.unstubAllGlobals();
 });
@@ -50,9 +48,8 @@ async function tokyo() {
   return trip;
 }
 
-it('실험을 켜면 빠른 메뉴 [영수증]으로 찍은 사진이 지금 일정에 붙는다 (기기에만)', async () => {
+it('빠른 메뉴 [영수증]으로 찍은 사진이 지금 일정에 붙는다 (기기에만, 2026-11-11 정식)', async () => {
   vi.stubGlobal('fetch', async () => Response.json({}));
-  setLab('tripPhotos', true, { silent: true });
   const trip = await tokyo();
   const user = userEvent.setup();
   render(
@@ -83,19 +80,6 @@ it('실험을 켜면 빠른 메뉴 [영수증]으로 찍은 사진이 지금 일
   const items = await itemRepo.listByTrip(trip.id);
   expect(items.find((i) => i.id === p!.itemId)?.title).toBe('이치란');
   expect(p).toMatchObject({ kind: 'receipt' });
-});
-
-it('실험이 꺼져 있으면 빠른 메뉴에 사진·영수증이 없다', async () => {
-  const trip = await tokyo();
-  const user = userEvent.setup();
-  render(
-    <RouterProvider
-      router={createMemoryRouter(routes, { initialEntries: [`/trips/${trip.id}/plan`] })}
-    />,
-  );
-  await user.click(await screen.findByRole('button', { name: '빠른 메뉴' }));
-  const sheet = await screen.findByRole('dialog', { name: '빠른 메뉴' });
-  expect(within(sheet).queryByRole('button', { name: /영수증/ })).toBeNull();
 });
 
 it('photoRepo로 붙인 영수증: 상세에서 [영수증 분석] → 서버 글 → 품목 표 (금액은 저장 안 함)', async () => {

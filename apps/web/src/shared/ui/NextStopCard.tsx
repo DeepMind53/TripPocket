@@ -67,7 +67,7 @@ export function NextStopCard({
               <span
                 className={
                   size === 'lg'
-                    ? 'tabular text-[min(3.25rem,16cqi)] leading-none font-semibold tracking-[-0.04em] whitespace-nowrap'
+                    ? 'tabular text-[min(3.25rem,16cqi)] leading-none font-semibold whitespace-nowrap [word-spacing:0.12em]'
                     : 'tabular text-count-xl whitespace-nowrap'
                 }
               >

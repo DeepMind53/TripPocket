@@ -43,7 +43,8 @@ export function DepartCountdown({
   const sec = leaveInSeconds(start, secondsIn(timezone, now), travelMin);
   if (sec <= 0) return <span className="whitespace-nowrap">{t('travel.leaveNow')}</span>;
   return (
-    <span className="flex flex-wrap items-baseline gap-x-1.5">
+    // 띄어쓰기가 보이게: 큰 글자 사이 낱말 간격을 넓히고, "후 출발"과는 한 칸 더 (사용자 요청 2026-11-11)
+    <span className="flex flex-wrap items-baseline gap-x-2.5">
       <span className="whitespace-nowrap">
         {t('travel.departIn', { m: Math.floor(sec / 60), s: sec % 60 })}
       </span>

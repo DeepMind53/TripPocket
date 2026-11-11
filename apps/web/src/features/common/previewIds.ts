@@ -34,7 +34,6 @@ export type PreviewId =
   | 'sunsetDark'
   | 'dayNote'
   | 'tripCard'
-  | 'tripPhotos'
   | 'photoTranslate'
   | 'photoLandmark'
   | 'photoLabels';
@@ -74,7 +73,6 @@ const IDS: readonly string[] = [
   'sunsetDark',
   'dayNote',
   'tripCard',
-  'tripPhotos',
   'photoTranslate',
   'photoLandmark',
   'photoLabels',

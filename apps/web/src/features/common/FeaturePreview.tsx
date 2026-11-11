@@ -1,5 +1,4 @@
 import {
-  Camera,
   Footprints,
   ImageDown,
   Luggage,
@@ -7,7 +6,6 @@ import {
   Moon,
   MoonStar,
   Navigation,
-  Image as ImageIcon,
   PenLine,
   Sun,
 } from 'lucide-react';
@@ -450,50 +448,6 @@ export function FeaturePreview({ id }: { id: PreviewId }) {
           ],
         }),
         t('tripCard.title'),
-      );
-    case 'tripPhotos':
-      // 빠른 메뉴 칸: [찍기][고르기] 둘로 + 일정 상세 영수증 표 (실제 화면 모양)
-      return (
-        <div className="flex flex-col gap-3">
-          <div className="grid grid-cols-2 gap-2">
-            {(['photo', 'receipt'] as const).map((k) => (
-              <span key={k} className="flex gap-1.5">
-                {(['shoot', 'pick'] as const).map((m) => (
-                  <span
-                    key={m}
-                    className="flex min-h-20 flex-1 flex-col items-center justify-center gap-1 rounded-card bg-bg-subtle py-2.5"
-                  >
-                    {m === 'shoot' ? (
-                      <Camera aria-hidden="true" className="size-5 text-primary" />
-                    ) : (
-                      <ImageIcon aria-hidden="true" className="size-5 text-primary" />
-                    )}
-                    <span className="text-body-2 font-semibold">{t(`quickMenu.${k}`)}</span>
-                    <span className="text-micro text-fg-muted">{t(`quickMenu.${m}`)}</span>
-                  </span>
-                ))}
-              </span>
-            ))}
-          </div>
-          <ul className="flex flex-col divide-y divide-line rounded-card border border-line bg-surface">
-            {(
-              [
-                [t('sample.ichiran'), '980'],
-                [t('sample.receiptItem'), '210'],
-              ] as const
-            ).map(([name, price]) => (
-              <li key={name} className="flex gap-3 px-3 py-2 text-body-2">
-                <span className="flex-1">{name}</span>
-                <span className="tabular">{price}</span>
-              </li>
-            ))}
-            <li className="flex gap-3 bg-bg-subtle px-3 py-2 text-body-2 font-semibold">
-              <span className="flex-1">{t('photos.total')}</span>
-              <span className="tabular">1,190</span>
-            </li>
-          </ul>
-          <p className="text-caption text-fg-muted">{t('photos.localOnly')}</p>
-        </div>
       );
     case 'photoTranslate':
       // 메뉴판 한 장 → 줄마다 한국어 (큰 글) + 원문 (작은 글)
