@@ -68,6 +68,9 @@ export function BottomSheetImpl({
             e.preventDefault();
             (e.currentTarget as HTMLElement).focus();
           }}
+          // 시트 안 양식의 제출은 시트 밖으로 올려 보내지 않는다 — React는 포털 너머 부모 양식까지 올려 보내서,
+          // 예약 입력 시트 안 [최저가 비교]의 검색이 예약 저장까지 했다 (2026-11-11 고침)
+          onSubmit={(e) => e.stopPropagation()}
           // 하단 알림(실행 취소 등)을 눌러도 시트가 닫히지 않게
           onPointerDownOutside={(e) => {
             if ((e.target as Element | null)?.closest('[data-toaster]')) e.preventDefault();
