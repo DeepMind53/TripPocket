@@ -60,12 +60,32 @@ export const bookingRepo = {
     });
   },
 
+  /**
+   * 예약 지우기 — 그 예약에서 일정표로 넘어간 일정(항공·숙소·교통 등, item.bookingId)도 같은 시각으로 함께 지운다
+   * (사용자 요청 2026-11-11). 되살리면 그때 함께 지운 일정만 함께 되살린다
+   */
   async softDelete(id: string): Promise<void> {
     const now = nowIso();
-    await db.bookings.update(id, { deletedAt: now, updatedAt: now, dirty: 1 });
+    await db.transaction('rw', db.bookings, db.items, async () => {
+      await db.bookings.update(id, { deletedAt: now, updatedAt: now, dirty: 1 });
+      const linked = await db.items.filter((i) => i.bookingId === id && !i.deletedAt).primaryKeys();
+      for (const itemId of linked)
+        await db.items.update(itemId, { deletedAt: now, updatedAt: now, dirty: 1 });
+    });
   },
 
   async restore(id: string): Promise<void> {
-    await db.bookings.update(id, { deletedAt: undefined, updatedAt: nowIso(), dirty: 1 });
+    await db.transaction('rw', db.bookings, db.items, async () => {
+      const row = await db.bookings.get(id);
+      const at = row?.deletedAt;
+      const now = nowIso();
+      await db.bookings.update(id, { deletedAt: undefined, updatedAt: now, dirty: 1 });
+      if (!at) return;
+      const linked = await db.items
+        .filter((i) => i.bookingId === id && i.deletedAt === at)
+        .primaryKeys();
+      for (const itemId of linked)
+        await db.items.update(itemId, { deletedAt: undefined, updatedAt: now, dirty: 1 });
+    });
   },
 };
