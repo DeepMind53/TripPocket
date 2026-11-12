@@ -70,7 +70,7 @@ export const PRIVACY: Section[] = [
   {
     title: '4. 보관과 삭제',
     body: [
-      '기기 데이터는 직접 지우기 전까지 기기에 남습니다.\n마이 → 백업·복원으로 파일로 보관할 수 있습니다.',
+      '기기 데이터는 직접 지우기 전까지 기기에 남습니다.\n마이 → 백업·복원으로 파일로 보관할 수 있습니다.\n백업 파일을 만들면 최근 3개를 이 기기에도 함께 둡니다.',
       '일정 사진·영수증은 이 기기에만 저장합니다.\n서버·동기화·백업 파일로 보내지 않아, 기기를 바꾸거나 앱 데이터를 지우면 사라집니다.\n영수증은 사진과 읽은 글만 저장하고 금액은 따로 저장하지 않습니다.',
       '마이 → 개인정보는 이 기기에만 저장합니다.\n여권·허가 만료일, 항공사 회원번호, 보험·비상 연락처, 알레르기·혈액형·복용약이 들어갑니다.\n서버와 백업 파일로 보내지 않습니다.',
       '지운 항목은 7일 동안 마이 → 삭제 기록 복원에서 되살릴 수 있습니다.\n7일이 지나면 기기와 서버에서 내용을 지웁니다.\n서버에는 항목 번호와 삭제 시각만 남깁니다.',
@@ -166,6 +166,18 @@ export const DATA_SOURCES: { name: string; use: string; license: string; url: st
     use: '해외 지도·장소 검색·평점, 이동 시간(Routes)',
     license: 'Google Maps Platform 이용약관',
     url: 'https://cloud.google.com/maps-platform/terms',
+  },
+  {
+    name: 'SerpApi (Google 호텔 검색 결과)',
+    use: '숙소 최저가 — 구글 호텔 참고 가격 (검색을 누를 때만, 6시간 보관)',
+    license: 'SerpApi 이용약관',
+    url: 'https://serpapi.com/legal',
+  },
+  {
+    name: '아고다 (Agoda) 숙소 검색',
+    use: '숙소 최저가 — 숙소 이름으로 아고다 숙소 페이지 찾기 (누를 때만)',
+    license: '아고다 이용약관',
+    url: 'https://www.agoda.com/info/termsofuse.html',
   },
   {
     name: '네이버 지도 (네이버 클라우드)',
