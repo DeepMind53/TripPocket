@@ -4,7 +4,7 @@ import type { CountryTransit } from './transitGuide';
 /**
  * 도시별 현지 생활 정보 (빠른 메뉴 "현지 생활 정보", 사용자 요청 2026-11-03):
  * 한국인이 많이 찾는 도시는 그 도시의 교통카드·결제·교통수단·요금·환승·추천 앱을, 나머지 도시는 나라 대표 정보를 참고로.
- * 1차 30곳 + 2차 70곳 = 100곳 (2026-11-03, 2차는 cityLocal2.ts) — 앞으로 계속 늘린다 (docs/22 A10, CITY_LOCAL_CHECKED_AT).
+ * 1차 30곳 + 2차 70곳 = 100곳 (2026-11-03, 2차는 cityLocal2.ts) — 앞으로 계속 늘린다 (docs/22 B8, CITY_LOCAL_CHECKED_AT).
  * 요금은 여러 안내가 일치한 대표값 — 공식 운임표로 다시 확인할 것
  */
 export interface CityLocal extends CountryTransit {
