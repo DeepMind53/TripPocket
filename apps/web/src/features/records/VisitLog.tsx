@@ -53,9 +53,12 @@ export function VisitLog({ trips }: { trips: readonly Trip[] }) {
                     {trip.endDate.slice(5).replace(/-/g, '.')}
                   </span>
                 )}
-                <span className="ml-auto text-fg-muted">
-                  {t('visit.logCounts', { visited: seen, skipped: list.length - seen })}
-                </span>
+                {/* 여행이 하나면 위 합계와 같아 두 번 보인다 (2026-11-13) */}
+                {groups.length > 1 && (
+                  <span className="ml-auto text-fg-muted">
+                    {t('visit.logCounts', { visited: seen, skipped: list.length - seen })}
+                  </span>
+                )}
               </h3>
               <ul className="flex flex-col divide-y divide-line rounded-card border border-line">
                 {list.map((i) => {

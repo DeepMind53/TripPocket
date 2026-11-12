@@ -4,6 +4,7 @@ import {
   DndContext,
   KeyboardSensor,
   PointerSensor,
+  useDndContext,
   useDroppable,
   useSensor,
   useSensors,
@@ -184,14 +185,22 @@ export function ChecklistBoard({
 function DropList({ id, empty, children }: { id: string; empty: boolean; children: ReactNode }) {
   const { t } = useTranslation();
   // 빈 그룹에도 끌어 놓을 수 있게 그룹 전체를 놓는 자리로
+  // 안내 칸은 끄는 동안만 (빈 기본 분류마다 큰 칸이 보여 화면이 길었다 — 2026-11-13)
   const { setNodeRef, isOver } = useDroppable({ id });
+  const dragging = useDndContext().active !== null;
   return (
     <ul
       ref={setNodeRef}
-      className={cn('flex min-h-11 flex-col rounded-btn', isOver && 'bg-primary-weak')}
+      className={cn(
+        'flex flex-col rounded-btn',
+        (!empty || dragging) && 'min-h-11',
+        isOver && 'bg-primary-weak',
+      )}
     >
       {children}
-      {empty && <li className="px-3 py-2 text-caption text-fg-muted">{t('edit.dropHere')}</li>}
+      {empty && dragging && (
+        <li className="px-3 py-2 text-caption text-fg-muted">{t('edit.dropHere')}</li>
+      )}
     </ul>
   );
 }

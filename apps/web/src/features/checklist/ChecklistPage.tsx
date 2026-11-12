@@ -85,7 +85,7 @@ export function ChecklistPage() {
   }
 
   return (
-    <div className={`flex flex-col gap-4 px-5 pt-3 ${dirty ? 'pb-24' : ''}`}>
+    <div className={`flex flex-col gap-4 px-5 pt-3 ${dirty ? 'pb-24' : 'pb-20'}`}>
       {essentials && essentials.total > 0 && (
         <Link
           to={`/trips/${tripId}/essentials`}

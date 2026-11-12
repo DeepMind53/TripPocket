@@ -51,28 +51,34 @@ export function TravelReview({ pastTrips }: { pastTrips: readonly Trip[] }) {
     value: string;
     label: string;
     fun?: string | undefined;
+    /** 값이 0이면 숨긴다 (0km·0번 카드가 어색하다는 사용자 피드백 2026-11-13) */
+    zero?: boolean;
   }[] = [
     {
       icon: Footprints,
       value: t('travelReview.km', { n: km(s.walkKm) }),
       label: t('travelReview.walk'),
-      fun: s.walkKm > 0 ? ratio(s.walkKm / MARATHON_KM, 'walkFun') : t('travelReview.walkEmpty'),
+      fun: ratio(s.walkKm / MARATHON_KM, 'walkFun'),
+      zero: s.walkKm <= 0,
     },
     {
       icon: TrainFront,
       value: t('travelReview.km', { n: km(s.transitKm) }),
       label: t('travelReview.transit'),
       fun: ratio(s.transitKm / SEOUL_BUSAN_KM, 'transitFun'),
+      zero: s.transitKm <= 0,
     },
     {
       icon: Plane,
       value: t('travelReview.times', { n: s.flights }),
       label: t('travelReview.flights'),
+      zero: s.flights === 0,
     },
     {
       icon: MapPin,
       value: t('travelReview.count', { n: s.places }),
       label: t('travelReview.places'),
+      zero: s.places === 0,
       ...(s.topKind
         ? {
             fun: t('travelReview.topKind', {
@@ -106,12 +112,14 @@ export function TravelReview({ pastTrips }: { pastTrips: readonly Trip[] }) {
       icon: BedDouble,
       value: t('travelReview.nightsN', { n: s.nights }),
       label: t('travelReview.nights'),
+      zero: s.nights === 0,
     },
     {
       icon: Globe,
       value: t('travelReview.tripsSplit', { overseas: s.overseas, domestic: s.domestic }),
       label: t('travelReview.split'),
       fun: t('travelReview.thisYear', { n: s.thisYear }),
+      zero: s.overseas + s.domestic === 0,
     },
     ...(s.earliest
       ? [
@@ -137,11 +145,13 @@ export function TravelReview({ pastTrips }: { pastTrips: readonly Trip[] }) {
       icon: Coffee,
       value: t('travelReview.cafeFood', { cafe: s.cafes, food: s.restaurants }),
       label: t('travelReview.cafeFoodLabel'),
+      zero: s.cafes + s.restaurants === 0,
     },
     {
       icon: Repeat,
       value: t('travelReview.count', { n: s.revisits }),
       label: t('travelReview.revisits'),
+      zero: s.revisits === 0,
     },
     ...(s.farthest
       ? [
@@ -154,12 +164,14 @@ export function TravelReview({ pastTrips }: { pastTrips: readonly Trip[] }) {
         ]
       : []),
   ];
+  const shown = cards.filter((c) => !c.zero);
+  if (shown.length === 0) return null;
 
   return (
     <section aria-label={t('travelReview.title')} className="flex flex-col gap-2">
       <h2 className="text-caption font-semibold text-fg-muted">{t('travelReview.title')}</h2>
       <ul className="grid grid-cols-2 gap-2">
-        {cards.map((c) => (
+        {shown.map((c) => (
           <li
             key={c.label}
             className="flex flex-col gap-0.5 rounded-card border border-line bg-surface p-3"

@@ -3,8 +3,8 @@ import { useRef } from 'react';
 import { useTranslation } from '../../i18n';
 
 /**
- * 빠른 메뉴 [사진]·[영수증] 칸 하나를 둘로 (사용자 요청 2026-11-11): 왼쪽 = 카메라로 찍기, 오른쪽 = 휴대폰 사진에서 고르기.
- * 고르기는 여러 장을 한 번에 고를 수 있다
+ * 빠른 메뉴 [사진]·[영수증] 칸 (사용자 요청 2026-11-11, 모양 2026-11-13): 한 칸에 첫 줄 이름,
+ * 둘째 줄 [찍기]·[고르기] 버튼 둘. 찍기 = 카메라, 고르기 = 휴대폰 사진(여러 장 한 번에)
  */
 export function CaptureTile({
   kind,
@@ -31,11 +31,10 @@ export function CaptureTile({
         type="button"
         onClick={() => ref.current?.click()}
         aria-label={t(mode === 'shoot' ? 'quickMenu.shootOf' : 'quickMenu.pickOf', { name })}
-        className="flex min-h-20 min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-card bg-bg-subtle px-1 py-2.5"
+        className="flex min-h-11 min-w-0 flex-1 items-center justify-center gap-1 rounded-btn bg-surface px-1 text-caption font-medium"
       >
-        <Icon aria-hidden="true" className="size-5 shrink-0 text-primary" />
-        <span className="text-body-2 font-semibold">{name}</span>
-        <span className="text-micro text-fg-muted">
+        <Icon aria-hidden="true" className="size-4 shrink-0 text-primary" />
+        <span className="truncate">
           {t(mode === 'shoot' ? 'quickMenu.shoot' : 'quickMenu.pick')}
         </span>
         <input
@@ -57,9 +56,12 @@ export function CaptureTile({
     );
   };
   return (
-    <div className="flex gap-1.5">
-      {half('shoot')}
-      {half('pick')}
+    <div className="flex min-w-0 flex-col gap-1.5 rounded-card bg-bg-subtle p-2">
+      <span className="truncate px-1 text-body-2 font-semibold">{name}</span>
+      <div className="flex gap-1.5">
+        {half('shoot')}
+        {half('pick')}
+      </div>
     </div>
   );
 }
