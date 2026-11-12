@@ -63,7 +63,7 @@ Tailscale Funnel https://jin-server.tail0844c0.ts.net ─▶ 홈 PC 127.0.0.1:87
   상세 `ItemPhotos.tsx`·`PhotoViewer.tsx`, 글자 인식 `data/services/receiptOcr.ts`(서버 `routes/ocr.ts`) → `deviceOcr.ts`(Tesseract), 품목 표 `domain/receipt.ts`
 - **숙소 최저가 (늘 켜짐, docs/28·ADR-0010)**: 웹 `features/lodging/`(`/lodging-price` 화면 + 숙소 예약 시트 안 시트), 서버 `routes/lodging.ts` + `services/agodaLookup.ts`·`serpapiHotels.ts`, 관리자 `/admin/lodging`
 - **여행 모드 (설정 "일정" `tripMode`, docs/25-travel-mode·docs/27)**: `features/travel/TravelModePage.tsx`(`/trips/:tripId/go`), 기기 설정 `data/travelModeStore.ts`
-- **시트(아래에서 올라오는 창)**: `shared/ui/BottomSheet.tsx`(처음 열 때 `BottomSheetImpl`을 불러옴). 시트 안 양식 제출은 바깥 양식으로 올라가지 않게 막는다 (2026-11-11)
+- **시트(아래에서 올라오는 창)**: `shared/ui/BottomSheet.tsx`(처음 열 때 `BottomSheetImpl`을 불러옴). 시트 안 양식 제출은 바깥 양식으로 올라가지 않게 막는다 (2026-11-11). 시트는 한 번에 하나만 보인다 (2026-11-12): 시트 위에 시트가 열리면 `sheetStack.ts`가 열린 순서를 기억해 아래 시트를 숨기고(그려 둔 채라 입력 내용 유지) 위 시트에 "뒤로"를 둔다 — 새 시트를 만들 때 따로 할 일 없음. "뒤로"가 필요 없는 시트는 `backButton={false}`(삭제 확인 창)
 - **새 외부 API (서버)**: `services/apiUsage.ts`의 `APIS`에 id·분류(`paid`=과금 가능 / `free`)·무료 월 사용량 추가 →
   호출 직전에 `guardApi(id)`(멈춤이면 `ApiPaused` → 503 `api_paused`), `trackApi(id)` → `ko.json` `apiUsage.name/note`.
   브라우저에서 직접 부르는 유료 API는 `routes/usage.ts`처럼 허용 여부 확인 + 사용 기록 엔드포인트를 둔다

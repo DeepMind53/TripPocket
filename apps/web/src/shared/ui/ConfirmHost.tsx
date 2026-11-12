@@ -12,6 +12,7 @@ export function ConfirmHost() {
       open={message !== null}
       onOpenChange={(o) => !o && closeConfirm(false)}
       title={t('confirm.title')}
+      backButton={false}
     >
       <div className="flex flex-col gap-4 pb-2">
         <p className="text-body-2 whitespace-pre-line text-fg-sub">{message}</p>

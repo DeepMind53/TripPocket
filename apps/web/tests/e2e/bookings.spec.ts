@@ -64,3 +64,36 @@ test('예약: 기차·버스는 날짜|교통편, 출발 시각|출발역, 도�
   const cardOverflow = await card.evaluate((el) => el.scrollWidth - el.clientWidth);
   expect(cardOverflow).toBeLessThanOrEqual(1);
 });
+
+test('예약: 입력 시트에서 달력 시트를 열면 달력만 보이고, 뒤로 누르면 입력하던 내용 그대로 돌아온다', async ({
+  page,
+}) => {
+  // 창 위에 또 창이 뜨면 헷갈린다 → 한 번에 하나만 (사용자 요청 2026-11-12)
+  await page.setViewportSize({ width: 360, height: 740 });
+  await createTrip(page, '겹친 창 여행');
+  await page
+    .getByRole('navigation', { name: '여행 메뉴' })
+    .getByRole('link', { name: '예약' })
+    .click();
+  await page.getByRole('button', { name: '예약 추가' }).click();
+  const form = page.getByRole('dialog', { name: '예약 추가' });
+  await form.getByRole('button', { name: '숙소' }).click();
+  await form.getByLabel('숙소 이름').fill('신주쿠 그레이스리 호텔');
+  await expect(form.getByRole('button', { name: '뒤로' })).toHaveCount(0);
+
+  await form.getByRole('button', { name: /체크인 → 체크아웃/ }).click();
+  const stay = page.getByRole('dialog', { name: '체크인 · 체크아웃' });
+  await expect(stay).toBeVisible();
+  await expect(page.getByLabel('숙소 이름')).toBeHidden();
+  // "뒤로"는 손가락으로 누를 만큼 크고(44px), 제목과 왼쪽 줄이 맞는다
+  const back = stay.getByRole('button', { name: '뒤로' });
+  const box = (await back.boundingBox())!;
+  expect(box.height).toBeGreaterThanOrEqual(44);
+  await page.screenshot({ path: 'test-results/sheet-stack-inner-360.png' });
+
+  await back.click();
+  await expect(stay).toBeHidden();
+  await expect(form).toBeVisible();
+  await expect(form.getByLabel('숙소 이름')).toHaveValue('신주쿠 그레이스리 호텔');
+  await page.screenshot({ path: 'test-results/sheet-stack-outer-360.png' });
+});
