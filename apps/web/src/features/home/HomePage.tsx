@@ -1,4 +1,5 @@
 import { useSettings } from '../../data/settingsStore';
+import { useMinuteClock } from '../../shared/hooks/useMinuteClock';
 import { DepartCountdown } from '../travel/DepartCountdown';
 import { LegControls } from '../travel/LegControls';
 import { useNextLeg } from '../travel/useNextLeg';
@@ -20,7 +21,7 @@ import {
   type Trip,
 } from '@trippocket/shared';
 import { BedDouble, ChevronDown, CircleHelp, Copy, Navigation, Plus, Luggage } from 'lucide-react';
-import { lazy, Suspense, useEffect, useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { useTranslation } from '../../i18n';
 import { Link, useNavigate } from 'react-router';
 import { useChecklist, useTripBookings, useTripItems, useTrips } from '../../data/hooks';
@@ -74,12 +75,9 @@ function progressBetween(prev: ItineraryItem, next: ItineraryItem, now: string):
 }
 
 /** 1분마다 다시 그려 "35분 후"를 갱신한다 */
+/** 분이 바뀔 때·앱으로 돌아올 때 다시 그리기 (현지 시각·남은 시간, 2026-11-13 실제 분에 맞춤) */
 function useMinuteTick() {
-  const [, setTick] = useState(0);
-  useEffect(() => {
-    const id = window.setInterval(() => setTick((n) => n + 1), 60_000);
-    return () => window.clearInterval(id);
-  }, []);
+  useMinuteClock(true);
 }
 
 /**
