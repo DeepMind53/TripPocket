@@ -4,11 +4,11 @@ import type { Config } from '../config';
 import type { Db } from '../db/database';
 import { requireUser } from '../auth/session';
 import { apiAllowed } from '../services/apiUsage';
-import { geoapifyEta, googleEta } from '../services/routes';
+import { geoapifyDrive, geoapifyEta, googleDrive, googleEta } from '../services/routes';
 import { ROUTE_DAILY_LIMIT, routeUsageRepo } from '../repositories/routeUsageRepo';
 
 /**
- * 두 곳 사이 걸어서·대중교통 소요 시간 (일정 화면 "다음 일정" 바·구간 시간).
+ * 두 곳 사이 걸어서·대중교통 소요 시간 (+ drive: 자동차 시간·거리, 2026-11-13) (일정 화면 "다음 일정" 바·구간 시간).
  * 좌표는 본문으로만 받고(주소창·로그에 남지 않게) 저장하지 않는다
  */
 export function routeEtaRoutes(app: FastifyInstance, config: Config, db: Db): void {
@@ -20,7 +20,7 @@ export function routeEtaRoutes(app: FastifyInstance, config: Config, db: Db): vo
   app.post('/api/routes/eta', auth, async (req, reply) => {
     const body = RouteEtaBody.safeParse(req.body);
     if (!body.success) return reply.code(400).send({ error: 'bad_request' });
-    const { from, to, google, live = false } = body.data;
+    const { from, to, google, live = false, drive = false } = body.data;
     reply.header('cache-control', 'no-store');
     // 한 사람 하루 50번 (자동 + 현재 위치, 2026-11-10). 다 쓰면 웹은 직선거리 어림으로 — 한도 팝업은 띄우지 않는다
     const userId = req.user!.userId;
@@ -31,6 +31,28 @@ export function routeEtaRoutes(app: FastifyInstance, config: Config, db: Db): vo
     const left = ROUTE_DAILY_LIMIT - n - 1;
     const gkey = config.GOOGLE_PLACES_KEY;
     const okey = config.GEOAPIFY_KEY;
+    // 자동차만 (사용자가 [자동차]를 고를 때, 2026-11-13) — 같은 하루 50번 안에서
+    if (drive) {
+      let d: RouteEta | null = null;
+      if (gkey && apiAllowed('google_routes')) {
+        try {
+          d = await googleDrive(from, to, gkey, live);
+        } catch (e) {
+          req.log.warn(`google routes(drive) 실패: ${String(e)}`);
+        }
+      }
+      if (d?.drive === undefined && !google && okey && apiAllowed('geoapify')) {
+        try {
+          d = await geoapifyDrive(from, to, okey, live);
+        } catch (e) {
+          req.log.warn(`geoapify routing(drive) 실패: ${String(e)}`);
+        }
+      }
+      if (d?.drive !== undefined) return { ...d, left };
+      return reply
+        .code(503)
+        .send({ error: 'no_route', api: google ? 'google_routes' : 'geoapify', left });
+    }
     // 실제 길 기준 시간: 걷기·대중교통 모두 Google Routes가 먼저 (2026-10-27).
     // Google은 나라마다 빈 곳이 있다 — 일본은 대중교통 없음, 한국은 도보 없음 (2026-10-27 실제 응답 확인).
     // 빈 쪽은 Google 좌표가 아닐 때만 무료 Geoapify로 채운다 (Google 좌표는 다른 회사로 보내지 않는다 — 약관)

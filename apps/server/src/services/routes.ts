@@ -38,6 +38,9 @@ export function clearRouteCache(): void {
   cache.clear();
 }
 
+const kmOf = (meters: number | undefined) =>
+  meters === undefined || !Number.isFinite(meters) ? undefined : Math.round(meters / 100) / 10;
+
 const minutesOf = (seconds: number | undefined) =>
   seconds === undefined || !Number.isFinite(seconds)
     ? undefined
@@ -125,5 +128,68 @@ export async function geoapifyEta(
     geoapifyOne(from, to, 'approximated_transit', apiKey).catch(() => undefined),
   ]);
   const eta: RouteEta = { walk, transit, source: 'osm' };
+  return live ? eta : remember(k, eta);
+}
+
+/**
+ * 자동차 시간·거리 (사용자 요청 2026-11-13): [자동차]를 고를 때만 한 번. Google Routes DRIVE(교통 반영 안 함 = Essentials 등급,
+ * 걷기·대중교통과 같은 무료량) → 실패하거나 멈추면 Google 좌표가 아닐 때만 Geoapify drive
+ */
+export async function googleDrive(
+  from: Coords,
+  to: Coords,
+  apiKey: string,
+  live = false,
+): Promise<RouteEta> {
+  const k = key(from, to, 'gd');
+  const hit = live ? undefined : cached(k);
+  if (hit) return hit;
+  guardApi('google_routes');
+  trackApi('google_routes');
+  const ll = (c: Coords) => ({ location: { latLng: { latitude: c.lat, longitude: c.lng } } });
+  const res = await fetch('https://routes.googleapis.com/directions/v2:computeRoutes', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'X-Goog-Api-Key': apiKey,
+      // 시간·거리만 (Essentials 기본 필드)
+      'X-Goog-FieldMask': 'routes.duration,routes.distanceMeters',
+    },
+    body: JSON.stringify({ origin: ll(from), destination: ll(to), travelMode: 'DRIVE' }),
+    signal: timeout(),
+  });
+  if (!res.ok) throw new Error(`google routes ${res.status}`);
+  const d = (await res.json()) as { routes?: { duration?: string; distanceMeters?: number }[] };
+  const r = d.routes?.[0];
+  const eta: RouteEta = {
+    drive: minutesOf(r?.duration ? Number.parseFloat(r.duration) : undefined),
+    driveKm: kmOf(r?.distanceMeters),
+    source: 'google',
+  };
+  return live ? eta : remember(k, eta);
+}
+
+export async function geoapifyDrive(
+  from: Coords,
+  to: Coords,
+  apiKey: string,
+  live = false,
+): Promise<RouteEta> {
+  const k = key(from, to, 'od');
+  const hit = live ? undefined : cached(k);
+  if (hit) return hit;
+  guardApi('geoapify');
+  trackApi('geoapify');
+  const url = new URL('https://api.geoapify.com/v1/routing');
+  url.searchParams.set('waypoints', `${from.lat},${from.lng}|${to.lat},${to.lng}`);
+  url.searchParams.set('mode', 'drive');
+  url.searchParams.set('apiKey', apiKey);
+  const res = await fetch(url, { signal: timeout() });
+  if (!res.ok) throw new Error(`geoapify routing ${res.status}`);
+  const d = (await res.json()) as {
+    features?: { properties?: { time?: number; distance?: number } }[];
+  };
+  const p = d.features?.[0]?.properties;
+  const eta: RouteEta = { drive: minutesOf(p?.time), driveKm: kmOf(p?.distance), source: 'osm' };
   return live ? eta : remember(k, eta);
 }

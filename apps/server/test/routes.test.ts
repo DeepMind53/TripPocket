@@ -37,11 +37,21 @@ beforeEach(async () => {
     calls.push({ url, body, headers: (init?.headers ?? {}) as Record<string, string> });
     if (url.includes('routes.googleapis.com'))
       return Response.json({
-        routes: [{ duration: body.includes('TRANSIT') ? '1500s' : '3600s' }],
+        routes: [
+          body.includes('DRIVE')
+            ? { duration: '720s', distanceMeters: 5340 }
+            : { duration: body.includes('TRANSIT') ? '1500s' : '3600s' },
+        ],
       });
     if (url.includes('api.geoapify.com/v1/routing'))
       return Response.json({
-        features: [{ properties: { time: url.includes('mode=walk') ? 3000 : 1800 } }],
+        features: [
+          {
+            properties: url.includes('mode=drive')
+              ? { time: 900, distance: 6100 }
+              : { time: url.includes('mode=walk') ? 3000 : 1800 },
+          },
+        ],
       });
     return new Response('not found', { status: 404 });
   });
@@ -162,5 +172,21 @@ describe('출발 시각 (두 장소 소요 시간)', () => {
     expect(over.json()).toEqual({ error: 'route_daily', limit: 50, left: 0 });
     // 한도를 넘은 요청은 외부 API를 부르지 않는다 (두 번 × 걷기·대중교통)
     expect(calls).toHaveLength(4);
+  });
+
+  it('자동차(drive): 고를 때만 — Google DRIVE 한 번(시간·거리만), 멈추면 Google 좌표가 아닐 때만 Geoapify', async () => {
+    const res = await eta({ from, to, google: true, drive: true });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toMatchObject({ drive: 12, driveKm: 5.3, source: 'google' });
+    expect(calls).toHaveLength(1);
+    expect(calls[0]!.body).toContain('DRIVE');
+    expect(calls[0]!.headers['X-Goog-FieldMask']).toBe('routes.duration,routes.distanceMeters');
+    used('google_routes', 9500, 'America/Los_Angeles');
+    clearRouteCache();
+    // Google 좌표는 다른 회사로 보내지 않는다
+    expect((await eta({ from, to, google: true, drive: true })).statusCode).toBe(503);
+    const o = await eta({ from, to, google: false, drive: true });
+    expect(o.json()).toMatchObject({ drive: 15, driveKm: 6.1, source: 'osm' });
+    expect(calls.at(-1)!.url).toContain('mode=drive');
   });
 });
