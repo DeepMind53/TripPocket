@@ -3,7 +3,7 @@ import { buildApp, PROXY_HEADER } from '../src/app';
 import { createSession } from '../src/auth/session';
 import { loadConfig } from '../src/config';
 import { openDb, type Db } from '../src/db/database';
-import { dailyQuota } from '../src/routes/usage';
+import { dailyQuota, MAP_LOADS_PER_IP_DAY } from '../src/routes/usage';
 import { apiAllowed, APIS, guardApi, trackApi } from '../src/services/apiUsage';
 
 const SECRET = 's'.repeat(40);
@@ -155,10 +155,34 @@ describe('API 사용량 (관리자)', () => {
 describe('dailyQuota (지도 로드 부풀리기 방지)', () => {
   it('키마다 하루 한도까지만, 날짜가 바뀌면 다시', () => {
     let now = new Date('2026-10-24T10:00:00Z');
-    const allow = dailyQuota(2, () => now);
-    expect([allow('a'), allow('a'), allow('a'), allow('b')]).toEqual([true, true, false, true]);
+    const q = dailyQuota(2, () => now);
+    expect([q.hit('a'), q.hit('a'), q.hit('a'), q.hit('b')]).toEqual([true, true, false, true]);
+    expect([q.left('a'), q.left('b')]).toEqual([false, true]);
     now = new Date('2026-10-25T00:00:01Z');
-    expect(allow('a')).toBe(true);
+    expect(q.left('a')).toBe(true);
+    expect(q.hit('a')).toBe(true);
+  });
+
+  it('유료 지도는 한 사람 하루 100번을 넘어도 늘 센다 — 대신 그 사람에게는 막는다 (2026-11-12)', async () => {
+    // 분당 30번 요청 제한은 주소마다라, 시험에서는 요청마다 다른 주소로
+    for (let i = 0; i < MAP_LOADS_PER_IP_DAY + 2; i++)
+      await app.inject({
+        method: 'POST',
+        url: '/api/usage/map-load',
+        remoteAddress: `10.0.${i >> 8}.${i & 255}`,
+        headers: { [PROXY_HEADER]: SECRET, origin: ORIGIN, cookie: `__Host-sid=${member}` },
+        payload: { api: 'google_maps_js' },
+      });
+    expect(api(await report(), 'google_maps_js').used).toBe(MAP_LOADS_PER_IP_DAY + 2);
+    const flags = (await req('GET', '/api/usage/flags', member)).json() as {
+      apis: Record<string, boolean>;
+    };
+    // 이 사람은 무료 지도로, 무료 브라우저 API는 그대로
+    expect(flags.apis).toMatchObject({
+      google_maps_js: false,
+      openfreemap: true,
+      open_meteo: true,
+    });
   });
 });
 
@@ -224,5 +248,35 @@ describe('API 사용량 — 모든 외부 API·하루 한도·중지 불가 항�
       }
     }
     expect([...used].filter((id) => !ids.has(id as never))).toEqual([]);
+  });
+
+  it('서버의 외부 호출(fetch)마다 바로 앞에서 guardApi·trackApi를 거친다 (빠뜨리면 사용량이 안 세진다)', async () => {
+    const { readdirSync, readFileSync } = await import('node:fs');
+    const missing: string[] = [];
+    for (const dir of ['src/services', 'src/routes']) {
+      for (const f of readdirSync(dir).filter((n) => n.endsWith('.ts'))) {
+        const lines = readFileSync(`${dir}/${f}`, 'utf8').split('\n');
+        lines.forEach((line, i) => {
+          if (!/\bfetch\(/.test(line)) return;
+          const before = lines.slice(Math.max(0, i - 25), i + 1).join('\n');
+          if (!/guardApi\(|trackApi\(/.test(before)) missing.push(`${dir}/${f}:${i + 1}`);
+        });
+      }
+    }
+    expect(missing).toEqual([]);
+  });
+
+  it('웹이 브라우저에서 바로 부르는 API 목록 = 서버 APIS의 browser 항목 (한쪽만 고치면 기록이 버려진다)', async () => {
+    const { readFileSync } = await import('node:fs');
+    const src = readFileSync('../web/src/data/api/usage.ts', 'utf8');
+    const union = src.slice(
+      src.indexOf('export type BrowserApi'),
+      src.indexOf(';', src.indexOf('export type BrowserApi')),
+    );
+    const web = [...union.matchAll(/'([\w-]+)'/g)].map((m) => m[1]).sort();
+    const server = APIS.filter((a) => a.browser)
+      .map((a) => a.id)
+      .sort();
+    expect(web).toEqual(server);
   });
 });

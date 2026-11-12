@@ -317,7 +317,7 @@ export function setApiPaused(id: ApiId, paused: boolean): void {
     .run(id, paused ? 1 : 0);
 }
 
-/** 자동 중지 상한. kind = month(이번 달 호출 수) / day(오늘). null = 기본값(무료 사용량의 90%) */
+/** 자동 중지 상한. kind = month(이번 달 호출 수) / day(오늘). null = 기본값(무료 사용량의 95%) */
 export function setApiLimit(
   id: ApiId,
   limit: number | null,
