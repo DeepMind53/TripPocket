@@ -2,7 +2,7 @@ import { parseBackup } from '@trippocket/shared';
 import { db } from '../db';
 import { resetLocalDb } from '../dev';
 import { tripRepo, type NewTrip } from '../repositories/tripRepo';
-import { createBackup, restoreBackup } from './backupService';
+import { base64ToBytes, bytesToBase64, createBackup, restoreBackup } from './backupService';
 
 const tokyo: NewTrip = {
   title: '도쿄 가을여행',
@@ -107,5 +107,55 @@ describe('여행 파일 내보내기 (공유 → 파일)', () => {
     await restoreBackup(ok(JSON.stringify(file)), 'merge');
     expect(await count()).toEqual(before);
     expect(await db.items.where('tripId').equals(other.id).count()).toBe(0);
+  });
+});
+
+describe('백업 — 사진·영수증 넣기 (2026-11-13)', () => {
+  const photo = (id: string) => ({
+    id,
+    tripId: 't1',
+    itemId: 'i1',
+    kind: 'receipt' as const,
+    blob: new Blob([new Uint8Array([1, 2, 3, 250])], { type: 'image/jpeg' }),
+    createdAt: '2026-11-13T00:00:00.000Z',
+    text: '커피 4,500',
+    textSource: 'device' as const,
+  });
+
+  it('기본은 사진을 넣지 않고, 켜면 넣어서 복원하면 그대로 돌아온다', async () => {
+    await db.photos.add(photo('p1'));
+    expect((await createBackup()).data).not.toHaveProperty('photos');
+
+    const file = await createBackup({ photos: true });
+    const parsed = ok(JSON.stringify(file));
+    expect(parsed.photos).toHaveLength(1);
+    expect(parsed.photos[0]!.image.startsWith('data:image/jpeg;base64,')).toBe(true);
+
+    await db.photos.clear();
+    await restoreBackup(parsed, 'merge');
+    const back = await db.photos.get('p1');
+    expect(back?.text).toBe('커피 4,500');
+    expect(back?.textSource).toBe('device');
+    // 바이트 변환은 아래 시험에서 (시험 DB fake-indexeddb는 Blob 내용을 복제하지 못한다)
+    expect(back?.blob).toBeDefined();
+  });
+
+  it('바이트 ⇄ base64는 그대로 돌아온다 (큰 사진도)', () => {
+    const big = new Uint8Array(100_000).map((_, i) => (i * 7) % 256);
+    expect(base64ToBytes(bytesToBase64(big))).toEqual(big);
+    expect(bytesToBase64(new Uint8Array([1, 2, 3, 250]))).toBe('AQID+g==');
+  });
+
+  it('사진 없는 파일로 전체 바꾸기를 해도 이 기기 사진은 남는다', async () => {
+    await db.photos.add(photo('p1'));
+    await restoreBackup(ok(JSON.stringify(await createBackup())), 'replace');
+    expect(await db.photos.count()).toBe(1);
+  });
+
+  it('예전 파일(사진 칸 없음)은 빈 사진으로, 형식이 틀린 사진은 거부', () => {
+    const base = { format: 'trippocket-backup', schemaVersion: 1, exportedAt: 'x', data: {} };
+    expect(ok(JSON.stringify(base)).photos).toEqual([]);
+    const bad = { ...base, data: { photos: [{ id: 'p', image: 'javascript:1' }] } };
+    expect(parseBackup(JSON.stringify(bad))).toEqual({ ok: false, reason: 'invalid' });
   });
 });

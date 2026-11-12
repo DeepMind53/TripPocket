@@ -26,6 +26,25 @@ export const BACKUP_TABLES = {
 export type BackupTable = keyof typeof BACKUP_TABLES;
 export const BACKUP_TABLE_NAMES = Object.keys(BACKUP_TABLES) as BackupTable[];
 
+/**
+ * 사진·영수증 (사용자 결정 2026-11-13, ADR-0012 보완): [사진도 넣기]를 켰을 때만 data.photos에.
+ * 기기 전용 사진이 기기를 바꿀 때 사라지지 않게 — 사용자가 고른 파일에만 담기고 서버·동기화로는 안 간다.
+ * 빠진 예전 파일도, 이 칸을 모르는 예전 앱도 그대로 읽는다 (schemaVersion 그대로)
+ */
+const PhotoBackupSchema = z.object({
+  id: z.string(),
+  tripId: z.string(),
+  itemId: z.string(),
+  kind: z.enum(['photo', 'receipt']),
+  createdAt: z.string(),
+  /** data:image/...;base64, */
+  image: z.string().check(z.startsWith('data:image/')),
+  text: z.optional(z.string()),
+  textSource: z.optional(z.enum(['google', 'azure', 'device'])),
+  tag: z.optional(z.enum(['food', 'scenery', 'building', 'people', 'other'])),
+});
+export type PhotoBackup = z.infer<typeof PhotoBackupSchema>;
+
 export interface KeyValue {
   key: string;
   value: unknown;
@@ -44,6 +63,8 @@ export type ParsedBackup =
       exportedAt: string;
       data: Record<BackupTable, { id: string; updatedAt?: string; deletedAt?: unknown }[]>;
       settings: KeyValue[];
+      /** 사진·영수증 (넣지 않은 파일은 빈 배열) */
+      photos: PhotoBackup[];
       /** 지워지지 않은 행 수 (미리보기용) */
       counts: Record<BackupTable, number>;
     }
@@ -93,5 +114,14 @@ export function parseBackup(text: string): ParsedBackup {
   }
   const settings = Settings.safeParse(raw.settings ?? []);
   if (!settings.success) return { ok: false, reason: 'invalid' };
-  return { ok: true, exportedAt: head.data.exportedAt, data, settings: settings.data, counts };
+  const photos = z.array(PhotoBackupSchema).safeParse(raw.photos ?? []);
+  if (!photos.success) return { ok: false, reason: 'invalid' };
+  return {
+    ok: true,
+    exportedAt: head.data.exportedAt,
+    data,
+    settings: settings.data,
+    photos: photos.data,
+    counts,
+  };
 }

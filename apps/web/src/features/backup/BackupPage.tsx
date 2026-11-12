@@ -6,6 +6,7 @@ import {
   createBackup,
   lastBackupAt,
   markBackedUp,
+  photoStats,
   restoreBackup,
   type RestoreMode,
 } from '../../data/services/backupService';
@@ -18,7 +19,7 @@ import {
 } from '../../data/services/localBackups';
 import { useTranslation } from '../../i18n';
 import { useRouteSheet } from '../../shared/hooks/useRouteSheet';
-import { BottomSheet, Button, RadioList, TopBar, toast } from '../../shared/ui';
+import { BottomSheet, Button, RadioList, Switch, TopBar, toast } from '../../shared/ui';
 import { formatBytes, formatSince, hasFolderPicker, openBackupFile, saveFile } from './backupUtils';
 import { ServerStorage } from './ServerStorage';
 
@@ -36,9 +37,13 @@ export function BackupPage() {
   const [sheetOpen, setSheetOpen] = useRouteSheet('restore');
   const fileInput = useRef<HTMLInputElement>(null);
   const [recent, setRecent] = useState<LocalBackup[]>([]);
+  // 사진도 넣기 (사용자 결정 2026-11-13) — 파일이 커지니 기본은 끔
+  const [withPhotos, setWithPhotos] = useState(false);
+  const [photos, setPhotos] = useState<{ count: number; bytes: number } | null>(null);
 
   useEffect(() => {
     void lastBackupAt().then(setLast);
+    void photoStats().then(setPhotos);
     void listLocalBackups().then(setRecent);
     void navigator.storage?.estimate?.().then((e) => setUsage(e.usage ?? null));
     void navigator.storage?.persisted?.().then(setPersisted);
@@ -47,12 +52,18 @@ export function BackupPage() {
   async function backup() {
     setBusy(true);
     try {
-      const file = await createBackup();
+      const file = await createBackup({ photos: withPhotos });
       const json = JSON.stringify(file);
       const saved = await saveFile(backupFileName(file), json, t('backup.shareTitle'));
       if (saved) {
         // 이 기기에도 한 벌 (최근 3개) — 복원할 때 파일을 찾지 않아도 되게
-        await saveLocalBackup(localBackupName(file.exportedAt), json);
+        // 사진은 빼고 (사진은 이미 이 기기에 있고, 3벌이면 용량이 커진다)
+        const { photos: _photos, ...rest } = file.data;
+        void _photos;
+        await saveLocalBackup(
+          localBackupName(file.exportedAt),
+          file.data.photos ? JSON.stringify({ ...file, data: rest }) : json,
+        );
         setRecent(await listLocalBackups());
         await markBackedUp();
         setLast(await lastBackupAt());
@@ -118,6 +129,17 @@ export function BackupPage() {
           <p className="text-caption text-fg-muted" aria-live="polite">
             {t('backup.last')}: {last ? formatSince(last) : t('backup.never')}
           </p>
+          {photos !== null && photos.count > 0 && (
+            <div className="flex items-center gap-3">
+              <label htmlFor="backup-photos" className="flex min-w-0 flex-1 flex-col gap-0.5">
+                <span className="text-body-2 font-medium">{t('backup.photos')}</span>
+                <span className="tabular text-caption whitespace-pre-line text-fg-muted">
+                  {t('backup.photosDesc', { n: photos.count, size: formatBytes(photos.bytes) })}
+                </span>
+              </label>
+              <Switch id="backup-photos" checked={withPhotos} onCheckedChange={setWithPhotos} />
+            </div>
+          )}
           <Button size="lg" fullWidth loading={busy} onClick={() => void backup()}>
             <Download aria-hidden="true" className="size-5" />
             {t('backup.create')}
@@ -244,6 +266,12 @@ export function BackupPage() {
                 items: parsed.counts.items,
                 bookings: parsed.counts.bookings,
               })}
+              {parsed.photos.length > 0 && (
+                <>
+                  <br />
+                  {t('backup.previewPhotos', { n: parsed.photos.length })}
+                </>
+              )}
             </p>
             <RadioList
               label={t('backup.mode')}

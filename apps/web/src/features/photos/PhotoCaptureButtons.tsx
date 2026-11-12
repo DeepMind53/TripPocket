@@ -11,7 +11,7 @@ import { CaptureTile } from './CaptureTile';
 
 /**
  * 빠른 메뉴 [사진]·[영수증] (실험실 "사진·영수증", ADR-0012 — 2026-11-11): 휴대폰 카메라를 열고, 찍으면
- * 지금 일정(없으면 바로 앞 → 다음)에 붙인다. 사진은 이 기기에만 (서버·동기화·백업 없음).
+ * 지금 일정(없으면 바로 앞 → 다음)에 붙인다. 사진은 이 기기에만 (서버·동기화 없음, 백업 파일은 켰을 때만).
  * trip이 없으면 지금 여행 중인 여행을 쓴다
  */
 export function PhotoCaptureButtons({ trip }: { trip?: Trip | undefined }) {

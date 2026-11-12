@@ -3,7 +3,7 @@ import { nowIso } from '../clock';
 import { db, type PhotoRow } from '../db';
 
 /**
- * 일정 사진·영수증 저장소 (ADR-0012): 이 기기에만. 동기화(dirty)·서버 업로드·백업이 없다 — 일부러 그렇게 둔다.
+ * 일정 사진·영수증 저장소 (ADR-0012): 이 기기에만. 동기화(dirty)·서버 업로드가 없다 — 일부러. 백업 파일에는 [사진도 넣기]를 켰을 때만 (2026-11-13)
  * 아예 지운 일정의 사진은 휴지통 정리(trashRepo.purge) 때 함께 지운다
  */
 export const photoRepo = {

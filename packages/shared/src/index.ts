@@ -54,6 +54,7 @@ export {
   type BackupFile,
   type BackupTable,
   type ParsedBackup,
+  type PhotoBackup,
 } from './backup/backup';
 export {
   parsePush,

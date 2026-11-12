@@ -16,7 +16,8 @@ CLAUDE.md는 사용자 데이터를 ADR-0004 범위 밖으로 보내지 못하�
 - 새 기능이라 실험실(`tripPhotos`)에 먼저, [샘플] 포함 → 같은 날 사용자 요청으로 정식(설정 없이 늘 켜짐)
 
 ## 결정 (Decision)
-1. **사진은 기기에만.** Dexie v13 `photos` 표 (id·tripId·itemId·kind·blob·createdAt·text·textSource). 동기화·서버 업로드·백업 JSON에 넣지 않는다.
+1. **사진은 기기에만.** Dexie v13 `photos` 표 (id·tripId·itemId·kind·blob·createdAt·text·textSource). 동기화·서버 업로드에 넣지 않는다.
+   (2026-11-13 보완, 사용자 결정) 백업 JSON에는 백업 화면의 [사진·영수증도 넣기]를 켰을 때만 `data.photos`(data URL)로 담는다 — 기본은 끔, 기기의 최근 백업 3개에는 넣지 않음
    긴 변 1600px JPEG로 줄여 저장한다. 아예 지운 일정의 사진은 휴지통 정리 때 함께 지운다
 2. **글자 인식 경로:** 웹 → 홈 서버 `POST /api/ocr`(로그인, JPEG 본문 4MB까지) → Google Vision `DOCUMENT_TEXT_DETECTION` → 실패·한도면 Azure Read.
    서버는 사진을 저장·기록하지 않고 결과 글만 돌려준다. 키는 서버 `.env`에만 (`GOOGLE_VISION_KEY` 없으면 `GOOGLE_PLACES_KEY`, `AZURE_VISION_*`)
