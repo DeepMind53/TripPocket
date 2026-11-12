@@ -1,7 +1,7 @@
 # 코드 지도 (실제 구조) — 고칠 때 여기서 시작
 
-> 2026-11-12 기준. `03-architecture.md`는 설계 초안이고, **지금 코드가 어떻게 생겼는지는 이 문서**가 기준이다.
-> 구조가 바뀌면 이 문서도 같이 고친다.
+> 2026-11-12 기준. **어디를 고치나**는 이 문서, 전체 그림과 이유는 [`03-architecture.md`](03-architecture.md), 문서 목록은 [`README.md`](README.md).
+> 구조가 바뀌면 같은 커밋에서 이 문서도 고친다.
 
 ## 1. 한눈에
 
@@ -27,7 +27,7 @@ Tailscale Funnel https://jin-server.tail0844c0.ts.net ─▶ 홈 PC 127.0.0.1:87
 |---|---|
 | `packages/shared/src` | 웹·서버 공용 **순수 함수와 Zod 스키마**. 날짜(`date/`), 정렬 키(`order/`), 스키마(`schema/`), 설정·백업·동기화 형식, 장소 데이터·검색(`data/`, `places/`), 환율(`fx/`), 공유용 변환(`share/`), AI 점수(`ai/`), 거리(`geo/`) |
 | `apps/web/src/app` | 라우터(`router.tsx` — 홈과 내 여행 `/trips`만 바로, 나머지 화면은 지연 로딩), 로그인 문(`AuthGate`)·관리자 문(`AdminGate`), 레이아웃(`layouts/AppShell`·`TripLayout` — 하단 탭과 ⚡ 플로팅 버튼), PWA 등록(`pwa.ts`) |
-| `apps/web/src/features/<기능>` | 화면 단위. 기능끼리는 `features/common`만 함께 쓴다 |
+| `apps/web/src/features/<기능>` | 화면 단위. 둘 이상이 쓰는 것은 `features/common`으로. 다른 기능의 조각을 바로 쓰는 곳은 꼭 필요할 때만 (지금: 기록 → `photos/PhotoViewer`·`itinerary/itemKinds`, 마이 → `legal/content.ko`) |
 | `apps/web/src/data` | **DB 접근은 여기만**: `repositories/`(Dexie), `services/`(여러 저장소를 묶는 일), `sync/`(동기화 엔진), `api/`(서버 호출 — `client.ts`의 `api()`는 오류 대신 결과 종류를 돌려준다), 작은 스토어(`authStore`·`settingsStore`·`labsStore`) |
 | `apps/web/src/domain` | 웹 전용 순수 로직 (숙소 밤 계산·일정 정렬·공유 텍스트 등) |
 | `apps/web/src/shared` | UI 부품(`ui/`), 훅(`hooks/`), 유틸(`lib/`), 지도 SDK 감싸기(`maps/`) |
@@ -60,7 +60,8 @@ Tailscale Funnel https://jin-server.tail0844c0.ts.net ─▶ 홈 PC 127.0.0.1:87
     사진 실험 3개의 요청은 `data/services/photoVision.ts` (누를 때만 보냄, ADR-0012)
 - **노선도 (설정 "일정 · 화면" `routeMap`, 2026-11-10 실험실에서 정식)**: 일차 미니맵 `itinerary/DayMiniMap.tsx` → 누르면 여행 전체 노선도 `TripRouteView.tsx`·`TripRouteSheet.tsx`
 - **사진·영수증 (늘 켜짐, ADR-0012, 2026-11-11 실험실에서 정식)**: 기기 전용 `photos` 표·`data/repositories/photoRepo.ts`, 찍기 `features/photos/PhotoCaptureButtons.tsx`,
-  상세 `ItemPhotos.tsx`·`PhotoViewer.tsx`, 글자 인식 `data/services/receiptOcr.ts`(서버 `routes/ocr.ts`) → `deviceOcr.ts`(Tesseract), 품목 표 `domain/receipt.ts`
+  상세 `ItemPhotos.tsx`·`PhotoViewer.tsx`([다시 분석] 포함), 기록 탭 모아보기 `records/PhotoAlbum.tsx`(사진·영수증 전부, 지운 일정 사진은 "일정 없음", 눌러서 지우기·옮기기 — 분류만 실험실 `photoLabels`),
+  글자 인식 `data/services/receiptOcr.ts`(서버 `routes/ocr.ts` → `services/ocr.ts`, 글자 상자를 같은 높이끼리 줄로 묶는 `services/ocrRows.ts`) → `deviceOcr.ts`(Tesseract, 한 열 모드), 품목 표 `domain/receipt.ts`(이름·금액 짝짓기, 수량·세금 표시·할인 처리)
 - **숙소 최저가 (늘 켜짐, docs/28·ADR-0010)**: 웹 `features/lodging/`(`/lodging-price` 화면 + 숙소 예약 시트 안 시트), 서버 `routes/lodging.ts` + `services/agodaLookup.ts`·`serpapiHotels.ts`, 관리자 `/admin/lodging`
 - **여행 모드 (설정 "일정" `tripMode`, docs/25-travel-mode·docs/27)**: `features/travel/TravelModePage.tsx`(`/trips/:tripId/go`), 기기 설정 `data/travelModeStore.ts`
 - **시트(아래에서 올라오는 창)**: `shared/ui/BottomSheet.tsx`(처음 열 때 `BottomSheetImpl`을 불러옴). 시트 안 양식 제출은 바깥 양식으로 올라가지 않게 막는다 (2026-11-11). 시트는 한 번에 하나만 보인다 (2026-11-12): 시트 위에 시트가 열리면 `sheetStack.ts`가 열린 순서를 기억해 아래 시트를 숨기고(그려 둔 채라 입력 내용 유지) 위 시트에 "뒤로"를 둔다 — 새 시트를 만들 때 따로 할 일 없음. "뒤로"가 필요 없는 시트는 `backButton={false}`(삭제 확인 창)
@@ -87,7 +88,8 @@ Tailscale Funnel https://jin-server.tail0844c0.ts.net ─▶ 홈 PC 127.0.0.1:87
 - **관리자 전용 기능**: 서버는 `routes/admin.ts`의 `requireAdmin`, 웹은 `useAuth((s) => s.me?.isAdmin)`로 메뉴 표시
 - **삭제 확인 팝업**: `shared/ui/confirmStore.ts`의 `confirmDelete(문구)` (모든 삭제는 한 번 더 묻는다)
 - **여행지 특보 나라 추가**: 링크는 shared `alerts/alerts.ts` `WEATHER_WARNING_LINKS`, 내용은 서버 `services/nationalAlerts.ts`에 파서 + `APIS` 등록 + docs/24 §7 표
-- **월간 갱신 요청문**: 주기적으로 확인할 정보를 넣으면 `features/me/monthlyUpdate.ko.ts`와 docs/22에 함께 더한다
+- **월간 갱신 요청문**: 주기적으로 확인할 정보를 넣으면 `features/me/monthlyUpdate.ko.ts`와 docs/22에 같은 번호로 함께 더한다
+- **백업·복원**: `features/backup/BackupPage.tsx`, 파일 저장·열기 `backupUtils.ts`(PC 크롬·엣지는 저장 창 `id`로 폴더 기억, 휴대폰은 공유 시트·파일 입력), 이 기기 최근 백업 3개 `data/services/localBackups.ts`(OPFS 파일 — Dexie 표 아님), 형식·검사 shared `backup/`
 
 ## 4. 주요 흐름
 
@@ -101,7 +103,8 @@ Tailscale Funnel https://jin-server.tail0844c0.ts.net ─▶ 홈 PC 127.0.0.1:87
   Google 장소 정보는 AI에 보내지 않는다(목록에만 표시). Google 장소 검색은 API 사용량 자동 중지 안에서만 — 멈추면 블로그만으로
 - **API 사용량**: `api_usage`(날짜별 호출 수, 날짜는 API마다 무료량 초기화 시간대) + `api_controls`(수동 중지·월/하루 자동 상한).
   무료 월·하루 사용량을 아는 API는 그 95%(남은 5%)에서 자동 중지 (2026-10-27, 전에는 90%). 서버 호출은 `guardApi`/`trackApi`, 브라우저 호출은
-  `data/api/usage.ts`의 `externalAllowed`/`reportExternal`(→ `/api/usage/flags`·`/api/usage/map-load`, IP당 하루 100회까지만 셈)
+  `data/api/usage.ts`의 `externalAllowed`/`reportExternal`(→ `/api/usage/flags`·`/api/usage/map-load`). 브라우저 사용은 늘 기록하고,
+  유료 지도(Google·네이버·카카오)는 한 사람 하루 100번을 넘으면 그 사람에게 `flags`가 false → 무료 지도로 (2026-11-12, 전에는 넘으면 기록만 멈춰 덜 세졌다)
 
 - **후기·포인트** (docs/17): 템플릿·장소 키·검사 = shared `reviews/reviews.ts` (`REVIEW_ASPECTS`·`placeKeyOf`·`ReviewInputSchema`) →
   서버 `routes/reviews.ts`(쓰기는 소유자·편집자만, 동기화된 지난 일정만, 포인트는 서버만 `point_ledger`) →
@@ -162,7 +165,7 @@ Tailscale Funnel https://jin-server.tail0844c0.ts.net ─▶ 홈 PC 127.0.0.1:87
 | kma_warning | 무료 | 하루 10,000 | 한국 기상청 특보 현황 (같은 키). 10분 보관 |
 | jma · nws · cwa · eccc | 무료 | 없음 | 일본·미국·대만(`CWA_API_KEY`)·캐나다 기상청 특보. 10분 보관. 기록만 |
 
-새 외부 API를 넣으면 이 표와 `APIS`를 함께 고친다 (`test/apiUsage.test.ts`가 등록 누락을 잡는다)
+새 외부 API를 넣으면 이 표와 `APIS`를 함께 고친다. `test/apiUsage.test.ts`가 잡는 것: 등록 안 된 id, `guardApi`·`trackApi` 없이 부르는 서버 `fetch(`, 웹 `BrowserApi`와 서버 `browser` 목록 차이
 
 ## 5. 확인 명령
 

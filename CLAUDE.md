@@ -7,7 +7,7 @@
 
 오프라인 우선 PWA 여행 일정 앱(https://trippocket.day). 데이터의 1차 저장소는 기기 IndexedDB이고, 로그인하면 홈 PC 서버(Node.js + SQLite, Cloudflare Pages 프록시 → Tailscale Funnel)와 동기화한다.
 지도는 구글/네이버 병행, 평점·리뷰는 Google Places(서버 프록시), 길찾기는 지도 앱 딥링크.
-상세: `README.md`, `docs/` 참조. 서버의 공개 API도 로그인 필요(예외: 보기 전용 링크 `/api/public/*`, 로그인 `/auth/*`). **코드를 고칠 때는 `docs/code-map.md`(실제 구조·수정 위치)부터.**
+상세: `README.md`, `docs/` 참조. 서버의 공개 API도 로그인 필요(예외: 보기 전용 링크 `/api/public/*`, 로그인 `/auth/*`). **코드를 고칠 때는 `docs/code-map.md`(실제 구조·수정 위치)부터.** 전체 그림은 `docs/03-architecture.md`, 문서 목록·상태(현행/기록/보류)는 `docs/README.md`.
 
 ## 2. 작업 시작 전 반드시 확인
 

@@ -1,154 +1,131 @@
 # 03. 아키텍처
 
-- 문서 상태: **운영 중인 구조 기준** (2026-11-02 갱신). §1·§2·§5·§7~§9는 실제 구조, §4·§6은 처음 설계안이라 폴더·라우트는 [`code-map.md`](code-map.md)가 기준이다
+- 문서 상태: **현행** (2026-11-12 전면 갱신 — 처음 설계안의 폴더·라우트를 실제 구조로 바꿈)
+- 이 문서 = 전체 그림과 **왜** 그렇게 했나. 파일 단위로 **어디를** 고치나는 [`code-map.md`](code-map.md). 문서 목록은 [`README.md`](README.md)
+- 구조가 바뀌면 같은 커밋에서 이 문서와 code-map을 고친다
 
 ## 1. 전체 구조
 
 ```
-휴대폰·PC 브라우저 (PWA)
-  UI (React) ─ features ─ data/repositories ─▶ IndexedDB (1차 저장, 오프라인 동작)
-  동기화 엔진 ─ 고친 행 올리기 / 바뀐 행 받기 (시작·복귀·고친 뒤·30초마다)
-  서비스 워커 (직접 작성, 앱 파일 미리 저장)
-  지도 SDK ─ 지도를 열 때만 불러옴
-    해외: Google / 국내: 설정값(네이버·카카오·매번 묻기) / 멈추면: MapLibre + OpenFreeMap
-  길찾기 ─ 지도 앱 딥링크
-       │ 같은 주소 https://trippocket.day (쿠키 세션)
+휴대폰·PC 브라우저 (PWA, https://trippocket.day)
+  UI (React) ─ features ─ data/repositories ─▶ IndexedDB (Dexie v14, 1차 저장 — 서버 없이 모든 핵심 기능)
+  기기 전용: 사진·영수증(photos 표), 개인정보(여권 만료 등), 최근 백업 3개(OPFS 파일) — 서버·동기화로 보내지 않음
+  동기화 엔진 ─ 고친 행(dirty) 올리기 / 바뀐 행 받기 (시작·복귀·고친 뒤·30초마다)
+  서비스 워커 (직접 작성, 앱 파일 미리 저장, /api·/auth는 가로채지 않음)
+  지도 SDK ─ 지도를 열 때만 불러옴: 해외 Google / 국내 네이버·카카오(설정) / 막히면 MapLibre + OpenFreeMap
+  길찾기 ─ 지도 앱 딥링크 · 영수증 글자 인식 마지막 단계 ─ 기기 안 Tesseract.js
+       │ 같은 주소 (쿠키 세션, 로그인한 사람만 — app/AuthGate.tsx)
        ▼
-Cloudflare Pages ─ 웹앱 + Functions가 /api·/auth를 전달 (비밀 헤더, ADR-0006)
+Cloudflare Pages ─ 정적 파일 + Functions가 /api·/auth만 전달 (비밀 헤더 x-tp-proxy, ADR-0006)
        │ Tailscale Funnel
        ▼
-홈 PC: Node.js + Fastify (127.0.0.1, 비밀 헤더 없으면 404)
-  인증·동기화·공유·후기·알림 ─ SQLite(node:sqlite) + 첨부 파일 + 암호화 백업(매일 03:00)
-  외부 API는 services/apiUsage.ts로 사용량 측정·자동 중지 (무료량 95%)
+홈 PC: Node.js + Fastify (127.0.0.1:8787, 비밀 헤더 없으면 404)
+  로그인(카카오·Google)·동기화·공유·후기·알림·예약 문서·숙소 가격 기록·사용 통계
+  SQLite(node:sqlite, 마이그레이션 23) + 첨부 파일 + 암호화 백업(매일 03:00)
+  외부 API는 모두 services/apiUsage.ts를 거친다: 호출 직전 guardApi(멈춤·한도 확인) + trackApi(기록), 무료량 95%에서 자동 중지
     장소: 국내 네이버 → 카카오 / 해외 Google → 자동완성 → Geoapify
-    AI 추천: Gemini → Workers AI → Groq → AI 없이 / 환율: 수출입은행
-    특보: GDACS·USGS·외교부·나라별 기상청 / 항공편: AviationStack / 길 시간: Google Routes·Geoapify
+    AI: Gemini → Workers AI → Groq → AI 없이 · 글자 인식: Google Vision → Azure Read (→ 웹이 기기 안에서)
+    특보: GDACS·USGS·외교부·나라별 기상청 · 항공편: AviationStack·AirLabs·공항공사 · 길 시간: Google Routes·Geoapify
+    숙소 최저가: 아고다 찾기·SerpApi · 공공데이터포털(입국·안전공지·축제·미세먼지) · 위키백과 · 수출입은행
 ```
 
-- 로그인한 사람만 앱을 쓴다 (`app/AuthGate.tsx`). 이 기기에서 로그인한 적 있으면 서버 없이도 동작한다
-- 사용자 위치는 저장·기록하지 않는다. 사용자 데이터는 홈 서버로만 보낸다
+- 사용자 위치는 저장·기록하지 않는다 (줄여서 계산에만). 사용자 데이터는 홈 서버로만 보낸다 (CLAUDE.md §3)
+- 결정 근거: ADR-0001~0012 ([`adr/`](adr/))
 
 ## 2. 기술 스택 (실제)
 
 | 영역 | 사용 | 메모 |
 |---|---|---|
 | 언어·빌드 | TypeScript strict, Vite, pnpm workspaces | ADR-0005 |
-| UI | React 19, React Router, Tailwind CSS 4, Radix(필요한 것만), lucide-react, dnd-kit(편집 때만) | 시트 등은 처음 열 때 불러옴 |
+| UI | React 19, React Router, Tailwind CSS 4, Radix(시트 등 필요한 것만), lucide-react, dnd-kit(편집 때만) | 시트·무거운 화면은 처음 열 때 불러옴 |
+| 디자인 | 토큰 + "여행 노선" 부품(노선·탑승권·다음 역 카드·도장), unslop 규칙 | docs/11 §13, docs/29, ADR-0011 |
 | 로컬 DB·상태 | Dexie(IndexedDB), Zustand | UI는 항상 로컬 DB에서 읽는다 |
 | 검증 | `zod/mini` (`packages/shared`) | 웹·서버 공용 |
-| 날짜·문구 | 자체 유틸, 자체 경량 i18n | 번들 절약 |
+| 날짜·문구 | 자체 유틸, 자체 경량 i18n (`ko.json`, 키 타입 검사) | 번들 절약 |
 | 지도 | Google·네이버·카카오 공식 스크립트, 대체 MapLibre | ADR-0004, ADR-0007 |
+| 글자 인식 | 서버 Google Vision → Azure Read, 기기 Tesseract.js(누를 때만 불러옴) | ADR-0012 |
 | PWA | 직접 만든 서비스 워커 + vite 플러그인 | 라이브러리 없음 |
-| 서버 | Node.js, Fastify, node:sqlite, web-push | 마이그레이션은 `db/migrations.ts` |
-| 인증 | 카카오·네이버·Google OAuth + 서버 세션 쿠키 | `docs/09` |
+| 서버 | Node.js, Fastify, node:sqlite, web-push | ORM 없이 repository에서 SQL |
+| 인증 | 카카오·Google OAuth + 서버 세션 쿠키 (네이버는 2026-11-03 뺌) | docs/09 |
 | 테스트 | Vitest, Testing Library, fake-indexeddb, Playwright(Chromium·WebKit) | `pnpm check`, `pnpm e2e` |
 | 호스팅 | Cloudflare Pages + Functions, 홈 PC + Tailscale Funnel | ADR-0006, 작업 스케줄러로 자동 시작 |
 
 ## 3. 레이어 & 의존 규칙
-```
-app  ──▶  features  ──▶  shared (ui, hooks, lib)
-                    ──▶  data (db, repositories, backup)
-                    ──▶  domain (types, 순수 로직)
-data ──▶ domain
-shared ──▶ domain
-domain ──▶ (없음. 외부 라이브러리는 date-fns 정도만)
-```
-- `features/A`는 `features/B`를 직접 import 하지 않는다. 공통이면 `shared`/`domain`으로 내린다.
-- 규칙은 ESLint `import/no-restricted-paths`(또는 `eslint-plugin-boundaries`)로 강제.
 
-## 4. 폴더 구조 (모노레포)
+```
+app  ──▶  features  ──▶  shared (ui, hooks, lib, maps)
+                    ──▶  data (db, repositories, services, sync, api)
+                    ──▶  domain (웹 전용 순수 로직)
+data ──▶ domain        shared ──▶ domain
+모든 앱 ──▶ packages/shared (공용 스키마·순수 함수)  /  packages/shared ──▶ (앱을 모름)
+```
+- 거꾸로 import 하지 않는다. **lint로 강제하는 것**: `packages/shared`가 React·앱 코드를 import 하면 오류 (`eslint.config.js`)
+- 기능끼리: 둘 이상이 쓰는 것은 `features/common`으로 내린다. 한 기능이 다른 기능의 화면 조각을 그대로 쓰는 것은 허용하되 꼭 필요할 때만
+  (지금 예: 기록 → 사진 창·일정 종류 아이콘, 마이 → 법적 고지 도움말 내용). 셋 이상이 쓰게 되면 common으로 옮긴다
+- DB 접근은 repository만 (웹 `data/repositories`, 서버 `repositories`). 컴포넌트·라우트에서 DB를 직접 부르지 않는다
+
+## 4. 폴더 (요약 — 상세는 code-map §2)
+
 ```
 Travel_Planner/
-├─ CLAUDE.md, README.md, pnpm-workspace.yaml, package.json
-├─ docs/
-├─ packages/
-│  └─ shared/                  # 웹·서버 공용 (React/Node 의존 금지)
-│     └─ src/ schemas/(Zod), sync/(프로토콜 타입), domain/(공용 순수 함수)
-├─ apps/
-│  ├─ web/
-│  │  ├─ public/  index.html  vite.config.ts
-│  │  ├─ src/
-│  │  │  ├─ main.tsx
-│  │  │  ├─ app/               # App, router, layouts(AppShell 하단 탭바), providers
-│  │  │  ├─ features/
-│  │  │  │  ├─ trips/ itinerary/ bookings/ checklist/ today/ saved/ quick-menu/ fx/ ai/
-│  │  │  │  ├─ places/         # 장소 검색·필터·상세, 지도 화면
-│  │  │  │  ├─ account/        # 로그인, 기기 관리, 탈퇴
-│  │  │  │  └─ settings/
-│  │  │  ├─ domain/            # 웹 전용 순수 로직
-│  │  │  ├─ data/
-│  │  │  │  ├─ db.ts  migrations/  repositories/  backup/
-│  │  │  │  ├─ sync/           # push/pull 엔진, 충돌 처리
-│  │  │  │  └─ api/            # 서버 API 클라이언트 (fetch 래퍼, 401 처리)
-│  │  │  ├─ shared/
-│  │  │  │  ├─ ui/  hooks/
-│  │  │  │  ├─ maps/           # MapProvider, GoogleMapProvider, NaverMapProvider
-│  │  │  │  └─ lib/            # directions.ts(딥링크), geolocation, id, clipboard
-│  │  │  └─ i18n/  styles/
-│  │  └─ tests/e2e/
-│  └─ server/
-│     ├─ src/
-│     │  ├─ index.ts · app.ts  # Fastify 조립 (helmet, rate-limit, cookie, 프록시 비밀 헤더, Origin 검사, 사용 통계 훅)
-│     │  ├─ config.ts          # .env 로드 + Zod 검증 (누락 시 기동 실패)
-│     │  ├─ db/                # database.ts, migrations.ts (SQLite 마이그레이션 19개)
-│     │  ├─ auth/              # providers(naver, kakao, google), session(requireUser), admins
-│     │  ├─ routes/            # auth, me, sync, share, places, routes(이동 시간), flights(편명·국내 공항 정보),
-│     │  │                     # ai(추천), translate(건강 카드 번역), stats(사용 통계), reviews, push, alerts,
-│     │  │                     # attachments, suggestions, usage, admin
-│     │  ├─ repositories/      # syncRepo(멤버십 조건 강제), statsRepo(사람 구분 없는 합계)
-│     │  └─ services/          # places(Google·네이버·카카오·Geoapify), llm(Gemini→Workers AI→Groq), naverBlog,
-│     │                        # airportInfo(인천·한국공항공사), flights(AviationStack), alerts, fx, apiUsage(한도·자동 중지)
-│     ├─ test/
-│     └─ .env.example
-└─ ops/                        # 홈 PC 운영
-   ├─ winsw/  cloudflared/     # 서비스 등록 설정
-   ├─ backup.ps1  restore.ps1
-   └─ README.md                # 설치·복구 절차
+├─ CLAUDE.md · PROGRESS.md · README.md
+├─ docs/            # README.md(목록) · code-map · 번호 문서 · adr/ · conventions/
+├─ packages/shared/ # schema · date · order · settings · backup · sync · data(입국·공항·회화 등) · alerts · ai · lodging · ocr · vision
+├─ apps/web/        # src/{app, features/*, data, domain, shared, i18n, styles, sw} · public · tests/e2e · scripts
+├─ apps/server/     # src/{routes, services, repositories, db, auth} · test
+├─ functions/       # Cloudflare Pages Functions (_proxy, _middleware)
+└─ ops/             # 홈 PC 설치·Funnel·백업·복구·재시작
 ```
 
 ## 5. 데이터 흐름
-- **읽기**: 컴포넌트 → `useTrip(id)` 같은 feature hook → repository → Dexie `useLiveQuery` → DB 변경 시 자동 재렌더.
-- **쓰기**: 컴포넌트 → feature hook의 mutation → repository (Zod 검증 + `updatedAt` 갱신 + 트랜잭션) → Dexie.
-- **전역 UI 상태**(현재 선택된 Day, 시트 열림 등)만 Zustand / URL 파라미터. 서버 상태 캐시 라이브러리 불필요.
-- **URL이 상태**: `/trips/:tripId/day/:dayIndex` 처럼 화면 위치는 URL로 표현 → 새로고침/공유/뒤로가기 일관성.
 
-## 6. 라우트 (실제, `app/router.tsx`)
+- **읽기**: 컴포넌트 → repository → Dexie `useLiveQuery` → DB가 바뀌면 다시 그림
+- **쓰기**: 컴포넌트 → repository (Zod 검증 + `updatedAt` + `dirty` + 트랜잭션) → Dexie → 동기화 엔진이 올림
+- **삭제**: `deletedAt` 표시만 → 7일 휴지통(`trashRepo`) → 기기·서버 정리. 기기 전용 사진은 일정이 아예 지워질 때 함께 지움
+- **화면 상태**: 위치는 URL(`?day=`·시트 이름), 잠깐 상태는 Zustand·컴포넌트
+- **시트**: 한 번에 하나만 보인다 (`shared/ui/sheetStack.ts` — 위 시트가 열리면 아래 시트를 숨기고 "뒤로")
+
+## 6. 라우트 (실제, `apps/web/src/app/router.tsx`)
+
 | 경로 | 화면 |
 |---|---|
-| `/` | 홈: 여행 목록·오늘 여행·날씨 카드 |
-| `/trips`, `/trips/new` | 여행 목록·만들기 |
-| `/trips/:tripId/plan?day=N` | 일정 (일차 칩·지도·날씨 주의·이동 정보) |
-| `/trips/:tripId/bookings?focus=id` | 예약 (항공 공항 정보·회원번호·문서) — focus = 그 예약으로 스크롤 |
-| `/trips/:tripId/checklist` | 준비물·할 일 |
-| `/trips/:tripId/essentials` | 나라별 필수 항목 (여권·전자여행허가 자동 확인) |
-| `/trips/:tripId/weather` | 날씨 정보 (지난 날씨·예보·작년 기록, ? 설명) |
-| `/trips/:tripId/places`, `/print`, `/settings` | 가고 싶은 곳, 인쇄용 일정표, 여행 설정 |
-| `/records`, `/saved`, `/me` | 기록, 저장한 장소, 마이 |
-| `/me/profile`, `/me/reviews`, `/me/trash`, `/me/suggestions` | 개인정보, 내 후기, 삭제 기록 복원, 개선 제안 |
-| `/ai`, `/fx`, `/phrases` | AI 추천, 환율, 번역·회화(건강 카드) — 빠른 메뉴에서 |
-| `/settings`, `/backup`, `/labs`, `/help`, `/legal/:doc` | 설정, 백업·복원, 실험실, 도움말, 법적 고지 |
-| `/admin/users`, `/admin/api-usage`, `/admin/stats`, `/admin/suggestions`, `/admin/ai` | 관리자 |
-| `/s/:shareId`, `/invite/:token`, `/login` | 보기 전용 공유, 초대 수락, 로그인 (로그인 없이 여는 화면) |
+| `/` | 홈: 여행 중 다음 일정 카드·오늘 노선·준비 현황·내 여행 |
+| `/trips`, `/trips/new` | 내 여행 · 만들기 |
+| `/trips/:tripId/plan?day=N` | 일정 (노선·지도·날씨 주의·이동 정보) |
+| `/trips/:tripId/places`, `/bookings`, `/checklist` | 가고 싶은 곳 · 예약 · 준비물/할 일 |
+| `/trips/:tripId/essentials`, `/weather`, `/go`, `/print`, `/settings` | 출국 준비 · 날씨·특보 · 여행 모드 · 인쇄용 · 여행 설정 |
+| `/records`, `/saved`, `/me`, `/help` | 기록(도장·회고·사진 모아보기) · 저장한 장소 · 마이 · 도움말 |
+| `/me/profile`, `/me/reviews`, `/me/trash`, `/me/suggestions` | 개인정보 · 내 후기 · 삭제 기록 복원 · 개선 제안 |
+| `/ai`, `/fx`, `/phrases`, `/lodging-price` | AI 추천 · 환율 · 번역·회화(건강 카드) · 숙소 최저가 |
+| `/settings`, `/backup`, `/labs`, `/legal/:doc` | 설정 · 백업·복원 · 실험실 · 법적 고지 |
+| `/admin/users`, `/admin/stats`, `/admin/api-usage`, `/admin/entry-check`, `/admin/lodging`, `/admin/ai`, `/admin/suggestions` | 관리자 (`AdminGate`) |
+| `/s/:shareId`, `/invite/:token`, `/login` | 보기 전용 공유 · 초대 수락 · 로그인 (로그인 없이 여는 화면) |
+| `/dev/ui`, `/dev/db` | 개발용 (개발 빌드만) |
 
 ## 7. PWA / 오프라인 전략
-- 직접 만든 서비스 워커(`src/sw/sw-template.js`): 앱 파일 미리 저장, 글꼴은 쓸 때 저장. `/api`·`/auth`는 가로채지 않는다
+
+- 서비스 워커(`src/sw/sw-template.js`): 앱 파일 미리 저장, 글꼴은 쓸 때 저장. `/api`·`/auth`는 가로채지 않는다
 - 새 버전이 있으면 [업데이트] 안내 (편집 중 강제 새로고침 없음)
 - 지도는 온라인에서만. 오프라인에서는 안내 + 지도 앱 오프라인 지도 팁·택시 카드
-- 외부 API가 실패하거나 한도면 대체 API → 대체 기능 → 안내 팝업 순서 (`docs/23`)
+- 외부 API가 실패하거나 한도면 대체 API → 대체 기능 → 안내 팝업 순서 (docs/23)
+- 백업: 파일(공유 시트·다운로드, PC는 폴더 기억) + 이 기기에 최근 3개 (`data/services/localBackups.ts`)
 
 ## 8. 보안 / 개인정보
-> 서버·인증·동기화 보안 전체 체크리스트는 `09-server-auth-security.md` §7.
-- 사용자 데이터 전송은 홈 서버로만. CSP: `default-src 'self'` + API 도메인 + Google·네이버·카카오 지도 도메인만 허용.
-- 공유 링크는 서버의 보기 전용 링크(128bit id, 언제든 끄기). 예약번호·연락처·메모는 기본 제외.
-- 가져오기 데이터는 Zod로 전량 검증, HTML 렌더 시 `dangerouslySetInnerHTML` 금지 (XSS).
-- 예약번호 등 민감 정보는 공유 내보내기 시 "포함/제외" 옵션 제공.
+
+> 서버·인증·동기화 보안 전체 점검표는 `09-server-auth-security.md` §7.
+- 사용자 데이터 전송은 홈 서버로만. CSP: `default-src 'self'` + API·지도 도메인만 (`public/_headers`, E2E로 위반 검사)
+- 서버의 모든 데이터 접근은 `requireUser` + 여행 멤버십 인가 (`syncRepo`가 행마다)
+- 공유 링크는 보기 전용(128bit id, 언제든 끄기). 예약번호·연락처·메모는 기본 제외 (shared `toPublicTrip`)
+- 가져오기 데이터는 Zod로 전량 검증, `dangerouslySetInnerHTML` 금지
+- 비밀값은 `apps/server/.env`에만 (커밋·출력 금지), 브라우저 키는 도메인 제한
 
 ## 9. 성능 예산
-- 초기 JS ≤ 300KB gzip (2026-10-24 상향). 지도·차트·DnD는 **라우트 단위 lazy import**.
-- 리스트 200개 이상이면 가상화 고려 (현실적으로 Day당 아이템 수는 적어 우선 불필요).
-- 이미지 첨부는 저장 전 리사이즈/압축 (긴 변 1600px, WebP/JPEG 0.8).
+
+- 첫 화면 JS ≤ 300KB gzip (`pnpm size`, 2026-10-24 상향). 화면은 라우트 단위 지연 로딩, 시트는 처음 열 때
+- 사진은 저장 전 줄여 저장 (기기 전용), 글자 인식 엔진은 누를 때만 불러옴
 
 ## 10. 확장 고려
-- 동기화: 모든 엔티티에 `id(UUID v7)`, `createdAt`, `updatedAt`, `deletedAt`, `rev` → 서버 동기화(v0.2 도입). 필드 단위 병합/CRDT는 P2.
-- 서버 이전: SQLite → PostgreSQL, 홈 PC → 클라우드 VM 이전이 가능하도록 DB 접근은 Drizzle + repository로 격리.
-- 네이티브 앱화: Capacitor로 감싸기 가능하도록 브라우저 전용 API는 `shared/lib`에 어댑터로 격리.
+
+- 동기화: 모든 엔티티에 `id(UUID v7)`, `createdAt`, `updatedAt`, `deletedAt`, `rev`. 충돌은 나중 도착 채택 + `conflicts` 보관 (필드 단위 병합은 나중)
+- 서버 이전: DB 접근이 repository 안에만 있어 SQLite → 다른 DB, 홈 PC → 클라우드 VM 이전이 가능
+- 네이티브 앱화: Capacitor로 감싸기 가능하도록 브라우저 전용 API는 `shared/lib`·`data/services`에 감싼다
