@@ -105,6 +105,7 @@ Tailscale Funnel https://jin-server.tail0844c0.ts.net ─▶ 홈 PC 127.0.0.1:87
   무료 월·하루 사용량을 아는 API는 그 95%(남은 5%)에서 자동 중지 (2026-10-27, 전에는 90%). 서버 호출은 `guardApi`/`trackApi`, 브라우저 호출은
   `data/api/usage.ts`의 `externalAllowed`/`reportExternal`(→ `/api/usage/flags`·`/api/usage/map-load`). 브라우저 사용은 늘 기록하고,
   유료 지도(Google·네이버·카카오)는 한 사람 하루 100번을 넘으면 그 사람에게 `flags`가 false → 무료 지도로 (2026-11-12, 전에는 넘으면 기록만 멈춰 덜 세졌다)
+  서버에 닿지 않으면(홈 PC 꺼짐·오류) 셀 수 없으니 유료 지도만 막는다(30초 뒤 다시 확인), 무료 API는 그대로 (2026-11-13)
 
 - **후기·포인트** (docs/17): 템플릿·장소 키·검사 = shared `reviews/reviews.ts` (`REVIEW_ASPECTS`·`placeKeyOf`·`ReviewInputSchema`) →
   서버 `routes/reviews.ts`(쓰기는 소유자·편집자만, 동기화된 지난 일정만, 포인트는 서버만 `point_ledger`) →
