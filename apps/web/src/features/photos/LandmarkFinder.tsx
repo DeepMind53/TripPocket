@@ -2,7 +2,6 @@ import type { VisionNames } from '@trippocket/shared';
 import { MapPin, Plus } from 'lucide-react';
 import { useState } from 'react';
 import type { PhotoRow } from '../../data/db';
-import { useLab } from '../../data/labsStore';
 import { itemRepo } from '../../data/repositories/itemRepo';
 import { photoNames } from '../../data/services/photoVision';
 import { useTranslation } from '../../i18n';
@@ -14,10 +13,9 @@ import { Button, toast } from '../../shared/ui';
  */
 export function LandmarkFinder({ photo }: { photo: PhotoRow }) {
   const { t } = useTranslation();
-  const on = useLab('photoLandmark');
   const [busy, setBusy] = useState(false);
   const [found, setFound] = useState<VisionNames['names'] | null>(null);
-  if (!on || photo.kind !== 'photo') return null;
+  if (photo.kind !== 'photo') return null;
 
   const find = async () => {
     setBusy(true);

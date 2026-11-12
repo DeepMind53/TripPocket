@@ -1,6 +1,5 @@
 import type { PhotoTranslation } from '@trippocket/shared';
 import { useState } from 'react';
-import { useLab } from '../../data/labsStore';
 import { translatePhoto } from '../../data/services/photoVision';
 import { useTranslation } from '../../i18n';
 import { shrinkImage } from '../../shared/lib/shrinkImage';
@@ -13,10 +12,8 @@ import { CaptureTile } from '../photos/CaptureTile';
  */
 export function PhotoTranslate() {
   const { t } = useTranslation();
-  const on = useLab('photoTranslate');
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<PhotoTranslation | null>(null);
-  if (!on) return null;
 
   const run = async (file: File) => {
     setBusy(true);

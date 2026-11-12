@@ -2,7 +2,6 @@ import { COUNTRY_CURRENCY } from '@trippocket/shared';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { ReceiptText, Tags } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { useLab } from '../../data/labsStore';
 import { itemRepo } from '../../data/repositories/itemRepo';
 import { photoRepo } from '../../data/repositories/photoRepo';
 import { tripRepo } from '../../data/repositories/tripRepo';
@@ -21,7 +20,6 @@ type Filter = PhotoTag | 'all' | 'receipt';
  */
 export function PhotoAlbum() {
   const { t } = useTranslation();
-  const labels = useLab('photoLabels');
   const all = useLiveQuery(() => photoRepo.listAll(), []);
   const tripIds = useMemo(() => [...new Set((all ?? []).map((p) => p.tripId))], [all]);
   // 사진이 붙은 일정이 아직 있는지 (지운 일정은 목록에 없다)
@@ -122,7 +120,9 @@ export function PhotoAlbum() {
                 <img
                   src={urls.get(p.id)}
                   alt=""
-                  className={orphan ? 'size-full object-cover opacity-60' : 'size-full object-cover'}
+                  className={
+                    orphan ? 'size-full object-cover opacity-60' : 'size-full object-cover'
+                  }
                 />
                 {p.kind === 'receipt' && (
                   <span className="absolute right-1 bottom-1 grid size-6 place-items-center rounded-full bg-surface/90">
@@ -142,7 +142,7 @@ export function PhotoAlbum() {
           );
         })}
       </ul>
-      {labels && todo.length > 0 && (
+      {todo.length > 0 && (
         <div className="flex flex-col gap-1">
           <Button
             variant="secondary"

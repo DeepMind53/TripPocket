@@ -1,14 +1,4 @@
-import {
-  addDays,
-  dayNumberOf,
-  distanceKm,
-  todayIn,
-  walkMinutes,
-  type RouteEta,
-  type Coords,
-  type ItineraryItem,
-  type Trip,
-} from '@trippocket/shared';
+import { addDays, dayNumberOf, todayIn, type ItineraryItem, type Trip } from '@trippocket/shared';
 import {
   Bed,
   Bell,
@@ -31,7 +21,6 @@ import { useEffect, useState, useSyncExternalStore } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { TravelTabPanel } from './TravelTabPanel';
 import { isTravelTab, type TravelTabId } from './travelTabs';
-import { routeEtaResult, routeLeftToday } from '../../data/api/routes';
 import { useTrip, useTripBookings, useTripItems } from '../../data/hooks';
 import { applyVisit } from '../../data/skippedToSaved';
 import { VisitToggle } from '../common/VisitToggle';
@@ -39,24 +28,16 @@ import { setTravelMode, setTravelPrefs, useTravelMode } from '../../data/travelM
 import { airWarnings } from '../../domain/air';
 import { currentItemId, nextStop, pastItemIds } from '../../domain/dayTools';
 import { lodgingForNight } from '../../domain/lodging';
-import {
-  dayPhase,
-  leaveAt,
-  legOptions,
-  pickLegMode,
-  rainFrom,
-  type DayPhase,
-  type LegMode,
-} from '../../domain/travelDay';
+import { dayPhase, leaveAt, rainFrom, type DayPhase } from '../../domain/travelDay';
 import { travelLegsAhead } from '../../domain/travelLeg';
 import { isDomesticTrip } from '../../domain/tripPlace';
 import { formatTemps, hourWeather, weatherLook } from '../../domain/weather';
 import { useTranslation } from '../../i18n';
 import { timeIn, useMinuteClock } from '../../shared/hooks/useMinuteClock';
 import { useRouteSheet } from '../../shared/hooks/useRouteSheet';
-import { useCurrentPosition } from '../../shared/hooks/useCurrentPosition';
 import { DepartCountdown } from './DepartCountdown';
 import { LegControls } from './LegControls';
+import { useNextLeg } from './useNextLeg';
 import { cn } from '../../shared/lib/cn';
 import { formatMonthDay } from '../../shared/lib/dateFormat';
 import type { Destination } from '../../shared/lib/directions';
@@ -69,7 +50,7 @@ import {
   routeColor,
   toast,
 } from '../../shared/ui';
-import { useLab } from '../../data/labsStore';
+import { useSettings } from '../../data/settingsStore';
 import { InlineIcon } from '../../shared/ui/InlineIcon';
 import { DayWeatherBadge } from '../common/DayWeatherBadge';
 import { DirectionsSheet } from '../common/DirectionsSheet';
@@ -158,82 +139,17 @@ function TravelView({ trip, items: all }: { trip: Trip; items: ItineraryItem[] }
   const next = nextStop(dayItems, now);
   const n = dayNumberOf(trip.startDate, trip.endDate, today);
   // 실험실: 다음 역 카드를 그날 노선 색으로 (2026-11-10)
-  const dayColorOn = useLab('nextStopDayColor');
+  const dayColorOn = useSettings((st) => st.nextStopDayColor);
   const domestic = isDomesticTrip(trip);
   // 오늘 밤 숙소 → 없으면 첫 숙소 (빠른 메뉴 "숙소로 길찾기"와 같은 규칙)
   const stay =
     lodgingForNight(bookings, today)?.booking ?? bookings.find((b) => b.kind === 'lodging');
   const w = weather[today];
 
-  // 다음 일정까지 이동 (Q4 + 사용자 요청 2026-11-10): 다음 일정 차례가 되면 앞 일정 장소 → 다음 장소를 1번만 자동 조회
-  // (기기에 7일 보관). 지난 일정은 nextStop이 고르지 않아 조회하지 않는다. 실패·한도면 도보 직선거리 어림으로.
-  // [현재 위치]는 다음 일정마다 1번 — 지금 위치 → 다음 장소. 한 사람 하루 50번(자동 + 현재 위치)은 서버가 센다
-  const prev = next
-    ? [...dayItems]
-        .filter((i) => i.place?.coords && i.startTime && i.startTime < next.startTime!)
-        .pop()
-    : undefined;
-  const to = next?.place?.coords;
-  const google = next?.place?.coordsSource === 'google' || prev?.place?.coordsSource === 'google';
-  const [route, setRoute] = useState<{
-    key: string;
-    eta: RouteEta | null;
-    from: Coords;
-    live: boolean;
-  } | null>(null);
-  const [left, setLeft] = useState(routeLeftToday);
-  const autoFrom: Coords | undefined = prev?.place?.coords;
-  const key = next && to ? next.id : '';
-  useEffect(() => {
-    if (!key || !autoFrom || !to || route?.key === key) return;
-    let alive = true;
-    void routeEtaResult(autoFrom, to, google).then((r) => {
-      if (!alive) return;
-      setRoute({ key, eta: r.eta, from: autoFrom, live: false });
-      setLeft(routeLeftToday());
-    });
-    return () => {
-      alive = false;
-    };
-  }, [key]); // eslint-disable-line react-hooks/exhaustive-deps -- 다음 일정이 바뀔 때만
-  const mine = route?.key === key ? route : null;
-  const legFrom = mine?.from ?? autoFrom;
-  const opts = legOptions(
-    mine?.eta ?? null,
-    legFrom && to ? walkMinutes(distanceKm(legFrom, to)) : undefined,
-  );
-  const [chosen, setChosen] = useState<LegMode | null>(null);
-  const mode = pickLegMode(opts, chosen);
-  const travelMin =
-    mode === 'transit' ? opts.transit : mode === 'walk' ? opts.walk?.min : undefined;
+  // 다음 일정까지 이동 — 홈과 같은 규칙 (useNextLeg, 2026-11-13 자동차·새로고침)
+  const nextLeg = useNextLeg(dayItems, next ?? undefined);
+  const travelMin = nextLeg.travelMin;
   const leave = next?.startTime ? leaveAt(next.startTime, now, travelMin) : null;
-  // [현재 위치]: 누른 뒤 위치를 받으면 1번만 조회
-  const { state: here, request: askHere } = useCurrentPosition(false);
-  const [hereFor, setHereFor] = useState<string | null>(null);
-  useEffect(() => {
-    if (!hereFor || hereFor !== key || here.status === 'asking' || here.status === 'idle') return;
-    if (here.status !== 'ok' || !to) {
-      toast(t('travel.hereFail'));
-      return;
-    }
-    const at = here.coords;
-    let alive = true;
-    void routeEtaResult(at, to, google, true).then((r) => {
-      if (!alive) return;
-      setLeft(routeLeftToday());
-      if (r.limited) toast(t('travel.routeLimit'));
-      else if (!r.eta) toast(t('travel.routeFail'));
-      setRoute({ key, eta: r.eta, from: at, live: true });
-    });
-    return () => {
-      alive = false;
-    };
-  }, [here, hereFor]); // eslint-disable-line react-hooks/exhaustive-deps -- 누름·위치가 바뀔 때만
-  const legNote = [
-    opts.walk &&
-      t(opts.walk.straight ? 'travel.etaWalkLine' : 'travel.etaWalk', { min: opts.walk.min }),
-    opts.transit !== undefined && t('travel.etaTransit', { min: opts.transit }),
-  ].filter((x): x is string => typeof x === 'string');
 
   // 나갈 시각 알림 (앱이 열려 있을 때 — 브라우저 알림 권한을 허락한 경우)
   useEffect(() => {
@@ -466,32 +382,20 @@ function TravelView({ trip, items: all }: { trip: Trip; items: ItineraryItem[] }
                   travelMin={travelMin}
                 />
               }
-              note={
-                legNote.length > 0
-                  ? t('travel.etaNote', {
-                      text:
-                        legNote.length === 2
-                          ? t('travel.etaBoth', { a: legNote[0]!, b: legNote[1]! })
-                          : legNote[0]!,
-                    })
-                  : undefined
-              }
+              note={nextLeg.note}
               actions={
-                // [도보|대중교통] 토글 + [현재 위치]를 [길찾기] 위 한 줄로 (사용자 요청 2026-11-10)
-                (to || next.place?.address || next.place?.name) && (
+                // [도보|대중교통|자동차] 토글 + [새로고침]을 [길찾기] 위 한 줄로 (사용자 요청 2026-11-10·11-13)
+                (nextLeg.hasRoute || next.place?.address || next.place?.name) && (
                   <div className="flex flex-1 flex-col gap-2">
-                    {to && (
+                    {nextLeg.hasRoute && (
                       <LegControls
-                        mode={mode}
-                        onMode={setChosen}
-                        hasWalk={opts.walk !== undefined}
-                        hasTransit={opts.transit !== undefined}
-                        hereDisabled={hereFor === key || left === 0}
-                        left={left}
-                        onHere={() => {
-                          setHereFor(key);
-                          askHere();
-                        }}
+                        mode={nextLeg.mode}
+                        onMode={nextLeg.onMode}
+                        hasWalk={nextLeg.opts.walk !== undefined}
+                        hasTransit={nextLeg.opts.transit !== undefined}
+                        hereDisabled={nextLeg.hereDisabled}
+                        left={nextLeg.left}
+                        onHere={nextLeg.onHere}
                       />
                     )}
                     <button

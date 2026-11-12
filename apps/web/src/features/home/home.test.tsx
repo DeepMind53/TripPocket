@@ -34,3 +34,42 @@ it('여행 전 홈: 준비 현황 4장(준비물·예약·날씨 정보·환율)
     `/ai?trip=${tripId}`,
   );
 });
+
+it('여행 중 홈: 다음 일정 카드도 여행 모드처럼 [도보|대중교통|자동차]·[새로고침 n회 남음]·출발까지, [길찾기]·[일정 보기]는 그대로', async () => {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date('2026-11-03T01:35:00Z')); // 오사카 10:35
+  vi.stubGlobal('fetch', async () => Response.json({}));
+  const { tripRepo } = await import('../../data/repositories/tripRepo');
+  const { itemRepo } = await import('../../data/repositories/itemRepo');
+  const trip = await tripRepo.create({
+    title: '오사카',
+    destinations: [{ name: '오사카', kind: 'city', countryCode: 'JP' }],
+    startDate: '2026-11-03',
+    endDate: '2026-11-04',
+    timezone: 'Asia/Tokyo',
+    cover: {},
+  });
+  for (const [title, startTime, lat] of [
+    ['도톤보리', '09:00', 34.6687],
+    ['오사카성', '11:00', 34.67],
+  ] as const)
+    await itemRepo.create({
+      tripId: trip.id,
+      date: '2026-11-03',
+      kind: 'place',
+      title,
+      startTime,
+      place: { name: title, coords: { lat, lng: 135.502 } },
+    });
+  render(<RouterProvider router={createMemoryRouter(routes, { initialEntries: ['/'] })} />);
+  const legs = await screen.findByRole('radiogroup', { name: '이동 수단' });
+  for (const name of ['도보', '대중교통', '자동차'])
+    expect(within(legs).getByRole('radio', { name })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: /새로고침/ })).toBeInTheDocument();
+  expect(screen.getByText('후 출발')).toBeInTheDocument();
+  expect(await screen.findByText(/^\(도보 직선거리 약 \d+분\)$/)).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: '길찾기' })).toBeInTheDocument();
+  expect(screen.getByRole('link', { name: '일정 보기' })).toBeInTheDocument();
+  vi.useRealTimers();
+  vi.unstubAllGlobals();
+});

@@ -415,7 +415,8 @@ describe('홈', () => {
     expect(prep).toBeInTheDocument();
     const next = await screen.findByRole('region', { name: '다음 일정' });
     expect(next).toHaveTextContent('돼지국밥');
-    expect(next).toHaveTextContent('35분 후');
+    // 여행 모드처럼 출발까지 남은 시간 (2026-11-13)
+    expect(next).toHaveTextContent(/\d+분 \d+초\s*후 출발/);
     const lodging = screen.getByRole('region', { name: '오늘 숙소' });
     expect(lodging).toHaveTextContent('해운대 호텔');
     expect(lodging).toHaveTextContent('2/3');

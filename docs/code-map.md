@@ -58,9 +58,12 @@ Tailscale Funnel https://jin-server.tail0844c0.ts.net ─▶ 홈 PC 127.0.0.1:87
     여행 요약 카드 `tripCard`(`records/tripCard.ts`·`TripCardSave.tsx`), 사진 번역 `photoTranslate`(`features/phrases/PhotoTranslate.tsx`),
     사진 속 장소 `photoLandmark`(`features/photos/LandmarkFinder.tsx`), 사진 분류 `photoLabels`(`features/records/PhotoAlbum.tsx`·`domain/photoTags.ts`).
     사진 실험 3개의 요청은 `data/services/photoVision.ts` (누를 때만 보냄, ADR-0012)
+- **2026-11-13 실험실 → 정식 (사용자 요청)**: 설정 "일정 · 화면" `sunsetDark`(`travel/SunsetDark.tsx`)·`dayNote`·`nextStopDayColor`, 늘 켜짐: 여권 도장 이미지(`records/CountryGrid.tsx`)·여행 요약 카드(`records/TripCardSave.tsx`)·메뉴판·안내문 번역(`phrases/PhotoTranslate.tsx`)·사진 속 장소(`photos/LandmarkFinder.tsx`)·사진 분류.
+  지금 실험실: 회화 소리로 듣기(`phrases/SpeakButton.tsx`, 기기 speechSynthesis)·금액 크게 보여 주기(`fx/FxPage.tsx` → `phrases/ShowCard`)·숙소 방향(`common/LodgingCompass.tsx`, `domain/compass.ts`)·일정 사이 빈 시간(`domain/freeTime.ts`, PlanPage `FreeTimeLine`)·여행기 글로 복사(`domain/tripStory.ts`, TripCardSave)
+- **다음 일정까지 이동 (여행 모드·여행 중 홈 공통, 2026-11-13)**: `features/travel/useNextLeg.ts`(자동 조회·[새로고침]·[자동차] 조회) + `LegControls.tsx`([도보|대중교통|자동차] + [새로고침 n회 남음]) + `DepartCountdown.tsx`. 서버 `POST /api/routes/eta` `drive: true` → `services/routes.ts` `googleDrive`/`geoapifyDrive`
 - **노선도 (설정 "일정 · 화면" `routeMap`, 2026-11-10 실험실에서 정식)**: 일차 미니맵 `itinerary/DayMiniMap.tsx` → 누르면 여행 전체 노선도 `TripRouteView.tsx`·`TripRouteSheet.tsx`
 - **사진·영수증 (늘 켜짐, ADR-0012, 2026-11-11 실험실에서 정식)**: 기기 전용 `photos` 표·`data/repositories/photoRepo.ts`, 찍기 `features/photos/PhotoCaptureButtons.tsx`,
-  상세 `ItemPhotos.tsx`·`PhotoViewer.tsx`([다시 분석] 포함), 기록 탭 모아보기 `records/PhotoAlbum.tsx`(사진·영수증 전부, 지운 일정 사진은 "일정 없음", 눌러서 지우기·옮기기 — 분류만 실험실 `photoLabels`),
+  상세 `ItemPhotos.tsx`·`PhotoViewer.tsx`([다시 분석] 포함), 기록 탭 모아보기 `records/PhotoAlbum.tsx`(사진·영수증 전부, 지운 일정 사진은 "일정 없음", 눌러서 지우기·옮기기·[분류하기]),
   글자 인식 `data/services/receiptOcr.ts`(서버 `routes/ocr.ts` → `services/ocr.ts`, 글자 상자를 같은 높이끼리 줄로 묶는 `services/ocrRows.ts`) → `deviceOcr.ts`(Tesseract, 한 열 모드), 품목 표 `domain/receipt.ts`(이름·금액 짝짓기, 수량·세금 표시·할인 처리)
 - **숙소 최저가 (늘 켜짐, docs/28·ADR-0010)**: 웹 `features/lodging/`(`/lodging-price` 화면 + 숙소 예약 시트 안 시트), 서버 `routes/lodging.ts` + `services/agodaLookup.ts`·`serpapiHotels.ts`, 관리자 `/admin/lodging`
 - **여행 모드 (설정 "일정" `tripMode`, docs/25-travel-mode·docs/27)**: `features/travel/TravelModePage.tsx`(`/trips/:tripId/go`), 기기 설정 `data/travelModeStore.ts`
@@ -130,11 +133,11 @@ Tailscale Funnel https://jin-server.tail0844c0.ts.net ─▶ 홈 PC 127.0.0.1:87
 | google_places_local | 과금 가능 | 월 5,000 | 택시 카드용 현지어 이름 — Place Details **Pro** (docs/20 G4) |
 | google_autocomplete | 과금 가능 | 월 10,000 | **검색 백업**(docs/23·ADR-0007): Text Search 무료량이 끝나면 Autocomplete (New). 세션 토큰 |
 | google_details_basic | 과금 가능 | 월 10,000 | 자동완성에서 고른 장소의 주소·좌표 — Place Details **Essentials** (FieldMask: formattedAddress,location) |
-| google_routes | 과금 가능 | 월 10,000 | 다음 일정 바·구간 시간: Compute Routes Essentials(걷기·대중교통 2건씩, FieldMask: routes.duration). Google 좌표가 낀 구간만 — 나머지는 Geoapify 먼저. 둘 다 없으면 웹이 직선거리로 어림(팝업 없음). `services/routes.ts`·`POST /api/routes/eta` |
+| google_routes | 과금 가능 | 월 10,000 | 다음 일정 바·구간 시간: Compute Routes Essentials(걷기·대중교통 2건씩, FieldMask: routes.duration. [자동차]를 고를 때만 DRIVE 1건, FieldMask: routes.duration,routes.distanceMeters — 2026-11-13). Google 좌표가 낀 구간만 — 나머지는 Geoapify 먼저. 둘 다 없으면 웹이 직선거리로 어림(팝업 없음). `services/routes.ts`·`POST /api/routes/eta` |
 | google_vision | 과금 가능 | 월 1,000 | 영수증 글자 인식(ADR-0012): Document Text Detection, [영수증 분석]을 누를 때만, 한 사람 하루 20장. 키 `GOOGLE_VISION_KEY`(없으면 `GOOGLE_PLACES_KEY`). `services/ocr.ts`·`POST /api/ocr` |
 | azure_read | 무료 | 월 5,000 | 영수증 백업: Azure AI Vision Read F0 (분당 20). **2028-09-25 서비스 종료 예정**(Image Analysis 4.0, `APIS`의 `retires` → 관리자 화면에 표시). 키 `AZURE_VISION_ENDPOINT`·`AZURE_VISION_KEY`. 둘 다 안 되면 웹이 기기 안 Tesseract.js |
-| google_vision_landmark | 과금 가능 | 월 1,000 | 사진 속 장소(실험실, ADR-0012): Landmark Detection, 이름만(좌표 버림), 하루 20장. `POST /api/vision/landmark` |
-| google_vision_labels | 과금 가능 | 월 1,000 | 사진 분류(실험실): Label Detection, 하루 60장. `POST /api/vision/labels`. 사진 번역은 `POST /api/vision/translate`(google_vision → azure_read → 무료 AI) |
+| google_vision_landmark | 과금 가능 | 월 1,000 | 사진 속 장소(ADR-0012): Landmark Detection, 이름만(좌표 버림), 하루 20장. `POST /api/vision/landmark` |
+| google_vision_labels | 과금 가능 | 월 1,000 | 사진 분류: Label Detection, 하루 60장. `POST /api/vision/labels`. 사진 번역은 `POST /api/vision/translate`(google_vision → azure_read → 무료 AI) |
 | geoapify | 무료 | 하루 3,000 | Google 백업까지 멈추면 검색·택시 카드(역지오코딩), 출발 시각(걷기·approximated_transit). OSM 데이터, 출처 표기 필수. 키 `GEOAPIFY_KEY` |
 | openfreemap | 무료 | 없음 | 지도 백업(MapLibre). Google·네이버 지도를 못 쓸 때. 기록만. 브라우저 |
 | naver_maps_js | 과금 가능 | 하루·월 6,000,000 | NCP Maps Web Dynamic Map, **대표 계정만** 무료 이용량 (2026-10-24 콘솔 확인: 대표 계정). 브라우저 |

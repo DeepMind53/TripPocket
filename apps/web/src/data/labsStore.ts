@@ -7,18 +7,16 @@ import { countUse } from '../shared/lib/usageCount';
  * 정식 기능이 되면 LABS에서 빼고 useLab 호출을 지운다 (docs/code-map.md §3)
  */
 export const LABS = [
-  // 2026-11-10 새 실험 (사용자 선택, 서버·외부 요청 없음): 다음 역 카드 노선 색·여권 도장 이미지 저장·
-  // 해 질 녘 자동 다크·하루 한 줄 기록. 일차 노선 미니맵·여행 전체 노선도는 합쳐서 설정 "노선도"로 정식 (같은 날)
-  'nextStopDayColor',
-  'stampImage',
-  'sunsetDark',
-  'dayNote',
-  // 2026-11-10 새 실험 2 (사용자 선택): 여행 요약 카드 저장
-  'tripCard',
-  // 2026-11-11 사진 기능 3개 (사용자 선택, ADR-0012): 사진으로 번역·사진 속 장소·사진 분류 — 누를 때만 보냄
-  'photoTranslate',
-  'photoLandmark',
-  'photoLabels',
+  // 2026-11-13 새 실험 (사용자 요청 "좋은 아이디어 5개 이상", 서버·외부 요청 없음):
+  // 회화 소리로 듣기·금액 크게 보여 주기·숙소 방향·일정 사이 빈 시간·여행기 글로 복사
+  'speakPhrase',
+  'showAmount',
+  'homeCompass',
+  'freeTime',
+  'tripStory',
+  // 2026-11-13 정식(사용자 요청 "실험실 모두 적용"): 해 질 녘 자동 다크·하루 한 줄 기록·다음 역 카드 노선 색은 설정 "일정"으로,
+  // 여권 도장 이미지·여행 요약 카드·사진으로 번역(번역·회화 "메뉴판·안내문 번역")·사진 속 장소·사진 분류는 늘 켜짐.
+  // 켜 두었던 기기는 settingsStore.migrateGraduatedLabs가 설정으로 옮긴다
   // 2026-11-11 정식(설정 없이 늘 켜짐, 사용자 요청): 사진·영수증 (ADR-0012)
   // 2026-11-10 정식(설정 "일정", 사용자 요청): 오프라인 준비·외교부 안전공지·축제와 행사·항공편 지연·여행 모드(tripMode).
   // 숙소 최저가는 설정 없이 늘 켜짐. 켜 두었던 기기는 settingsStore.migrateGraduatedLabs가 설정으로 옮긴다

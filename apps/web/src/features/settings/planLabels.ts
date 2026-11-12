@@ -30,4 +30,8 @@ export const PLAN_LABELS = {
   flightDelay: 'labs.item.flightDelay.name',
   tripMode: 'labs.item.travelMode.name',
   routeMap: 'settings.routeMap',
+  // 2026-11-13 실험실에서 정식
+  sunsetDark: 'labs.item.sunsetDark.name',
+  dayNote: 'labs.item.dayNote.name',
+  nextStopDayColor: 'labs.item.nextStopDayColor.name',
 } as const satisfies Record<PlanFeature, string>;

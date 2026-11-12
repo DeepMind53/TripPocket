@@ -62,6 +62,10 @@ const GRADUATED_LABS = {
   // 일차 노선 미니맵·여행 전체 노선도 → 설정 "노선도" 하나로 (2026-11-10)
   dayMiniMap: 'routeMap',
   tripRouteMap: 'routeMap',
+  // 2026-11-13 정식 (사용자 요청)
+  sunsetDark: 'sunsetDark',
+  dayNote: 'dayNote',
+  nextStopDayColor: 'nextStopDayColor',
 } as const;
 
 function migrateGraduatedLabs(): void {

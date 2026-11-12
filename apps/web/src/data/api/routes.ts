@@ -69,6 +69,8 @@ export async function routeEtaResult(
   google: boolean,
   /** 출발점이 지금 내 위치: 약 100m로 줄여 보내고, 기기·서버 어디에도 보관하지 않는다 */
   live = false,
+  /** 자동차 시간·거리만 (사용자가 [자동차]를 고를 때, 2026-11-13) */
+  drive = false,
 ): Promise<RouteEtaResult> {
   const ask = async (body: object): Promise<RouteEtaResult> => {
     const res = await api<RouteEta>('/api/routes/eta', {
@@ -90,13 +92,13 @@ export async function routeEtaResult(
       lat: Math.round(c.lat * 1000) / 1000,
       lng: Math.round(c.lng * 1000) / 1000,
     });
-    return ask({ from: round(from), to, google, live: true });
+    return ask({ from: round(from), to, google, live: true, ...(drive ? { drive } : {}) });
   }
-  const k = pairKey(from, to);
+  const k = pairKey(from, to) + (drive ? 'd' : '');
   const store = load();
   const hit = store[k];
   if (hit && Date.now() - hit.at < KEEP_MS) return { eta: hit.eta, limited: false };
-  const r = await ask({ from, to, google });
+  const r = await ask({ from, to, google, ...(drive ? { drive } : {}) });
   if (r.eta) {
     const { left: _left, ...eta } = r.eta;
     store[k] = { at: Date.now(), eta };

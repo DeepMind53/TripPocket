@@ -1,13 +1,16 @@
 import {
+  BedDouble,
+  Coffee,
   Footprints,
-  ImageDown,
   Luggage,
   Map as MapIcon,
   Moon,
   MoonStar,
   Navigation,
+  Navigation2,
   PenLine,
   Sun,
+  Volume2,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useTranslation } from '../../i18n';
@@ -18,11 +21,10 @@ import { CautionIcons } from './CautionIcons';
 import { NearbyFind } from './NearbyFind';
 import { TransitGuide } from './TransitGuide';
 import type { PreviewId } from './previewIds';
-import { NextStopCard, Stamp } from '../../shared/ui';
+import { NextStopCard } from '../../shared/ui';
 import { routeColor, routeStyle } from '../../shared/ui/routeColor';
 import { DayMiniMap } from '../itinerary/DayMiniMap';
 import { TripRouteView } from '../itinerary/TripRouteView';
-import { tripCardSvg } from '../records/tripCard';
 
 /** 샘플 하루 동선 (도쿄 아사쿠사 → 스카이트리 → 우에노 → 신주쿠, 좌표는 미리보기 그림용) */
 const SAMPLE_STOPS = [
@@ -31,15 +33,6 @@ const SAMPLE_STOPS = [
   { kind: 'place', place: { coords: { lat: 35.7101, lng: 139.7745 } } },
   { kind: 'food', place: { coords: { lat: 35.6938, lng: 139.7034 } } },
 ];
-
-/** 저장될 그림을 그대로 보여 준다 (SVG 글 → img) */
-const svgImg = (svg: string, alt: string) => (
-  <img
-    src={`data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`}
-    alt={alt}
-    className="w-full rounded-card border border-line"
-  />
-);
 
 /**
  * 켜면 어떻게 보이는지 [샘플] 미리보기 (사용자 요청 2026-10-27 — 실험실·설정 "일정").
@@ -344,27 +337,6 @@ export function FeaturePreview({ id }: { id: PreviewId }) {
           }
         />
       );
-    case 'stampImage':
-      return (
-        <div className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-3">
-          <div className="grid grid-cols-3 gap-3 px-1">
-            {(['japan', 'vietnam', 'tokyo'] as const).map((k, i) => (
-              <Stamp
-                key={k}
-                city={t(`sample.${k}`)}
-                period={t('records.tripsN', { n: 3 - i })}
-                dayIndex={i}
-                seed={k}
-                label={t(`sample.${k}`)}
-              />
-            ))}
-          </div>
-          <span className="mx-auto flex h-11 items-center gap-1.5 px-4 text-caption font-medium text-fg-sub">
-            <ImageDown aria-hidden="true" className="size-4" />
-            {t('records.stampSave')}
-          </span>
-        </div>
-      );
     case 'sunsetDark':
       return (
         <div className="grid grid-cols-2 gap-2">
@@ -433,64 +405,59 @@ export function FeaturePreview({ id }: { id: PreviewId }) {
           </div>
         </div>
       );
-    case 'tripCard':
-      return svgImg(
-        tripCardSvg({
-          title: t('sample.tokyo'),
-          cities: `${t('sample.tokyo')} · ${t('sample.japan')}`,
-          range: '2026.10.27 – 10.31',
-          days: 5,
-          brand: 'TripPocket',
-          facts: [
-            [t('records.days'), t('travelReview.days', { n: 5 })],
-            [t('travelReview.places'), t('travelReview.count', { n: 14 })],
-            [t('tripCard.moved'), t('travelReview.km', { n: 38 })],
-          ],
-        }),
-        t('tripCard.title'),
-      );
-    case 'photoTranslate':
-      // 메뉴판 한 장 → 줄마다 한국어 (큰 글) + 원문 (작은 글)
+    case 'speakPhrase':
       return (
-        <ul className="flex flex-col divide-y divide-line rounded-2xl border border-line bg-surface px-3">
-          {(
-            [
-              ['sample.menuKo1', 'ラーメン 980円'],
-              ['sample.menuKo2', '替玉 210円'],
-            ] as const
-          ).map(([ko, src]) => (
-            <li key={src} className="flex flex-col gap-0.5 py-2">
-              <span className="text-body-1 font-medium">{t(ko)}</span>
-              <span className="text-caption text-fg-muted">{src}</span>
-            </li>
-          ))}
-        </ul>
-      );
-    case 'photoLandmark':
-      return (
-        <div className="flex items-center gap-2 rounded-2xl border border-line bg-surface px-3 py-2">
-          <MapIcon aria-hidden="true" className="size-5 text-primary" />
-          <span className="flex min-w-0 flex-1 flex-col">
-            <span className="text-body-2 font-medium">{t('sample.sensoji')}</span>
-            <span className="tabular text-micro text-fg-muted">
-              {t('landmark.score', { n: 92 })}
-            </span>
+        <div className="flex flex-col items-center gap-4 rounded-2xl border border-line bg-surface p-4">
+          <span lang="ja" className="text-title-1 font-semibold">
+            {t('sample.phraseThanks')}
           </span>
-          <span className="text-caption font-semibold text-primary">{t('landmark.add')}</span>
+          <span className="flex h-12 items-center gap-2 rounded-full bg-primary-weak px-5 text-body-2 font-semibold text-primary">
+            <Volume2 aria-hidden="true" className="size-5" />
+            {t('phrases.speak')}
+          </span>
         </div>
       );
-    case 'photoLabels':
+    case 'showAmount':
       return (
-        <div className="flex flex-wrap gap-2">
-          {(['food', 'scenery', 'building'] as const).map((k, i) => (
-            <span
-              key={k}
-              className="rounded-full border border-line px-3 py-1.5 text-caption font-medium"
-            >
-              {t(`album.tag.${k}`, { n: [6, 4, 3][i]! })}
-            </span>
-          ))}
+        <div className="flex flex-col items-center gap-2 rounded-2xl border border-line bg-surface p-6">
+          <span className="tabular text-[2rem] leading-tight font-semibold">
+            {t('sample.fxBig')}
+          </span>
+          <span className="tabular text-body-1 text-fg-sub">{t('sample.fxBigKo')}</span>
         </div>
+      );
+    case 'homeCompass':
+      return (
+        <div className="flex flex-col items-center gap-3 rounded-2xl border border-line bg-surface p-4">
+          <div className="grid size-28 place-items-center rounded-full border border-line bg-bg-subtle">
+            <Navigation2
+              aria-hidden="true"
+              className="size-12 rotate-45 fill-primary text-primary"
+            />
+          </div>
+          <span className="flex items-center gap-1.5 text-body-1 font-semibold">
+            <BedDouble aria-hidden="true" className="size-4 text-fg-sub" />
+            <span className="tabular">{t('sample.compassDist')}</span>
+          </span>
+          <span className="text-caption text-fg-sub">{t('sample.shinjukuHotel')}</span>
+        </div>
+      );
+    case 'freeTime':
+      return day(
+        <>
+          {row(1, '10:00', t('sample.sensoji'))}
+          <span className="ml-10 inline-flex items-center gap-1 self-start rounded-full bg-primary-weak px-2.5 py-0.5 text-caption text-primary">
+            <Coffee aria-hidden="true" className="size-3.5" />
+            <span className="tabular">{t('sample.freeTime')}</span>
+          </span>
+          {row(2, '14:30', t('sample.skytree'))}
+        </>,
+      );
+    case 'tripStory':
+      return (
+        <pre className="rounded-2xl border border-line bg-surface p-3 font-sans text-caption whitespace-pre-wrap text-fg-sub">
+          {t('sample.story')}
+        </pre>
       );
     case 'placeTips':
       return day(

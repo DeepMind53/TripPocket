@@ -54,7 +54,8 @@ export function leaveInSeconds(
   return (mins(start) - (travelMin ?? 0) - LEAVE_MARGIN_MIN) * 60 - nowSec;
 }
 
-export type LegMode = 'walk' | 'transit';
+/** drive = 자동차 (사용자 요청 2026-11-13, 고를 때만 조회) */
+export type LegMode = 'walk' | 'transit' | 'drive';
 
 /**
  * 다음 일정까지 고를 수 있는 이동 (사용자 요청 2026-11-10): 길 조회 결과가 있으면 그 값, 도보가 없거나
@@ -63,7 +64,12 @@ export type LegMode = 'walk' | 'transit';
 export function legOptions(
   eta: { walk?: number | undefined; transit?: number | undefined } | null,
   straightWalkMin: number | undefined,
-): { walk?: { min: number; straight: boolean }; transit?: number } {
+  drive?: { min: number; km: number | undefined } | undefined,
+): {
+  walk?: { min: number; straight: boolean };
+  transit?: number;
+  drive?: { min: number; km: number | undefined };
+} {
   const walk =
     eta?.walk !== undefined
       ? { min: eta.walk, straight: false }
@@ -73,14 +79,17 @@ export function legOptions(
   return {
     ...(walk ? { walk } : {}),
     ...(eta?.transit !== undefined ? { transit: eta.transit } : {}),
+    ...(drive ? { drive } : {}),
   };
 }
 
 /** 고른 수단이 없으면 대중교통 → 도보 순 (대중교통 조회가 실패하면 저절로 도보) */
 export function pickLegMode(
-  opts: { walk?: unknown; transit?: unknown },
+  opts: { walk?: unknown; transit?: unknown; drive?: unknown },
   chosen: LegMode | null,
 ): LegMode | null {
+  // 자동차는 고르면 바로 (시간은 그 뒤에 조회)
+  if (chosen === 'drive') return 'drive';
   if (chosen && opts[chosen] !== undefined) return chosen;
   if (opts.transit !== undefined) return 'transit';
   return opts.walk !== undefined ? 'walk' : null;

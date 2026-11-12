@@ -82,6 +82,10 @@ export interface Settings {
   tripMode: boolean;
   /** 노선도 — 일차 머리 미니맵, 누르면 여행 전체 노선도 (2026-11-10 실험실 두 개를 합쳐 정식) */
   routeMap: boolean;
+  /** 2026-11-13 실험실에서 정식 (사용자 요청): 여행 중 현지 해가 지면 어둡게(테마가 시스템일 때) · 하루 한 줄 기록 · 다음 일정 카드를 그날 노선 색으로 */
+  sunsetDark: boolean;
+  dayNote: boolean;
+  nextStopDayColor: boolean;
   /** ⚡ 빠른 메뉴 버튼 보이기 */
   quickButton: boolean;
   /** AI 추천을 열 때 처음 골라 둘 카테고리 */
@@ -123,6 +127,9 @@ export const PLAN_FEATURES = [
   'flightDelay',
   'tripMode',
   'routeMap',
+  'sunsetDark',
+  'dayNote',
+  'nextStopDayColor',
 ] as const;
 export type PlanFeature = (typeof PLAN_FEATURES)[number];
 
@@ -140,6 +147,9 @@ export const PLAN_FEATURE_GROUPS: readonly { id: string; keys: readonly PlanFeat
       'planB',
       'tripMode',
       'routeMap',
+      'nextStopDayColor',
+      'sunsetDark',
+      'dayNote',
     ],
   },
   {
@@ -226,6 +236,9 @@ export const SETTINGS_DEFAULTS: Settings = {
   flightDelay: false,
   tripMode: false,
   routeMap: false,
+  sunsetDark: false,
+  dayNote: false,
+  nextStopDayColor: false,
   quickButton: true,
   aiCats: ['food', 'cafe'],
   aiAnchor: 'text',
@@ -280,6 +293,9 @@ const VALID: { [K in keyof Settings]: (v: unknown) => v is Settings[K] } = {
   flightDelay: (v): v is boolean => typeof v === 'boolean',
   tripMode: (v): v is boolean => typeof v === 'boolean',
   routeMap: (v): v is boolean => typeof v === 'boolean',
+  sunsetDark: (v): v is boolean => typeof v === 'boolean',
+  dayNote: (v): v is boolean => typeof v === 'boolean',
+  nextStopDayColor: (v): v is boolean => typeof v === 'boolean',
   quickButton: (v): v is boolean => typeof v === 'boolean',
   aiCats: (v): v is Settings['aiCats'] =>
     Array.isArray(v) &&

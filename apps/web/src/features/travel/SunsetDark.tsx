@@ -1,7 +1,6 @@
 import { getTripStatus, todayIn } from '@trippocket/shared';
 import { useEffect } from 'react';
 import { useTrips } from '../../data/hooks';
-import { useLab } from '../../data/labsStore';
 import { useSettings } from '../../data/settingsStore';
 import { afterDark, sunTimes } from '../../domain/sun';
 import { timeIn, useMinuteClock } from '../../shared/hooks/useMinuteClock';
@@ -12,7 +11,7 @@ import { applyTheme } from '../../shared/lib/theme';
  * 여행지 해가 진 뒤 어둡게, 해가 뜨면 밝게. 좌표는 기기 안에서만 계산 (서버로 보내지 않음), 설정은 바꾸지 않는다
  */
 export function SunsetDark() {
-  const on = useLab('sunsetDark');
+  const on = useSettings((s) => s.sunsetDark);
   const theme = useSettings((s) => s.theme);
   const active = on && theme === 'system';
   const now = useMinuteClock(active);

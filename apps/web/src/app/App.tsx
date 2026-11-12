@@ -16,7 +16,6 @@ import { PullToSync } from '../features/common/PullToSync';
 import { FlightReminder } from '../features/common/FlightReminder';
 import { useSync } from '../data/sync/syncStore';
 import { useSettings } from '../data/settingsStore';
-import { useLab } from '../data/labsStore';
 import { trashRepo } from '../data/repositories/trashRepo';
 
 // Plan B 아침 컨디션 체크 (실험실) — 켰을 때만
@@ -88,7 +87,7 @@ export function App() {
   // 닉네임을 정한 다음, 설치하지 않은 기기에서 한 번만 홈 화면 추가 안내 (사용자 요청 2026-10-26)
   const signedIn = useAuth((s) => s.status === 'user');
   const planOn = useSettings((st) => st.planB);
-  const sunsetOn = useLab('sunsetDark');
+  const sunsetOn = useSettings((st) => st.sunsetDark);
   const isAdmin = useAuth((s) => s.status === 'user' && s.me?.isAdmin === true);
   const installed = useInstall((s) => s.installed);
   const [installDone, setInstallDone] = useState(installOffered);

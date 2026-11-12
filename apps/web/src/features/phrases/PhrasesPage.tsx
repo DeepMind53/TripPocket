@@ -18,6 +18,7 @@ import { Chip, ScrollRow, TopBar } from '../../shared/ui';
 import { ShowCard } from './ShowCard';
 import { HealthCardButton } from './HealthCardButton';
 import { PhotoTranslate } from './PhotoTranslate';
+import { SpeakButton } from './SpeakButton';
 
 /**
  * 번역·회화 (docs/20 G7): 여행지 말로 자주 쓰는 10문장 — 누르면 크게 보여 주기.
@@ -81,7 +82,7 @@ export function PhrasesPage() {
         </div>
 
         <HealthCardButton lang={lang} />
-        {/* 실험실 "사진으로 번역" (2026-11-11) */}
+        {/* 메뉴판·안내문 사진 번역 (2026-11-11 실험실 → 2026-11-13 정식, 사용자 요청) */}
         <PhotoTranslate />
         <ul
           aria-label={t('phrases.list', { lang: lang.name })}
@@ -112,7 +113,10 @@ export function PhrasesPage() {
         // 영어가 아닌 말이면 영어도 함께 (사용자 요청 2026-11-02)
         en={show && lang.code !== 'en' ? EN.phrases[show] : undefined}
         sub={show ? KO_PHRASES[show] : undefined}
-      />
+      >
+        {/* 실험실 "회화 소리로 듣기" */}
+        {show && <SpeakButton text={lang.phrases[show]} lang={lang.code} />}
+      </ShowCard>
     </>
   );
 }

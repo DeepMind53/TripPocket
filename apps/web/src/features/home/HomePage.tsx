@@ -1,4 +1,7 @@
-import { useLab } from '../../data/labsStore';
+import { useSettings } from '../../data/settingsStore';
+import { DepartCountdown } from '../travel/DepartCountdown';
+import { LegControls } from '../travel/LegControls';
+import { useNextLeg } from '../travel/useNextLeg';
 import { applyVisit } from '../../data/skippedToSaved';
 import { pastItemIds } from '../../domain/dayTools';
 import type { Visit } from '../../domain/visit';
@@ -324,7 +327,7 @@ function OngoingTrip({ trip }: { trip: Trip }) {
   // 지난 일정 (방문·미방문을 고를 수 있는 것) — 일정 탭과 같은 규칙
   const past = pastItemIds(todayItems, today, now);
   // 실험실: 다음 역 카드를 그날 노선 색으로 (2026-11-10)
-  const dayColorOn = useLab('nextStopDayColor');
+  const dayColorOn = useSettings((st) => st.nextStopDayColor);
   // 지난 일정 접기 (사용자 결정 2026-11-10) — 다음 일정·남은 일정이 바로 보이게
   const [pastOpen, setPastOpen] = useState(false);
   const pastList = todayItems.filter((i) => past.has(i.id));
@@ -347,6 +350,11 @@ function OngoingTrip({ trip }: { trip: Trip }) {
       ? ((items ?? []).find((i) => i.date === tomorrow && !i.done) ?? null)
       : null;
   const lodging = lodgingForNight(bookings, today);
+  // 다음 일정까지 이동 — 여행 모드와 똑같이 (사용자 요청 2026-11-13): [도보|대중교통|자동차]·[새로고침]·출발까지 남은 시간
+  const nextLeg = useNextLeg(
+    todayItems.filter((i) => i.kind !== 'note'),
+    next ?? undefined,
+  );
   const planUrl = `/trips/${trip.id}/plan?day=${day}`;
 
   function directions(d: Destination) {
@@ -381,35 +389,60 @@ function OngoingTrip({ trip }: { trip: Trip }) {
           label={t('home.nextItem')}
           kicker={t('home.nextItem')}
           title={next.title}
-          // 남은 시간만 (뒤 시각·주소는 뺐다 — "분"이 다음 줄로 밀려서, 사용자 요청 2026-11-10)
-          countdown={countdown(next)}
+          // 고른 이동 수단으로 계산한 출발까지 남은 시간 (여행 모드와 같게, 2026-11-13). 시각이 없으면 예전처럼
+          countdown={
+            next.startTime ? (
+              <DepartCountdown
+                start={next.startTime}
+                timezone={trip.timezone}
+                travelMin={nextLeg.travelMin}
+              />
+            ) : (
+              countdown(next)
+            )
+          }
+          note={nextLeg.note}
           progress={prevStop && next.startTime ? progressBetween(prevStop, next, now) : null}
           progressLabel={prevStop ? `${prevStop.title} → ${next.title}` : undefined}
           from={prevStop?.title}
           to={next.title}
           actions={
-            <>
-              <button
-                type="button"
-                onClick={() =>
-                  directions({
-                    name: next.title,
-                    address: next.place?.address,
-                    coords: next.place?.coords,
-                  })
-                }
-                className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-btn bg-on-primary px-3 text-body-2 font-medium text-primary"
-              >
-                <Navigation aria-hidden="true" className="size-4" />
-                {t('home.directions')}
-              </button>
-              <Link
-                to={planUrl}
-                className="flex h-11 flex-1 items-center justify-center rounded-btn bg-on-primary/20 px-3 text-body-2 font-medium text-on-primary"
-              >
-                {t('home.viewPlan')}
-              </Link>
-            </>
+            <div className="flex flex-1 flex-col gap-2">
+              {nextLeg.hasRoute && (
+                <LegControls
+                  mode={nextLeg.mode}
+                  onMode={nextLeg.onMode}
+                  hasWalk={nextLeg.opts.walk !== undefined}
+                  hasTransit={nextLeg.opts.transit !== undefined}
+                  hereDisabled={nextLeg.hereDisabled}
+                  left={nextLeg.left}
+                  onHere={nextLeg.onHere}
+                />
+              )}
+              {/* [길찾기]·[일정 보기]는 그대로 (사용자 요청 2026-11-13) */}
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() =>
+                    directions({
+                      name: next.title,
+                      address: next.place?.address,
+                      coords: next.place?.coords,
+                    })
+                  }
+                  className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-btn bg-on-primary px-3 text-body-2 font-medium text-primary"
+                >
+                  <Navigation aria-hidden="true" className="size-4" />
+                  {t('home.directions')}
+                </button>
+                <Link
+                  to={planUrl}
+                  className="flex h-11 flex-1 items-center justify-center rounded-btn bg-on-primary/20 px-3 text-body-2 font-medium text-on-primary"
+                >
+                  {t('home.viewPlan')}
+                </Link>
+              </div>
+            </div>
           }
         />
       ) : (

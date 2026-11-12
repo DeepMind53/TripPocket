@@ -1,7 +1,6 @@
 import { flagEmoji } from '@trippocket/shared';
 import { ImageDown } from 'lucide-react';
 import { useState } from 'react';
-import { useLab } from '../../data/labsStore';
 import { useTranslation } from '../../i18n';
 import { Stamp, toast } from '../../shared/ui';
 
@@ -32,7 +31,6 @@ export function CountryGrid({
   const sorted = [...codes].sort((a, b) => (counts.get(b) ?? 0) - (counts.get(a) ?? 0));
   const shown = all ? sorted : sorted.slice(0, SHOWN);
   // 실험실 "여권 도장 이미지 저장" (2026-11-10): 가 본 나라 도장 전부를 그림 한 장으로 — 누를 때만 그리는 코드를 불러온다
-  const imageOn = useLab('stampImage');
   const [saving, setSaving] = useState(false);
   const saveImage = () => {
     setSaving(true);
@@ -81,7 +79,7 @@ export function CountryGrid({
           {all ? t('saved.less') : t('records.moreCountries', { n: sorted.length - SHOWN })}
         </button>
       )}
-      {imageOn && sorted.length > 0 && (
+      {sorted.length > 0 && (
         <button
           type="button"
           disabled={saving}
