@@ -195,6 +195,8 @@ test('일정 → 예약 탭 → 일정으로 돌아오면 보던 위치 그대�
 test('글자 크기 가장 크게(99%): 주요 화면 가로 넘침 없음, 탭 이름이 잘리지 않음', async ({
   page,
 }) => {
+  // 화면 10개를 차례로 돈다 — 한 화면 30초가 아니라 테스트 전체에 넉넉히 (2026-11-13, 느린 PC에서 시간 초과)
+  test.setTimeout(90_000);
   await page.setViewportSize({ width: 360, height: 760 });
   const trip = await seedTrip(page);
   // 설정 → 글자 크기 가장 크게 (99%)
@@ -217,7 +219,9 @@ test('글자 크기 가장 크게(99%): 주요 화면 가로 넘침 없음, 탭 
     `${trip}/essentials`,
   ]) {
     await page.goto(path);
-    await page.waitForLoadState('networkidle');
+    // networkidle은 지도·날씨 요청이 이어지면 끝나지 않는다 — 제목이 그려진 뒤 최대 3초만 더 기다리고 잰다
+    await page.locator('h1, h2').first().waitFor();
+    await page.waitForLoadState('networkidle', { timeout: 3000 }).catch(() => {});
     expect(
       await page.evaluate(() => document.documentElement.style.getPropertyValue('--tp-font')),
       path,
