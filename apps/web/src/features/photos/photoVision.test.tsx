@@ -7,6 +7,7 @@ import { setLab } from '../../data/labsStore';
 import { photoRepo } from '../../data/repositories/photoRepo';
 import { PhotoTranslate } from '../phrases/PhotoTranslate';
 import { PhotoAlbum } from '../records/PhotoAlbum';
+import { ConfirmHost } from '../../shared/ui';
 
 beforeEach(async () => {
   await resetLocalDb();
@@ -67,4 +68,25 @@ it('사진 분류: [분류하기]를 누를 때만 안 나눈 사진을 보내�
   // 영수증은 보내지 않는다
   expect(sent).toEqual(['/api/vision/labels', '/api/vision/labels']);
   expect(screen.queryByRole('button', { name: /분류하기/ })).toBeNull();
+});
+
+it('기록 사진 모아보기: 실험을 꺼도 사진·영수증이 보이고, 일정이 지워진 사진도 눌러서 지운다 (2026-11-12)', async () => {
+  // 일정 'gone'은 없다 (지운 일정) — 그 사진은 "일정 없음"
+  await photoRepo.add({ tripId: 't', itemId: 'gone', kind: 'photo', blob: new Blob(['p']) });
+  await photoRepo.add({ tripId: 't', itemId: 'gone', kind: 'receipt', blob: new Blob(['r']) });
+  const user = userEvent.setup();
+  render(
+    <MemoryRouter>
+      <PhotoAlbum />
+      <ConfirmHost />
+    </MemoryRouter>,
+  );
+  expect(await screen.findByRole('radio', { name: '영수증 1' })).toBeInTheDocument();
+  // 분류는 실험을 켰을 때만
+  expect(screen.queryByRole('button', { name: /분류하기/ })).toBeNull();
+  await user.click(await screen.findByRole('button', { name: '사진 1 크게 보기, 일정 없음' }));
+  const sheet = await screen.findByRole('dialog', { name: '사진' });
+  await user.click(within(sheet).getByRole('button', { name: '사진 지우기' }));
+  await user.click(await screen.findByRole('button', { name: '삭제' }));
+  await waitFor(async () => expect(await db.photos.count()).toBe(1));
 });

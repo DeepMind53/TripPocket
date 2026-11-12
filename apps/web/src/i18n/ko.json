@@ -2325,6 +2325,7 @@
     "failed": "사진을 저장하지 못했어요",
     "analyze": "영수증 분석",
     "analyzing": "글자를 읽는 중",
+    "reanalyze": "다시 분석",
     "analyzeFailed": "글자를 읽지 못했어요\n잠시 뒤 다시 해 주세요",
     "analyzeNote": "누르면 글자 인식 서비스로 사진을 보내요\n사진은 거기에 남지 않아요",
     "text": "읽은 글",
@@ -2970,6 +2971,8 @@
   "album": {
     "title": "사진 모아보기",
     "all": "전체 {{n}}",
+    "receipts": "영수증 {{n}}",
+    "orphan": "일정 없음",
     "tag": {
       "food": "음식 {{n}}",
       "scenery": "풍경 {{n}}",
