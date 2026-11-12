@@ -171,7 +171,7 @@ const CARDS: Record<string, TransitCard> = {
     id: 'jp-shinkansen',
     name: '신칸센 승차권',
     kind: 'ticket',
-    url: 'https://global.jr-central.co.jp/',
+    url: 'https://global.jr-central.co.jp/ko/',
     color: '#5aa9c8',
     photo: {
       src: '/transit/jp-shinkansen.jpg',

@@ -49,7 +49,6 @@ export const AGODA_PROMOS = [
   'kbcard',
   'hyundaipromo',
   'wooricard',
-  'wooricardmaster',
   'upikrpromo',
   'unionpayKR',
   'bccard',
@@ -60,8 +59,6 @@ export const AGODA_PROMOS = [
   'krmastercard',
   'visakorea',
   'koreanair',
-  'flyasiana',
-  'airseoul',
 ] as const;
 
 export const agodaPromoUrl = (slug: string) => `https://www.agoda.com/ko-kr/${slug}`;

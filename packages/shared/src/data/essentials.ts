@@ -5,7 +5,7 @@
  * 고칠 때: 이 파일만 고치고 CHECKED_AT·sources를 갱신한다
  */
 
-export const ESSENTIALS_CHECKED_AT = '2026-10-27';
+export const ESSENTIALS_CHECKED_AT = '2026-11-13';
 
 export type EssentialLevel = 'must' | 'recommend' | 'tip';
 
@@ -734,7 +734,7 @@ export const TRAVEL_EVENTS: readonly TravelEvent[] = [
     url: 'https://5000.taiwan.net.tw/campaign_rules_kr.html',
     from: '2026-10-01',
     until: '2027-03-24',
-    checkedAt: '2026-10-27',
+    checkedAt: '2026-11-13',
   },
   {
     id: 'mo-free-coach-2026',
@@ -744,7 +744,7 @@ export const TRAVEL_EVENTS: readonly TravelEvent[] = [
     url: 'https://www.macauhkairportbus.com/news/79',
     from: '2026-01-20',
     until: '2026-12-31',
-    checkedAt: '2026-10-27',
+    checkedAt: '2026-11-13',
   },
 ];
 

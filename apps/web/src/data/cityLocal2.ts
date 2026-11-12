@@ -50,7 +50,7 @@ export const CITY_LOCAL_2: readonly CityLocal[] = [
     ],
     transfer: '오사카에서 JR·한큐·한신으로 30분 안팎',
     apps: JP_APPS,
-    url: 'https://www.city.kobe.lg.jp/kotsu/',
+    url: 'https://kotsu.city.kobe.lg.jp/',
   },
   {
     id: 'nara',

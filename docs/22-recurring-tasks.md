@@ -88,7 +88,7 @@
 | H3 | 디스크·문서 용량 | `pnpm admin:data list` (apps/server) |
 | H4 | Windows 업데이트 후 서버 자동 시작 | 바탕화면 "TripPocket 서버 재시작.bat" |
 | H5 | 로그인 앱 키·지도 키 도메인 제한 (Google·카카오 콘솔) | 키 값은 채팅·PR에 쓰지 않기 |
-| H6 | **Google Cloud 콘솔 하루 할당량 상한** (지도·장소·Routes·Vision) — 서버가 꺼져 사용량을 못 셀 때의 마지막 안전장치 | Google Cloud 콘솔 → 할당량 |
+| H6 | **Google Cloud 콘솔 하루 할당량 상한** (지도·장소·Routes·Vision) — 앱을 거치지 않는 키 사용까지 막는 마지막 안전장치 (서버가 꺼져 사용량을 못 세면 앱은 유료 지도를 막고 무료 지도로, 2026-11-13) | Google Cloud 콘솔 → 할당량 |
 | H7 | 도메인 `trippocket.day` 갱신일·자동 갱신 결제 수단 | 도메인 등록 업체 |
 | H8 | API 사용량 화면에서 남은 무료량 20% 아래(주황·빨강)였던 API — 자동 중지는 95% | 마이 → 관리자 → API 사용량 |
 | H9 | 공공데이터포털 개발계정 활용기간, Google 결제 카드·Cloudflare 토큰 만료, Google 로그인 6개월 미사용 | 각 콘솔 |

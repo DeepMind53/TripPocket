@@ -56,7 +56,7 @@ describe('숙소 최저가 링크 (docs/28 §4)', () => {
     expect(AGODA_ROUTES.filter((r) => r.group === 'search')).toHaveLength(7);
     expect(AGODA_ROUTES.filter((r) => r.group === 'card')).toHaveLength(10);
     expect(AGODA_ROUTES.filter((r) => r.group === 'airline')).toHaveLength(3);
-    expect(AGODA_PROMOS).toHaveLength(17);
+    expect(AGODA_PROMOS).toHaveLength(14);
   });
 
   it('붙여 넣은 아고다 글에서 숙소 찾기: 숙소 id·숙소 화면 주소, 그 밖은 null', () => {

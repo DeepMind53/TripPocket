@@ -351,7 +351,7 @@
 | 검색 경유 7 | 구글 지도1 `1833981` · 구글 지도2 `1917614` · 구글 지도3 `1829968` · 구글 검색1 `1908612` · 구글 검색2 `1922868` · 구글 검색3 `1776688` · 네이버 검색 `1729890` |
 | 카드사 10 | 국민 `1563295` · 우리 `1654104` · 우리(마스터) `1932810` · BC `1748498` · 신한 `1760133` · 신한(마스터) `1917257` · 토스 `1917334` · 하나 `1729471` · 마스터카드 `1889572` · 비자 `1889319` |
 | 항공사 3 | 대한항공 `1904827` · 아시아나 `1806212` · 에어서울 `1800120` |
-| 프로모션 페이지 (숙소 링크 아님) | 아고다 공식 카드·결제 할인 페이지 `www.agoda.com/ko-kr/<이름>`: kakaopaypromo · kbcard · hyundaipromo · wooricard · wooricardmaster · upikrpromo · unionpayKR · bccard · shinhancard · shinhanmaster · tossbank · hanacard · krmastercard · visakorea · koreanair · flyasiana · airseoul |
+| 프로모션 페이지 (숙소 링크 아님) | 아고다 공식 카드·결제 할인 페이지 `www.agoda.com/ko-kr/<이름>`: kakaopaypromo · kbcard · hyundaipromo · wooricard · upikrpromo · unionpayKR · bccard · shinhancard · shinhanmaster · tossbank · hanacard · krmastercard · visakorea · koreanair (2026-11-13 wooricardmaster·flyasiana·airseoul 페이지 없어져 뺌) |
 
 - 숙소 링크 20개 + 기본(경로 없음) 1개 = 21개, 그리고 프로모션 페이지 17개. 현대카드·유니온페이·카카오페이는 아고다스캐너도 경로 값 없이 프로모션 페이지로만 연결한다
 - 경로 값은 아고다가 바꿀 수 있다 → 웹 데이터 파일 한 곳에만 두고, 열리지 않는다는 기록이 쌓이면 고친다

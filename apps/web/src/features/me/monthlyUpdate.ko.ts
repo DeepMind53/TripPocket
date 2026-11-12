@@ -68,7 +68,7 @@ B10. 공휴일
     - 한국 임시공휴일·대체공휴일이 새로 정해졌는지 (Nager.Date 반영 여부)
 
 [C. 앱 기능에 쓰는 외부 정보]
-C1. 숙소 최저가 링크 (docs/28): apps/web/src/domain/agodaRoutes.ts (경로 21곳·할인 안내 17곳), domain/lodgingLinks.ts (예약 앱 6곳)
+C1. 숙소 최저가 링크 (docs/28): apps/web/src/domain/agodaRoutes.ts (경로 21곳·할인 안내 14곳), domain/lodgingLinks.ts (예약 앱 6곳)
     - 아고다 경로 값(CID)·카드사·항공사 할인 페이지가 아직 열리고 할인이 이어지는지, 끝난 행사는 빼기
     - 여기어때·놀·트립닷컴·부킹닷컴·구글 호텔 검색 주소 형식이 바뀌지 않았는지
 C2. 환율 보조 출처 동작 (apps/web/src/data/services/fxService.ts — currency-api 두 주소·Frankfurter)
@@ -120,7 +120,7 @@ G3. docs/README.md 문서 목록의 상태(현행·기록·보류)가 맞는지
 - 분기마다(1·4·7·10월) 백업 복구 리허설 (ops/README.md §3)
 - Windows 업데이트 뒤 서버가 자동으로 켜졌는지 (안 켜졌으면 "TripPocket 서버 재시작.bat")
 - 로그인 앱(Google·카카오)·지도 키의 허용 도메인이 trippocket.day로 제한돼 있는지
-- Google Cloud 콘솔: 지도·장소·Routes·Vision 하루 할당량(quota) 상한이 그대로인지 — 서버가 꺼져 있을 때의 마지막 안전장치
+- Google Cloud 콘솔: 지도·장소·Routes·Vision 하루 할당량(quota) 상한이 그대로인지 — 앱을 거치지 않는 키 사용까지 막는 마지막 안전장치 (서버가 꺼지면 앱은 유료 지도를 막는다)
 - 도메인 trippocket.day 갱신일 (자동 갱신·결제 수단)
 - 관리자 → API 사용량에서 남은 무료량 20% 아래(주황·빨강)였던 API
 - 공공데이터포털 마이페이지 → 개발계정: 활용기간 끝나는 날 (한 달 전이면 [연장신청])
