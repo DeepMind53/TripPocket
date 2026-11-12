@@ -1,4 +1,5 @@
 import { guardApi, trackApi } from './apiUsage';
+import { aPoly, gPoly, rowsFromBoxes } from './ocrRows';
 
 const timeout = () => AbortSignal.timeout(20000);
 /** 영수증에 흔한 글자 — 한국·일본·중국·영어 */
@@ -27,11 +28,25 @@ export async function googleOcr(image: Buffer, apiKey: string): Promise<string> 
   });
   if (!res.ok) throw new Error(`vision ${res.status}`);
   const d = (await res.json()) as {
-    responses?: { fullTextAnnotation?: { text?: string }; error?: { message?: string } }[];
+    responses?: {
+      fullTextAnnotation?: { text?: string };
+      /** [0] = 전체 글, [1..] = 낱말마다 글자 상자 */
+      textAnnotations?: {
+        description?: string;
+        boundingPoly?: { vertices?: { x?: number; y?: number }[] };
+      }[];
+      error?: { message?: string };
+    }[];
   };
   const r = d.responses?.[0];
   if (r?.error) throw new Error(`vision ${r.error.message ?? 'error'}`);
-  return r?.fullTextAnnotation?.text ?? '';
+  // 같은 높이 낱말을 한 줄로 (품목 이름 열·금액 열이 따로 읽히는 것 바로잡기). 상자가 없으면 전체 글
+  const rows = rowsFromBoxes(
+    (r?.textAnnotations ?? [])
+      .slice(1)
+      .map((w) => ({ text: w.description ?? '', poly: gPoly(w.boundingPoly?.vertices) })),
+  );
+  return rows || (r?.fullTextAnnotation?.text ?? '');
 }
 
 /** Cloud Vision 한 기능만 (장소 알아보기·사진 분류) — 이름과 점수만 돌려준다 (좌표는 버린다) */
@@ -87,10 +102,18 @@ export async function azureOcr(image: Buffer, endpoint: string, apiKey: string):
   });
   if (!res.ok) throw new Error(`azure read ${res.status}`);
   const d = (await res.json()) as {
-    readResult?: { blocks?: { lines?: { text?: string }[] }[] };
+    readResult?: {
+      blocks?: {
+        lines?: { text?: string; words?: { text?: string; boundingPolygon?: unknown[] }[] }[];
+      }[];
+    };
   };
-  return (d.readResult?.blocks ?? [])
-    .flatMap((b) => b.lines ?? [])
-    .map((l) => l.text ?? '')
-    .join('\n');
+  const lines = (d.readResult?.blocks ?? []).flatMap((b) => b.lines ?? []);
+  // 같은 높이 낱말을 한 줄로 (Azure도 열마다 따로 읽는다). 상자가 없으면 읽은 줄 그대로
+  const rows = rowsFromBoxes(
+    lines
+      .flatMap((l) => l.words ?? [])
+      .map((w) => ({ text: w.text ?? '', poly: aPoly(w.boundingPolygon) })),
+  );
+  return rows || lines.map((l) => l.text ?? '').join('\n');
 }

@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { Trash2 } from 'lucide-react';
+import { RotateCcw, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import type { PhotoRow } from '../../data/db';
 import { itemRepo } from '../../data/repositories/itemRepo';
@@ -124,6 +124,16 @@ export function PhotoViewer({
               />
               <span className="text-micro text-fg-muted">{t('photos.textHint')}</span>
             </label>
+            {/* 예전에 잘못 읽힌 영수증을 고친 인식으로 다시 읽기 (2026-11-12, 하루 20장에 포함) */}
+            <Button
+              variant="secondary"
+              fullWidth
+              loading={busy}
+              leading={<RotateCcw aria-hidden="true" className="size-4" />}
+              onClick={() => void analyze()}
+            >
+              {busy ? t('photos.analyzing') : t('photos.reanalyze')}
+            </Button>
           </section>
         )}
 

@@ -1,4 +1,4 @@
-import { createWorker } from 'tesseract.js';
+import { createWorker, PSM } from 'tesseract.js';
 import coreUrl from 'tesseract.js-core/tesseract-core-simd-lstm.wasm.js?url';
 import workerUrl from 'tesseract.js/dist/worker.min.js?url';
 
@@ -14,6 +14,11 @@ export async function deviceOcr(image: Blob, langs: readonly string[]): Promise<
     workerBlobURL: false,
   });
   try {
+    // 영수증은 한 열로 읽는다 — 기본 자동 나누기는 품목 열·금액 열을 따로 읽어 줄이 갈라진다 (2026-11-12)
+    await worker.setParameters({
+      tessedit_pageseg_mode: PSM.SINGLE_COLUMN,
+      preserve_interword_spaces: '1',
+    });
     const { data } = await worker.recognize(image);
     return data.text;
   } finally {
