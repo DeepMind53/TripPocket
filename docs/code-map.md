@@ -1,6 +1,6 @@
 # 코드 지도 (실제 구조) — 고칠 때 여기서 시작
 
-> 2026-10-27 기준. `03-architecture.md`는 설계 초안이고, **지금 코드가 어떻게 생겼는지는 이 문서**가 기준이다.
+> 2026-11-12 기준. `03-architecture.md`는 설계 초안이고, **지금 코드가 어떻게 생겼는지는 이 문서**가 기준이다.
 > 구조가 바뀌면 이 문서도 같이 고친다.
 
 ## 1. 한눈에
@@ -13,27 +13,29 @@
 Tailscale Funnel https://jin-server.tail0844c0.ts.net ─▶ 홈 PC 127.0.0.1:8787 (Fastify + node:sqlite)
    └─▶ 외부 API: Google Places·Routes · Geoapify · NAVER API HUB · 카카오 로컬 · 수출입은행 · AviationStack
         · Gemini → Workers AI → Groq · 특보(GDACS·USGS·외교부·기상청 한국·일본·미국·대만·캐나다)
+        · 공공데이터포털(공항·입국·안전공지·축제·미세먼지) · 위키백과 · Google Vision → Azure Read · 아고다 · SerpApi
 ```
 
 - 옛 주소 `trippocket.pages.dev`의 화면 이동은 `functions/_middleware.ts`가 새 주소로 301. 앱 파일·API·로그인은 그대로 통과
   (설치된 앱은 `MovedBanner`로 안내). 서버 `WEB_ORIGIN`은 두 주소를 모두 허용
 - 결정 근거: ADR-0001(로컬 우선)·0002(PWA)·0003(홈 PC 서버)·0004(지도)·0005(스택)·0006(Pages 프록시)·0007(무료 백업)·0008(여행지 특보)
+  ·0009(사용 통계)·0010(숙소 최저가)·0011(디자인 개편 "여행 노선")·0012(영수증 글자 인식·기기 사진)
 
 ## 2. 폴더
 
 | 위치 | 하는 일 |
 |---|---|
 | `packages/shared/src` | 웹·서버 공용 **순수 함수와 Zod 스키마**. 날짜(`date/`), 정렬 키(`order/`), 스키마(`schema/`), 설정·백업·동기화 형식, 장소 데이터·검색(`data/`, `places/`), 환율(`fx/`), 공유용 변환(`share/`), AI 점수(`ai/`), 거리(`geo/`) |
-| `apps/web/src/app` | 라우터(`router.tsx`, 화면은 모두 지연 로딩), 레이아웃(`layouts/AppShell`·`TripLayout` — 하단 탭과 ⚡ 플로팅 버튼), PWA 등록(`pwa.ts`) |
+| `apps/web/src/app` | 라우터(`router.tsx` — 홈과 내 여행 `/trips`만 바로, 나머지 화면은 지연 로딩), 로그인 문(`AuthGate`)·관리자 문(`AdminGate`), 레이아웃(`layouts/AppShell`·`TripLayout` — 하단 탭과 ⚡ 플로팅 버튼), PWA 등록(`pwa.ts`) |
 | `apps/web/src/features/<기능>` | 화면 단위. 기능끼리는 `features/common`만 함께 쓴다 |
 | `apps/web/src/data` | **DB 접근은 여기만**: `repositories/`(Dexie), `services/`(여러 저장소를 묶는 일), `sync/`(동기화 엔진), `api/`(서버 호출 — `client.ts`의 `api()`는 오류 대신 결과 종류를 돌려준다), 작은 스토어(`authStore`·`settingsStore`·`labsStore`) |
 | `apps/web/src/domain` | 웹 전용 순수 로직 (숙소 밤 계산·일정 정렬·공유 텍스트 등) |
 | `apps/web/src/shared` | UI 부품(`ui/`), 훅(`hooks/`), 유틸(`lib/`), 지도 SDK 감싸기(`maps/`) |
 | `apps/web/src/sw/sw-template.js` | 직접 만든 서비스 워커 (빌드 때 `vite.config.ts` 플러그인이 파일 목록을 채움) |
 | `apps/web/public` | `_headers`(CSP·캐시), `_routes.json`(함수가 도는 경로 — 앱 파일 제외), 아이콘·매니페스트 |
-| `apps/server/src/routes` | API. `auth`(소셜 로그인·가입 요청), `me`, `admin`(사용자 관리·API 사용량), `sync`, `share`, `places`, `ai`, `usage`(지도 로드 기록), `routes`(이동 시간), `flights`, `reviews`, `push`, `attachments`(예약 문서), `suggestions`(개선 제안), `alerts`(여행지 특보) |
+| `apps/server/src/routes` | API. `auth`(소셜 로그인·가입 요청), `me`, `admin`(사용자 관리·API 사용량), `sync`, `share`, `places`, `ai`, `usage`(지도 로드 기록), `routes`(이동 시간), `flights`, `reviews`, `push`, `attachments`(예약 문서), `suggestions`(개선 제안), `alerts`(여행지 특보), `info`(여행지 소개·축제·입국 정보 점검), `lodging`(숙소 최저가: 가격 기록·아고다 찾기·참고 가격), `ocr`(영수증 글자 인식), `vision`(사진 번역·장소·분류), `translate`(개인정보 카드 번역), `stats`(사용 통계) |
 | `apps/server/src/services` | 외부 API 호출. **모든 외부 호출은 `apiUsage.ts`의 `guardApi`/`trackApi`를 거친다** |
-| `apps/server/src/db` | `migrations.ts` — 이미 배포된 항목은 고치지 말고 뒤에 추가 (지금 17번까지) |
+| `apps/server/src/db` | `migrations.ts` — 이미 배포된 항목은 고치지 말고 뒤에 추가 (지금 23번까지). 웹 기기 DB는 `apps/web/src/data/db.ts` (지금 Dexie 14번) |
 | `functions/` | Cloudflare Pages Functions: `_proxy.ts`(→ 홈 서버), `_middleware.ts`(옛 주소 이동) |
 | `ops/` | 홈 PC 설치(`install.ps1`, 작업 스케줄러 S4U)·Funnel·운영 문서·`restart-server.ps1`(바탕화면 "TripPocket 서버 재시작.bat") |
 | `apps/server/.env` | 비밀값·키. 기능별로 묶고 키마다 [유효기간] 안내 (`.env.example`이 같은 틀, 값 비움). 값은 절대 출력·커밋하지 않는다 |
@@ -44,12 +46,24 @@ Tailscale Funnel https://jin-server.tail0844c0.ts.net ─▶ 홈 PC 127.0.0.1:87
 
 - **화면 문구**: `apps/web/src/i18n/ko.json` (키는 타입 검사됨 — 없는 키는 빌드 실패)
 - **새 화면**: `features/<기능>/XxxPage.tsx` + `app/router.tsx`에 `lazy` 경로. 첫 화면 예산 300KB(`pnpm size`)
+- **여행 목록**: `features/trips/TripList.tsx`(목록·묶음·카드 — 홈·기록·내 여행이 함께 씀), `TripsPage.tsx`는 `/trips` 화면 틀만 (2026-11-12 나눔)
 - **새 설정 항목**: shared `settings/settings.ts`(검사·기본값) → `SettingsPage`
 - **일정 표시 기능 (설정 "일정")**: shared `PLAN_FEATURES`에 추가 + `features/settings/planLabels.ts` + `FeaturePreview` 샘플. 처음엔 끔, `features/me/PlanFeaturePrompt.tsx`가 접속마다 하나씩 묻고 `planPromptSeen`(계정 설정, 서버가 합침)에 남긴다. `planPromptV`가 없는 옛 설정은 모두 끄고 다시 묻는다
 - **앱 안 국내 지도**: 설정 `domesticMap` → `data/mapChoice.ts`(매번 묻기는 메모리에만) → `shared/maps` `chooseProvider`
 - **좁은 화면·큰 글씨**: Tailwind `tight:` 변형(폭 340px 이하 또는 글자 115% 이상, `html[data-big-text]`). 검사 `tests/e2e/text-fit.spec.ts`
-- **새 실험 기능**: `data/labsStore.ts`의 `LABS`에 id 추가 → `ko.json` `labs.item.<id>.name/desc` → 기능 코드에서 `useLab('<id>')`. 실험을 정식으로 옮기면 `Settings`·`PLAN_FEATURES`(묶음)·`planLabels.ts`에 넣고, 켜 둔 기기 값은 `settingsStore.migrateGraduatedLabs`로 옮긴다 (2026-11-10). 지금 실험: 일차 노선 미니맵 `itinerary/DayMiniMap.tsx`, 다음 역 카드 노선 색(`NextStopCard` `tone`), 도장 이미지 `records/stampSheet.ts`, 해 질 녘 다크 `travel/SunsetDark.tsx`, 하루 한 줄 `itinerary/DayNoteField.tsx`·`records/DayNoteLog.tsx`(`trip.dayNotes`). 여행 전체 노선도 `itinerary/TripRouteView.tsx`·`TripRouteSheet.tsx`, 여행 요약 카드 `records/tripCard.ts`·`TripCardSave.tsx`. 새 실험은 반드시 [샘플]도: `common/previewIds.ts` + `FeaturePreview.tsx` case. 사진·영수증(ADR-0012): 기기 전용 `photos` 표·`data/repositories/photoRepo.ts`, 찍기 `features/photos/PhotoCaptureButtons.tsx`, 상세 `ItemPhotos.tsx`·`PhotoViewer.tsx`, 글자 인식 `data/services/receiptOcr.ts`(서버) → `deviceOcr.ts`(Tesseract), 품목 표 `domain/receipt.ts`. 사진 번역 `features/phrases/PhotoTranslate.tsx`, 장소 `features/photos/LandmarkFinder.tsx`, 분류 `features/records/PhotoAlbum.tsx`·`domain/photoTags.ts`, 요청 `data/services/photoVision.ts`.
+- **새 실험 기능**: `data/labsStore.ts`의 `LABS`에 id 추가 → `ko.json` `labs.item.<id>.name/desc` → 기능 코드에서 `useLab('<id>')`. 실험을 정식으로 옮기면 `Settings`·`PLAN_FEATURES`(묶음)·`planLabels.ts`에 넣고, 켜 둔 기기 값은 `settingsStore.migrateGraduatedLabs`로 옮긴다 (2026-11-10). 새 실험은 반드시 [샘플]도: `common/previewIds.ts` + `FeaturePreview.tsx` case.
   정식 기능이 되면 `LABS`에서 빼고 `useLab` 분기를 지운다
+  - 지금 실험 8개 (2026-11-12): 다음 역 카드 노선 색 `nextStopDayColor`(`NextStopCard` `tone`), 도장 이미지 `stampImage`(`records/stampSheet.ts`),
+    해 질 녘 다크 `sunsetDark`(`travel/SunsetDark.tsx`), 하루 한 줄 `dayNote`(`itinerary/DayNoteField.tsx`·`records/DayNoteLog.tsx`, `trip.dayNotes`),
+    여행 요약 카드 `tripCard`(`records/tripCard.ts`·`TripCardSave.tsx`), 사진 번역 `photoTranslate`(`features/phrases/PhotoTranslate.tsx`),
+    사진 속 장소 `photoLandmark`(`features/photos/LandmarkFinder.tsx`), 사진 분류 `photoLabels`(`features/records/PhotoAlbum.tsx`·`domain/photoTags.ts`).
+    사진 실험 3개의 요청은 `data/services/photoVision.ts` (누를 때만 보냄, ADR-0012)
+- **노선도 (설정 "일정 · 화면" `routeMap`, 2026-11-10 실험실에서 정식)**: 일차 미니맵 `itinerary/DayMiniMap.tsx` → 누르면 여행 전체 노선도 `TripRouteView.tsx`·`TripRouteSheet.tsx`
+- **사진·영수증 (늘 켜짐, ADR-0012, 2026-11-11 실험실에서 정식)**: 기기 전용 `photos` 표·`data/repositories/photoRepo.ts`, 찍기 `features/photos/PhotoCaptureButtons.tsx`,
+  상세 `ItemPhotos.tsx`·`PhotoViewer.tsx`, 글자 인식 `data/services/receiptOcr.ts`(서버 `routes/ocr.ts`) → `deviceOcr.ts`(Tesseract), 품목 표 `domain/receipt.ts`
+- **숙소 최저가 (늘 켜짐, docs/28·ADR-0010)**: 웹 `features/lodging/`(`/lodging-price` 화면 + 숙소 예약 시트 안 시트), 서버 `routes/lodging.ts` + `services/agodaLookup.ts`·`serpapiHotels.ts`, 관리자 `/admin/lodging`
+- **여행 모드 (설정 "일정" `tripMode`, docs/25-travel-mode·docs/27)**: `features/travel/TravelModePage.tsx`(`/trips/:tripId/go`), 기기 설정 `data/travelModeStore.ts`
+- **시트(아래에서 올라오는 창)**: `shared/ui/BottomSheet.tsx`(처음 열 때 `BottomSheetImpl`을 불러옴). 시트 안 양식 제출은 바깥 양식으로 올라가지 않게 막는다 (2026-11-11)
 - **새 외부 API (서버)**: `services/apiUsage.ts`의 `APIS`에 id·분류(`paid`=과금 가능 / `free`)·무료 월 사용량 추가 →
   호출 직전에 `guardApi(id)`(멈춤이면 `ApiPaused` → 503 `api_paused`), `trackApi(id)` → `ko.json` `apiUsage.name/note`.
   브라우저에서 직접 부르는 유료 API는 `routes/usage.ts`처럼 허용 여부 확인 + 사용 기록 엔드포인트를 둔다
@@ -77,7 +91,7 @@ Tailscale Funnel https://jin-server.tail0844c0.ts.net ─▶ 홈 PC 127.0.0.1:87
 
 ## 4. 주요 흐름
 
-- **로그인**: `/auth/<제공자>/start` → 제공자 → `/auth/<제공자>/callback`. state는 서버 저장 + `__Host-oauth` 쿠키로 대조, 구글은 PKCE.
+- **로그인**: 카카오·Google (네이버 로그인은 2026-11-03 뺌, 서버 마이그레이션 22). `/auth/<제공자>/start` → 제공자 → `/auth/<제공자>/callback`. state는 서버 저장 + `__Host-oauth` 쿠키로 대조, 구글은 PKCE.
   콜백 주소는 사용자가 들어온 주소 기준(`requestOrigin`). 처음 보는 계정 → 첫 계정이면 관리자로 가입, 아니면 가입 요청(`join_requests`)
 - **동기화**: 기기에서 고친 행에 `dirty` → `syncEngine` push(행마다 멤버십 인가) → pull(서버 rev 이후). 충돌은 나중 도착 채택 + `conflicts` 보관
 - **AI 추천** (`routes/ai.ts`): 기준점(가까운 역·숙소·직접 입력 — 드롭다운에서 고르면 그 장소 좌표) → 카테고리(맛집·카페·놀거리 + 직접 키워드 `custom`)끼리 동시에 {
@@ -109,6 +123,7 @@ Tailscale Funnel https://jin-server.tail0844c0.ts.net ─▶ 홈 PC 127.0.0.1:87
 | google_places_search | 과금 가능 | 월 5,000 | Text Search **Pro** (FieldMask: id·이름·주소·좌표·지도 링크). 2025-03 SKU별 무료: Essentials 1만·Pro 5천·Enterprise 1천 |
 | google_places_details | 과금 가능 | 월 1,000 | Place Details **Enterprise** (평점·영업시간·전화·웹사이트). FieldMask를 바꾸면 등급이 바뀌니 주의 |
 | google_maps_js | 과금 가능 | 월 10,000 | Dynamic Maps (지도 1회 로드). 브라우저 |
+| google_places_local | 과금 가능 | 월 5,000 | 택시 카드용 현지어 이름 — Place Details **Pro** (docs/20 G4) |
 | google_autocomplete | 과금 가능 | 월 10,000 | **검색 백업**(docs/23·ADR-0007): Text Search 무료량이 끝나면 Autocomplete (New). 세션 토큰 |
 | google_details_basic | 과금 가능 | 월 10,000 | 자동완성에서 고른 장소의 주소·좌표 — Place Details **Essentials** (FieldMask: formattedAddress,location) |
 | google_routes | 과금 가능 | 월 10,000 | 다음 일정 바·구간 시간: Compute Routes Essentials(걷기·대중교통 2건씩, FieldMask: routes.duration). Google 좌표가 낀 구간만 — 나머지는 Geoapify 먼저. 둘 다 없으면 웹이 직선거리로 어림(팝업 없음). `services/routes.ts`·`POST /api/routes/eta` |
@@ -120,6 +135,7 @@ Tailscale Funnel https://jin-server.tail0844c0.ts.net ─▶ 홈 PC 127.0.0.1:87
 | openfreemap | 무료 | 없음 | 지도 백업(MapLibre). Google·네이버 지도를 못 쓸 때. 기록만. 브라우저 |
 | naver_maps_js | 과금 가능 | 하루·월 6,000,000 | NCP Maps Web Dynamic Map, **대표 계정만** 무료 이용량 (2026-10-24 콘솔 확인: 대표 계정). 브라우저 |
 | kakao_map | 과금 가능 | 월 3,000,000 (합산) | 카카오맵 REST API 전체 월 합산 묶음(`pool`). 멈추면 아래 카카오 API 모두 멈춤. 무료 쿼터는 개발자 계정의 첫 카카오맵 앱만(이 앱은 받음, 2026-10-24 사용자 확인) |
+| kakao_maps_js | 과금 가능 | 하루 300,000 | 카카오 지도 Web SDK (국내 앱 안 지도를 카카오로 고른 경우). 월은 카카오맵 합산, 넘으면 0.1원/건. 브라우저 |
 | kakao_keyword | 과금 가능 | 하루 100,000 | 키워드로 장소 검색, 넘으면 2원/건 |
 | kakao_category | 과금 가능 | 하루 100,000 | 카테고리로 장소 검색(가까운 역), 넘으면 2원/건 |
 | naver_search | 과금 가능 | 월 775,000 · 하루 25,000 | NAVER API HUB 한시적 무료, 유료 전환은 사전 공지 예정. 하루 값은 옛 개발자센터 기준 |
@@ -130,8 +146,15 @@ Tailscale Funnel https://jin-server.tail0844c0.ts.net ─▶ 홈 PC 127.0.0.1:87
 | aviationstack | 무료 | 월 100 (하루 제한 없음) | 편명으로 항공편 불러오기 — 최근 운항(실시간)만, 미래 시간표는 유료. 같은 편명 7일 저장. 무료는 HTTPS 막힘 → 서버에서 HTTP로 |
 | overpass | 무료 | 하루 100 | 공용 서버 정책(1만 미만, 꾸준한 사용은 1/100). User-Agent 필수 |
 | open_meteo | 무료 | 하루 10,000 | 비상업, IP당. 브라우저 |
-| nager_date · jsdelivr | 무료 | 없음 | 브라우저 |
-| oauth_kakao/naver/google | 무료 | 없음 | 기록만 (멈추면 로그인 불가) |
+| nager_date · jsdelivr · frankfurter | 무료 | 없음 | 공휴일 · 대만 공휴일·환율 보조 · 환율 보조 2번째(유럽중앙은행, docs/26 C1). 브라우저 |
+| icn_flights · kac_flights | 무료 | 하루 500 · 5,000 | 국내 공항 정보: 인천공항 · 한국공항공사 (공공데이터포털 `DATA_GO_KR_KEY`) |
+| mofa_entry · mofa_safety · tourapi | 무료 | 하루 1,000씩 | 외교부 입국 정보 · 안전공지 · 관광공사 축제와 행사 (docs/26, 같은 키, 서비스마다 활용신청) |
+| airkorea | 무료 | 하루 500 | 미세먼지 안내 (같은 키) |
+| airlabs | 무료 | 월 1,000 | 항공편 지연 (docs/26) |
+| wikipedia | 무료 | 하루 5,000 | 여행지 소개 — 위키백과 요약, 서버가 30일 저장 (docs/26 A4) |
+| agoda_lookup | 무료 | 하루 100 (스스로 정함) | 숙소 최저가: 아고다 숙소 자동 찾기 (docs/28 §4.2). 공개 API가 아니라 사이트 부담·차단 위험을 줄이려는 한도 |
+| serpapi_hotels | 무료 | 월 250 | 숙소 최저가: 구글 호텔 참고 가격 (docs/28 §4.3). 검색 1번에 최대 2회, 6시간 재사용. 결제 수단 없음 |
+| oauth_kakao · oauth_google | 무료 | 없음 | 기록만 (멈추면 로그인 불가) |
 | cf_functions | 무료 | 하루 100,000 | Pages Functions 무료 플랜(넘으면 오류). 홈 서버까지 온 요청만 셈. 기록만 |
 | web_push | 무료 | 없음 | 브라우저 회사 푸시 서버. 기록만 |
 | gdacs · usgs | 무료 | 없음 | 여행지 특보 (전 세계 재난·지진). 10분에 한 번만 받음. 기록만 |

@@ -10,6 +10,7 @@
 - 운영 중: **https://trippocket.day** (Cloudflare Pages) + 홈 PC 서버 (Tailscale Funnel)
 - 23단계 구현 완료 후 운영 기능 추가: 관리자 가입 승인, API 사용량·자동 중지(무료량 95%)와 대체 API, 무료 AI 순서(Gemini → Workers AI → Groq → AI 없음),
   실험실, 삭제 확인·7일 복원, 방문 기록, 여행지 특보(ADR-0008), 관리자 월간 갱신 요청문
+- 2026-11: 여행 모드, 숙소 최저가(ADR-0010), 디자인 개편 "여행 노선"(ADR-0011), 사진·영수증(ADR-0012). 로그인은 카카오·Google
 - 지금 상태·남은 일: [`PROGRESS.md`](PROGRESS.md) / **코드 구조: [`docs/code-map.md`](docs/code-map.md)**
 
 ## 핵심 컨셉
@@ -52,6 +53,12 @@
 | [docs/22-recurring-tasks.md](docs/22-recurring-tasks.md)                 | 정기 점검 목록 (월간 갱신 요청문의 근거)                           |
 | [docs/23-paid-api-fallbacks.md](docs/23-paid-api-fallbacks.md)           | 무료량이 끝났을 때 대체 API·대체 기능                              |
 | [docs/24-weather-disaster-alerts.md](docs/24-weather-disaster-alerts.md) | 여행지 기상·재난 특보 (나라별 출처표)                              |
+| [docs/25-travel-mode.md](docs/25-travel-mode.md)                         | 여행 모드 (오늘·내일만 크게)                                       |
+| [docs/26-free-apis.md](docs/26-free-apis.md)                             | 무료 API 더 쓰기 (안전공지·축제·미세먼지·항공편 지연)              |
+| [docs/27-travel-mode-v2.md](docs/27-travel-mode-v2.md)                   | 여행 모드 개선                                                     |
+| [docs/28-lodging-price-compare.md](docs/28-lodging-price-compare.md)     | 숙소 최저가 비교                                                   |
+| [docs/29-design-renewal.md](docs/29-design-renewal.md)                   | 디자인 개편 "여행 노선"                                            |
+| [docs/30-aircraft-seats.md](docs/30-aircraft-seats.md)                   | 항공편 기종·좌석 안내 (보류)                                       |
 | [PROGRESS.md](PROGRESS.md)                                               | 진행 상황                                                          |
 | [docs/13-design-review.md](docs/13-design-review.md)                     | 설계 점검: 빠진 부분·리스크·추가 결정 사항                         |
 | [docs/design/mockups.html](docs/design/mockups.html)                     | 주요 화면 시각 시안 (브라우저로 열기)                              |
