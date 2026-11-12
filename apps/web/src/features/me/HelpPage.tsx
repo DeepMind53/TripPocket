@@ -12,6 +12,7 @@ const TIPS = [
   'pullSync',
   'mapFull',
   'sheetResize',
+  'sheetBack',
   'offline',
   'pinned',
   'trash',
