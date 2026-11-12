@@ -12,7 +12,7 @@ fi
 # 색 코드 빼고, 실패한 시험 이름(›)과 오류처럼 보이는 줄 위주로 최대 40줄을 주석 하나로 모은다
 # (GitHub은 단계마다 주석을 10개까지만 보여 줘서, 줄마다 따로 남기면 뒤쪽 실패가 잘린다 — 2026-10-28)
 body="$(sed 's/\x1b\[[0-9;]*m//g' "$log" \
-  | grep -E -i '›|error|fail|×|✗|✖|expected|received|TS[0-9]{4}' \
+  | grep -E -i '›|error|fail|×|✗|✖|expected|received|timed out|interrupted|did not run|TS[0-9]{4}' \
   | grep -v -E '^\[WebServer\]|chunkSizeWarningLimit' \
   | tail -n 40)"
 esc="${body//'%'/'%25'}"

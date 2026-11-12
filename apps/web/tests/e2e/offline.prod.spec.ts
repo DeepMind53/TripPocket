@@ -2,6 +2,8 @@ import { expect, test } from './fixtures';
 import { dayLabel } from './helpers';
 
 test('설치 후에는 인터넷 없이도 앱이 열리고 만든 여행이 보인다', async ({ page, context }) => {
+  // 아이폰(WebKit)은 다른 시험과 같이 돌 때 30초를 넘기도 한다 (offline-full과 같은 제한)
+  test.setTimeout(120_000);
   await page.goto('/');
   // 서비스 워커가 앱 파일을 다 저장하고 화면을 맡을 때까지
   await page.evaluate(async () => {
@@ -30,6 +32,7 @@ test('설치 후에는 인터넷 없이도 앱이 열리고 만든 여행이 보
 });
 
 test('로그인(/auth)·API 주소는 서비스 워커가 가로채지 않고 서버로 보낸다', async ({ page }) => {
+  test.setTimeout(120_000);
   await page.goto('/');
   await page.evaluate(async () => {
     await navigator.serviceWorker.ready;

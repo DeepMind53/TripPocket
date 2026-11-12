@@ -5,6 +5,9 @@ export default defineConfig({
   testDir: './tests/e2e',
   fullyParallel: true,
   retries: process.env.CI ? 2 : 0,
+  // CI에서 시험이 멈추면 작업 제한(30분)에 걸려 취소만 되고 어디서 멈췄는지 안 남는다 (실행 237~239).
+  // 평소 7분쯤이라 18분에 끊고, 멈춘 시험 이름을 실패로 남긴다 (scripts/ci-step.sh 주석)
+  globalTimeout: process.env.CI ? 18 * 60_000 : 0,
   reporter: [['list']],
   // 날짜를 다루는 시험이 많아 브라우저 시간대를 한국으로 고정 (CI는 UTC — 시험 쪽 Node도 TZ=Asia/Seoul, ci.yml)
   use: { baseURL: 'http://localhost:5173', trace: 'on-first-retry', timezoneId: 'Asia/Seoul' },
