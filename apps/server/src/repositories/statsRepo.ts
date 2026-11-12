@@ -315,5 +315,3 @@ export function statsRepo(db: Db) {
 
   return { bump, markActive, request, summary };
 }
-
-export type StatsSummary = ReturnType<ReturnType<typeof statsRepo>['summary']>;

@@ -56,11 +56,3 @@ export function travelLegsAhead(
   }
   return order.map((b) => ({ kind: kindOf(b), booking: b }));
 }
-
-export function travelLegNow(
-  bookings: readonly Booking[],
-  today: LocalDate,
-  now: LocalTime,
-): TravelLeg {
-  return travelLegsAhead(bookings, today, now)[0] ?? null;
-}

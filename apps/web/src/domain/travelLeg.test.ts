@@ -1,5 +1,8 @@
 import type { Booking } from '@trippocket/shared';
-import { travelLegNow, travelLegsAhead } from './travelLeg';
+import { travelLegsAhead } from './travelLeg';
+
+/** 지금 볼 구간 = 남은 구간의 첫 번째 */
+const travelLegNow = (...a: Parameters<typeof travelLegsAhead>) => travelLegsAhead(...a)[0] ?? null;
 
 /** 출국 비행기 → 렌터카 → 귀국 비행기 (사용자 요청 2026-11-02) */
 const b = (id: string, kind: Booking['kind'], start: string, end?: string) => {

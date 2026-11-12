@@ -116,11 +116,6 @@ export function placeLink(app: MapApp, dest: Destination, appName: string): MapL
   }
 }
 
-/** 국내(한국어 주소·한국 시간대)면 네이버를 먼저 (docs/05 S-30) */
-export function preferredAppOrder(isDomestic: boolean): MapApp[] {
-  return isDomestic ? ['naver', 'kakao', 'google'] : ['google', 'naver', 'kakao'];
-}
-
 /** 길찾기에 보여 줄 앱: 국내는 네이버·카카오, 해외는 구글만 (사용자 요청 2026-10-26) */
 export function directionApps(isDomestic: boolean): MapApp[] {
   return isDomestic ? ['naver', 'kakao'] : ['google'];

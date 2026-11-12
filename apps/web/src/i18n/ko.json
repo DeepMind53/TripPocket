@@ -1,12 +1,10 @@
 {
   "app": {
-    "name": "트립포켓",
-    "tagline": "여행 일정을 주머니에 넣고 다니세요"
+    "name": "트립포켓"
   },
   "nav": {
     "label": "주요 메뉴",
     "home": "홈",
-    "trips": "내 여행",
     "saved": "저장",
     "me": "마이",
     "records": "기록"
@@ -20,9 +18,7 @@
   },
   "header": {
     "back": "뒤로",
-    "quickMenu": "빠른 메뉴",
     "more": "더보기",
-    "syncLocal": "이 기기에만 저장돼요",
     "home": "홈으로"
   },
   "common": {
@@ -129,8 +125,6 @@
     "lodgingTonight": "오늘 숙소",
     "viewPlan": "일정 보기",
     "directions": "길찾기",
-    "detail": "상세 보기",
-    "otherTrips": "다른 여행 {{n}}개 보기",
     "upcomingDesc": "{{period}} · {{length}}",
     "bookingCount": "예약 {{n}}개",
     "itemCount": "일정 {{n}}개",
@@ -139,7 +133,6 @@
     "newTrip": "새 여행",
     "sampleCta": "샘플 여행으로 둘러보기",
     "sampleCreated": "샘플 여행을 만들었어요\n둘러본 뒤 지워도 돼요",
-    "directionsTo": "{{name}} 길찾기",
     "tomorrowFirst": "내일 첫 일정 · {{time}} {{title}} ›"
   },
   "trips": {
@@ -188,7 +181,6 @@
   },
   "me": {
     "title": "마이",
-    "login": "로그인",
     "settings": "설정",
     "backup": "백업·복원·용량",
     "help": "도움말",
@@ -218,7 +210,6 @@
     "emptyDay": "아직 일정이 없어요",
     "wishEmpty": "날짜를 정하지 않은 장소를 모아두는 곳이에요",
     "itemLabel": "{{n}}번째 일정, {{title}}",
-    "doneMark": "다녀옴",
     "edit": "편집",
     "editDone": "완료",
     "editHint": "손잡이(⠿)를 끌어 순서를 바꾸거나 다른 날로 옮기세요",
@@ -251,8 +242,6 @@
     "lateNight": "{{time}}까지 일정이 있어요\n막차·택시를 미리 확인하세요"
   },
   "places": {
-    "emptyTitle": "장소 찾기",
-    "emptyDesc": "숙소·맛집·카페·관광지를 평점으로 골라볼 수 있어요",
     "search": "장소 검색",
     "searchPlaceholder": "{{city}} 맛집, 장소 이름…",
     "go": "검색",
@@ -419,8 +408,6 @@
       "addOf": "{{name}} 내 목록에 담기",
       "have": "이미 있어요"
     },
-    "emptyTitle": "준비물을 챙겨볼까요?",
-    "emptyDesc": "템플릿으로 준비물과 할 일을 빠르게 만들 수 있어요",
     "packing": "준비물",
     "todo": "할 일",
     "listLabel": "목록",
@@ -430,7 +417,6 @@
     "addTodoPlaceholder": "할 일 추가",
     "add": "추가",
     "category": "카테고리",
-    "uncategorized": "기타",
     "template": "템플릿 불러오기·관리",
     "templateTitle": "템플릿",
     "templateCount": "{{n}}개",
@@ -507,7 +493,6 @@
     "language": "언어",
     "comingSoon": "준비 중",
     "reset": "기본값으로 되돌리기",
-    "all": "전체 설정",
     "fx": "환율",
     "fxFee": "환전 수수료 반영",
     "fxFeePercent": "수수료율",
@@ -600,8 +585,6 @@
     "titleDefault": "{{dest}} 여행",
     "create": "여행 만들기",
     "created": "여행을 만들었어요",
-    "needCity": "가고 싶은 곳을 하나 이상 골라주세요",
-    "needDates": "출발일과 도착일을 골라주세요",
     "needTitle": "여행 이름을 입력해 주세요",
     "results": "검색 결과",
     "wholeCountry": "나라 전체",
@@ -653,7 +636,6 @@
     "addressPlaceholder": "주소나 위치 설명",
     "memo": "메모",
     "url": "링크",
-    "date": "날짜",
     "add": "일정에 추가",
     "save": "저장",
     "added": "일정을 추가했어요",
@@ -814,7 +796,6 @@
       "google": "Google"
     },
     "unavailable": "지금은 로그인 서버에 연결할 수 없어요\n잠시 뒤 다시 해 주세요",
-    "serverOffline": "로그인 서버에 연결할 수 없어요 — 앱은 그대로 쓸 수 있어요",
     "privacy": "닉네임과 로그인 계정 번호만 저장해요\n비밀번호·연락처·위치는 저장하지 않아요",
     "error": {
       "cancelled": "로그인을 취소했어요",
@@ -1086,7 +1067,6 @@
   },
   "stats": {
     "title": "사용 통계",
-    "desc": "누가 썼는지 구분하지 않은 합계예요\n3년 동안 보관해요",
     "range": "기간",
     "d1": "오늘",
     "d7": "7일",
@@ -1101,7 +1081,6 @@
     "signups": "새 가입",
     "providers": "로그인 방법",
     "features": "많이 쓴 기능",
-    "featuresDesc": "화면·시트를 연 횟수와 앱에서 센 동작이에요",
     "data": "입력·수정·삭제",
     "api": "서버 요청",
     "apiDesc": "보통 = 절반이 끝난 시간\n느림 = 95%가 끝난 시간",
@@ -1109,7 +1088,6 @@
     "apiMs": "보통 {{p50}} · 느림 {{p95}}",
     "under": "{{ms}}ms 안",
     "over": "10초 넘음",
-    "ai": "AI 추천",
     "trips": "여행",
     "tripTotal": "여행 {{n}}개 · 국내 {{pct}}%",
     "tripAvg": "평균 {{days}}일 · 함께 쓰는 여행 {{shared}}개",
@@ -1405,7 +1383,6 @@
     "title": "실험실",
     "desc": "정식 기능 전에 시험해 보는 곳이에요\n불편하면 끄면 돼요 (이 기기에만 적용)",
     "leg": "{{distance}} · 걸어서 약 {{min}}분 (직선거리 기준)",
-    "localTime": "현지 {{time}}",
     "none": "지금 시험 중인 기능이 없어요\n새 기능이 생기면 여기에 먼저 보여요",
     "item": {
       "offlineReady": {
@@ -1577,9 +1554,6 @@
     "translateNote": "누르면 음식·약 이름만 무료 AI(Google Gemini 등)로 보내 12개 언어로 번역해요\n이름·계정·위치는 보내지 않고, 번역은 이 기기에만 저장해요\n안 되면 카드에서 번역기 바로가기를 써 주세요",
     "translated": "카드용 번역을 만들었어요",
     "translateFailed": "지금은 번역하지 못했어요\n카드에서 번역기 바로가기를 써 주세요",
-    "pickAirline": "항공사 고르기",
-    "pickTier": "{{program}} 등급",
-    "pickTierLabel": "등급 고르기",
     "noTier": "등급 없음",
     "pickAirlineName": "{{name}}로 채우기",
     "tierOf": "{{program}} 등급",
@@ -1767,9 +1741,7 @@
     "kakaoMap": "카카오맵에서 보기",
     "googleMap": "Google 지도에서 보기",
     "naverBlog": "네이버 블로그 검색",
-    "flight": "항공편 정보 사이트에서 보기",
-    "fx": "네이버 환율 보기",
-    "weather": "날씨 직접 보기"
+    "flight": "항공편 정보 사이트에서 보기"
   },
   "stay": {
     "button": "체크인 → 체크아웃 (달력에서 고르기)",
@@ -1886,8 +1858,6 @@
   "phrases": {
     "title": "번역·회화",
     "health": "건강 카드",
-    "healthSub": "식당·병원에서 보여 주세요",
-    "healthExtra": "직접 적은 내용",
     "healthTranslate": "이 내용 번역해서 보기",
     "healthNote": "번역은 참고용이에요\n중요하면 직원에게 한 번 더 확인하세요",
     "lang": "언어",
@@ -1935,8 +1905,6 @@
     "dayBefore": "여행 전날",
     "dayAfter": "여행 다음 날",
     "dayN": "{{n}}일차",
-    "forecast": "예보",
-    "observed": "지난 날씨",
     "airports": "공항 날씨",
     "depart": "출발",
     "arrive": "도착",
@@ -2705,16 +2673,12 @@
     "dayN": "{{n}}일차 · {{date}}",
     "localTime": "현지 {{time}}",
     "sun": "햇빛 모드",
-    "today": "오늘",
     "tomorrow": "내일 미리보기",
-    "now": "지금",
     "next": "다음",
     "first": "첫 일정",
-    "leaveIn": "{{min}}분 남음",
     "directions": "길찾기",
     "empty": "남은 일정이 없어요",
     "rest": "이날 일정",
-    "visited": "다녀옴",
     "remindOn": "나갈 시각 알림 켜짐",
     "remindOff": "나갈 시각 알림 꺼짐",
     "remindTitle": "지금 나갈 시각이에요",
@@ -2729,11 +2693,7 @@
     "sunOn": "햇빛 모드",
     "morning": "오늘 아침",
     "briefing": "오늘 {{n}}곳 · 첫 일정 {{time}}",
-    "until": "{{time}}까지",
-    "leaveAt": "{{time}}에 나가요",
     "leaveNow": "지금 나가요",
-    "byTransit": "대중교통 {{min}}분",
-    "byWalk": "도보 {{min}}분",
     "hourWeather": "{{look}} {{temp}}도",
     "departIn": "{{m}}분 {{s}}초",
     "departSuffix": "후 출발",
@@ -2757,7 +2717,6 @@
     "restN": "오늘 남은 일정 {{n}}",
     "pastN": "지난 일정 {{n}}",
     "past": "지난 일정",
-    "skip": "건너뛰기",
     "thumbs": {
       "weather": "날씨",
       "checklist": "준비물",

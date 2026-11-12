@@ -17,6 +17,7 @@ import { FlightReminder } from '../features/common/FlightReminder';
 import { useSync } from '../data/sync/syncStore';
 import { useSettings } from '../data/settingsStore';
 import { useLab } from '../data/labsStore';
+import { trashRepo } from '../data/repositories/trashRepo';
 
 // Plan B 아침 컨디션 체크 (실험실) — 켰을 때만
 const ConditionCheck = lazy(() => import('../features/itinerary/ConditionCheck'));
@@ -105,7 +106,7 @@ export function App() {
   // 지운 지 7일 넘은 기록은 한가할 때 기기에서 정리 (삭제 기록 복원, 2026-10-27)
   useEffect(() => {
     const idle = window.requestIdleCallback ?? ((cb: () => void) => window.setTimeout(cb, 3000));
-    idle(() => void import('../data/repositories/trashRepo').then((m) => m.trashRepo.purge()));
+    idle(() => void trashRepo.purge());
     // 만든 지 24시간 지난 샘플 여행은 지운다 (실험실 샘플 테스트, 2026-11-03)
     idle(
       () => void import('../data/labSample').then((m) => m.removeLabSample({ expiredOnly: true })),

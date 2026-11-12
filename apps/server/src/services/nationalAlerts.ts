@@ -431,8 +431,3 @@ export async function nationalAlerts(
   });
   return { alerts, missing: [...missing] };
 }
-
-/** 테스트용 */
-export function resetNationalCache(): void {
-  cache.clear();
-}

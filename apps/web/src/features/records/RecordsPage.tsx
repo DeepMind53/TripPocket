@@ -5,7 +5,7 @@ import { useTrips } from '../../data/hooks';
 import { useTranslation } from '../../i18n';
 import { EmptyState, TopBar } from '../../shared/ui';
 import { CountryGrid } from './CountryGrid';
-import { TripList } from '../trips/TripsPage';
+import { TripList } from '../trips/TripList';
 import { TravelReview } from './TravelReview';
 import { VisitLog } from './VisitLog';
 import { DayNoteLog } from './DayNoteLog';

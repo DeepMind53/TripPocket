@@ -104,13 +104,3 @@ export async function routeEtaResult(
   }
   return r;
 }
-
-/** 소요 시간만 (일정 화면 "다음 일정" 줄) */
-export async function routeEta(
-  from: Coords,
-  to: Coords,
-  google: boolean,
-  live = false,
-): Promise<RouteEta | null> {
-  return (await routeEtaResult(from, to, google, live)).eta;
-}

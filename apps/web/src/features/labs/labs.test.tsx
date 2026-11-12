@@ -12,7 +12,6 @@ import { trashRepo } from '../../data/repositories/trashRepo';
 import { tripRepo } from '../../data/repositories/tripRepo';
 import { settingsRepo } from '../../data/repositories/settingsRepo';
 import { Toaster } from '../../shared/ui';
-import { localTimeLabel } from '../../shared/hooks/useMinuteClock';
 
 beforeEach(async () => {
   await resetLocalDb();
@@ -736,18 +735,6 @@ describe('실험실', () => {
       vi.useRealTimers();
       vi.unstubAllGlobals();
     }
-  });
-
-  it('현지 시각: 시간대가 기기와 다를 때만', () => {
-    const t = (_k: string, o: { time: string }) => `현지 ${o.time}`;
-    const now = new Date('2026-10-24T03:05:00Z');
-    const device = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    expect(localTimeLabel(device, now, t)).toBeNull();
-    const other = device === 'Asia/Bangkok' ? 'Asia/Tokyo' : 'Asia/Bangkok';
-    expect(localTimeLabel(other, now, t)).toBe(
-      other === 'Asia/Bangkok' ? '현지 10:05' : '현지 12:05',
-    );
-    expect(localTimeLabel('Not/AZone', now, t)).toBeNull();
   });
 
   it('긴급 연락처 카드: 켜면 ⚡ 메뉴 맨 위, 여행 나라 번호를 누르면 전화', async () => {

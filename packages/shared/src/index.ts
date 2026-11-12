@@ -1,5 +1,3 @@
-export const APP_NAME = '트립포켓';
-
 export {
   addDays,
   diffDays,

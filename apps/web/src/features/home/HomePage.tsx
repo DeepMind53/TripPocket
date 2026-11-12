@@ -43,7 +43,7 @@ const BookingCard = lazy(async () => ({
   default: (await import('../bookings/BookingCard')).BookingCard,
 }));
 import { TravelModeButton } from '../travel/TravelModeButton';
-import { TripList } from '../trips/TripsPage';
+import { TripList } from '../trips/TripList';
 
 const PrepCards = lazy(async () => ({ default: (await import('./PrepCards')).PrepCards }));
 // 여행 중 특보 한 줄 — 첫 화면에 넣지 않고 따로 받는다

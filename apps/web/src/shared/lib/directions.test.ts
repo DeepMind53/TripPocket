@@ -1,4 +1,4 @@
-import { directionsLink, placeLink, preferredAppOrder } from './directions';
+import { directionsLink, placeLink } from './directions';
 
 const ichiran = { name: '이치란 라멘', address: '신주쿠 3-34-11' };
 const withCoords = { name: '센소지', coords: { lat: 35.7148, lng: 139.7967 } };
@@ -67,10 +67,5 @@ describe('길찾기 링크', () => {
       /^https:\/\/www\.google\.com\/maps\/search\/\?api=1&query=/,
     );
     expect(placeLink('kakao', ichiran, 'x').app).toMatch(/^kakaomap:\/\/search\?q=/);
-  });
-
-  it('국내면 네이버, 해외면 구글을 먼저', () => {
-    expect(preferredAppOrder(true)[0]).toBe('naver');
-    expect(preferredAppOrder(false)[0]).toBe('google');
   });
 });

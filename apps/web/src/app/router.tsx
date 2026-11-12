@@ -1,5 +1,6 @@
 import { createBrowserRouter, Navigate, type RouteObject } from 'react-router';
 import { HomePage } from '../features/home/HomePage';
+import { TripsPage } from '../features/trips/TripsPage';
 import { AdminGate } from './AdminGate';
 import { AuthGate } from './AuthGate';
 import { AppShell } from './layouts/AppShell';
@@ -11,11 +12,9 @@ const allRoutes: RouteObject[] = [
     element: <AppShell />,
     children: [
       { index: true, element: <HomePage /> },
+      // 목록(TripList)은 홈이 이미 쓰고 화면 자체는 몇 줄이라 나눠 받지 않는다 (삭제 뒤 바로 열려야 함)
+      { path: 'trips', element: <TripsPage /> },
       // 첫 화면(홈) 밖의 탭은 누를 때 불러온다 (첫 화면 크기 예산, 설치 후에는 기기에 저장돼 바로 열림)
-      {
-        path: 'trips',
-        lazy: async () => ({ Component: (await import('../features/trips/TripsPage')).TripsPage }),
-      },
       {
         path: 'records',
         lazy: async () => ({

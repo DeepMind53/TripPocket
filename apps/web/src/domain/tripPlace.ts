@@ -12,11 +12,6 @@ export function isDomesticTrip(trip: Pick<Trip, 'destinations' | 'timezone'>): b
   return trip.timezone === 'Asia/Seoul';
 }
 
-/** 지도·검색 중심 좌표 (좌표가 있는 첫 목적지) */
-export function tripCenter(trip: Pick<Trip, 'destinations'>): { lat: number; lng: number } | null {
-  return trip.destinations.find((d) => d.coords)?.coords ?? null;
-}
-
 /**
  * 숙소가 있는 도시 (AI 추천에서 호텔 위치·블로그 검색에 함께 쓴다).
  * 목적지가 하나면 그곳, 여럿이면 주소에 이름이 나오는 곳, 모르면 null.
