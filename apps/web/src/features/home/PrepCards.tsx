@@ -117,8 +117,14 @@ export function PrepCards({
       >
         <span className="shrink-0 text-caption font-semibold text-fg-muted">{t('prep.title')}</span>
         <span className="min-w-0 flex-1 truncate text-caption text-fg-sub">
-          <InlineIcon icon={Luggage} />
-          {packed}/{total} · <InlineIcon icon={Ticket} />
+          {/* 짐 목록이 비어 있으면(0/0) 요약에서 뺀다 — 펼치면 [짐 목록 만들기] 그대로 (2026-11-14 다듬기) */}
+          {total > 0 && (
+            <>
+              <InlineIcon icon={Luggage} />
+              {packed}/{total} ·{' '}
+            </>
+          )}
+          <InlineIcon icon={Ticket} />
           {t('prep.bookingCounts', { flights, lodgings })}
           {essentials && essentials.total > 0 && (
             <>

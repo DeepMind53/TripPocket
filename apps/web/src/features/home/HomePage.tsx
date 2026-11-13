@@ -36,6 +36,8 @@ export function HomePage() {
   const ongoing = withStatus.find((x) => x.status === 'ongoing')?.trip;
   const upcoming = withStatus.find((x) => x.status === 'upcoming')?.trip;
   const featured = ongoing ?? upcoming;
+  // 위 카드 말고 보여 줄 여행(여행 중·다가오는)이 없으면 "내 여행" 제목을 숨기고 [+ 새 여행]만 (2026-11-14 다듬기)
+  const moreTrips = withStatus.some((x) => x.status !== 'past' && x.trip.id !== featured?.id);
 
   return (
     <>
@@ -107,8 +109,13 @@ export function HomePage() {
       {/* 내 여행 (여행 중·다가오는) — 예전 "내 여행" 탭을 홈으로 (사용자 요청 2026-10-24) */}
       {featured && (
         <section aria-label={t('home.myTrips')} className="flex flex-col gap-2 pt-6">
-          <div className="flex items-center justify-between px-5">
-            <h2 className="text-body-1 font-semibold">{t('home.myTrips')}</h2>
+          <div
+            className={cn(
+              'flex items-center px-5',
+              moreTrips ? 'justify-between' : 'justify-center',
+            )}
+          >
+            {moreTrips && <h2 className="text-body-1 font-semibold">{t('home.myTrips')}</h2>}
             <Button
               size="sm"
               variant="ghost"
@@ -120,11 +127,13 @@ export function HomePage() {
           </div>
           {/* 맨 위에 보인 여행은 뺀다 (여행 중이면 그 오늘 일정 묶음도 위로 옮겼다, docs/29 §7.1).
               같은 날 여행 중인 다른 여행은 지금처럼 목록 '여행 중'에 오늘 일정 묶음으로 (사용자 요청 2026-11-06) */}
-          <TripList
-            only="active"
-            exclude={featured.id}
-            renderOngoing={(tr) => <OngoingTrip trip={tr} />}
-          />
+          {moreTrips && (
+            <TripList
+              only="active"
+              exclude={featured.id}
+              renderOngoing={(tr) => <OngoingTrip trip={tr} />}
+            />
+          )}
         </section>
       )}
     </>

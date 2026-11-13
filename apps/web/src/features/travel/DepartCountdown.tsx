@@ -41,13 +41,19 @@ export function DepartCountdown({
     return () => window.clearInterval(id);
   }, []);
   const sec = leaveInSeconds(start, secondsIn(timezone, now), travelMin);
+  // 1시간 넘으면 시간·분, 10분 안쪽만 초까지 (2026-11-14 다듬기)
+  const m = Math.floor(sec / 60);
+  const label =
+    m >= 60
+      ? t('travel.departInH', { h: Math.floor(m / 60), m: m % 60 })
+      : m >= 10
+        ? t('travel.departInM', { m: sec % 60 ? m + 1 : m })
+        : t('travel.departIn', { m, s: sec % 60 });
   if (sec <= 0) return <span className="whitespace-nowrap">{t('travel.leaveNow')}</span>;
   return (
     // 띄어쓰기가 보이게: 큰 글자 사이 낱말 간격을 넓히고, "후 출발"과는 한 칸 더 (사용자 요청 2026-11-11)
     <span className="flex flex-wrap items-baseline gap-x-2.5">
-      <span className="whitespace-nowrap">
-        {t('travel.departIn', { m: Math.floor(sec / 60), s: sec % 60 })}
-      </span>
+      <span className="whitespace-nowrap">{label}</span>
       <span className="text-body-1 font-medium whitespace-nowrap opacity-90">
         {t('travel.departSuffix')}
       </span>

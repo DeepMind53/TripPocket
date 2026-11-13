@@ -76,7 +76,8 @@ it('여행 모드: 여행 중이면 한 번 묻고, 시작하면 지금·다음 
   // 다음 일정: "N분 N초 후 출발" 하나만 크게 (시작 11:00 − 이동 − 여유 10분, 사용자 요청 2026-11-10)
   const nextBox = await screen.findByRole('region', { name: '다음 일정' });
   expect(screen.getByText(/^1일차 · 11.03 \(화\)$/)).toBeInTheDocument();
-  expect(within(nextBox).getByText(/^\d+분 \d+초$/)).toBeInTheDocument();
+  // 1시간 넘으면 "N시간 N분", 10분 넘으면 "N분", 그 안쪽은 초까지 (2026-11-14 다듬기)
+  expect(within(nextBox).getByText(/^(\d+시간 \d+분|\d+분( \d+초)?)$/)).toBeInTheDocument();
   expect(within(nextBox).getByText('후 출발')).toBeInTheDocument();
   // [도보][대중교통][자동차] + [새로고침] (2026-11-13)
   const legs = within(nextBox).getByRole('radiogroup', { name: '이동 수단' });

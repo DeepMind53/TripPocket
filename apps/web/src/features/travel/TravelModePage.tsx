@@ -172,7 +172,7 @@ function TravelView({ trip, items: all }: { trip: Trip; items: ItineraryItem[] }
   return (
     <div
       className={cn(
-        'mx-auto flex min-h-dvh max-w-[560px] flex-col gap-3 px-5 pb-28',
+        'mx-auto flex min-h-dvh max-w-[560px] flex-col gap-3 px-5 pb-44',
         sun && 'travel-sun',
       )}
     >
@@ -200,7 +200,7 @@ function TravelView({ trip, items: all }: { trip: Trip; items: ItineraryItem[] }
               <DayWeatherBadge weather={w} />
             </span>
             <span className="@container flex h-14 min-w-0 flex-1 items-center justify-end">
-              <span className="tabular text-[min(2.75rem,17cqi)] leading-none font-semibold whitespace-nowrap text-fg-sub">
+              <span className="tabular text-[min(2.25rem,15cqi)] leading-none font-medium whitespace-nowrap text-fg-sub">
                 {t('travel.localTime', { time: now })}
               </span>
             </span>

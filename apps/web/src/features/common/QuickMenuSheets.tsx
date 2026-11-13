@@ -312,7 +312,7 @@ function QuickMenuContent({
         </Link>
         <Link
           to={tripId ? `/ai?trip=${tripId}` : '/ai'}
-          className="flex min-h-20 flex-col justify-center gap-0.5 rounded-card bg-primary-weak px-3 py-2.5 text-left"
+          className="flex min-h-20 flex-col justify-center gap-0.5 rounded-card bg-bg-subtle px-3 py-2.5 text-left"
         >
           {/* 제목은 아이콘 오른쪽, 설명은 아래 (사용자 요청 2026-11-04) */}
           <span className="flex items-center gap-1.5">

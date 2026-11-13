@@ -13,7 +13,7 @@ export interface RouteStopProps {
   title: ReactNode;
   /** 제목 아래 한 줄 (종류 · 주소 · "다음 · 38분 뒤") */
   meta?: ReactNode;
-  /** 오른쪽 시각 ("14:00", 없으면 "—") */
+  /** 오른쪽 시각 ("14:00", 없으면 빈칸) */
   time?: string | undefined;
   /** 시각 오른쪽 (방문 표시 버튼 등) */
   trailing?: ReactNode;
@@ -47,7 +47,8 @@ export function RouteStop({
   const next = state === 'next';
   const body = (
     <>
-      <span className="flex min-w-0 flex-col justify-center">
+      {/* 제목 첫 줄·점·시각이 한 줄에 (2026-11-14 다듬기 — 시각이 제목보다 떠 보임) */}
+      <span className="flex min-w-0 flex-col">
         <span
           className={cn(
             // 제목은 두 줄까지 (docs/11 §13-8 긴 글자), 촘촘히 보기는 한 줄
@@ -70,7 +71,7 @@ export function RouteStop({
           past ? 'text-fg-muted' : 'text-fg',
         )}
       >
-        {time ?? (memo ? '' : '—')}
+        {time ?? ''}
       </span>
     </>
   );

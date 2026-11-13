@@ -11,7 +11,8 @@ export interface ScrollRowProps extends HTMLAttributes<HTMLDivElement> {
 
 /**
  * 가로로 미는 줄 (칩 줄 등, 사용자 요청 2026-10-25): 스크롤바는 숨기고,
- * 오른쪽에 더 있으면 위쪽 끝에 반투명 "밀어서 더 보기" — 미는 동안은 숨고 멈추면 다시 나온다
+ * 오른쪽에 더 있으면 오른쪽 끝을 흐리게 지우고 작은 › 표시 (2026-11-14 다듬기 — 전에는 칩을 덮는 검은 말풍선).
+ * 미는 동안은 › 가 숨고 멈추면 다시 나온다. "밀어서 더 보기"는 화면 읽기용 글자로만
  */
 export function ScrollRow({ ref, className, outerClassName, children, ...rest }: ScrollRowProps) {
   const { t } = useTranslation();
@@ -58,6 +59,8 @@ export function ScrollRow({ ref, className, outerClassName, children, ...rest }:
         }}
         className={cn(
           'overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
+          // 배경색과 상관없이 끝만 흐리게 (시트·카드 안에서도)
+          more && '[mask-image:linear-gradient(to_right,#000_calc(100%-40px),transparent)]',
           className,
         )}
       >
@@ -66,12 +69,14 @@ export function ScrollRow({ ref, className, outerClassName, children, ...rest }:
       <span
         aria-hidden="true"
         className={cn(
-          'pointer-events-none absolute -top-0.5 right-1 flex items-center gap-0.5 rounded-full bg-fg/55 py-0.5 pr-1 pl-2 text-micro text-bg backdrop-blur-sm transition-opacity duration-200',
+          'pointer-events-none absolute inset-y-0 right-0 flex items-center text-fg-muted transition-opacity duration-200',
           more && !moving ? 'opacity-100' : 'opacity-0',
         )}
       >
-        {t('common.swipeMore')}
-        <ChevronRight className="size-3" />
+        <span className="sr-only">{t('common.swipeMore')}</span>
+        <span className="grid size-6 place-items-center rounded-full border border-line bg-surface">
+          <ChevronRight className="size-4" />
+        </span>
       </span>
     </div>
   );

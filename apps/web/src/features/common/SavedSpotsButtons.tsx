@@ -100,12 +100,13 @@ export function SavedSpotsButtons({
           className="flex min-h-12 items-center gap-2 rounded-card bg-bg-subtle px-3 text-left text-body-2 font-semibold"
         >
           <List aria-hidden="true" className="size-5 shrink-0 text-primary" />
-          {t('spots.list', { n: spots.length })}
+          {t('spots.listTitle')}{' '}
+          <span className="tabular font-normal text-fg-muted">{spots.length}</span>
         </button>
         <button
           type="button"
           onClick={() => setSaveOpen(true)}
-          className="flex min-h-12 items-center gap-2 rounded-card bg-primary-weak px-3 text-left text-body-2 font-semibold"
+          className="flex min-h-12 items-center gap-2 rounded-card bg-bg-subtle px-3 text-left text-body-2 font-semibold"
         >
           <MapPinPlus aria-hidden="true" className="size-5 shrink-0 text-primary" />
           {t('spots.save')}

@@ -49,8 +49,8 @@ describe('RouteLine · RouteStop · TransferChip', () => {
     expect(next).toHaveTextContent('센소지');
     await userEvent.click(screen.getByRole('button', { name: '센소지 14시' }));
     expect(open).toHaveBeenCalledOnce();
-    // 시각이 없는 역은 —, 메모 줄은 빈칸
-    expect(within(list).getAllByRole('listitem')[4]).toHaveTextContent('—');
+    // 시각이 없는 역도 빈칸 (2026-11-14 다듬기, 전에는 —)
+    expect(within(list).getAllByRole('listitem')[4]).not.toHaveTextContent('—');
   });
 });
 
