@@ -33,19 +33,31 @@ beforeEach(async () => {
 });
 
 describe('실험실', () => {
-  it('마이 → 실험실: 2026-11-13 새 실험 5개(나머지는 정식), 모두 [샘플], 켜면 이 기기에 저장', async () => {
+  it('마이 → 실험실: 2026-11-13 새 실험 11개(소리·숙소 방향은 정식), 모두 [샘플], 켜면 이 기기에 저장', async () => {
     const user = userEvent.setup();
     render(<RouterProvider router={createMemoryRouter(routes, { initialEntries: ['/me'] })} />);
     await user.click(await screen.findByRole('link', { name: '실험실' }));
-    const sw = await screen.findByRole('switch', { name: /일정 사이 빈 시간/ });
+    const sw = await screen.findByRole('switch', { name: /예약 날짜 점검/ });
     expect(sw).toHaveAttribute('aria-checked', 'false');
     await user.click(sw);
-    expect(JSON.parse(localStorage.getItem('tp-labs')!)).toEqual({ freeTime: true });
+    expect(JSON.parse(localStorage.getItem('tp-labs')!)).toEqual({ bookingCheck: true });
     // 일차 노선 미니맵·여행 전체 노선도는 설정 "노선도"로 정식 (2026-11-10)
-    expect(LABS).toEqual(['speakPhrase', 'showAmount', 'homeCompass', 'freeTime', 'tripStory']);
-    expect(screen.getAllByRole('switch')).toHaveLength(5);
+    expect(LABS).toEqual([
+      'phraseOfDay',
+      'bestWalkTime',
+      'daylightLeft',
+      'shareStay',
+      'shorterOrder',
+      'farPlace',
+      'revisitCity',
+      'weatherVsSeoul',
+      'krHolidayRush',
+      'memoryToday',
+      'bookingCheck',
+    ]);
+    expect(screen.getAllByRole('switch')).toHaveLength(11);
     // 실험마다 [샘플] (사용자 요청 2026-11-10)
-    expect(screen.getAllByRole('button', { name: / 샘플$/ })).toHaveLength(5);
+    expect(screen.getAllByRole('button', { name: / 샘플$/ })).toHaveLength(11);
     // 정식이 됐거나 뺀 것은 실험실에 없다
     for (const name of [
       /현지 공휴일/,
@@ -65,9 +77,14 @@ describe('실험실', () => {
       /하루 한 줄 기록/,
       /사진으로 번역/,
       /해 질 녘/,
+      /소리로 듣기/,
+      /숙소 방향/,
+      /빈 시간/,
+      /여행기/,
+      /크게 보여/,
     ])
       expect(screen.queryByRole('switch', { name })).toBeNull();
-    setLab('freeTime', false);
+    setLab('bookingCheck', false);
   });
 
   it('정식: 날씨 주의 그림·현지 공휴일·늦은 귀가 + 실험: 장소 맞춤 팁', async () => {

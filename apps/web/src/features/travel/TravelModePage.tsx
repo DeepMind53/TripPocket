@@ -3,13 +3,11 @@ import {
   Bed,
   Bell,
   BellOff,
-  ChevronDown,
   CloudSun,
   House,
   IdCard,
   Languages,
   ListChecks,
-  Navigation,
   Sun,
   Ticket,
   TriangleAlert,
@@ -17,40 +15,25 @@ import {
   WifiOff,
   type LucideIcon,
 } from 'lucide-react';
-import { useEffect, useState, useSyncExternalStore } from 'react';
+import { useState, useSyncExternalStore } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { TravelTabPanel } from './TravelTabPanel';
 import { isTravelTab, type TravelTabId } from './travelTabs';
 import { useTrip, useTripBookings, useTripItems } from '../../data/hooks';
-import { applyVisit } from '../../data/skippedToSaved';
-import { VisitToggle } from '../common/VisitToggle';
 import { setTravelMode, setTravelPrefs, useTravelMode } from '../../data/travelModeStore';
 import { airWarnings } from '../../domain/air';
-import { currentItemId, nextStop, pastItemIds } from '../../domain/dayTools';
 import { lodgingForNight } from '../../domain/lodging';
-import { dayPhase, leaveAt, rainFrom, type DayPhase } from '../../domain/travelDay';
+import { dayPhase, rainFrom, type DayPhase } from '../../domain/travelDay';
 import { travelLegsAhead } from '../../domain/travelLeg';
 import { isDomesticTrip } from '../../domain/tripPlace';
-import { formatTemps, hourWeather, weatherLook } from '../../domain/weather';
+import { formatTemps } from '../../domain/weather';
 import { useTranslation } from '../../i18n';
 import { timeIn, useMinuteClock } from '../../shared/hooks/useMinuteClock';
 import { useRouteSheet } from '../../shared/hooks/useRouteSheet';
-import { DepartCountdown } from './DepartCountdown';
-import { LegControls } from './LegControls';
-import { useNextLeg } from './useNextLeg';
 import { cn } from '../../shared/lib/cn';
 import { formatMonthDay } from '../../shared/lib/dateFormat';
 import type { Destination } from '../../shared/lib/directions';
-import {
-  Button,
-  IconButton,
-  NextStopCard,
-  Skeleton,
-  WeatherIcon,
-  routeColor,
-  toast,
-} from '../../shared/ui';
-import { useSettings } from '../../data/settingsStore';
+import { Button, IconButton, Skeleton, toast } from '../../shared/ui';
 import { InlineIcon } from '../../shared/ui/InlineIcon';
 import { DayWeatherBadge } from '../common/DayWeatherBadge';
 import { DirectionsSheet } from '../common/DirectionsSheet';
@@ -60,6 +43,8 @@ import { TravelLegCard } from '../common/TravelLegCard';
 import { useTripWeather } from '../common/useTripWeather';
 import { useTripHolidays } from '../itinerary/useTripHolidays';
 import { useTripPlanItems } from '../itinerary/usePlanView';
+import { OngoingTrip } from '../home/OngoingTrip';
+import { TripStrip } from '../home/TripStrip';
 
 const mins = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5));
 
@@ -123,7 +108,6 @@ function TravelView({ trip, items: all }: { trip: Trip; items: ItineraryItem[] }
   const online = useOnline();
   const [dirOpen, setDirOpen] = useRouteSheet('travel-directions');
   const [dest, setDest] = useState<Destination | null>(null);
-  const [pastOpen, setPastOpen] = useState(false);
   // 아래 탭으로 연 화면 (?tab=fx&trip=… — 환율·번역 화면이 trip으로 여행을 안다). 뒤로 가기 = 여행 모드 첫 화면
   const [params, setParams] = useSearchParams();
   const tabParam = params.get('tab');
@@ -134,45 +118,18 @@ function TravelView({ trip, items: all }: { trip: Trip; items: ItineraryItem[] }
   const now = timeIn(trip.timezone, clock) ?? '00:00';
   const dayItems = items.filter((i) => i.date === today && i.kind !== 'note');
   const phase = dayPhase(dayItems, now);
-  const nowId = currentItemId(dayItems, now);
-  const current = dayItems.find((i) => i.id === nowId);
-  const next = nextStop(dayItems, now);
   const n = dayNumberOf(trip.startDate, trip.endDate, today);
-  // 실험실: 다음 역 카드를 그날 노선 색으로 (2026-11-10)
-  const dayColorOn = useSettings((st) => st.nextStopDayColor);
   const domestic = isDomesticTrip(trip);
   // 오늘 밤 숙소 → 없으면 첫 숙소 (빠른 메뉴 "숙소로 길찾기"와 같은 규칙)
   const stay =
     lodgingForNight(bookings, today)?.booking ?? bookings.find((b) => b.kind === 'lodging');
   const w = weather[today];
 
-  // 다음 일정까지 이동 — 홈과 같은 규칙 (useNextLeg, 2026-11-13 자동차·새로고침)
-  const nextLeg = useNextLeg(dayItems, next ?? undefined);
-  const travelMin = nextLeg.travelMin;
-  const leave = next?.startTime ? leaveAt(next.startTime, now, travelMin) : null;
-
-  // 나갈 시각 알림 (앱이 열려 있을 때 — 브라우저 알림 권한을 허락한 경우)
-  useEffect(() => {
-    if (!remind || !leave || leave.inMin < 0 || !next) return;
-    const timer = window.setTimeout(() => {
-      if (typeof Notification !== 'undefined' && Notification.permission === 'granted')
-        new Notification(t('travel.remindTitle'), { body: next.title });
-      navigator.vibrate?.(200);
-    }, leave.inMin * 60_000);
-    return () => window.clearTimeout(timer);
-  }, [remind, leave?.inMin, next, t]); // eslint-disable-line react-hooks/exhaustive-deps
-
   const directions = (d: Destination) => {
     if (openDirectionsDirect(d, domestic)) return;
     setDest(d);
     setDirOpen(true);
   };
-  const go = (i: ItineraryItem) =>
-    directions({
-      name: i.place?.name ?? i.title,
-      address: i.place?.address,
-      coords: i.place?.coords,
-    });
   const toStay = () => {
     if (!stay) return toast(t('quickMenu.noLodging'));
     directions({ name: stay.title, address: stay.details?.address });
@@ -201,61 +158,6 @@ function TravelView({ trip, items: all }: { trip: Trip; items: ItineraryItem[] }
     (!leg.booking.start.time ||
       leg.booking.start.date < today ||
       mins(leg.booking.start.time) - mins(now) <= 180);
-
-  // 지난 일정 [미방문][방문] — 홈·일정 탭과 같은 기록 (사용자 요청 2026-11-06)
-  const past = pastItemIds(dayItems, today, now);
-  const markVisit = async (i: ItineraryItem, v: 'visited' | 'skipped' | null) => {
-    const r = await applyVisit(i, v, trip);
-    if (r === 'saved') toast(t('visit.savedToSaved'));
-  };
-  const visitButtons = (i: ItineraryItem) =>
-    past.has(i.id) && (
-      <VisitToggle value={i.visit} label={i.title} onChange={(v) => void markVisit(i, v)} />
-    );
-
-  // 남은 일정: 방문 버튼 자리에 그 시각 날씨 (예보가 있는 날만, 작년 기록은 빼고 — 사용자 요청 2026-11-10)
-  const hourMark = (i: ItineraryItem) => {
-    const h = w && !w.year ? hourWeather(w, i.startTime) : null;
-    if (!h) return null;
-    const look = weatherLook(h.code);
-    return (
-      <span
-        role="img"
-        aria-label={t('travel.hourWeather', { look: look.label, temp: h.temp })}
-        className="flex shrink-0 items-center gap-1"
-      >
-        <WeatherIcon kind={look.kind} className="size-5" />
-        <span aria-hidden="true" className="tabular text-caption text-fg-sub">
-          {h.temp}°
-        </span>
-      </span>
-    );
-  };
-
-  const row = (i: ItineraryItem) => (
-    <li key={i.id} className="flex min-h-12 items-center gap-2 px-3 py-2">
-      <span className="tabular w-12 shrink-0 text-caption text-fg-muted">
-        {i.startTime ?? '--:--'}
-      </span>
-      <span
-        className={cn(
-          'min-w-0 flex-1 truncate text-body-1',
-          i.visit && 'text-fg-muted line-through',
-        )}
-      >
-        {i.title}
-      </span>
-      {past.has(i.id) ? visitButtons(i) : hourMark(i)}
-    </li>
-  );
-
-  const ended = (i: ItineraryItem) =>
-    !!i.startTime &&
-    i.id !== nowId &&
-    (!next || i.startTime < next.startTime!) &&
-    i.startTime < now;
-  const pastItems = dayItems.filter(ended);
-  const restItems = dayItems.filter((i) => !ended(i));
 
   const tomorrowItems = items
     .filter((i) => i.date === tomorrow && i.kind !== 'note')
@@ -349,153 +251,76 @@ function TravelView({ trip, items: all }: { trip: Trip; items: ItineraryItem[] }
             />
           )}
 
-          {/* 아침 브리핑 (A2): 첫 일정 전까지 */}
-          {phase === 'morning' && (
-            <section
-              aria-label={t('travel.morning')}
-              className="flex flex-col gap-1 rounded-card bg-bg-subtle p-4"
-            >
-              <span className="text-caption font-semibold text-fg-muted">
-                {t('travel.morning')}
-              </span>
-              <span className="text-body-1 font-semibold">
-                {t('travel.briefing', { n: dayItems.length, time: firstTimed?.startTime ?? '' })}
-              </span>
-              {w && <span className="tabular text-caption text-fg-sub">{formatTemps(w)}</span>}
-            </section>
-          )}
-
-          {/* 다음 일정: 나갈 시각이 가장 크게 (Q2) */}
-          {/* 다음 역 카드 (docs/29 §7.12, 사용자 결정 Q3 파랑 채움) — 정보·문구는 그대로, 나갈 시각이 가장 크게 */}
-          {next && leave && (
-            <NextStopCard
-              size="lg"
-              tone={dayColorOn && n ? routeColor(n - 1).ink : undefined}
-              label={t('travel.next')}
-              kicker={t(phase === 'morning' ? 'travel.first' : 'travel.next')}
-              title={`${next.title} · ${next.startTime}`}
-              // "88분 38초 후 출발" 하나만 크게 — 고른 수단으로 계산 (사용자 요청 2026-11-10, 전에는 "21:19에 나가요")
-              countdown={
-                <DepartCountdown
-                  start={next.startTime!}
-                  timezone={trip.timezone}
-                  travelMin={travelMin}
-                />
-              }
-              note={nextLeg.note}
-              actions={
-                // [도보|대중교통|자동차] 토글 + [새로고침]을 [길찾기] 위 한 줄로 (사용자 요청 2026-11-10·11-13)
-                (nextLeg.hasRoute || next.place?.address || next.place?.name) && (
-                  <div className="flex flex-1 flex-col gap-2">
-                    {nextLeg.hasRoute && (
-                      <LegControls
-                        mode={nextLeg.mode}
-                        onMode={nextLeg.onMode}
-                        hasWalk={nextLeg.opts.walk !== undefined}
-                        hasTransit={nextLeg.opts.transit !== undefined}
-                        hereDisabled={nextLeg.hereDisabled}
-                        left={nextLeg.left}
-                        onHere={nextLeg.onHere}
-                      />
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => go(next)}
-                      className="flex h-13 items-center justify-center gap-2 rounded-btn bg-on-primary text-body-1 font-semibold text-primary"
-                    >
-                      <Navigation aria-hidden="true" className="size-5" />
-                      {t('travel.directions')}
-                    </button>
-                  </div>
-                )
-              }
-            />
-          )}
-
-          {/* 저녁 정리 + 내일 미리보기 (A5·A6, Q1) */}
-          {phase === 'evening' && (
-            <section
-              aria-label={t('travel.evening')}
-              className="flex flex-col gap-2 rounded-card bg-bg-subtle p-4"
-            >
-              <span className="text-caption font-semibold text-fg-muted">
-                {t('travel.evening')}
-              </span>
-              <span className="text-body-1 font-semibold">
-                {t('travel.recap', { n: dayItems.length, done: visitedCount })}
-              </span>
-              <span className="border-t border-dashed border-line pt-2 text-caption font-semibold text-fg-muted">
-                {t('travel.tomorrow')}
-              </span>
-              {tomorrowFirst ? (
-                <span className="text-body-2">
-                  {t('travel.tomorrowFirst', {
-                    time: tomorrowFirst.startTime ?? '',
-                    title: tomorrowFirst.title,
-                  })}
-                </span>
-              ) : (
-                <span className="text-body-2 text-fg-muted">{t('travel.tomorrowNone')}</span>
-              )}
-              {weather[tomorrow] && (
-                <span className="tabular text-caption text-fg-sub">
-                  {formatTemps(weather[tomorrow])}
-                </span>
-              )}
-              <Button
-                size="lg"
-                fullWidth
-                leading={<Bed aria-hidden="true" className="size-5" />}
-                onClick={toStay}
-              >
-                {t('travel.toStay')}
-              </Button>
-            </section>
-          )}
-
-          {!current && !next && phase !== 'evening' && (
-            <p className="rounded-card bg-bg-subtle p-4 text-body-2 text-fg-sub">
-              {t('travel.empty')}
-            </p>
-          )}
-
-          {/* 남은 일정 + 지난 일정 접기 (C3) */}
-          {dayItems.length > 0 && (
-            <section aria-label={t('travel.rest')} className="flex flex-col gap-1.5">
-              <div className="flex items-center justify-between">
-                <h2 className="text-caption font-semibold text-fg-muted">
-                  {t('travel.restN', { n: restItems.length })}
-                </h2>
-                {pastItems.length > 0 && (
-                  <button
-                    type="button"
-                    aria-expanded={pastOpen}
-                    onClick={() => setPastOpen(!pastOpen)}
-                    className="flex h-9 items-center gap-1 text-caption font-semibold text-fg-sub"
-                  >
-                    {t('travel.pastN', { n: pastItems.length })}
-                    <ChevronDown
-                      aria-hidden="true"
-                      className={`size-4 transition-transform ${pastOpen ? 'rotate-180' : ''}`}
-                    />
-                  </button>
-                )}
-              </div>
-              {pastOpen && pastItems.length > 0 && (
-                <ul
-                  aria-label={t('travel.past')}
-                  className="flex flex-col divide-y divide-line rounded-card border border-dashed border-line"
+          {/* 홈 여행 중 화면과 그대로 (사용자 요청 2026-11-13): 여행 카드(일정 막대) → 다음 일정 카드 → 오늘 일정표.
+              아침 브리핑은 다음 일정 위, 저녁 정리는 그 아래 */}
+          <TripStrip trip={trip} link={false} />
+          <OngoingTrip
+            trip={trip}
+            travel
+            hideDone={phase === 'evening'}
+            beforeNext={
+              // 아침 브리핑 (A2): 첫 일정 전까지
+              phase === 'morning' && (
+                <section
+                  aria-label={t('travel.morning')}
+                  className="flex flex-col gap-1 rounded-card bg-bg-subtle p-4"
                 >
-                  {pastItems.map(row)}
-                </ul>
-              )}
-              {restItems.length > 0 && (
-                <ul className="flex flex-col divide-y divide-line rounded-card border border-line">
-                  {restItems.map(row)}
-                </ul>
-              )}
-            </section>
-          )}
+                  <span className="text-caption font-semibold text-fg-muted">
+                    {t('travel.morning')}
+                  </span>
+                  <span className="text-body-1 font-semibold">
+                    {t('travel.briefing', {
+                      n: dayItems.length,
+                      time: firstTimed?.startTime ?? '',
+                    })}
+                  </span>
+                  {w && <span className="tabular text-caption text-fg-sub">{formatTemps(w)}</span>}
+                </section>
+              )
+            }
+            afterNext={
+              // 저녁 정리 + 내일 미리보기 (A5·A6, Q1)
+              phase === 'evening' && (
+                <section
+                  aria-label={t('travel.evening')}
+                  className="flex flex-col gap-2 rounded-card bg-bg-subtle p-4"
+                >
+                  <span className="text-caption font-semibold text-fg-muted">
+                    {t('travel.evening')}
+                  </span>
+                  <span className="text-body-1 font-semibold">
+                    {t('travel.recap', { n: dayItems.length, done: visitedCount })}
+                  </span>
+                  <span className="border-t border-dashed border-line pt-2 text-caption font-semibold text-fg-muted">
+                    {t('travel.tomorrow')}
+                  </span>
+                  {tomorrowFirst ? (
+                    <span className="text-body-2">
+                      {t('travel.tomorrowFirst', {
+                        time: tomorrowFirst.startTime ?? '',
+                        title: tomorrowFirst.title,
+                      })}
+                    </span>
+                  ) : (
+                    <span className="text-body-2 text-fg-muted">{t('travel.tomorrowNone')}</span>
+                  )}
+                  {weather[tomorrow] && (
+                    <span className="tabular text-caption text-fg-sub">
+                      {formatTemps(weather[tomorrow])}
+                    </span>
+                  )}
+                  <Button
+                    size="lg"
+                    fullWidth
+                    leading={<Bed aria-hidden="true" className="size-5" />}
+                    onClick={toStay}
+                  >
+                    {t('travel.toStay')}
+                  </Button>
+                </section>
+              )
+            }
+          />
 
           <Button
             variant="ghost"

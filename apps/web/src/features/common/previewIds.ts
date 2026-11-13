@@ -32,11 +32,17 @@ export type PreviewId =
   | 'nextStopDayColor'
   | 'sunsetDark'
   | 'dayNote'
-  | 'speakPhrase'
-  | 'showAmount'
-  | 'homeCompass'
-  | 'freeTime'
-  | 'tripStory';
+  | 'phraseOfDay'
+  | 'bestWalkTime'
+  | 'daylightLeft'
+  | 'shareStay'
+  | 'shorterOrder'
+  | 'farPlace'
+  | 'revisitCity'
+  | 'weatherVsSeoul'
+  | 'krHolidayRush'
+  | 'memoryToday'
+  | 'bookingCheck';
 
 const IDS: readonly string[] = [
   'dimPastItems',
@@ -71,11 +77,17 @@ const IDS: readonly string[] = [
   'nextStopDayColor',
   'sunsetDark',
   'dayNote',
-  'speakPhrase',
-  'showAmount',
-  'homeCompass',
-  'freeTime',
-  'tripStory',
+  'phraseOfDay',
+  'bestWalkTime',
+  'daylightLeft',
+  'shareStay',
+  'shorterOrder',
+  'farPlace',
+  'revisitCity',
+  'weatherVsSeoul',
+  'krHolidayRush',
+  'memoryToday',
+  'bookingCheck',
 ];
 
 export const hasPreview = (id: string): id is PreviewId => IDS.includes(id);

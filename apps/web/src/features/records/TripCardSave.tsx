@@ -1,10 +1,7 @@
 import { nightsBetween, type Trip } from '@trippocket/shared';
-import { FileText, ImageDown } from 'lucide-react';
+import { ImageDown } from 'lucide-react';
 import { useState } from 'react';
 import { useTripsData } from '../../data/hooks';
-import { useLab } from '../../data/labsStore';
-import { tripStoryText } from '../../domain/tripStory';
-import { copyText } from '../../shared/lib/clipboard';
 import { travelStats } from '../../domain/tripStats';
 import { useTranslation } from '../../i18n';
 import { toast } from '../../shared/ui';
@@ -19,7 +16,6 @@ export function TripCardSave({ pastTrips }: { pastTrips: readonly Trip[] }) {
   const data = useTripsData(pastTrips.map((tr) => tr.id));
   const [busy, setBusy] = useState<string | null>(null);
   // 실험실 "여행기 글로 복사" (2026-11-13)
-  const storyOn = useLab('tripStory');
   if (pastTrips.length === 0) return null;
   const recent = [...pastTrips].sort((a, b) => b.startDate.localeCompare(a.startDate));
 
@@ -62,28 +58,6 @@ export function TripCardSave({ pastTrips }: { pastTrips: readonly Trip[] }) {
                 {tripRange(tr.startDate, tr.endDate)}
               </span>
             </span>
-            {storyOn && (
-              <button
-                type="button"
-                disabled={!data}
-                onClick={() =>
-                  data &&
-                  void copyText(
-                    tripStoryText(
-                      tr,
-                      data.items.filter((i) => i.tripId === tr.id),
-                      { dayN: (n) => t('plan.dayN', { n }), note: t('tripStory.note') },
-                    ),
-                    t('tripStory.copied'),
-                  )
-                }
-                aria-label={t('tripStory.copyOf', { title: tr.title })}
-                className="flex h-11 shrink-0 items-center gap-1.5 rounded-full px-3 text-caption font-medium text-fg-sub disabled:opacity-50"
-              >
-                <FileText aria-hidden="true" className="size-4" />
-                {t('tripStory.copy')}
-              </button>
-            )}
             <button
               type="button"
               disabled={!data || busy !== null}

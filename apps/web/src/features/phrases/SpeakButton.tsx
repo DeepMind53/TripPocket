@@ -1,5 +1,4 @@
 import { Volume2 } from 'lucide-react';
-import { useLab } from '../../data/labsStore';
 import { useTranslation } from '../../i18n';
 import { toast } from '../../shared/ui';
 
@@ -7,13 +6,12 @@ import { toast } from '../../shared/ui';
 const VOICE_LANG: Record<string, string> = { en: 'en-US' };
 
 /**
- * 회화 소리로 듣기 (실험실 speakPhrase, 2026-11-13): 기기 읽기 기능(speechSynthesis)으로 현지어 문장을 읽는다.
+ * 회화 소리로 듣기 (2026-11-13, 실험실에서 정식 — 사용자 요청): 기기 읽기 기능(speechSynthesis)으로 현지어 문장을 읽는다.
  * 앱에 들어 있는 정해진 문장만 읽는다 (사용자 글은 읽지 않음). 목소리가 없는 기기는 안내만
  */
 export function SpeakButton({ text, lang }: { text: string; lang: string }) {
   const { t } = useTranslation();
-  const on = useLab('speakPhrase');
-  if (!on || typeof window === 'undefined' || !('speechSynthesis' in window)) return null;
+  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return null;
   const speak = () => {
     const want = VOICE_LANG[lang] ?? lang;
     const voices = window.speechSynthesis.getVoices();

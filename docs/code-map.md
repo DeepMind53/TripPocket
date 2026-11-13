@@ -59,7 +59,10 @@ Tailscale Funnel https://jin-server.tail0844c0.ts.net ─▶ 홈 PC 127.0.0.1:87
     사진 속 장소 `photoLandmark`(`features/photos/LandmarkFinder.tsx`), 사진 분류 `photoLabels`(`features/records/PhotoAlbum.tsx`·`domain/photoTags.ts`).
     사진 실험 3개의 요청은 `data/services/photoVision.ts` (누를 때만 보냄, ADR-0012)
 - **2026-11-13 실험실 → 정식 (사용자 요청)**: 설정 "일정 · 화면" `sunsetDark`(`travel/SunsetDark.tsx`)·`dayNote`·`nextStopDayColor`, 늘 켜짐: 여권 도장 이미지(`records/CountryGrid.tsx`)·여행 요약 카드(`records/TripCardSave.tsx`)·메뉴판·안내문 번역(`phrases/PhotoTranslate.tsx`)·사진 속 장소(`photos/LandmarkFinder.tsx`)·사진 분류.
-  지금 실험실: 회화 소리로 듣기(`phrases/SpeakButton.tsx`, 기기 speechSynthesis)·금액 크게 보여 주기(`fx/FxPage.tsx` → `phrases/ShowCard`)·숙소 방향(`common/LodgingCompass.tsx`, `domain/compass.ts`)·일정 사이 빈 시간(`domain/freeTime.ts`, PlanPage `FreeTimeLine`)·여행기 글로 복사(`domain/tripStory.ts`, TripCardSave)
+- **2026-11-13 2차 (사용자 요청)**: 회화 소리로 듣기(`phrases/SpeakButton.tsx`, 기기 speechSynthesis)·숙소 방향(빠른 메뉴 `common/LodgingCompass.tsx`, `domain/compass.ts`)은 늘 켜짐으로 정식. 금액 크게 보여 주기·일정 사이 빈 시간·여행기 글로 복사는 뺐다.
+  지금 실험실 11개 (계산은 `domain/tripHints.ts`, 화면은 `features/labs/`): 여행 중 `TodayLabs`(오늘의 한마디·걷기 좋은 시간·해 지기까지·숙소 알려 주기 — `home/OngoingTrip.tsx`에서 지연 로딩),
+  일정 하루 `DayLabs`(더 짧은 순서·멀리 떨어진 장소 — PlanPage DaySection), 출발 전 홈 `UpcomingLabs`(다시 찾은 도시·서울과 기온 비교(Open-Meteo 서울 고정 좌표)·한국 연휴 겹침), 홈 `MemoryToday`(몇 년 전 오늘), 예약 탭 `BookingCheck`(예약 날짜 점검).
+- **여행 중 오늘 화면 (홈·여행 모드 공통, 2026-11-13)**: `home/OngoingTrip.tsx`(다음 일정 카드·오늘 일정표+시각별 날씨, `travel`이면 특보·숙소 카드 빼고 [일정 보기]는 여행 모드를 끄고 그날로, 나갈 시각 알림) + `home/TripStrip.tsx`(여행 카드·일정 막대). 여행 모드(`travel/TravelModePage.tsx`)는 머리·주의 줄·아침/저녁 칸·엄지 버튼만 따로. 다음 일정 아래 한 줄은 고른 이동 수단 하나만 (`travel/useNextLeg.ts`)
 - **다음 일정까지 이동 (여행 모드·여행 중 홈 공통, 2026-11-13)**: `features/travel/useNextLeg.ts`(자동 조회·[새로고침]·[자동차] 조회) + `LegControls.tsx`([도보|대중교통|자동차] + [새로고침 n회 남음]) + `DepartCountdown.tsx`. 서버 `POST /api/routes/eta` `drive: true` → `services/routes.ts` `googleDrive`/`geoapifyDrive`
 - **노선도 (설정 "일정 · 화면" `routeMap`, 2026-11-10 실험실에서 정식)**: 일차 미니맵 `itinerary/DayMiniMap.tsx` → 누르면 여행 전체 노선도 `TripRouteView.tsx`·`TripRouteSheet.tsx`
 - **사진·영수증 (늘 켜짐, ADR-0012, 2026-11-11 실험실에서 정식)**: 기기 전용 `photos` 표·`data/repositories/photoRepo.ts`, 찍기 `features/photos/PhotoCaptureButtons.tsx`,

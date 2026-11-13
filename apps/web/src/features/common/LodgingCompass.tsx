@@ -9,7 +9,6 @@ import {
 import { BedDouble, Navigation2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useTripBookings, useTripItems } from '../../data/hooks';
-import { useLab } from '../../data/labsStore';
 import { arrowDeg, bearingDeg } from '../../domain/compass';
 import { lodgingForNight } from '../../domain/lodging';
 import { useTranslation } from '../../i18n';
@@ -22,16 +21,15 @@ type IosOrientation = typeof DeviceOrientationEvent & {
 type HeadingEvent = DeviceOrientationEvent & { webkitCompassHeading?: number };
 
 /**
- * 빠른 메뉴 "숙소 방향" (실험실 homeCompass, 2026-11-13): 오늘 밤 숙소(일정표에 넣은 숙소 좌표)까지
+ * 빠른 메뉴 "숙소 방향" (2026-11-13, 실험실에서 정식 — 사용자 요청): 오늘 밤 숙소(일정표에 넣은 숙소 좌표)까지
  * 거리와 화살표. 길 잃었을 때 인터넷 없이도 — 위치·방향은 이 기기에서만 쓰고 보내거나 저장하지 않는다
  */
 export function LodgingCompass({ trip }: { trip: Trip }) {
   const { t } = useTranslation();
-  const on = useLab('homeCompass');
-  const items = useTripItems(on ? trip.id : undefined);
-  const bookings = useTripBookings(on ? trip.id : undefined);
+  const items = useTripItems(trip.id);
+  const bookings = useTripBookings(trip.id);
   const [open, setOpen] = useState(false);
-  if (!on || !items || !bookings) return null;
+  if (!items || !bookings) return null;
   // 오늘 밤 숙소, 없으면(귀국 날 등) 어젯밤 숙소
   const today = todayIn(trip.timezone);
   const night = lodgingForNight(bookings, today) ?? lodgingForNight(bookings, addDays(today, -1));

@@ -138,20 +138,14 @@ export function useNextLeg(dayItems: readonly ItineraryItem[], next: ItineraryIt
           : legFrom && to
             ? t('travel.etaDriveLine', { km: km(distanceKm(legFrom, to)) })
             : undefined
-      : (() => {
-          const parts = [
-            opts.walk &&
-              t(opts.walk.straight ? 'travel.etaWalkLine' : 'travel.etaWalk', {
-                min: opts.walk.min,
-              }),
-            opts.transit !== undefined && t('travel.etaTransit', { min: opts.transit }),
-          ].filter((x): x is string => typeof x === 'string');
-          return parts.length === 0
-            ? undefined
-            : parts.length === 2
-              ? t('travel.etaBoth', { a: parts[0]!, b: parts[1]! })
-              : parts[0]!;
-        })();
+      : // 고른 수단 하나만 (사용자 요청 2026-11-13, 전에는 도보·대중교통을 같이)
+        mode === 'transit' && opts.transit !== undefined
+        ? t('travel.etaTransit', { min: opts.transit })
+        : mode === 'walk' && opts.walk
+          ? t(opts.walk.straight ? 'travel.etaWalkLine' : 'travel.etaWalk', {
+              min: opts.walk.min,
+            })
+          : undefined;
 
   return {
     /** 좌표가 있어 [도보|대중교통|자동차]·[새로고침]을 보일 수 있는지 */

@@ -22,7 +22,6 @@ import {
   ChevronLeft,
   ChevronRight,
   ClipboardCopy,
-  Coffee,
   CopyPlus,
   Droplets,
   EggFried,
@@ -90,8 +89,6 @@ import {
   type LodgingNight,
   bookingForItem,
 } from '../../domain/lodging';
-import { freeGapMin, splitHM } from '../../domain/freeTime';
-import { useLab } from '../../data/labsStore';
 import type { Destination } from '../../shared/lib/directions';
 import { itemRepo } from '../../data/repositories/itemRepo';
 import { useRouteSheet } from '../../shared/hooks/useRouteSheet';
@@ -133,6 +130,7 @@ import { CautionIcons } from '../common/CautionIcons';
 import { useTripHolidays } from './useTripHolidays';
 import { DayPlanSheet } from './DayPlanSheet';
 import { DayNoteField } from './DayNoteField';
+import { DayLabs } from '../labs/DayLabs';
 import { usePlanView, type DayPlanInfo } from './usePlanView';
 import { distanceKm, formatDistance, walkMinutes } from '@trippocket/shared';
 import { DayWeatherBadge } from '../common/DayWeatherBadge';
@@ -1061,7 +1059,6 @@ function DaySection({
   // 설정 "일정" (2026-10-27 실험실에서 정식)
   const legs = useSettings((st) => st.legDistance);
   // 실험실 "일정 사이 빈 시간" (2026-11-13)
-  const freeOn = useLab('freeTime');
   // 2026-10-27 정식: 하루 일정 글로 복사·하루 동선 지도
   const copyDayOn = true;
   const dayRouteOn = true;
@@ -1373,7 +1370,6 @@ function DaySection({
                   })()}
                 />
                 {legs && <LegLine from={item} to={items[i + 1]} />}
-                {freeOn && date && <FreeTimeLine from={item} to={items[i + 1]} />}
               </>
             )}
           </Fragment>
@@ -1412,6 +1408,8 @@ function DaySection({
             </li>
           )}
       </ol>
+      {/* 실험실 (2026-11-13): 더 짧은 순서 · 멀리 떨어진 장소 */}
+      {date && items.length > 0 && <DayLabs items={items} />}
       {noteTrip && date && (
         <DayNoteField
           key={noteTrip.dayNotes?.find((n) => n.date === date)?.text ?? ''}
@@ -1525,23 +1523,6 @@ function BookingLine({ row, onOpen }: { row: BookingRow; onOpen: () => void }) {
 /** 실험실 "빠듯한 일정 알림": 걸어서 걸리는 시간이 두 일정 시각 차이보다 길 때 */
 
 /** 실험실 "다음 장소까지 거리": 두 일정 모두 좌표가 있을 때만 직선거리·도보 어림 */
-/** 실험실 "일정 사이 빈 시간": 앞 일정 끝 → 다음 시작이 90분 넘게 비면 (끝 시각을 적은 일정만) */
-function FreeTimeLine({ from, to }: { from: ItineraryItem; to: ItineraryItem | undefined }) {
-  const { t } = useTranslation();
-  const gap = freeGapMin(from, to);
-  if (gap === null) return null;
-  const { h, m } = splitHM(gap);
-  return (
-    <li className="relative flex items-center py-0.5 pl-12">
-      <span className="inline-flex items-center gap-1 rounded-full bg-primary-weak px-2.5 py-0.5 text-caption text-primary">
-        <Coffee aria-hidden="true" className="size-3.5 shrink-0" />
-        <span className="tabular">
-          {m ? t('plan.freeTimeHM', { h, m }) : t('plan.freeTimeH', { h })}
-        </span>
-      </span>
-    </li>
-  );
-}
 
 function LegLine({ from, to }: { from: ItineraryItem; to: ItineraryItem | undefined }) {
   const { t } = useTranslation();

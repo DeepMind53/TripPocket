@@ -6,11 +6,10 @@ import {
   POPULAR_CURRENCIES,
   toKrw,
 } from '@trippocket/shared';
-import { ArrowUpDown, ChevronDown, Delete, ExternalLink, Maximize2 } from 'lucide-react';
+import { ArrowUpDown, ChevronDown, Delete, ExternalLink } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { useTrip, useTrips } from '../../data/hooks';
-import { useLab } from '../../data/labsStore';
 import { cachedFx, getFx, type FxResult } from '../../data/services/fxService';
 import { useSettings } from '../../data/settingsStore';
 import { t, useTranslation, type TKey } from '../../i18n';
@@ -18,7 +17,6 @@ import { copyText } from '../../shared/lib/clipboard';
 import { cn } from '../../shared/lib/cn';
 import { useRouteSheet } from '../../shared/hooks/useRouteSheet';
 import { BottomSheet, Chip, TopBar } from '../../shared/ui';
-import { ShowCard } from '../phrases/ShowCard';
 
 /**
  * 통화 한국어 이름 (2026-10-28): 문구 파일의 이름표 → 없으면 브라우저 이름. 기기에 따라 브라우저가 약어만 돌려줘
@@ -119,8 +117,6 @@ export function FxPage() {
 
   const rate = fx?.rates[currency];
   // 실험실 "금액 크게 보여 주기" (2026-11-13): 현지 통화 금액을 화면 가득 — 가게·시장에서 보여 주기
-  const bigOn = useLab('showAmount');
-  const [bigOpen, setBigOpen] = useState(false);
   const amount = Number(input || '0');
   const topCode = krwFirst ? 'KRW' : currency;
   const bottomCode = krwFirst ? currency : 'KRW';
@@ -201,16 +197,6 @@ export function FxPage() {
           ))}
         </div>
 
-        {bigOn && result !== null && amount > 0 && (
-          <button
-            type="button"
-            onClick={() => setBigOpen(true)}
-            className="flex h-11 items-center justify-center gap-1.5 rounded-btn bg-bg-subtle text-body-2 font-medium"
-          >
-            <Maximize2 aria-hidden="true" className="size-4" />
-            {t('fx.showBig')}
-          </button>
-        )}
         <div aria-live="polite" className="flex flex-col gap-0.5 text-caption text-fg-sub">
           {rate ? (
             <span className="tabular text-body-2 font-semibold text-fg">
@@ -245,18 +231,6 @@ export function FxPage() {
         <Keypad keys={keys} onKey={press} onClear={() => setInput('')} />
       </div>
 
-      {bigOn && result !== null && (
-        <ShowCard
-          open={bigOpen}
-          onClose={() => setBigOpen(false)}
-          big={
-            krwFirst
-              ? `${symbol(currency)} ${fmt(result, digits(currency))}`
-              : `${symbol(currency)} ${fmt(amount, digits(currency))}`
-          }
-          sub={`${fmt(krwFirst ? amount : result, 0)}${t('fx.won')}`}
-        />
-      )}
       <CurrencyPicker
         open={pickerOpen}
         onOpenChange={setPickerOpen}

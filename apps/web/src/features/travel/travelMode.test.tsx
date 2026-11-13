@@ -74,7 +74,7 @@ it('여행 모드: 여행 중이면 한 번 묻고, 시작하면 지금·다음 
   await user.click(within(ask).getByRole('button', { name: '시작' }));
 
   // 다음 일정: "N분 N초 후 출발" 하나만 크게 (시작 11:00 − 이동 − 여유 10분, 사용자 요청 2026-11-10)
-  const nextBox = await screen.findByRole('region', { name: '다음' });
+  const nextBox = await screen.findByRole('region', { name: '다음 일정' });
   expect(screen.getByText(/^1일차 · 11.03 \(화\)$/)).toBeInTheDocument();
   expect(within(nextBox).getByText(/^\d+분 \d+초$/)).toBeInTheDocument();
   expect(within(nextBox).getByText('후 출발')).toBeInTheDocument();
@@ -100,10 +100,12 @@ it('여행 모드: 여행 중이면 한 번 묻고, 시작하면 지금·다음 
   // 오늘/내일 탭은 없다 (Q1)
   expect(screen.queryByRole('tab')).toBeNull();
 
+  // 홈과 같은 여행 카드(일정 막대)와 오늘 일정표 (사용자 요청 2026-11-13)
+  expect(screen.getByRole('img', { name: 'D-DAY' })).toBeInTheDocument();
   // 지난 일정은 접혀 있고, 펼쳐서 다녀옴·건너뛰기
-  expect(screen.queryByText('도톤보리')).toBeNull();
+  const past = screen.getByRole('list', { name: '오늘 일정 2개' });
+  expect(within(past).queryByText('도톤보리')).toBeNull();
   await user.click(screen.getByRole('button', { name: '지난 일정 1' }));
-  const past = screen.getByRole('list', { name: '지난 일정' });
   await user.click(within(past).getByRole('button', { name: '방문' }));
   await waitFor(() =>
     expect(within(past).getByRole('button', { name: '방문' })).toHaveAttribute(
@@ -202,7 +204,7 @@ it('여행 모드 켜기 버튼: 홈 왼쪽 위와 빠른 메뉴 제목 오른�
   const view = open('/');
   const btn = await screen.findByRole('button', { name: '여행 모드' });
   await user.click(btn);
-  expect(await screen.findByRole('region', { name: '다음' })).toBeInTheDocument();
+  expect(await screen.findByRole('button', { name: '여행 모드 끄기' })).toBeInTheDocument();
   expect(useTravelMode.getState().on[trip.id]).toBe(true);
   view.unmount();
 
@@ -211,5 +213,5 @@ it('여행 모드 켜기 버튼: 홈 왼쪽 위와 빠른 메뉴 제목 오른�
   await user.click(await screen.findByRole('button', { name: '빠른 메뉴' }));
   const sheet = await screen.findByRole('dialog', { name: '빠른 메뉴' });
   await user.click(within(sheet).getByRole('button', { name: '여행 모드' }));
-  expect(await screen.findByRole('region', { name: '다음' })).toBeInTheDocument();
+  expect(await screen.findByRole('button', { name: '여행 모드 끄기' })).toBeInTheDocument();
 });

@@ -1,16 +1,22 @@
 import {
-  BedDouble,
-  Coffee,
+  CalendarClock,
+  CalendarX,
+  Copy,
   Footprints,
+  History,
   Luggage,
   Map as MapIcon,
+  MapPinOff,
   Moon,
   MoonStar,
   Navigation,
-  Navigation2,
   PenLine,
+  Route,
   Sun,
+  Sunset,
+  Thermometer,
   Volume2,
+  type LucideIcon,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useTranslation } from '../../i18n';
@@ -95,6 +101,27 @@ export function FeaturePreview({ id }: { id: PreviewId }) {
       <span className="flex flex-1 flex-col">{title}</span>
     </div>
   );
+  const hint = (icon: LucideIcon, text: string, tone: 'sub' | 'primary' | 'warn' = 'sub') => {
+    const Icon = icon;
+    return (
+      <p
+        className={cn(
+          'rounded-btn px-3 py-2 text-caption whitespace-pre-line',
+          tone === 'primary'
+            ? 'bg-primary-weak text-primary'
+            : tone === 'warn'
+              ? 'bg-warning/10 text-fg-sub'
+              : 'bg-bg-subtle text-fg-sub',
+        )}
+      >
+        <Icon
+          aria-hidden="true"
+          className={cn('mr-1 inline size-3.5 align-[-2px]', tone === 'warn' && 'text-warning')}
+        />
+        {text}
+      </p>
+    );
+  };
   const note = (text: string, tone = 'bg-bg-subtle text-fg-sub') => (
     <p className={cn('rounded-btn px-3 py-2 text-caption', tone)}>{text}</p>
   );
@@ -405,59 +432,80 @@ export function FeaturePreview({ id }: { id: PreviewId }) {
           </div>
         </div>
       );
-    case 'speakPhrase':
+    // 2026-11-13 새 실험 2차 — 실제 화면과 같은 줄 모양
+    case 'phraseOfDay':
       return (
-        <div className="flex flex-col items-center gap-4 rounded-2xl border border-line bg-surface p-4">
-          <span lang="ja" className="text-title-1 font-semibold">
-            {t('sample.phraseThanks')}
+        <div className="flex items-center gap-3 rounded-2xl border border-line bg-surface p-4">
+          <span className="flex min-w-0 flex-1 flex-col">
+            <span className="text-caption text-fg-muted">
+              {t('hint.phraseTitle')} · {t('sample.hintPhraseKo')}
+            </span>
+            <span lang="ja" className="text-body-1 font-semibold">
+              {t('sample.hintPhraseJa')}
+            </span>
           </span>
-          <span className="flex h-12 items-center gap-2 rounded-full bg-primary-weak px-5 text-body-2 font-semibold text-primary">
-            <Volume2 aria-hidden="true" className="size-5" />
+          <span className="flex h-10 items-center gap-1.5 rounded-full bg-primary-weak px-4 text-caption font-semibold text-primary">
+            <Volume2 aria-hidden="true" className="size-4" />
             {t('phrases.speak')}
           </span>
         </div>
       );
-    case 'showAmount':
+    case 'bestWalkTime':
+      return hint(Footprints, t('hint.walk', { from: 14, to: 17 }));
+    case 'daylightLeft':
+      return hint(Sunset, t('hint.daylightHM', { h: 1, m: 20, at: '16:42' }));
+    case 'shareStay':
       return (
-        <div className="flex flex-col items-center gap-2 rounded-2xl border border-line bg-surface p-6">
-          <span className="tabular text-[2rem] leading-tight font-semibold">
-            {t('sample.fxBig')}
+        <div className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-3">
+          <span className="flex h-11 items-center justify-center gap-1.5 rounded-btn bg-bg-subtle text-body-2 font-medium">
+            <Copy aria-hidden="true" className="size-4" />
+            {t('hint.shareStay')}
           </span>
-          <span className="tabular text-body-1 text-fg-sub">{t('sample.fxBigKo')}</span>
+          <pre className="font-sans text-caption whitespace-pre-wrap text-fg-sub">
+            {`${t('hint.stayName', { name: t('sample.shinjukuHotel') })}\n${t('hint.stayOut', { date: '2026-10-31' })}`}
+          </pre>
         </div>
       );
-    case 'homeCompass':
-      return (
-        <div className="flex flex-col items-center gap-3 rounded-2xl border border-line bg-surface p-4">
-          <div className="grid size-28 place-items-center rounded-full border border-line bg-bg-subtle">
-            <Navigation2
-              aria-hidden="true"
-              className="size-12 rotate-45 fill-primary text-primary"
-            />
-          </div>
-          <span className="flex items-center gap-1.5 text-body-1 font-semibold">
-            <BedDouble aria-hidden="true" className="size-4 text-fg-sub" />
-            <span className="tabular">{t('sample.compassDist')}</span>
-          </span>
-          <span className="text-caption text-fg-sub">{t('sample.shinjukuHotel')}</span>
-        </div>
-      );
-    case 'freeTime':
+    case 'shorterOrder':
       return day(
         <>
           {row(1, '10:00', t('sample.sensoji'))}
-          <span className="ml-10 inline-flex items-center gap-1 self-start rounded-full bg-primary-weak px-2.5 py-0.5 text-caption text-primary">
-            <Coffee aria-hidden="true" className="size-3.5" />
-            <span className="tabular">{t('sample.freeTime')}</span>
-          </span>
-          {row(2, '14:30', t('sample.skytree'))}
+          {row(2, '13:00', t('sample.ameyoko'))}
+          {row(3, '16:00', t('sample.skytree'))}
+          {hint(Route, t('hint.shorter', { km: 2.4, order: t('sample.hintOrder') }), 'primary')}
         </>,
       );
-    case 'tripStory':
+    case 'farPlace':
+      return day(
+        <>
+          {row(1, '10:00', t('sample.sensoji'))}
+          {row(2, '15:00', t('sample.hintFarName'))}
+          {hint(MapPinOff, t('hint.far', { names: t('sample.hintFarName') }), 'warn')}
+        </>,
+      );
+    case 'revisitCity':
+      return hint(History, t('hint.revisit', { date: '2024.03', title: t('sample.hintTrip') }));
+    case 'weatherVsSeoul':
+      return hint(Thermometer, t('hint.tempWarmer', { n: 6 }));
+    case 'krHolidayRush':
+      return hint(CalendarClock, t('hint.krHoliday', { names: t('sample.hintHoliday') }));
+    case 'memoryToday':
       return (
-        <pre className="rounded-2xl border border-line bg-surface p-3 font-sans text-caption whitespace-pre-wrap text-fg-sub">
-          {t('sample.story')}
-        </pre>
+        <div className="flex min-h-12 items-center gap-3 rounded-2xl border border-line bg-surface px-4 py-3">
+          <History aria-hidden="true" className="size-5 shrink-0 text-primary" />
+          <span className="flex min-w-0 flex-1 flex-col">
+            <span className="text-caption text-fg-muted">{t('hint.memoryYears', { n: 1 })}</span>
+            <span className="text-body-2 font-medium">
+              {t('hint.memoryDay', { title: t('sample.hintTrip'), n: 2 })}
+            </span>
+          </span>
+        </div>
+      );
+    case 'bookingCheck':
+      return hint(
+        CalendarX,
+        t('hint.late', { title: t('sample.hintFlight'), time: '23:10' }),
+        'warn',
       );
     case 'placeTips':
       return day(
