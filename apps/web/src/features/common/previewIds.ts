@@ -35,14 +35,14 @@ export type PreviewId =
   | 'phraseOfDay'
   | 'bestWalkTime'
   | 'daylightLeft'
-  | 'shareStay'
   | 'shorterOrder'
-  | 'farPlace'
-  | 'revisitCity'
-  | 'weatherVsSeoul'
-  | 'krHolidayRush'
-  | 'memoryToday'
-  | 'bookingCheck';
+  | 'bulkAdd'
+  | 'shiftDay'
+  | 'calendarExport'
+  | 'mapLink'
+  | 'splitBill'
+  | 'unitConvert'
+  | 'quickTimer';
 
 const IDS: readonly string[] = [
   'dimPastItems',
@@ -80,14 +80,14 @@ const IDS: readonly string[] = [
   'phraseOfDay',
   'bestWalkTime',
   'daylightLeft',
-  'shareStay',
   'shorterOrder',
-  'farPlace',
-  'revisitCity',
-  'weatherVsSeoul',
-  'krHolidayRush',
-  'memoryToday',
-  'bookingCheck',
+  'bulkAdd',
+  'shiftDay',
+  'calendarExport',
+  'mapLink',
+  'splitBill',
+  'unitConvert',
+  'quickTimer',
 ];
 
 export const hasPreview = (id: string): id is PreviewId => IDS.includes(id);

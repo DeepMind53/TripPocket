@@ -34,4 +34,8 @@ export const PLAN_LABELS = {
   sunsetDark: 'labs.item.sunsetDark.name',
   dayNote: 'labs.item.dayNote.name',
   nextStopDayColor: 'labs.item.nextStopDayColor.name',
+  phraseOfDay: 'labs.item.phraseOfDay.name',
+  bestWalkTime: 'labs.item.bestWalkTime.name',
+  daylightLeft: 'labs.item.daylightLeft.name',
+  shorterOrder: 'labs.item.shorterOrder.name',
 } as const satisfies Record<PlanFeature, string>;

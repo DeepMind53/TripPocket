@@ -1,16 +1,9 @@
-import {
-  addDays,
-  distanceKm,
-  type Booking,
-  type Coords,
-  type LocalDate,
-  type Trip,
-} from '@trippocket/shared';
+import { distanceKm, type Coords } from '@trippocket/shared';
 import { weatherLook, type DayWeather } from './weather';
 
 /**
- * 2026-11-13 새 실험 (사용자 요청 "10개 이상, 가진 정보로 도움이 되는 것"): 서버·외부 요청 없이 기기에 있는 정보로 계산.
- * 화면은 features/labs/*
+ * 2026-11-13 실험실에서 정식 (설정 "일정"): 오늘의 한마디·걷기 좋은 시간·해 지기까지·더 짧은 순서.
+ * 서버·외부 요청 없이 기기에 있는 정보로 계산. 화면은 home/TodayTips·itinerary/ShorterOrderHint
  */
 
 const mins = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5));
@@ -79,116 +72,4 @@ export function shorterOrder(spots: readonly Spot[]): { titles: string[]; saveKm
   const save = now - better;
   if (save < 1 || save / now < 0.15) return null;
   return { titles: out.map((s) => s.title), saveKm: Math.round(save * 10) / 10 };
-}
-
-/**
- * 멀리 떨어진 장소: 여행 전체 장소 좌표의 가운데(위도·경도 중앙값)에서 80km 넘게 떨어진 곳 —
- * 같은 이름 다른 도시를 잘못 고른 경우 (장소 4곳부터, 여러 도시 여행은 도시마다 가운데가 달라 빼지 않는다)
- */
-export const FAR_PLACE_KM = 80;
-export function farPlaceIds(spots: readonly Spot[], all: readonly Coords[]): Set<string> {
-  const out = new Set<string>();
-  if (all.length < 4) return out;
-  const mid = (xs: number[]) => {
-    const s = [...xs].sort((a, b) => a - b);
-    return s[Math.floor(s.length / 2)]!;
-  };
-  const center = { lat: mid(all.map((c) => c.lat)), lng: mid(all.map((c) => c.lng)) };
-  // 절반 넘게 가운데에서 멀면 여러 도시 여행 — 알리지 않는다
-  const far = all.filter((c) => distanceKm(center, c) > FAR_PLACE_KM).length;
-  if (far * 2 >= all.length) return out;
-  for (const s of spots) if (distanceKm(center, s.coords) > FAR_PLACE_KM) out.add(s.id);
-  return out;
-}
-
-/** 다시 찾은 도시: 이 여행보다 먼저 끝난 여행 중 같은 목적지(이름)가 있는 것, 가장 최근 것 */
-export function earlierTripTo(trip: Trip, trips: readonly Trip[]): Trip | null {
-  const names = new Set(trip.destinations.map((d) => d.name.trim()));
-  return (
-    trips
-      .filter(
-        (o) =>
-          o.id !== trip.id &&
-          !o.deletedAt &&
-          o.endDate < trip.startDate &&
-          o.destinations.some((d) => names.has(d.name.trim())),
-      )
-      .sort((a, b) => b.endDate.localeCompare(a.endDate))[0] ?? null
-  );
-}
-
-/** N년 전 오늘: 지난해들의 오늘(월·일)에 여행 중이었던 여행 — 가장 가까운 해 */
-export function memoryOfToday(
-  trips: readonly Trip[],
-  today: LocalDate,
-): { trip: Trip; years: number; dayN: number } | null {
-  const md = today.slice(5);
-  const year = Number(today.slice(0, 4));
-  for (let y = year - 1; y >= year - 10; y--) {
-    const day = `${y}-${md}`;
-    const trip = trips.find((o) => !o.deletedAt && o.startDate <= day && day <= o.endDate);
-    if (trip) {
-      const dayN = Math.round((Date.parse(day) - Date.parse(trip.startDate)) / 86_400_000) + 1;
-      return { trip, years: year - y, dayN };
-    }
-  }
-  return null;
-}
-
-/** 서울과 기온 비교: 하루 평균 기온 차 (반올림, +면 여행지가 따뜻함) */
-export function tempDiff(dest: DayWeather, home: DayWeather): number {
-  return Math.round((dest.min + dest.max) / 2 - (home.min + home.max) / 2);
-}
-
-/** 한국 연휴와 겹침: 출발 전날 ~ 돌아오는 다음 날 사이 한국 공휴일 이름 (중복 없이) */
-export function krHolidaysNear(
-  trip: Pick<Trip, 'startDate' | 'endDate'>,
-  holidays: Record<LocalDate, string>,
-): string[] {
-  const from = addDays(trip.startDate, -1);
-  const to = addDays(trip.endDate, 1);
-  return [
-    ...new Set(
-      Object.entries(holidays)
-        .filter(([d]) => d >= from && d <= to)
-        .sort(([a], [b]) => a.localeCompare(b))
-        .map(([, name]) => name),
-    ),
-  ];
-}
-
-export type BookingIssue =
-  | { kind: 'outside'; title: string; date: LocalDate }
-  | { kind: 'stayAfterFlight'; title: string; date: LocalDate }
-  | { kind: 'lateArrival'; title: string; time: string };
-
-/**
- * 예약 날짜 맞춰 보기:
- * - 여행 기간 밖에 시작하는 예약 (날짜를 잘못 넣은 경우)
- * - 마지막 항공편 출발일보다 늦게 체크아웃하는 숙소
- * - 밤 10시 넘어 도착하는 항공편 (숙소에 늦은 체크인 알리기)
- */
-export function bookingIssues(
-  trip: Pick<Trip, 'startDate' | 'endDate'>,
-  bookings: readonly Booking[],
-): BookingIssue[] {
-  const live = bookings.filter((b) => !b.deletedAt);
-  const out: BookingIssue[] = [];
-  for (const b of live)
-    if (b.start.date < addDays(trip.startDate, -1) || b.start.date > trip.endDate)
-      out.push({ kind: 'outside', title: b.title, date: b.start.date });
-  const flights = live
-    .filter((b) => b.kind === 'flight')
-    .sort((a, b) => a.start.date.localeCompare(b.start.date));
-  const lastFlight = flights.length > 1 ? flights[flights.length - 1] : undefined;
-  if (lastFlight)
-    for (const b of live)
-      if (b.kind === 'lodging' && b.end && b.end.date > lastFlight.start.date)
-        out.push({ kind: 'stayAfterFlight', title: b.title, date: b.end.date });
-  for (const f of flights) {
-    const at = f.end?.time;
-    if (at && at >= '22:00' && f !== lastFlight)
-      out.push({ kind: 'lateArrival', title: f.title, time: at });
-  }
-  return out;
 }

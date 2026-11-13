@@ -3,6 +3,7 @@ import { itemDefaultTimes, switchTimes } from '../../domain/defaultTimes';
 import { isDomesticTrip } from '../../domain/tripPlace';
 import { PlaceAutocomplete } from '../common/PlaceAutocomplete';
 import { SavedPick } from '../saved/SavedPick';
+import { MapLinkField } from '../labs/MapLinkField';
 import { PlaceHours } from './PlaceHours';
 import { useSettings } from '../../data/settingsStore';
 import {
@@ -263,6 +264,14 @@ function ItemForm({
                   : {}),
                 ...(p.url && p.source !== 'google' ? { externalUrl: p.url } : {}),
               });
+            }}
+          />
+          {/* 실험실 "지도 링크로 장소" (2026-11-13) */}
+          <MapLinkField
+            onFound={(p) => {
+              const name = title.trim() || p.name || '';
+              if (!title.trim() && p.name) setTitle(p.name);
+              setPicked({ name, coords: { lat: p.lat, lng: p.lng }, coordsSource: 'user' });
             }}
           />
           {picked?.googlePlaceId && (

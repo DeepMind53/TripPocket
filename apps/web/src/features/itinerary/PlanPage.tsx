@@ -21,7 +21,10 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  CalendarPlus,
   ClipboardCopy,
+  ClipboardPaste,
+  Clock4,
   CopyPlus,
   Droplets,
   EggFried,
@@ -58,6 +61,11 @@ import { VisitToggle } from '../common/VisitToggle';
 import { flightSignature, flightsToReconfirm } from '../../domain/flightCheck';
 import { confirmFlight, useFlightChecks } from '../../data/flightCheckStore';
 import { timeIn, useMinuteClock } from '../../shared/hooks/useMinuteClock';
+import { useLab } from '../../data/labsStore';
+import { icsText } from '../../domain/labTools';
+import { saveFile } from '../backup/backupUtils';
+import { BulkAddSheet } from '../labs/BulkAddSheet';
+import { ShiftDaySheet } from '../labs/ShiftDaySheet';
 import { copyText } from '../../shared/lib/clipboard';
 import {
   lazy,
@@ -130,7 +138,7 @@ import { CautionIcons } from '../common/CautionIcons';
 import { useTripHolidays } from './useTripHolidays';
 import { DayPlanSheet } from './DayPlanSheet';
 import { DayNoteField } from './DayNoteField';
-import { DayLabs } from '../labs/DayLabs';
+import { ShorterOrderHint } from './ShorterOrderHint';
 import { usePlanView, type DayPlanInfo } from './usePlanView';
 import { distanceKm, formatDistance, walkMinutes } from '@trippocket/shared';
 import { DayWeatherBadge } from '../common/DayWeatherBadge';
@@ -294,6 +302,12 @@ function PlanView({
   const [dupOpen, setDupOpen] = useRouteSheet('dup-day');
   const dupOn = true;
   const [menuDate, setMenuDate] = useState<LocalDate | null>(null);
+  // 실험실 (2026-11-13 3차): 여러 일정 붙여 넣기 · 남은 일정 미루기 · 캘린더로 내보내기
+  const bulkOn = useLab('bulkAdd');
+  const shiftOn = useLab('shiftDay');
+  const icsOn = useLab('calendarExport');
+  const [bulkOpen, setBulkOpen] = useRouteSheet('bulk-add');
+  const [shiftOpen, setShiftOpen] = useRouteSheet('shift-day');
   const [dirDest, setDirDest] = useState<Destination | null>(null);
   // 고른 일정은 이 탭에 기억한다 — 상세 시트는 새로고침(앱 다시 열기)해도 다시 열리는데,
   // 무엇을 보던 중인지 모르면 빈 시트가 일정을 가렸다 (2026-10-28, 아이폰 오프라인 확인 중 발견)
@@ -858,6 +872,53 @@ function PlanView({
             </span>
           </button>
         )}
+        {bulkOn && canEdit && menuDate && (
+          <button
+            type="button"
+            onClick={() => switchDayMenuTo('bulk-add')}
+            className="flex w-full items-start gap-3 rounded-btn py-3 text-left"
+          >
+            <ClipboardPaste aria-hidden="true" className="mt-0.5 size-5 text-fg-sub" />
+            <span className="flex flex-col">
+              <span className="text-body-1">{t('tool.bulkTitle')}</span>
+              <span className="text-caption text-fg-muted">{t('tool.bulkMenuDesc')}</span>
+            </span>
+          </button>
+        )}
+        {shiftOn && canEdit && items.some((i) => i.date === menuDate && i.startTime) && (
+          <button
+            type="button"
+            onClick={() => switchDayMenuTo('shift-day')}
+            className="flex w-full items-start gap-3 rounded-btn py-3 text-left"
+          >
+            <Clock4 aria-hidden="true" className="mt-0.5 size-5 text-fg-sub" />
+            <span className="flex flex-col">
+              <span className="text-body-1">{t('tool.shiftTitle')}</span>
+              <span className="text-caption text-fg-muted">{t('tool.shiftMenuDesc')}</span>
+            </span>
+          </button>
+        )}
+        {icsOn && items.some((i) => i.date && i.kind !== 'note') && (
+          <button
+            type="button"
+            onClick={() => {
+              setDayMenuOpen(false);
+              void saveFile(
+                `${trip.title}.ics`,
+                icsText(trip, items, new Date()),
+                trip.title,
+                'text/calendar',
+              );
+            }}
+            className="flex w-full items-start gap-3 rounded-btn py-3 text-left"
+          >
+            <CalendarPlus aria-hidden="true" className="mt-0.5 size-5 text-fg-sub" />
+            <span className="flex flex-col">
+              <span className="text-body-1">{t('tool.icsTitle')}</span>
+              <span className="text-caption text-fg-muted">{t('tool.icsDesc')}</span>
+            </span>
+          </button>
+        )}
         {canEdit && (
           <>
             <button
@@ -886,6 +947,17 @@ function PlanView({
         )}
       </BottomSheet>
 
+      {bulkOpen && menuDate && (
+        <BulkAddSheet open={bulkOpen} onOpenChange={setBulkOpen} tripId={trip.id} date={menuDate} />
+      )}
+      {shiftOpen && menuDate && (
+        <ShiftDaySheet
+          open={shiftOpen}
+          onOpenChange={setShiftOpen}
+          items={items.filter((i) => i.date === menuDate)}
+          now={menuDate === today ? (timeIn(trip.timezone, new Date()) ?? undefined) : undefined}
+        />
+      )}
       {dupOpen && (
         <DuplicateDaySheet
           open={dupOpen}
@@ -1074,6 +1146,7 @@ function DaySection({
   // 실험실 (2026-11-03): 장소 맞춤 팁
   const tipsOn = useSettings((st) => st.placeTips);
   const dupOn = true;
+  const bulkOn = useLab('bulkAdd');
   // 여행 당일: 현지 시각으로 지금 진행 중인 일정 (1분마다 다시 계산)
   const now = useMinuteClock(isToday);
   const nowTime = isToday ? timeIn(timezone, now) : null;
@@ -1203,7 +1276,9 @@ function DaySection({
             ].filter(Boolean)}
           />
           {((canEdit && items.length > 1) ||
-            ((copyDayOn || dayRouteOn || (dupOn && canEdit)) && items.length > 0)) && (
+            ((copyDayOn || dayRouteOn || (dupOn && canEdit)) && items.length > 0) ||
+            // 실험실 "여러 일정 붙여 넣기": 빈 날에도 메뉴
+            (bulkOn && canEdit && !!date)) && (
             <IconButton
               label={t('plan.dayMenu', { day: title })}
               icon={<Ellipsis />}
@@ -1408,8 +1483,8 @@ function DaySection({
             </li>
           )}
       </ol>
-      {/* 실험실 (2026-11-13): 더 짧은 순서 · 멀리 떨어진 장소 */}
-      {date && items.length > 0 && <DayLabs items={items} />}
+      {/* 더 짧은 순서 (설정 "일정", 2026-11-13 실험실에서 정식) */}
+      {date && items.length > 2 && <ShorterOrderHint items={items} />}
       {noteTrip && date && (
         <DayNoteField
           key={noteTrip.dayNotes?.find((n) => n.date === date)?.text ?? ''}

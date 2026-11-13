@@ -12,6 +12,8 @@ import { useSearchParams } from 'react-router';
 import { useTrip, useTrips } from '../../data/hooks';
 import { cachedFx, getFx, type FxResult } from '../../data/services/fxService';
 import { useSettings } from '../../data/settingsStore';
+import { useLab } from '../../data/labsStore';
+import { splitShare } from '../../domain/labTools';
 import { t, useTranslation, type TKey } from '../../i18n';
 import { copyText } from '../../shared/lib/clipboard';
 import { cn } from '../../shared/lib/cn';
@@ -116,7 +118,9 @@ export function FxPage() {
   }, [currency, fx, loaded]);
 
   const rate = fx?.rates[currency];
-  // 실험실 "금액 크게 보여 주기" (2026-11-13): 현지 통화 금액을 화면 가득 — 가게·시장에서 보여 주기
+  // 실험실 "나눠 내기" (2026-11-13): 고른 인원으로 1명당 금액 (저장하지 않는 계산만)
+  const splitOn = useLab('splitBill');
+  const [people, setPeople] = useState(2);
   const amount = Number(input || '0');
   const topCode = krwFirst ? 'KRW' : currency;
   const bottomCode = krwFirst ? currency : 'KRW';
@@ -197,6 +201,30 @@ export function FxPage() {
           ))}
         </div>
 
+        {splitOn && result !== null && amount > 0 && (
+          <section
+            aria-label={t('tool.splitLabel')}
+            className="flex flex-col gap-2 rounded-card border border-line p-3"
+          >
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-caption font-semibold text-fg-sub">{t('tool.splitLabel')}</span>
+              {[2, 3, 4, 5, 6].map((n) => (
+                <Chip key={n} selected={n === people} onClick={() => setPeople(n)}>
+                  {t('tool.splitPeople', { n })}
+                </Chip>
+              ))}
+            </div>
+            <p aria-live="polite" className="tabular text-body-1 font-semibold">
+              {t('tool.splitEach', {
+                foreign: `${symbol(currency)}${fmt(
+                  splitShare(krwFirst ? result : amount, people, digits(currency)),
+                  digits(currency),
+                )}`,
+                krw: fmt(splitShare(krwFirst ? amount : result, people, 0), 0),
+              })}
+            </p>
+          </section>
+        )}
         <div aria-live="polite" className="flex flex-col gap-0.5 text-caption text-fg-sub">
           {rate ? (
             <span className="tabular text-body-2 font-semibold text-fg">

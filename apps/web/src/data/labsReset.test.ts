@@ -7,9 +7,9 @@ it('처음 읽을 때 예전 실험실 값을 지우고, 그 뒤에는 사용자
   expect(first.useLabs.getState()).toEqual({});
   expect(localStorage.getItem('tp-labs')).toBeNull();
 
-  first.setLab('bookingCheck', true);
+  first.setLab('quickTimer', true);
   vi.resetModules();
   const again = await import('./labsStore');
-  expect(again.useLabs.getState()).toEqual({ bookingCheck: true });
-  again.setLab('bookingCheck', false);
+  expect(again.useLabs.getState()).toEqual({ quickTimer: true });
+  again.setLab('quickTimer', false);
 });

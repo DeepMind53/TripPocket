@@ -66,6 +66,11 @@ const GRADUATED_LABS = {
   sunsetDark: 'sunsetDark',
   dayNote: 'dayNote',
   nextStopDayColor: 'nextStopDayColor',
+  // 2026-11-13 2차 정식 (사용자 요청)
+  phraseOfDay: 'phraseOfDay',
+  bestWalkTime: 'bestWalkTime',
+  daylightLeft: 'daylightLeft',
+  shorterOrder: 'shorterOrder',
 } as const;
 
 function migrateGraduatedLabs(): void {

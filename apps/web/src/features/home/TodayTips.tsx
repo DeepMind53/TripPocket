@@ -1,33 +1,24 @@
-import {
-  KO_PHRASES,
-  PHRASE_IDS,
-  phraseLangFor,
-  type Booking,
-  type Coords,
-  type Trip,
-} from '@trippocket/shared';
-import { Copy, Footprints, Sunset } from 'lucide-react';
-import { useLabs } from '../../data/labsStore';
+import { KO_PHRASES, PHRASE_IDS, phraseLangFor, type Coords, type Trip } from '@trippocket/shared';
+import { Footprints, Sunset } from 'lucide-react';
+import { useSettings } from '../../data/settingsStore';
 import { sunTimes } from '../../domain/sun';
 import { bestWalkWindow, daylightLeft, phraseOfDay } from '../../domain/tripHints';
 import type { DayWeather } from '../../domain/weather';
 import { useTranslation } from '../../i18n';
-import { copyText } from '../../shared/lib/clipboard';
 import { InlineIcon } from '../../shared/ui/InlineIcon';
 import { SpeakButton } from '../phrases/SpeakButton';
 
 /**
- * 여행 중 오늘 (홈·여행 모드 다음 일정 카드 아래) 실험 4개 (2026-11-13):
- * 오늘의 한마디 · 걷기 좋은 시간 · 해 지기까지 · 숙소 알려 주기. 모두 기기 안 정보만
+ * 여행 중 오늘 (홈·여행 모드 다음 일정 카드 아래, 설정 "일정 · 날씨와 현지 정보" — 2026-11-13 실험실에서 정식):
+ * 오늘의 한마디 · 걷기 좋은 시간 · 해 지기까지. 모두 기기 안 정보만
  */
-export function TodayLabs({
+export function TodayTips({
   trip,
   today,
   dayN,
   now,
   weather,
   coords,
-  stay,
 }: {
   trip: Trip;
   today: string;
@@ -37,18 +28,18 @@ export function TodayLabs({
   weather: DayWeather | undefined;
   /** 오늘 장소 좌표 하나 (해 지는 시각) */
   coords: Coords | undefined;
-  /** 오늘 밤 숙소 */
-  stay: Booking | undefined;
 }) {
   const { t } = useTranslation();
-  const labs = useLabs();
+  const walkOn = useSettings((st) => st.bestWalkTime);
+  const sunOn = useSettings((st) => st.daylightLeft);
+  const phraseOn = useSettings((st) => st.phraseOfDay);
   const lines: { icon: typeof Footprints; text: string }[] = [];
 
-  if (labs.bestWalkTime) {
+  if (walkOn) {
     const win = bestWalkWindow(weather?.hours, Number(now.slice(0, 2)));
     if (win) lines.push({ icon: Footprints, text: t('hint.walk', win) });
   }
-  if (labs.daylightLeft && coords) {
+  if (sunOn && coords) {
     const sun = sunTimes(today, coords, trip.timezone);
     const left = sun ? daylightLeft(now, sun.set) : null;
     if (left !== null)
@@ -60,10 +51,10 @@ export function TodayLabs({
             : t('hint.daylightM', { m: left, at: sun!.set }),
       });
   }
-  const lang = labs.phraseOfDay ? phraseLangFor(trip.destinations[0]?.countryCode) : undefined;
+  const lang = phraseOn ? phraseLangFor(trip.destinations[0]?.countryCode) : undefined;
   const id = lang ? phraseOfDay(PHRASE_IDS, dayN) : null;
 
-  if (!lines.length && !id && !(labs.shareStay && stay)) return null;
+  if (!lines.length && !id) return null;
   return (
     <div className="flex flex-col gap-2">
       {lang && id && (
@@ -91,29 +82,6 @@ export function TodayLabs({
           {l.text}
         </p>
       ))}
-      {labs.shareStay && stay && (
-        <button
-          type="button"
-          onClick={() =>
-            void copyText(
-              // 가족·동행에게 보낼 글: 숙소 이름 · 주소 · 전화 · 체크아웃 (있는 것만)
-              [
-                t('hint.stayName', { name: stay.title }),
-                stay.details?.address,
-                stay.details?.phone && t('hint.stayPhone', { phone: stay.details.phone }),
-                stay.end?.date && t('hint.stayOut', { date: stay.end.date }),
-              ]
-                .filter(Boolean)
-                .join('\n'),
-              t('hint.stayCopied'),
-            )
-          }
-          className="flex h-11 items-center justify-center gap-1.5 rounded-btn bg-bg-subtle text-body-2 font-medium"
-        >
-          <Copy aria-hidden="true" className="size-4" />
-          {t('hint.shareStay')}
-        </button>
-      )}
     </div>
   );
 }

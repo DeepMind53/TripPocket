@@ -33,31 +33,26 @@ beforeEach(async () => {
 });
 
 describe('실험실', () => {
-  it('마이 → 실험실: 2026-11-13 새 실험 11개(소리·숙소 방향은 정식), 모두 [샘플], 켜면 이 기기에 저장', async () => {
+  it('마이 → 실험실: 2026-11-13 3차 실제 기능 7개, 모두 [샘플], 켜면 이 기기에 저장', async () => {
     const user = userEvent.setup();
     render(<RouterProvider router={createMemoryRouter(routes, { initialEntries: ['/me'] })} />);
     await user.click(await screen.findByRole('link', { name: '실험실' }));
-    const sw = await screen.findByRole('switch', { name: /예약 날짜 점검/ });
+    const sw = await screen.findByRole('switch', { name: /타이머/ });
     expect(sw).toHaveAttribute('aria-checked', 'false');
     await user.click(sw);
-    expect(JSON.parse(localStorage.getItem('tp-labs')!)).toEqual({ bookingCheck: true });
-    // 일차 노선 미니맵·여행 전체 노선도는 설정 "노선도"로 정식 (2026-11-10)
+    expect(JSON.parse(localStorage.getItem('tp-labs')!)).toEqual({ quickTimer: true });
     expect(LABS).toEqual([
-      'phraseOfDay',
-      'bestWalkTime',
-      'daylightLeft',
-      'shareStay',
-      'shorterOrder',
-      'farPlace',
-      'revisitCity',
-      'weatherVsSeoul',
-      'krHolidayRush',
-      'memoryToday',
-      'bookingCheck',
+      'bulkAdd',
+      'shiftDay',
+      'calendarExport',
+      'mapLink',
+      'splitBill',
+      'unitConvert',
+      'quickTimer',
     ]);
-    expect(screen.getAllByRole('switch')).toHaveLength(11);
+    expect(screen.getAllByRole('switch')).toHaveLength(7);
     // 실험마다 [샘플] (사용자 요청 2026-11-10)
-    expect(screen.getAllByRole('button', { name: / 샘플$/ })).toHaveLength(11);
+    expect(screen.getAllByRole('button', { name: / 샘플$/ })).toHaveLength(7);
     // 정식이 됐거나 뺀 것은 실험실에 없다
     for (const name of [
       /현지 공휴일/,
@@ -82,9 +77,16 @@ describe('실험실', () => {
       /빈 시간/,
       /여행기/,
       /크게 보여/,
+      // 2026-11-13 2차: 4개는 설정 "일정"으로, 7개는 뺐다
+      /오늘의 한마디/,
+      /걷기 좋은 시간/,
+      /해 지기까지/,
+      /더 짧은 순서/,
+      /예약 날짜 점검/,
+      /몇 년 전 오늘/,
     ])
       expect(screen.queryByRole('switch', { name })).toBeNull();
-    setLab('bookingCheck', false);
+    setLab('quickTimer', false);
   });
 
   it('정식: 날씨 주의 그림·현지 공휴일·늦은 귀가 + 실험: 장소 맞춤 팁', async () => {
@@ -579,8 +581,8 @@ describe('실험실', () => {
     expect(within(sheet).getByText('오늘 11:00 체크아웃 · 신주쿠 호텔')).toBeInTheDocument();
     await user.click(within(sheet).getByRole('button', { name: '이 기능 끄기' }));
     expect(useSettings.getState().checkoutNotice).toBe(false);
-    // 설정 "일정" 항목 모두 샘플 버튼 (2026-11-13 정식 3개 더해 30)
-    expect(screen.getAllByRole('button', { name: / 샘플$/ })).toHaveLength(30);
+    // 설정 "일정" 항목 모두 샘플 버튼 (2026-11-13 정식 3개 + 2차 4개 더해 34)
+    expect(screen.getAllByRole('button', { name: / 샘플$/ })).toHaveLength(34);
     updateSettings({ checkoutNotice: true });
   });
 

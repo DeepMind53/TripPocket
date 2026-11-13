@@ -48,9 +48,9 @@ const HomeLabs = lazy(async () => ({ default: (await import('./HomeLabs')).HomeL
 const TripAlertBanner = lazy(async () => ({
   default: (await import('../weather/TripAlertBanner')).TripAlertBanner,
 }));
-// 오늘 실험 줄 — 첫 화면에 넣지 않고 따로 받는다
-const TodayLabs = lazy(async () => ({
-  default: (await import('../labs/TodayLabs')).TodayLabs,
+// 오늘의 한마디·걷기 좋은 시간·해 지기까지 줄 — 첫 화면에 넣지 않고 따로 받는다
+const TodayTips = lazy(async () => ({
+  default: (await import('./TodayTips')).TodayTips,
 }));
 // 길찾기 시트(이동수단 고르기)는 누를 때 불러온다 — 첫 화면 크기
 const DirectionsSheet = lazy(async () => ({
@@ -301,16 +301,15 @@ export function OngoingTrip({
 
       {afterNext}
 
-      {/* 실험실 (2026-11-13): 오늘의 한마디·걷기 좋은 시간·해 지기까지·숙소 알려 주기 */}
+      {/* 설정 "일정" (2026-11-13 실험실에서 정식): 오늘의 한마디·걷기 좋은 시간·해 지기까지 */}
       <Suspense fallback={null}>
-        <TodayLabs
+        <TodayTips
           trip={trip}
           today={today}
           dayN={day}
           now={now}
           weather={w}
           coords={todayItems.find((i) => i.place?.coords)?.place?.coords}
-          stay={lodgingForNight(bookings, today)?.booking}
         />
       </Suspense>
 

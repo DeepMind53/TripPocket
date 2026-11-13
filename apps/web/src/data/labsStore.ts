@@ -7,20 +7,18 @@ import { countUse } from '../shared/lib/usageCount';
  * 정식 기능이 되면 LABS에서 빼고 useLab 호출을 지운다 (docs/code-map.md §3)
  */
 export const LABS = [
-  // 2026-11-13 새 실험 2차 (사용자 요청 "10개 이상, 가진 정보로 도움이 되는 것"), 화면은 features/labs/*, 계산은 domain/tripHints.ts:
-  // 여행 중: 오늘의 한마디·걷기 좋은 시간·해 지기까지·숙소 알려 주기 / 일정: 더 짧은 순서·멀리 떨어진 장소 /
-  // 출발 전 홈: 다시 찾은 도시·서울과 기온 비교·한국 연휴 겹침 / 홈: 몇 년 전 오늘 / 예약: 예약 날짜 점검
-  'phraseOfDay',
-  'bestWalkTime',
-  'daylightLeft',
-  'shareStay',
-  'shorterOrder',
-  'farPlace',
-  'revisitCity',
-  'weatherVsSeoul',
-  'krHolidayRush',
-  'memoryToday',
-  'bookingCheck',
+  // 2026-11-13 3차 (사용자 요청 "정보만 주는 것 말고 실제 기능"), 계산은 domain/labTools.ts, 화면은 features/labs/*:
+  // 하루 메뉴: 여러 일정 붙여 넣기·남은 일정 미루기·캘린더로 내보내기 / 일정 입력: 지도 링크로 장소 /
+  // 환율: 나눠 내기 / 빠른 메뉴: 단위 바꾸기·타이머
+  'bulkAdd',
+  'shiftDay',
+  'calendarExport',
+  'mapLink',
+  'splitBill',
+  'unitConvert',
+  'quickTimer',
+  // 2026-11-13 2차 정식(사용자 요청): 오늘의 한마디·걷기 좋은 시간·해 지기까지·더 짧은 순서는 설정 "일정"으로 (켜 둔 기기는 migrateGraduatedLabs).
+  // 뺐다(사용자 결정): 숙소 알려 주기·멀리 떨어진 장소·다시 찾은 도시·서울과 기온 비교·한국 연휴 겹침·몇 년 전 오늘·예약 날짜 점검
   // 2026-11-13 정식(사용자 요청, 늘 켜짐): 회화 소리로 듣기(phrases/SpeakButton)·숙소 방향(빠른 메뉴 LodgingCompass).
   // 뺐다(사용자 결정): 금액 크게 보여 주기·일정 사이 빈 시간·여행기 글로 복사
   // 2026-11-13 정식(사용자 요청 "실험실 모두 적용"): 해 질 녘 자동 다크·하루 한 줄 기록·다음 역 카드 노선 색은 설정 "일정"으로,

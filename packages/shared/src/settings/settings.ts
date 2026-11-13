@@ -86,6 +86,11 @@ export interface Settings {
   sunsetDark: boolean;
   dayNote: boolean;
   nextStopDayColor: boolean;
+  /** 2026-11-13 2차 실험실에서 정식 (사용자 요청): 오늘의 한마디 · 걷기 좋은 시간 · 해 지기까지 (여행 중 홈·여행 모드), 더 짧은 순서 (일정) */
+  phraseOfDay: boolean;
+  bestWalkTime: boolean;
+  daylightLeft: boolean;
+  shorterOrder: boolean;
   /** ⚡ 빠른 메뉴 버튼 보이기 */
   quickButton: boolean;
   /** AI 추천을 열 때 처음 골라 둘 카테고리 */
@@ -130,6 +135,10 @@ export const PLAN_FEATURES = [
   'sunsetDark',
   'dayNote',
   'nextStopDayColor',
+  'phraseOfDay',
+  'bestWalkTime',
+  'daylightLeft',
+  'shorterOrder',
 ] as const;
 export type PlanFeature = (typeof PLAN_FEATURES)[number];
 
@@ -156,6 +165,7 @@ export const PLAN_FEATURE_GROUPS: readonly { id: string; keys: readonly PlanFeat
     id: 'notice',
     keys: [
       'nearbyWish',
+      'shorterOrder',
       'checkoutNotice',
       'lateNight',
       'dayRecap',
@@ -175,6 +185,9 @@ export const PLAN_FEATURE_GROUPS: readonly { id: string; keys: readonly PlanFeat
       'cityIntro',
       'safetyNotice',
       'festivals',
+      'bestWalkTime',
+      'daylightLeft',
+      'phraseOfDay',
     ],
   },
   { id: 'quick', keys: ['transitGuide', 'nearbyFind', 'arrivalRoute'] },
@@ -239,6 +252,10 @@ export const SETTINGS_DEFAULTS: Settings = {
   sunsetDark: false,
   dayNote: false,
   nextStopDayColor: false,
+  phraseOfDay: false,
+  bestWalkTime: false,
+  daylightLeft: false,
+  shorterOrder: false,
   quickButton: true,
   aiCats: ['food', 'cafe'],
   aiAnchor: 'text',
@@ -296,6 +313,10 @@ const VALID: { [K in keyof Settings]: (v: unknown) => v is Settings[K] } = {
   sunsetDark: (v): v is boolean => typeof v === 'boolean',
   dayNote: (v): v is boolean => typeof v === 'boolean',
   nextStopDayColor: (v): v is boolean => typeof v === 'boolean',
+  phraseOfDay: (v): v is boolean => typeof v === 'boolean',
+  bestWalkTime: (v): v is boolean => typeof v === 'boolean',
+  daylightLeft: (v): v is boolean => typeof v === 'boolean',
+  shorterOrder: (v): v is boolean => typeof v === 'boolean',
   quickButton: (v): v is boolean => typeof v === 'boolean',
   aiCats: (v): v is Settings['aiCats'] =>
     Array.isArray(v) &&

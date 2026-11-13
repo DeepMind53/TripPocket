@@ -60,8 +60,10 @@ Tailscale Funnel https://jin-server.tail0844c0.ts.net ─▶ 홈 PC 127.0.0.1:87
     사진 실험 3개의 요청은 `data/services/photoVision.ts` (누를 때만 보냄, ADR-0012)
 - **2026-11-13 실험실 → 정식 (사용자 요청)**: 설정 "일정 · 화면" `sunsetDark`(`travel/SunsetDark.tsx`)·`dayNote`·`nextStopDayColor`, 늘 켜짐: 여권 도장 이미지(`records/CountryGrid.tsx`)·여행 요약 카드(`records/TripCardSave.tsx`)·메뉴판·안내문 번역(`phrases/PhotoTranslate.tsx`)·사진 속 장소(`photos/LandmarkFinder.tsx`)·사진 분류.
 - **2026-11-13 2차 (사용자 요청)**: 회화 소리로 듣기(`phrases/SpeakButton.tsx`, 기기 speechSynthesis)·숙소 방향(빠른 메뉴 `common/LodgingCompass.tsx`, `domain/compass.ts`)은 늘 켜짐으로 정식. 금액 크게 보여 주기·일정 사이 빈 시간·여행기 글로 복사는 뺐다.
-  지금 실험실 11개 (계산은 `domain/tripHints.ts`, 화면은 `features/labs/`): 여행 중 `TodayLabs`(오늘의 한마디·걷기 좋은 시간·해 지기까지·숙소 알려 주기 — `home/OngoingTrip.tsx`에서 지연 로딩),
-  일정 하루 `DayLabs`(더 짧은 순서·멀리 떨어진 장소 — PlanPage DaySection), 출발 전 홈 `UpcomingLabs`(다시 찾은 도시·서울과 기온 비교(Open-Meteo 서울 고정 좌표)·한국 연휴 겹침), 홈 `MemoryToday`(몇 년 전 오늘), 예약 탭 `BookingCheck`(예약 날짜 점검).
+  같은 날 2차 실험 11개 중 4개는 설정 "일정"으로 정식(계산 `domain/tripHints.ts`): 오늘의 한마디 `phraseOfDay`·걷기 좋은 시간 `bestWalkTime`·해 지기까지 `daylightLeft`(묶음 "날씨와 현지 정보", 화면 `home/TodayTips.tsx` — `home/OngoingTrip.tsx`에서 지연 로딩),
+  더 짧은 순서 `shorterOrder`(묶음 "알림", `itinerary/ShorterOrderHint.tsx` — PlanPage DaySection). 나머지 7개(숙소 알려 주기·멀리 떨어진 장소·다시 찾은 도시·서울과 기온 비교·한국 연휴 겹침·몇 년 전 오늘·예약 날짜 점검)는 뺐다.
+  지금 실험실 (2026-11-13 3차, 실제 기능 — 계산 `domain/labTools.ts`, 화면 `features/labs/`): 하루 메뉴(PlanPage) 여러 일정 붙여 넣기 `BulkAddSheet`·남은 일정 미루기 `ShiftDaySheet`(실행 취소)·캘린더로 내보내기(.ics, `backup/backupUtils.saveFile`),
+  일정 입력 지도 링크로 장소 `MapLinkField`(ItemFormSheet, 링크 글자만 읽음), 환율 나눠 내기(FxPage), 빠른 메뉴 단위 바꾸기 `UnitConverter`·타이머 `QuickTimer`(끝나는 때 `timerStore` 기기 저장, 알림은 `QuickMenu.tsx`의 `TimerWatch`).
 - **여행 중 오늘 화면 (홈·여행 모드 공통, 2026-11-13)**: `home/OngoingTrip.tsx`(다음 일정 카드·오늘 일정표+시각별 날씨, `travel`이면 특보·숙소 카드 빼고 [일정 보기]는 여행 모드를 끄고 그날로, 나갈 시각 알림) + `home/TripStrip.tsx`(여행 카드·일정 막대). 여행 모드(`travel/TravelModePage.tsx`)는 머리·주의 줄·아침/저녁 칸·엄지 버튼만 따로. 다음 일정 아래 한 줄은 고른 이동 수단 하나만 (`travel/useNextLeg.ts`)
 - **다음 일정까지 이동 (여행 모드·여행 중 홈 공통, 2026-11-13)**: `features/travel/useNextLeg.ts`(자동 조회·[새로고침]·[자동차] 조회) + `LegControls.tsx`([도보|대중교통|자동차] + [새로고침 n회 남음]) + `DepartCountdown.tsx`. 서버 `POST /api/routes/eta` `drive: true` → `services/routes.ts` `googleDrive`/`geoapifyDrive`
 - **노선도 (설정 "일정 · 화면" `routeMap`, 2026-11-10 실험실에서 정식)**: 일차 미니맵 `itinerary/DayMiniMap.tsx` → 누르면 여행 전체 노선도 `TripRouteView.tsx`·`TripRouteSheet.tsx`

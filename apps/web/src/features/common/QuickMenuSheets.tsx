@@ -43,6 +43,8 @@ import {
 } from './quickShortcuts';
 import { useLabs } from '../../data/labsStore';
 import { LodgingCompass } from './LodgingCompass';
+import { QuickTimer } from '../labs/QuickTimer';
+import { UnitConverter } from '../labs/UnitConverter';
 import { openDirectionsDirect } from './openDirections';
 import { isDomesticTrip } from '../../domain/tripPlace';
 
@@ -351,6 +353,9 @@ function QuickMenuContent({
       )}
       {/* 실험실 "숙소 방향" (2026-11-13) */}
       {inTrip && trip && <LodgingCompass trip={trip} />}
+      {/* 실험실 (2026-11-13 3차): 단위 바꾸기 · 타이머 */}
+      <UnitConverter />
+      <QuickTimer />
       {/* 여행 밖: 탭마다 맞는 정보 + 바로가기 (사용자 요청 2026-11-03) */}
       {!inTrip && <TabQuickInfo />}
       {/* 바로가기 4칸: 편집으로 모든 기능·화면 중에서 고른다 (사용자 요청 2026-11-02) — 여행 안에서만 */}

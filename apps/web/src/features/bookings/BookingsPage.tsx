@@ -1,6 +1,5 @@
 import type { Booking } from '@trippocket/shared';
 import { BookingNotices } from './BookingNotices';
-import { BookingCheck } from '../labs/BookingCheck';
 import { Plus, BedDouble, Plane, Ticket } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useTranslation } from '../../i18n';
@@ -104,8 +103,6 @@ export function BookingsPage() {
         <div className="flex flex-col gap-6 px-5 pt-3">
           {/* 실험실: 좌측 통행·현장 결제 */}
           <BookingNotices trip={trip} bookings={bookings} />
-          {/* 실험실: 예약 날짜 점검 (2026-11-13) */}
-          <BookingCheck trip={trip} bookings={bookings} />
           {canEdit && (
             <Button
               variant="secondary"

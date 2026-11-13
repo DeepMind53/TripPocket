@@ -18,12 +18,6 @@ import { Wordmark } from './Wordmark';
 const BookingCard = lazy(async () => ({
   default: (await import('../bookings/BookingCard')).BookingCard,
 }));
-const UpcomingLabs = lazy(async () => ({
-  default: (await import('../labs/UpcomingLabs')).UpcomingLabs,
-}));
-const MemoryToday = lazy(async () => ({
-  default: (await import('../labs/MemoryToday')).MemoryToday,
-}));
 const PrepCards = lazy(async () => ({ default: (await import('./PrepCards')).PrepCards }));
 
 /**
@@ -100,18 +94,7 @@ export function HomePage() {
         {/* 디자인 개편 3단계 (docs/29 §7.1, 사용자 결정 Q1·Q2 2026-11-09): 여행 중에는 여행 카드를 한 줄 띠로 줄이고
             바로 아래 다음 일정 카드·오늘 노선·오늘 숙소. 출발 전에는 여행 카드 + 다음 이동 탑승권 (2026-11-10) */}
         {featured && (ongoing ? <TripStrip trip={featured} /> : <UpcomingTrip trip={featured} />)}
-        {/* 실험실 (2026-11-13): 다시 찾은 도시·서울과 기온·한국 연휴 / 몇 년 전 오늘 */}
-        {featured && !ongoing && (
-          <Suspense fallback={null}>
-            <UpcomingLabs trip={featured} />
-          </Suspense>
-        )}
         {featured && !ongoing && <NextTransport trip={featured} />}
-        {trips && !ongoing && (
-          <Suspense fallback={null}>
-            <MemoryToday today={todayIn('Asia/Seoul')} />
-          </Suspense>
-        )}
         {ongoing && <OngoingTrip trip={ongoing} />}
         {/* 출발 30일 전부터 준비 현황 (docs/16 B1) — 여행 중에는 접힌 채로 — 필요할 때 불러온다 */}
         {featured &&

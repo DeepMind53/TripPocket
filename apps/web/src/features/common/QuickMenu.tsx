@@ -4,6 +4,7 @@ import { useRouteSheet } from '../../shared/hooks/useRouteSheet';
 import { FloatingQuickButton } from './FloatingQuickButton';
 import { useSettings } from '../../data/settingsStore';
 import type { QuickMenuSheets as Sheets } from './QuickMenuSheets';
+import { TimerWatch } from '../labs/TimerWatch';
 
 const SHEET_KEY = 'quick-menu';
 
@@ -39,6 +40,8 @@ export function QuickMenuButton({
   const visible = useSettings((s) => s.quickButton);
   return (
     <>
+      {/* 실험실 "타이머": 끝나면 알림 (메뉴를 닫아도) */}
+      <TimerWatch />
       {visible && (
         <FloatingQuickButton
           label={t('quickMenu.title')}

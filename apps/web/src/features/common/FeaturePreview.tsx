@@ -1,20 +1,21 @@
 import {
-  CalendarClock,
-  CalendarX,
-  Copy,
+  CalendarPlus,
+  ClipboardPaste,
+  Clock4,
   Footprints,
-  History,
+  Link2,
   Luggage,
   Map as MapIcon,
-  MapPinOff,
   Moon,
   MoonStar,
   Navigation,
   PenLine,
   Route,
+  Ruler,
   Sun,
   Sunset,
-  Thermometer,
+  Timer,
+  Users,
   Volume2,
   type LucideIcon,
 } from 'lucide-react';
@@ -432,7 +433,7 @@ export function FeaturePreview({ id }: { id: PreviewId }) {
           </div>
         </div>
       );
-    // 2026-11-13 새 실험 2차 — 실제 화면과 같은 줄 모양
+    // 2026-11-13 실험실에서 정식 (설정 "일정") — 실제 화면과 같은 줄 모양
     case 'phraseOfDay':
       return (
         <div className="flex items-center gap-3 rounded-2xl border border-line bg-surface p-4">
@@ -454,18 +455,6 @@ export function FeaturePreview({ id }: { id: PreviewId }) {
       return hint(Footprints, t('hint.walk', { from: 14, to: 17 }));
     case 'daylightLeft':
       return hint(Sunset, t('hint.daylightHM', { h: 1, m: 20, at: '16:42' }));
-    case 'shareStay':
-      return (
-        <div className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-3">
-          <span className="flex h-11 items-center justify-center gap-1.5 rounded-btn bg-bg-subtle text-body-2 font-medium">
-            <Copy aria-hidden="true" className="size-4" />
-            {t('hint.shareStay')}
-          </span>
-          <pre className="font-sans text-caption whitespace-pre-wrap text-fg-sub">
-            {`${t('hint.stayName', { name: t('sample.shinjukuHotel') })}\n${t('hint.stayOut', { date: '2026-10-31' })}`}
-          </pre>
-        </div>
-      );
     case 'shorterOrder':
       return day(
         <>
@@ -475,37 +464,82 @@ export function FeaturePreview({ id }: { id: PreviewId }) {
           {hint(Route, t('hint.shorter', { km: 2.4, order: t('sample.hintOrder') }), 'primary')}
         </>,
       );
-    case 'farPlace':
-      return day(
-        <>
-          {row(1, '10:00', t('sample.sensoji'))}
-          {row(2, '15:00', t('sample.hintFarName'))}
-          {hint(MapPinOff, t('hint.far', { names: t('sample.hintFarName') }), 'warn')}
-        </>,
-      );
-    case 'revisitCity':
-      return hint(History, t('hint.revisit', { date: '2024.03', title: t('sample.hintTrip') }));
-    case 'weatherVsSeoul':
-      return hint(Thermometer, t('hint.tempWarmer', { n: 6 }));
-    case 'krHolidayRush':
-      return hint(CalendarClock, t('hint.krHoliday', { names: t('sample.hintHoliday') }));
-    case 'memoryToday':
+    // 2026-11-13 실험 3차 (실제 기능) — 누르면 나오는 시트·줄 모양
+    case 'bulkAdd':
       return (
-        <div className="flex min-h-12 items-center gap-3 rounded-2xl border border-line bg-surface px-4 py-3">
-          <History aria-hidden="true" className="size-5 shrink-0 text-primary" />
-          <span className="flex min-w-0 flex-1 flex-col">
-            <span className="text-caption text-fg-muted">{t('hint.memoryYears', { n: 1 })}</span>
-            <span className="text-body-2 font-medium">
-              {t('hint.memoryDay', { title: t('sample.hintTrip'), n: 2 })}
-            </span>
+        <div className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-3">
+          <pre className="rounded-btn bg-bg-subtle p-2 font-sans text-caption whitespace-pre-wrap text-fg-sub">
+            {t('tool.bulkPlaceholder')}
+          </pre>
+          <span className="flex h-10 items-center justify-center gap-1.5 rounded-btn bg-primary text-body-2 font-semibold text-on-primary">
+            <ClipboardPaste aria-hidden="true" className="size-4" />
+            {t('tool.bulkAdd', { n: 3 })}
           </span>
         </div>
       );
-    case 'bookingCheck':
-      return hint(
-        CalendarX,
-        t('hint.late', { title: t('sample.hintFlight'), time: '23:10' }),
-        'warn',
+    case 'shiftDay':
+      return day(
+        <>
+          {row(1, '10:30', t('sample.sensoji'))}
+          {row(2, '13:30', t('sample.skytree'))}
+          {hint(Clock4, t('tool.shiftedLater', { n: 2, m: 30 }), 'primary')}
+        </>,
+      );
+    case 'calendarExport':
+      return (
+        <div className="flex items-start gap-3 rounded-2xl border border-line bg-surface p-3">
+          <CalendarPlus aria-hidden="true" className="mt-0.5 size-5 text-fg-sub" />
+          <span className="flex flex-col">
+            <span className="text-body-1">{t('tool.icsTitle')}</span>
+            <span className="text-caption text-fg-muted">{t('tool.icsDesc')}</span>
+          </span>
+        </div>
+      );
+    case 'mapLink':
+      return (
+        <div className="flex flex-col gap-1.5 rounded-2xl border border-line bg-surface p-3">
+          <span className="flex items-center gap-1 text-caption font-semibold text-fg-sub">
+            <Link2 aria-hidden="true" className="size-3.5" />
+            {t('tool.mapLink')}
+          </span>
+          <span className="truncate rounded-btn border border-line bg-bg-subtle px-3 py-2 text-body-2">
+            https://maps.google.com/?q=35.7148,139.7967
+          </span>
+          <span className="text-caption text-primary">
+            {t('tool.mapLinkFound', { lat: '35.7148', lng: '139.7967' })}
+          </span>
+        </div>
+      );
+    case 'splitBill':
+      return (
+        <div className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-3">
+          <span className="flex items-center gap-2 text-caption font-semibold text-fg-sub">
+            <Users aria-hidden="true" className="size-4" />
+            {t('tool.splitLabel')} · {t('tool.splitPeople', { n: 3 })}
+          </span>
+          <span className="tabular text-body-1 font-semibold">
+            {t('tool.splitEach', { foreign: '¥1,327', krw: '12,040' })}
+          </span>
+        </div>
+      );
+    case 'unitConvert':
+      return (
+        <div className="flex flex-col gap-1 rounded-2xl border border-line bg-surface p-3">
+          <span className="flex items-center gap-2 text-caption font-semibold text-fg-sub">
+            <Ruler aria-hidden="true" className="size-4" />
+            {t('tool.unitTitle')}
+          </span>
+          <span className="tabular text-body-1">77 °F</span>
+          <span className="tabular text-title-1 font-semibold">25 °C</span>
+        </div>
+      );
+    case 'quickTimer':
+      return (
+        <div className="flex flex-col items-center gap-2 rounded-2xl border border-line bg-surface p-4">
+          <Timer aria-hidden="true" className="size-5 text-primary" />
+          <span className="tabular text-[2rem] leading-none font-semibold">29:41</span>
+          <span className="text-caption text-fg-muted">{t('tool.timerM', { m: 30 })}</span>
+        </div>
       );
     case 'placeTips':
       return day(

@@ -1440,37 +1440,37 @@
         "name": "해 지기까지",
         "desc": "해 지기 3시간 전부터\n남은 시간을 알려 줘요"
       },
-      "shareStay": {
-        "name": "숙소 알려 주기",
-        "desc": "오늘 밤 숙소 이름·주소를\n보낼 글로 복사해요"
-      },
       "shorterOrder": {
         "name": "더 짧은 순서",
         "desc": "장소 순서를 바꾸면 덜 가는\n순서를 알려 줘요"
       },
-      "farPlace": {
-        "name": "멀리 떨어진 장소",
-        "desc": "다른 장소와 80km 넘게 먼 곳\n잘못 고른 장소를 찾아 줘요"
+      "bulkAdd": {
+        "name": "여러 일정 붙여 넣기",
+        "desc": "메모·카톡의 일정을 붙여 넣으면\n한 번에 일정으로 만들어요"
       },
-      "revisitCity": {
-        "name": "다시 찾은 도시",
-        "desc": "전에 같은 곳에 다녀왔으면\n그 여행을 알려 줘요"
+      "shiftDay": {
+        "name": "남은 일정 미루기",
+        "desc": "늦어졌을 때 그날 일정 시각을\n한 번에 미루거나 당겨요"
       },
-      "weatherVsSeoul": {
-        "name": "서울과 기온 비교",
-        "desc": "출발일 여행지 기온을\n서울과 비교해 알려 줘요"
+      "calendarExport": {
+        "name": "캘린더로 내보내기",
+        "desc": "일정을 캘린더 파일로 만들어\n휴대폰 캘린더에 넣어요"
       },
-      "krHolidayRush": {
-        "name": "한국 연휴 겹침",
-        "desc": "출발·귀국이 한국 연휴와 겹치면\n공항 혼잡을 알려 줘요"
+      "mapLink": {
+        "name": "지도 링크로 장소",
+        "desc": "구글·네이버 지도 링크를 붙이면\n그 위치를 장소로 넣어요"
       },
-      "memoryToday": {
-        "name": "몇 년 전 오늘",
-        "desc": "지난해 오늘 여행 중이었으면\n홈에서 다시 보여 줘요"
+      "splitBill": {
+        "name": "나눠 내기",
+        "desc": "환율 화면에서 인원을 고르면\n1명당 금액을 계산해요"
       },
-      "bookingCheck": {
-        "name": "예약 날짜 점검",
-        "desc": "여행 기간 밖 날짜·늦은 도착을\n예약 탭에서 알려 줘요"
+      "unitConvert": {
+        "name": "단위 바꾸기",
+        "desc": "°F·마일·파운드·인치를\n우리 단위로 바꿔요"
+      },
+      "quickTimer": {
+        "name": "타이머",
+        "desc": "주차·짐 보관 시간을 맞춰 두면\n끝날 때 알려 줘요"
       }
     },
     "checkoutAt": "오늘 {{time}} 체크아웃 · {{name}}",
@@ -2223,11 +2223,7 @@
     "menuKo2": "면 추가 210엔",
     "hintPhraseJa": "すみません",
     "hintPhraseKo": "실례합니다",
-    "hintOrder": "센소지 → 우에노 → 스카이트리",
-    "hintFarName": "하코네 온천",
-    "hintTrip": "도쿄 여행",
-    "hintHoliday": "추석",
-    "hintFlight": "KE703"
+    "hintOrder": "센소지 → 우에노 → 스카이트리"
   },
   "currencyName": {
     "USD": "미국 달러",
@@ -3033,24 +3029,66 @@
     "walk": "걷기 좋은 시간 {{from}}~{{to}}시\n비 없고 선선해요",
     "daylightHM": "해 지기까지 {{h}}시간 {{m}}분\n일몰 {{at}}",
     "daylightM": "해 지기까지 {{m}}분\n일몰 {{at}}",
-    "shareStay": "숙소 알려 주기",
-    "stayName": "오늘 밤 숙소: {{name}}",
-    "stayPhone": "전화: {{phone}}",
-    "stayOut": "체크아웃: {{date}}",
-    "stayCopied": "숙소 글을 복사했어요",
-    "shorter": "순서를 바꾸면 약 {{km}}km 짧아요\n{{order}}",
-    "far": "{{names}}\n다른 장소와 80km 넘게 멀어요",
-    "upcomingLabel": "출발 전 알림",
-    "revisit": "{{date}}에도 다녀왔어요\n{{title}}",
-    "tempWarmer": "출발일 여행지가 서울보다\n{{n}}도 따뜻해요",
-    "tempColder": "출발일 여행지가 서울보다\n{{n}}도 추워요",
-    "tempSame": "출발일 여행지 기온이\n서울과 비슷해요",
-    "krHoliday": "한국 연휴({{names}})와 겹쳐요\n공항이 붐빌 수 있어요",
-    "memoryYears": "{{n}}년 전 오늘",
-    "memoryDay": "{{title}} {{n}}일차",
-    "bookingCheck": "예약 날짜 점검",
-    "outside": "{{title}} {{date}}\n여행 기간 밖 날짜예요",
-    "stayAfter": "{{title}} 체크아웃 {{date}}\n돌아오는 편보다 늦어요",
-    "late": "{{title}} {{time}} 도착\n숙소에 늦은 체크인을 알려요"
+    "shorter": "순서를 바꾸면 약 {{km}}km 짧아요\n{{order}}"
+  },
+  "tool": {
+    "bulkTitle": "여러 일정 붙여 넣기",
+    "bulkMenuDesc": "한 줄에 일정 하나씩 한 번에",
+    "bulkDesc": "한 줄에 일정 하나\n시각이 앞에 있으면 시각도 넣어요",
+    "bulkPlaceholder": "10:00 센소지\n12:30 이치란 라멘\n스카이트리",
+    "bulkPreview": "넣을 일정",
+    "bulkAdd": "{{n}}개 넣기",
+    "bulkAdded": "일정 {{n}}개를 넣었어요",
+    "shiftTitle": "남은 일정 미루기",
+    "shiftMenuDesc": "일정 시각을 한 번에 옮겨요",
+    "shiftDesc": "시각이 있는 일정을 한 번에 옮겨요\n예약에서 온 일정은 그대로예요",
+    "shiftDescToday": "{{time}} 이후 일정만 옮겨요\n예약에서 온 일정은 그대로예요",
+    "later": "{{m}}분 늦게",
+    "earlier": "{{m}}분 일찍",
+    "shiftApply": "일정 {{n}}개 옮기기",
+    "shiftNone": "옮길 일정이 없어요",
+    "shiftedLater": "일정 {{n}}개를 {{m}}분 미뤘어요",
+    "shiftedEarlier": "일정 {{n}}개를 {{m}}분 당겼어요",
+    "shiftSkipped": "자정을 넘는 일정 {{n}}개는 그대로예요",
+    "icsTitle": "캘린더로 내보내기",
+    "icsDesc": "이 여행 일정을 캘린더 파일로",
+    "mapLink": "지도 링크로 위치 넣기",
+    "mapLinkPlaceholder": "구글·네이버 지도 링크",
+    "mapLinkFound": "위치를 찾았어요 · {{lat}}, {{lng}}",
+    "mapLinkNone": "링크에 좌표가 없어요\n짧은 링크는 브라우저에서 연 뒤\n주소창 링크를 복사해 주세요",
+    "splitLabel": "나눠 내기",
+    "splitPeople": "{{n}}명",
+    "splitEach": "1명당 {{foreign}} · {{krw}}원",
+    "unitTitle": "단위 바꾸기",
+    "unitSwap": "반대로 바꾸기",
+    "unit": {
+      "temp": {
+        "name": "온도",
+        "us": "°F",
+        "metric": "°C"
+      },
+      "length": {
+        "name": "거리",
+        "us": "마일",
+        "metric": "km"
+      },
+      "weight": {
+        "name": "무게",
+        "us": "파운드",
+        "metric": "kg"
+      },
+      "height": {
+        "name": "길이",
+        "us": "인치",
+        "metric": "cm"
+      }
+    },
+    "timerTitle": "타이머",
+    "timerDesc": "주차·짐 보관·온천 시간에 맞춰요\n앱이 열려 있으면 끝날 때 알려요",
+    "timerM": "{{m}}분",
+    "timerH": "{{h}}시간",
+    "timerHM": "{{h}}시간 {{m}}분",
+    "timerStop": "타이머 끄기",
+    "timerDone": "타이머가 끝났어요"
   }
 }
