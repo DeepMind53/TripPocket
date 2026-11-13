@@ -45,6 +45,13 @@ async function tokyo() {
     title: '센소지',
     startTime: '15:00',
   });
+  await itemRepo.create({
+    tripId: trip.id,
+    date: '2026-11-13',
+    kind: 'place',
+    title: '팀랩',
+    startTime: '10:00',
+  });
   return trip;
 }
 
@@ -69,17 +76,28 @@ it('빠른 메뉴 [영수증]으로 찍은 사진이 지금 일정에 붙는다 
     shoot.querySelector('input') as HTMLInputElement,
     new File(['jpg'], 'r.jpg', { type: 'image/jpeg' }),
   );
+  // 찍으면 붙일 일정을 고른다 (2026-11-13): 오늘 일정, 지금 일정에 [지금]
+  const ask = await screen.findByRole('dialog', { name: '어느 일정에 붙일까요' });
+  expect(within(ask).getByText('영수증 1장 · 이 기기에만 저장돼요')).toBeInTheDocument();
+  expect(await within(ask).findByRole('button', { name: /이치란/ })).toHaveTextContent('지금');
+  expect(await db.photos.count()).toBe(0);
+  await user.click(within(ask).getByRole('button', { name: /이치란/ }));
   await waitFor(async () => expect(await db.photos.count()).toBe(1));
   expect(useToastStore.getState().items.map((x) => x.message)).toContain('이치란에 붙였어요');
+  // 여러 장 고르고, 다른 날·다른 일정에도 붙일 수 있다
   await user.upload(pick.querySelector('input') as HTMLInputElement, [
     new File(['a'], 'a.jpg', { type: 'image/jpeg' }),
     new File(['b'], 'b.jpg', { type: 'image/jpeg' }),
   ]);
+  const ask2 = await screen.findByRole('dialog', { name: '어느 일정에 붙일까요' });
+  await user.click(await within(ask2).findByRole('button', { name: '2일차' }));
+  await user.click(await within(ask2).findByRole('button', { name: /팀랩/ }));
   await waitFor(async () => expect(await db.photos.count()).toBe(3));
-  const [p] = await db.photos.toArray();
   const items = await itemRepo.listByTrip(trip.id);
-  expect(items.find((i) => i.id === p!.itemId)?.title).toBe('이치란');
-  expect(p).toMatchObject({ kind: 'receipt' });
+  const title = (id: string) => items.find((i) => i.id === id)?.title;
+  const photos = await db.photos.toArray();
+  expect(photos.map((p) => title(p.itemId)).sort()).toEqual(['이치란', '팀랩', '팀랩'].sort());
+  expect(photos.every((p) => p.kind === 'receipt')).toBe(true);
 });
 
 it('photoRepo로 붙인 영수증: 상세에서 [영수증 분석] → 서버 글 → 품목 표 (금액은 저장 안 함)', async () => {
