@@ -165,33 +165,81 @@ export function FxPage() {
             ))}
           </div>
         )}
-        <AmountRow
-          label={topCode === 'KRW' ? t('fx.krw') : currencyLabel(currency)}
-          value={`${symbol(topCode)} ${input ? fmt(Number(input), digits(topCode)) : '0'}`}
-          active
-          onPick={topCode === 'KRW' ? undefined : () => setPickerOpen(true)}
-        />
-        <button
-          type="button"
-          aria-label={t('fx.swap')}
-          onClick={() => {
-            setKrwFirst((v) => !v);
-            setInput(result ? String(Math.round(result * 100) / 100) : '');
-          }}
-          className="mx-auto grid size-10 place-items-center rounded-full bg-bg-subtle text-primary"
-        >
-          <ArrowUpDown aria-hidden="true" className="size-5" />
-        </button>
-        <AmountRow
-          label={bottomCode === 'KRW' ? t('fx.krw') : currencyLabel(currency)}
-          value={result === null ? '—' : `${symbol(bottomCode)} ${fmt(result, digits(bottomCode))}`}
-          onCopy={
-            result === null
-              ? undefined
-              : () => void copyText(fmt(result, digits(bottomCode)), t('fx.copied'))
-          }
-          onPick={bottomCode === 'KRW' ? undefined : () => setPickerOpen(true)}
-        />
+        {/* 설명은 왼쪽, 금액 칸은 오른쪽 절반 (2026-11-13 사용자 요청) */}
+        <div className="flex items-start gap-3">
+          <div
+            aria-live="polite"
+            className="flex min-w-0 flex-1 flex-col gap-0.5 self-center text-caption break-keep text-fg-sub"
+          >
+            {rate ? (
+              <span className="tabular text-body-2 font-semibold text-fg">
+                {symbol(currency)}
+                {unit} = {fmt(toKrw(unit, rate, fee), 2)}
+                {t('fx.won')}
+              </span>
+            ) : (
+              <span>{fx ? t('fx.noRate', { code: currency }) : t('fx.loading')}</span>
+            )}
+            {fx && (
+              <span className={cn(fx.stale && 'text-fg-muted')}>
+                {fx.source === 'koreaexim' && fx.fallback?.codes.includes(currency) ? (
+                  <>
+                    {t('fx.sourceFallback')} ·{' '}
+                    <span className="whitespace-nowrap">{fx.fallback.date}</span>
+                  </>
+                ) : (
+                  <>
+                    {t(fx.source === 'koreaexim' ? 'fx.sourceExim' : 'fx.sourceFallback')} ·{' '}
+                    <span className="whitespace-nowrap">{fx.date}</span>
+                  </>
+                )}
+                {fx.stale && ` · ${t('fx.stale')}`}
+              </span>
+            )}
+            {fee > 0 && <span>{t('fx.feeApplied', { fee })}</span>}
+            <span className="text-fg-muted">{t('fx.notRealtime')}</span>
+            <a
+              href={`https://search.naver.com/search.naver?query=${encodeURIComponent(naverQuery(currency))}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-1 inline-flex items-center gap-1 self-start font-semibold text-primary"
+            >
+              {t('fx.naver')}
+              <ExternalLink aria-hidden="true" className="size-3.5" />
+            </a>
+          </div>
+          <div className="flex w-1/2 shrink-0 flex-col gap-1">
+            <AmountRow
+              label={topCode === 'KRW' ? t('fx.krw') : currencyLabel(currency)}
+              value={`${symbol(topCode)} ${input ? fmt(Number(input), digits(topCode)) : '0'}`}
+              active
+              onPick={topCode === 'KRW' ? undefined : () => setPickerOpen(true)}
+            />
+            <button
+              type="button"
+              aria-label={t('fx.swap')}
+              onClick={() => {
+                setKrwFirst((v) => !v);
+                setInput(result ? String(Math.round(result * 100) / 100) : '');
+              }}
+              className="mx-auto grid size-10 place-items-center rounded-full bg-bg-subtle text-primary"
+            >
+              <ArrowUpDown aria-hidden="true" className="size-5" />
+            </button>
+            <AmountRow
+              label={bottomCode === 'KRW' ? t('fx.krw') : currencyLabel(currency)}
+              value={
+                result === null ? '—' : `${symbol(bottomCode)} ${fmt(result, digits(bottomCode))}`
+              }
+              onCopy={
+                result === null
+                  ? undefined
+                  : () => void copyText(fmt(result, digits(bottomCode)), t('fx.copied'))
+              }
+              onPick={bottomCode === 'KRW' ? undefined : () => setPickerOpen(true)}
+            />
+          </div>
+        </div>
         <div className="flex flex-wrap gap-2">
           {quick.map((q) => (
             <Chip key={q} onClick={() => setInput(String(q))}>
@@ -225,37 +273,6 @@ export function FxPage() {
             </p>
           </section>
         )}
-        <div aria-live="polite" className="flex flex-col gap-0.5 text-caption text-fg-sub">
-          {rate ? (
-            <span className="tabular text-body-2 font-semibold text-fg">
-              {symbol(currency)}
-              {unit} = {fmt(toKrw(unit, rate, fee), 2)}
-              {t('fx.won')}
-            </span>
-          ) : (
-            <span>{fx ? t('fx.noRate', { code: currency }) : t('fx.loading')}</span>
-          )}
-          {fx && (
-            <span className={cn(fx.stale && 'text-fg-muted')}>
-              {fx.source === 'koreaexim' && fx.fallback?.codes.includes(currency)
-                ? `${t('fx.sourceFallback')} · ${fx.fallback.date}`
-                : `${t(fx.source === 'koreaexim' ? 'fx.sourceExim' : 'fx.sourceFallback')} · ${fx.date}`}
-              {fx.stale && ` · ${t('fx.stale')}`}
-            </span>
-          )}
-          {fee > 0 && <span>{t('fx.feeApplied', { fee })}</span>}
-          <span className="text-fg-muted">{t('fx.notRealtime')}</span>
-          <a
-            href={`https://search.naver.com/search.naver?query=${encodeURIComponent(naverQuery(currency))}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-1 inline-flex items-center gap-1 self-start font-semibold text-primary"
-          >
-            {t('fx.naver')}
-            <ExternalLink aria-hidden="true" className="size-3.5" />
-          </a>
-        </div>
-
         <Keypad keys={keys} onKey={press} onClear={() => setInput('')} />
       </div>
 
@@ -286,10 +303,10 @@ function AmountRow(props: {
         <button
           type="button"
           onClick={props.onPick}
-          className="flex items-center gap-1 self-start text-caption font-semibold text-fg-sub"
+          className="flex items-center gap-1 self-start text-left text-caption font-semibold text-fg-sub"
         >
           {props.label}
-          <ChevronDown aria-hidden="true" className="size-4" />
+          <ChevronDown aria-hidden="true" className="size-4 shrink-0" />
         </button>
       ) : (
         <span className="text-caption font-semibold text-fg-sub">{props.label}</span>
@@ -300,7 +317,7 @@ function AmountRow(props: {
         disabled={!props.onCopy && !props.active}
         aria-live={props.active ? undefined : 'polite'}
         className={cn(
-          'tabular flex h-14 items-center justify-end rounded-card border px-4 text-title-1',
+          'tabular flex h-14 items-center justify-end rounded-card border px-3 text-title-2',
           props.active ? 'border-primary' : 'border-line bg-bg-subtle',
         )}
       >
