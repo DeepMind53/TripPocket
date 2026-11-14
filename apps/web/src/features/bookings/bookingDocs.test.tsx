@@ -93,7 +93,7 @@ it('설정 → 기기 데이터 정리: 지난 여행 문서만 두 번 눌러 �
   const user = userEvent.setup();
   render(
     <>
-      <RouterProvider router={createMemoryRouter(routes, { initialEntries: ['/settings'] })} />
+      <RouterProvider router={createMemoryRouter(routes, { initialEntries: ['/settings/data'] })} />
       <Toaster />
     </>,
   );

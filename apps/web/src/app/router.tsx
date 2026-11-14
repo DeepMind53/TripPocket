@@ -88,6 +88,12 @@ const allRoutes: RouteObject[] = [
     }),
   },
   {
+    path: 'settings/:section',
+    lazy: async () => ({
+      Component: (await import('../features/settings/SettingsSectionPage')).SettingsSectionPage,
+    }),
+  },
+  {
     path: 's/:shareId',
     lazy: async () => ({
       Component: (await import('../features/share/PublicTripPage')).PublicTripPage,

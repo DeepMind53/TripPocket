@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { routes } from '../../app/router';
@@ -19,7 +19,9 @@ describe('설정 화면', () => {
   it('바꾸면 바로 적용되고 저장된다, 섹션별 기본값 되돌리기', async () => {
     const user = userEvent.setup();
     render(
-      <RouterProvider router={createMemoryRouter(routes, { initialEntries: ['/settings'] })} />,
+      <RouterProvider
+        router={createMemoryRouter(routes, { initialEntries: ['/settings/display'] })}
+      />,
     );
 
     const display = await screen.findByRole('region', { name: '화면' });
@@ -38,8 +40,14 @@ describe('설정 화면', () => {
     expect(document.documentElement.dataset.theme).toBeUndefined();
     expect(useSettings.getState().timeFormat).toBe('24h');
 
-    // 백업 알림 스테퍼: 14 → 21일
-    const data = screen.getByRole('region', { name: '데이터' });
+    // 백업 알림 스테퍼: 14 → 21일 (설정 → 데이터)
+    cleanup();
+    render(
+      <RouterProvider
+        router={createMemoryRouter(routes, { initialEntries: ['/settings/data'] })}
+      />,
+    );
+    const data = await screen.findByRole('region', { name: '데이터' });
     await user.click(within(data).getByRole('button', { name: /늘리기|더하기|\+/ }));
     expect(useSettings.getState().backupReminderDays).toBe(21);
   });
@@ -102,24 +110,70 @@ describe('설정 묶음·기본값 저장 (2026-11-03)', () => {
     render(
       <RouterProvider router={createMemoryRouter(routes, { initialEntries: ['/settings'] })} />,
     );
+    // 첫 화면은 묶음 목록 (2026-11-14) — 일정 기능 4묶음은 켜진 개수와 함께
+    const plan = await screen.findByRole('region', { name: '일정 기능' });
     for (const name of [
       '일정 · 화면',
       '일정 · 알림',
       '일정 · 날씨와 현지 정보',
       '일정 · 빠른 메뉴',
     ])
-      expect(await screen.findByRole('region', { name })).toBeInTheDocument();
-    const quick = screen.getByRole('region', { name: '일정 · 빠른 메뉴' });
+      expect(within(plan).getByRole('link', { name: new RegExp(name) })).toBeInTheDocument();
+    expect(
+      within(plan).getByRole('link', { name: /일정 · 빠른 메뉴s*3개 중 0개 켜짐/ }),
+    ).toBeInTheDocument();
+    const back = () => user.click(screen.getByRole('button', { name: '뒤로' }));
+    const openQuick = async () => {
+      await user.click(await screen.findByRole('link', { name: /일정 · 빠른 메뉴/ }));
+      return screen.findByRole('region', { name: '일정 · 빠른 메뉴' });
+    };
     // 대중교통 안내 켜고 기본값으로 저장 → 끈 뒤 되돌리기 → 다시 켜짐
+    let quick = await openQuick();
     await user.click(within(quick).getByRole('switch', { name: '대중교통 안내' }));
+    await back();
+    expect(await screen.findByRole('link', { name: /3개 중 1개 켜짐/ })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: '지금 설정을 기본값으로 저장' }));
+    quick = await openQuick();
     await user.click(within(quick).getByRole('switch', { name: '대중교통 안내' }));
     expect(useSettings.getState().transitGuide).toBe(false);
     await user.click(within(quick).getByRole('button', { name: '기본값으로 되돌리기' }));
     expect(useSettings.getState().transitGuide).toBe(true);
     // 저장한 기본값을 지우면 처음 기본값(끔)으로
-    await user.click(screen.getByRole('button', { name: '저장한 기본값 지우기' }));
+    await back();
+    await user.click(await screen.findByRole('button', { name: '저장한 기본값 지우기' }));
+    quick = await openQuick();
     await user.click(within(quick).getByRole('button', { name: '기본값으로 되돌리기' }));
     expect(useSettings.getState().transitGuide).toBe(false);
+  });
+});
+
+describe('설정 검색 (2026-11-14)', () => {
+  it('항목 이름으로 찾고, 누르면 그 묶음 화면에서 그 항목을 강조', async () => {
+    const user = userEvent.setup();
+    render(
+      <RouterProvider router={createMemoryRouter(routes, { initialEntries: ['/settings'] })} />,
+    );
+    const box = await screen.findByRole('searchbox', { name: '설정 검색' });
+    await user.type(box, '날씨');
+    const found = screen.getByRole('list', { name: '설정 검색' });
+    const hit = within(found).getByRole('link', { name: /날씨.*일정 · 날씨와 현지 정보/ });
+    expect(screen.queryByRole('region', { name: '기본' })).toBeNull();
+    await user.click(hit);
+    const group = await screen.findByRole('region', { name: '일정 · 날씨와 현지 정보' });
+    await waitFor(() => expect(group.querySelector('.setting-found')).not.toBeNull());
+
+    // 없으면 알려 준다
+    await user.click(screen.getByRole('button', { name: '뒤로' }));
+    await user.type(await screen.findByRole('searchbox', { name: '설정 검색' }), '없는설정');
+    expect(screen.getByRole('status')).toHaveTextContent('찾는 설정이 없어요');
+  });
+
+  it('없는 묶음 주소는 설정 첫 화면으로', async () => {
+    render(
+      <RouterProvider
+        router={createMemoryRouter(routes, { initialEntries: ['/settings/nope'] })}
+      />,
+    );
+    expect(await screen.findByRole('searchbox', { name: '설정 검색' })).toBeInTheDocument();
   });
 });

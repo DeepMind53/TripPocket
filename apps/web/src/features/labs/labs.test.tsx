@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor, within } from '@testing-library/react';
+import { act, cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import { useAuth } from '../../data/authStore';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
@@ -572,7 +572,9 @@ describe('실험실', () => {
   it('설정 → 일정 항목마다 [샘플]: 미리보기, 시트에서 바로 끄기 (2026-10-27)', async () => {
     const user = userEvent.setup();
     render(
-      <RouterProvider router={createMemoryRouter(routes, { initialEntries: ['/settings'] })} />,
+      <RouterProvider
+        router={createMemoryRouter(routes, { initialEntries: ['/settings/notice'] })}
+      />,
     );
     await user.click(
       await screen.findByRole('button', { name: '체크아웃 날 시각 보여 주기 샘플' }),
@@ -581,8 +583,19 @@ describe('실험실', () => {
     expect(within(sheet).getByText('오늘 11:00 체크아웃 · 신주쿠 호텔')).toBeInTheDocument();
     await user.click(within(sheet).getByRole('button', { name: '이 기능 끄기' }));
     expect(useSettings.getState().checkoutNotice).toBe(false);
-    // 설정 "일정" 항목 모두 샘플 버튼 (2026-11-13 정식 3개 + 2차 4개 더해 34)
-    expect(screen.getAllByRole('button', { name: / 샘플$/ })).toHaveLength(34);
+    // 설정 "일정" 항목 모두 샘플 버튼 (2026-11-13 정식 3개 + 2차 4개 더해 34) — 4묶음 화면의 합
+    let samples = screen.getAllByRole('button', { name: / 샘플$/ }).length;
+    for (const id of ['view', 'local', 'quick']) {
+      cleanup();
+      render(
+        <RouterProvider
+          router={createMemoryRouter(routes, { initialEntries: [`/settings/${id}`] })}
+        />,
+      );
+      await screen.findAllByRole('switch');
+      samples += screen.getAllByRole('button', { name: / 샘플$/ }).length;
+    }
+    expect(samples).toBe(34);
     updateSettings({ checkoutNotice: true });
   });
 

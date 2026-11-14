@@ -47,6 +47,7 @@ for (const width of [320, 360, 412]) {
       '/saved',
       '/me',
       '/settings',
+      '/settings/view',
       '/trips/new',
       `${trip}/plan`,
       `${trip}/places`,
@@ -200,7 +201,7 @@ test('글자 크기 가장 크게(99%): 주요 화면 가로 넘침 없음, 탭 
   await page.setViewportSize({ width: 360, height: 760 });
   const trip = await seedTrip(page);
   // 설정 → 글자 크기 가장 크게 (99%)
-  await page.goto('/settings');
+  await page.goto('/settings/display');
   await page.getByRole('slider', { name: '글자 크기' }).focus();
   await page.keyboard.press('End');
   await expect

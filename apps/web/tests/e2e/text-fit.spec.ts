@@ -46,7 +46,7 @@ for (const [width, scale] of [
     await expect(page).toHaveURL(/\/plan/);
     const trip = page.url().replace(/\/plan.*$/, '');
     if (scale === 99) {
-      await page.goto('/settings');
+      await page.goto('/settings/display');
       await page.getByRole('slider', { name: '글자 크기' }).focus();
       await page.keyboard.press('End');
       await expect
@@ -60,6 +60,7 @@ for (const [width, scale] of [
       '/',
       '/me',
       '/settings',
+      '/settings/view',
       '/labs',
       '/backup',
       '/trips/new',

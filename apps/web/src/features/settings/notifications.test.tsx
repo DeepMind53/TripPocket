@@ -57,7 +57,9 @@ afterEach(() => {
 
 it('설정 → 알림: 전체 켜기(권한·구독·서버 등록) → 필요한 것만 끄기 → 전체 끄기 (docs/20 G1)', async () => {
   const user = userEvent.setup();
-  render(<RouterProvider router={createMemoryRouter(routes, { initialEntries: ['/settings'] })} />);
+  render(
+    <RouterProvider router={createMemoryRouter(routes, { initialEntries: ['/settings/push'] })} />,
+  );
   const group = await screen.findByRole('region', { name: '알림' });
   expect(within(group).getByRole('switch', { name: '일정 30분 전' })).toBeDisabled();
   await user.click(within(group).getByRole('switch', { name: '알림 받기' }));

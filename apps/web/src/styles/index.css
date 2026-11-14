@@ -372,3 +372,13 @@ input,
 textarea {
   scroll-margin-top: calc(var(--topbar-h, 56px) + 2rem);
 }
+
+/* 설정 검색에서 들어온 항목을 잠깐 강조 (2026-11-14) */
+.setting-found {
+  border-radius: 8px;
+  background: var(--tp-primary-weak);
+  box-shadow: 0 0 0 6px var(--tp-primary-weak);
+  transition:
+    background 0.6s,
+    box-shadow 0.6s;
+}
