@@ -2136,14 +2136,9 @@
     "denied": "위치를 허용하면 이동 시간이 보여요",
     "noFix": "위치를 못 찾았어요 · 다시 눌러 주세요",
     "loading": "길 찾는 중",
-    "walkMin": "도보 {{min}}분",
-    "transitMin": "대중교통 {{min}}분",
-    "roughShort": "(어림)",
     "walkNone": "도보 검색 불가",
     "transitNone": "대중교통 검색 불가",
     "map": "지도",
-    "leaveBy": "{{time}} 전 출발\n여유 {{margin}}분",
-    "leaveNow": "지금 바로\n출발하세요",
     "far": "멀리 있어요 · 이동 시간은 계산하지 않아요"
   },
   "confirm": {

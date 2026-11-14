@@ -5,180 +5,276 @@ import {
   type ItineraryItem,
   type RouteEta,
 } from '@trippocket/shared';
-import { LocateFixed, RotateCw } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import {
+  Car,
+  Check,
+  ChevronDown,
+  Footprints,
+  LocateFixed,
+  RotateCw,
+  TrainFront,
+} from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import { routeEtaResult } from '../../data/api/routes';
-import { toast } from '../../shared/ui/toastStore';
-import { FAR_LEG_KM, LEAVE_MARGIN_MIN, departurePlan } from '../../domain/dayTools';
+import { FAR_LEG_KM } from '../../domain/dayTools';
+import { leaveAt, type LegMode } from '../../domain/travelDay';
 import { useTranslation } from '../../i18n';
 import { useCurrentPosition } from '../../shared/hooks/useCurrentPosition';
 import { cn } from '../../shared/lib/cn';
+import { BottomSheet } from '../../shared/ui';
+import { toast } from '../../shared/ui/toastStore';
 
 /** 이보다 오래 걸으면 도보로 가는 길이 아니다 → "도보 검색 불가" */
 const MAX_WALK_MIN = 200;
 
+const MODES = [
+  { mode: 'walk', label: 'travel.modeWalk', Icon: Footprints },
+  { mode: 'transit', label: 'travel.modeTransit', Icon: TrainFront },
+  { mode: 'drive', label: 'travel.modeDrive', Icon: Car },
+] as const;
+
 interface Found {
   /** 어느 다음 일정의 결과인지 (다음 일정이 바뀌면 다시 눌러야 한다) */
   nextId: string;
-  /** 몇 번째 누름의 결과인지 */
+  /** 몇 번째 위치 읽기의 결과인지 */
   press: number;
   here: Coords;
-  eta: RouteEta | null;
-  /** 비행기로 건너갈 만큼 멀거나 다음 일정이 항공편 → 시간을 묻지 않았다 */
+  /** 비행기로 건너갈 만큼 멀다 → 시간을 묻지 않았다 */
   far: boolean;
+  /** 도보·대중교통 조회 결과 (undefined = 아직 안 물음, null = 실패) */
+  eta?: RouteEta | null | undefined;
+  /** 자동차 조회 결과 (undefined = 아직 안 물음, null = 실패) */
+  drive?: { min: number; km: number | undefined } | null | undefined;
 }
 
 /**
- * 일정 화면 지도·편집 사이 "다음 일정" 줄 (사용자 요청 2026-10-27): 여행 당일 지금 위치에서
- * 다음 일정까지 실제 걷는 길·대중교통 시간과 몇 시까지 나가면 되는지.
- * 길 찾기는 [이동 시간 검색]을 누를 때만 한 번 (자동·반복 검색은 API 낭비 — 사용자 요청 2026-10-27).
- * 위치는 누를 때만 읽고 화면에서만 쓴다
+ * 일정 화면 지도·편집 사이 "다음 목적지" (사용자 요청 2026-10-27, 2026-11-14 수단 고르기):
+ * [다음 목적지 이동시간] → [도보|대중교통|자동차] 창 → 고른 수단으로 지금 위치에서 시간과 "N분 후 출발".
+ * 홈·여행 모드 다음 일정 카드와 같은 방식. 길 찾기는 누를 때만 (자동·반복 검색은 API 낭비 — 2026-10-27),
+ * 수단을 바꾸면 이미 받은 결과를 다시 쓰고, 없을 때만 1번 더 묻는다. 위치는 누를 때만 읽고 화면에서만 쓴다
  */
 export function NextStopBar({ next, now }: { next: ItineraryItem; now: string }) {
   const { t } = useTranslation();
   const { state, request } = useCurrentPosition(false);
-  const [press, setPress] = useState(0);
-  const [found, setFound] = useState<Found | null>(null);
+  const [sheet, setSheet] = useState(false);
+  const [mode, setMode] = useState<LegMode | null>(null);
+  // 몇 번째 누름인지 + 그때의 다음 일정 (다음 일정이 바뀌면 다시 눌러야 한다)
+  const [pressed, setPressed] = useState<{ press: number; nextId: string } | null>(null);
+  const press = pressed?.press ?? 0;
+  // 조회 결과 (key = 다음 일정:누름)
+  const [got, setGot] = useState<{ key: string; eta?: RouteEta | null; drive?: Found['drive'] }>({
+    key: '',
+  });
+  const asked = useRef(new Set<string>());
   const to = next.place?.coords;
   const google = next.place?.coordsSource === 'google';
+  // 누른 뒤 위치를 받으면 그 위치로. 비행기로 건너가야 할 만큼 멀면(다른 나라 등) 묻지 않는다
+  // (2026-10-27: 한국에서 일본 샘플 도보 19909분)
+  const key = pressed ? `${pressed.nextId}:${pressed.press}` : '';
+  const current: Found | null =
+    pressed && pressed.nextId === next.id && state.status === 'ok' && to
+      ? {
+          nextId: next.id,
+          press,
+          here: state.coords,
+          far: distanceKm(state.coords, to) > FAR_LEG_KM,
+          ...(got.key === key ? { eta: got.eta, drive: got.drive } : {}),
+        }
+      : null;
 
-  // 누른 뒤 위치를 받으면 그 위치로 한 번만 길을 찾는다
+  // 위치를 못 받으면 알려 주고 다시 누를 수 있게
+  const failed = press > 0 && (state.status === 'denied' || state.status === 'unavailable');
   useEffect(() => {
-    if (press === 0 || state.status !== 'ok' || !to) return;
-    if (found && found.press === press && found.nextId === next.id) return;
-    const here = state.coords;
-    let alive = true;
-    // 비행기로 건너가야 할 만큼 멀면(다른 나라 등) 묻지 않는다
-    // (2026-10-27: 한국에서 일본 샘플을 보면 도보 19909분이 떴음).
-    // 다음 일정이 항공편이어도 공항까지는 땅길 — 그대로 찾는다
-    const far = distanceKm(here, to) > FAR_LEG_KM;
-    // 여행 모드와 같은 하루 50번 한도 (서버가 센다) — 다 쓰면 직선거리 어림으로
-    void (far ? Promise.resolve(null) : routeEtaResult(here, to, google, true)).then((r) => {
-      if (!alive) return;
-      if (r?.limited) toast(t('travel.routeLimit'));
-      setFound({ nextId: next.id, press, here, eta: r?.eta ?? null, far });
+    if (failed) toast(t(state.status === 'denied' ? 'nextStop.denied' : 'nextStop.noFix'));
+  }, [failed]); // eslint-disable-line react-hooks/exhaustive-deps -- 실패할 때 한 번
+
+  // 고른 수단의 결과가 없으면 1번만 묻는다 (여행 모드와 같은 하루 50번 한도, 서버가 센다)
+  const isDrive = mode === 'drive';
+  const need =
+    !!current && !current.far && !!mode && (isDrive ? current.drive : current.eta) === undefined;
+  useEffect(() => {
+    if (!need || !current || !to) return;
+    const k = `${key}:${isDrive ? 'drive' : 'leg'}`;
+    if (asked.current.has(k)) return;
+    asked.current.add(k);
+    void routeEtaResult(current.here, to, google, true, isDrive).then((r) => {
+      if (r.limited) toast(t('travel.routeLimit'));
+      else if (isDrive && r.eta?.drive === undefined) toast(t('travel.driveFail'));
+      setGot((g) => {
+        const base = g.key === key ? g : { key };
+        return isDrive
+          ? {
+              ...base,
+              drive: r.eta?.drive !== undefined ? { min: r.eta.drive, km: r.eta.driveKm } : null,
+            }
+          : { ...base, eta: r.eta };
+      });
     });
-    return () => {
-      alive = false;
-    };
-  }, [press, state]); // eslint-disable-line react-hooks/exhaustive-deps -- 누름·위치가 바뀔 때만
+  }, [need, mode, current?.press, current?.nextId]); // eslint-disable-line react-hooks/exhaustive-deps -- 결과가 비었을 때만
 
   if (!to) return null;
   const search = () => {
-    setPress((n) => n + 1);
+    setPressed({ press: press + 1, nextId: next.id });
     request();
   };
-  const current = found && found.nextId === next.id ? found : null;
-  // 위치를 못 받으면(거부·시간 초과) 멈추고 다시 누를 수 있게
-  const failed = state.status === 'denied' || state.status === 'unavailable';
-  const searching = press > 0 && (!current || current.press !== press) && !failed;
+  const choose = (m: LegMode) => {
+    setMode(m);
+    setSheet(false);
+    // 이미 지금 위치를 받았으면 그 위치로 (수단만 바꿀 때 위치를 다시 묻지 않는다)
+    if (!current) search();
+  };
+  const locating = pressed?.nextId === next.id && !current && !failed;
+  const loading = locating || need;
 
-  // 아직 안 눌렀거나 다음 일정이 바뀜: 제목 + [이동 시간 검색]
-  if (!current)
+  const picker = (
+    <BottomSheet open={sheet} onOpenChange={setSheet} title={t('travel.legGroup')}>
+      <div role="radiogroup" aria-label={t('travel.legGroup')} className="flex flex-col gap-2 pb-2">
+        {MODES.map(({ mode: m, label, Icon }) => (
+          <button
+            key={m}
+            type="button"
+            role="radio"
+            aria-checked={mode === m}
+            onClick={() => choose(m)}
+            className={cn(
+              'flex h-14 items-center gap-3 rounded-btn border px-4 text-body-1 font-medium',
+              mode === m ? 'border-primary text-primary' : 'border-line',
+            )}
+          >
+            <Icon aria-hidden="true" className="size-5 shrink-0" />
+            <span className="flex-1 text-left">{t(label)}</span>
+            {mode === m && <Check aria-hidden="true" className="size-5 shrink-0" />}
+          </button>
+        ))}
+      </div>
+    </BottomSheet>
+  );
+
+  // 아직 안 눌렀거나 다음 일정이 바뀜: [다음 목적지 이동시간]만
+  if (!current || !mode)
     return (
-      // 지도 버튼 옆: 다음 일정 시각·장소 글은 빼고 버튼만 (사용자 요청 2026-11-10)
-      <div className="flex min-w-0 flex-1 items-center gap-2 text-micro leading-tight">
-        <span className="flex min-w-0 flex-1 flex-col">
-          {state.status === 'denied' && (
-            <span className="truncate text-fg-muted">{t('nextStop.denied')}</span>
-          )}
-          {press > 0 && state.status === 'unavailable' && (
-            <span className="truncate text-fg-muted">{t('nextStop.noFix')}</span>
-          )}
-        </span>
+      <>
         <button
           type="button"
-          onClick={search}
-          disabled={searching}
-          className="flex min-h-9 shrink-0 items-center gap-1 rounded-full border border-primary/40 px-3 font-semibold text-primary disabled:opacity-60"
+          onClick={() => setSheet(true)}
+          disabled={loading}
+          aria-haspopup="dialog"
+          className="flex min-h-9 shrink-0 items-center gap-1 rounded-full border border-primary/40 px-3 text-micro font-semibold text-primary disabled:opacity-60"
         >
           <LocateFixed aria-hidden="true" className="size-3.5" />
-          {searching ? t('nextStop.loading') : t('nextStop.search')}
+          {loading ? t('nextStop.loading') : t('nextStop.search')}
         </button>
-      </div>
+        {picker}
+      </>
     );
 
   const again = (
     <button
       type="button"
       onClick={search}
-      disabled={searching}
+      disabled={loading}
       aria-label={t('nextStop.again')}
       title={t('nextStop.again')}
       className="grid size-9 shrink-0 place-items-center rounded-full text-fg-muted disabled:opacity-60"
     >
-      <RotateCw aria-hidden="true" className={cn('size-4', searching && 'animate-spin')} />
+      <RotateCw aria-hidden="true" className={cn('size-4', loading && 'animate-spin')} />
     </button>
   );
 
   if (current.far)
     return (
-      <div
-        role="status"
-        className="flex min-w-0 flex-1 items-center gap-2 text-micro leading-tight"
-      >
-        <span className="flex min-w-0 flex-1 flex-col">
-          <span className="truncate text-fg-muted">{t('nextStop.far')}</span>
-        </span>
+      <div role="status" className="flex min-w-0 items-center gap-1 text-micro leading-tight">
+        <span className="min-w-0 truncate text-fg-muted">{t('nextStop.far')}</span>
         {again}
       </div>
     );
 
-  const { eta, here } = current;
-  // 길 정보를 못 받았거나(무료량 끝·오프라인) 도보가 빠졌으면(한국은 Google 도보 없음) 직선거리 어림으로 대신
-  const roughWalk = walkMinutes(distanceKm(here, to));
-  const rough = eta?.walk === undefined;
-  // 도보 200분 이상·대중교통 결과 없음은 "검색 불가" (사용자 요청 2026-10-27) — 출발 시각 계산에서도 뺀다
-  const walk0 = eta?.walk ?? roughWalk;
-  const shown = {
-    walk: walk0 < MAX_WALK_MIN ? walk0 : undefined,
-    transit: eta?.transit,
-  };
-  // 검색 불가가 있으면 지도 앱 길찾기로 — 출발지는 넣지 않는다(지도 앱이 현재 위치를 씀)
-  const mapUrl = `https://www.google.com/maps/dir/?api=1&destination=${to.lat},${to.lng}&travelmode=${shown.transit === undefined ? 'transit' : 'walking'}`;
-  const plan = departurePlan(next.startTime!, now, shown);
-  // 왼쪽 2줄(다음 일정 / 시간) + 오른쪽 출발 안내 — 3줄을 넘지 않게 (사용자 요청 2026-10-27)
+  // 고른 수단 하나만 (홈·여행 모드와 같이). 받지 못하면 직선거리 어림, 길이 없으면 "검색 불가" + 지도 앱
+  const km = (n: number) => (Math.round(n * 10) / 10).toString();
+  const straightKm = distanceKm(current.here, to);
+  let line: string;
+  let travelMin: number | undefined;
+  let mapMode: string | null = null;
+  if (need) line = isDrive ? t('travel.driveLoading') : t('nextStop.loading');
+  else if (mode === 'drive') {
+    if (current.drive) {
+      travelMin = current.drive.min;
+      line = t('travel.etaDrive', { min: travelMin, km: km(current.drive.km ?? straightKm) });
+    } else {
+      line = t('travel.etaDriveLine', { km: km(straightKm) });
+      mapMode = 'driving';
+    }
+  } else if (mode === 'transit') {
+    travelMin = current.eta?.transit;
+    if (travelMin !== undefined) line = t('travel.etaTransit', { min: travelMin });
+    else {
+      line = t('nextStop.transitNone');
+      mapMode = 'transit';
+    }
+  } else {
+    // 길 정보가 없거나 도보가 빠졌으면(한국은 Google 도보 없음) 직선거리 어림
+    const straight = current.eta?.walk === undefined;
+    const walk = current.eta?.walk ?? walkMinutes(straightKm);
+    if (walk < MAX_WALK_MIN) {
+      travelMin = walk;
+      line = t(straight ? 'travel.etaWalkLine' : 'travel.etaWalk', { min: walk });
+    } else {
+      line = t('nextStop.walkNone');
+      mapMode = 'walking';
+    }
+  }
+  // 출발지는 넣지 않는다 (지도 앱이 현재 위치를 씀)
+  const mapUrl = `https://www.google.com/maps/dir/?api=1&destination=${to.lat},${to.lng}&travelmode=${mapMode}`;
+
+  // 홈·여행 모드처럼 "1시간 52분 후 출발" (일정 시작 − 이동 − 여유 10분)
+  const leave =
+    travelMin !== undefined && next.startTime ? leaveAt(next.startTime, now, travelMin) : null;
+  const leaveText = !leave
+    ? null
+    : leave.inMin <= 0
+      ? t('travel.leaveNow')
+      : `${
+          leave.inMin >= 60
+            ? t('travel.departInH', { h: Math.floor(leave.inMin / 60), m: leave.inMin % 60 })
+            : t('travel.departInM', { m: leave.inMin })
+        } ${t('travel.departSuffix')}`;
+
   return (
-    <div role="status" className="flex min-w-0 flex-1 items-center gap-2 text-micro leading-tight">
-      <span className="flex min-w-0 flex-1 flex-col">
-        <span className="truncate text-fg-sub">
-          {[
-            shown.walk !== undefined
-              ? t('nextStop.walkMin', { min: shown.walk }) +
-                (rough ? ` ${t('nextStop.roughShort')}` : '')
-              : t('nextStop.walkNone'),
-            shown.transit !== undefined
-              ? t('nextStop.transitMin', { min: shown.transit })
-              : t('nextStop.transitNone'),
-          ].join(' · ')}
-          {(shown.transit === undefined || shown.walk === undefined) && (
-            <>
-              {' · '}
-              <a
-                href={mapUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="text-primary underline underline-offset-2"
-              >
-                {t('nextStop.map')}
-              </a>
-            </>
-          )}
-        </span>
-      </span>
-      {plan.leaveBy && (
-        <span
-          className={cn(
-            'shrink-0 text-right font-semibold whitespace-pre-line',
-            plan.leaveNow ? 'text-warning' : 'text-primary',
-          )}
+    <div role="status" className="flex min-w-0 items-center gap-1 text-micro leading-tight">
+      <span className="flex min-w-0 flex-col items-center">
+        <button
+          type="button"
+          onClick={() => setSheet(true)}
+          aria-haspopup="dialog"
+          aria-label={`${t('travel.legGroup')} · ${line}`}
+          className="flex min-h-6 max-w-full items-center gap-0.5 text-fg-sub"
         >
-          {plan.leaveNow
-            ? t('nextStop.leaveNow')
-            : t('nextStop.leaveBy', { time: plan.leaveBy, margin: LEAVE_MARGIN_MIN })}
-        </span>
-      )}
+          <span className="truncate">{line}</span>
+          <ChevronDown aria-hidden="true" className="size-3 shrink-0" />
+        </button>
+        {leaveText && (
+          <span
+            className={cn(
+              'font-semibold whitespace-nowrap',
+              leave!.inMin <= 0 ? 'text-warning' : 'text-primary',
+            )}
+          >
+            {leaveText}
+          </span>
+        )}
+        {mapMode && (
+          <a
+            href={mapUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="text-primary underline underline-offset-2"
+          >
+            {t('nextStop.map')}
+          </a>
+        )}
+      </span>
       {again}
+      {picker}
     </div>
   );
 }
