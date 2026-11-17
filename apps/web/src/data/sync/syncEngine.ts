@@ -106,6 +106,11 @@ async function sendUsage(): Promise<void> {
 
 type Step = true | 'offline' | 'error';
 
+/** 올린 뒤 바뀌었는지 볼 행 내용 (동기화 표시 dirty·서버 버전 rev 제외) */
+function contentOf(row: Row): string {
+  return JSON.stringify({ ...row, dirty: undefined, rev: undefined });
+}
+
 async function push(): Promise<Step> {
   for (;;) {
     const batch: { table: SyncTable; row: Row }[] = [];
@@ -130,7 +135,7 @@ async function push(): Promise<Step> {
       }),
     });
     if (!res.ok) return fail(res.reason);
-    const sent = new Map(batch.map((b) => [`${b.table}|${b.row.id}`, b.row.updatedAt]));
+    const sent = new Map(batch.map((b) => [`${b.table}|${b.row.id}`, contentOf(b.row)]));
     await db.transaction(
       'rw',
       SYNC_TABLES.map((t) => db[t]),
@@ -138,8 +143,9 @@ async function push(): Promise<Step> {
         for (const a of res.data.applied) {
           const cur = await table(a.table).get(a.id);
           if (!cur) continue;
-          // 보낸 뒤 또 고쳤으면 dirty 유지 (다음 push에서 올라감)
-          const unchanged = cur.updatedAt === sent.get(`${a.table}|${a.id}`);
+          // 보낸 뒤 또 고쳤으면 dirty 유지 (다음 push에서 올라감).
+          // 수정 시각(밀리초)이 아니라 내용으로 비교 — 같은 밀리초에 또 고치면 시각이 같아 놓쳤다 (CI 실행, 2026-11-18)
+          const unchanged = contentOf(cur) === sent.get(`${a.table}|${a.id}`);
           await table(a.table).update(a.id, { rev: a.rev, ...(unchanged ? { dirty: 0 } : {}) });
         }
         // 서버가 거부한 행(권한·형식)은 다시 보내지 않는다 — 이 기기에는 남는다

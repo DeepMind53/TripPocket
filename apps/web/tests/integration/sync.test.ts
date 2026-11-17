@@ -123,6 +123,35 @@ describe('기기 사이 동기화', () => {
     expect((await tripRepo.listActive())[0]?.title).toBe('B');
   });
 
+  it('같은 밀리초에 또 고쳐도 다시 올라간다 (수정 시각이 아니라 내용으로 비교)', async () => {
+    await newDevice();
+    await syncNow();
+    const [trip] = await tripRepo.listActive();
+    // 시계를 멈춰 두 번의 수정이 같은 수정 시각을 갖게 한다 (빠른 CI에서 실제로 일어남)
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-11-18T00:00:00Z'));
+    await tripRepo.update(trip!.id, { title: 'A' });
+    const realFetch = globalThis.fetch;
+    let edited = false;
+    vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
+      if (url === '/api/sync/push' && !edited) {
+        edited = true;
+        await tripRepo.update(trip!.id, { title: 'B' });
+      }
+      return realFetch(url, init);
+    });
+    try {
+      await syncNow();
+    } finally {
+      vi.stubGlobal('fetch', realFetch);
+      vi.useRealTimers();
+    }
+    expect((await db.trips.get(trip!.id))?.dirty).toBe(0);
+    await newDevice();
+    await syncNow();
+    expect((await tripRepo.listActive())[0]?.title).toBe('B');
+  });
+
   it('개인별 준비 목록 전에 받은 준비물: 한 번 다시 받아 만든 사람을 채우고, 받을 수 없는 일행 것은 지운다', async () => {
     await newDevice();
     await syncNow();
