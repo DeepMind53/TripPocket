@@ -5,6 +5,7 @@ import {
   isFlightLeg,
   nextStop,
   pastItemIds,
+  visitableItemIds,
 } from './dayTools';
 
 it('하루 일정 글: 제목 줄 + 번호·시각·이름·주소, 메모는 첫 줄', () => {
@@ -76,6 +77,36 @@ describe('pastItemIds', () => {
 
   it('하루가 지나면 시각 없는 일정도', () => {
     expect([...pastItemIds(items, '2026-10-26', '08:00')].sort()).toEqual(['a', 'b', 'memo', 'y']);
+  });
+});
+
+describe('visitableItemIds', () => {
+  const items = [
+    { id: 'y', date: '2026-10-25' },
+    { id: 'a', date: '2026-10-26', startTime: '09:00' },
+    { id: 'free', date: '2026-10-26' },
+    { id: 'memo', date: '2026-10-26', kind: 'note' as const },
+    { id: 'b', date: '2026-10-26', startTime: '11:00', endTime: '12:00' },
+    { id: 'c', date: '2026-10-26', startTime: '14:00' },
+  ];
+
+  it('지금 진행 중인 일정과 그 앞 일정(시각 없는 것 포함)까지, 메모는 빼고', () => {
+    expect([...visitableItemIds(items, '2026-10-26', '11:30')].sort()).toEqual([
+      'a',
+      'b',
+      'free',
+      'y',
+    ]);
+  });
+
+  it('진행 중인 일정이 없으면 지난 일정과 그 앞 일정까지', () => {
+    expect([...visitableItemIds(items, '2026-10-26', '08:00')].sort()).toEqual(['y']);
+    expect([...visitableItemIds(items, '2026-10-26', '13:00')].sort()).toEqual([
+      'a',
+      'b',
+      'free',
+      'y',
+    ]);
   });
 });
 

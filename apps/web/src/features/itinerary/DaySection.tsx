@@ -24,7 +24,7 @@ import {
   SunMedium,
   TreePalm,
 } from 'lucide-react';
-import { currentItemId, pastItemIds, FAR_LEG_KM } from '../../domain/dayTools';
+import { currentItemId, pastItemIds, visitableItemIds, FAR_LEG_KM } from '../../domain/dayTools';
 import { DayMiniMap } from './DayMiniMap';
 import { type Visit } from '../../domain/visit';
 import { flightSignature, flightsToReconfirm } from '../../domain/flightCheck';
@@ -180,6 +180,10 @@ export function DaySection({
   );
   const today = todayIn(timezone);
   const past = visitOn ? pastItemIds(items, today, timeIn(timezone, now) ?? '00:00') : null;
+  // 방문·미방문 버튼: 지난 일정 + 지금 진행 중인 일정과 그 앞 일정 (사용자 요청 2026-11-17)
+  const visitable = visitOn
+    ? visitableItemIds(items, today, timeIn(timezone, now) ?? '00:00')
+    : null;
   const miniMapOn = useSettings((st) => st.routeMap);
   // 여행 중 오늘: 지난 일정은 여행 모드처럼 접어 둔다 — [지난 일정 N]으로 펼침 (사용자 요청 2026-11-10)
   const [pastOpen, setPastOpen] = useState(false);
@@ -464,7 +468,7 @@ export function DaySection({
                   booking={item.bookingId ? bookingById.get(item.bookingId) : undefined}
                   onOpen={() => onOpen(item)}
                   // 고른 뒤에도 버튼은 남고 고른 것만 칠해진다 (사용자 요청 2026-11-06)
-                  onVisit={past?.has(item.id) ? (v) => onVisitItem(item, v) : undefined}
+                  onVisit={visitable?.has(item.id) ? (v) => onVisitItem(item, v) : undefined}
                   history={historyOf(item)}
                   onConfirmFlight={(() => {
                     const b = item.bookingId ? bookingById.get(item.bookingId) : undefined;

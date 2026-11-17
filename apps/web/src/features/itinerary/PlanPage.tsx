@@ -26,7 +26,7 @@ import {
   MapPinned,
   Route,
 } from 'lucide-react';
-import { dayText, nextStop, pastItemIds } from '../../domain/dayTools';
+import { dayText, nextStop, visitableItemIds } from '../../domain/dayTools';
 import { NextStopBar } from './NextStopBar';
 import { earlierVisits, type Visit } from '../../domain/visit';
 import { applyVisit } from '../../data/skippedToSaved';
@@ -293,11 +293,11 @@ function PlanView({
   useEffect(() => {
     if (detailOpen && !selected) setDetailOpen(false);
   }, [detailOpen, selected]); // eslint-disable-line react-hooks/exhaustive-deps -- 열림·고른 일정이 바뀔 때만
-  // 상세에서 방문 기록을 고칠 수 있는 지난 일정 (여행지 지금 시각 기준)
+  const sameDay = selected ? items.filter((i) => i.date === selected.date) : [];
+  // 상세에서 방문 기록을 고칠 수 있는 일정 — 일정표와 같은 규칙 (여행지 지금 시각 기준)
   const selectedPast =
     !!selected &&
-    pastItemIds([selected], today, timeIn(trip.timezone, new Date()) ?? '00:00').has(selected.id);
-  const sameDay = selected ? items.filter((i) => i.date === selected.date) : [];
+    visitableItemIds(sameDay, today, timeIn(trip.timezone, new Date()) ?? '00:00').has(selected.id);
   const position = selected ? sameDay.findIndex((i) => i.id === selected.id) + 1 : 0;
   const selectedDayIndex = selected?.date ? days.indexOf(selected.date) : -1;
   const selectedDayLabel =

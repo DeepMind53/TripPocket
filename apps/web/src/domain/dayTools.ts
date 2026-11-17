@@ -89,6 +89,30 @@ export function pastItemIds(
   return out;
 }
 
+/**
+ * 방문·미방문 버튼을 보여 줄 일정 (사용자 요청 2026-11-17 "현재 장소 포함 이전 장소들").
+ * 지난 일정(pastItemIds)에 더해, 오늘 지금 진행 중인 일정, 그리고 일정표에서 지났거나 진행 중인 일정 앞의 일정(시각 없는 것 포함).
+ * items는 화면 순서대로. 메모·가고 싶은 곳은 아님
+ */
+export function visitableItemIds(
+  items: readonly (Pick<ItineraryItem, 'id' | 'date' | 'startTime' | 'endTime'> & {
+    kind?: ItineraryItem['kind'];
+  })[],
+  today: string,
+  now: string,
+): Set<string> {
+  const out = pastItemIds(items, today, now);
+  const todays = items.filter((i) => i.date === today);
+  const current = currentItemId(todays, now);
+  // 오늘 일정 중 마지막으로 "지났거나 진행 중"인 것까지 앞의 일정은 모두
+  let last = -1;
+  todays.forEach((i, k) => {
+    if (i.id === current || out.has(i.id)) last = k;
+  });
+  for (const i of todays.slice(0, last + 1)) if (i.kind !== 'note') out.add(i.id);
+  return out;
+}
+
 /** 일정 화면 "다음 일정" 줄: 지금 시각 뒤에 시작하는 첫 일정 (메모 빼고, 시각 있는 것만) */
 export function nextStop<T extends Pick<ItineraryItem, 'startTime' | 'kind'>>(
   items: readonly T[],
