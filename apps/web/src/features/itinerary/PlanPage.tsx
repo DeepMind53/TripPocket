@@ -105,6 +105,7 @@ import { useStoredFlag } from '../../shared/hooks/useStoredFlag';
 import { cn } from '../../shared/lib/cn';
 import { formatMonthDay } from '../../shared/lib/dateFormat';
 import { shortestOrder, sortByTimeKeepingUntimed } from '../../domain/schedule';
+import { mapViewOf, resizeMap, toggleMapBase, type MapBase } from '../../domain/mapView';
 import {
   BottomSheet,
   Button,
@@ -239,9 +240,10 @@ function PlanView({
   const { time: timeText } = useTimeText();
   // 지도는 누를 때만 (지도 불러오기도 무료 사용량에 포함)
   // 설정 "일정 화면 지도 기본 펼침"
-  const [mapOpen, setMapOpen] = useState(() => useSettings.getState().planMapOpen);
-  // 지도를 누르면 크게(아래 일정은 하나씩), 꾹 누르면 지도만 전체 화면(뒤로 가기·X로 닫음)
-  const [mapLarge, setMapLarge] = useState(false);
+  // 지도를 누르면 크게(아래 일정은 하나씩), 꾹 누르면 지도만 전체 화면(뒤로 가기·X로 닫음) — 상태 규칙은 domain/mapView
+  const [mapBase, setMapBase] = useState<MapBase>(() =>
+    useSettings.getState().planMapOpen ? 'small' : 'closed',
+  );
   const [mapFull, setMapFull] = useRouteSheet('map-full');
   const [pagerId, setPagerId] = useState<string | null>(null);
   // 펼친 "빈 날 묶음" (전체 보기에서 3일 이상 이어진 빈 날)
@@ -287,6 +289,7 @@ function PlanView({
   const [dirOpen, setDirOpen] = useRouteSheet('directions');
   const [moveOpen, setMoveOpen] = useRouteSheet('move-day');
   const [editing, setEditing] = useRouteSheet('edit-mode');
+  const mapView = mapViewOf(mapBase, mapFull, editing);
   const [dayMenuOpen, setDayMenuOpen, switchDayMenuTo] = useRouteSheet('day-menu');
   // 방문 기록: 예전에 같은 장소를 방문한 날(다른 여행 포함), 미방문은 저장 탭으로 (사용자 요청 2026-10-27)
   const visitedAll = useVisitedItems() ?? [];
@@ -391,7 +394,7 @@ function PlanView({
   const [toolsFolded, setToolsFolded] = useStoredFlag('tp-plan-tools-folded', false);
   const folded = toolsFolded && !editing;
   // 접었을 때 펴기 버튼은 날짜 머리 오른쪽에. 날짜 머리가 하나도 없는 화면(빈 여행 전체 보기·지도 크게)만 위에 얇은 줄로
-  const headerUnfold = folded && !(mapOpen && mapLarge) && (items.length > 0 || filter !== 'all');
+  const headerUnfold = folded && mapBase !== 'large' && (items.length > 0 || filter !== 'all');
   // 위 고정 영역(칩 줄·지도/편집 줄·펼친 지도) 높이 — 날짜 머리가 그 바로 아래에 붙는다 (사용자 요청 2026-10-27)
   const [stickyH, setStickyH] = useState(0);
   useEffect(() => {
@@ -424,7 +427,7 @@ function PlanView({
     );
     els.forEach((el) => io.observe(el));
     return () => io.disconnect();
-  }, [filter, items, bookings, openRuns, mapOpen, editing, folded]);
+  }, [filter, items, bookings, openRuns, mapBase, editing, folded]);
   useEffect(() => {
     const bar = chipsRef.current;
     const chip = inView ? bar?.querySelector<HTMLElement>(`[data-chip="${inView}"]`) : null;
@@ -444,7 +447,7 @@ function PlanView({
     press.current = null;
   };
   const gestures = {
-    ...(typeof filter === 'number' && !editing && !(mapOpen && mapLarge)
+    ...(typeof filter === 'number' && !editing && mapBase !== 'large'
       ? {
           onTouchStart: (e: React.TouchEvent) => {
             const p = e.touches[0]!;
@@ -573,7 +576,7 @@ function PlanView({
         className={cn(
           'sticky top-[var(--topbar-h,calc(var(--safe-top)+56px))] bg-bg',
           !folded && 'pb-1',
-          mapFull ? 'z-50' : 'z-10',
+          mapView === 'full' ? 'z-50' : 'z-10',
         )}
       >
         {/* 접으면 이 줄은 높이 0 — 펴기 버튼은 날짜 머리 오른쪽에 (빈 공간 최소화, 사용자 요청 2026-11-17) */}
@@ -659,12 +662,9 @@ function PlanView({
                 <p className="flex-1 text-caption text-fg-muted">{t('plan.editHint')}</p>
               ) : (
                 <Chip
-                  selected={mapOpen}
+                  selected={mapBase !== 'closed'}
                   leading={<MapIcon aria-hidden="true" className="size-4" />}
-                  onClick={() => {
-                    setMapOpen(!mapOpen);
-                    setMapLarge(false);
-                  }}
+                  onClick={() => setMapBase(toggleMapBase(mapBase))}
                 >
                   {t('map.toggle')}
                 </Chip>
@@ -704,7 +704,7 @@ function PlanView({
           </>
         )}
 
-        {mapOpen && !editing && (
+        {mapView !== 'closed' && (
           <div className="px-5 pt-2">
             <Suspense fallback={<div className="h-60 rounded-2xl bg-bg-subtle" />}>
               <TripMap
@@ -712,13 +712,14 @@ function PlanView({
                 items={mapItems}
                 dayIndexOf={dayIndexOf}
                 // 크게 볼 때 핀을 누르면 아래 카드를 그 일정으로, 작게 볼 때는 바로 상세
-                onSelect={(i) => (mapLarge || mapFull ? setPagerId(i.id) : openDetail(i))}
-                size={mapFull ? 'full' : mapLarge ? 'large' : 'small'}
-                focus={mapLarge || mapFull ? pagerItem : undefined}
+                onSelect={(i) => (mapView === 'small' ? openDetail(i) : setPagerId(i.id))}
+                size={mapView}
+                focus={mapView === 'small' ? undefined : pagerItem}
                 onSizeChange={(next) => {
-                  if (next === 'full') setMapFull(true);
-                  else if (mapFull) setMapFull(false);
-                  else setMapLarge(next === 'large');
+                  const step = resizeMap(mapView, next);
+                  if (step.kind === 'openFull') setMapFull(true);
+                  else if (step.kind === 'closeFull') setMapFull(false);
+                  else setMapBase(step.base);
                 }}
               />
             </Suspense>
@@ -745,7 +746,7 @@ function PlanView({
             </div>
           </div>
         )}
-        {mapOpen && mapLarge && !editing ? (
+        {mapBase === 'large' && !editing ? (
           <MapPager
             list={pagerList}
             current={Math.max(
