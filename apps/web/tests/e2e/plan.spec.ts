@@ -76,6 +76,10 @@ test('여행 당일: 오늘 칩이 골라지고 지금 진행 중인 일정이 �
   // 방문·미방문 버튼: 지금 진행 중인 일정(이치란 라멘)까지, 다음 일정(블루보틀)은 아직 (사용자 요청 2026-11-17)
   await expect(page.getByRole('group', { name: '이치란 라멘 방문 기록' })).toBeVisible();
   await expect(page.getByRole('group', { name: '블루보틀 방문 기록' })).toHaveCount(0);
+  // 홈 "여행 중" 카드(여행 모드와 같은 화면)도 같은 규칙
+  await page.goto('/');
+  await expect(page.getByRole('group', { name: '이치란 라멘 방문 기록' })).toBeVisible();
+  await expect(page.getByRole('group', { name: '블루보틀 방문 기록' })).toHaveCount(0);
 });
 
 test('날짜·지도 줄을 접고 펴고, 다시 열어도 기억한다', async ({ page }) => {

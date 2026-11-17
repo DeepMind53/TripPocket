@@ -13,7 +13,7 @@ import { useTripBookings, useTripItems } from '../../data/hooks';
 import { useSettings } from '../../data/settingsStore';
 import { applyVisit } from '../../data/skippedToSaved';
 import { setTravelMode, useTravelMode } from '../../data/travelModeStore';
-import { pastItemIds } from '../../domain/dayTools';
+import { pastItemIds, visitableItemIds } from '../../domain/dayTools';
 import { lodgingForNight, minutesUntil, nextItem, nowTimeIn } from '../../domain/lodging';
 import { leaveAt } from '../../domain/travelDay';
 import { isDomesticTrip } from '../../domain/tripPlace';
@@ -107,6 +107,8 @@ export function OngoingTrip({
   const next = nextItem(todayItems, now);
   // 지난 일정 (방문·미방문을 고를 수 있는 것) — 일정 탭과 같은 규칙
   const past = pastItemIds(todayItems, today, now);
+  // 방문·미방문 버튼: 지난 일정 + 지금 진행 중인 일정과 그 앞 일정 — 일정 탭과 같은 규칙 (사용자 요청 2026-11-17)
+  const visitable = visitableItemIds(todayItems, today, now);
   // 다음 역 카드를 그날 노선 색으로 (설정)
   const dayColorOn = useSettings((st) => st.nextStopDayColor);
   // 지난 일정 접기 (사용자 결정 2026-11-10) — 다음 일정·남은 일정이 바로 보이게
@@ -351,7 +353,7 @@ export function OngoingTrip({
                 last={i === shown.length - 1}
                 dense
                 trailing={
-                  item.kind === 'note' ? undefined : past.has(item.id) ? (
+                  item.kind === 'note' ? undefined : visitable.has(item.id) ? (
                     <VisitToggle
                       value={item.visit}
                       label={item.title}
