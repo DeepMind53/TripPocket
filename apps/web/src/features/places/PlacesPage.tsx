@@ -11,7 +11,7 @@ import { attachFallback } from '../../data/limitNotice';
 import { placeSearchLinks, type FallbackLink } from '../../shared/lib/fallbackLinks';
 import { FallbackLinks } from '../common/FallbackLinks';
 import { Heart, MapPin, Plus, Search } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useParams } from 'react-router';
 import { canEditTrip } from '../../data/tripRoles';
 import { placesApi, resolvePlace } from '../../data/api/places';
@@ -41,6 +41,12 @@ const CATEGORIES: { kind: ItemKind; key: 'food' | 'cafe' | 'place' | 'shopping' 
  * - 하트 = 저장 탭에 바로 반영(채운 하트), 한 번 더 누르면 저장 취소
  * - [+]는 이 나라로 가는(끝나지 않은·고칠 수 있는) 여행이 있을 때만. 여럿이면 여행을 골라 그 여행의 '가고 싶은 곳'에
  */
+/** 장소 탭 검색 상태 — 시작 전 / 찾는 중 / 결과 / 한도(바로가기 링크) / 실패 */
+type SearchState =
+  | { status: 'idle' }
+  | { status: 'loading' | 'error' | 'done'; results: PlaceSummary[] | null }
+  | { status: 'limit'; links: FallbackLink[] };
+
 export function PlacesPage() {
   const { t } = useTranslation();
   const { tripId = '' } = useParams();
@@ -52,11 +58,15 @@ export function PlacesPage() {
   const loggedIn = useAuth((s) => s.status === 'user');
   const [q, setQ] = useState('');
   const [cat, setCat] = useState<(typeof CATEGORIES)[number] | null>(null);
-  const [results, setResults] = useState<PlaceSummary[] | null>(null);
-  const [busy, setBusy] = useState(false);
+  // 검색 상태 하나로 (2026-11-17 상태 머신 정리): 빠르게 칩을 바꿔 누르면 늦게 온 이전 결과가 덮어쓰던 문제,
+  // 한도일 때 이전 검색어 결과가 남던 문제를 막는다. loading·error는 이전 결과를 그대로 보여 준다
+  const [search, setSearch] = useState<SearchState>({ status: 'idle' });
+  const seq = useRef(0);
+  const busy = search.status === 'loading';
+  const results = 'results' in search ? search.results : null;
+  const limitLinks = search.status === 'limit' ? search.links : [];
 
   // 한도로 검색이 막히면 지도 서비스에서 직접 (사용자 요청 2026-10-25)
-  const [limitLinks, setLimitLinks] = useState<FallbackLink[]>([]);
   if (!trip) return null;
   const city = trip.destinations[0]?.name ?? '';
   // 저장할 때 나라도 같이 (저장 탭 나라 칸·일정 추가에서 그 나라만 보여 주기)
@@ -120,14 +130,22 @@ export function PlacesPage() {
       .filter(Boolean)
       .join(' ');
     if (!query) return;
-    setBusy(true);
-    const r = await placesApi.search(query, isDomesticTrip(trip!) ? 'domestic' : 'overseas', near);
-    setBusy(false);
-    const limited = !r.ok && (r.status === 429 || r.reason === 'limit');
-    setLimitLinks(limited ? placeSearchLinks(query, isDomesticTrip(trip!)) : []);
-    if (r.ok) setResults(r.data.places);
-    else if (limited) attachFallback(placeSearchLinks(query, isDomesticTrip(trip!)));
-    else toast(t('places.failed'));
+    const mine = ++seq.current;
+    const keep = (s: SearchState) => ('results' in s ? s.results : null);
+    setSearch((s) => ({ status: 'loading', results: keep(s) }));
+    const r = await placesApi
+      .search(query, isDomesticTrip(trip!) ? 'domestic' : 'overseas', near)
+      .catch(() => null);
+    // 그사이 새 검색을 시작했으면 이 결과는 버린다 (마지막 검색만 화면에)
+    if (mine !== seq.current) return;
+    if (r?.ok) return setSearch({ status: 'done', results: r.data.places });
+    if (r && (r.status === 429 || r.reason === 'limit')) {
+      const links = placeSearchLinks(query, isDomesticTrip(trip!));
+      setSearch({ status: 'limit', links });
+      return attachFallback(links);
+    }
+    setSearch((s) => ({ status: 'error', results: keep(s) }));
+    toast(t('places.failed'));
   }
 
   const toPlaceRef = (p: PlaceSummary) => ({
@@ -186,7 +204,7 @@ export function PlacesPage() {
           <FallbackLinks links={limitLinks} />
         </div>
       )}
-      {results === null ? (
+      {search.status === 'limit' ? null : results === null ? (
         <p className="text-caption text-fg-muted">{t('places.hint', { city })}</p>
       ) : results.length === 0 ? (
         <p className="text-body-2 text-fg-sub">{t('placeSearch.none')}</p>
