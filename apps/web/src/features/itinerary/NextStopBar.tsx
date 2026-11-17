@@ -159,7 +159,7 @@ export function NextStopBar({ next, now }: { next: ItineraryItem; now: string })
           onClick={() => setSheet(true)}
           disabled={loading}
           aria-haspopup="dialog"
-          className="flex min-h-9 shrink-0 items-center gap-1 rounded-full border border-primary/40 px-3 text-micro font-semibold text-primary disabled:opacity-60"
+          className="flex h-7 shrink-0 items-center gap-1 rounded-full border border-primary/40 px-2.5 text-micro font-semibold text-primary disabled:opacity-60"
         >
           <LocateFixed aria-hidden="true" className="size-3.5" />
           {loading ? t('nextStop.loading') : t('nextStop.search')}

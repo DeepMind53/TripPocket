@@ -208,6 +208,25 @@ export function DaySection({
   const skipped = tracked.filter((i) => i.visit === 'skipped').length;
   // 일차 알약은 진한 노선 색 + on-primary 글자 (8색 모두 4.5:1, docs/29 §3.1)
   const dayInk = routeColor(index).ink;
+  // "N일차" 알약과 날짜를 한 칸에서 3초마다 번갈아 — 날씨·오늘 칸처럼 (사용자 요청 2026-11-18).
+  // 폭은 날짜에 맞춰 두어 바뀔 때 옆 노선도 버튼이 움직이지 않게
+  const dayRoll = date ? (
+    <RollingSlot
+      className="min-w-[5.5rem]"
+      items={[
+        <span
+          key="day"
+          className="rounded-full px-2.5 py-0.5 text-caption font-semibold whitespace-nowrap text-on-primary"
+          style={{ background: dayInk }}
+        >
+          {t('plan.dayN', { n: index + 1 })}
+        </span>,
+        <span key="date" className="text-body-1 font-semibold whitespace-nowrap">
+          {formatMonthDay(date)}
+        </span>,
+      ]}
+    />
+  ) : null;
   const title = date
     ? t('plan.dayHeader', { n: index + 1, date: formatMonthDay(date) })
     : t('plan.wishlist');
@@ -231,29 +250,11 @@ export function DaySection({
                 aria-label={t('planB.open', { day: title })}
                 className="flex min-h-9 items-center gap-2"
               >
-                <span
-                  className="rounded-full px-2.5 py-0.5 text-caption font-semibold whitespace-nowrap text-on-primary"
-                  style={{ background: dayInk }}
-                >
-                  {t('plan.dayN', { n: index + 1 })}
-                </span>
-                <span className="text-body-1 font-semibold whitespace-nowrap">
-                  {formatMonthDay(date)}
-                </span>
+                {dayRoll}
                 <ChevronDown aria-hidden="true" className="size-4 text-fg-muted" />
               </button>
             ) : date ? (
-              <>
-                <span
-                  className="rounded-full px-2.5 py-0.5 text-caption font-semibold whitespace-nowrap text-on-primary"
-                  style={{ background: dayInk }}
-                >
-                  {t('plan.dayN', { n: index + 1 })}
-                </span>
-                <span className="text-body-1 font-semibold whitespace-nowrap">
-                  {formatMonthDay(date)}
-                </span>
-              </>
+              dayRoll
             ) : (
               <span className="text-body-1 font-semibold">{title}</span>
             )}

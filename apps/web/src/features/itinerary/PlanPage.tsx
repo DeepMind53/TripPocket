@@ -548,13 +548,14 @@ function PlanView({
                 role="toolbar"
                 aria-label={t('plan.dayChipsLabel')}
                 outerClassName="min-w-0 flex-1"
-                className="flex gap-2 py-2 pl-5"
+                className="flex gap-1.5 py-1.5 pl-5"
               >
-                <Chip selected={filter === 'all'} onClick={() => setFilter('all')}>
+                <Chip size="sm" selected={filter === 'all'} onClick={() => setFilter('all')}>
                   {t('plan.all')}
                 </Chip>
                 {days.map((d, i) => (
                   <Chip
+                    size="sm"
                     key={d}
                     data-chip={d}
                     aria-current={inView === d ? 'location' : undefined}
@@ -586,6 +587,7 @@ function PlanView({
                   </Chip>
                 ))}
                 <Chip
+                  size="sm"
                   data-chip="wish"
                   aria-current={inView === 'wish' ? 'location' : undefined}
                   className={inView === 'wish' ? 'border-primary text-primary' : undefined}
@@ -611,8 +613,9 @@ function PlanView({
                 <p className="flex-1 text-caption text-fg-muted">{t('plan.editHint')}</p>
               ) : (
                 <Chip
+                  size="sm"
                   selected={mapBase !== 'closed'}
-                  leading={<MapIcon aria-hidden="true" className="size-4" />}
+                  leading={<MapIcon aria-hidden="true" className="size-3.5" />}
                   onClick={() => setMapBase(toggleMapBase(mapBase))}
                 >
                   {t('map.toggle')}
