@@ -30,7 +30,14 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<ApiR
   }
   // 서버가 없으면 개발 서버·Pages가 앱 HTML을 돌려준다 → 서버 없음으로
   const isJson = res.headers.get('content-type')?.includes('json') ?? false;
-  if (res.ok && isJson) return { ok: true, data: (await res.json()) as T };
+  // 본문이 깨졌거나 받는 중에 끊기면 json()이 예외를 던진다 → 오류 결과로 (화면 로딩 표시가 안 끝나던 원인, 2026-11-17)
+  if (res.ok && isJson) {
+    try {
+      return { ok: true, data: (await res.json()) as T };
+    } catch {
+      return { ok: false, reason: 'offline', status: res.status };
+    }
+  }
   if (res.ok) return { ok: false, reason: 'offline', status: res.status };
   if (res.status === 401) return { ok: false, reason: 'unauthorized', status: 401 };
   // 사용량 한도(503 api_paused·429 daily_limit) → 이유를 팝업으로 (data/limitNotice.ts)
