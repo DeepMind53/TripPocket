@@ -18,6 +18,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "check": "pnpm lint && pnpm typecheck && pnpm test",
+    "e2e:prod": "pnpm --filter @trippocket/web exec playwright test --project=prod",
+    "check:full": "pnpm format:check && pnpm check && pnpm e2e:prod",
     "prepare": "husky",
     "size": "pnpm build && pnpm --filter @trippocket/web size"
   },
