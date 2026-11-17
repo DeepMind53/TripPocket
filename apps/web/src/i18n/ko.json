@@ -199,6 +199,8 @@
   },
   "plan": {
     "dayChipsLabel": "날짜 선택",
+    "toolsFold": "날짜·지도 줄 접기",
+    "toolsUnfold": "날짜·지도 줄 펴기",
     "progress": "오늘 일정 {{total}}개 중\n방문 {{visited}} · 미방문 {{skipped}}",
     "sunrise": "일출",
     "sunset": "일몰",

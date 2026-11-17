@@ -19,6 +19,7 @@ import {
   BedDouble,
   Check,
   ChevronDown,
+  ChevronUp,
   ChevronLeft,
   ChevronRight,
   CalendarPlus,
@@ -100,6 +101,7 @@ import {
 import type { Destination } from '../../shared/lib/directions';
 import { itemRepo } from '../../data/repositories/itemRepo';
 import { useRouteSheet } from '../../shared/hooks/useRouteSheet';
+import { useStoredFlag } from '../../shared/hooks/useStoredFlag';
 import { cn } from '../../shared/lib/cn';
 import { formatMonthDay } from '../../shared/lib/dateFormat';
 import { shortestOrder, sortByTimeKeepingUntimed } from '../../domain/schedule';
@@ -383,6 +385,9 @@ function PlanView({
   // 전체 보기: 지금 화면 위쪽에 있는 날의 칩을 테두리로 표시하고 칩 줄을 그 칩으로 (docs/16 C2)
   const chipsRef = useRef<HTMLDivElement>(null);
   const stickyRef = useRef<HTMLDivElement>(null);
+  // 날짜 칩 줄·지도/편집 줄 접기 (사용자 요청 2026-11-17) — 이 기기에 기억. 편집 중에는 늘 펼침([완료] 버튼)
+  const [toolsFolded, setToolsFolded] = useStoredFlag('tp-plan-tools-folded', false);
+  const folded = toolsFolded && !editing;
   // 위 고정 영역(칩 줄·지도/편집 줄·펼친 지도) 높이 — 날짜 머리가 그 바로 아래에 붙는다 (사용자 요청 2026-10-27)
   const [stickyH, setStickyH] = useState(0);
   useEffect(() => {
@@ -415,7 +420,7 @@ function PlanView({
     );
     els.forEach((el) => io.observe(el));
     return () => io.disconnect();
-  }, [filter, items, bookings, openRuns, mapOpen, editing]);
+  }, [filter, items, bookings, openRuns, mapOpen, editing, folded]);
   useEffect(() => {
     const bar = chipsRef.current;
     const chip = inView ? bar?.querySelector<HTMLElement>(`[data-chip="${inView}"]`) : null;
@@ -567,103 +572,130 @@ function PlanView({
           mapFull ? 'z-50' : 'z-10',
         )}
       >
-        <ScrollRow
-          ref={chipsRef}
-          role="toolbar"
-          aria-label={t('plan.dayChipsLabel')}
-          className="flex gap-2 px-5 py-2"
-        >
-          <Chip selected={filter === 'all'} onClick={() => setFilter('all')}>
-            {t('plan.all')}
-          </Chip>
-          {days.map((d, i) => (
-            <Chip
-              key={d}
-              data-chip={d}
-              aria-current={inView === d ? 'location' : undefined}
-              // 노선 색 알약 (docs/29 §4.3): 고르면 진한 노선 색 채움, 아니면 노선 색 테두리. 버튼 구조·이름은 그대로
-              style={routeStyle(i)}
-              className={
-                filter === i + 1
-                  ? 'border-transparent! bg-[var(--route-ink)]! text-on-primary!'
-                  : inView === d
-                    ? 'border-primary text-primary'
-                    : 'border-[var(--route)]! text-[var(--route-ink)]!'
-              }
-              selected={filter === i + 1}
-              onClick={() => setFilter(i + 1)}
-              leading={
-                <span
-                  aria-hidden="true"
-                  className="size-2 rounded-full"
-                  style={{
-                    background: filter === i + 1 ? 'var(--tp-on-primary)' : dayColor(i),
-                  }}
+        {folded ? (
+          <div className="flex justify-end pr-2">
+            <IconButton
+              label={t('plan.toolsUnfold')}
+              icon={<ChevronDown />}
+              aria-expanded={false}
+              onClick={() => setToolsFolded(false)}
+            />
+          </div>
+        ) : (
+          <>
+            <div className="flex items-center">
+              <ScrollRow
+                ref={chipsRef}
+                role="toolbar"
+                aria-label={t('plan.dayChipsLabel')}
+                outerClassName="min-w-0 flex-1"
+                className="flex gap-2 py-2 pl-5"
+              >
+                <Chip selected={filter === 'all'} onClick={() => setFilter('all')}>
+                  {t('plan.all')}
+                </Chip>
+                {days.map((d, i) => (
+                  <Chip
+                    key={d}
+                    data-chip={d}
+                    aria-current={inView === d ? 'location' : undefined}
+                    // 노선 색 알약 (docs/29 §4.3): 고르면 진한 노선 색 채움, 아니면 노선 색 테두리. 버튼 구조·이름은 그대로
+                    style={routeStyle(i)}
+                    className={
+                      filter === i + 1
+                        ? 'border-transparent! bg-[var(--route-ink)]! text-on-primary!'
+                        : inView === d
+                          ? 'border-primary text-primary'
+                          : 'border-[var(--route)]! text-[var(--route-ink)]!'
+                    }
+                    selected={filter === i + 1}
+                    onClick={() => setFilter(i + 1)}
+                    leading={
+                      <span
+                        aria-hidden="true"
+                        className="size-2 rounded-full"
+                        style={{
+                          background: filter === i + 1 ? 'var(--tp-on-primary)' : dayColor(i),
+                        }}
+                      />
+                    }
+                  >
+                    <span className="tabular">
+                      {t('plan.dayChip', { n: i + 1, date: d.slice(5).replace('-', '.') })}
+                    </span>
+                    {d === today && <span className="sr-only"> · {t('date.today')}</span>}
+                  </Chip>
+                ))}
+                <Chip
+                  data-chip="wish"
+                  aria-current={inView === 'wish' ? 'location' : undefined}
+                  className={inView === 'wish' ? 'border-primary text-primary' : undefined}
+                  selected={filter === 'wish'}
+                  onClick={() => setFilter('wish')}
+                >
+                  {t('plan.wishlist')}
+                </Chip>
+              </ScrollRow>
+              {!editing && (
+                <IconButton
+                  label={t('plan.toolsFold')}
+                  icon={<ChevronUp />}
+                  aria-expanded={true}
+                  className="mr-2 shrink-0"
+                  onClick={() => setToolsFolded(true)}
                 />
-              }
-            >
-              <span className="tabular">
-                {t('plan.dayChip', { n: i + 1, date: d.slice(5).replace('-', '.') })}
-              </span>
-              {d === today && <span className="sr-only"> · {t('date.today')}</span>}
-            </Chip>
-          ))}
-          <Chip
-            data-chip="wish"
-            aria-current={inView === 'wish' ? 'location' : undefined}
-            className={inView === 'wish' ? 'border-primary text-primary' : undefined}
-            selected={filter === 'wish'}
-            onClick={() => setFilter('wish')}
-          >
-            {t('plan.wishlist')}
-          </Chip>
-        </ScrollRow>
-
-        <div className="flex items-center justify-between gap-2 px-5 pt-1 tight:flex-wrap">
-          {editing ? (
-            <p className="flex-1 text-caption text-fg-muted">{t('plan.editHint')}</p>
-          ) : (
-            <Chip
-              selected={mapOpen}
-              leading={<MapIcon aria-hidden="true" className="size-4" />}
-              onClick={() => {
-                setMapOpen(!mapOpen);
-                setMapLarge(false);
-              }}
-            >
-              {t('map.toggle')}
-            </Chip>
-          )}
-          {routeOpen && (
-            <Suspense fallback={null}>
-              <TripRouteSheet
-                open={routeOpen}
-                onOpenChange={setRouteOpen}
-                days={days.map((d, index) => ({
-                  index,
-                  date: formatMonthDay(d),
-                  stops: items.filter((i) => i.date === d && i.kind !== 'note').map((i) => i.title),
-                }))}
-              />
-            </Suspense>
-          )}
-          {/* 여행 당일: 지금 위치에서 다음 일정까지 (사용자 요청 2026-10-27) */}
-          {!editing && nextStopItem && nowTime && (
-            <div className="flex min-w-0 flex-1 justify-center tight:order-last tight:basis-full">
-              <NextStopBar next={nextStopItem} now={nowTime} />
+              )}
             </div>
-          )}
-          {canEdit && (
-            <Button
-              size="sm"
-              variant={editing ? 'primary' : 'ghost'}
-              disabled={items.length === 0 && !editing}
-              onClick={() => setEditing(!editing)}
-            >
-              {editing ? t('plan.editDone') : t('plan.edit')}
-            </Button>
-          )}
-        </div>
+
+            <div className="flex items-center justify-between gap-2 px-5 pt-1 tight:flex-wrap">
+              {editing ? (
+                <p className="flex-1 text-caption text-fg-muted">{t('plan.editHint')}</p>
+              ) : (
+                <Chip
+                  selected={mapOpen}
+                  leading={<MapIcon aria-hidden="true" className="size-4" />}
+                  onClick={() => {
+                    setMapOpen(!mapOpen);
+                    setMapLarge(false);
+                  }}
+                >
+                  {t('map.toggle')}
+                </Chip>
+              )}
+              {routeOpen && (
+                <Suspense fallback={null}>
+                  <TripRouteSheet
+                    open={routeOpen}
+                    onOpenChange={setRouteOpen}
+                    days={days.map((d, index) => ({
+                      index,
+                      date: formatMonthDay(d),
+                      stops: items
+                        .filter((i) => i.date === d && i.kind !== 'note')
+                        .map((i) => i.title),
+                    }))}
+                  />
+                </Suspense>
+              )}
+              {/* 여행 당일: 지금 위치에서 다음 일정까지 (사용자 요청 2026-10-27) */}
+              {!editing && nextStopItem && nowTime && (
+                <div className="flex min-w-0 flex-1 justify-center tight:order-last tight:basis-full">
+                  <NextStopBar next={nextStopItem} now={nowTime} />
+                </div>
+              )}
+              {canEdit && (
+                <Button
+                  size="sm"
+                  variant={editing ? 'primary' : 'ghost'}
+                  disabled={items.length === 0 && !editing}
+                  onClick={() => setEditing(!editing)}
+                >
+                  {editing ? t('plan.editDone') : t('plan.edit')}
+                </Button>
+              )}
+            </div>
+          </>
+        )}
 
         {mapOpen && !editing && (
           <div className="px-5 pt-2">
