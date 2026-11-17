@@ -63,17 +63,52 @@ for (const width of [320, 360, 412]) {
   });
 }
 
-// 여행 마지막 날: "오늘" 칩의 화면 읽기용 글자(sr-only)가 날짜 칩 줄 밖으로 삐져나가
-// 페이지 폭을 넓혀, 휴대폰이 화면을 축소하던 문제 (2026-11-17 사용자 제보)
-test('여행 중 날짜 칩 줄이 길어도 가로 넘침이 없다', async ({ page }) => {
-  await page.setViewportSize({ width: 360, height: 760 });
-  const trip = await seedTrip(page);
-  // 샘플 여행은 3일 뒤 출발 4박 5일 → 7일 뒤가 마지막 날
-  await page.clock.install({ time: new Date(Date.now() + 7 * 86_400_000) });
-  await page.goto(`${trip}/plan`);
-  await page.waitForLoadState('networkidle');
-  await noHorizontalOverflow(page, '여행 마지막 날 일정');
-});
+// 여행 중(첫날·중간·마지막 날) + 긴 이름 일정으로 주요 화면 가로 넘침 검사 (버그 줄이기 ③, 2026-11-17).
+// 출발 전 샘플만 보던 검사가 "오늘" 칩의 화면 읽기용 글자가 칩 줄 밖으로 삐져나가 휴대폰이 화면을 축소하던 문제를 놓쳤다 (docs/bugs.md B1)
+const LONG_TITLE = 'Repos Gentleman 瑞波士訂製西服 新北 Banqiao Branch Shopping District';
+for (const width of [320, 360]) {
+  test(`${width}px 여행 중: 주요 화면에 가로 넘침이 없다`, async ({ page }) => {
+    test.slow();
+    await page.setViewportSize({ width, height: 760 });
+    const trip = await seedTrip(page);
+    // 긴 외국어 이름·주소 일정 (2일차)
+    await page
+      .getByRole('region', { name: /^2일차/ })
+      .getByRole('button', { name: '일정 추가' })
+      .click();
+    const form = page.getByRole('dialog');
+    await form.getByRole('textbox', { name: '이름' }).fill(LONG_TITLE);
+    await form
+      .getByRole('textbox', { name: '주소' })
+      .fill(`No. 8號, Lane 286, Section 1, ${LONG_TITLE}`);
+    await form.getByRole('button', { name: '일정에 추가' }).click();
+    await expect(page.getByRole('region', { name: /^2일차/ })).toContainText('Repos Gentleman');
+    await page.evaluate(() => {
+      localStorage.setItem('tp-labs-reset', '2026-11-03');
+      localStorage.setItem('tp-labs', JSON.stringify({ travelMode: true }));
+    });
+    // 샘플 여행은 3일 뒤 출발 4박 5일 → 3·5·7일 뒤 = 첫날·중간·마지막 날
+    await page.clock.install({ time: new Date(Date.now() + 3 * 86_400_000) });
+    for (const offset of [0, 2, 4]) {
+      if (offset) await page.clock.fastForward(2 * 86_400_000);
+      for (const path of [
+        '/',
+        'plan',
+        'places',
+        'bookings',
+        'checklist',
+        'go',
+        'weather',
+        'essentials',
+      ]) {
+        const url = path.startsWith('/') ? path : `${trip}/${path}`;
+        await page.goto(url);
+        await page.waitForLoadState('networkidle');
+        await noHorizontalOverflow(page, `여행 ${offset + 1}일차 ${url}`);
+      }
+    }
+  });
+}
 
 test('⚡ 버튼과 하단 탭은 탭을 바꿔도 같은 자리에 있다', async ({ page }) => {
   const trip = await seedTrip(page);
