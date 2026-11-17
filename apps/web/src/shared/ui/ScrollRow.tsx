@@ -58,7 +58,9 @@ export function ScrollRow({ ref, className, outerClassName, children, ...rest }:
           idle.current = window.setTimeout(() => setMoving(false), 700);
         }}
         className={cn(
-          'overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
+          // relative: 안의 sr-only(절대 위치) 글자가 이 줄 기준으로 잘리게. 없으면 바깥 상자 기준이 되어
+          // 화면 밖으로 삐져나가 페이지 폭을 넓히고, 휴대폰이 화면을 축소해 오른쪽·아래가 비었다 (2026-11-17)
+          'relative overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
           // 배경색과 상관없이 끝만 흐리게 (시트·카드 안에서도)
           more && '[mask-image:linear-gradient(to_right,#000_calc(100%-40px),transparent)]',
           className,

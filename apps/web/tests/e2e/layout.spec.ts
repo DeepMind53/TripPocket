@@ -63,6 +63,18 @@ for (const width of [320, 360, 412]) {
   });
 }
 
+// 여행 마지막 날: "오늘" 칩의 화면 읽기용 글자(sr-only)가 날짜 칩 줄 밖으로 삐져나가
+// 페이지 폭을 넓혀, 휴대폰이 화면을 축소하던 문제 (2026-11-17 사용자 제보)
+test('여행 중 날짜 칩 줄이 길어도 가로 넘침이 없다', async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 760 });
+  const trip = await seedTrip(page);
+  // 샘플 여행은 3일 뒤 출발 4박 5일 → 7일 뒤가 마지막 날
+  await page.clock.install({ time: new Date(Date.now() + 7 * 86_400_000) });
+  await page.goto(`${trip}/plan`);
+  await page.waitForLoadState('networkidle');
+  await noHorizontalOverflow(page, '여행 마지막 날 일정');
+});
+
 test('⚡ 버튼과 하단 탭은 탭을 바꿔도 같은 자리에 있다', async ({ page }) => {
   const trip = await seedTrip(page);
 
