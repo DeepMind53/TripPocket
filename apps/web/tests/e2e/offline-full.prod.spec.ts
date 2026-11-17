@@ -59,7 +59,7 @@ async function visitAll(page: Page, tripUrl: string, title: string) {
   await expect(page.getByRole('radio', { name: '준비물' })).toBeVisible();
   await page.goto('/fx');
   await expect(page.getByRole('heading', { name: '환율 계산기' })).toBeVisible();
-  await page.goto('/settings');
+  await page.goto('/settings/display');
   await expect(page.getByRole('region', { name: '화면', exact: true })).toBeVisible();
   // 2026-11-02 새 화면들도 인터넷 없이 (기기에 저장된 정보로)
   await page.goto(`${tripUrl}/weather`);

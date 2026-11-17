@@ -27,7 +27,7 @@ test('설치 후에는 인터넷 없이도 앱이 열리고 만든 여행이 보
   await context.setOffline(true);
   await page.goto('/trips');
   await expect(page.getByText('오프라인 여행')).toBeVisible();
-  await page.goto('/settings');
+  await page.goto('/settings/display');
   await expect(page.getByRole('region', { name: '화면', exact: true })).toBeVisible();
 });
 
