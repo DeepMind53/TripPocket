@@ -100,7 +100,7 @@ import {
 } from '../../domain/lodging';
 import type { Destination } from '../../shared/lib/directions';
 import { itemRepo } from '../../data/repositories/itemRepo';
-import { useRouteSheet } from '../../shared/hooks/useRouteSheet';
+import { useRouteSheet, useSheetArg } from '../../shared/hooks/useRouteSheet';
 import { useStoredFlag } from '../../shared/hooks/useStoredFlag';
 import { cn } from '../../shared/lib/cn';
 import { formatMonthDay } from '../../shared/lib/dateFormat';
@@ -203,7 +203,7 @@ function PlanView({
   // Plan B (실험실, 2026-11-03): 날짜마다 보일 플랜의 일정만 — 아래 화면은 모두 이 목록을 쓴다
   const plansView = usePlanView(trip, allItems, days, weather, holidays);
   const items = plansView.visible;
-  const [planDate, setPlanDate] = useState<LocalDate | null>(null);
+  const planDate = useSheetArg<LocalDate | null>(['day-plan']) ?? null;
   const [planOpen, setPlanOpen] = useRouteSheet('day-plan');
   // 보기 전용으로 공유받은 여행이면 추가·편집·삭제를 숨긴다 (data/tripRoles.ts)
   const canEdit = useCanEdit(trip.id);
@@ -303,14 +303,16 @@ function PlanView({
   }
   const [dupOpen, setDupOpen] = useRouteSheet('dup-day');
   const dupOn = true;
-  const [menuDate, setMenuDate] = useState<LocalDate | null>(null);
+  // 날짜 메뉴와 거기서 넘어가는 시트(복제·붙여 넣기·시간 밀기)는 같은 날을 대상으로
+  const menuDate =
+    useSheetArg<LocalDate | null>(['day-menu', 'dup-day', 'bulk-add', 'shift-day']) ?? null;
   // 실험실 (2026-11-13 3차): 여러 일정 붙여 넣기 · 남은 일정 미루기 · 캘린더로 내보내기
   const bulkOn = useLab('bulkAdd');
   const shiftOn = useLab('shiftDay');
   const icsOn = useLab('calendarExport');
   const [bulkOpen, setBulkOpen] = useRouteSheet('bulk-add');
   const [shiftOpen, setShiftOpen] = useRouteSheet('shift-day');
-  const [dirDest, setDirDest] = useState<Destination | null>(null);
+  const dirDest = useSheetArg<Destination>(['directions']) ?? null;
   // 고른 일정은 이 탭에 기억한다 — 상세 시트는 새로고침(앱 다시 열기)해도 다시 열리는데,
   // 무엇을 보던 중인지 모르면 빈 시트가 일정을 가렸다 (2026-10-28, 아이폰 오프라인 확인 중 발견)
   const [selectedId, setSelectedIdState] = useState<string | null>(() => {
@@ -329,10 +331,10 @@ function PlanView({
       // 기억 못 해도 이번 화면에서는 그대로
     }
   };
-  const [formTarget, setFormTarget] = useState<{ date: LocalDate | null; editing: boolean }>({
+  // 일정 입력 시트 대상: 어느 날에 추가 / 어떤 일정을 고침 (시트와 함께 브라우저 기록에)
+  const formTarget = useSheetArg<{ date: LocalDate | null; itemId?: string }>(['item-form']) ?? {
     date: null,
-    editing: false,
-  });
+  };
 
   const selected = items.find((i) => i.id === selectedId);
   // 다시 열었는데 보던 일정이 없으면(지워짐·다른 여행) 빈 상세 시트를 닫는다
@@ -498,8 +500,7 @@ function PlanView({
   }
 
   function openAdd(date: LocalDate | null) {
-    setFormTarget({ date, editing: false });
-    setFormOpen(true);
+    setFormOpen(true, { date });
   }
 
   function openDetail(item: ItineraryItem) {
@@ -821,22 +822,19 @@ function PlanView({
                         if (stay) return openDetail(stay);
                         const d = { name: b.title, address: b.details?.address };
                         if (openDirectionsDirect(d, isDomestic)) return;
-                        setDirDest(d);
-                        setDirOpen(true);
+                        setDirOpen(true, d);
                       }}
                       canEdit={canEdit}
                       onAdd={() => openAdd(date)}
                       onOpen={openDetail}
                       onMenu={() => {
-                        setMenuDate(date);
-                        setDayMenuOpen(true);
+                        setDayMenuOpen(true, date);
                       }}
                       plan={date && plansView.on ? plansView.info[date] : undefined}
                       onPlans={
                         date && plansView.on
                           ? () => {
-                              setPlanDate(date);
-                              setPlanOpen(true);
+                              setPlanOpen(true, date);
                             }
                           : undefined
                       }
@@ -1012,7 +1010,7 @@ function PlanView({
         onOpenChange={setFormOpen}
         tripId={trip.id}
         date={formTarget.date}
-        item={formTarget.editing ? selected : undefined}
+        item={formTarget.itemId ? items.find((i) => i.id === formTarget.itemId) : undefined}
         planId={formTarget.date ? plansView.info[formTarget.date]?.plan?.id : undefined}
       />
       {plansView.on && (
@@ -1041,12 +1039,10 @@ function PlanView({
             coords: selected.place?.coords,
           };
           if (openDirectionsDirect(d, isDomestic)) return;
-          setDirDest(d);
-          setDirOpen(true);
+          setDirOpen(true, d);
         }}
         onEdit={() => {
-          setFormTarget({ date: selected?.date ?? null, editing: true });
-          setFormOpen(true);
+          if (selected) setFormOpen(true, { date: selected.date, itemId: selected.id });
         }}
         onMoveDay={() => setMoveOpen(true)}
         onDelete={() => selected && void remove(selected)}
