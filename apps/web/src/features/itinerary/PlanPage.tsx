@@ -80,6 +80,7 @@ import {
   toast,
   Skeleton,
   ScrollRow,
+  RollingSlot,
   routeStyle,
 } from '../../shared/ui';
 import { DirectionsSheet } from '../common/DirectionsSheet';
@@ -524,7 +525,6 @@ function PlanView({
         data-plan-sticky=""
         className={cn(
           'sticky top-[var(--topbar-h,calc(var(--safe-top)+56px))] bg-bg',
-          !folded && 'pb-1',
           mapView === 'full' ? 'z-50' : 'z-10',
         )}
       >
@@ -548,6 +548,7 @@ function PlanView({
                 role="toolbar"
                 aria-label={t('plan.dayChipsLabel')}
                 outerClassName="min-w-0 flex-1"
+                // 위아래 여백 6px로 두 줄 간격을 맞춘다 (사용자 요청 2026-11-18)
                 className="flex gap-1.5 py-1.5 pl-5"
               >
                 <Chip size="sm" selected={filter === 'all'} onClick={() => setFilter('all')}>
@@ -570,6 +571,11 @@ function PlanView({
                     }
                     selected={filter === i + 1}
                     onClick={() => setFilter(i + 1)}
+                    // 글자가 번갈아 바뀌어도 이름은 그대로 "N일차 11.17 (화)" (+ 오늘)
+                    aria-label={
+                      t('plan.dayChip', { n: i + 1, date: formatMonthDay(d) }) +
+                      (d === today ? ` · ${t('date.today')}` : '')
+                    }
                     leading={
                       <span
                         aria-hidden="true"
@@ -580,10 +586,18 @@ function PlanView({
                       />
                     }
                   >
-                    <span className="tabular">
-                      {t('plan.dayChip', { n: i + 1, date: d.slice(5).replace('-', '.') })}
+                    {/* "N일차"와 날짜를 번갈아 — 아래 날짜 머리줄과 같은 글자 (사용자 요청 2026-11-18).
+                        칩 폭은 날짜(더 긴 쪽)에 맞춰 고정: 보이지 않는 날짜 글자로 자리를 잡고 그 위에서 굴린다 */}
+                    <span aria-hidden="true" className="tabular relative inline-grid">
+                      <span className="invisible">{formatMonthDay(d)}</span>
+                      <RollingSlot
+                        className="absolute! inset-0 h-full! justify-center"
+                        items={[
+                          <span key="day">{t('plan.dayN', { n: i + 1 })}</span>,
+                          <span key="date">{formatMonthDay(d)}</span>,
+                        ]}
+                      />
                     </span>
-                    {d === today && <span className="sr-only"> · {t('date.today')}</span>}
                   </Chip>
                 ))}
                 <Chip
@@ -602,13 +616,14 @@ function PlanView({
                   label={t('plan.toolsFold')}
                   icon={<ChevronUp />}
                   aria-expanded={true}
-                  className="mr-2 shrink-0"
+                  // 칩 줄 높이(40)를 넘지 않게 — 너비 44는 그대로
+                  className="mr-2 h-10! shrink-0"
                   onClick={() => setToolsFolded(true)}
                 />
               )}
             </div>
 
-            <div className="flex items-center justify-between gap-2 px-5 pt-1 tight:flex-wrap">
+            <div className="flex items-center justify-between gap-2 px-5 tight:flex-wrap">
               {editing ? (
                 <p className="flex-1 text-caption text-fg-muted">{t('plan.editHint')}</p>
               ) : (
@@ -645,6 +660,8 @@ function PlanView({
               {canEdit && (
                 <Button
                   size="sm"
+                  // 지도 칩과 같은 높이 28 (너비는 넉넉해 누르기 쉬움)
+                  className="h-7!"
                   variant={editing ? 'primary' : 'ghost'}
                   disabled={items.length === 0 && !editing}
                   onClick={() => setEditing(!editing)}
@@ -681,7 +698,7 @@ function PlanView({
 
       <div
         {...gestures}
-        className={cn('flex flex-col px-5 pt-2', editing ? 'gap-6' : 'gap-6 pb-4')}
+        className={cn('flex flex-col px-5', editing ? 'gap-6' : 'gap-6 pb-4')}
         style={{ '--day-top': `${stickyH}px` } as CSSProperties}
       >
         {/* 막 만든 여행: 무엇부터 할지 (docs/20 U5) */}

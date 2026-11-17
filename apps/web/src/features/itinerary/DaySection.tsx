@@ -10,6 +10,7 @@ import {
 import {
   BedDouble,
   ChevronDown,
+  GitFork,
   ChevronRight,
   Droplets,
   EggFried,
@@ -209,10 +210,9 @@ export function DaySection({
   // 일차 알약은 진한 노선 색 + on-primary 글자 (8색 모두 4.5:1, docs/29 §3.1)
   const dayInk = routeColor(index).ink;
   // "N일차" 알약과 날짜를 한 칸에서 3초마다 번갈아 — 날씨·오늘 칸처럼 (사용자 요청 2026-11-18).
-  // 폭은 날짜에 맞춰 두어 바뀔 때 옆 노선도 버튼이 움직이지 않게
+  // 칸은 보이는 글자 폭만큼 — 오른쪽 버튼이 바로 옆에 붙는다 (사용자 요청 2026-11-18)
   const dayRoll = date ? (
     <RollingSlot
-      className="min-w-[5.5rem]"
       items={[
         <span
           key="day"
@@ -240,18 +240,21 @@ export function DaySection({
       {/* 날짜 머리글: "1일차" 알약(일정 번호 색과 같음) + 날짜, 아래 선 (unslop 2026-11-09 카드 상자 → 평평한 목록).
           그날 일정이 보이는 동안 화면 위(고정 영역 아래)에 붙어 있고, 다음 날로 넘어가면 다음 날 머리로 바뀐다 (2026-10-27) */}
       <div className="sticky top-[var(--day-top,0px)] z-[5] -mx-5 bg-bg/95 px-5 backdrop-blur">
-        <div className="flex min-h-12 items-center gap-2 border-b border-line">
-          <h2 aria-label={title} className="tabular flex min-w-0 flex-wrap items-center gap-2 py-2">
+        <div className="flex min-h-12 items-center gap-1 border-b border-line">
+          <h2 aria-label={title} className="tabular flex min-w-0 flex-wrap items-center gap-1 py-2">
             {date && onPlans ? (
               // Plan B (실험실): 날짜를 누르면 플랜 고르기·만들기
               <button
                 type="button"
                 onClick={onPlans}
                 aria-label={t('planB.open', { day: title })}
-                className="flex min-h-9 items-center gap-2"
+                className="flex min-h-9 items-center gap-1"
               >
                 {dayRoll}
-                <ChevronDown aria-hidden="true" className="size-4 text-fg-muted" />
+                {/* 갈래 아이콘 = 다른 플랜 고르기 (아래 화살표 대신, 사용자 요청 2026-11-18) */}
+                <span className="grid size-6 place-items-center rounded-full bg-bg-subtle text-fg-sub">
+                  <GitFork aria-hidden="true" className="size-3.5" />
+                </span>
               </button>
             ) : date ? (
               dayRoll
