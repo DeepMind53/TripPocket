@@ -84,8 +84,8 @@ test('날짜·지도 줄을 접고 펴고, 다시 열어도 기억한다', async
   await expect(page.getByRole('button', { name: '편집' })).toBeHidden();
   await page.screenshot({ path: test.info().outputPath('folded.png') });
   await page.reload();
-  await expect(page.getByRole('button', { name: '날짜·지도 줄 펴기' })).toBeVisible();
+  await expect(page.getByRole('button', { name: '날짜·지도 줄 펴기' }).first()).toBeVisible();
   await expect(chips).toBeHidden();
-  await page.getByRole('button', { name: '날짜·지도 줄 펴기' }).click();
+  await page.getByRole('button', { name: '날짜·지도 줄 펴기' }).first().click();
   await expect(chips).toBeVisible();
 });

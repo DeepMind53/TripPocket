@@ -388,6 +388,8 @@ function PlanView({
   // 날짜 칩 줄·지도/편집 줄 접기 (사용자 요청 2026-11-17) — 이 기기에 기억. 편집 중에는 늘 펼침([완료] 버튼)
   const [toolsFolded, setToolsFolded] = useStoredFlag('tp-plan-tools-folded', false);
   const folded = toolsFolded && !editing;
+  // 접었을 때 펴기 버튼은 날짜 머리 오른쪽에. 날짜 머리가 하나도 없는 화면(빈 여행 전체 보기·지도 크게)만 위에 얇은 줄로
+  const headerUnfold = folded && !(mapOpen && mapLarge) && (items.length > 0 || filter !== 'all');
   // 위 고정 영역(칩 줄·지도/편집 줄·펼친 지도) 높이 — 날짜 머리가 그 바로 아래에 붙는다 (사용자 요청 2026-10-27)
   const [stickyH, setStickyH] = useState(0);
   useEffect(() => {
@@ -568,19 +570,23 @@ function PlanView({
         ref={stickyRef}
         data-plan-sticky=""
         className={cn(
-          'sticky top-[var(--topbar-h,calc(var(--safe-top)+56px))] bg-bg pb-1',
+          'sticky top-[var(--topbar-h,calc(var(--safe-top)+56px))] bg-bg',
+          !folded && 'pb-1',
           mapFull ? 'z-50' : 'z-10',
         )}
       >
+        {/* 접으면 이 줄은 높이 0 — 펴기 버튼은 날짜 머리 오른쪽에 (빈 공간 최소화, 사용자 요청 2026-11-17) */}
         {folded ? (
-          <div className="flex justify-end pr-2">
-            <IconButton
-              label={t('plan.toolsUnfold')}
-              icon={<ChevronDown />}
-              aria-expanded={false}
-              onClick={() => setToolsFolded(false)}
-            />
-          </div>
+          headerUnfold ? null : (
+            <div className="flex justify-end pr-2">
+              <IconButton
+                label={t('plan.toolsUnfold')}
+                icon={<ChevronDown />}
+                aria-expanded={false}
+                onClick={() => setToolsFolded(false)}
+              />
+            </div>
+          )
         ) : (
           <>
             <div className="flex items-center">
@@ -836,6 +842,7 @@ function PlanView({
                       }
                       hideWhenEmpty={filter === 'all' && date === null}
                       onRouteMap={() => setRouteOpen(true)}
+                      onUnfold={headerUnfold ? () => setToolsFolded(false) : undefined}
                       noteTrip={dayNoteOn && canEdit && date && date <= today ? trip : undefined}
                     />
                   ),
@@ -1114,9 +1121,12 @@ function DaySection({
   onPlans,
   noteTrip,
   onRouteMap,
+  onUnfold,
 }: {
   /** 설정 "노선도": 미니맵을 누르면 여행 전체 노선도 */
   onRouteMap: () => void;
+  /** 위 날짜·지도 줄을 접었으면: 날짜 머리 오른쪽 끝의 펴기 버튼 */
+  onUnfold?: (() => void) | undefined;
   /** 실험실 "하루 한 줄 기록": 오늘·지난 날이면 그 여행 (아니면 칸 없음) */
   noteTrip?: Trip | undefined;
   /** Plan B (실험실): 그날 플랜 정보 · 날짜 머리글을 누르면 플랜 시트 */
@@ -1315,6 +1325,15 @@ function DaySection({
               label={t('plan.dayMenu', { day: title })}
               icon={<Ellipsis />}
               onClick={onMenu}
+            />
+          )}
+          {onUnfold && (
+            <IconButton
+              label={t('plan.toolsUnfold')}
+              icon={<ChevronDown />}
+              aria-expanded={false}
+              className="-mr-2"
+              onClick={onUnfold}
             />
           )}
         </div>
