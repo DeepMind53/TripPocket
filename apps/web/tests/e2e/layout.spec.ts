@@ -288,7 +288,10 @@ test('글자 크기 가장 크게(99%): 주요 화면 가로 넘침 없음, 탭 
 test('여행 모드 [홈] 버튼은 일정표 [홈으로] 버튼과 같은 자리', async ({ page }) => {
   await page.setViewportSize({ width: 360, height: 640 });
   const base = await seedTrip(page);
-  const planHome = await box(page.getByRole('button', { name: '홈으로' }).first());
+  // 머리 버튼이 그려지기 전에 재면 위치가 없다 (B4, 가끔 실패하던 원인)
+  const homeBtn = page.getByRole('button', { name: '홈으로' }).first();
+  await expect(homeBtn).toBeVisible();
+  const planHome = await box(homeBtn);
   await page.evaluate(() => {
     localStorage.setItem('tp-labs-reset', '2026-11-03');
     localStorage.setItem('tp-labs', JSON.stringify({ travelMode: true }));
