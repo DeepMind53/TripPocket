@@ -15,6 +15,7 @@ import {
   BottomSheet,
   Button,
   CancelSaveRow,
+  RollingSlot,
   SegmentedControl,
   TopBar,
   toast,
@@ -112,9 +113,16 @@ function TripSettingsForm({ trip, items }: { trip: Trip; items: ItineraryItem[] 
             className="flex h-12 items-center gap-3 rounded-btn border border-line bg-bg-subtle px-3 text-left"
           >
             <CalendarRange aria-hidden="true" className="size-5 text-fg-sub" />
-            <span className="tabular flex-1 text-body-1">
-              {formatPeriod(start, end)} · {formatTripLength(start, end)}
-            </span>
+            {/* 날짜 ↔ 3박 4일 전광판: 좁은 화면에서 두 줄로 넘어가지 않게 (사용자 요청 2026-11-23) */}
+            <RollingSlot
+              reserve
+              align="start"
+              className="tabular min-w-0 flex-1 text-body-1 whitespace-nowrap"
+              items={[
+                <span key="period">{formatPeriod(start, end)}</span>,
+                <span key="length">{formatTripLength(start, end)}</span>,
+              ]}
+            />
             <span className="text-caption font-semibold text-primary">
               {t('tripSettings.change')}
             </span>

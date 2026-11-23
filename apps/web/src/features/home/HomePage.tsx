@@ -6,7 +6,7 @@ import { useChecklist, useTripBookings, useTripItems, useTrips } from '../../dat
 import { useTranslation } from '../../i18n';
 import { cn } from '../../shared/lib/cn';
 import { formatPeriod, formatTripBadge, formatTripLength } from '../../shared/lib/dateFormat';
-import { Button, EmptyState, toast } from '../../shared/ui';
+import { Button, EmptyState, RollingSlot, toast } from '../../shared/ui';
 import { BackupReminder } from '../backup/BackupReminder';
 import { TravelModeButton } from '../travel/TravelModeButton';
 import { TripList } from '../trips/TripList';
@@ -166,12 +166,16 @@ function UpcomingTrip({ trip }: { trip: Trip }) {
         </span>
         <span className="flex min-w-0 flex-col">
           <span className="line-clamp-2 text-title-1">{trip.title}</span>
-          <span className="tabular text-body-2 opacity-90">
-            {t('home.upcomingDesc', {
-              period: formatPeriod(trip.startDate, trip.endDate),
-              length: formatTripLength(trip.startDate, trip.endDate),
-            })}
-          </span>
+          {/* 날짜 ↔ 4박 5일 전광판: 좁은 화면에서 두 줄로 넘어가지 않게 (사용자 요청 2026-11-23) */}
+          <RollingSlot
+            reserve
+            align="start"
+            className="tabular self-start text-body-2 whitespace-nowrap opacity-90"
+            items={[
+              <span key="period">{formatPeriod(trip.startDate, trip.endDate)}</span>,
+              <span key="length">{formatTripLength(trip.startDate, trip.endDate)}</span>,
+            ]}
+          />
         </span>
       </span>
       <span className="text-caption opacity-90">

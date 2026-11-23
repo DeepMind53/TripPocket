@@ -14,13 +14,15 @@ export interface TopBarProps {
   actions?: ReactNode;
   /** 제목 줄 가운데 (예: 마이의 동기화 상태) */
   center?: ReactNode;
+  /** 제목을 한 줄로 고정하고 넘치면 … (여행 화면 — 긴 여행 이름에 머리 높이가 바뀌지 않게, 사용자 요청 2026-11-23) */
+  singleLine?: boolean;
 }
 
 /**
  * 화면 상단 헤더. 스크롤해도 위에 고정된다.
  * 뒤로 버튼이 있는 화면에는 그 왼쪽에 홈 버튼을 항상 둔다 (어디서든 한 번에 홈으로 — 사용자 요청).
  */
-export function TopBar({ title, subtitle, backTo, actions, center }: TopBarProps) {
+export function TopBar({ title, subtitle, backTo, actions, center, singleLine }: TopBarProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const header = useRef<HTMLElement>(null);
@@ -65,7 +67,9 @@ export function TopBar({ title, subtitle, backTo, actions, center }: TopBarProps
         <span className="w-3" />
       )}
       <div className="min-w-0 flex-1 tight:order-last tight:basis-full tight:px-3 tight:pb-1">
-        <h1 className="line-clamp-2 text-title-2">{title}</h1>
+        <h1 className={singleLine ? 'truncate text-title-2' : 'line-clamp-2 text-title-2'}>
+          {title}
+        </h1>
         {subtitle && <p className="tabular truncate text-caption text-fg-muted">{subtitle}</p>}
       </div>
       {center && (

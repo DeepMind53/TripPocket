@@ -711,7 +711,7 @@ function PlanView({
             <div className="grid grid-cols-2 gap-2">
               <Button
                 variant="secondary"
-                className="border border-line bg-surface text-primary"
+                className="border border-line bg-surface whitespace-nowrap text-primary tight:gap-1 tight:px-2"
                 leading={<Search aria-hidden="true" className="size-4" />}
                 onClick={() => void navigate(`/trips/${trip.id}/places`)}
               >
@@ -719,7 +719,7 @@ function PlanView({
               </Button>
               <Button
                 variant="secondary"
-                className="border border-line bg-surface text-primary"
+                className="border border-line bg-surface whitespace-nowrap text-primary tight:gap-1 tight:px-2"
                 leading={<Sparkles aria-hidden="true" className="size-4" />}
                 onClick={() => void navigate(`/ai?trip=${trip.id}`)}
               >

@@ -58,7 +58,10 @@ it('날씨 정보: 여행 앞뒤 하루까지 목적지 날씨, 항공편 출발
   expect(rows).toHaveLength(5);
   expect(rows[0]).toHaveTextContent('여행 전날');
   expect(rows[4]).toHaveTextContent('여행 다음 날');
-  expect(await within(dest).findAllByText('10°/22°')).toHaveLength(5);
+  // 전광판이 폭을 잡으려고 겹쳐 둔 숨은 복사본(aria-hidden)은 빼고 센다
+  expect(
+    await within(dest).findAllByText('10°/22°', { ignore: '[aria-hidden="true"] *' }),
+  ).toHaveLength(5);
   // 편명·공항 코드는 자르지 않고, 출발 공항(출발일)·도착 공항(도착일) 둘 다
   const air = screen.getByRole('region', { name: '공항 날씨' });
   expect(within(air).getByText('ICN → NRT')).toBeInTheDocument();

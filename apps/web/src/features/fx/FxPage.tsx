@@ -6,6 +6,7 @@ import {
   POPULAR_CURRENCIES,
   toKrw,
 } from '@trippocket/shared';
+import { useTight } from '../../shared/hooks/useTight';
 import { ArrowUpDown, ChevronDown, Delete, ExternalLink } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router';
@@ -152,6 +153,19 @@ export function FxPage() {
     'del',
   ];
 
+  // 네이버 환율 링크 — 넓은 화면은 설명 칸 안, 좁은 화면은 금액 줄 아래 (한 줄 유지, 2026-11-23)
+  const tight = useTight();
+  const naverLink = (
+    <a
+      href={`https://search.naver.com/search.naver?query=${encodeURIComponent(naverQuery(currency))}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="mt-1 inline-flex items-center gap-1 self-start font-semibold whitespace-nowrap text-primary"
+    >
+      {t('fx.naver')}
+      <ExternalLink aria-hidden="true" className="size-3.5" />
+    </a>
+  );
   return (
     <div className="mx-auto flex min-h-dvh max-w-[560px] flex-col">
       <TopBar title={t('fx.title')} backTo="/" />
@@ -198,15 +212,8 @@ export function FxPage() {
             )}
             {fee > 0 && <span>{t('fx.feeApplied', { fee })}</span>}
             <span className="text-fg-muted">{t('fx.notRealtime')}</span>
-            <a
-              href={`https://search.naver.com/search.naver?query=${encodeURIComponent(naverQuery(currency))}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-1 inline-flex items-center gap-1 self-start font-semibold text-primary"
-            >
-              {t('fx.naver')}
-              <ExternalLink aria-hidden="true" className="size-3.5" />
-            </a>
+            {/* 좁은 화면(≤340px·큰 글자)에서는 왼쪽 칸이 좁아 두 줄이 되므로 줄 아래로 (사용자 요청 2026-11-23) */}
+            {!tight && naverLink}
           </div>
           <div className="flex w-1/2 shrink-0 flex-col gap-1">
             <AmountRow
@@ -240,6 +247,7 @@ export function FxPage() {
             />
           </div>
         </div>
+        {tight && <span className="text-caption">{naverLink}</span>}
         <div className="flex flex-wrap gap-2">
           {quick.map((q) => (
             <Chip key={q} onClick={() => setInput(String(q))}>

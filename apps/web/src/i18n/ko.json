@@ -124,7 +124,6 @@
     "lodgingTonight": "오늘 숙소",
     "viewPlan": "일정 보기",
     "directions": "길찾기",
-    "upcomingDesc": "{{period}} · {{length}}",
     "bookingCount": "예약 {{n}}개",
     "itemCount": "일정 {{n}}개",
     "checklistProgress": "준비물 {{done}}/{{total}}",

@@ -55,6 +55,7 @@ export function RollingSlot({
   items,
   className,
   reserve = false,
+  align = 'center',
 }: {
   items: readonly ReactNode[];
   /** 칸 크기 등 (예: 가장 긴 것에 맞춘 최소 폭 — 바뀔 때 옆 요소가 움직이지 않게) */
@@ -64,12 +65,16 @@ export function RollingSlot({
    * 모든 항목을 같은 격자 칸에 보이지 않게 겹쳐 자리를 잡는다
    */
   reserve?: boolean;
+  /** reserve 칸 안 글자 정렬 — 왼쪽 정렬 글줄(홈 카드 날짜 등)은 start */
+  align?: 'center' | 'start';
 }) {
   const n = items.length;
   const now = useSyncExternalStore(n > 1 ? subscribe : still, read);
   if (n === 0) return null;
   const at = now % n;
-  const cell = reserve ? 'col-start-1 row-start-1 justify-center ' : '';
+  const cell = reserve
+    ? `col-start-1 row-start-1 ${align === 'start' ? 'justify-start' : 'justify-center'} `
+    : '';
   return (
     <span
       className={cn(

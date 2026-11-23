@@ -84,6 +84,7 @@ export function TripLayout() {
     <div className="mx-auto min-h-dvh max-w-[560px]">
       <TopBar
         title={trip ? `${trip.cover.emoji ?? ''} ${trip.title}`.trim() : ''}
+        singleLine
         {...(trip
           ? {
               subtitle: `${formatPeriod(trip.startDate, trip.endDate)} · ${formatTripBadge(trip.startDate, trip.endDate, todayIn(trip.timezone))}`,

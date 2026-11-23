@@ -7,17 +7,18 @@ import {
   type LocalDate,
 } from '@trippocket/shared';
 import { SafetyNotices } from './SafetyNotices';
-import { CircleHelp, Plane } from 'lucide-react';
+import { CalendarDays, CircleHelp, Plane } from 'lucide-react';
 import { useState } from 'react';
 import { useParams } from 'react-router';
 import { useTrip, useTripBookings } from '../../data/hooks';
 import { formatTemps, weatherLook } from '../../domain/weather';
 import { useTranslation } from '../../i18n';
 import { formatMonthDay } from '../../shared/lib/dateFormat';
-import { BottomSheet, IconButton, TopBar, WeatherIcon, toast } from '../../shared/ui';
+import { BottomSheet, IconButton, RollingSlot, TopBar, WeatherIcon, toast } from '../../shared/ui';
 import { useRouteSheet } from '../../shared/hooks/useRouteSheet';
 import { WeatherKindBadge } from './WeatherKindBadge';
 import { KIND_ICON, weatherKind, type WeatherKind } from './weatherKind';
+
 import { useWeatherDays, type TripDayWeather } from '../common/useTripWeather';
 import { DestinationAlerts } from './DestinationAlerts';
 
@@ -40,6 +41,10 @@ export function WeatherPage() {
       ]
     : [];
   const weather = useWeatherDays(dest?.coords, trip?.timezone ?? 'Asia/Seoul', dates);
+  // 목록에 실제로 있는 자료 종류 (예보·지난 날씨·작년 기록) — 종류 표시 칸 폭 맞춤용
+  const kinds = (Object.keys(KIND_ICON) as WeatherKind[]).filter((k) =>
+    dates.some((d) => weather[d] && weatherKind(weather[d]) === k),
+  );
   const flights = bookings.filter((b) => b.kind === 'flight' && b.start.place);
   const { countries, points } = alertQuery(trip ?? { destinations: [] });
   const [help, setHelp] = useState(false);
@@ -86,6 +91,7 @@ export function WeatherPage() {
                 title={label(i)}
                 date={d}
                 weather={weather[d]}
+                kinds={kinds}
                 outside={i === 0 || i === dates.length - 1}
                 onOpen={() => {
                   if (!weather[d]?.hours) return toast(t('weatherPage.noHours'));
@@ -150,12 +156,15 @@ function DayRow({
   title,
   date,
   weather,
+  kinds,
   outside = false,
   onOpen,
 }: {
   title: string;
   date: LocalDate;
   weather: TripDayWeather | undefined;
+  /** 이 목록에 있는 자료 종류 — 종류 표시 칸 폭을 이것들 중 가장 긴 것에 맞춘다 */
+  kinds: readonly WeatherKind[];
   outside?: boolean;
   onOpen: () => void;
 }) {
@@ -167,7 +176,7 @@ function DayRow({
         type="button"
         onClick={onOpen}
         aria-label={t('weatherPage.openHours', { date: formatMonthDay(date) })}
-        className="flex w-full items-center gap-3 px-4 py-2.5 text-left"
+        className="flex w-full items-center gap-3 px-4 py-2.5 text-left tight:gap-2"
       >
         <span className="flex w-20 shrink-0 flex-col">
           <span className="text-caption font-semibold text-fg-sub">{title}</span>
@@ -176,12 +185,41 @@ function DayRow({
         {weather && look ? (
           <>
             {/* 예보·지난 날씨·작년 기록은 날짜와 날씨 그림 사이에 (사용자 요청 2026-11-03) */}
-            <span className="shrink-0 whitespace-nowrap">
-              <WeatherKindBadge kind={weatherKind(weather)} />
+            {/* 종류 표시는 이 목록에 있는 것 중 가장 긴 폭으로 — 줄마다 그림·전광판이 같은 세로줄에, 없는 종류 자리는 비우지 않게 (사용자 요청 2026-11-23) */}
+            <span className="inline-grid shrink-0 whitespace-nowrap">
+              {/* 폭만 잡는 복사본 — 글자는 CSS로만 그려 화면 읽기·검색에 두 번 잡히지 않게 */}
+              {kinds.map((k) => (
+                <span
+                  key={k}
+                  aria-hidden="true"
+                  data-label={t(`weatherPage.kind.${k}`)}
+                  className="invisible col-start-1 row-start-1 inline-flex items-center gap-0.5 text-micro before:order-last before:content-[attr(data-label)]"
+                >
+                  <CalendarDays className="size-3.5" />
+                </span>
+              ))}
+              <span className="col-start-1 row-start-1">
+                <WeatherKindBadge kind={weatherKind(weather)} />
+              </span>
             </span>
-            <WeatherIcon kind={look.kind} className="size-7" />
-            <span className="min-w-0 flex-1 text-body-2">{look.label}</span>
-            <span className="tabular text-body-1 font-semibold">{formatTemps(weather)}</span>
+            {/* 날씨 그림 바로 옆에 흐림 ↔ 12°/20° 전광판 (사용자 요청 2026-11-23: 그림과 글자 사이를 붙이고, 좁은 화면은 글자 한 단계 작게).
+                칸 폭은 둘 중 넓은 것에 고정하고 왼쪽 정렬 — 바뀔 때 글자가 좌우로 움직이지 않게 */}
+            <span className="flex min-w-0 items-center gap-1">
+              <WeatherIcon kind={look.kind} className="size-7 shrink-0 tight:size-6" />
+              <RollingSlot
+                reserve
+                align="start"
+                className="min-w-0 whitespace-nowrap"
+                items={[
+                  <span key="look" className="text-body-2 tight:text-caption">
+                    {look.label}
+                  </span>,
+                  <span key="temps" className="tabular text-body-1 font-semibold tight:text-body-2">
+                    {formatTemps(weather)}
+                  </span>,
+                ]}
+              />
+            </span>
           </>
         ) : (
           <span className="flex-1 text-caption text-fg-muted">{t('prep.weatherNone')}</span>
