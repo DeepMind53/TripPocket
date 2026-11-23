@@ -23,6 +23,8 @@
 - `useEffect`로 파생 상태 만들지 않기 (계산은 렌더 중 / `useMemo`).
 - 리스트 key는 항상 엔티티 `id`.
 - 무거운 화면(지도, 차트)은 `React.lazy`.
+- Enter로 저장·추가할 때는 `shared/lib/keys.ts`의 `isSubmitEnter(e)`만 쓴다 — 한글 조합 중 Enter를 빼야 글자가 남거나 두 번 저장되지 않는다 (docs/31 R4).
+- 입력 시트는 처음 값과 다르면 `useSheetDirty(dirty)`(시트 안 양식) 또는 `<BottomSheet dirty>`로 알린다 — 닫을 때 "버릴까요?"를 묻는다 (docs/31 A1). 시트 안 [취소]는 `CancelSaveRow`를 쓰면 같은 규칙.
 
 ## 4. 데이터 접근
 - 컴포넌트 → feature hook → repository → Dexie. **컴포넌트에서 `db.` 직접 사용 금지.**
