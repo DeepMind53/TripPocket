@@ -5,6 +5,7 @@ import { updateSettings } from '../../data/settingsStore';
 import { ShorterOrderHint } from '../itinerary/ShorterOrderHint';
 import { SpeakButton } from '../phrases/SpeakButton';
 import { TodayTips } from './TodayTips';
+import { useToastStore } from '../../shared/ui/toastStore';
 
 const OFF = { phraseOfDay: false, bestWalkTime: false, daylightLeft: false, shorterOrder: false };
 afterEach(() => {
@@ -72,12 +73,47 @@ it('소리로 듣기: 아이폰 무음 모드에서도 들리게, 읽는 중에 
   const user = userEvent.setup();
   await user.click(screen.getByRole('button', { name: '소리로 듣기' }));
   expect(session.type).toBe('playback');
-  // 기기 기본 목소리, 멈춤 없이 바로
-  expect(log).toEqual(['resume', 'speak Kyoko']);
+  // 기기 기본 목소리, 누른 그 순간 바로 (멈춤 상태가 아니면 resume을 부르지 않는다 — 2026-11-24 안드로이드 제보)
+  expect(log).toEqual(['speak Kyoko']);
   await user.click(screen.getByRole('button', { name: '소리로 듣기' }));
-  await vi.waitFor(() => expect(log).toHaveLength(5));
-  expect(log.slice(2)).toEqual(['cancel', 'resume', 'speak Kyoko']);
+  expect(log.slice(1)).toEqual(['cancel', 'speak Kyoko']);
   delete (navigator as Navigator & { audioSession?: unknown }).audioSession;
+});
+
+it('소리로 듣기: 안드로이드 중국어 목소리 이름(cmn-TW), 고른 목소리가 실패하면 언어만으로 한 번 더 (2026-11-24)', async () => {
+  type U = {
+    text: string;
+    lang: string;
+    voice: { name: string } | null;
+    onerror?: (e: { error: string }) => void;
+  };
+  const spoken: U[] = [];
+  vi.stubGlobal(
+    'SpeechSynthesisUtterance',
+    class {
+      lang = '';
+      voice: unknown = null;
+      rate = 1;
+      constructor(public text: string) {}
+    },
+  );
+  vi.stubGlobal('speechSynthesis', {
+    speaking: false,
+    pending: false,
+    paused: false,
+    getVoices: () => [{ lang: 'cmn_TW', name: 'Google 國語', localService: true, default: false }],
+    cancel: () => {},
+    resume: () => {},
+    speak: (u: U) => spoken.push(u),
+  });
+  render(<SpeakButton text="謝謝" lang="zh-TW" />);
+  const user = userEvent.setup();
+  await user.click(screen.getByRole('button', { name: '소리로 듣기' }));
+  expect(spoken[0]).toMatchObject({ lang: 'cmn-TW', voice: { name: 'Google 國語' } });
+  spoken[0]!.onerror?.({ error: 'synthesis-failed' });
+  expect(spoken[1]).toMatchObject({ lang: 'zh-TW', voice: null });
+  spoken[1]!.onerror?.({ error: 'synthesis-failed' });
+  expect(useToastStore.getState().items.at(-1)?.message).toMatch(/그 말 목소리가 없어요/);
 });
 
 const osaka = {
