@@ -13,6 +13,11 @@ export interface RouteBarProps {
   className?: string;
   /** 색 바탕 카드 위(홈 맨 위 여행 카드): 칸은 흰 반투명, 오늘 점은 흰색 (2026-11-23) */
   onColor?: boolean;
+  /**
+   * onColor에서 여행이 지난 만큼(0~1) — 그만큼 칸을 진한 흰색으로 채운다. 오늘 칸은 여행지 시각만큼만
+   * (사용자 요청 2026-11-23: 일정이 지나면 현재 시간 위치까지 채우기). 오늘 점도 그 끝에
+   */
+  progress?: number;
 }
 
 /** 노선 막대 (docs/29 §5·§7.2, 사용자 결정 Q7): 일차 수만큼 노선 색 칸, 오늘 칸 위에 점 */
@@ -23,25 +28,34 @@ export function RouteBar({
   label,
   className,
   onColor = false,
+  progress = 0,
 }: RouteBarProps) {
   const n = Math.max(1, Math.min(days, 30));
+  // 칸 수가 30에 묶이면 진행도도 칸 기준으로
+  const filled = Math.min(Math.max(progress, 0), 1) * n;
   return (
     <div role="img" aria-label={label} className={cn('relative pt-1.5', className)}>
       <div
         className="grid h-1.5 gap-[3px]"
         style={{ gridTemplateColumns: `repeat(${n}, minmax(0, 1fr))` }}
       >
-        {Array.from({ length: n }, (_, i) => (
-          <span
-            key={i}
-            className="rounded-[2px]"
-            style={
-              onColor
-                ? { background: '#fff', opacity: i < pastBefore ? 0.35 : 0.85 }
-                : { background: routeColor(i).line, opacity: i < pastBefore ? 0.35 : 1 }
-            }
-          />
-        ))}
+        {Array.from({ length: n }, (_, i) =>
+          onColor ? (
+            // 옅은 흰 칸 위에 지난 만큼 진한 흰색
+            <span key={i} className="relative overflow-hidden rounded-[2px] bg-white/35">
+              <span
+                className="absolute inset-y-0 left-0 bg-white"
+                style={{ width: `${Math.min(Math.max(filled - i, 0), 1) * 100}%` }}
+              />
+            </span>
+          ) : (
+            <span
+              key={i}
+              className="rounded-[2px]"
+              style={{ background: routeColor(i).line, opacity: i < pastBefore ? 0.35 : 1 }}
+            />
+          ),
+        )}
       </div>
       {todayIndex !== null && todayIndex >= 0 && todayIndex < n && (
         <span
@@ -50,7 +64,9 @@ export function RouteBar({
             'absolute top-0 size-1.5 -translate-x-1/2 rounded-full',
             onColor ? 'bg-white' : 'bg-fg',
           )}
-          style={{ left: `${((todayIndex + 0.5) / n) * 100}%` }}
+          style={{
+            left: `${(onColor ? filled / n : (todayIndex + 0.5) / n) * 100}%`,
+          }}
         />
       )}
     </div>

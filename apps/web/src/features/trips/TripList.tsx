@@ -153,6 +153,10 @@ function TripSection({
   );
 }
 
+/** "HH:mm" → 하루 중 지난 분 (없으면 0) */
+const minutesOf = (hm: string | null) =>
+  hm ? Number(hm.slice(0, 2)) * 60 + Number(hm.slice(3, 5)) : 0;
+
 /** 여행 ⋯ 메뉴 (삭제 → 실행 취소). 목록과 홈 맨 위 카드가 같이 쓴다 */
 export function TripMenuSheet({
   trip,
@@ -247,26 +251,27 @@ export function TripCard({
           {trip.cover.emoji ?? '🧳'}
         </span>
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-          {/* [D-day] 제목 — 제목이 길면 D-day 뒤로 이어 두 줄까지 (제목은 두 줄 허용, docs/11 §13-8) */}
+          {/* [D-day] 제목 👥 — D-day는 따로 칸이라 제목이 두 줄이 돼도 둘째 줄이 제목 첫 글자 아래에서 시작한다.
+              D-day·인원은 제목 첫 줄 가운데 높이에 맞춘다 (사용자 요청 2026-11-23: 위아래 정렬) */}
           <span className="flex min-w-0 items-start gap-1.5">
-            <span className="line-clamp-2 min-w-0 text-body-1">
-              <span
-                className={cn(
-                  'tabular mr-1.5 inline-block rounded-full px-2 py-0.5 align-[2px] text-micro',
-                  onColor
-                    ? 'bg-white/20 text-white'
-                    : isPast
-                      ? 'bg-bg-subtle text-fg-muted'
-                      : 'bg-primary-weak text-primary',
-                )}
-              >
-                {badge}
-              </span>
-              {trip.title}
+            <span
+              className={cn(
+                'tabular mt-0.5 shrink-0 rounded-full px-2 py-0.5 text-micro',
+                onColor
+                  ? 'bg-white/20 text-white'
+                  : isPast
+                    ? 'bg-bg-subtle text-fg-muted'
+                    : 'bg-primary-weak text-primary',
+              )}
+            >
+              {badge}
             </span>
+            <span className="line-clamp-2 min-w-0 text-body-1">{trip.title}</span>
             {/* 함께 쓰는 사람 (docs/16 E1) — 제목 오른쪽 */}
             {members > 1 && (
-              <span className={cn('tabular mt-1 shrink-0 text-micro', sub)}>
+              <span
+                className={cn('tabular mt-1 flex shrink-0 items-center gap-0.5 text-micro', sub)}
+              >
                 <InlineIcon icon={Users} className={sub} />
                 {members}
                 {role === 'viewer' && ` · ${t('share.role.viewer')}`}
@@ -310,6 +315,13 @@ export function TripCard({
               pastBefore={isPast ? total : dayNow === null ? 0 : dayNow - 1}
               label={badge}
               onColor={onColor}
+              progress={
+                isPast
+                  ? 1
+                  : status === 'ongoing' && dayNow !== null
+                    ? (dayNow - 1 + minutesOf(localNow) / 1440) / total
+                    : 0
+              }
             />
           </span>
         </span>

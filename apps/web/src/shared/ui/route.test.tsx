@@ -168,4 +168,12 @@ describe('GateProgress · RouteBar · Stamp', () => {
     expect(screen.getByRole('img', { name: '4일 중 2일차' })).toBeInTheDocument();
     expect(screen.getByRole('img', { name: '도쿄 2026년 11월' })).toHaveTextContent('TOKYO');
   });
+
+  it('색 바탕 노선 막대: 지난 만큼 채운다 — 4일 중 2일차 정오면 1칸 다 + 2칸째 절반 (2026-11-23)', () => {
+    render(<RouteBar days={4} todayIndex={1} label="진행" onColor progress={1.5 / 4} />);
+    const fills = [...screen.getByRole('img', { name: '진행' }).querySelectorAll('.bg-white')]
+      .filter((el) => el.classList.contains('absolute') && el.classList.contains('inset-y-0'))
+      .map((el) => (el as HTMLElement).style.width);
+    expect(fills).toEqual(['100%', '50%', '0%', '0%']);
+  });
 });
