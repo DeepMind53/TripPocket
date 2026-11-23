@@ -38,6 +38,48 @@ it('회화 소리로 듣기 (정식, 늘 켜짐): 그 말 목소리로 읽고 �
   expect(spoken).toHaveLength(1);
 });
 
+it('소리로 듣기: 아이폰 무음 모드에서도 들리게, 읽는 중에 다시 누르면 멈췄다가 새로 읽는다 (사용자 제보 2026-11-23)', async () => {
+  const log: string[] = [];
+  const session = { type: 'auto' };
+  Object.defineProperty(navigator, 'audioSession', { value: session, configurable: true });
+  vi.stubGlobal(
+    'SpeechSynthesisUtterance',
+    class {
+      lang = '';
+      voice: unknown = null;
+      rate = 1;
+      constructor(public text: string) {}
+    },
+  );
+  let speaking = false;
+  vi.stubGlobal('speechSynthesis', {
+    get speaking() {
+      return speaking;
+    },
+    pending: false,
+    getVoices: () => [
+      { lang: 'ja-JP', name: 'Bells', localService: true, default: false },
+      { lang: 'ja-JP', name: 'Kyoko', localService: true, default: true },
+    ],
+    cancel: () => log.push('cancel'),
+    resume: () => log.push('resume'),
+    speak: (u: { voice: { name: string } }) => {
+      log.push(`speak ${u.voice.name}`);
+      speaking = true;
+    },
+  });
+  render(<SpeakButton text="ありがとう" lang="ja" />);
+  const user = userEvent.setup();
+  await user.click(screen.getByRole('button', { name: '소리로 듣기' }));
+  expect(session.type).toBe('playback');
+  // 기기 기본 목소리, 멈춤 없이 바로
+  expect(log).toEqual(['resume', 'speak Kyoko']);
+  await user.click(screen.getByRole('button', { name: '소리로 듣기' }));
+  await vi.waitFor(() => expect(log).toHaveLength(5));
+  expect(log.slice(2)).toEqual(['cancel', 'resume', 'speak Kyoko']);
+  delete (navigator as Navigator & { audioSession?: unknown }).audioSession;
+});
+
 const osaka = {
   id: 't1',
   title: '오사카',
