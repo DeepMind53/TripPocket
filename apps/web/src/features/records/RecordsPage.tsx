@@ -7,7 +7,7 @@ import { EmptyState, TopBar } from '../../shared/ui';
 import { CountryGrid } from './CountryGrid';
 import { TripList } from '../trips/TripList';
 import { TravelReview } from './TravelReview';
-import { VisitLog } from './VisitLog';
+import { VisitSummary } from './VisitSummary';
 import { DayNoteLog } from './DayNoteLog';
 import { TripCardSave } from './TripCardSave';
 import { PhotoAlbum } from './PhotoAlbum';
@@ -55,7 +55,7 @@ export function RecordsPage() {
         </section>
 
         <TravelReview pastTrips={past} />
-        <VisitLog trips={trips ?? []} />
+        <VisitSummary trips={trips ?? []} />
         <DayNoteLog trips={trips ?? []} />
         <TripCardSave pastTrips={past} />
         <PhotoAlbum />

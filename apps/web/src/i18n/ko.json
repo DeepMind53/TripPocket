@@ -2098,7 +2098,29 @@
     "historyCount": "방문기록 {{n}}회",
     "detailLabel": "방문 기록",
     "none": "기록 없음",
-    "groupLabel": "{{name}} 방문 기록"
+    "groupLabel": "{{name}} 방문 기록",
+    "allLink": "전체 보기",
+    "summary": "방문 {{visited}} · 미방문 {{skipped}} · 도시 {{cities}}곳",
+    "tripCount": "방문 {{visited}}/{{total}}",
+    "searchLabel": "방문 기록 검색",
+    "searchPlaceholder": "장소·메모·도시 검색",
+    "viewLabel": "보기",
+    "view": {
+      "trip": "여행별",
+      "city": "도시별",
+      "place": "장소별"
+    },
+    "filterLabel": "고르기",
+    "filterAll": "전체",
+    "otherCity": "기타 지역",
+    "cityMeta": "방문 {{visited}} · 여행 {{trips}}번",
+    "placeTimes": "방문 {{n}}번",
+    "noResult": "찾는 장소가 없어요",
+    "clearSearch": "검색 지우기",
+    "openPlan": "일정에서 보기",
+    "saveToSaved": "저장 탭에 담기",
+    "savedDone": "저장 탭에 담았어요",
+    "savedExists": "이미 저장한 곳이에요"
   },
   "emergency": {
     "title": "긴급 연락처",

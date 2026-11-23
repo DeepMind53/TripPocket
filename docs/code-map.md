@@ -47,6 +47,7 @@ Tailscale Funnel https://jin-server.tail0844c0.ts.net ─▶ 홈 PC 127.0.0.1:87
 - **화면 문구**: `apps/web/src/i18n/ko.json` (키는 타입 검사됨 — 없는 키는 빌드 실패)
 - **새 화면**: `features/<기능>/XxxPage.tsx` + `app/router.tsx`에 `lazy` 경로. 첫 화면 예산 300KB(`pnpm size`)
 - **일정 화면** (2026-11-17 나눔, 파일당 컴포넌트 1개): `itinerary/PlanPage.tsx`(화면 상태·시트) → `DaySection.tsx`(하루) → `ItemRow`·`BookingLine`·`LegLine`·`SunLine`, 빈 날 `EmptyDayRow`·`EmptyRun`(묶기 `planSections.ts`), 크게 본 지도 아래 카드 `MapPager`. 지도 크기 규칙 `domain/mapView.ts`, 시트 대상(날짜·일정)은 `useRouteSheet(...)`의 `setOpen(true, arg)` → `useSheetArg` (브라우저 기록에 저장돼 새로고침해도 같은 대상)
+- **방문 기록** (2026-11-24, docs/32): 기록 탭 요약 `records/VisitSummary.tsx` → 전체 `/records/visits` `records/VisitLogPage.tsx`(묶음 `VisitGroup`·줄 `VisitRow`·상세 `VisitItemSheet`). 도시 판정·검색·묶기는 `domain/visitLog.ts`
 - **여행 목록**: `features/trips/TripList.tsx`(목록·묶음·카드 — 홈·기록·내 여행이 함께 씀), `TripsPage.tsx`는 `/trips` 화면 틀만 (2026-11-12 나눔)
 - **새 설정 항목**: shared `settings/settings.ts`(검사·기본값) → `SettingsPage`
 - **일정 표시 기능 (설정 "일정")**: shared `PLAN_FEATURES`에 추가 + `features/settings/planLabels.ts` + `FeaturePreview` 샘플. 처음엔 끔, `features/me/PlanFeaturePrompt.tsx`가 접속마다 하나씩 묻고 `planPromptSeen`(계정 설정, 서버가 합침)에 남긴다. `planPromptV`가 없는 옛 설정은 모두 끄고 다시 묻는다

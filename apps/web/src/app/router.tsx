@@ -21,6 +21,13 @@ const allRoutes: RouteObject[] = [
           Component: (await import('../features/records/RecordsPage')).RecordsPage,
         }),
       },
+      // 방문 기록 전체 (2026-11-24, docs/32) — 탭 아래 화면이라 탭 바는 그대로
+      {
+        path: 'records/visits',
+        lazy: async () => ({
+          Component: (await import('../features/records/VisitLogPage')).VisitLogPage,
+        }),
+      },
       {
         path: 'saved',
         lazy: async () => ({ Component: (await import('../features/saved/SavedPage')).SavedPage }),
