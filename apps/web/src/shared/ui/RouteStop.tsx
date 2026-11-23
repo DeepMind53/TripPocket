@@ -117,7 +117,7 @@ export function RouteStop({
           onClick={onClick}
           className={cn(
             'col-span-2 grid grid-cols-subgrid rounded-btn text-left active:bg-bg-subtle',
-            dense ? 'min-h-11 pb-2' : 'min-h-14 pb-3',
+            dense ? 'min-h-11 pb-3' : 'min-h-14 pb-3',
           )}
         >
           {body}
@@ -127,13 +127,18 @@ export function RouteStop({
           aria-label={ariaLabel}
           className={cn(
             'col-span-2 grid grid-cols-subgrid',
-            dense ? 'min-h-11 pb-2' : 'min-h-14 pb-3',
+            dense ? 'min-h-11 pb-3' : 'min-h-14 pb-3',
           )}
         >
           {body}
         </div>
       )}
-      {trailing && <span className="flex items-start pt-0.5">{trailing}</span>}
+      {/* 오른쪽(방문 버튼·시각 날씨)은 제목 첫 줄 높이 칸의 가운데에 — 더 크면 위아래로 같이 넘친다 (사용자 요청 2026-11-23: 정렬) */}
+      {trailing && (
+        <span className="flex h-[calc(var(--text-body-1--line-height)+2px)] items-center self-start">
+          {trailing}
+        </span>
+      )}
     </li>
   );
 }

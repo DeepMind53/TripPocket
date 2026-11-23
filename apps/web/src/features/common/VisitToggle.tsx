@@ -44,7 +44,8 @@ export function VisitToggle({
             }}
             className={cn(
               'rounded-btn border text-caption font-semibold',
-              vertical ? 'h-9' : 'h-9 px-2.5',
+              // 가로 줄: 높이 28px로 줄여 옆 제목·시각 한 줄과 맞춘다 (사용자 요청 2026-11-23). 폭은 40px 이상(누르기 기준)
+              vertical ? 'h-9' : 'h-7 min-w-10 px-2',
               on
                 ? v === 'visited'
                   ? 'border-primary bg-primary text-on-primary'
