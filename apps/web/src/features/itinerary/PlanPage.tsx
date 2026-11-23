@@ -25,6 +25,8 @@ import {
   Map as MapIcon,
   MapPinned,
   Route,
+  Search,
+  Sparkles,
 } from 'lucide-react';
 import { dayText, nextStop, visitableItemIds } from '../../domain/dayTools';
 import { NextStopBar } from './NextStopBar';
@@ -705,11 +707,22 @@ function PlanView({
         {items.length === 0 && canEdit && !editing && (
           <div className="flex flex-col gap-2 rounded-card bg-bg-subtle p-4">
             <p className="text-body-2 font-semibold">{t('plan.startTitle')}</p>
+            {/* 카드와 같은 회색 버튼이라 누르는 곳인지 안 보였다 → 흰 바탕 + 테두리 + 아이콘 (사용자 요청 2026-11-23) */}
             <div className="grid grid-cols-2 gap-2">
-              <Button variant="secondary" onClick={() => void navigate(`/trips/${trip.id}/places`)}>
+              <Button
+                variant="secondary"
+                className="border border-line bg-surface text-primary"
+                leading={<Search aria-hidden="true" className="size-4" />}
+                onClick={() => void navigate(`/trips/${trip.id}/places`)}
+              >
                 {t('plan.startPlaces')}
               </Button>
-              <Button variant="secondary" onClick={() => void navigate(`/ai?trip=${trip.id}`)}>
+              <Button
+                variant="secondary"
+                className="border border-line bg-surface text-primary"
+                leading={<Sparkles aria-hidden="true" className="size-4" />}
+                onClick={() => void navigate(`/ai?trip=${trip.id}`)}
+              >
                 {t('plan.startAi')}
               </Button>
             </div>

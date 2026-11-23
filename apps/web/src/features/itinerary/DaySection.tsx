@@ -37,13 +37,7 @@ import { useTranslation } from '../../i18n';
 import { type BookingRow, type LodgingNight } from '../../domain/lodging';
 import { cn } from '../../shared/lib/cn';
 import { formatMonthDay } from '../../shared/lib/dateFormat';
-import {
-  IconButton,
-  routeColor,
-  routeStyle,
-  ROUTE_LINE_CLASS,
-  useRouteLine,
-} from '../../shared/ui';
+import { IconButton, routeStyle, ROUTE_LINE_CLASS, useRouteLine } from '../../shared/ui';
 import { sunSlot } from '../../domain/sun';
 import { dayRecap, nearbyWishes } from '../../domain/dayExtras';
 import { lateNightAt } from '../../domain/travelExtras';
@@ -55,6 +49,7 @@ import { ShorterOrderHint } from './ShorterOrderHint';
 import { type DayPlanInfo } from './usePlanView';
 import { distanceKm, formatDistance, walkMinutes } from '@trippocket/shared';
 import { DayWeatherBadge } from '../common/DayWeatherBadge';
+import { DayRoll } from './DayRoll';
 import { type TripDayWeather } from '../common/useTripWeather';
 import { RollingSlot } from '../../shared/ui';
 import { BookingLine } from './BookingLine';
@@ -207,27 +202,7 @@ export function DaySection({
   const lastCoords = [...tracked].reverse().find((i) => i.place?.coords)?.place?.coords;
   const visited = tracked.filter((i) => i.visit === 'visited' || i.done).length;
   const skipped = tracked.filter((i) => i.visit === 'skipped').length;
-  // 일차 알약은 진한 노선 색 + on-primary 글자 (8색 모두 4.5:1, docs/29 §3.1)
-  const dayInk = routeColor(index).ink;
-  // "N일차" 알약과 날짜를 한 칸에서 3초마다 번갈아 — 날씨·오늘 칸처럼 (사용자 요청 2026-11-18).
-  // 칸 폭은 날짜(더 긴 쪽)에 맞춰 고정하고 알약도 그 폭을 채운다 — 바뀔 때 옆 버튼·날씨가 좌우로 흔들리지 않게 (사용자 요청 2026-11-23)
-  const dayRoll = date ? (
-    <RollingSlot
-      reserve
-      items={[
-        <span
-          key="day"
-          className="w-full rounded-full px-2.5 py-0.5 text-center text-caption font-semibold whitespace-nowrap text-on-primary"
-          style={{ background: dayInk }}
-        >
-          {t('plan.dayN', { n: index + 1 })}
-        </span>,
-        <span key="date" className="text-body-1 font-semibold whitespace-nowrap">
-          {formatMonthDay(date)}
-        </span>,
-      ]}
-    />
-  ) : null;
+  const dayRoll = date ? <DayRoll date={date} index={index} /> : null;
   const title = date
     ? t('plan.dayHeader', { n: index + 1, date: formatMonthDay(date) })
     : t('plan.wishlist');
