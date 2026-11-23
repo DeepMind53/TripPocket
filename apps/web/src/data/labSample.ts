@@ -197,7 +197,7 @@ async function createJapan(): Promise<string> {
     kind: 'lodging',
     title: '호텔 그레이스리 신주쿠',
     confirmationNo: 'HTL777',
-    start: { date: today, time: '15:00' },
+    start: { date: today, time: '15:00', coords: { lat: 35.6951, lng: 139.7017 } },
     end: { date: day(4), time: '11:00' },
     details: {
       address: '도쿄 신주쿠구 가부키초 1-19-1',
@@ -377,7 +377,7 @@ async function createTaiwan(): Promise<void> {
     kind: 'lodging',
     title: '시티즌M 타이베이 북역',
     confirmationNo: 'CZM58',
-    start: { date: day(6), time: '15:00' },
+    start: { date: day(6), time: '15:00', coords: { lat: 25.0486, lng: 121.5114 } },
     end: { date: day(9), time: '11:00' },
     details: {
       address: '타이베이 다퉁구 청더로 1단 3',
@@ -476,7 +476,7 @@ async function createKorea(): Promise<void> {
     kind: 'lodging',
     title: '애월 바다 스테이',
     confirmationNo: 'STAY32',
-    start: { date: s0, time: '16:00' },
+    start: { date: s0, time: '16:00', coords: { lat: 33.4627, lng: 126.3094 } },
     end: { date: day(2), time: '11:00' },
     details: { address: '제주 제주시 애월읍 애월해안로 272', payment: 'paid' },
   });

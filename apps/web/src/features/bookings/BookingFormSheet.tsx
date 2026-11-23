@@ -57,6 +57,8 @@ const CANCEL_KINDS = new Set<Booking['kind']>([
 const PAYMENT_KINDS = new Set<Booking['kind']>(['lodging', 'car', 'transfer', 'tour']);
 const VOUCHER_KINDS = new Set<Booking['kind']>(['transfer', 'tour', 'ticket', 'other']);
 const PARTY_KINDS = new Set<Booking['kind']>(['tour', 'ticket']);
+/** 이름 검색으로 장소를 고르는 예약 (좌표는 start.coords에) */
+const PICK_KINDS = new Set<Booking['kind']>(['lodging', 'restaurant']);
 
 const KINDS: Booking['kind'][] = [
   'flight',
@@ -381,7 +383,7 @@ function BookingForm({
         date: f.startDate,
         time: v(f.startTime),
         place: v(f.from),
-        coords: placed && v(f.from) ? f.fromCoords : undefined,
+        coords: (placed && v(f.from)) || PICK_KINDS.has(kind) ? f.fromCoords : undefined,
         address: kind === 'train' && v(f.from) ? f.fromAddress : undefined,
       }),
       end: carReturn ?? trainArrive,
@@ -711,7 +713,14 @@ function BookingForm({
                 id="bk-title"
                 value={f.title}
                 maxLength={100}
-                onChange={set('title')}
+                // 이름을 직접 고치면 검색으로 고른 좌표는 버린다 (다른 곳일 수 있다)
+                onChange={(e) =>
+                  setF((cur) => ({
+                    ...cur,
+                    title: e.target.value,
+                    ...(PICK_KINDS.has(kind) ? { fromCoords: undefined } : {}),
+                  }))
+                }
                 className={inputClass}
               />
             </Field>
@@ -728,6 +737,8 @@ function BookingForm({
                   title: p.name,
                   address: p.address || cur.address,
                   phone: p.phone || cur.phone,
+                  // 좌표도 저장 — 빠른 메뉴 숙소 방향·일정 지도 핀 (2026-11-24, 전에는 버려서 숙소 방향이 늘 "위치 없음")
+                  fromCoords: p.coords ?? undefined,
                 }))
               }
             />

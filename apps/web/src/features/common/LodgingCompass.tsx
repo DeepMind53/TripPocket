@@ -33,8 +33,10 @@ export function LodgingCompass({ trip }: { trip: Trip }) {
   // 오늘 밤 숙소, 없으면(귀국 날 등) 어젯밤 숙소
   const today = todayIn(trip.timezone);
   const night = lodgingForNight(bookings, today) ?? lodgingForNight(bookings, addDays(today, -1));
+  // 예약에 저장된 좌표(이름 검색으로 고른 숙소) → 없으면 일정에서 고친 숙소 장소 좌표
   const coords = night
-    ? items.find((i) => i.bookingId === night.booking.id && i.place?.coords)?.place?.coords
+    ? (night.booking.start.coords ??
+      items.find((i) => i.bookingId === night.booking.id && i.place?.coords)?.place?.coords)
     : undefined;
   return (
     <>

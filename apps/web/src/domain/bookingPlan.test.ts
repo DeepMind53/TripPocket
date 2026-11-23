@@ -19,6 +19,19 @@ const base = {
 const arrive = (a: string) => `${a} 도착`;
 
 describe('예약 → 일정표 (처음 한 번)', () => {
+  it('숙소: 이름 검색으로 고른 좌표가 일정 장소로 (숙소 방향·지도 핀, 2026-11-24)', () => {
+    const b: Booking = {
+      ...base,
+      id: 'h',
+      kind: 'lodging',
+      title: '호텔 그레이스리 신주쿠',
+      start: { date: '2026-11-01', time: '15:00', coords: { lat: 35.69, lng: 139.7 } },
+      end: { date: '2026-11-03', time: '11:00' },
+    };
+    const [d] = planDraftsFromBooking(b, arrive);
+    expect(d?.place?.coords).toEqual({ lat: 35.69, lng: 139.7 });
+  });
+
   it('항공: 출발 공항(탑승 시각) + 도착 공항(도착 시각), 공항 좌표로 지도 핀', () => {
     const b: Booking = {
       ...base,
