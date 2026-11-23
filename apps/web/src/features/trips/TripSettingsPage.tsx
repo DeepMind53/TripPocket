@@ -213,7 +213,7 @@ function TripSettingsForm({ trip, items }: { trip: Trip; items: ItineraryItem[] 
         </Button>
       </div>
 
-      <div className="sticky bottom-0 border-t border-line bg-bg px-5 pt-3 pb-[max(16px,env(safe-area-inset-bottom))]">
+      <div className="sticky bottom-0 z-20 border-t border-line bg-bg px-5 pt-3 pb-[max(16px,env(safe-area-inset-bottom))]">
         {/* 저장하지 않고 나가기 (사용자 요청 2026-11-02) */}
         <CancelSaveRow onCancel={() => void navigate(`/trips/${trip.id}/plan`, { replace: true })}>
           <Button size="lg" fullWidth loading={saving} onClick={() => void save()}>

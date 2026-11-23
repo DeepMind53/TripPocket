@@ -350,7 +350,7 @@ function TravelView({ trip, items: all }: { trip: Trip; items: ItineraryItem[] }
           아래 탭은 그대로 (사용자 요청 2026-11-10). 고른 탭을 다시 누르면 여행 모드 첫 화면 */}
       <nav
         aria-label={t('travel.thumb')}
-        className="fixed inset-x-0 bottom-0 mx-auto grid max-w-[560px] grid-cols-4 gap-2 border-t border-line bg-surface px-4 pt-2 pb-[calc(var(--safe-bottom,0px)+8px)]"
+        className="fixed inset-x-0 bottom-0 z-30 mx-auto grid max-w-[560px] grid-cols-4 gap-2 border-t border-line bg-surface px-4 pt-2 pb-[calc(var(--safe-bottom,0px)+8px)]"
       >
         <button
           type="button"

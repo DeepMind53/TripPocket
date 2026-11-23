@@ -252,7 +252,7 @@ function StepBody({
         <h2 className="mb-5 text-display">{title}</h2>
         {children}
       </div>
-      <div className="sticky bottom-0 border-t border-line bg-bg px-5 pt-3 pb-[max(16px,env(safe-area-inset-bottom))]">
+      <div className="sticky bottom-0 z-20 border-t border-line bg-bg px-5 pt-3 pb-[max(16px,env(safe-area-inset-bottom))]">
         {footer}
       </div>
     </>
