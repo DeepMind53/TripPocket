@@ -104,3 +104,106 @@ it('API 사용량: 하루 제한 없이 무료 월 100회 — 이번 달 95회�
   expect(res.json()).toEqual({ error: 'api_paused', api: 'aviationstack' });
   expect(urls).toHaveLength(2); // 앞의 KE703 조회만
 });
+
+describe('지방 공항 편 — 한국공항공사 API로 보완 (청주 RF511 등)', () => {
+  let kacApp: FastifyInstance;
+  let aviation: unknown;
+  const kac = {
+    response: {
+      body: {
+        items: {
+          item: [
+            {
+              airFln: 'RF511',
+              airlineKorean: '에어로케이',
+              io: 'O',
+              airport: 'CJJ',
+              city: 'TPE',
+              std: '0845',
+            },
+          ],
+        },
+      },
+    },
+  };
+  beforeEach(async () => {
+    kacApp = await buildApp(
+      loadConfig({
+        NODE_ENV: 'test',
+        WEB_ORIGIN: ORIGIN,
+        PROXY_SECRET: SECRET,
+        AVIATIONSTACK_KEY: 'k',
+        DATA_GO_KR_KEY: 'd',
+      }),
+      db,
+    );
+    aviation = { data: [] };
+    vi.stubGlobal('fetch', async (url: string | URL) => {
+      const u = String(url);
+      urls.push(u);
+      return Response.json(u.includes('data.go.kr') ? kac : aviation);
+    });
+  });
+  afterEach(async () => {
+    await kacApp.close();
+  });
+  const getK = (no: string) =>
+    kacApp.inject({
+      method: 'GET',
+      url: `/api/flights/${no}`,
+      headers: { [PROXY_HEADER]: SECRET, origin: ORIGIN, cookie: `__Host-sid=${sid}` },
+    });
+
+  it('AviationStack에 없으면 공사 값(출발 공항·시각·한국어 항공사)으로', async () => {
+    const res = await getK('RF511');
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({
+      flightNo: 'RF511',
+      airline: '에어로케이',
+      from: { iata: 'CJJ', time: '08:45' },
+      to: { iata: 'TPE' },
+    });
+  });
+
+  it('둘 다 있으면 합친다 — 도착 시각·터미널은 AviationStack, 항공사 이름은 한국어', async () => {
+    aviation = {
+      data: [
+        {
+          flight_date: '2026-11-23',
+          airline: { name: 'E-Cargo Airlines' },
+          departure: { iata: 'CJJ', scheduled: '2026-11-23T08:45:00+00:00' },
+          arrival: { iata: 'TPE', terminal: '1', scheduled: '2026-11-23T10:30:00+00:00' },
+        },
+      ],
+    };
+    expect((await getK('RF511')).json()).toEqual({
+      flightNo: 'RF511',
+      airline: '에어로케이',
+      from: { iata: 'CJJ', time: '08:45' },
+      to: { iata: 'TPE', terminal: '1', time: '10:30' },
+    });
+  });
+
+  it('AviationStack이 멈춰도 공사 값이 있으면 보여 준다', async () => {
+    db.prepare("INSERT INTO api_usage (api, date, count) VALUES ('aviationstack', ?, 99)").run(
+      new Date().toISOString().slice(0, 10),
+    );
+    expect((await getK('RF511')).statusCode).toBe(200);
+  });
+
+  it('못 찾은 결과는 오래 남기지 않는다 (30분 뒤 다시 조회)', async () => {
+    kac.response.body.items.item = [];
+    vi.useFakeTimers({ toFake: ['Date'] });
+    try {
+      expect((await getK('RF511')).statusCode).toBe(404);
+      const n = urls.length;
+      await getK('RF511');
+      expect(urls).toHaveLength(n); // 잠깐은 저장본
+      vi.setSystemTime(Date.now() + 31 * 60_000);
+      await getK('RF511');
+      expect(urls.length).toBeGreaterThan(n);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
