@@ -339,8 +339,8 @@ function ItemForm({
         />
       </Field>
 
-      {/* 저장하지 않고 나가기 — 왼쪽 1/5 빨간 [취소] (사용자 요청 2026-11-02) */}
-      <CancelSaveRow onCancel={onDone}>
+      {/* 저장하지 않고 나가기 — 왼쪽 1/5 [취소] (사용자 요청 2026-11-02) */}
+      <CancelSaveRow docked onCancel={onDone}>
         <Button type="submit" size="lg" fullWidth loading={saving}>
           {t(item ? 'form.save' : 'form.add')}
         </Button>

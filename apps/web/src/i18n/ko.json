@@ -30,8 +30,7 @@
     "cancel": "취소",
     "copyFailed": "복사하지 못했어요\n길게 눌러 직접 복사해 주세요",
     "copied": "복사했어요",
-    "loading": "불러오는 중",
-    "swipeMore": "밀어서 더 보기"
+    "loading": "불러오는 중"
   },
   "quickMenu": {
     "title": "빠른 메뉴",
@@ -325,7 +324,7 @@
     "restaurantName": "음식점 이름",
     "departTerminal": "출발 터미널",
     "arriveTerminal": "도착 터미널",
-    "airportPlaceholder": "공항·도시 또는 코드 ({{example}})",
+    "airportPlaceholder": "공항 이름·코드",
     "airportResults": "공항 검색 결과",
     "lookup": "불러오기",
     "lookupNote": "최근 운항 기준으로 채웠어요\n실제 날짜의 시간은 다를 수 있어요",
@@ -1704,7 +1703,11 @@
     "fxValue": "{{unit}} {{code}} = {{won}}원",
     "fxOpen": "환율 계산기 열기",
     "ai": "{{place}}에서 뭐 하지? AI 추천 받기",
-    "needsAttention": "확인이 필요해요"
+    "needsAttention": "확인이 필요해요",
+    "attnLodging": "숙소 없음",
+    "attnPacking": "짐 목록 없음",
+    "attnPackLeft": "짐 남음",
+    "attnDocs": "서류 확인"
   },
   "weather": {
     "pastShort": "과거 날씨",

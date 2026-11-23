@@ -17,5 +17,5 @@ it('취소를 누르면 저장하지 않고 닫는다', async () => {
   await user.click(screen.getByRole('button', { name: '취소' }));
   expect(cancel).toHaveBeenCalledTimes(1);
   expect(save).not.toHaveBeenCalled();
-  expect(screen.getByRole('button', { name: '취소' })).toHaveClass('w-1/5', 'bg-danger');
+  expect(screen.getByRole('button', { name: '취소' })).toHaveClass('w-1/5', 'bg-bg-subtle');
 });

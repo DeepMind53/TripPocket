@@ -1,8 +1,7 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { ScrollRow } from './ScrollRow';
 
-it('오른쪽에 더 있으면 끝을 흐리게 + › (화면 읽기 "밀어서 더 보기") — 미는 동안 숨고 멈추면 다시, 끝까지 밀면 사라짐', () => {
-  vi.useFakeTimers();
+it('오른쪽에 더 있으면 끝을 흐리게 — 끝까지 밀면 흐림이 사라진다 (› 동그라미는 없음, 2026-11-23)', () => {
   const sizes = { scrollWidth: 600, clientWidth: 300, scrollLeft: 0 };
   for (const k of Object.keys(sizes) as (keyof typeof sizes)[])
     Object.defineProperty(HTMLElement.prototype, k, {
@@ -14,17 +13,12 @@ it('오른쪽에 더 있으면 끝을 흐리게 + › (화면 읽기 "밀어서 
       <button>a</button>
     </ScrollRow>,
   );
-  const hint = screen.getByText('밀어서 더 보기').parentElement!;
-  expect(hint.className).toContain('opacity-100');
-  fireEvent.scroll(screen.getByRole('toolbar'));
-  expect(hint.className).toContain('opacity-0');
-  act(() => vi.advanceTimersByTime(800));
-  expect(hint.className).toContain('opacity-100');
+  const row = screen.getByRole('toolbar');
+  expect(row.className).toContain('mask-image');
+  expect(row.parentElement!.querySelector('svg')).toBeNull();
   sizes.scrollLeft = 300;
-  fireEvent.scroll(screen.getByRole('toolbar'));
-  act(() => vi.advanceTimersByTime(800));
-  expect(hint.className).toContain('opacity-0');
+  fireEvent.scroll(row);
+  expect(row.className).not.toContain('mask-image');
   for (const k of Object.keys(sizes))
     delete (HTMLElement.prototype as unknown as Record<string, unknown>)[k];
-  vi.useRealTimers();
 });

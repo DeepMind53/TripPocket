@@ -519,16 +519,15 @@ describe('편명으로 불러오기', () => {
     useAuth.setState({ status: 'unknown', me: null });
   });
 
-  it('점선 칸의 출발 날짜와 아래 출발 날짜는 같은 값으로 함께 바뀐다', async () => {
+  it('출발 날짜는 점선 칸에서만 고르고, 아래 줄은 같은 날짜를 글자로 보여 준다 (2026-11-23)', async () => {
     const user = userEvent.setup();
     renderAt([`/trips/${tripId}/bookings`]);
     await user.click(await screen.findByRole('button', { name: '예약 추가' }));
     const sheet = screen.getByRole('dialog', { name: '예약 추가' });
-    const [box, below] = within(sheet).getAllByLabelText('출발 날짜');
-    fireEvent.change(box!, { target: { value: '2026-10-25' } });
-    expect(below).toHaveValue('2026-10-25');
-    fireEvent.change(below!, { target: { value: '2026-10-26' } });
-    expect(box).toHaveValue('2026-10-26');
+    const inputs = within(sheet).getAllByLabelText('출발 날짜');
+    expect(inputs).toHaveLength(1);
+    fireEvent.change(inputs[0]!, { target: { value: '2026-10-25' } });
+    expect(sheet.querySelector('#bk-depart-date')).toHaveTextContent('10.25');
   });
 });
 

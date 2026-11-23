@@ -545,7 +545,7 @@ function BookingForm({
               id="bk-from"
               label={t('bookings.from')}
               value={f.from}
-              placeholder={t('bookings.airportPlaceholder', { example: 'ICN' })}
+              placeholder={t('bookings.airportPlaceholder')}
               onChange={(value) => set('from')({ target: { value } })}
             />
             <Field label={t('bookings.departTerminal')}>
@@ -567,6 +567,8 @@ function BookingForm({
             onDate={set('startDate')}
             onTime={set('startTime')}
             idPrefix="bk-depart"
+            // 날짜는 위 점선 칸에서만 고른다 — 같은 칸이 두 번 있어 헷갈리지 않게 글자로만 (사용자 요청 2026-11-23)
+            dateAsText
           />
           <hr aria-hidden="true" className="my-1 border-t-2 border-dashed border-line" />
           <Row>
@@ -574,7 +576,7 @@ function BookingForm({
               id="bk-to"
               label={t('bookings.to')}
               value={f.to}
-              placeholder={t('bookings.airportPlaceholder', { example: 'NRT' })}
+              placeholder={t('bookings.airportPlaceholder')}
               onChange={(value) => set('to')({ target: { value } })}
             />
             <Field label={t('bookings.arriveTerminal')}>
@@ -1350,13 +1352,11 @@ function BookingForm({
       )}
 
       {/* [저장]은 아래에 붙어 있게 — 칸이 많아도 바로 누를 수 있게 */}
-      <div className="sticky bottom-0 -mx-5 bg-surface px-5 pt-2 pb-1">
-        <CancelSaveRow onCancel={onDone}>
-          <Button type="submit" size="lg" fullWidth loading={saving}>
-            {t(b ? 'form.save' : 'bookings.add')}
-          </Button>
-        </CancelSaveRow>
-      </div>
+      <CancelSaveRow docked onCancel={onDone}>
+        <Button type="submit" size="lg" fullWidth loading={saving}>
+          {t(b ? 'form.save' : 'bookings.add')}
+        </Button>
+      </CancelSaveRow>
       {b && (
         <Button
           variant="secondary"
@@ -1440,20 +1440,34 @@ function DateTimeRow(props: {
   onDate: (e: { target: { value: string } }) => void;
   onTime: (e: { target: { value: string } }) => void;
   idPrefix: string;
+  /** 날짜를 고치지 않고 보여 주기만 (다른 칸에서 고르는 날짜) */
+  dateAsText?: boolean;
 }) {
   const timeStep = useSettings((st) => st.timeStepMin) * 60;
   return (
     <Row>
-      <Field label={props.dateLabel}>
-        <input
-          id={`${props.idPrefix}-date`}
-          type="date"
-          required
-          value={props.date}
-          onChange={props.onDate}
-          className={`${inputClass} tabular`}
-        />
-      </Field>
+      {props.dateAsText ? (
+        <div className="flex min-w-0 flex-col gap-1.5">
+          <span className="text-caption font-semibold text-fg-sub">{props.dateLabel}</span>
+          <span
+            id={`${props.idPrefix}-date`}
+            className="tabular flex h-12 items-center px-1 text-body-1 text-fg"
+          >
+            {props.date ? formatMonthDay(props.date) : '-'}
+          </span>
+        </div>
+      ) : (
+        <Field label={props.dateLabel}>
+          <input
+            id={`${props.idPrefix}-date`}
+            type="date"
+            required
+            value={props.date}
+            onChange={props.onDate}
+            className={`${inputClass} tabular`}
+          />
+        </Field>
+      )}
       <Field label={props.timeLabel}>
         <TimeInput
           id={`${props.idPrefix}-time`}

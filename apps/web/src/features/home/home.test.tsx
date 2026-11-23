@@ -16,6 +16,8 @@ it('여행 전 홈: 준비 현황 4장(준비물·예약·날씨 정보·환율)
   // 기본은 한 줄 요약 (docs/20 U3) — 누르면 펼침
   const summary = within(prep).getByRole('button', { expanded: false });
   await waitFor(() => expect(summary).toHaveTextContent('0/1'));
+  // 확인할 것은 점 대신 글자로 (2026-11-23)
+  expect(summary).toHaveTextContent('숙소 없음');
   fireEvent.click(summary);
   for (const name of ['준비물', '예약', '날씨 정보', '환율'])
     expect(within(prep).getByRole('link', { name: new RegExp(name) })).toBeInTheDocument();

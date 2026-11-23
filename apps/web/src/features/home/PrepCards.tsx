@@ -41,7 +41,7 @@ import { WeatherIcon } from '../../shared/ui';
 /**
  * 여행 전 홈 "준비 현황" (docs/16 B1, 사용자 결정 2026-10-24: 4장 + AI 추천 버튼).
  * 출발 30일 전부터. 모두 기기에 있는 값(준비물·예약·저장해 둔 환율)과 날씨 예보(3시간 저장)만 — 새 외부 호출은 날씨뿐.
- * 할 일 표시(주황 점): 숙소 예약 없음 / 준비물 없음 / 출발 3일 전인데 준비물이 남음
+ * 할 일 표시(주황 글자, 첫 이유 하나): 숙소 예약 없음 / 준비물 없음 / 출발 3일 전인데 준비물이 남음 / 필수 서류
  */
 export function PrepCards({
   trip,
@@ -98,10 +98,17 @@ export function PrepCards({
       // 기억 못 해도 이번에는 적용
     }
   };
-  const anyAlert =
-    lodgings === 0 ||
-    (packing !== undefined && (total === 0 || (daysLeft <= 3 && packed < total))) ||
-    !!essentials?.alert;
+  // 확인할 것 — 점 대신 첫 번째 이유를 글자로 (사용자 결정 2026-11-23: 점만으로는 뜻을 알 수 없었다)
+  const attention =
+    lodgings === 0
+      ? 'prep.attnLodging'
+      : packing !== undefined && total === 0
+        ? 'prep.attnPacking'
+        : packing !== undefined && daysLeft <= 3 && packed < total
+          ? 'prep.attnPackLeft'
+          : essentials?.alert
+            ? 'prep.attnDocs'
+            : null;
 
   return (
     <section aria-label={t('prep.title')} className="flex flex-col gap-2">
@@ -134,12 +141,8 @@ export function PrepCards({
             </>
           )}
         </span>
-        {anyAlert && (
-          <span
-            role="img"
-            aria-label={t('prep.needsAttention')}
-            className="size-2 shrink-0 rounded-full bg-warning"
-          />
+        {attention && (
+          <span className="shrink-0 text-caption font-semibold text-warning">{t(attention)}</span>
         )}
         <ChevronDown
           aria-hidden="true"
