@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { FastifyInstance } from 'fastify';
@@ -140,4 +140,41 @@ describe('개선 제안 (사용자 요청 2026-10-25)', () => {
     });
     expect(other.statusCode).toBe(404);
   });
+});
+
+it('관리자는 아무 제안이나 지운다 (사진도) — 일반 사용자는 관리자 지우기 불가 (사용자 요청 2026-11-23)', async () => {
+  const { id } = (
+    await app.inject({
+      method: 'POST',
+      url: '/api/suggestions',
+      headers: h('U'),
+      payload: { body: '지워질 제안' },
+    })
+  ).json() as { id: string };
+  await app.inject({
+    method: 'POST',
+    url: `/api/suggestions/${id}/image`,
+    headers: h('U', { 'content-type': 'image/png' }),
+    payload: Buffer.from('png'),
+  });
+  const del = (who: string, sid2 = id) =>
+    app.inject({ method: 'DELETE', url: `/api/admin/suggestions/${sid2}`, headers: h(who) });
+  expect((await del('U')).statusCode).toBe(403);
+  expect(
+    (
+      await app.inject({
+        method: 'DELETE',
+        url: `/api/admin/suggestions/${id}`,
+        headers: { [PROXY_HEADER]: SECRET, origin: ORIGIN },
+      })
+    ).statusCode,
+  ).toBe(401);
+  expect((await del('A')).statusCode).toBe(200);
+  expect(existsSync(join(dataDir, 'suggestions', id))).toBe(false);
+  const mine = (
+    await app.inject({ method: 'GET', url: '/api/suggestions/mine', headers: h('U') })
+  ).json();
+  expect(mine.suggestions).toEqual([]);
+  expect((await del('A')).statusCode).toBe(404);
+  expect((await del('A', '../x')).statusCode).toBe(404);
 });

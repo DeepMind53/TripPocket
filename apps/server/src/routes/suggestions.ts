@@ -166,6 +166,19 @@ export function suggestionRoutes(app: FastifyInstance, config: Config, db: Db): 
     },
   );
 
+  // 관리자 지우기 (사진도) — 제안한 사람의 '보낸 제안'에서도 사라진다 (사용자 요청 2026-11-23)
+  app.delete<{ Params: { id: string } }>(
+    '/api/admin/suggestions/:id',
+    admin,
+    async (req, reply) => {
+      if (!safeId(req.params.id)) return reply.code(404).send({ error: 'not_found' });
+      const res = db.prepare('DELETE FROM suggestions WHERE id = ?').run(req.params.id);
+      if (res.changes === 0) return reply.code(404).send({ error: 'not_found' });
+      rmSync(join(dir(), req.params.id), { force: true });
+      return { ok: true };
+    },
+  );
+
   // 본인 제안 지우기 (사진도)
   app.delete<{ Params: { id: string } }>('/api/suggestions/:id', auth, async (req, reply) => {
     if (!safeId(req.params.id)) return reply.code(404).send({ error: 'not_found' });

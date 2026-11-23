@@ -1941,6 +1941,8 @@
     "sendReply": "답장 보내고 완료",
     "replied": "답장했어요",
     "delete": "제안 지우기",
+    "showDone": "완료 {{n}}개 보기",
+    "noneOpen": "처리할 제안이 없어요",
     "status": {
       "new": "새 제안",
       "read": "읽음",
@@ -2163,6 +2165,7 @@
     "item": "‘{{name}}’ 삭제해요\n7일 안에는 복원할 수 있어요",
     "permanent": "‘{{name}}’ 삭제해요\n되돌릴 수 없어요",
     "suggestion": "보낸 제안을 삭제해요\n되돌릴 수 없어요",
+    "adminSuggestion": "이 제안을 삭제해요\n되돌릴 수 없어요",
     "checklist": "‘{{name}}’ 빼요\n저장해야 반영돼요",
     "group": "‘{{name}}’ 묶음을 모두 빼요\n저장해야 반영돼요"
   },

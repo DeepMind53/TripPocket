@@ -37,6 +37,9 @@ export const suggestionsApi = {
   },
   remove: (id: string) => api(`/api/suggestions/${encodeURIComponent(id)}`, { method: 'DELETE' }),
   adminList: () => api<{ suggestions: Suggestion[] }>('/api/admin/suggestions'),
+  /** 관리자 지우기 (사진도, 사용자 요청 2026-11-23) */
+  adminRemove: (id: string) =>
+    api(`/api/admin/suggestions/${encodeURIComponent(id)}`, { method: 'DELETE' }),
   adminUpdate: (id: string, patch: { status?: Suggestion['status']; reply?: string }) =>
     api(`/api/admin/suggestions/${encodeURIComponent(id)}`, {
       method: 'POST',

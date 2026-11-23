@@ -1,16 +1,21 @@
 import { useEffect, useState } from 'react';
 import { suggestionsApi, type Suggestion } from '../../data/api/suggestions';
 import { useTranslation } from '../../i18n';
-import { Button, Chip, toast, TopBar } from '../../shared/ui';
+import { Trash2 } from 'lucide-react';
+import { Button, Chip, confirmDelete, IconButton, toast, TopBar } from '../../shared/ui';
 import { ServerOfflineNotice } from '../common/ServerOfflineNotice';
 
 const date = (iso: string) => iso.slice(0, 10).replaceAll('-', '.');
 
-/** 관리자 → 개선 제안: 읽음·완료 표시, 답장(제안한 사람에게 알림) */
+/**
+ * 관리자 → 개선 제안: 읽음·완료 표시, 답장(제안한 사람에게 알림), 지우기.
+ * 완료한 것은 목록에서 숨기고 [완료 N개 보기]로 펼친다 (사용자 요청 2026-11-23)
+ */
 export function AdminSuggestionsPage() {
   const { t } = useTranslation();
   const [list, setList] = useState<Suggestion[] | null | 'offline'>(null);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const [showDone, setShowDone] = useState(false);
   const load = () =>
     void suggestionsApi.adminList().then((r) => setList(r.ok ? r.data.suggestions : 'offline'));
   useEffect(load, []);
@@ -24,6 +29,15 @@ export function AdminSuggestionsPage() {
     if (patch.reply) toast(t('suggest.replied'));
     load();
   };
+  const remove = async (s: Suggestion) => {
+    if (!(await confirmDelete(t('confirm.adminSuggestion')))) return;
+    const r = await suggestionsApi.adminRemove(s.id);
+    if (!r.ok) return toast(t('admin.failed'));
+    load();
+  };
+  const all = list === 'offline' ? [] : (list ?? []);
+  const doneCount = all.filter((s) => s.status === 'done').length;
+  const shown = showDone ? all : all.filter((s) => s.status !== 'done');
 
   return (
     <>
@@ -34,57 +48,82 @@ export function AdminSuggestionsPage() {
         ) : list && list.length === 0 ? (
           <p className="py-8 text-center text-body-2 text-fg-muted">{t('suggest.none')}</p>
         ) : (
-          (list ?? []).map((s) => (
-            <article key={s.id} className="flex flex-col gap-2 rounded-card border border-line p-3">
-              <span className="tabular text-caption text-fg-muted">
-                {s.author} · {date(s.createdAt)}
-              </span>
-              <p className="text-body-2">{s.body}</p>
-              {s.hasImage && (
-                <img
-                  src={`/api/admin/suggestions/${s.id}/image`}
-                  alt={t('suggest.withImage')}
-                  className="max-h-64 self-start rounded-btn border border-line object-contain"
-                />
-              )}
-              <div className="flex gap-2">
-                {(['new', 'read', 'done'] as const).map((st) => (
-                  <Chip
-                    key={st}
-                    selected={s.status === st}
-                    onClick={() => void update(s, { status: st })}
-                  >
-                    {t(`suggest.status.${st}`)}
-                  </Chip>
-                ))}
-              </div>
-              {s.reply && (
-                <p className="rounded-btn bg-primary-weak px-3 py-2 text-caption">
-                  <strong className="text-primary">{t('suggest.reply')}</strong> {s.reply}
-                </p>
-              )}
-              <textarea
-                aria-label={t('suggest.replyLabel')}
-                value={drafts[s.id] ?? ''}
-                maxLength={2000}
-                rows={2}
-                placeholder={t('suggest.replyLabel')}
-                onChange={(e) => setDrafts((d) => ({ ...d, [s.id]: e.target.value }))}
-                className="rounded-btn border border-line bg-bg-subtle px-3 py-2 text-body-2 outline-none focus:border-primary"
-              />
-              <Button
-                size="sm"
-                disabled={!(drafts[s.id] ?? '').trim()}
-                onClick={() =>
-                  void update(s, { status: 'done', reply: (drafts[s.id] ?? '').trim() }).then(() =>
-                    setDrafts((d) => ({ ...d, [s.id]: '' })),
-                  )
-                }
+          <>
+            {doneCount > 0 && (
+              <Chip
+                selected={showDone}
+                onClick={() => setShowDone((v) => !v)}
+                className="self-start"
               >
-                {t('suggest.sendReply')}
-              </Button>
-            </article>
-          ))
+                {t('suggest.showDone', { n: doneCount })}
+              </Chip>
+            )}
+            {list && shown.length === 0 && (
+              <p className="py-8 text-center text-body-2 text-fg-muted">{t('suggest.noneOpen')}</p>
+            )}
+            {shown.map((s) => (
+              <article
+                key={s.id}
+                className="flex flex-col gap-2 rounded-card border border-line p-3"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="tabular min-w-0 flex-1 text-caption text-fg-muted">
+                    {s.author} · {date(s.createdAt)}
+                  </span>
+                  <IconButton
+                    label={t('suggest.delete')}
+                    icon={<Trash2 />}
+                    className="-my-2 -mr-2"
+                    onClick={() => void remove(s)}
+                  />
+                </div>
+                <p className="text-body-2">{s.body}</p>
+                {s.hasImage && (
+                  <img
+                    src={`/api/admin/suggestions/${s.id}/image`}
+                    alt={t('suggest.withImage')}
+                    className="max-h-64 self-start rounded-btn border border-line object-contain"
+                  />
+                )}
+                <div className="flex gap-2">
+                  {(['new', 'read', 'done'] as const).map((st) => (
+                    <Chip
+                      key={st}
+                      selected={s.status === st}
+                      onClick={() => void update(s, { status: st })}
+                    >
+                      {t(`suggest.status.${st}`)}
+                    </Chip>
+                  ))}
+                </div>
+                {s.reply && (
+                  <p className="rounded-btn bg-primary-weak px-3 py-2 text-caption">
+                    <strong className="text-primary">{t('suggest.reply')}</strong> {s.reply}
+                  </p>
+                )}
+                <textarea
+                  aria-label={t('suggest.replyLabel')}
+                  value={drafts[s.id] ?? ''}
+                  maxLength={2000}
+                  rows={2}
+                  placeholder={t('suggest.replyLabel')}
+                  onChange={(e) => setDrafts((d) => ({ ...d, [s.id]: e.target.value }))}
+                  className="rounded-btn border border-line bg-bg-subtle px-3 py-2 text-body-2 outline-none focus:border-primary"
+                />
+                <Button
+                  size="sm"
+                  disabled={!(drafts[s.id] ?? '').trim()}
+                  onClick={() =>
+                    void update(s, { status: 'done', reply: (drafts[s.id] ?? '').trim() }).then(
+                      () => setDrafts((d) => ({ ...d, [s.id]: '' })),
+                    )
+                  }
+                >
+                  {t('suggest.sendReply')}
+                </Button>
+              </article>
+            ))}
+          </>
         )}
       </div>
     </>
