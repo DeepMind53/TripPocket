@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { tripRepo } from '../../data/repositories/tripRepo';
 import { DAY_NOTE_MAX, setDayNote } from '../../domain/dayNotes';
 import { useTranslation } from '../../i18n';
+import { isSubmitEnter } from '../../shared/lib/keys';
 
 /**
  * 하루 한 줄 기록 (실험실 dayNote, 2026-11-10): 오늘·지난 날 일정 아래 한 줄. 저장 버튼 없이 칸을 벗어나면 저장
@@ -30,7 +31,7 @@ export function DayNoteField({ trip, date }: { trip: Trip; date: string }) {
         onChange={(e) => setText(e.target.value)}
         onBlur={save}
         onKeyDown={(e) => {
-          if (e.key === 'Enter') e.currentTarget.blur();
+          if (isSubmitEnter(e)) e.currentTarget.blur();
         }}
         className="h-11 min-w-0 flex-1 bg-transparent text-body-2 outline-none placeholder:text-fg-muted"
       />

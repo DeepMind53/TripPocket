@@ -100,6 +100,8 @@ export function ReportFormSheet({
     <BottomSheet
       open={open}
       onOpenChange={onOpenChange}
+      // 닫기 보호 (docs/31 A1): 가격·특징을 넣었으면 닫기 전에 묻는다
+      dirty={!busy && (price !== '' || tags.length > 0)}
       title={t('lodgingPrice.report.title', { name: target?.label ?? '' })}
       footer={
         <CancelSaveRow onCancel={() => onOpenChange(false)}>

@@ -17,7 +17,7 @@ import { useAuth } from '../../data/authStore';
 import { itemRepo } from '../../data/repositories/itemRepo';
 import { queuedFor, queueReview } from '../../data/reviewQueue';
 import { useTranslation } from '../../i18n';
-import { BottomSheet, Button, toast } from '../../shared/ui';
+import { BottomSheet, Button, toast, useSheetDirty } from '../../shared/ui';
 import { PlaceAutocomplete } from '../common/PlaceAutocomplete';
 import { StarPicker } from './StarRating';
 
@@ -70,6 +70,10 @@ function ReviewForm({
   const [place, setPlace] = useState(item.place);
   const [search, setSearch] = useState(item.title);
   const [busy, setBusy] = useState(false);
+  // 닫기 보호 (docs/31 A1): 별점·글을 처음과 다르게 고쳤으면 닫기 전에 묻는다
+  const snapshot = JSON.stringify([ratings, note]);
+  const [initial] = useState(snapshot);
+  useSheetDirty(!busy && snapshot !== initial);
   const placeKey = placeKeyOf(place);
   const aspects = REVIEW_ASPECTS[kind] as readonly ReviewAspect[];
   const shownName = me ? (me.hideNickname ? maskedName(me.publicNo ?? 0) : me.nickname) : '';

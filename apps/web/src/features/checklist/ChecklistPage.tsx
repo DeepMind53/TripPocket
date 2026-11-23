@@ -227,9 +227,8 @@ export function ChecklistPage() {
             {t('checklist.saveAndLeave')}
           </Button>
           <Button
-            variant="secondary"
+            variant="dangerSoft"
             fullWidth
-            className="text-danger"
             onClick={() => {
               cancel();
               if (blocker.state === 'blocked') blocker.proceed();

@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { useTranslation } from '../../i18n';
 import { cn } from '../lib/cn';
 import { Button } from './Button';
+import { useSheetClose } from './sheetGuard';
 
 /**
  * 저장·추가 버튼 왼쪽에 [취소] (사용자 요청 2026-11-02, 색은 2026-11-23 회색): 저장하지 않고 나가기.
@@ -21,6 +22,8 @@ export function CancelSaveRow({
   docked?: boolean;
 }) {
   const { t } = useTranslation();
+  // 시트 안이면 바뀐 내용이 있을 때 먼저 묻고 닫는다 (docs/31 A1 — [취소]도 같은 규칙)
+  const cancel = useSheetClose(onCancel);
   return (
     // 긴 입력 시트에서도 늘 보이게 아래에 붙인다: 자판이 떠도 저장·취소가 가려지지 않게 (사용자 요청 2026-11-04)
     <div
@@ -33,7 +36,7 @@ export function CancelSaveRow({
     >
       <Button
         variant="cancel"
-        onClick={onCancel}
+        onClick={cancel}
         className="h-auto! w-1/5 shrink-0 px-1! whitespace-nowrap"
       >
         {t('common.cancel')}

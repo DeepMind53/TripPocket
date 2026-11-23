@@ -18,7 +18,15 @@ import { MemoFx } from './MemoFx';
 import { MoneyButtons } from './MoneyButtons';
 import { useTranslation } from '../../i18n';
 import { itemRepo } from '../../data/repositories/itemRepo';
-import { BottomSheet, Button, CancelSaveRow, Chip, TimeInput, toast } from '../../shared/ui';
+import {
+  BottomSheet,
+  Button,
+  CancelSaveRow,
+  Chip,
+  TimeInput,
+  toast,
+  useSheetDirty,
+} from '../../shared/ui';
 import { KIND_ICON } from './itemKinds';
 
 export interface ItemFormSheetProps {
@@ -116,6 +124,10 @@ function ItemForm({
   };
   const [url, setUrl] = useState(item?.url ?? '');
   const [saving, setSaving] = useState(false);
+  // 닫기 보호 (docs/31 A1): 처음 연 값과 다르면 닫기 전에 묻는다
+  const snapshot = JSON.stringify([kind, title, startTime, endTime, address, memo, url, picked]);
+  const [initial] = useState(snapshot);
+  useSheetDirty(!saving && snapshot !== initial);
 
   // 새 일정이면 종류에 맞는 시각 초기값 (직접 고친 시각은 그대로)
   const changeKind = (k: ItemKind) => {

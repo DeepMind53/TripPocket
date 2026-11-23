@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { CUSTOM_FOODS_MAX, updateTravelProfile, useTravelProfile } from '../../data/travelProfile';
 import { useTranslation } from '../../i18n';
 import { Button, IconButton, SegmentedControl } from '../../shared/ui';
+import { isSubmitEnter } from '../../shared/lib/keys';
 
 const field = 'h-12 w-full min-w-0 rounded-btn bg-bg-subtle px-3 text-body-1';
 
@@ -64,7 +65,7 @@ export function CustomFoodsField() {
           className={field}
           value={ko}
           onChange={(e) => setKo(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && add()}
+          onKeyDown={(e) => isSubmitEnter(e) && add()}
         />
         <input
           aria-label={t('profile.customEn')}
@@ -74,7 +75,7 @@ export function CustomFoodsField() {
           className={field}
           value={en}
           onChange={(e) => setEn(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && add()}
+          onKeyDown={(e) => isSubmitEnter(e) && add()}
         />
       </div>
       <Button variant="secondary" disabled={!canAdd} onClick={add}>

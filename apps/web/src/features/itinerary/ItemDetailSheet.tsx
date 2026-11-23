@@ -346,8 +346,7 @@ export function ItemDetailSheet({
                 {t('detail.moveDay')}
               </Button>
               <Button
-                variant="secondary"
-                className="text-danger"
+                variant="dangerSoft"
                 leading={<Trash2 aria-hidden="true" className="size-4" />}
                 onClick={onDelete}
               >

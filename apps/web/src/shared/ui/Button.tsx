@@ -6,7 +6,7 @@ import { Spinner } from './Spinner';
  * 색 규칙 (사용자 요청 2026-11-03, 취소는 2026-11-23 빨강 → 회색): 확인·저장·추가·시작 = primary(파랑), 취소 = cancel(회색 — 빨강은 삭제에만),
  * 나중에·괜찮아요·닫기 같은 넘어가기 = secondary/ghost. danger는 화면 안의 위험 동작(여행 삭제 등)
  */
-type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'cancel';
+type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'dangerSoft' | 'cancel';
 type Size = 'lg' | 'md' | 'sm';
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -22,6 +22,8 @@ const variantClass: Record<Variant, string> = {
   secondary: 'bg-bg-subtle text-fg active:brightness-95',
   ghost: 'bg-transparent text-primary active:bg-primary-weak',
   danger: 'bg-danger text-on-primary active:brightness-95',
+  // 회색 바탕 + 빨간 글자: 시트 아래 [삭제]처럼 덜 눈에 띄어야 하는 지우기 (docs/31 A2 — className으로 글자색만 바꾸면 text-fg가 이긴다)
+  dangerSoft: 'bg-bg-subtle text-danger active:brightness-95',
   cancel: 'bg-bg-subtle text-fg active:brightness-95',
 };
 

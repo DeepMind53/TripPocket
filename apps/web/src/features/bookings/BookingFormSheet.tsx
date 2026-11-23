@@ -37,7 +37,7 @@ import {
   toast,
 } from '../../shared/ui';
 import { BOOKING_ICON } from '../common/bookingKinds';
-import { confirmDelete } from '../../shared/ui';
+import { confirmDelete, useSheetDirty } from '../../shared/ui';
 
 /** 픽업·드랍을 많이 예약하는 곳 (고르면 예약 사이트 칸에 들어감, 직접 입력도 됨) */
 const TRANSFER_SITES = ['KKday', 'Klook', '아고다', '마이리얼트립', '네이버'] as const;
@@ -191,6 +191,10 @@ function BookingForm({
   // 편명으로 불러오기 (AviationStack 무료 — 최근 운항 기준이라 날짜는 그대로, 시간·공항·터미널만 채움)
   const [looking, setLooking] = useState(false);
   const [lookedUp, setLookedUp] = useState(false);
+  // 닫기 보호 (docs/31 A1): 처음 연 값과 다르면 닫기 전에 묻는다
+  const snapshot = JSON.stringify([kind, f]);
+  const [initial] = useState(snapshot);
+  useSheetDirty(!saving && snapshot !== initial);
   async function lookupFlight() {
     setLooking(true);
     const res = await flightsApi.lookup(f.flightNo);
@@ -1359,8 +1363,7 @@ function BookingForm({
       </CancelSaveRow>
       {b && (
         <Button
-          variant="secondary"
-          className="text-danger"
+          variant="dangerSoft"
           leading={<Trash2 aria-hidden="true" className="size-4" />}
           onClick={() => void remove()}
         >

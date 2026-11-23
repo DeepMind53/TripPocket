@@ -13,6 +13,7 @@ import { useSettings } from '../../data/settingsStore';
 import { useTranslation } from '../../i18n';
 import { openMapLink, placeLink } from '../../shared/lib/directions';
 import { BottomSheet, Button, CancelSaveRow, IconButton, toast } from '../../shared/ui';
+import { isSubmitEnter } from '../../shared/lib/keys';
 
 /** 다른 여행 목록일 때 — 매번 새 배열을 만들면 화면이 끝없이 다시 그려진다 */
 const NO_SPOTS: SavedSpot[] = [];
@@ -134,7 +135,7 @@ export function SavedSpotsButtons({
               maxLength={40}
               placeholder={t('spots.namePlaceholder')}
               onChange={(e) => setName(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && save()}
+              onKeyDown={(e) => isSubmitEnter(e) && save()}
               className="h-12 rounded-btn bg-bg-subtle px-3 text-body-1"
             />
           </label>
