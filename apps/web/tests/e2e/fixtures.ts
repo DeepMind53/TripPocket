@@ -13,6 +13,12 @@ export const test = base.extend<{ offlineApis: void }>({
       await page.addInitScript(() => {
         localStorage.setItem('tp-signed-in', '1');
         localStorage.setItem('tp-quick-hint', '1'); // ⚡ 첫 안내 말풍선은 따로 시험
+        // 관리자 월간 갱신 안내(달마다 무작위 날 이후 자동으로 뜸)가 화면을 덮지 않게 — 이번 달은 띄운 것으로.
+        // 없으면 관리자로 흉내 내는 시험이 그달 그날 이후에만 실패한다 (2026-11-21부터 장소 검색 시험)
+        localStorage.setItem(
+          'tp-monthly-notice',
+          new Intl.DateTimeFormat('sv', { timeZone: 'Asia/Seoul' }).format(new Date()).slice(0, 7),
+        );
       });
       await page.route('https://date.nager.at/**', (r) => r.fulfill({ json: [] }));
       // 예보·작년 기록 둘 다
