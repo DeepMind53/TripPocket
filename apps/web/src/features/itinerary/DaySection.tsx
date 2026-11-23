@@ -280,10 +280,14 @@ export function DaySection({
           )}
           {/* 노선도 버튼은 날짜 바로 옆, 나머지는 오른쪽 끝으로 (사용자 요청 2026-11-10) */}
           <span aria-hidden="true" className="flex-1" />
-          {/* 날씨·오늘·Plan B를 한 칸에서 3초마다 번갈아 (날짜 아래 줄에 쌓이지 않게, 사용자 요청 2026-11-10) */}
+          {/* 날씨·오늘·Plan B를 한 칸에서 3초마다 번갈아 (날짜 아래 줄에 쌓이지 않게, 사용자 요청 2026-11-10).
+              작년 기록이면 "과거 날씨"·그림·기온을 이 목록에 펼쳐 넣는다 — 날씨 칸이 따로 굴면 박자가 겹쳐 기온이 숨는다 (docs/31 §11 R2).
+              Plan B가 없으면 칸 폭을 가장 넓은 것에 고정, 있으면 Plan B 알약(최대 9rem)에 맞추지 않게 칸 폭이 따라 바뀐다 (오른쪽 끝은 고정) */}
           <RollingSlot
+            reserve={!plan?.plan}
             items={[
-              weather && <DayWeatherBadge key="w" weather={weather} />,
+              weather?.year && <DayWeatherBadge key="wp" weather={weather} part="past" />,
+              weather && <DayWeatherBadge key="w" weather={weather} part="info" />,
               isToday && (
                 <span
                   key="today"

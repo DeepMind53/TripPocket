@@ -1,8 +1,51 @@
 import { cn } from '../lib/cn';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useSyncExternalStore, type ReactNode } from 'react';
 
 /** 다음 것으로 넘어가는 간격 (사용자 요청 2026-11-10) */
 const EVERY_MS = 3000;
+
+/*
+ * 앱 전체가 함께 보는 시계 하나 (docs/31 §11 R2, 2026-11-23).
+ * 칸마다 따로 타이머를 돌리면 늦게 뜬 칸(날씨는 화면이 뜬 뒤 도착)이 박자가 어긋나고,
+ * 겹친 전광판은 같은 박자로 돌아 어떤 항목이 영원히 숨는다. 모든 칸이 같은 순간에 넘어가게 한다.
+ * 화면이 안 보이는 동안은 멈추고, 보는 칸이 하나도 없으면 처음(0)으로 돌아간다
+ */
+let tick = 0;
+let timer: number | undefined;
+const listeners = new Set<() => void>();
+
+function start() {
+  if (timer !== undefined || document.hidden) return;
+  timer = window.setInterval(() => {
+    tick += 1;
+    listeners.forEach((f) => f());
+  }, EVERY_MS);
+}
+function stop() {
+  window.clearInterval(timer);
+  timer = undefined;
+}
+function onVisibility() {
+  if (document.hidden) stop();
+  else start();
+}
+function subscribe(f: () => void) {
+  listeners.add(f);
+  if (listeners.size === 1) {
+    document.addEventListener('visibilitychange', onVisibility);
+    start();
+  }
+  return () => {
+    listeners.delete(f);
+    if (listeners.size === 0) {
+      stop();
+      document.removeEventListener('visibilitychange', onVisibility);
+      tick = 0;
+    }
+  };
+}
+const still = () => () => {};
+const read = () => tick;
 
 /**
  * 한 칸에 여러 정보를 번갈아 (일정 날짜 머리 오른쪽: 날씨·오늘·Plan B). 새 것이 위에서 아래로 굴러 들어온다.
@@ -22,15 +65,10 @@ export function RollingSlot({
    */
   reserve?: boolean;
 }) {
-  const [i, setI] = useState(0);
   const n = items.length;
-  useEffect(() => {
-    if (n < 2) return;
-    const id = window.setInterval(() => setI((x) => x + 1), EVERY_MS);
-    return () => window.clearInterval(id);
-  }, [n]);
+  const now = useSyncExternalStore(n > 1 ? subscribe : still, read);
   if (n === 0) return null;
-  const at = i % n;
+  const at = now % n;
   const cell = reserve ? 'col-start-1 row-start-1 justify-center ' : '';
   return (
     <span
