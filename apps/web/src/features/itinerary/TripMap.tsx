@@ -1,4 +1,4 @@
-import { dayInkHex } from '../../shared/ui/routeColor';
+import { DAY_COLORS, dayInkHex } from '../../shared/ui/routeColor';
 import type { ItineraryItem, LocalDate, Trip } from '@trippocket/shared';
 import { useDomesticMap } from '../../data/mapChoice';
 import { DomesticMapChoice } from '../common/DomesticMapChoice';
@@ -37,7 +37,7 @@ const hintSeen = () => {
 /** 날짜 색 토큰 → 실제 색 (지도 핀 SVG는 CSS 변수를 못 쓴다) */
 const dayHex = (index: number) =>
   getComputedStyle(document.documentElement)
-    .getPropertyValue(`--tp-day-${(index % 8) + 1}`)
+    .getPropertyValue(`--tp-day-${(index % DAY_COLORS) + 1}`)
     .trim() || '#2F6BFF';
 /** 핀 번호 글자색 — 핀은 테마와 상관없이 흰 바탕이라 라이트 값 (4.5:1) */
 const pinInk = dayInkHex;

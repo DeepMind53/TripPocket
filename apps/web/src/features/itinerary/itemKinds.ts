@@ -1,4 +1,5 @@
 import type { ItemKind } from '@trippocket/shared';
+import { routeColor } from '../../shared/ui/routeColor';
 import {
   BedDouble,
   Coffee,
@@ -25,5 +26,5 @@ export const KIND_ICON: Record<ItemKind, LucideIcon> = {
 
 /** 일차 색 (8색 순환, docs/11 §3.3) */
 export function dayColor(dayIndex: number): string {
-  return `var(--tp-day-${(dayIndex % 8) + 1})`;
+  return routeColor(dayIndex).line;
 }

@@ -41,6 +41,12 @@
   --color-day-6: var(--tp-day-6);
   --color-day-7: var(--tp-day-7);
   --color-day-8: var(--tp-day-8);
+  --color-day-9: var(--tp-day-9);
+  --color-day-10: var(--tp-day-10);
+  --color-day-11: var(--tp-day-11);
+  --color-day-12: var(--tp-day-12);
+  --color-day-13: var(--tp-day-13);
+  --color-day-14: var(--tp-day-14);
   /* 노선 글자색 (docs/29 §3.1) — text-day-N-ink, bg-day-N-ink */
   --color-day-1-ink: var(--tp-day-1-ink);
   --color-day-2-ink: var(--tp-day-2-ink);
@@ -50,6 +56,12 @@
   --color-day-6-ink: var(--tp-day-6-ink);
   --color-day-7-ink: var(--tp-day-7-ink);
   --color-day-8-ink: var(--tp-day-8-ink);
+  --color-day-9-ink: var(--tp-day-9-ink);
+  --color-day-10-ink: var(--tp-day-10-ink);
+  --color-day-11-ink: var(--tp-day-11-ink);
+  --color-day-12-ink: var(--tp-day-12-ink);
+  --color-day-13-ink: var(--tp-day-13-ink);
+  --color-day-14-ink: var(--tp-day-14-ink);
   --shadow-card: var(--tp-shadow);
 }
 

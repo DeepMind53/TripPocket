@@ -46,7 +46,7 @@ describe.each(Object.entries(themes))('%s 테마 글자 대비', (_name, c) => {
 
 // 노선 글자색 (docs/29 §3.1): 글자로 쓸 때 바탕 위 4.5:1, 채움 알약 위 on-primary 글자 4.5:1
 describe.each(Object.entries(themes))('%s 테마 노선 색', (_name, c) => {
-  const inks = [1, 2, 3, 4, 5, 6, 7, 8].map((n) => `day-${n}-ink`);
+  const inks = Array.from({ length: 14 }, (_, i) => i + 1).map((n) => `day-${n}-ink`);
   it.each(inks)('%s 글자 / 바탕·표면·옅은 바탕 ≥ 4.5, 위 on-primary ≥ 4.5', (k) => {
     for (const bg of ['bg', 'surface', 'bg-subtle'])
       expect(ratio(c[k]!, c[bg]!)).toBeGreaterThanOrEqual(4.5);

@@ -239,7 +239,7 @@ function SortableRow({ item, n, color }: { item: ItineraryItem; n: number; color
         className="grid size-6 shrink-0 place-items-center rounded-full border-[3px] bg-surface font-mono text-micro leading-none"
         style={{
           borderColor: color,
-          color: color.replace(/^var\(--tp-day-(\d)\)$/, 'var(--tp-day-$1-ink)'),
+          color: color.replace(/^var\(--tp-day-(\d+)\)$/, 'var(--tp-day-$1-ink)'),
         }}
       >
         {n}

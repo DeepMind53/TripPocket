@@ -37,7 +37,7 @@ export function tripCardSvg(d: TripCardData): string {
   const bar = Array.from(
     { length: n },
     (_, i) =>
-      `<rect x="${24 + i * segW}" y="24" width="${Math.max(segW - 3, 2)}" height="5" rx="2.5" fill="${DAY_LINE_HEX[i % 8]}"/>`,
+      `<rect x="${24 + i * segW}" y="24" width="${Math.max(segW - 3, 2)}" height="5" rx="2.5" fill="${DAY_LINE_HEX[i % DAY_LINE_HEX.length]}"/>`,
   ).join('');
   const colW = (W - 48) / Math.max(1, d.facts.length);
   const facts = d.facts

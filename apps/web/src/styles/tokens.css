@@ -26,24 +26,37 @@
   --tp-toast-fg: #ffffff;
   --tp-shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 2px 8px rgb(0 0 0 / 0.04);
 
-  /* 일차(Day) 색 8개 — 지도 핀·Day 칩 공통, 9일차부터 순환 */
+  /* 일차(Day) 색 14개 — 지도 핀·Day 칩·노선 공통, 15일차부터 1일차 색으로 (2026-11-23 사용자 요청: 8 → 14색, 색약 고려).
+     붙어 있는 날끼리 적록·청황 색약 흉내에서도 CIEDE2000 20 이상 (docs/11 §3.3). 6일차는 분홍 → 자홍(초록 7일차와 구분) */
   --tp-day-1: #2f6bff;
   --tp-day-2: #ff6b4a;
   --tp-day-3: #12b5a5;
   --tp-day-4: #9b5cff;
   --tp-day-5: #f5a524;
-  --tp-day-6: #e5488a;
+  --tp-day-6: #c2378f;
   --tp-day-7: #3ba55c;
   --tp-day-8: #5a6b85;
+  --tp-day-9: #c39bf0;
+  --tp-day-10: #9c5b2e;
+  --tp-day-11: #2b3a8f;
+  --tp-day-12: #33b5e5;
+  --tp-day-13: #9aa31a;
+  --tp-day-14: #8b1e3f;
   /* 노선 글자색 (docs/29 §3.1): 일차 색을 글자·채움(흰 글자)으로 쓸 때 — 흰·옅은 바탕 4.5:1 */
   --tp-day-1-ink: #2c64ed;
   --tp-day-2-ink: #b84d35;
   --tp-day-3-ink: #0c7d72;
   --tp-day-4-ink: #854fdb;
   --tp-day-5-ink: #956516;
-  --tp-day-6-ink: #c03c74;
+  --tp-day-6-ink: #c2378f;
   --tp-day-7-ink: #2d7d46;
   --tp-day-8-ink: #5a6b85;
+  --tp-day-9-ink: #9047e3;
+  --tp-day-10-ink: #9c5b2e;
+  --tp-day-11-ink: #2b3a8f;
+  --tp-day-12-ink: #14779c;
+  --tp-day-13-ink: #6c7312;
+  --tp-day-14-ink: #8b1e3f;
   /* 글자 크기 배율 — 설정 작게 0.81·보통 0.9·크게 0.99 (2026-11-10). settingsStore·boot.js가 바꾼다 */
   --tp-font: 0.9;
   /* 노선 모양 (docs/29 §3.2) */
@@ -99,17 +112,29 @@
     --tp-day-3: #12b5a5;
     --tp-day-4: #a369ff;
     --tp-day-5: #f5a524;
-    --tp-day-6: #e75391;
+    --tp-day-6: #d261a9;
     --tp-day-7: #3ba55c;
     --tp-day-8: #7d8a9f;
+    --tp-day-9: #c39bf0;
+    --tp-day-10: #c6753c;
+    --tp-day-11: #7684d6;
+    --tp-day-12: #33b5e5;
+    --tp-day-13: #9aa31a;
+    --tp-day-14: #dd6086;
     --tp-day-1-ink: #5083ff;
     --tp-day-2-ink: #ff6b4a;
     --tp-day-3-ink: #12b5a5;
     --tp-day-4-ink: #a369ff;
     --tp-day-5-ink: #f5a524;
-    --tp-day-6-ink: #e75391;
+    --tp-day-6-ink: #d261a9;
     --tp-day-7-ink: #3ba55c;
     --tp-day-8-ink: #7d8a9f;
+    --tp-day-9-ink: #c39bf0;
+    --tp-day-10-ink: #c6753c;
+    --tp-day-11-ink: #7684d6;
+    --tp-day-12-ink: #33b5e5;
+    --tp-day-13-ink: #9aa31a;
+    --tp-day-14-ink: #dd6086;
     --tp-past-opacity: 0.35;
     color-scheme: dark;
   }
@@ -143,17 +168,29 @@
   --tp-day-3: #12b5a5;
   --tp-day-4: #a369ff;
   --tp-day-5: #f5a524;
-  --tp-day-6: #e75391;
+  --tp-day-6: #d261a9;
   --tp-day-7: #3ba55c;
   --tp-day-8: #7d8a9f;
+  --tp-day-9: #c39bf0;
+  --tp-day-10: #c6753c;
+  --tp-day-11: #7684d6;
+  --tp-day-12: #33b5e5;
+  --tp-day-13: #9aa31a;
+  --tp-day-14: #dd6086;
   --tp-day-1-ink: #5083ff;
   --tp-day-2-ink: #ff6b4a;
   --tp-day-3-ink: #12b5a5;
   --tp-day-4-ink: #a369ff;
   --tp-day-5-ink: #f5a524;
-  --tp-day-6-ink: #e75391;
+  --tp-day-6-ink: #d261a9;
   --tp-day-7-ink: #3ba55c;
   --tp-day-8-ink: #7d8a9f;
+  --tp-day-9-ink: #c39bf0;
+  --tp-day-10-ink: #c6753c;
+  --tp-day-11-ink: #7684d6;
+  --tp-day-12-ink: #33b5e5;
+  --tp-day-13-ink: #9aa31a;
+  --tp-day-14-ink: #dd6086;
   --tp-past-opacity: 0.35;
   color-scheme: dark;
 }

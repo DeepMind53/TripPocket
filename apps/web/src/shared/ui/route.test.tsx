@@ -16,8 +16,10 @@ import { TransferChip } from './TransferChip';
 describe('routeColor', () => {
   it('8색 순환, 0부터', () => {
     expect(routeColor(0)).toEqual({ line: 'var(--tp-day-1)', ink: 'var(--tp-day-1-ink)' });
-    expect(routeColor(8).line).toBe('var(--tp-day-1)');
-    expect(routeColor(-1).line).toBe('var(--tp-day-8)');
+    // 14색 순환 — 15일차(14)부터 1일차 색 (2026-11-23)
+    expect(routeColor(8).line).toBe('var(--tp-day-9)');
+    expect(routeColor(14).line).toBe('var(--tp-day-1)');
+    expect(routeColor(-1).line).toBe('var(--tp-day-14)');
   });
 });
 
@@ -171,9 +173,9 @@ describe('GateProgress · RouteBar · Stamp', () => {
 
   it('색 바탕 노선 막대: 지난 만큼 채운다 — 4일 중 2일차 정오면 1칸 다 + 2칸째 절반 (2026-11-23)', () => {
     render(<RouteBar days={4} todayIndex={1} label="진행" onColor progress={1.5 / 4} />);
-    const fills = [...screen.getByRole('img', { name: '진행' }).querySelectorAll('.bg-white')]
-      .filter((el) => el.classList.contains('absolute') && el.classList.contains('inset-y-0'))
-      .map((el) => (el as HTMLElement).style.width);
-    expect(fills).toEqual(['100%', '50%', '0%', '0%']);
+    const fills = [...screen.getByRole('img', { name: '진행' }).querySelectorAll('[data-fill]')];
+    expect(fills.map((el) => (el as HTMLElement).style.width)).toEqual(['100%', '50%', '0%', '0%']);
+    // 흰색이 아니라 일차별 색으로 채운다
+    expect((fills[1] as HTMLElement).style.background).toBe('var(--tp-day-2)');
   });
 });
