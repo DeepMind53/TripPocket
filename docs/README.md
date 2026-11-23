@@ -41,6 +41,7 @@
 | [13 설계 점검](13-design-review.md) · [15 구현 단계](15-implementation-steps.md) · [16 UX 개선](16-ux-ui-improvements.md) · [20 문구·UX 점검](20-copy-ux-gap-review.md) · [25 여행 모드](25-travel-mode.md) | 끝난 계획·점검 | 기록 |
 | [18 예약 자동 채우기](18-booking-import.md) | | 보류 (사용자 결정: 미적용) |
 | [30 기종·좌석 안내](30-aircraft-seats.md) | | 보류 (사용자 결정) |
+| [31 사용 불편 점검·개선 설계](31-usability-review.md) | 입력 보호·알림 가림·양식·배치 (스킬 기준 점검) | 설계 확정, 구현 전 |
 | [design/](design/) | 시안 자료 | 기록 |
 
 ## 문서 관리 규칙
