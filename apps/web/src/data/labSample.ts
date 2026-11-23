@@ -1,16 +1,26 @@
-import { addDays, todayIn, uuidv7, type ItemKind, type LocalDate } from '@trippocket/shared';
+import {
+  addDays,
+  essentialKey,
+  todayIn,
+  uuidv7,
+  type ItemKind,
+  type LocalDate,
+} from '@trippocket/shared';
 import { bookingRepo } from './repositories/bookingRepo';
+import { checklistRepo, type PrepList } from './repositories/checklistRepo';
 import { itemRepo } from './repositories/itemRepo';
 import { savedPlaceRepo, SavedLimitError } from './repositories/savedPlaceRepo';
 import { tripRepo } from './repositories/tripRepo';
 
 /**
- * 실험실 "샘플 테스트" (2026-11-03 모든 사용자, 24시간 뒤 자동 삭제) (사용자 요청 2026-10-26, 2026-10-27 최신 기능 반영): 당장 볼 수 없는 화면을 한 번에 보려고
- * - 오늘 출발 도쿄 5일: 항공(출발 확인)·숙소·지금 기준 지난/진행 중/다음 일정(방문 버튼·다음 일정 바)·메모·가고 싶은 곳,
- *   좌표 있는 목적지(일출·일몰·여행지 특보·하루 동선), 지운 일정 1개(삭제 기록 복원)
- * - 6일 뒤 타이베이 3일: 다가오는 여행(준비 현황·특보 점·대만 기상 특보·입국 항목)
- * - 지난 오사카 여행·1년 전 도쿄 여행: 방문 기록·여행 회고·"방문기록 N회"(센소지)
- * - 저장 장소. 제목·메모의 [샘플]로 알아보고 지운다. 실험실 기능도 모두 켠다. 만든 지금 여행 id를 돌려준다
+ * 실험실 "샘플 테스트" (2026-11-03 모든 사용자, 24시간 뒤 자동 삭제). 당장 볼 수 없는 화면을 한 번에 보려고.
+ * 2026-11-23 사용자 요청: 일본·대만·한국 나라마다 하나씩, 모든 기능을 써 보거나 볼 수 있게 — 여행 시점을 나눈다
+ * - 🇯🇵 도쿄 5일 (오늘 출발 = 여행 중): 예약 6종(항공·픽업·기차·숙소·식당·입장권), 지금 기준 지난/진행 중/다음 일정
+ *   (방문 버튼·다음 일정 바·여행 모드), 이동 일정·메모·링크, Plan B 2개, 준비물·할 일, 하루 한 줄 기록, 가고 싶은 곳, 지운 일정 1개
+ * - 🇹🇼 타이베이 4일 (6일 뒤 = 다가오는 여행): 항공·숙소(조식)·투어·기차, 준비물 일부 체크, 할 일, 필수 항목 일부 체크
+ *   (준비 현황·D-day·여행지 특보·입국 항목)
+ * - 🇰🇷 제주 3일 (한 달 전 = 지난 여행): 국내선·렌터카·숙소·식당, 방문/미방문 기록, 하루 한 줄 기록 (기록 탭·여행 회고)
+ * - 나라마다 저장 장소. 제목·메모의 [샘플]로 알아보고 지운다. 만든 도쿄(여행 중) id를 돌려준다
  */
 export const SAMPLE_MARK = '[샘플]';
 const TZ = 'Asia/Tokyo';
@@ -79,7 +89,29 @@ async function makeItem(tripId: string, date: LocalDate, s: Spot, startTime?: st
   });
 }
 
+/** 준비물·할 일 [글, 분류, 체크] 넣기 */
+async function addPrep(
+  tripId: string,
+  list: PrepList,
+  rows: readonly (readonly [string, string | undefined, boolean])[],
+) {
+  for (const [text, category, checked] of rows) {
+    const it = await checklistRepo.add(tripId, list, { text, category });
+    if (checked) await checklistRepo.setChecked(it.id, true);
+  }
+}
+
 export async function createLabSample(): Promise<string> {
+  const id = await createJapan();
+  await createTaiwan();
+  await createKorea();
+  await createSavedPlaces();
+  // 실험실 기능은 켜지 않는다 — 기본은 모두 꺼짐, 사용자가 직접 켠다 (사용자 요청 2026-11-03)
+  return id;
+}
+
+/** 🇯🇵 오늘 출발 도쿄 5일 — 여행 중 화면 전부 */
+async function createJapan(): Promise<string> {
   const today = todayIn(TZ);
   const day = (n: number) => addDays(today, n);
   const trip = await tripRepo.create({
@@ -98,9 +130,10 @@ export async function createLabSample(): Promise<string> {
     endDate: day(4),
     timezone: TZ,
     cover: { emoji: '🗼', color: '#2F6BFF' },
+    memo: `${SAMPLE_MARK} 첫날은 숙소 근처에서 가볍게`,
   });
 
-  // 항공: 오늘 아침 출국(출발 날이라 [확인]·빨간 깜빡임), 5일차 귀국. 숙소 4박 (일정표에는 일정 화면을 열 때 들어간다)
+  // 항공: 오늘 아침 출국(출발 날이라 [확인]·빨간 깜빡임), 5일차 귀국 — 편명·좌석·터미널·수하물까지
   await bookingRepo.create({
     tripId: trip.id,
     kind: 'flight',
@@ -109,6 +142,14 @@ export async function createLabSample(): Promise<string> {
     confirmationNo: 'SMPL01',
     start: { date: today, time: '06:30', place: 'ICN' },
     end: { date: today, time: '08:50', place: 'NRT' },
+    details: {
+      flightNo: 'KE703',
+      seat: '32A',
+      terminal: 'T2',
+      arrivalTerminal: 'T1',
+      baggage: '위탁 23kg · 기내 10kg',
+      payment: 'paid',
+    },
   });
   await bookingRepo.create({
     tripId: trip.id,
@@ -118,7 +159,39 @@ export async function createLabSample(): Promise<string> {
     confirmationNo: 'SMPL02',
     start: { date: day(4), time: '18:30', place: 'NRT' },
     end: { date: day(4), time: '21:10', place: 'ICN' },
+    details: { flightNo: 'KE704', seat: '32A', terminal: 'T1', arrivalTerminal: 'T2' },
   });
+  // 공항 픽업 (만나는 곳·인원)
+  await bookingRepo.create({
+    tripId: trip.id,
+    kind: 'transfer',
+    title: '나리타 공항 픽업',
+    provider: '클룩',
+    confirmationNo: 'PICK21',
+    start: { date: today, time: '09:30', place: '나리타 공항 T1 도착 로비' },
+    details: {
+      direction: 'pickup',
+      partySize: 2,
+      meetingPoint: '도착 로비 B 출구 앞',
+      payment: 'paid',
+    },
+  });
+  // 기차 (역 좌표 → 길찾기)
+  await bookingRepo.create({
+    tripId: trip.id,
+    kind: 'train',
+    title: '나리타 익스프레스',
+    confirmationNo: 'NEX44',
+    start: {
+      date: day(4),
+      time: '15:03',
+      place: '신주쿠역',
+      coords: { lat: 35.6896, lng: 139.7006 },
+    },
+    end: { date: day(4), time: '16:28', place: '나리타 공항역' },
+    details: { seat: '5호차 9D' },
+  });
+  // 숙소 (조식 날짜·객실·취소 마감·현장 결제)
   await bookingRepo.create({
     tripId: trip.id,
     kind: 'lodging',
@@ -126,7 +199,32 @@ export async function createLabSample(): Promise<string> {
     confirmationNo: 'HTL777',
     start: { date: today, time: '15:00' },
     end: { date: day(4), time: '11:00' },
-    details: { address: '도쿄 신주쿠구 가부키초 1-19-1' },
+    details: {
+      address: '도쿄 신주쿠구 가부키초 1-19-1',
+      phone: '+81-3-6833-2489',
+      roomType: '더블룸 금연',
+      breakfast: true,
+      breakfastDates: [day(1), day(2)],
+      cancelBy: today,
+      payment: 'onsite',
+    },
+    priceNote: '현장 결제 4박',
+  });
+  await bookingRepo.create({
+    tripId: trip.id,
+    kind: 'restaurant',
+    title: '스시 잔마이 본점',
+    confirmationNo: 'RSV12',
+    start: { date: day(1), time: '19:00', place: '도쿄 주오구 츠키지 4-11-9' },
+    details: { partySize: 2, phone: '+81-3-3541-1117' },
+  });
+  await bookingRepo.create({
+    tripId: trip.id,
+    kind: 'ticket',
+    title: '팀랩 플래닛 입장권',
+    confirmationNo: 'TLP3001',
+    start: { date: day(3), time: '10:00', place: '팀랩 플래닛 도쿄' },
+    details: { voucherUrl: 'https://www.teamlab.art/ko/e/planets/', payment: 'paid' },
   });
 
   // 오늘: 지금 시각 기준 — 앞의 둘은 끝남(방문 버튼), 하나는 진행 중(강조·출발 시각), 뒤는 다음 일정
@@ -135,8 +233,21 @@ export async function createLabSample(): Promise<string> {
   await makeItem(trip.id, today, a!, hhmm(now - 180), { endTime: hhmm(now - 120) });
   await makeItem(trip.id, today, b!, hhmm(now - 100), { endTime: hhmm(now - 60) });
   await makeItem(trip.id, today, c!, hhmm(now - 30), { endTime: hhmm(now + 60) });
+  // 이동 일정 (지하철 구간)
+  await itemRepo.create({
+    tripId: trip.id,
+    date: today,
+    kind: 'transport',
+    title: '긴자선 우에노 → 미쓰코시마에',
+    startTime: hhmm(now + 62),
+    transport: { mode: 'subway', from: '우에노', to: '미쓰코시마에' },
+  });
   await makeItem(trip.id, today, d!, hhmm(now + 75));
-  await makeItem(trip.id, today, e!, hhmm(now + 180));
+  // 링크·메모가 있는 일정
+  await makeItem(trip.id, today, e!, hhmm(now + 180), {
+    url: 'https://bluebottlecoffee.jp/',
+    memo: `${SAMPLE_MARK} 싱글 오리진 추천`,
+  });
   await itemRepo.create({
     tripId: trip.id,
     date: today,
@@ -153,6 +264,12 @@ export async function createLabSample(): Promise<string> {
   }
   // 날짜 없는 가고 싶은 곳
   await itemRepo.create({ tripId: trip.id, date: null, kind: 'cafe', title: '사루타히코 커피' });
+  await itemRepo.create({
+    tripId: trip.id,
+    date: null,
+    kind: 'shopping',
+    title: '돈키호테 시부야',
+  });
   // 지운 일정 하나 (마이 → 삭제 기록 복원에서 되살리기)
   const gone = await makeItem(
     trip.id,
@@ -161,7 +278,7 @@ export async function createLabSample(): Promise<string> {
   );
   await itemRepo.softDelete(gone.id);
 
-  // Plan B 샘플 (실험실 "Plan B", 2026-11-03): 2일차에 비 오는 날 실내 플랜, 피곤한 날 쉬는 플랜
+  // Plan B (실험실 "Plan B", 2026-11-03): 2일차에 비 오는 날 실내 플랜, 피곤한 날 쉬는 플랜
   const rainy = uuidv7();
   const tired = uuidv7();
   await tripRepo.update(trip.id, {
@@ -181,6 +298,8 @@ export async function createLabSample(): Promise<string> {
         conditions: [{ type: 'fatigue', value: 4 }],
       },
     ],
+    // 하루 한 줄 기록 (실험실, 2026-11-10)
+    dayNotes: [{ date: today, text: '아사쿠사 멘치카츠가 오늘의 발견' }],
   });
   for (const [i, s] of [
     P('도쿄 국립박물관', 'place', 35.7188, 139.7765, '도쿄 다이토구 우에노 공원 13-9'),
@@ -195,105 +314,239 @@ export async function createLabSample(): Promise<string> {
     { planId: tired },
   );
 
-  // 6일 뒤 타이베이 3일 (다가오는 여행: 준비 현황·여행지 특보·대만 입국 항목)
-  const taipei = await tripRepo.create({
+  // 준비물·할 일 — 여행 중이라 거의 끝남
+  await addPrep(trip.id, 'packing', [
+    ['여권', '서류', true],
+    ['항공권 e티켓', '서류', true],
+    ['충전기·보조배터리', '전자기기', true],
+    ['돼지코 어댑터', '전자기기', false],
+    ['우산', '기타', false],
+  ]);
+  await addPrep(trip.id, 'todo', [
+    ['스이카 앱 설치', undefined, true],
+    ['유심 개통', undefined, true],
+    ['팀랩 입장 시간 확인', undefined, false],
+  ]);
+  return trip.id;
+}
+
+/** 🇹🇼 6일 뒤 타이베이 4일 — 다가오는 여행 (준비 현황·D-day·여행지 특보·입국 항목) */
+async function createTaiwan(): Promise<void> {
+  const tz = 'Asia/Taipei';
+  const today = todayIn(tz);
+  const day = (n: number) => addDays(today, n);
+  const trip = await tripRepo.create({
     sample: true,
-    title: `${SAMPLE_MARK} 타이베이 3일`,
+    title: `${SAMPLE_MARK} 타이베이 4일`,
     destinations: [
       {
         name: '타이베이',
         kind: 'city',
         countryCode: 'TW',
-        timezone: 'Asia/Taipei',
+        timezone: tz,
         coords: { lat: 25.033, lng: 121.5654 },
       },
     ],
     startDate: day(6),
-    endDate: day(8),
-    timezone: 'Asia/Taipei',
+    endDate: day(9),
+    timezone: tz,
     cover: { emoji: '🧋', color: '#FF6B4A' },
   });
   await bookingRepo.create({
-    tripId: taipei.id,
+    tripId: trip.id,
     kind: 'flight',
     title: '에바항공 BR169',
     provider: '에바항공',
     confirmationNo: 'SMPL03',
     start: { date: day(6), time: '09:00', place: 'ICN' },
     end: { date: day(6), time: '10:40', place: 'TPE' },
-  });
-  for (const [n, s] of [
-    P('타이베이 101', 'place', 25.0339, 121.5645, '타이베이 신이구 신이로 5단 7'),
-    P('딘타이펑 신이점', 'food', 25.0331, 121.5654, '타이베이 신이구 숭가오로 194'),
-    P('스린 야시장', 'food', 25.0881, 121.5241, '타이베이 스린구 지허로 101'),
-  ].entries())
-    await makeItem(taipei.id, day(6 + Math.min(n, 2)), s, hhmm(11 * 60 + n * 180));
-
-  // 지난 여행 (기록 탭: 방문 기록·여행 회고)
-  const past = await tripRepo.create({
-    sample: true,
-    title: `${SAMPLE_MARK} 지난 오사카 여행`,
-    destinations: [
-      {
-        name: '오사카',
-        kind: 'city',
-        countryCode: 'JP',
-        timezone: TZ,
-        coords: { lat: 34.6937, lng: 135.5023 },
-      },
-    ],
-    startDate: addDays(today, -90),
-    endDate: addDays(today, -88),
-    timezone: TZ,
-    cover: { emoji: '🏯' },
+    details: { flightNo: 'BR169', terminal: 'T1', arrivalTerminal: 'T2', baggage: '위탁 23kg' },
   });
   await bookingRepo.create({
-    tripId: past.id,
+    tripId: trip.id,
     kind: 'flight',
-    title: '진에어 LJ201',
-    start: { date: addDays(today, -90), time: '08:00', place: 'ICN' },
-    end: { date: addDays(today, -90), time: '09:50', place: 'KIX' },
+    title: '에바항공 BR170',
+    provider: '에바항공',
+    confirmationNo: 'SMPL04',
+    start: { date: day(9), time: '11:50', place: 'TPE' },
+    end: { date: day(9), time: '15:20', place: 'ICN' },
+    details: { flightNo: 'BR170' },
   });
-  const osaka = [
-    P('오사카성', 'place', 34.6873, 135.5262, '오사카 주오구 오사카조 1-1'),
-    P('도톤보리', 'food', 34.6687, 135.5013, '오사카 주오구 도톤보리 1'),
-    P('구로몬 시장', 'food', 34.6655, 135.5066, '오사카 주오구 닛폰바시 2-4-1'),
-    P('신세카이', 'place', 34.6525, 135.5063, '오사카 나니와구 에비스히가시'),
+  await bookingRepo.create({
+    tripId: trip.id,
+    kind: 'lodging',
+    title: '시티즌M 타이베이 북역',
+    confirmationNo: 'CZM58',
+    start: { date: day(6), time: '15:00' },
+    end: { date: day(9), time: '11:00' },
+    details: {
+      address: '타이베이 다퉁구 청더로 1단 3',
+      breakfast: true,
+      cancelBy: day(3),
+      payment: 'paid',
+    },
+  });
+  await bookingRepo.create({
+    tripId: trip.id,
+    kind: 'tour',
+    title: '예스진지 버스 투어',
+    provider: 'KKday',
+    confirmationNo: 'KK7788',
+    start: { date: day(7), time: '08:30', place: '타이베이역 M4 출구' },
+    end: { date: day(7), time: '19:00' },
+    details: { meetingPoint: '타이베이역 M4 출구 앞', partySize: 2, payment: 'paid' },
+  });
+  await bookingRepo.create({
+    tripId: trip.id,
+    kind: 'train',
+    title: '대만 고속철 타이베이 → 타이중',
+    confirmationNo: 'THSR21',
+    start: { date: day(8), time: '09:16', place: '타이베이역' },
+    end: { date: day(8), time: '10:05', place: '타이중역' },
+    details: { seat: '7호차 12A' },
+  });
+  const spots: [number, string, Spot][] = [
+    [6, '13:00', P('타이베이 101', 'place', 25.0339, 121.5645, '타이베이 신이구 신이로 5단 7')],
+    [6, '18:00', P('딘타이펑 신이점', 'food', 25.0331, 121.5654, '타이베이 신이구 숭가오로 194')],
+    [7, '20:00', P('스린 야시장', 'food', 25.0881, 121.5241, '타이베이 스린구 지허로 101')],
+    [8, '13:00', P('무지개 마을', 'place', 24.1338, 120.6098, '타이중 난툰구 춘안로 56')],
+    [8, '19:00', P('펑자 야시장', 'food', 24.1749, 120.6459, '타이중 시툰구 원화로')],
   ];
-  for (const [n, s] of osaka.entries()) {
-    const it = await makeItem(past.id, addDays(today, -89), s, hhmm(10 * 60 + n * 120));
-    await itemRepo.setVisit(it.id, n === 3 ? 'skipped' : 'visited');
-  }
+  for (const [n, time, s] of spots) await makeItem(trip.id, day(n), s, time);
+  await addPrep(trip.id, 'packing', [
+    ['여권', '서류', true],
+    ['이지카드', '서류', false],
+    ['110V 어댑터', '전자기기', false],
+    ['우비', '의류', false],
+  ]);
+  await addPrep(trip.id, 'todo', [
+    ['대만 입국신고서 온라인 작성', undefined, false],
+    ['환전 (대만 달러)', undefined, true],
+  ]);
+  // 필수 항목 일부 체크 (준비 화면 "필수 항목 체크리스트 n/N")
+  await checklistRepo.setEssential(trip.id, essentialKey('ALL', 'insurance'), true);
+  await checklistRepo.setEssential(trip.id, essentialKey('ALL', 'data'), true);
+}
 
-  // 1년 전 도쿄 여행 — 오늘 센소지에 "방문기록 1회"
-  const lastYear = await tripRepo.create({
+/** 🇰🇷 한 달 전 제주 3일 — 지난 여행 (기록 탭·방문 기록·여행 회고) */
+async function createKorea(): Promise<void> {
+  const tz = 'Asia/Seoul';
+  const s0 = addDays(todayIn(tz), -32);
+  const day = (n: number) => addDays(s0, n);
+  const trip = await tripRepo.create({
     sample: true,
-    title: `${SAMPLE_MARK} 작년 도쿄 여행`,
+    title: `${SAMPLE_MARK} 지난 제주 3일`,
     destinations: [
       {
-        name: '도쿄',
+        name: '제주',
         kind: 'city',
-        countryCode: 'JP',
-        timezone: TZ,
-        coords: { lat: 35.6812, lng: 139.7671 },
+        countryCode: 'KR',
+        timezone: tz,
+        coords: { lat: 33.4996, lng: 126.5312 },
       },
     ],
-    startDate: addDays(today, -365),
-    endDate: addDays(today, -363),
-    timezone: TZ,
-    cover: { emoji: '⛩️' },
+    startDate: s0,
+    endDate: day(2),
+    timezone: tz,
+    cover: { emoji: '🍊', color: '#F5A524' },
   });
-  for (const [n, s] of [TOKYO[0]![0]!, TOKYO[2]![0]!].entries()) {
-    const it = await makeItem(lastYear.id, addDays(today, -364), s, hhmm(10 * 60 + n * 180));
-    await itemRepo.setVisit(it.id, 'visited');
+  await bookingRepo.create({
+    tripId: trip.id,
+    kind: 'flight',
+    title: '제주항공 7C101',
+    provider: '제주항공',
+    confirmationNo: 'SMPL05',
+    start: { date: s0, time: '07:00', place: 'GMP' },
+    end: { date: s0, time: '08:10', place: 'CJU' },
+    details: { flightNo: '7C101' },
+  });
+  // 렌터카 (차종·번호·보험 — 여행 중이면 빠른 메뉴에 크게)
+  await bookingRepo.create({
+    tripId: trip.id,
+    kind: 'car',
+    title: '제주 렌터카',
+    provider: '롯데렌터카',
+    confirmationNo: 'CAR909',
+    start: { date: s0, time: '09:00', place: '제주공항 렌터카 하우스' },
+    end: { date: day(2), time: '18:00', place: '제주공항 렌터카 하우스' },
+    details: { carModel: '아이오닉 5', plate: '12하 3456', insurance: '완전자차' },
+  });
+  await bookingRepo.create({
+    tripId: trip.id,
+    kind: 'lodging',
+    title: '애월 바다 스테이',
+    confirmationNo: 'STAY32',
+    start: { date: s0, time: '16:00' },
+    end: { date: day(2), time: '11:00' },
+    details: { address: '제주 제주시 애월읍 애월해안로 272', payment: 'paid' },
+  });
+  await bookingRepo.create({
+    tripId: trip.id,
+    kind: 'restaurant',
+    title: '우진해장국',
+    start: { date: day(1), time: '08:00', place: '제주 제주시 서사로 11' },
+    details: { partySize: 2 },
+  });
+  const jeju: [number, string, Spot, 'visited' | 'skipped'][] = [
+    [
+      0,
+      '11:00',
+      P('협재 해수욕장', 'place', 33.394, 126.2397, '제주 제주시 한림읍 협재리'),
+      'visited',
+    ],
+    [
+      0,
+      '14:00',
+      P('애월 카페거리', 'cafe', 33.4627, 126.3094, '제주 제주시 애월읍 애월리'),
+      'visited',
+    ],
+    [
+      1,
+      '06:30',
+      P('성산 일출봉', 'place', 33.4581, 126.9425, '제주 서귀포시 성산읍 일출로 284-12'),
+      'visited',
+    ],
+    [
+      1,
+      '10:00',
+      P('섭지코지', 'place', 33.424, 126.9306, '제주 서귀포시 성산읍 섭지코지로'),
+      'skipped',
+    ],
+    [1, '17:00', P('동문 시장', 'food', 33.5121, 126.5276, '제주 제주시 관덕로14길 20'), 'visited'],
+    [
+      2,
+      '10:00',
+      P('오설록 티뮤지엄', 'cafe', 33.3059, 126.2894, '제주 서귀포시 안덕면 신화역사로 15'),
+      'visited',
+    ],
+  ];
+  for (const [n, time, s, visit] of jeju) {
+    const it = await makeItem(trip.id, day(n), s, time);
+    await itemRepo.setVisit(it.id, visit);
   }
+  await tripRepo.update(trip.id, {
+    dayNotes: [
+      { date: s0, text: '협재 바다 색이 사진보다 예뻤다' },
+      { date: day(1), text: '일출봉은 아침 일찍 가길 잘했다' },
+      { date: day(2), text: '오설록 녹차 롤케이크 또 먹고 싶다' },
+    ],
+  });
+  await addPrep(trip.id, 'packing', [
+    ['운전면허증', '서류', true],
+    ['선크림', '세면도구', true],
+  ]);
+}
 
-  // 저장한 장소 (저장 탭 나라 칸·일정 추가 고르기)
+/** 저장한 장소 (저장 탭 나라 칸·일정 추가 고르기) — 나라마다 */
+async function createSavedPlaces(): Promise<void> {
   const saved = [
     { name: '사루타히코 커피', kind: 'cafe', countryCode: 'JP', cityTag: '도쿄' },
     { name: '스시 잔마이', kind: 'food', countryCode: 'JP', cityTag: '도쿄' },
     { name: '나카메구로', kind: 'place', countryCode: 'JP', cityTag: '도쿄' },
     { name: '딘타이펑 신이점', kind: 'food', countryCode: 'TW', cityTag: '타이베이' },
+    { name: '융캉제', kind: 'place', countryCode: 'TW', cityTag: '타이베이' },
+    { name: '오설록 티뮤지엄', kind: 'cafe', countryCode: 'KR', cityTag: '제주' },
+    { name: '우진해장국', kind: 'food', countryCode: 'KR', cityTag: '제주' },
   ] as const;
   for (const s of saved) {
     try {
@@ -302,9 +555,6 @@ export async function createLabSample(): Promise<string> {
       if (!(e instanceof SavedLimitError)) throw e;
     }
   }
-
-  // 실험실 기능은 켜지 않는다 — 기본은 모두 꺼짐, 사용자가 직접 켠다 (사용자 요청 2026-11-03)
-  return trip.id;
 }
 
 /** 샘플은 만든 지 24시간이 지나면 앱을 열 때 지운다 (사용자 요청 2026-11-03) */
@@ -318,9 +568,11 @@ export async function removeLabSample(opts: { expiredOnly?: boolean } = {}): Pro
     (t) => t.title.startsWith(SAMPLE_MARK) && due(t),
   );
   for (const t of trips) {
-    // 안의 일정·예약까지 (여행만 지우면 방문 기록 등이 남는다)
+    // 안의 일정·예약·준비 목록까지 (여행만 지우면 방문 기록 등이 남는다)
     for (const i of await itemRepo.listByTrip(t.id)) await itemRepo.softDelete(i.id);
     for (const b of await bookingRepo.listByTrip(t.id)) await bookingRepo.softDelete(b.id);
+    for (const list of ['packing', 'todo', 'essentials'] as const)
+      for (const c of await checklistRepo.list(t.id, list)) await checklistRepo.softDelete(c.id);
     await tripRepo.softDelete(t.id);
   }
   for (const p of await savedPlaceRepo.listActive())

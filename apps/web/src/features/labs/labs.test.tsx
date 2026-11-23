@@ -888,7 +888,7 @@ describe('실험실', () => {
     print.mockRestore();
   });
 
-  it('샘플 테스트: 모든 사용자, 누르면 오늘 출발 도쿄 5일 샘플을 만들어 열고 지울 수 있다 · 24시간 지나면 자동 삭제', async () => {
+  it('샘플 테스트: 모든 사용자, 누르면 일본·대만·한국 샘플을 만들어 도쿄(여행 중)를 열고 지울 수 있다 · 24시간 지나면 자동 삭제', async () => {
     const user = userEvent.setup();
     const me = { id: 'u', nickname: '사용자', createdAt: '', providers: [] };
     useAuth.setState({ status: 'user', me: { ...me, isAdmin: false } });
@@ -897,12 +897,20 @@ describe('실험실', () => {
     await user.click(await screen.findByRole('button', { name: '샘플 테스트' }));
     await waitFor(() => expect(admin.state.location.pathname).toMatch(/^\/trips\/.+\/plan$/));
     const trips = await tripRepo.listActive();
+    // 일본(여행 중)·대만(다가오는 여행)·한국(지난 여행) 하나씩 (사용자 요청 2026-11-23)
     expect(trips.map((t) => t.title).sort()).toEqual([
       '[샘플] 도쿄 5일',
-      '[샘플] 작년 도쿄 여행',
-      '[샘플] 지난 오사카 여행',
-      '[샘플] 타이베이 3일',
+      '[샘플] 지난 제주 3일',
+      '[샘플] 타이베이 4일',
     ]);
+    expect(trips.map((t) => t.destinations[0]?.countryCode).sort()).toEqual(['JP', 'KR', 'TW']);
+    // 예약 종류를 고루 (항공·숙소·기차·픽업·식당·입장권·투어·렌터카)
+    const kinds = new Set(
+      (await Promise.all(trips.map((t) => bookingRepo.listByTrip(t.id)))).flat().map((b) => b.kind),
+    );
+    expect([...kinds].sort()).toEqual(
+      ['car', 'flight', 'lodging', 'restaurant', 'ticket', 'tour', 'train', 'transfer'].sort(),
+    );
     // 삭제 기록 복원에서 볼 지운 일정
     expect((await trashRepo.list()).some((e) => e.title === '스카이트리')).toBe(true);
     const tokyo = trips.find((t) => t.title === '[샘플] 도쿄 5일')!;
@@ -919,7 +927,7 @@ describe('실험실', () => {
     expect(await removeLabSample({ expiredOnly: true })).toBe(0);
     vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(Date.now() + 25 * 3_600_000);
-    expect(await removeLabSample({ expiredOnly: true })).toBe(4);
+    expect(await removeLabSample({ expiredOnly: true })).toBe(3);
     vi.useRealTimers();
     useAuth.setState({ status: 'unknown', me: null });
   });
