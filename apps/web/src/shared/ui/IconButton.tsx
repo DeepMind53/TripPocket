@@ -9,7 +9,7 @@ export interface IconButtonProps extends Omit<
   label: string;
   icon: ReactNode;
   /** tint = 확인(파랑), cancel = 취소(빨강) — Button 색 규칙과 같다 */
-  tone?: 'plain' | 'tint' | 'cancel';
+  tone?: 'plain' | 'tint' | 'cancel' | 'onColor';
 }
 
 /** 아이콘만 있는 버튼. 터치 영역 44×44 (docs/11 §5) */
@@ -31,6 +31,8 @@ export function IconButton({
         tone === 'plain' && 'text-fg-sub active:bg-bg-subtle',
         tone === 'tint' && 'bg-primary-weak text-primary active:brightness-95',
         tone === 'cancel' && 'bg-danger/10 text-danger active:brightness-95',
+        // 색 바탕 카드 위 (홈 맨 위 여행 카드, 2026-11-23)
+        tone === 'onColor' && 'text-white active:bg-white/15',
         'disabled:opacity-40',
         className,
       )}

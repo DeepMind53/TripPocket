@@ -11,6 +11,8 @@ export interface RouteBarProps {
   /** 스크린리더 이름 ("4일 중 2일차") */
   label: string;
   className?: string;
+  /** 색 바탕 카드 위(홈 맨 위 여행 카드): 칸은 흰 반투명, 오늘 점은 흰색 (2026-11-23) */
+  onColor?: boolean;
 }
 
 /** 노선 막대 (docs/29 §5·§7.2, 사용자 결정 Q7): 일차 수만큼 노선 색 칸, 오늘 칸 위에 점 */
@@ -20,6 +22,7 @@ export function RouteBar({
   pastBefore = 0,
   label,
   className,
+  onColor = false,
 }: RouteBarProps) {
   const n = Math.max(1, Math.min(days, 30));
   return (
@@ -32,14 +35,21 @@ export function RouteBar({
           <span
             key={i}
             className="rounded-[2px]"
-            style={{ background: routeColor(i).line, opacity: i < pastBefore ? 0.35 : 1 }}
+            style={
+              onColor
+                ? { background: '#fff', opacity: i < pastBefore ? 0.35 : 0.85 }
+                : { background: routeColor(i).line, opacity: i < pastBefore ? 0.35 : 1 }
+            }
           />
         ))}
       </div>
       {todayIndex !== null && todayIndex >= 0 && todayIndex < n && (
         <span
           aria-hidden="true"
-          className="absolute top-0 size-1.5 -translate-x-1/2 rounded-full bg-fg"
+          className={cn(
+            'absolute top-0 size-1.5 -translate-x-1/2 rounded-full',
+            onColor ? 'bg-white' : 'bg-fg',
+          )}
           style={{ left: `${((todayIndex + 0.5) / n) * 100}%` }}
         />
       )}

@@ -4,6 +4,7 @@ import { createMemoryRouter, RouterProvider } from 'react-router';
 import { routes } from '../../app/router';
 import { resetLocalDb } from '../../data/dev';
 import { tripRepo } from '../../data/repositories/tripRepo';
+import { setMemberCounts } from '../../data/tripRoles';
 import { Toaster } from '../../shared/ui';
 import { acceptDelete } from '../../test/confirm';
 
@@ -141,6 +142,29 @@ describe('내 여행 목록', () => {
     const upcoming = screen.getByRole('heading', { name: '다가오는 여행' }).closest('section');
     expect(within(upcoming as HTMLElement).getByText('D-10')).toBeInTheDocument();
     expect(screen.getByText('다녀온 여행 1')).toBeInTheDocument();
+  });
+
+  it('카드: D-day는 제목 앞, 함께 쓰는 사람은 제목 오른쪽, 날짜 ↔ N박 M일 (2026-11-23)', async () => {
+    const trip = await tripRepo.create({
+      ...base,
+      title: '타이베이 여행',
+      startDate: '2026-11-01',
+      endDate: '2026-11-04',
+    });
+    setMemberCounts({ [trip.id]: 3 });
+    renderAt('/trips');
+    // 날씨 버튼 이름에도 제목이 들어가므로 일정으로 가는 링크만
+    const link = (await screen.findAllByRole('link', { name: /타이베이 여행/ })).find((a) =>
+      a.getAttribute('href')?.endsWith('/plan'),
+    )!;
+    const text = link.textContent ?? '';
+    const title = text.indexOf('타이베이 여행');
+    // 순서: D-10 → 제목 → 인원 3 → 날짜
+    expect(text.indexOf('D-10')).toBeLessThan(title);
+    expect(text.indexOf('3', title)).toBeLessThan(text.indexOf('2026.11.01'));
+    // 날짜와 N박 M일은 전광판 (지금 안 보이는 쪽도 화면 읽기에는 남는다)
+    expect(within(link).getAllByText('3박 4일').length).toBeGreaterThan(0);
+    setMemberCounts({});
   });
 
   it('삭제하고 실행 취소할 수 있다', async () => {

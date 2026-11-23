@@ -407,10 +407,12 @@ describe('홈', () => {
     });
     renderAt(['/']);
 
-    // 여행 카드는 맨 위에 한 줄 띠로, 준비 현황은 여행 중이라 접혀 있다 (2026-11-06 → docs/29 §7.1 2026-11-10)
-    // 여행 중 민트는 이모지 칸·배지에 남는다 (파란 다음 일정과 구분)
-    const strip = await screen.findByRole('link', { name: /부산 여행/ });
-    expect(strip.querySelector('.bg-mint')).not.toBeNull();
+    // 맨 위 여행 카드는 목록 카드 모양 + 여행 중 민트 바탕, 날씨 바로가기도 (사용자 요청 2026-11-23).
+    // 준비 현황은 여행 중이라 접혀 있다 (docs/29 §7.1)
+    const cardLinks = await screen.findAllByRole('link', { name: /부산 여행/ });
+    const plan = cardLinks.find((a) => a.getAttribute('href')?.endsWith('/plan'))!;
+    expect(plan.parentElement).toHaveClass('bg-mint');
+    expect(cardLinks.some((a) => a.getAttribute('href')?.endsWith('/weather'))).toBe(true);
     const prep = await screen.findByRole('button', { expanded: false, name: /준비/ });
     expect(prep).toBeInTheDocument();
     const next = await screen.findByRole('region', { name: '다음 일정' });

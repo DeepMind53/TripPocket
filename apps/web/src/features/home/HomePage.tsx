@@ -2,16 +2,15 @@ import { getTripStatus, daysUntil, todayIn, type Trip } from '@trippocket/shared
 import { CircleHelp, Plus, Luggage } from 'lucide-react';
 import { lazy, Suspense } from 'react';
 import { Link, useNavigate } from 'react-router';
-import { useChecklist, useTripBookings, useTripItems, useTrips } from '../../data/hooks';
+import { useTripBookings, useTrips } from '../../data/hooks';
 import { useTranslation } from '../../i18n';
 import { cn } from '../../shared/lib/cn';
-import { formatPeriod, formatTripBadge, formatTripLength } from '../../shared/lib/dateFormat';
-import { Button, EmptyState, RollingSlot, toast } from '../../shared/ui';
+import { Button, EmptyState, toast } from '../../shared/ui';
 import { BackupReminder } from '../backup/BackupReminder';
 import { TravelModeButton } from '../travel/TravelModeButton';
 import { TripList } from '../trips/TripList';
 import { OngoingTrip } from './OngoingTrip';
-import { TripStrip } from './TripStrip';
+import { FeaturedTrip } from './FeaturedTrip';
 import { Wordmark } from './Wordmark';
 
 // 예약 탭과 같은 카드 — 공항 정보·지연·수하물까지 딸려 와 무거워서 출발 전 다음 이동이 있을 때만 불러온다 (첫 화면 크기)
@@ -95,7 +94,8 @@ export function HomePage() {
         />
         {/* 디자인 개편 3단계 (docs/29 §7.1, 사용자 결정 Q1·Q2 2026-11-09): 여행 중에는 여행 카드를 한 줄 띠로 줄이고
             바로 아래 다음 일정 카드·오늘 노선·오늘 숙소. 출발 전에는 여행 카드 + 다음 이동 탑승권 (2026-11-10) */}
-        {featured && (ongoing ? <TripStrip trip={featured} /> : <UpcomingTrip trip={featured} />)}
+        {/* 맨 위 여행 카드: 목록 카드와 같은 모양 + 표지 색 (사용자 요청 2026-11-23, 여행 중이면 민트) */}
+        {featured && <FeaturedTrip trip={featured} />}
         {featured && !ongoing && <NextTransport trip={featured} />}
         {ongoing && <OngoingTrip trip={ongoing} />}
         {/* 출발 30일 전부터 준비 현황 (docs/16 B1) — 여행 중에는 접힌 채로 — 필요할 때 불러온다 */}
@@ -137,54 +137,6 @@ export function HomePage() {
         </section>
       )}
     </>
-  );
-}
-
-function UpcomingTrip({ trip }: { trip: Trip }) {
-  const { t } = useTranslation();
-  const items = useTripItems(trip.id) ?? [];
-  const bookings = useTripBookings(trip.id) ?? [];
-  const packing = useChecklist(trip.id, 'packing') ?? [];
-  const packed = packing.filter((p) => p.checked).length;
-  const ongoing = getTripStatus(trip.startDate, trip.endDate, todayIn(trip.timezone)) === 'ongoing';
-  return (
-    <Link
-      to={`/trips/${trip.id}/plan`}
-      className={cn(
-        'flex flex-col gap-3 rounded-card p-5 text-white shadow-card',
-        ongoing && 'bg-mint',
-      )}
-      // 여행 중이면 민트(아래 파란 다음 일정 카드와 구분, 사용자 요청 2026-11-06), 아니면 여행 표지 색
-      style={ongoing ? undefined : { background: trip.cover.color ?? '#2F6BFF' }}
-    >
-      <span className="tabular self-start rounded-full bg-white/20 px-2.5 py-0.5 text-caption font-semibold">
-        {formatTripBadge(trip.startDate, trip.endDate, todayIn(trip.timezone))}
-      </span>
-      <span className="flex items-center gap-3">
-        <span aria-hidden="true" className="text-[40px] leading-none">
-          {trip.cover.emoji ?? '🧳'}
-        </span>
-        <span className="flex min-w-0 flex-col">
-          <span className="line-clamp-2 text-title-1">{trip.title}</span>
-          {/* 날짜 ↔ 4박 5일 전광판: 좁은 화면에서 두 줄로 넘어가지 않게 (사용자 요청 2026-11-23) */}
-          <RollingSlot
-            reserve
-            align="start"
-            className="tabular self-start text-body-2 whitespace-nowrap opacity-90"
-            items={[
-              <span key="period">{formatPeriod(trip.startDate, trip.endDate)}</span>,
-              <span key="length">{formatTripLength(trip.startDate, trip.endDate)}</span>,
-            ]}
-          />
-        </span>
-      </span>
-      <span className="text-caption opacity-90">
-        {t('home.itemCount', { n: items.length })} ·{' '}
-        {t('home.bookingCount', { n: bookings.length })}
-        {packing.length > 0 &&
-          ` · ${t('home.checklistProgress', { done: packed, total: packing.length })}`}
-      </span>
-    </Link>
   );
 }
 

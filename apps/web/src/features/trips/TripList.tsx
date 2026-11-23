@@ -16,7 +16,15 @@ import { useMemberCount, useTripRole } from '../../data/tripRoles';
 import { timeIn, useMinuteClock } from '../../shared/hooks/useMinuteClock';
 import { useRouteSheet } from '../../shared/hooks/useRouteSheet';
 import { formatPeriod, formatTripBadge, formatTripLength } from '../../shared/lib/dateFormat';
-import { BottomSheet, Button, EmptyState, IconButton, RouteBar } from '../../shared/ui';
+import { cn } from '../../shared/lib/cn';
+import {
+  BottomSheet,
+  Button,
+  EmptyState,
+  IconButton,
+  RollingSlot,
+  RouteBar,
+} from '../../shared/ui';
 import { deleteTripWithUndo } from './tripActions';
 
 /**
@@ -46,11 +54,6 @@ export function TripList({
   }
   // 다녀온 여행은 최근 것이 위로
   groups.past.reverse();
-
-  async function remove(trip: Trip) {
-    setMenuOpen(false);
-    await deleteTripWithUndo(trip);
-  }
 
   const openMenu = (trip: Trip) => {
     setMenuTrip(trip);
@@ -115,23 +118,7 @@ export function TripList({
         )}
       </div>
 
-      <BottomSheet
-        open={menuOpen}
-        onOpenChange={setMenuOpen}
-        title={menuTrip?.title ?? t('trips.menuTitle')}
-      >
-        {menuTrip && (
-          <Button
-            variant="secondary"
-            fullWidth
-            className="justify-start text-danger"
-            leading={<Trash2 aria-hidden="true" className="size-[18px]" />}
-            onClick={() => void remove(menuTrip)}
-          >
-            {t('trips.delete')}
-          </Button>
-        )}
-      </BottomSheet>
+      <TripMenuSheet trip={menuTrip} open={menuOpen} onOpenChange={setMenuOpen} />
     </>
   );
 }
@@ -166,10 +153,61 @@ function TripSection({
   );
 }
 
-function TripCard({ trip, onMenu }: { trip: Trip; onMenu: (trip: Trip) => void }) {
+/** 여행 ⋯ 메뉴 (삭제 → 실행 취소). 목록과 홈 맨 위 카드가 같이 쓴다 */
+export function TripMenuSheet({
+  trip,
+  open,
+  onOpenChange,
+}: {
+  trip: Trip | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <BottomSheet
+      open={open}
+      onOpenChange={onOpenChange}
+      title={trip?.title ?? t('trips.menuTitle')}
+    >
+      {trip && (
+        <Button
+          variant="dangerSoft"
+          fullWidth
+          className="justify-start"
+          leading={<Trash2 aria-hidden="true" className="size-[18px]" />}
+          onClick={() => {
+            onOpenChange(false);
+            void deleteTripWithUndo(trip);
+          }}
+        >
+          {t('trips.delete')}
+        </Button>
+      )}
+    </BottomSheet>
+  );
+}
+
+/**
+ * 여행 카드: [D-day] 제목 👥n / 국기 날짜 ↔ N박 M일 / 현지시간 · 일정 수 / 노선 막대 + 날씨 · ⋯ (사용자 요청 2026-11-23:
+ * D-day는 제목 앞, 함께 쓰는 사람은 제목 오른쪽, 잘리던 날짜 줄은 전광판).
+ * onColor = 홈 맨 위 카드: 같은 모양에 표지 색 바탕(여행 중이면 민트) + 흰 글자
+ */
+export function TripCard({
+  trip,
+  onMenu,
+  onColor = false,
+  as: Tag = 'li',
+}: {
+  trip: Trip;
+  onMenu: (trip: Trip) => void;
+  onColor?: boolean;
+  as?: 'li' | 'div';
+}) {
   const { t } = useTranslation();
   const today = todayIn(trip.timezone);
-  const isPast = getTripStatus(trip.startDate, trip.endDate, today) === 'past';
+  const status = getTripStatus(trip.startDate, trip.endDate, today);
+  const isPast = status === 'past';
   const total = dayNumberOf(trip.startDate, trip.endDate, trip.endDate) ?? 1;
   const dayNow = dayNumberOf(trip.startDate, trip.endDate, today);
   const now = useMinuteClock(!isPast);
@@ -177,55 +215,92 @@ function TripCard({ trip, onMenu }: { trip: Trip; onMenu: (trip: Trip) => void }
   const items = useTripItems(trip.id);
   const members = useMemberCount(trip.id);
   const role = useTripRole(trip.id);
+  const badge = formatTripBadge(trip.startDate, trip.endDate, today);
   // 나라 국기 (중복 없이)
   const flags = [
     ...new Set(trip.destinations.flatMap((d) => (d.countryCode ? [d.countryCode] : []))),
   ]
     .map(flagEmoji)
     .join('');
+  const sub = onColor ? 'text-white/85' : 'text-fg-muted';
   return (
-    <li className="flex items-center gap-1 rounded-card border border-line bg-surface pr-1 shadow-card">
+    <Tag
+      className={cn(
+        'flex items-center gap-1 rounded-card pr-1 shadow-card',
+        onColor ? 'text-white' : 'border border-line bg-surface',
+        onColor && status === 'ongoing' && 'bg-mint',
+      )}
+      // 여행 중이면 민트(사용자 요청 2026-11-06), 아니면 여행 표지 색
+      style={
+        onColor && status !== 'ongoing' ? { background: trip.cover.color ?? '#2F6BFF' } : undefined
+      }
+    >
       <Link to={`/trips/${trip.id}/plan`} className="flex min-w-0 flex-1 items-center gap-3 p-3">
         <span
           aria-hidden="true"
-          className="grid size-14 shrink-0 place-items-center rounded-btn text-[28px]"
-          style={{ background: `${trip.cover.color ?? '#2F6BFF'}22` }}
+          className={cn(
+            'grid size-14 shrink-0 place-items-center rounded-btn text-[28px] tight:size-11 tight:text-[22px]',
+            onColor && 'bg-white/20',
+          )}
+          style={onColor ? undefined : { background: `${trip.cover.color ?? '#2F6BFF'}22` }}
         >
           {trip.cover.emoji ?? '🧳'}
         </span>
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <span className="truncate text-body-1">{trip.title}</span>
-          <span className="tabular truncate text-caption text-fg-muted">
-            {flags && `${flags} `}
-            {formatPeriod(trip.startDate, trip.endDate)} ·{' '}
-            {formatTripLength(trip.startDate, trip.endDate)}
-          </span>
-          <span className="mt-1 flex flex-wrap items-center gap-1.5">
-            <span
-              className={`tabular rounded-full px-2 py-0.5 text-micro ${isPast ? 'bg-bg-subtle text-fg-muted' : 'bg-primary-weak text-primary'}`}
-            >
-              {formatTripBadge(trip.startDate, trip.endDate, today)}
+          {/* [D-day] 제목 — 제목이 길면 D-day 뒤로 이어 두 줄까지 (제목은 두 줄 허용, docs/11 §13-8) */}
+          <span className="flex min-w-0 items-start gap-1.5">
+            <span className="line-clamp-2 min-w-0 text-body-1">
+              <span
+                className={cn(
+                  'tabular mr-1.5 inline-block rounded-full px-2 py-0.5 align-[2px] text-micro',
+                  onColor
+                    ? 'bg-white/20 text-white'
+                    : isPast
+                      ? 'bg-bg-subtle text-fg-muted'
+                      : 'bg-primary-weak text-primary',
+                )}
+              >
+                {badge}
+              </span>
+              {trip.title}
             </span>
-            {/* 여행지 지금 시각 (사용자 요청 2026-10-25) */}
-            {localNow && (
-              <span className="tabular text-micro text-fg-muted">
-                {t('trips.localNow', { time: localNow })}
-              </span>
-            )}
-            {/* 일정 수 · 함께 쓰는 사람 (docs/16 E1) */}
-            {items !== undefined && (
-              <span className="tabular text-micro text-fg-muted">
-                {t('trips.itemCount', { n: items.length })}
-              </span>
-            )}
+            {/* 함께 쓰는 사람 (docs/16 E1) — 제목 오른쪽 */}
             {members > 1 && (
-              <span className="tabular text-micro text-fg-muted">
-                <InlineIcon icon={Users} className="text-fg-muted" />
+              <span className={cn('tabular mt-1 shrink-0 text-micro', sub)}>
+                <InlineIcon icon={Users} className={sub} />
                 {members}
                 {role === 'viewer' && ` · ${t('share.role.viewer')}`}
               </span>
             )}
           </span>
+          {/* 국기 + 날짜 ↔ N박 M일 전광판: 좁은 카드에서 잘리지 않게 */}
+          <span className={cn('flex min-w-0 items-center gap-1 text-caption', sub)}>
+            {flags && <span className="shrink-0">{flags}</span>}
+            {/* 칸보다 넓으면 옆(날씨 버튼)으로 넘치지 않게 자른다 */}
+            <span className="min-w-0 overflow-hidden">
+              <RollingSlot
+                reserve
+                align="start"
+                className="tabular whitespace-nowrap"
+                items={[
+                  <span key="period">{formatPeriod(trip.startDate, trip.endDate)}</span>,
+                  <span key="length">{formatTripLength(trip.startDate, trip.endDate)}</span>,
+                ]}
+              />
+            </span>
+          </span>
+          {(localNow || items !== undefined) && (
+            <span
+              className={cn(
+                'tabular flex items-center gap-x-1.5 overflow-hidden whitespace-nowrap text-micro',
+                sub,
+              )}
+            >
+              {/* 여행지 지금 시각 (사용자 요청 2026-10-25) */}
+              {localNow && <span>{t('trips.localNow', { time: localNow })}</span>}
+              {items !== undefined && <span>{t('trips.itemCount', { n: items.length })}</span>}
+            </span>
+          )}
           {/* 노선 막대 (docs/29 §7.2, 사용자 결정 Q7): 일차 수만큼 노선 색 칸, 오늘 칸 위 점, 지난 날 흐림.
               배지 글자와 같은 정보라 스크린리더에는 숨긴다 */}
           <span aria-hidden="true" className="mt-1.5 block">
@@ -233,27 +308,35 @@ function TripCard({ trip, onMenu }: { trip: Trip; onMenu: (trip: Trip) => void }
               days={total}
               todayIndex={dayNow === null ? null : dayNow - 1}
               pastBefore={isPast ? total : dayNow === null ? 0 : dayNow - 1}
-              label={formatTripBadge(trip.startDate, trip.endDate, today)}
+              label={badge}
+              onColor={onColor}
             />
           </span>
         </span>
       </Link>
-      {/* 여행마다 날씨 정보 바로가기 (사용자 요청 2026-10-27) — 끝난 여행은 빼고 */}
-      {!isPast && (
-        <Link
-          to={`/trips/${trip.id}/weather`}
-          aria-label={t('trips.weatherOf', { title: trip.title })}
-          className="flex size-12 shrink-0 flex-col items-center justify-center gap-0.5 rounded-btn text-fg-sub active:bg-bg-subtle"
-        >
-          <CloudSun aria-hidden="true" className="size-5 text-primary" />
-          <span className="text-micro">{t('trips.weather')}</span>
-        </Link>
-      )}
-      <IconButton
-        label={t('trips.openMenu', { title: trip.title })}
-        icon={<Ellipsis />}
-        onClick={() => onMenu(trip)}
-      />
-    </li>
+      {/* 날씨·⋯는 세로로 쌓아 글자 칸을 넓힌다 (2026-11-23 — 가로로 두면 320px에서 글자 칸이 84px) */}
+      <span className="flex shrink-0 flex-col items-center">
+        {/* 여행마다 날씨 정보 바로가기 (사용자 요청 2026-10-27) — 끝난 여행은 빼고 */}
+        {!isPast && (
+          <Link
+            to={`/trips/${trip.id}/weather`}
+            aria-label={t('trips.weatherOf', { title: trip.title })}
+            className={cn(
+              'flex size-11 shrink-0 flex-col items-center justify-center rounded-btn',
+              onColor ? 'text-white active:bg-white/15' : 'text-fg-sub active:bg-bg-subtle',
+            )}
+          >
+            <CloudSun aria-hidden="true" className={cn('size-5', !onColor && 'text-primary')} />
+            <span className="text-micro">{t('trips.weather')}</span>
+          </Link>
+        )}
+        <IconButton
+          label={t('trips.openMenu', { title: trip.title })}
+          icon={<Ellipsis />}
+          tone={onColor ? 'onColor' : 'plain'}
+          onClick={() => onMenu(trip)}
+        />
+      </span>
+    </Tag>
   );
 }
