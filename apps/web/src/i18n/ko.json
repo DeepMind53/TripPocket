@@ -2473,8 +2473,7 @@
     "drawnNote": "자유 이용 사진이 없어 그림으로 보여요",
     "official": "{{name}} 공식 안내",
     "cityTitle": "{{name}}",
-    "countryTitle": "{{name}}",
-    "reference": "나라 대표 정보 · 참고용"
+    "countryTitle": "{{name}}"
   },
   "flightAirport": {
     "title": "공항 정보",

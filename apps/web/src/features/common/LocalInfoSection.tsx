@@ -1,12 +1,11 @@
+import { flagEmoji } from '@trippocket/shared';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { InlineIcon } from '../../shared/ui/InlineIcon';
 import {
   CreditCard,
   ExternalLink,
   FileText,
-  Globe,
   Image as ImageIcon,
-  MapPin,
   Ticket,
   Wallet,
 } from 'lucide-react';
@@ -45,8 +44,6 @@ interface LocalGroup {
   cards?: readonly string[] | undefined;
   pay: string | null;
   guide?: CountryTransit;
-  /** 나라 대표 정보 (참고용) */
-  reference?: true;
 }
 
 /** 나라별 문구 (없으면 null) */
@@ -111,7 +108,6 @@ export function LocalInfoSection({ tripId }: { tripId: string }) {
           country: cc,
           card,
           pay,
-          reference: true,
         });
     }
   }
@@ -124,7 +120,6 @@ export function LocalInfoSection({ tripId }: { tripId: string }) {
       country: 'KR',
       card: null,
       pay: null,
-      reference: true,
     });
   const vouchers = voucherOn
     ? voucherBookings(bookings, new Set(docs.filter((d) => d.blob).map((d) => d.bookingId)))
@@ -132,20 +127,19 @@ export function LocalInfoSection({ tripId }: { tripId: string }) {
   if (!groups.length && !vouchers.length && !nearbyOn && !arrival && !festivalsOn) return null;
   return (
     <section className="flex flex-col gap-2">
-      <h3 className="text-caption font-semibold text-fg-muted">{t('labs.localTitle')}</h3>
+      {/* 머리말 오른쪽에 국기 + 나라 이름만 — 아래 따로 있던 "나라 대표 정보 · 참고용" 줄은 뺐다 (사용자 요청 2026-11-23).
+          묶음이 여럿(도시·나라가 둘 이상)일 때만 묶음마다 이름 */}
+      <h3 className="flex flex-wrap items-baseline gap-x-1.5 text-caption font-semibold text-fg-muted">
+        {t('labs.localTitle')}
+        {[...new Set(groups.map((g) => g.country))].map((cc) => (
+          <span key={cc} className="text-fg">
+            {flagEmoji(cc)} {countryName(cc)}
+          </span>
+        ))}
+      </h3>
       {groups.map((g) => (
         <div key={g.key} className="flex flex-col gap-1.5">
-          <span className="flex items-baseline gap-1.5 text-caption font-semibold">
-            <span>
-              <InlineIcon icon={g.reference ? Globe : MapPin} />
-              {g.title}
-            </span>
-            {g.reference && (
-              <span className="text-micro font-normal text-fg-muted">
-                {t('localInfo.reference')}
-              </span>
-            )}
-          </span>
+          {groups.length > 1 && <span className="text-caption font-semibold">{g.title}</span>}
           {/* 대중교통 안내(실험실)는 교통카드 위에 (사용자 요청 2026-11-03) */}
           {guideOn && <TransitGuide country={g.country} guide={g.guide} label={g.name} />}
           {g.card && (
