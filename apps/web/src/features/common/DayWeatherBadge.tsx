@@ -33,7 +33,10 @@ export function DayWeatherBadge({
         look: look.label,
         temps: formatTemps(weather),
       })
-    : t('weather.forecastLabel', { look: look.label, temps: formatTemps(weather) });
+    : t(weather.past ? 'weather.observedLabel' : 'weather.forecastLabel', {
+        look: look.label,
+        temps: formatTemps(weather),
+      });
   const info = (
     <span className="flex items-center gap-1">
       <WeatherIcon kind={look.kind} className="size-5" />

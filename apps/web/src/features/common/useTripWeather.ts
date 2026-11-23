@@ -3,7 +3,12 @@ import { useEffect, useState } from 'react';
 import { useSettings } from '../../data/settingsStore';
 import { api } from '../../data/api/client';
 import { sidoOf } from '../../domain/sido';
-import { getAirQuality, getForecast, getLastYearWeather } from '../../data/services/travelInfo';
+import {
+  getAirQuality,
+  getForecast,
+  getLastYearWeather,
+  getPastWeather,
+} from '../../data/services/travelInfo';
 import type { DayAir } from '../../domain/air';
 import type { DayWeather } from '../../domain/weather';
 
@@ -84,15 +89,19 @@ export function useWeatherDays(
     const days = dates.filter((d) => d >= addDays(today, -PAST_DAYS));
     const near = days.filter((d) => d <= lastForecast);
     const far = days.filter((d) => d > lastForecast);
+    // 예보의 지난 7일보다 오래된 날: 그날 실제 기록 (2026-11-23, 한 번 받으면 기기에 저장)
+    const old = dates.filter((d) => d < addDays(today, -PAST_DAYS));
     void Promise.all([
       near.length ? getForecast(coords.lat, coords.lng, tz) : Promise.resolve({}),
       getLastYearWeather(coords.lat, coords.lng, tz, far),
       withAir && near.length ? getAirQuality(coords.lat, coords.lng, tz) : Promise.resolve({}),
+      getPastWeather(coords.lat, coords.lng, tz, old),
     ]).then(
-      ([f, ly, air]: [
+      ([f, ly, air, pastW]: [
         Record<LocalDate, DayWeather>,
         Record<LocalDate, DayWeather>,
         Record<LocalDate, DayAir>,
+        Record<LocalDate, DayWeather>,
       ]) => {
         if (!alive) return;
         const next: Record<LocalDate, TripDayWeather> = {};
@@ -101,6 +110,7 @@ export function useWeatherDays(
             next[d] =
               d < today ? { ...f[d], past: true } : air[d] ? { ...f[d], air: air[d] } : f[d];
         for (const d of far) if (ly[d]) next[d] = { ...ly[d], year: Number(d.slice(0, 4)) - 1 };
+        for (const d of old) if (pastW[d]) next[d] = { ...pastW[d], past: true };
         setOut(next);
       },
     );

@@ -293,3 +293,60 @@ export function getLastYearWeather(
     {},
   );
 }
+
+/** 과거 날씨 응답(daily) → 날짜별 날씨 */
+function parseDaily(body: unknown): Map<string, DayWeather> {
+  const daily = isObj(body) && isObj(body.daily) ? body.daily : {};
+  const codes = arr(daily.weather_code);
+  const maxs = arr(daily.temperature_2m_max);
+  const mins = arr(daily.temperature_2m_min);
+  const out = new Map<string, DayWeather>();
+  arr(daily.time).forEach((d, i) => {
+    const code = num(codes[i]);
+    const max = num(maxs[i]);
+    const min = num(mins[i]);
+    if (typeof d === 'string' && code !== null && max !== null && min !== null)
+      out.set(d, { code, min, max });
+  });
+  return out;
+}
+
+/**
+ * 지난 날의 실제 날씨 (사용자 요청 2026-11-23: 지난 일정에도 그해 그날 실제 날씨, 바뀌지 않으니 저장해서 기록).
+ * 예보 API의 지난 7일보다 오래된 날 — Open-Meteo 과거 기록(비상업 무료·키 없음, 여행지 좌표와 날짜만 보냄).
+ * 요청한 날이 모두 오면 기간 없이 기기에 저장해 다시 묻지 않는다. 과거 기록은 며칠 늦게 채워지므로 빠진 날이 있으면 저장하지 않는다
+ */
+export async function getPastWeather(
+  lat: number,
+  lng: number,
+  timezone: string,
+  dates: readonly LocalDate[],
+): Promise<Record<LocalDate, DayWeather>> {
+  if (dates.length === 0) return {};
+  const sorted = [...dates].sort();
+  const from = sorted[0]!;
+  const to = sorted[sorted.length - 1]!;
+  const key = `weather-past:${lat.toFixed(2)},${lng.toFixed(2)}:${from}:${to}`;
+  const hit = await settingsRepo.get<Record<LocalDate, DayWeather> | null>(key, null);
+  if (hit) return hit;
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) return {};
+  try {
+    const url =
+      `https://archive-api.open-meteo.com/v1/archive?latitude=${lat.toFixed(2)}&longitude=${lng.toFixed(2)}` +
+      `&start_date=${from}&end_date=${to}` +
+      `&daily=weather_code,temperature_2m_max,temperature_2m_min` +
+      `&timezone=${encodeURIComponent(timezone)}`;
+    const res = await fetchCounted('open_meteo', url);
+    if (!res.ok) return {};
+    const byDay = parseDaily(await res.json());
+    const out: Record<LocalDate, DayWeather> = {};
+    for (const d of dates) {
+      const w = byDay.get(d);
+      if (w) out[d] = w;
+    }
+    if (dates.every((d) => out[d])) await settingsRepo.set(key, out);
+    return out;
+  } catch {
+    return {};
+  }
+}

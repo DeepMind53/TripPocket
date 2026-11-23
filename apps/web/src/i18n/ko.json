@@ -1711,7 +1711,8 @@
   "weather": {
     "pastShort": "과거 날씨",
     "lastYearLabel": "작년({{year}}년) 같은 날 날씨: {{look}} {{temps}}",
-    "forecastLabel": "날씨 예보: {{look}} {{temps}}"
+    "forecastLabel": "날씨 예보: {{look}} {{temps}}",
+    "observedLabel": "지난 날씨: {{look}} {{temps}}"
   },
   "review": {
     "write": "후기 입력",
