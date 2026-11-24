@@ -13,11 +13,18 @@ const SHOWN = 3;
  * 기록 탭 "방문 기록" 요약 (사용자 결정 2026-11-24, docs/32 §1): 합계 한 줄 + 최근 여행 3줄.
  * 누르면 /records/visits — 여행 줄은 그 여행을 펼친 채로
  */
-export function VisitSummary({ trips }: { trips: readonly Trip[] }) {
+export function VisitSummary({
+  trips,
+  hideEmpty = false,
+}: {
+  trips: readonly Trip[];
+  /** 방문이 하나도 없으면 칸을 그리지 않는다 — 기록 탭이 빈 화면 안내를 따로 보일 때 (docs/31 U9) */
+  hideEmpty?: boolean;
+}) {
   const { t } = useTranslation();
   const items = useVisitedItems();
   const byId = useMemo(() => new Map(trips.map((tr) => [tr.id, tr])), [trips]);
-  if (!items) return null;
+  if (!items || (hideEmpty && items.length === 0)) return null;
   const visited = items.filter((i) => i.visit === 'visited').length;
   const cities = new Set(
     items.flatMap((i) => {

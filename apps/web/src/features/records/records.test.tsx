@@ -171,3 +171,10 @@ it('지운 여행 안의 방문 기록은 보이지 않는다', async () => {
   await tripRepo.softDelete(trip.id);
   expect(await itemRepo.listVisited()).toEqual([]);
 });
+
+it('다녀온 여행이 없으면 0 숫자 카드 없이 빈 화면 안내 하나만 (docs/31 U9)', async () => {
+  render(<RouterProvider router={createMemoryRouter(routes, { initialEntries: ['/records'] })} />);
+  expect(await screen.findByText('아직 다녀온 여행이 없어요')).toBeInTheDocument();
+  expect(screen.queryByRole('region', { name: '나의 여행' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('region', { name: '방문 기록' })).not.toBeInTheDocument();
+});

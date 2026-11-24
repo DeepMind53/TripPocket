@@ -34,28 +34,33 @@ export function RecordsPage() {
     ),
   ];
 
+  // 다녀온 여행이 없으면 0만 있는 숫자 카드·방문 줄을 숨기고 빈 화면 안내 하나만 (docs/31 U9)
+  const none = !!trips && past.length === 0;
+
   return (
     <>
       <TopBar title={t('records.title')} />
       <div className="flex flex-col gap-6 px-5 pt-2">
-        <section
-          aria-label={t('records.stats')}
-          className="flex flex-col gap-4 rounded-card border border-line bg-surface p-4"
-        >
-          <h2 className="text-body-1 font-semibold">{t('records.stats')}</h2>
-          <div className="grid grid-cols-3 gap-3">
-            <Stat label={t('records.trips')} value={t('records.tripsN', { n: past.length })} />
-            <Stat label={t('records.days')} value={t('records.daysN', { n: days })} />
-            <Stat
-              label={t('records.countries')}
-              value={t('records.countriesN', { n: countries.length })}
-            />
-          </div>
-          {countries.length > 0 && <CountryGrid codes={countries} counts={countryTrips} />}
-        </section>
+        {!none && (
+          <section
+            aria-label={t('records.stats')}
+            className="flex flex-col gap-4 rounded-card border border-line bg-surface p-4"
+          >
+            <h2 className="text-body-1 font-semibold">{t('records.stats')}</h2>
+            <div className="grid grid-cols-3 gap-3">
+              <Stat label={t('records.trips')} value={t('records.tripsN', { n: past.length })} />
+              <Stat label={t('records.days')} value={t('records.daysN', { n: days })} />
+              <Stat
+                label={t('records.countries')}
+                value={t('records.countriesN', { n: countries.length })}
+              />
+            </div>
+            {countries.length > 0 && <CountryGrid codes={countries} counts={countryTrips} />}
+          </section>
+        )}
 
         <TravelReview pastTrips={past} />
-        <VisitSummary trips={trips ?? []} />
+        <VisitSummary trips={trips ?? []} hideEmpty={none} />
         <DayNoteLog trips={trips ?? []} />
         <TripCardSave pastTrips={past} />
         <PhotoAlbum />
