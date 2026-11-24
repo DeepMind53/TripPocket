@@ -112,7 +112,9 @@ describe('준비 탭 (저장·취소)', () => {
     await user.type(screen.getByLabelText('준비물 추가'), '랜턴{Enter}');
     expect(await screen.findByRole('checkbox', { name: '랜턴' })).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: '캠핑 그룹 삭제' }));
+    // 지우기는 그룹 [⋯] 메뉴 안에 (docs/31 A3)
+    await user.click(screen.getByRole('button', { name: '캠핑 그룹 메뉴' }));
+    await user.click(await screen.findByRole('button', { name: '캠핑 그룹 삭제' }));
     await acceptDelete(user);
     expect(screen.queryByRole('checkbox', { name: '랜턴' })).not.toBeInTheDocument();
     expect(screen.queryByRole('radio', { name: '캠핑' })).not.toBeInTheDocument();

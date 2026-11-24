@@ -19,8 +19,9 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Check, ChevronDown, GripVertical, Trash2, X } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { Check, ChevronDown, Ellipsis, GripVertical, Trash2, X } from 'lucide-react';
+import { useState, type ReactNode } from 'react';
+import { BottomSheet, Button } from '../../shared/ui';
 import { useTranslation } from '../../i18n';
 import { cn } from '../../shared/lib/cn';
 import type { DraftItem } from './useChecklistDraft';
@@ -55,6 +56,8 @@ export function ChecklistBoard({
   readOnly = false,
 }: ChecklistBoardProps) {
   const { t } = useTranslation();
+  // 그룹 [⋯] 메뉴 — 지우기는 메뉴 안에 (docs/31 A3: 접기 화살표 옆 휴지통을 잘못 누르기 쉬움)
+  const [menu, setMenu] = useState<string | null>(null);
   const grouped = categories !== undefined;
   const containers = grouped ? categories.map((c) => GROUP + c) : [SINGLE];
   const itemsOf = (container: string) =>
@@ -144,7 +147,12 @@ export function ChecklistBoard({
           if (!grouped) return <div key={id}>{body}</div>;
           const done = list.filter((i) => i.checked).length;
           return (
-            <details key={id} open className="group border-b border-line last:border-b-0">
+            // 빈 그룹은 처음에 접어 둔다 (docs/31 A3) — 항목이 생기면 펼침
+            <details
+              key={id}
+              open={list.length > 0}
+              className="group border-b border-line last:border-b-0"
+            >
               <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 pr-0 pl-1">
                 <span className="min-w-0 flex-1 truncate text-body-2 font-semibold text-fg-sub">
                   {name}
@@ -161,23 +169,42 @@ export function ChecklistBoard({
                   aria-hidden="true"
                   className="size-4 shrink-0 text-fg-muted transition-transform group-open:rotate-180"
                 />
-                <button
-                  type="button"
-                  aria-label={t('checklist.groupDelete', { name })}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    onRemoveGroup?.(name);
-                  }}
-                  className="grid size-11 shrink-0 place-items-center text-fg-muted"
-                >
-                  <Trash2 aria-hidden="true" className="size-4" />
-                </button>
+                {onRemoveGroup && !readOnly && (
+                  <button
+                    type="button"
+                    aria-label={t('checklist.groupMenu', { name })}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setMenu(name);
+                    }}
+                    className="grid size-11 shrink-0 place-items-center text-fg-muted"
+                  >
+                    <Ellipsis aria-hidden="true" className="size-4" />
+                  </button>
+                )}
               </summary>
               <div className="pb-2">{body}</div>
             </details>
           );
         })}
       </div>
+      <BottomSheet
+        open={menu !== null}
+        onOpenChange={(o) => !o && setMenu(null)}
+        title={menu ?? ''}
+      >
+        <Button
+          variant="dangerSoft"
+          fullWidth
+          leading={<Trash2 aria-hidden="true" className="size-4" />}
+          onClick={() => {
+            if (menu !== null) onRemoveGroup?.(menu);
+            setMenu(null);
+          }}
+        >
+          {t('checklist.groupDelete', { name: menu ?? '' })}
+        </Button>
+      </BottomSheet>
     </DndContext>
   );
 }

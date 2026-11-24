@@ -446,6 +446,7 @@
     "categoryPlaceholder": "새 카테고리",
     "categoryExists": "이미 있는 카테고리예요",
     "groupDelete": "{{name}} 그룹 삭제",
+    "groupMenu": "{{name}} 그룹 메뉴",
     "groupDeleted": "{{name}} 그룹을 지웠어요\n[저장]을 눌러 주세요",
     "dragHandle": "{{text}} 옮기기",
     "save": "저장",
