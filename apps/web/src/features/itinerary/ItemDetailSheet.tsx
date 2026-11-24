@@ -46,7 +46,8 @@ export interface ItemDetailSheetProps {
   /** 지도에서 보기에 쓸 앱 (국내=네이버, 해외=구글) */
   mapApp: MapApp;
   onDirections: () => void;
-  onEdit: () => void;
+  /** focus: 편집 시트를 열 때 커서를 둘 칸 (주소 없음 → [주소 넣기], docs/31 D2) */
+  onEdit: (focus?: 'address') => void;
   onMoveDay: () => void;
   onDelete: () => void;
   onToggleDone: (done: boolean) => void;
@@ -235,7 +236,9 @@ export function ItemDetailSheet({
                 onClick={() => setTaxiOpen(true)}
               />
             )}
-            {!readOnly && <Action icon={<Pencil />} label={t('detail.edit')} onClick={onEdit} />}
+            {!readOnly && (
+              <Action icon={<Pencil />} label={t('detail.edit')} onClick={() => onEdit()} />
+            )}
           </div>
 
           {inlineDirections && (
@@ -248,7 +251,20 @@ export function ItemDetailSheet({
           <dl className="flex flex-col gap-3 text-body-2">
             {placeLike && (
               <Info label={t('form.address')}>
-                {address ?? <span className="text-fg-muted">{t('detail.noAddress')}</span>}
+                {address ?? (
+                  <span className="flex flex-col items-start gap-1">
+                    <span className="text-fg-muted">{t('detail.noAddress')}</span>
+                    {!readOnly && (
+                      <button
+                        type="button"
+                        onClick={() => onEdit('address')}
+                        className="font-semibold text-primary"
+                      >
+                        {t('detail.addAddress')}
+                      </button>
+                    )}
+                  </span>
+                )}
               </Info>
             )}
             {item.memo && (

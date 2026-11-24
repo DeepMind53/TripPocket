@@ -470,6 +470,18 @@ describe('일정 상세 — 종류별 맞춤·예약 연결 (docs/16 D1·D2)', (
   });
 });
 
+it('주소 없는 일정: [주소 넣기] → 편집 시트의 주소 칸에 커서 (docs/31 D2)', async () => {
+  const { itemRepo } = await import('../../data/repositories/itemRepo');
+  await itemRepo.create({ tripId, date: '2026-10-24', kind: 'place', title: '공원 산책' });
+  const user = userEvent.setup();
+  await renderPlan();
+  await user.click(await screen.findByRole('button', { name: /공원 산책/ }));
+  const sheet = await screen.findByRole('dialog', { name: '공원 산책' });
+  await user.click(within(sheet).getByRole('button', { name: '주소 넣기' }));
+  const address = await screen.findByLabelText('주소');
+  await waitFor(() => expect(address).toHaveFocus());
+});
+
 describe('손동작 (docs/16 C4·C5, 2026-10-26 정식)', () => {
   it('C5: 하루 보기에서 왼쪽으로 밀면 다음 날, 오른쪽이면 이전 날 (첫날에서 더 뒤로는 안 감)', async () => {
     const router = await renderPlan('?day=1');

@@ -287,7 +287,9 @@ function PlanView({
     }
   };
   // 일정 입력 시트 대상: 어느 날에 추가 / 어떤 일정을 고침 (시트와 함께 브라우저 기록에)
-  const formTarget = useSheetArg<{ date: LocalDate | null; itemId?: string }>(['item-form']) ?? {
+  const formTarget = useSheetArg<{ date: LocalDate | null; itemId?: string; focus?: 'address' }>([
+    'item-form',
+  ]) ?? {
     date: null,
   };
 
@@ -995,6 +997,7 @@ function PlanView({
         date={formTarget.date}
         item={formTarget.itemId ? items.find((i) => i.id === formTarget.itemId) : undefined}
         planId={formTarget.date ? plansView.info[formTarget.date]?.plan?.id : undefined}
+        focus={formTarget.focus}
       />
       {plansView.on && (
         <DayPlanSheet
@@ -1024,8 +1027,13 @@ function PlanView({
           if (openDirectionsDirect(d, isDomestic)) return;
           setDirOpen(true, d);
         }}
-        onEdit={() => {
-          if (selected) setFormOpen(true, { date: selected.date, itemId: selected.id });
+        onEdit={(focus) => {
+          if (selected)
+            setFormOpen(true, {
+              date: selected.date,
+              itemId: selected.id,
+              ...(focus ? { focus } : {}),
+            });
         }}
         onMoveDay={() => setMoveOpen(true)}
         onDelete={() => selected && void remove(selected)}

@@ -39,6 +39,8 @@ export interface ItemFormSheetProps {
   item?: ItineraryItem | undefined;
   /** Plan B: 새 일정을 넣을 대안 플랜 (없으면 기본 일정) */
   planId?: string | undefined;
+  /** 열 때 이 칸에 커서 — 일정 상세 [주소 넣기] (docs/31 D2) */
+  focus?: 'address' | undefined;
 }
 
 const inputClass =
@@ -52,6 +54,7 @@ export function ItemFormSheet({
   date,
   item,
   planId,
+  focus,
 }: ItemFormSheetProps) {
   const { t } = useTranslation();
   return (
@@ -68,6 +71,7 @@ export function ItemFormSheet({
           date={date}
           item={item}
           planId={planId}
+          focus={focus}
           onDone={() => onOpenChange(false)}
         />
       )}
@@ -80,12 +84,14 @@ function ItemForm({
   date,
   item,
   planId,
+  focus,
   onDone,
 }: {
   tripId: string;
   date: LocalDate | null;
   item: ItineraryItem | undefined;
   planId?: string | undefined;
+  focus?: 'address' | undefined;
   onDone: () => void;
 }) {
   const { t } = useTranslation();
@@ -328,6 +334,8 @@ function ItemForm({
         <Field label={t('form.address')}>
           <input
             id="item-address"
+            // 사용자가 [주소 넣기]를 눌러 연 경우에만
+            autoFocus={focus === 'address'}
             value={address}
             maxLength={200}
             placeholder={t('form.addressPlaceholder')}
