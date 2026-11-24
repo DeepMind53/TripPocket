@@ -3,6 +3,7 @@ import type { Db } from '../db/database';
 import { markAlertsSent, planAlertPushes } from './alertPush';
 import type { NationalKeys } from './nationalAlerts';
 import { sendPush, type PushMessage, type PushKind } from './push';
+import { pushLeaveRepo } from '../repositories/pushLeaveRepo';
 
 interface TripData {
   id: string;
@@ -42,6 +43,7 @@ export interface PlannedPush {
  * - 출발 하루 전 (현지 09시 이후)
  * - 입국신고를 낼 수 있게 된 날 (필수 항목 fromDaysBefore, 현지 09시 이후, 아직 체크 안 함)
  * - 일정 시작 30분 전 (오늘, 시작 시각 있는 일정, 안 다녀온 것)
+ * - 나갈 시각 (ADR-0013): 앱이 보낸 "HH:mm"이 되면(10분 안) — 그 일정은 30분 전 알림 대신 이것만
  * 같은 알림은 push_sent로 한 번만
  */
 export function planPushes(db: Db, now: Date): PlannedPush[] {
@@ -128,8 +130,29 @@ export function planPushes(db: Db, now: Date): PlannedPush[] {
             )
             .all(trip.id) as { data_json: string }[]
         ).map((r) => JSON.parse(r.data_json) as ItemData);
+        const leaves = new Map(
+          pushLeaveRepo(db)
+            .forTripDay(userId, trip.id, today)
+            .map((l) => [l.itemId, l.leaveAt]),
+        );
         for (const it of items) {
           if (it.date !== today || !it.startTime || it.done) continue;
+          const leaveAt = leaves.get(it.id);
+          if (leaveAt) {
+            const late = minutes(local) - minutes(leaveAt);
+            if (late >= 0 && late <= 10 && it.startTime > local)
+              out.push({
+                userId,
+                kind: 'itemSoon',
+                key: `leave:${it.id}:${today}`,
+                msg: {
+                  title: `지금 나가면 ${it.startTime} ${it.title}에 맞춰요`,
+                  body: `${leaveAt}에 나가기로 했어요`,
+                  url: `${base}/go`,
+                },
+              });
+            continue;
+          }
           const diff = minutes(it.startTime) - minutes(local);
           if (diff < 0 || diff > 30) continue;
           out.push({
@@ -169,6 +192,8 @@ export function schedulePushes(
         for (const p of await planAlertPushes(db, alertKeys, now))
           if ((await sendPush(db, p.userId, p.kind, p.msg, p.key)) > 0) markAlertsSent(db, p, now);
       }
+      // 이틀 넘게 지난 나갈 시각 정리 (여행지 시간대 차이 여유)
+      pushLeaveRepo(db).prune(new Date(Date.now() - 2 * 86_400_000).toISOString().slice(0, 10));
       // 30일 지난 발송 기록 정리
       db.prepare('DELETE FROM push_sent WHERE sent_at < ?').run(
         new Date(Date.now() - 30 * 86_400_000).toISOString(),

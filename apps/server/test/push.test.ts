@@ -106,6 +106,51 @@ describe('알림 (docs/20 G1)', () => {
       '11:10 왓포',
     ]);
   });
+
+  it('나갈 시각 (ADR-0013): 시각만 받고, 멤버·그 여행 일정만, 그 시각에 30분 전 알림 대신 한 번', async () => {
+    await call('PUT', '/api/push/subscription', sub);
+    record('trips', 't', null, {
+      id: 't',
+      title: '방콕',
+      startDate: '2026-11-01',
+      endDate: '2026-11-03',
+      timezone: 'Asia/Bangkok',
+    });
+    record('items', 'i', 't', { id: 'i', date: '2026-11-01', title: '왓포', startTime: '11:10' });
+    const body = { tripId: 't', itemId: 'i', date: '2026-11-01', leaveAt: '10:35' };
+    // 로그인 필요 · 멤버가 아니면 404 (있는지조차 알리지 않음)
+    expect((await call('PUT', '/api/push/leave', body, false)).statusCode).toBe(401);
+    expect((await call('PUT', '/api/push/leave', body)).statusCode).toBe(404);
+    db.prepare(
+      "INSERT INTO trip_members (trip_id, user_id, role, created_at) VALUES ('t', 'u', 'viewer', 'x')",
+    ).run();
+    // 이상한 값·다른 여행의 일정
+    expect((await call('PUT', '/api/push/leave', { ...body, leaveAt: '25:00' })).statusCode).toBe(
+      400,
+    );
+    expect((await call('PUT', '/api/push/leave', { ...body, itemId: 'x' })).statusCode).toBe(404);
+    expect((await call('PUT', '/api/push/leave', body)).statusCode).toBe(200);
+    // 좌표 같은 다른 값은 저장하지 않는다
+    expect(Object.keys(db.prepare('SELECT * FROM push_leave').get() as object).sort()).toEqual([
+      'date',
+      'item_id',
+      'leave_at',
+      'trip_id',
+      'updated_at',
+      'user_id',
+    ]);
+    // 방콕 10:30 — 아직 / 10:40 — 나갈 시각 알림, 30분 전 알림은 없음
+    expect(planPushes(db, new Date('2026-11-01T03:30:00Z'))).toEqual([]);
+    const plan = planPushes(db, new Date('2026-11-01T03:40:00Z'));
+    expect(plan.map((p) => [p.key, p.msg.title])).toEqual([
+      ['leave:i:2026-11-01', '지금 나가면 11:10 왓포에 맞춰요'],
+    ]);
+    // 지우면 다시 30분 전 알림
+    await call('DELETE', '/api/push/leave', { itemId: 'i' });
+    expect(planPushes(db, new Date('2026-11-01T03:40:00Z')).map((p) => p.msg.title)).toEqual([
+      '11:10 왓포',
+    ]);
+  });
 });
 
 describe('여행지 특보 알림 (docs/24, ADR-0008)', () => {

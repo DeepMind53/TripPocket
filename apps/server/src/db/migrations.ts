@@ -350,4 +350,18 @@ export const MIGRATIONS: readonly string[] = [
   CREATE INDEX lodging_reports_user ON lodging_price_reports(user_id, seen_at);
   CREATE INDEX lodging_reports_expires ON lodging_price_reports(expires_at);
   `,
+  // 24: 나갈 시각 알림 (ADR-0013, docs/27 F1) — 앱이 계산한 "HH:mm"만. 좌표·이동 시간 없음.
+  // 사람·일정마다 한 줄, 날짜가 지나면 지운다. 탈퇴하면 함께 지움 (ON DELETE CASCADE)
+  `
+  CREATE TABLE push_leave (
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    item_id TEXT NOT NULL,
+    trip_id TEXT NOT NULL,
+    date TEXT NOT NULL,
+    leave_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    PRIMARY KEY (user_id, item_id)
+  );
+  CREATE INDEX push_leave_date ON push_leave(date);
+  `,
 ];

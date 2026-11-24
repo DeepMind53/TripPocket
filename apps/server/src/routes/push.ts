@@ -3,6 +3,7 @@ import type { Config } from '../config';
 import type { Db } from '../db/database';
 import { requireUser } from '../auth/session';
 import { DEFAULT_PREFS, PUSH_KINDS, type PushPrefs } from '../services/push';
+import { pushLeaveRepo } from '../repositories/pushLeaveRepo';
 
 const isUrl = (v: unknown): v is string => {
   if (typeof v !== 'string' || v.length > 1000) return false;
@@ -13,6 +14,10 @@ const isUrl = (v: unknown): v is string => {
   }
 };
 const isKey = (v: unknown): v is string => typeof v === 'string' && /^[\w-]{10,200}$/.test(v);
+const isId = (v: unknown): v is string => typeof v === 'string' && /^[\w-]{1,64}$/.test(v);
+const isDate = (v: unknown): v is string => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v);
+const isHm = (v: unknown): v is string =>
+  typeof v === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(v);
 const prefsOf = (v: unknown): PushPrefs => {
   const o = (v && typeof v === 'object' ? v : {}) as Record<string, unknown>;
   return Object.fromEntries(
@@ -64,6 +69,29 @@ export function pushRoutes(app: FastifyInstance, config: Config, db: Db): void {
         endpoint,
         req.user!.userId,
       );
+    return { ok: true };
+  });
+
+  // 나갈 시각 (ADR-0013): 앱이 계산한 "HH:mm"만 받는다 — 좌표·이동 시간은 받지 않는다
+  const leave = pushLeaveRepo(db);
+  app.put<{ Body: { tripId?: unknown; itemId?: unknown; date?: unknown; leaveAt?: unknown } }>(
+    '/api/push/leave',
+    { ...auth, config: { rateLimit: { max: 60, timeWindow: '1 minute' } } },
+    async (req, reply) => {
+      const { tripId, itemId, date, leaveAt } = req.body ?? {};
+      if (!isId(tripId) || !isId(itemId) || !isDate(date) || !isHm(leaveAt))
+        return reply.code(400).send({ error: 'bad_request' });
+      // 남의 여행·없는 일정은 있는지조차 알리지 않는다
+      if (!leave.canSet(req.user!.userId, tripId, itemId))
+        return reply.code(404).send({ error: 'not_found' });
+      leave.set({ userId: req.user!.userId, tripId, itemId, date, leaveAt });
+      return { ok: true };
+    },
+  );
+  app.delete<{ Body: { itemId?: unknown } }>('/api/push/leave', auth, async (req, reply) => {
+    const itemId = req.body?.itemId;
+    if (!isId(itemId)) return reply.code(400).send({ error: 'bad_request' });
+    leave.remove(req.user!.userId, itemId);
     return { ok: true };
   });
 }
