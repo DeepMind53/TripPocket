@@ -1,4 +1,4 @@
-import { Unplug } from 'lucide-react';
+import { Unplug, WifiOff } from 'lucide-react';
 import { useState } from 'react';
 import { refreshMe, useAuth } from '../../data/authStore';
 import { useTranslation } from '../../i18n';
@@ -10,7 +10,14 @@ import { OfflineNote } from './OfflineNote';
  * 앱은 로그인한 사람만 쓰므로(AuthGate) 여기서 로그인 버튼은 보이지 않는다 — 로그인했던 기기가
  * 오프라인이거나 홈 PC가 꺼진 경우. 확인 중(unknown)이면 잠깐 돌아가는 표시만
  */
-export function ServerOfflineNotice({ inline = false }: { inline?: boolean }) {
+export function ServerOfflineNotice({
+  inline = false,
+  band = false,
+}: {
+  inline?: boolean;
+  /** 한 줄 띠 + [다시 시도] — 마이·장소 탭: 큰 카드가 화면 반을 가리지 않게 (docs/31 F1·N1) */
+  band?: boolean;
+}) {
   const { t } = useTranslation();
   const status = useAuth((s) => s.status);
   const [busy, setBusy] = useState(false);
@@ -26,6 +33,19 @@ export function ServerOfflineNotice({ inline = false }: { inline?: boolean }) {
     setBusy(false);
   };
   if (inline) return <OfflineNote text={t('offline.inline')} />;
+  if (band)
+    return (
+      <div
+        role="status"
+        className="flex items-center gap-2 rounded-card bg-bg-subtle py-1.5 pr-1.5 pl-3"
+      >
+        <WifiOff aria-hidden="true" className="size-4 shrink-0 text-fg-muted" />
+        <span className="min-w-0 flex-1 text-caption text-fg-sub">{t('offline.title')}</span>
+        <Button size="sm" variant="ghost" loading={busy} onClick={() => void retry()}>
+          {t('offline.retry')}
+        </Button>
+      </div>
+    );
   return (
     <EmptyState
       icon={Unplug}

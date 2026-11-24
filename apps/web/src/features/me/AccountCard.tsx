@@ -48,8 +48,8 @@ export function AccountCard() {
 
   if (status !== 'user' || !me)
     return (
-      <section className="rounded-card bg-bg-subtle">
-        <ServerOfflineNotice />
+      <section>
+        <ServerOfflineNotice band />
       </section>
     );
 

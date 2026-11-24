@@ -158,7 +158,13 @@ export function PlacesPage() {
     ...(p.url && p.source !== 'google' ? { externalUrl: p.url } : {}),
   });
 
-  if (!loggedIn) return <ServerOfflineNotice />;
+  // 서버에 닿지 않으면 한 줄 띠 (docs/31 N1) — 장소 찾기는 서버가 있어야 해서 아래는 비운다
+  if (!loggedIn)
+    return (
+      <div className="px-5 pt-3">
+        <ServerOfflineNotice band />
+      </div>
+    );
 
   return (
     <div className="flex flex-col gap-3 px-5 pt-3">
