@@ -149,7 +149,7 @@ export async function applyRemoteSettings(
 }
 
 /**
- * 사용자가 저장한 기본값 (사용자 요청 2026-11-03): [지금 설정을 기본값으로 저장] → 되돌리기는 이 값으로.
+ * 사용자가 저장한 기본값 (사용자 요청 2026-11-03): [지금 설정을 내 기본으로 저장] → 되돌리기는 이 값으로.
  * 이 기기에만 (localStorage). 물어본 기록(planPrompt*)은 저장하지 않는다
  */
 const USER_DEFAULTS_KEY = 'tp-settings-defaults';

@@ -109,7 +109,7 @@ export function SettingsPage() {
   );
 }
 
-/** 지금 설정을 기본값으로 저장 → 섹션별 [기본값으로 되돌리기]가 이 값으로 (사용자 요청 2026-11-03) */
+/** 지금 설정을 내 기본으로 저장 → 섹션별 [기본값으로 되돌리기]가 이 값으로 (사용자 요청 2026-11-03) */
 function DefaultsBox() {
   const { t } = useTranslation();
   const [saved, setSaved] = useState(() => userDefaults() !== null);

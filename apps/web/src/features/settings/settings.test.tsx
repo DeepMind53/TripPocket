@@ -132,7 +132,7 @@ describe('설정 묶음·기본값 저장 (2026-11-03)', () => {
     await user.click(within(quick).getByRole('switch', { name: '대중교통 안내' }));
     await back();
     expect(await screen.findByRole('link', { name: /3개 중 1개 켜짐/ })).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: '지금 설정을 기본값으로 저장' }));
+    await user.click(screen.getByRole('button', { name: '지금 설정을 내 기본으로 저장' }));
     quick = await openQuick();
     await user.click(within(quick).getByRole('switch', { name: '대중교통 안내' }));
     expect(useSettings.getState().transitGuide).toBe(false);
@@ -140,7 +140,7 @@ describe('설정 묶음·기본값 저장 (2026-11-03)', () => {
     expect(useSettings.getState().transitGuide).toBe(true);
     // 저장한 기본값을 지우면 처음 기본값(끔)으로
     await back();
-    await user.click(await screen.findByRole('button', { name: '저장한 기본값 지우기' }));
+    await user.click(await screen.findByRole('button', { name: '내 기본 지우기' }));
     quick = await openQuick();
     await user.click(within(quick).getByRole('button', { name: '기본값으로 되돌리기' }));
     expect(useSettings.getState().transitGuide).toBe(false);
