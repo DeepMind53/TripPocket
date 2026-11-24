@@ -5,7 +5,6 @@ import {
   todayIn,
   type Trip,
   type TripStatus,
-  flagEmoji,
 } from '@trippocket/shared';
 import { ChevronDown, CloudSun, Ellipsis, Trash2, Users, Map as MapIcon } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
@@ -220,12 +219,6 @@ export function TripCard({
   const members = useMemberCount(trip.id);
   const role = useTripRole(trip.id);
   const badge = formatTripBadge(trip.startDate, trip.endDate, today);
-  // 나라 국기 (중복 없이)
-  const flags = [
-    ...new Set(trip.destinations.flatMap((d) => (d.countryCode ? [d.countryCode] : []))),
-  ]
-    .map(flagEmoji)
-    .join('');
   const sub = onColor ? 'text-white/85' : 'text-fg-muted';
   return (
     <Tag
@@ -278,9 +271,8 @@ export function TripCard({
               </span>
             )}
           </span>
-          {/* 국기 + 날짜 ↔ N박 M일 전광판: 좁은 카드에서 잘리지 않게 */}
+          {/* 날짜 ↔ N박 M일 전광판: 좁은 카드에서 잘리지 않게. 작은 국기는 빼고 올해면 연도 생략 (docs/31 N2) */}
           <span className={cn('flex min-w-0 items-center gap-1 text-caption', sub)}>
-            {flags && <span className="shrink-0">{flags}</span>}
             {/* 칸보다 넓으면 옆(날씨 버튼)으로 넘치지 않게 자른다 */}
             <span className="min-w-0 overflow-hidden">
               <RollingSlot
@@ -288,7 +280,9 @@ export function TripCard({
                 align="start"
                 className="tabular whitespace-nowrap"
                 items={[
-                  <span key="period">{formatPeriod(trip.startDate, trip.endDate)}</span>,
+                  <span key="period">
+                    {formatPeriod(trip.startDate, trip.endDate, today.slice(0, 4))}
+                  </span>,
                   <span key="length">{formatTripLength(trip.startDate, trip.endDate)}</span>,
                 ]}
               />

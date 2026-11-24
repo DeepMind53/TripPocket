@@ -161,7 +161,9 @@ describe('내 여행 목록', () => {
     const title = text.indexOf('타이베이 여행');
     // 순서: D-10 → 제목 → 인원 3 → 날짜
     expect(text.indexOf('D-10')).toBeLessThan(title);
-    expect(text.indexOf('3', title)).toBeLessThan(text.indexOf('2026.11.01'));
+    // 올해 여행이면 연도 없이 (docs/31 N2)
+    const period = new Date().getFullYear() === 2026 ? '11.01 – 11.04' : '2026.11.01';
+    expect(text.indexOf('3', title)).toBeLessThan(text.indexOf(period));
     // 날짜와 N박 M일은 전광판 (지금 안 보이는 쪽도 화면 읽기에는 남는다)
     expect(within(link).getAllByText('3박 4일').length).toBeGreaterThan(0);
     setMemberCounts({});

@@ -42,10 +42,14 @@ export function formatMonthDay(date: LocalDate): string {
     : i18n.t('date.monthDay', { m, d, w: weekdayChar(date) });
 }
 
-/** "2026.10.24 – 10.28" (연도가 다르면 끝에도 연도) */
-export function formatPeriod(start: LocalDate, end: LocalDate): string {
+/**
+ * "2026.10.24 – 10.28" (연도가 다르면 끝에도 연도).
+ * thisYear: 시작·끝이 모두 그해면 연도를 뺀다 — "10.24 – 10.28" (내 여행 카드, docs/31 N2)
+ */
+export function formatPeriod(start: LocalDate, end: LocalDate, thisYear?: string): string {
   const s = parts(start);
   const e = parts(end);
+  const noYear = thisYear !== undefined && s.y === thisYear && e.y === thisYear;
   if (style === 'korean') {
     const ko = (p: { y: string; m: string; d: string }, year: boolean) =>
       i18n.t(year ? 'date.fullDateKo' : 'date.monthDayShortKo', {
@@ -53,9 +57,9 @@ export function formatPeriod(start: LocalDate, end: LocalDate): string {
         m: Number(p.m),
         d: Number(p.d),
       });
-    return i18n.t('date.period', { start: ko(s, true), end: ko(e, s.y !== e.y) });
+    return i18n.t('date.period', { start: ko(s, !noYear), end: ko(e, s.y !== e.y) });
   }
-  const startText = i18n.t('date.fullDate', s);
+  const startText = noYear ? `${s.m}.${s.d}` : i18n.t('date.fullDate', s);
   const endText = s.y === e.y ? `${e.m}.${e.d}` : i18n.t('date.fullDate', e);
   return i18n.t('date.period', { start: startText, end: endText });
 }
