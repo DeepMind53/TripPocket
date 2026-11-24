@@ -33,3 +33,19 @@ export function joinBaggage(b: FlightBaggage): string | undefined {
   ].filter(Boolean);
   return parts.length > 0 ? parts.join(' · ') : undefined;
 }
+
+/** 수하물 칸을 떠날 때: 숫자만 썼으면 kg를 붙여 보여 준다 (사용자 요청 2026-11-24) */
+export const baggageWithUnit = withUnit;
+
+/**
+ * 항공사 대표값 글자 → 빈 칸에 회색으로 보일 참고 무게 (사용자 요청 2026-11-24).
+ * "1개 23kg (미주 2개)" → "23kg", "운임에 따라 15~20kg" → "15~20kg", "플라이 없음 · 플라이백 20kg" → "없음".
+ * 기본 운임이 먼저 적혀 있어서 처음 나온 값을 쓴다. 무게가 없으면 undefined
+ */
+export function baggageHint(text: string | undefined): string | undefined {
+  const s = text ?? '';
+  const kg = /\d+(?:\.\d+)?(?:~\d+(?:\.\d+)?)?\s*kg/i.exec(s);
+  const none = s.indexOf('없음');
+  if (none >= 0 && (!kg || none < kg.index)) return '없음';
+  return kg?.[0].replace(/\s+/g, '');
+}

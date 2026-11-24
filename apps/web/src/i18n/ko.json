@@ -369,6 +369,7 @@
     },
     "meetingPoint": "만나는 곳",
     "meetingPlaceholder": "예: 1층 3번 출구 앞",
+    "spotChips": "예약한 공항·숙소에서 고르기",
     "meetingValue": "{{v}}",
     "voucherUrl": "바우처·확인서 링크",
     "voucherOpen": "바우처 열기",

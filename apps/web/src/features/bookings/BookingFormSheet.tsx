@@ -10,10 +10,12 @@ import { PlaceAutocomplete } from '../common/PlaceAutocomplete';
 import { StationField } from './StationPicker';
 import {
   addDays,
+  baggageFor,
   diffDays,
   nightsBetween,
   transitNames,
   type Booking,
+  type PlaceSummary,
   type Trip,
 } from '@trippocket/shared';
 import { BadgePercent, CalendarRange, EggFried, Trash2 } from 'lucide-react';
@@ -24,7 +26,15 @@ import { formatMonthDay } from '../../shared/lib/dateFormat';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from '../../i18n';
 import { syncBookingToPlan } from '../../data/bookingPlanner';
-import { joinBaggage, splitBaggage } from '../../domain/flightBaggage';
+import { placesApi } from '../../data/api/places';
+import { useTripBookings } from '../../data/hooks';
+import { transferSpots, type TransferSpot } from '../../domain/transferSpots';
+import {
+  baggageHint,
+  baggageWithUnit,
+  joinBaggage,
+  splitBaggage,
+} from '../../domain/flightBaggage';
 import { bookingRepo, type NewBooking } from '../../data/repositories/bookingRepo';
 import {
   BottomSheet,
@@ -60,6 +70,8 @@ const VOUCHER_KINDS = new Set<Booking['kind']>(['transfer', 'tour', 'ticket', 'o
 const PARTY_KINDS = new Set<Booking['kind']>(['tour', 'ticket']);
 /** 이름 검색으로 장소를 고르는 예약 (좌표는 start.coords에) */
 const PICK_KINDS = new Set<Booking['kind']>(['lodging', 'restaurant']);
+/** 고른 장소의 전화번호를 연락처 칸에 채우는 종류 (해외 Google은 고를 때 한 번 더 확인, 2026-11-24) */
+const PHONE_KINDS = new Set<Booking['kind']>(['lodging', 'restaurant', 'car']);
 
 const KINDS: Booking['kind'][] = [
   'flight',
@@ -171,8 +183,22 @@ function BookingForm({
     meetingPoint: b?.details?.meetingPoint ?? '',
     voucherUrl: b?.details?.voucherUrl ?? '',
     insurance: b?.details?.insurance ?? '',
+    // 투어 만나는 곳을 검색해 고른 좌표 (2026-11-24) — 일정에서 길찾기
+    meetCoords:
+      b?.kind === 'tour' ? (b.start.coords as { lat: number; lng: number } | undefined) : undefined,
   });
   const transit = transitNames(tripCountries(trip));
+  const tripBookings = useTripBookings(trip.id);
+  const spots = transferSpots(
+    (tripBookings ?? []).filter((x) => x.id !== b?.id),
+    f.direction,
+  );
+  // 빈 수하물 칸의 회색 참고값: 그 항공사 대표 무게 (사용자 요청 2026-11-24), 모르면 흔한 값
+  const bagInfo = kind === 'flight' ? baggageFor(f.provider, f.flightNo) : undefined;
+  const bagHint = {
+    cabin: baggageHint(bagInfo?.cabin) ?? '7kg',
+    checked: baggageHint(bagInfo?.checked) ?? '23kg',
+  };
   const timeStep = useSettings((st) => st.timeStepMin) * 60;
   const [saving, setSaving] = useState(false);
   const [stayOpen, setStayOpen] = useState(false);
@@ -226,6 +252,28 @@ function BookingForm({
       endDate: nextDay ? addDays(prev.startDate, 1) : prev.startDate,
     }));
     setLookedUp(true);
+  }
+  /** 해외(Google) 장소는 검색 결과에 전화번호가 없다 — 고를 때 한 번 확인해서 연락처 칸이 비면 채운다 */
+  async function fillGooglePhone(p: PlaceSummary, still: (cur: typeof f) => boolean) {
+    if (!PHONE_KINDS.has(kind) || p.source !== 'google' || p.phone) return;
+    const r = await placesApi.googleDetails(p.id);
+    const phone = r.ok ? r.data.phone?.trim().slice(0, 40) : undefined;
+    if (!phone) return;
+    // 그사이 다른 곳을 골랐거나 직접 적었으면 그대로
+    setF((cur) => (still(cur) && !cur.phone.trim() ? { ...cur, phone } : cur));
+  }
+  /** 픽업·드랍: 예약한 공항·숙소 칩 — 공항이면 그 항공편 편명·날짜도 (비어 있을 때) */
+  function pickSpot(side: 'from' | 'to', spot: TransferSpot) {
+    setF((cur) => ({
+      ...cur,
+      [side]: spot.name,
+      [side === 'from' ? 'fromCoords' : 'toCoords']: spot.coords,
+      ...(spot.flightNo && !cur.flightNo.trim()
+        ? { flightNo: spot.flightNo, ...(spot.date ? { startDate: spot.date } : {}) }
+        : {}),
+      // 픽업: 시간이 비어 있으면 그 항공편 도착 시각
+      ...(spot.time && !cur.startTime ? { startTime: spot.time } : {}),
+    }));
   }
   const set = (key: keyof typeof f) => (e: { target: { value: string } }) =>
     setF((prev) => ({ ...prev, [key]: e.target.value }));
@@ -294,8 +342,14 @@ function BookingForm({
         // 이름을 비우면 "공항 픽업" / "공항 드랍"
         title: v(f.title) ?? t(`bookings.transferTitle.${f.direction}`),
         provider: v(f.provider),
-        start: clean({ date: f.startDate, time: v(f.startTime), place: v(f.from) }),
-        end: v(f.to) ? clean({ date: f.startDate, place: v(f.to) }) : undefined,
+        // 검색·예약에서 고른 곳은 좌표도 (2026-11-24) — 일정에서 길찾기
+        start: clean({
+          date: f.startDate,
+          time: v(f.startTime),
+          place: v(f.from),
+          coords: v(f.from) ? f.fromCoords : undefined,
+        }),
+        end: v(f.to) ? clean({ date: f.startDate, place: v(f.to), coords: f.toCoords }) : undefined,
         details: cleanOrUndefined({
           direction: f.direction,
           flightNo: v(f.flightNo)?.toUpperCase(),
@@ -386,7 +440,14 @@ function BookingForm({
         date: f.startDate,
         time: v(f.startTime),
         place: v(f.from),
-        coords: (placed && v(f.from)) || PICK_KINDS.has(kind) ? f.fromCoords : undefined,
+        coords:
+          kind === 'tour'
+            ? v(f.meetingPoint)
+              ? f.meetCoords
+              : undefined
+            : (placed && v(f.from)) || PICK_KINDS.has(kind)
+              ? f.fromCoords
+              : undefined,
         address: kind === 'train' && v(f.from) ? f.fromAddress : undefined,
       }),
       end: carReturn ?? trainArrive,
@@ -534,15 +595,19 @@ function BookingForm({
               {t('bookings.lookupHint')}
             </p>
           </div>
-          <Field label={t('bookings.provider')}>
-            <input
-              id="bk-provider"
-              value={f.provider}
-              maxLength={60}
-              onChange={set('provider')}
-              className={inputClass}
-            />
-          </Field>
+          {/* 항공사 | 예약번호 한 줄 (사용자 요청 2026-11-24) */}
+          <Row>
+            <Field label={t('bookings.provider')}>
+              <input
+                id="bk-provider"
+                value={f.provider}
+                maxLength={60}
+                onChange={set('provider')}
+                className={inputClass}
+              />
+            </Field>
+            <ConfirmationField value={f.confirmationNo} onChange={set('confirmationNo')} />
+          </Row>
           {lookedUp && (
             <p role="status" className="text-caption text-fg-muted">
               {t('bookings.lookupNote')}
@@ -627,8 +692,11 @@ function BookingForm({
                     value={f.baggageCabin}
                     maxLength={25}
                     inputMode="decimal"
-                    placeholder="7kg"
+                    placeholder={bagHint.cabin}
                     onChange={set('baggageCabin')}
+                    onBlur={() =>
+                      setF((cur) => ({ ...cur, baggageCabin: baggageWithUnit(cur.baggageCabin) }))
+                    }
                     className={`${inputClass} px-2`}
                   />
                 </Field>
@@ -638,8 +706,14 @@ function BookingForm({
                     value={f.baggageChecked}
                     maxLength={25}
                     inputMode="decimal"
-                    placeholder="23kg"
+                    placeholder={bagHint.checked}
                     onChange={set('baggageChecked')}
+                    onBlur={() =>
+                      setF((cur) => ({
+                        ...cur,
+                        baggageChecked: baggageWithUnit(cur.baggageChecked),
+                      }))
+                    }
                     className={`${inputClass} px-2`}
                   />
                 </Field>
@@ -749,7 +823,7 @@ function BookingForm({
               query={f.title}
               domestic={isDomesticTrip(trip)}
               near={trip.destinations.find((d) => d.coords)?.coords}
-              onPick={(p) =>
+              onPick={(p) => {
                 setF((cur) => ({
                   ...cur,
                   title: p.name,
@@ -757,8 +831,10 @@ function BookingForm({
                   phone: p.phone || cur.phone,
                   // 좌표도 저장 — 빠른 메뉴 숙소 방향·일정 지도 핀 (2026-11-24, 전에는 버려서 숙소 방향이 늘 "위치 없음")
                   fromCoords: p.coords ?? undefined,
-                }))
-              }
+                }));
+                // 해외(Google)는 검색 결과에 전화번호가 없다 — 고를 때 한 번 확인 (사용자 요청 2026-11-24)
+                void fillGooglePhone(p, (cur) => cur.title === p.name);
+              }}
             />
           )}
           {kind === 'lodging' ? (
@@ -971,15 +1047,29 @@ function BookingForm({
                   placeholder={
                     f.direction === 'pickup' ? t('bookings.airportHint') : t('bookings.lodgingHint')
                   }
-                  onChange={set('from')}
+                  onChange={(e) =>
+                    setF((cur) => ({ ...cur, from: e.target.value, fromCoords: undefined }))
+                  }
                   className={inputClass}
                 />
               </Field>
+              {/* 예약한 공항·숙소에서 바로 고르기 (사용자 요청 2026-11-24) */}
+              <SpotChips
+                spots={f.direction === 'pickup' ? spots.airports : spots.lodgings}
+                value={f.from}
+                onPick={(spot) => pickSpot('from', spot)}
+              />
               <PlaceAutocomplete
                 query={f.from}
                 domestic={isDomesticTrip(trip)}
                 near={trip.destinations.find((d) => d.coords)?.coords}
-                onPick={(p) => setF((cur) => ({ ...cur, from: p.name.slice(0, 100) }))}
+                onPick={(p) =>
+                  setF((cur) => ({
+                    ...cur,
+                    from: p.name.slice(0, 100),
+                    fromCoords: p.coords ?? undefined,
+                  }))
+                }
               />
               <Field label={t('bookings.transferTo')}>
                 <input
@@ -989,15 +1079,28 @@ function BookingForm({
                   placeholder={
                     f.direction === 'drop' ? t('bookings.airportHint') : t('bookings.lodgingHint')
                   }
-                  onChange={set('to')}
+                  onChange={(e) =>
+                    setF((cur) => ({ ...cur, to: e.target.value, toCoords: undefined }))
+                  }
                   className={inputClass}
                 />
               </Field>
+              <SpotChips
+                spots={f.direction === 'pickup' ? spots.lodgings : spots.airports}
+                value={f.to}
+                onPick={(spot) => pickSpot('to', spot)}
+              />
               <PlaceAutocomplete
                 query={f.to}
                 domestic={isDomesticTrip(trip)}
                 near={trip.destinations.find((d) => d.coords)?.coords}
-                onPick={(p) => setF((cur) => ({ ...cur, to: p.name.slice(0, 100) }))}
+                onPick={(p) =>
+                  setF((cur) => ({
+                    ...cur,
+                    to: p.name.slice(0, 100),
+                    toCoords: p.coords ?? undefined,
+                  }))
+                }
               />
               <Row>
                 <Field label={t('bookings.partySize')}>
@@ -1172,13 +1275,17 @@ function BookingForm({
                       query={f.from}
                       domestic={isDomesticTrip(trip)}
                       near={trip.destinations.find((d) => d.coords)?.coords}
-                      onPick={(p) =>
+                      onPick={(p) => {
+                        const from = p.name.slice(0, 100);
                         setF((cur) => ({
                           ...cur,
-                          from: p.name.slice(0, 100),
+                          from,
                           fromCoords: p.coords ?? undefined,
-                        }))
-                      }
+                          // 대여 지점 연락처 (2026-11-24)
+                          phone: p.phone || cur.phone,
+                        }));
+                        void fillGooglePhone(p, (cur) => cur.from === from);
+                      }}
                     />
                   )}
                   {kind === 'car' && (
@@ -1232,7 +1339,31 @@ function BookingForm({
                 </Field>
               )}
               {kind === 'tour' && (
-                <MeetingField value={f.meetingPoint} onChange={set('meetingPoint')} />
+                <>
+                  <MeetingField
+                    value={f.meetingPoint}
+                    onChange={(e) =>
+                      setF((cur) => ({
+                        ...cur,
+                        meetingPoint: e.target.value,
+                        meetCoords: undefined,
+                      }))
+                    }
+                  />
+                  {/* 만나는 곳도 장소 검색 — 고르면 좌표까지 (사용자 요청 2026-11-24) */}
+                  <PlaceAutocomplete
+                    query={f.meetingPoint}
+                    domestic={isDomesticTrip(trip)}
+                    near={trip.destinations.find((d) => d.coords)?.coords}
+                    onPick={(p) =>
+                      setF((cur) => ({
+                        ...cur,
+                        meetingPoint: p.name.slice(0, 100),
+                        meetCoords: p.coords ?? undefined,
+                      }))
+                    }
+                  />
+                </>
               )}
               {PARTY_KINDS.has(kind) && (
                 <Row>
@@ -1348,15 +1479,9 @@ function BookingForm({
         </>
       )}
 
-      <Field label={t('bookings.confirmationNo')}>
-        <input
-          id="bk-no"
-          value={f.confirmationNo}
-          maxLength={60}
-          onChange={set('confirmationNo')}
-          className={`${inputClass} tabular`}
-        />
-      </Field>
+      {kind !== 'flight' && (
+        <ConfirmationField value={f.confirmationNo} onChange={set('confirmationNo')} />
+      )}
       {more ? (
         <Field label={t('bookings.memo')}>
           <textarea
@@ -1446,6 +1571,53 @@ function MeetingField(props: { value: string; onChange: OnText }) {
         placeholder={t('bookings.meetingPlaceholder')}
         onChange={props.onChange}
         className={inputClass}
+      />
+    </Field>
+  );
+}
+
+/** 픽업·드랍: 이 여행에 넣은 공항·숙소 칩 */
+function SpotChips({
+  spots,
+  value,
+  onPick,
+}: {
+  spots: TransferSpot[];
+  value: string;
+  onPick: (spot: TransferSpot) => void;
+}) {
+  const { t } = useTranslation();
+  if (spots.length === 0) return null;
+  return (
+    <ScrollRow role="group" aria-label={t('bookings.spotChips')} className="-mt-3 flex gap-2 pb-1">
+      {spots.map((s) => {
+        const Icon = BOOKING_ICON[s.kind === 'airport' ? 'flight' : 'lodging'];
+        return (
+          <Chip
+            key={s.key}
+            selected={value === s.name}
+            onClick={() => onPick(s)}
+            leading={<Icon aria-hidden="true" className="size-4" />}
+          >
+            {s.name}
+          </Chip>
+        );
+      })}
+    </ScrollRow>
+  );
+}
+
+/** 예약번호 칸 — 항공은 항공사 옆, 나머지는 아래 */
+function ConfirmationField({ value, onChange }: { value: string; onChange: OnText }) {
+  const { t } = useTranslation();
+  return (
+    <Field label={t('bookings.confirmationNo')}>
+      <input
+        id="bk-no"
+        value={value}
+        maxLength={60}
+        onChange={onChange}
+        className={`${inputClass} tabular`}
       />
     </Field>
   );

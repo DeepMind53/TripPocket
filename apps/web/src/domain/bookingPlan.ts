@@ -92,11 +92,21 @@ export function planDraftsFromBooking(
   // 기차·버스는 고른 출발역 주소·좌표 (2026-11-03) — 일정에서 바로 길찾기.
   // 숙소·음식점은 이름 검색으로 고른 곳의 좌표 (2026-11-24) — 지도 핀·숙소 방향
   const address = b.details?.address ?? b.start.address;
+  // 픽업·드랍 타는 곳, 투어 만나는 곳도 고른 좌표 (2026-11-24)
   const coords =
-    b.kind === 'train' || b.kind === 'lodging' || b.kind === 'restaurant'
+    b.kind === 'train' ||
+    b.kind === 'lodging' ||
+    b.kind === 'restaurant' ||
+    b.kind === 'transfer' ||
+    b.kind === 'tour'
       ? b.start.coords
       : undefined;
-  const placeName = b.kind === 'lodging' || b.kind === 'restaurant' ? b.title : b.start.place;
+  const placeName =
+    b.kind === 'lodging' || b.kind === 'restaurant'
+      ? b.title
+      : b.kind === 'tour'
+        ? (b.start.place ?? b.details?.meetingPoint)
+        : b.start.place;
   const place =
     placeName || address
       ? {

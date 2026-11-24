@@ -32,6 +32,36 @@ describe('예약 → 일정표 (처음 한 번)', () => {
     expect(d?.place?.coords).toEqual({ lat: 35.69, lng: 139.7 });
   });
 
+  it('픽업 타는 곳·투어 만나는 곳의 좌표도 일정 장소로 (2026-11-24)', () => {
+    const pickup: Booking = {
+      ...base,
+      id: 'p',
+      kind: 'transfer',
+      title: '공항 픽업',
+      start: {
+        date: '2026-11-01',
+        place: '나리타국제공항 T1',
+        coords: { lat: 35.77, lng: 140.39 },
+      },
+    };
+    expect(planDraftsFromBooking(pickup, arrive)[0]?.place).toMatchObject({
+      name: '나리타국제공항 T1',
+      coords: { lat: 35.77, lng: 140.39 },
+    });
+    const tour: Booking = {
+      ...base,
+      id: 'u',
+      kind: 'tour',
+      title: '근교 투어',
+      start: { date: '2026-11-02', coords: { lat: 35.68, lng: 139.76 } },
+      details: { meetingPoint: '도쿄역 마루노우치 북쪽 출구' },
+    };
+    expect(planDraftsFromBooking(tour, arrive)[0]?.place).toMatchObject({
+      name: '도쿄역 마루노우치 북쪽 출구',
+      coords: { lat: 35.68, lng: 139.76 },
+    });
+  });
+
   it('항공: 출발 공항(탑승 시각) + 도착 공항(도착 시각), 공항 좌표로 지도 핀', () => {
     const b: Booking = {
       ...base,

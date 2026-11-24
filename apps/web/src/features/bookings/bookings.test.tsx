@@ -542,8 +542,15 @@ describe('편명으로 불러오기', () => {
     await user.type(within(sheet).getByLabelText('편명'), 'KE703');
     await user.click(within(sheet).getByRole('button', { name: '+ 더 입력하기' }));
     await user.type(within(sheet).getByLabelText('좌석'), '32A');
+    // 빈 칸은 그 항공사(대한항공) 대표 무게가 회색 참고값으로
+    expect(within(sheet).getByLabelText('기내 수하물')).toHaveAttribute('placeholder', '10kg');
+    expect(within(sheet).getByLabelText('위탁 수하물')).toHaveAttribute('placeholder', '23kg');
     await user.type(within(sheet).getByLabelText('기내 수하물'), '7');
     await user.type(within(sheet).getByLabelText('위탁 수하물'), '23');
+    // 칸을 떠나면 kg가 붙는다
+    expect(within(sheet).getByLabelText('기내 수하물')).toHaveValue('7kg');
+    await user.tab();
+    expect(within(sheet).getByLabelText('위탁 수하물')).toHaveValue('23kg');
     await user.click(within(sheet).getByRole('button', { name: '예약 추가' }));
     await waitFor(async () => expect(await bookingRepo.listByTrip(tripId)).toHaveLength(1));
     const [b] = await bookingRepo.listByTrip(tripId);
@@ -556,7 +563,90 @@ describe('편명으로 불러오기', () => {
   });
 });
 
+it('예약번호는 항공사 오른쪽에 (2026-11-24)', async () => {
+  renderAt([`/trips/${tripId}/bookings`]);
+  await userEvent.setup().click(await screen.findByRole('button', { name: '예약 추가' }));
+  const sheet = screen.getByRole('dialog', { name: '예약 추가' });
+  const provider = within(sheet).getByLabelText('항공사');
+  const no = within(sheet).getByLabelText('예약번호');
+  expect(provider.closest('.grid')).toBe(no.closest('.grid'));
+  expect(within(sheet).getAllByLabelText('예약번호')).toHaveLength(1);
+});
+
+it('해외 숙소를 고르면 확인된 전화번호를 빈 칸에 채운다 (2026-11-24)', async () => {
+  useAuth.setState({
+    status: 'user',
+    me: { id: 'u', nickname: 'n', createdAt: '', providers: [] },
+  });
+  const id = 'ChIJ_hotel_abcdef';
+  vi.stubGlobal('fetch', async (url: string) => {
+    if (url === '/api/places/search')
+      return Response.json({
+        places: [
+          {
+            source: 'google',
+            id,
+            name: '호텔 그레이스리',
+            address: '도쿄 신주쿠',
+            coords: { lat: 35.69, lng: 139.7 },
+          },
+        ],
+      });
+    if (url === `/api/places/google/${id}`) return Response.json({ phone: '03-6833-2489' });
+    return Response.json({}, { status: 404 });
+  });
+  try {
+    const user = userEvent.setup();
+    renderAt([`/trips/${tripId}/bookings`]);
+    await user.click(await screen.findByRole('button', { name: '예약 추가' }));
+    const sheet = screen.getByRole('dialog', { name: '예약 추가' });
+    await user.click(within(sheet).getByRole('button', { name: '숙소' }));
+    await user.type(within(sheet).getByLabelText('숙소 이름'), '그레이스리');
+    await user.click(await within(sheet).findByRole('option', { name: /호텔 그레이스리/ }));
+    await waitFor(() => expect(within(sheet).getByLabelText('연락처')).toHaveValue('03-6833-2489'));
+  } finally {
+    vi.unstubAllGlobals();
+    useAuth.setState({ status: 'unknown', me: null });
+  }
+});
+
 describe('픽업·드랍 예약 (사용자 요청 2026-10-25)', () => {
+  it('예약한 공항·숙소 칩: 공항을 고르면 편명·날짜도, 좌표까지 저장 (2026-11-24)', async () => {
+    await bookingRepo.create({
+      tripId,
+      kind: 'flight',
+      title: 'KE123',
+      start: { date: '2026-10-25', place: 'ICN' },
+      end: { date: '2026-10-25', place: 'PUS' },
+      details: { flightNo: 'KE123' },
+    });
+    await bookingRepo.create({
+      tripId,
+      kind: 'lodging',
+      title: '해운대 그랜드호텔',
+      start: { date: '2026-10-25', coords: { lat: 35.16, lng: 129.16 } },
+      end: { date: '2026-10-27' },
+    });
+    const user = userEvent.setup();
+    renderAt([`/trips/${tripId}/bookings`]);
+    await user.click(await screen.findByRole('button', { name: '예약 추가' }));
+    const sheet = screen.getByRole('dialog', { name: '예약 추가' });
+    await user.click(within(sheet).getByRole('button', { name: '픽업·드랍' }));
+    const [fromChips, toChips] = await within(sheet).findAllByRole('group', {
+      name: '예약한 공항·숙소에서 고르기',
+    });
+    await user.click(within(fromChips!).getByRole('button', { name: /김해/ }));
+    await user.click(within(toChips!).getByRole('button', { name: '해운대 그랜드호텔' }));
+    expect(within(sheet).getByLabelText('편명 (선택)')).toHaveValue('KE123');
+    await user.click(within(sheet).getByRole('button', { name: '예약 추가' }));
+    await waitFor(async () => expect(await bookingRepo.listByTrip(tripId)).toHaveLength(3));
+    const b = (await bookingRepo.listByTrip(tripId)).find((x) => x.kind === 'transfer');
+    expect(b?.start).toMatchObject({ date: '2026-10-25', place: expect.stringMatching(/김해/) });
+    expect(b?.start.coords).toBeDefined();
+    expect(b?.end).toMatchObject({ coords: { lat: 35.16, lng: 129.16 } });
+    expect(b?.details?.flightNo).toBe('KE123');
+  });
+
   it('예약 사이트·날짜·시간·인원·타는 곳·내리는 곳·편명 → 이름을 비우면 "공항 픽업"', async () => {
     const user = userEvent.setup();
     renderAt([`/trips/${tripId}/bookings`]);
