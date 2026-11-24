@@ -42,7 +42,10 @@ export type PreviewId =
   | 'mapLink'
   | 'splitBill'
   | 'unitConvert'
-  | 'quickTimer';
+  | 'quickTimer'
+  | 'leavePush'
+  | 'todayShare'
+  | 'meetup';
 
 const IDS: readonly string[] = [
   'dimPastItems',
@@ -88,6 +91,9 @@ const IDS: readonly string[] = [
   'splitBill',
   'unitConvert',
   'quickTimer',
+  'leavePush',
+  'todayShare',
+  'meetup',
 ];
 
 export const hasPreview = (id: string): id is PreviewId => IDS.includes(id);

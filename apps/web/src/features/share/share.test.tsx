@@ -120,6 +120,41 @@ describe('공유', () => {
     expect(await screen.findByRole('heading', { name: /오사카/ })).toBeInTheDocument();
     expect(screen.getByText('오사카성')).toBeInTheDocument();
   });
+
+  it('?day=로 받은 링크는 그날만, 일차는 여행 기준 (docs/27 E1 오늘 일정 보내기)', async () => {
+    const item = (id: string, date: string, title: string) => ({
+      id,
+      tripId: 't',
+      date,
+      order: 'a',
+      kind: 'place',
+      title,
+      createdAt: '',
+      updatedAt: '',
+    });
+    vi.stubGlobal('fetch', async () =>
+      Response.json({
+        trip: {
+          id: 't',
+          title: '오사카',
+          destinations: [],
+          startDate: '2026-11-01',
+          endDate: '2026-11-02',
+          timezone: 'Asia/Tokyo',
+          cover: {},
+          createdAt: '',
+          updatedAt: '',
+        },
+        items: [item('a', '2026-11-01', '오사카성'), item('b', '2026-11-02', '유니버설')],
+        bookings: [],
+        includeSensitive: false,
+      }),
+    );
+    renderAt('/s/ok?day=2026-11-02');
+    expect(await screen.findByText('유니버설')).toBeInTheDocument();
+    expect(screen.queryByText('오사카성')).not.toBeInTheDocument();
+    expect(screen.getByText('2일차')).toBeInTheDocument();
+  });
 });
 
 describe('초대 승인제', () => {

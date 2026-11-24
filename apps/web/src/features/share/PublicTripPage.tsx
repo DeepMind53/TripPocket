@@ -1,7 +1,7 @@
 import { Link2 } from 'lucide-react';
 import { getTripDays, type PublicTrip } from '@trippocket/shared';
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router';
+import { Link, useParams, useSearchParams } from 'react-router';
 import { shareApi } from '../../data/api/share';
 import { useTranslation } from '../../i18n';
 import { useTimeText } from '../../shared/hooks/useTimeText';
@@ -14,6 +14,9 @@ import { EmptyState, RouteLine, RouteStop, Spinner, routeColor } from '../../sha
 export function PublicTripPage() {
   const { t } = useTranslation();
   const { shareId = '' } = useParams();
+  // ?day=YYYY-MM-DD: 여행 모드 "오늘 일정 보내기"로 받은 링크는 그날만 (docs/27 E1)
+  const [search] = useSearchParams();
+  const onlyDay = search.get('day');
   const { time } = useTimeText();
   const [data, setData] = useState<PublicTrip | null | undefined>(undefined);
 
@@ -43,7 +46,8 @@ export function PublicTripPage() {
     );
 
   const { trip, items, bookings } = data;
-  const days = getTripDays(trip.startDate, trip.endDate);
+  const allDays = getTripDays(trip.startDate, trip.endDate);
+  const days = onlyDay && allDays.includes(onlyDay) ? [onlyDay] : allDays;
   return (
     <div className="mx-auto min-h-dvh max-w-[560px] pb-10">
       <header className="bg-primary px-5 pt-8 pb-6 text-on-primary">
@@ -56,7 +60,9 @@ export function PublicTripPage() {
         </p>
       </header>
       <div className="flex flex-col gap-4 px-5 pt-4">
-        {days.map((date, i) => {
+        {days.map((date) => {
+          // 그날만 볼 때도 일차·색은 여행 전체 기준
+          const i = allDays.indexOf(date);
           const day = items
             .filter((it) => it.date === date)
             .sort((a, b) => (a.order < b.order ? -1 : 1));

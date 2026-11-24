@@ -14,6 +14,8 @@ import {
   type LocalDate,
 } from '@trippocket/shared';
 import { useRef, useState, type ReactNode } from 'react';
+import { useLab } from '../../data/labsStore';
+import { Switch } from '../../shared/ui';
 import { MemoFx } from './MemoFx';
 import { MoneyButtons } from './MoneyButtons';
 import { useTranslation } from '../../i18n';
@@ -133,9 +135,22 @@ function ItemForm({
     });
   };
   const [url, setUrl] = useState(item?.url ?? '');
+  // 실험실 "모이는 곳·시각" (docs/27 E2): 여행 모드 카드에 크게
+  const meetupOn = useLab('meetup');
+  const [meetup, setMeetup] = useState(item?.meetup ?? false);
   const [saving, setSaving] = useState(false);
   // 닫기 보호 (docs/31 A1): 처음 연 값과 다르면 닫기 전에 묻는다
-  const snapshot = JSON.stringify([kind, title, startTime, endTime, address, memo, url, picked]);
+  const snapshot = JSON.stringify([
+    kind,
+    title,
+    startTime,
+    endTime,
+    address,
+    memo,
+    url,
+    picked,
+    meetup,
+  ]);
   const [initial, setInitial] = useState(snapshot);
   if (!seeded && tripItems) {
     setSeeded(true);
@@ -148,7 +163,7 @@ function ItemForm({
     if (start) {
       setStartTime(start);
       // 미리 채운 값은 "바뀐 내용"이 아니다 — 그대로 닫아도 묻지 않게
-      setInitial(JSON.stringify([kind, title, start, endTime, address, memo, url, picked]));
+      setInitial(JSON.stringify([kind, title, start, endTime, address, memo, url, picked, meetup]));
     }
   }
   useSheetDirty(!saving && snapshot !== initial);
@@ -204,6 +219,8 @@ function ItemForm({
           memo: optional.memo,
           url: optional.url,
           place,
+          // 실험실을 끈 기기에서 고쳐도 표시는 그대로
+          ...(meetupOn ? { meetup: meetup || undefined } : {}),
         });
         toast(t('form.saved'));
       } else {
@@ -215,6 +232,7 @@ function ItemForm({
           ...optional,
           ...(place ? { place } : {}),
           ...(planId && date ? { planId } : {}),
+          ...(meetupOn && meetup ? { meetup: true } : {}),
         });
         toast(t('form.added'));
       }
@@ -329,6 +347,16 @@ function ItemForm({
           <TimeInput id="item-end" step={timeStep} value={endTime} onChange={setEndTime} />
         </Field>
       </div>
+
+      {meetupOn && !isNote && date && (
+        <div className="flex items-center justify-between gap-3 rounded-card bg-bg-subtle px-3 py-2.5">
+          <span className="flex flex-col">
+            <span className="text-body-2 font-medium">{t('form.meetup')}</span>
+            <span className="text-caption text-fg-muted">{t('form.meetupDesc')}</span>
+          </span>
+          <Switch label={t('form.meetup')} checked={meetup} onCheckedChange={setMeetup} />
+        </div>
+      )}
 
       {!isNote && (
         <Field label={t('form.address')}>

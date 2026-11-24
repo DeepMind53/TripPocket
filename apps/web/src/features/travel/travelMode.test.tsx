@@ -216,3 +216,35 @@ it('여행 모드 켜기 버튼: 홈 왼쪽 위와 빠른 메뉴 제목 오른�
   await user.click(within(sheet).getByRole('button', { name: '여행 모드' }));
   expect(await screen.findByRole('button', { name: '여행 모드 끄기' })).toBeInTheDocument();
 });
+
+it('실험실 (docs/27 §6.2): 모이는 곳이면 맨 위에, 나갈 시각은 시각만 서버에, 오늘 일정 보내기 버튼', async () => {
+  vi.setSystemTime(new Date('2026-11-03T01:35:00Z')); // 오사카 10:35
+  const { setLab } = await import('../../data/labsStore');
+  const { usePush } = await import('../../data/push');
+  setLab('meetup', true, { silent: true });
+  setLab('leavePush', true, { silent: true });
+  setLab('todayShare', true, { silent: true });
+  usePush.setState({ enabled: true, prefs: { ...usePush.getState().prefs, itemSoon: true } });
+  const sent: unknown[] = [];
+  vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
+    if (String(url).includes('/api/push/leave')) sent.push(JSON.parse(String(init?.body)));
+    return Response.json({});
+  });
+  const trip = await osaka();
+  const castle = (await itemRepo.listByTrip(trip.id)).find((i) => i.title === '오사카성')!;
+  await itemRepo.update(castle.id, { meetup: true });
+  useTravelMode.setState({ on: { [trip.id]: true }, asked: { [trip.id]: true } });
+  open(`/trips/${trip.id}/go`);
+  const meet = await screen.findByText('여기서 모여요');
+  expect(meet.parentElement).toHaveTextContent('11:00오사카성');
+  expect(screen.getByRole('button', { name: '오늘 일정 보내기' })).toBeInTheDocument();
+  // 앱이 계산한 시각만 — 좌표·이동 시간 없음 (ADR-0013)
+  await waitFor(() => expect(sent.length).toBeGreaterThan(0));
+  const body = sent.at(-1) as Record<string, string>;
+  expect(Object.keys(body).sort()).toEqual(['date', 'itemId', 'leaveAt', 'tripId']);
+  expect(body).toMatchObject({ tripId: trip.id, itemId: castle.id, date: '2026-11-03' });
+  expect(body.leaveAt).toMatch(/^10:[0-5]\d$/);
+  for (const id of ['meetup', 'leavePush', 'todayShare'] as const)
+    setLab(id, false, { silent: true });
+  usePush.setState({ enabled: false });
+});

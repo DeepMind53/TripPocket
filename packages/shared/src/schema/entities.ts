@@ -158,6 +158,8 @@ export const ItineraryItemSchema = z.object({
   visit: z.optional(z.enum(['visited', 'skipped'])),
   /** Plan B (2026-11-03): 대안 플랜 소속 (없으면 기본 일정) — trip.dayPlans[].id */
   planId: z.optional(IdSchema),
+  /** 모이는 곳·시각 (docs/27 E2, 2026-11-25) — 여행 모드 카드에 크게 */
+  meetup: z.optional(z.boolean()),
 });
 export type ItineraryItem = z.infer<typeof ItineraryItemSchema>;
 

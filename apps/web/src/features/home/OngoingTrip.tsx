@@ -1,3 +1,5 @@
+import { useLab } from '../../data/labsStore';
+import { sendLeaveTime } from '../../data/push';
 import {
   SAVED_PLACES_MAX,
   addDays,
@@ -6,7 +8,7 @@ import {
   type ItineraryItem,
   type Trip,
 } from '@trippocket/shared';
-import { BedDouble, ChevronDown, Copy, Navigation } from 'lucide-react';
+import { BedDouble, ChevronDown, Copy, Navigation, Users } from 'lucide-react';
 import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { useTripBookings, useTripItems } from '../../data/hooks';
@@ -153,6 +155,16 @@ export function OngoingTrip({
     return () => window.clearTimeout(timer);
   }, [remind, leave?.inMin, next, t]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // 실험실 "나갈 시각 알림" (ADR-0013): 앱이 닫혀 있어도 웹 푸시로 — 계산한 시각만 서버에
+  const leavePush = useLab('leavePush') && travel;
+  const meetupOn = useLab('meetup');
+  const leaveAtText = leave && leave.inMin >= 0 ? leave.at : undefined;
+  const nextId = next?.id;
+  useEffect(() => {
+    if (!leavePush || !leaveAtText || !nextId) return;
+    void sendLeaveTime({ tripId: trip.id, itemId: nextId, date: today, leaveAt: leaveAtText });
+  }, [leavePush, leaveAtText, nextId, trip.id, today]);
+
   function directions(d: Destination) {
     if (openDirectionsDirect(d, isDomesticTrip(trip))) return;
     setDest(d);
@@ -206,6 +218,23 @@ export function OngoingTrip({
       )}
 
       {beforeNext}
+
+      {/* 실험실 "모이는 곳·시각" (docs/27 E2): 다음 일정이 모이는 곳이면 카드 위에 크게 */}
+      {meetupOn && travel && next?.meetup && (
+        <div
+          role="status"
+          className="flex items-center gap-3 rounded-card border-2 border-primary bg-primary-weak px-4 py-3"
+        >
+          <Users aria-hidden="true" className="size-6 shrink-0 text-primary" />
+          <span className="flex min-w-0 flex-col">
+            <span className="text-caption font-medium text-primary">{t('travel.meetup')}</span>
+            <span className="truncate text-title-2 font-semibold">
+              {next.startTime && <span className="tabular mr-2">{next.startTime}</span>}
+              {next.place?.name ?? next.title}
+            </span>
+          </span>
+        </div>
+      )}
 
       {next ? (
         // 다음 일정 카드 (docs/29 §4.4, 사용자 결정 Q3 파랑 채움): 남은 시간 크게 + 지난 일정 → 다음 일정 진행 막대

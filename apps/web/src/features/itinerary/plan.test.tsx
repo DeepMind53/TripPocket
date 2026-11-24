@@ -482,6 +482,22 @@ it('주소 없는 일정: [주소 넣기] → 편집 시트의 주소 칸에 커
   await waitFor(() => expect(address).toHaveFocus());
 });
 
+it('실험실 "모이는 곳·시각" (docs/27 E2): 편집에서 표시를 켜면 저장된다', async () => {
+  const { itemRepo } = await import('../../data/repositories/itemRepo');
+  const { setLab } = await import('../../data/labsStore');
+  setLab('meetup', true, { silent: true });
+  const it0 = await itemRepo.create({ tripId, date: '2026-10-24', kind: 'place', title: '역 앞' });
+  const user = userEvent.setup();
+  await renderPlan();
+  await user.click(await screen.findByRole('button', { name: /역 앞/ }));
+  const detail = await screen.findByRole('dialog', { name: '역 앞' });
+  await user.click(within(detail).getByRole('button', { name: '편집' }));
+  await user.click(await screen.findByRole('switch', { name: '모이는 곳으로 표시' }));
+  await user.click(screen.getByRole('button', { name: '저장' }));
+  await waitFor(async () => expect((await itemRepo.get(it0.id))?.meetup).toBe(true));
+  setLab('meetup', false, { silent: true });
+});
+
 describe('손동작 (docs/16 C4·C5, 2026-10-26 정식)', () => {
   it('C5: 하루 보기에서 왼쪽으로 밀면 다음 날, 오른쪽이면 이전 날 (첫날에서 더 뒤로는 안 감)', async () => {
     const router = await renderPlan('?day=1');

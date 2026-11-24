@@ -15,6 +15,8 @@ import {
   Sun,
   Sunset,
   Timer,
+  BellRing,
+  Send,
   Users,
   Volume2,
   type LucideIcon,
@@ -539,6 +541,40 @@ export function FeaturePreview({ id }: { id: PreviewId }) {
           <Timer aria-hidden="true" className="size-5 text-primary" />
           <span className="tabular text-[2rem] leading-none font-semibold">29:41</span>
           <span className="text-caption text-fg-muted">{t('tool.timerM', { m: 30 })}</span>
+        </div>
+      );
+    // 2026-11-25 여행 모드 실험 3개 (docs/27 §6.2)
+    case 'leavePush':
+      return (
+        <div className="flex items-start gap-3 rounded-card border border-line bg-surface p-3 shadow-card">
+          <BellRing aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-primary" />
+          <span className="flex min-w-0 flex-col">
+            <span className="text-body-2 font-semibold">{t('sample.leaveTitle')}</span>
+            <span className="text-caption text-fg-muted">{t('sample.leaveBody')}</span>
+          </span>
+        </div>
+      );
+    case 'todayShare':
+      return (
+        <div className="flex flex-col gap-1.5 rounded-card border border-line bg-surface p-3">
+          <span className="flex items-center gap-1.5 text-caption font-medium text-fg-sub">
+            <Send aria-hidden="true" className="size-4 text-primary" />
+            {t('travel.todayShare')}
+          </span>
+          <span className="text-body-2 whitespace-pre-line">{t('sample.todayShareText')}</span>
+        </div>
+      );
+    case 'meetup':
+      return (
+        <div className="flex items-center gap-3 rounded-card border-2 border-primary bg-primary-weak px-4 py-3">
+          <Users aria-hidden="true" className="size-6 shrink-0 text-primary" />
+          <span className="flex min-w-0 flex-col">
+            <span className="text-caption font-medium text-primary">{t('travel.meetup')}</span>
+            <span className="truncate text-title-2 font-semibold">
+              <span className="tabular mr-2">18:00</span>
+              {t('sample.meetupPlace')}
+            </span>
+          </span>
         </div>
       );
     case 'placeTips':

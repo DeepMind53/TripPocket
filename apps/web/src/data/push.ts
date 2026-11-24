@@ -111,3 +111,21 @@ export async function setPushKind(kind: PushKind, on: boolean): Promise<void> {
     // 다음에 켤 때 맞춘다
   }
 }
+
+/**
+ * 나갈 시각 알림 (ADR-0013, 실험실 leavePush): 여행 모드가 계산한 "HH:mm"만 서버에 — 좌표·이동 시간은 보내지 않는다.
+ * 같은 일정·같은 시각은 다시 보내지 않는다 (이 실행 동안)
+ */
+const sentLeave = new Map<string, string>();
+export async function sendLeaveTime(v: {
+  tripId: string;
+  itemId: string;
+  date: string;
+  leaveAt: string;
+}): Promise<void> {
+  const s = usePush.getState();
+  if (!s.enabled || !s.prefs.itemSoon) return;
+  if (sentLeave.get(v.itemId) === `${v.date} ${v.leaveAt}`) return;
+  const res = await api('/api/push/leave', { method: 'PUT', body: JSON.stringify(v) });
+  if (res.ok) sentLeave.set(v.itemId, `${v.date} ${v.leaveAt}`);
+}

@@ -33,7 +33,7 @@ beforeEach(async () => {
 });
 
 describe('실험실', () => {
-  it('마이 → 실험실: 2026-11-13 3차 실제 기능 7개, 모두 [샘플], 켜면 이 기기에 저장', async () => {
+  it('마이 → 실험실: 2026-11-13 3차 실제 기능 7개 + 2026-11-25 여행 모드 3개, 모두 [샘플], 켜면 이 기기에 저장', async () => {
     const user = userEvent.setup();
     render(<RouterProvider router={createMemoryRouter(routes, { initialEntries: ['/me'] })} />);
     await user.click(await screen.findByRole('link', { name: '실험실' }));
@@ -49,10 +49,13 @@ describe('실험실', () => {
       'splitBill',
       'unitConvert',
       'quickTimer',
+      'leavePush',
+      'todayShare',
+      'meetup',
     ]);
-    expect(screen.getAllByRole('switch')).toHaveLength(7);
+    expect(screen.getAllByRole('switch')).toHaveLength(10);
     // 실험마다 [샘플] (사용자 요청 2026-11-10)
-    expect(screen.getAllByRole('button', { name: / 샘플$/ })).toHaveLength(7);
+    expect(screen.getAllByRole('button', { name: / 샘플$/ })).toHaveLength(10);
     // 정식이 됐거나 뺀 것은 실험실에 없다
     for (const name of [
       /현지 공휴일/,

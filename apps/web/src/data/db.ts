@@ -115,6 +115,8 @@ export class TripPocketDB extends Dexie {
     this.version(13).stores({ photos: 'id, tripId, itemId' });
     // v14 (2026-11-11): 사진 분류 묶음(tag) — 인덱스 없음, 예전 사진은 분류 전으로 본다
     this.version(14).stores({});
+    // v15 (2026-11-25): 일정 모이기 표시(meetup, docs/27 E2) — 인덱스 없음, 예전 행은 표시 없음
+    this.version(15).stores({});
   }
 }
 

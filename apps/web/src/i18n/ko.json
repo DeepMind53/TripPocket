@@ -649,6 +649,8 @@
     "start": "시작",
     "end": "종료",
     "address": "주소",
+    "meetup": "모이는 곳으로 표시",
+    "meetupDesc": "여행 모드 맨 위에 띄워요",
     "addressPlaceholder": "주소나 위치 설명",
     "memo": "메모",
     "url": "링크",
@@ -1488,6 +1490,18 @@
       "quickTimer": {
         "name": "타이머",
         "desc": "주차·짐 보관 시간을 맞춰 두면\n끝날 때 알려 줘요"
+      },
+      "leavePush": {
+        "name": "나갈 시각 알림",
+        "desc": "앱을 닫아도 나갈 시각에 알려요\n마이에서 알림을 켜야 해요\n서버에는 나갈 시각만 보내요"
+      },
+      "todayShare": {
+        "name": "오늘 일정 보내기",
+        "desc": "여행 모드에서 오늘 일정만 보내요\n공유 링크가 켜져 있으면 링크로"
+      },
+      "meetup": {
+        "name": "모이는 곳·시각",
+        "desc": "일정에 모이기 표시를 하면\n여행 모드 맨 위에 띄워요"
       }
     },
     "checkoutAt": "오늘 {{time}} 체크아웃 · {{name}}",
@@ -2260,7 +2274,11 @@
     "dayNote": "야경이 정말 예뻤어요",
     "hintPhraseJa": "すみません",
     "hintPhraseKo": "실례합니다",
-    "hintOrder": "센소지 → 우에노 → 스카이트리"
+    "hintOrder": "센소지 → 우에노 → 스카이트리",
+    "leaveTitle": "지금 나가면 11:00 오사카성에 맞춰요",
+    "leaveBody": "10:35에 나가기로 했어요",
+    "todayShareText": "10.29 (목) 2일차\n09:00 츠키지 장외시장\n11:00 센소지",
+    "meetupPlace": "신주쿠역 동쪽 출구"
   },
   "currencyName": {
     "USD": "미국 달러",
@@ -2739,6 +2757,10 @@
     "unknown": "확인 못 함"
   },
   "travel": {
+    "todayShare": "오늘 일정 보내기",
+    "todayShareTitle": "오늘 일정",
+    "todayShareCopied": "오늘 일정을 복사했어요",
+    "meetup": "여기서 모여요",
     "title": "여행 모드",
     "askTitle": "여행 모드로 볼까요?",
     "askDesc": "지금 할 일과 나갈 시각을 크게 보여 줘요\n[홈]을 누르면 언제든 돌아와요",

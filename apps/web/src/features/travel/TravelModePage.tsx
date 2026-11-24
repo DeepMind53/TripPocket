@@ -20,6 +20,8 @@ import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { TravelTabPanel } from './TravelTabPanel';
 import { isTravelTab, type TravelTabId } from './travelTabs';
 import { useTrip, useTripBookings, useTripItems } from '../../data/hooks';
+import { useLab } from '../../data/labsStore';
+import { TodayShareButton } from './TodayShareButton';
 import { setTravelMode, setTravelPrefs, useTravelMode } from '../../data/travelModeStore';
 import { airWarnings } from '../../domain/air';
 import { lodgingForNight } from '../../domain/lodging';
@@ -113,6 +115,7 @@ function TravelView({ trip, items: all }: { trip: Trip; items: ItineraryItem[] }
   const tabParam = params.get('tab');
   const tab = isTravelTab(tabParam) ? tabParam : null;
   const today = todayIn(trip.timezone);
+  const todayShareOn = useLab('todayShare');
   const tomorrow = addDays(today, 1);
   const clock = useMinuteClock(true);
   const now = timeIn(trip.timezone, clock) ?? '00:00';
@@ -211,6 +214,10 @@ function TravelView({ trip, items: all }: { trip: Trip; items: ItineraryItem[] }
               tone={sun ? 'tint' : 'plain'}
               onClick={() => setTravelPrefs({ sun: !sun, sunAsked: true })}
             />
+            {/* 실험실 "오늘 일정 보내기" (docs/27 E1) */}
+            {todayShareOn && (
+              <TodayShareButton trip={trip} today={today} items={items ?? []} bookings={bookings} />
+            )}
             {/* 오른쪽 위 긴급 연락처 버튼은 뺐다 (사용자 요청 2026-11-10, 전에는 D1) */}
           </header>
 
