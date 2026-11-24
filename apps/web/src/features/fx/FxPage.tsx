@@ -6,7 +6,6 @@ import {
   POPULAR_CURRENCIES,
   toKrw,
 } from '@trippocket/shared';
-import { useTight } from '../../shared/hooks/useTight';
 import { ArrowUpDown, ChevronDown, Delete, ExternalLink } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router';
@@ -153,8 +152,7 @@ export function FxPage() {
     'del',
   ];
 
-  // 네이버 환율 링크 — 넓은 화면은 설명 칸 안, 좁은 화면은 금액 줄 아래 (한 줄 유지, 2026-11-23)
-  const tight = useTight();
+  // 네이버 환율 링크 — 시세 설명 묶음 안
   const naverLink = (
     <a
       href={`https://search.naver.com/search.naver?query=${encodeURIComponent(naverQuery(currency))}`}
@@ -179,11 +177,12 @@ export function FxPage() {
             ))}
           </div>
         )}
-        {/* 설명은 왼쪽, 금액 칸은 오른쪽 절반 (2026-11-13 사용자 요청) */}
-        <div className="flex items-start gap-3">
+        {/* 설명은 왼쪽, 금액 칸은 오른쪽 절반 (2026-11-13 사용자 요청).
+            360px 이하·큰 글자는 설명을 위 한 묶음으로 올리고 금액 칸은 전체 폭 (docs/31 N3) */}
+        <div className="flex items-start gap-3 tight:flex-col tight:items-stretch max-[360px]:flex-col max-[360px]:items-stretch">
           <div
             aria-live="polite"
-            className="flex min-w-0 flex-1 flex-col gap-0.5 self-center text-caption break-keep text-fg-sub"
+            className="flex min-w-0 flex-1 flex-col gap-0.5 self-center text-caption break-keep text-fg-sub tight:self-stretch max-[360px]:self-stretch"
           >
             {rate ? (
               <span className="tabular text-body-2 font-semibold text-fg">
@@ -212,10 +211,9 @@ export function FxPage() {
             )}
             {fee > 0 && <span>{t('fx.feeApplied', { fee })}</span>}
             <span className="text-fg-muted">{t('fx.notRealtime')}</span>
-            {/* 좁은 화면(≤340px·큰 글자)에서는 왼쪽 칸이 좁아 두 줄이 되므로 줄 아래로 (사용자 요청 2026-11-23) */}
-            {!tight && naverLink}
+            {naverLink}
           </div>
-          <div className="flex w-1/2 shrink-0 flex-col gap-1">
+          <div className="flex w-1/2 shrink-0 flex-col gap-1 tight:w-full max-[360px]:w-full">
             <AmountRow
               label={topCode === 'KRW' ? t('fx.krw') : currencyLabel(currency)}
               value={`${symbol(topCode)} ${input ? fmt(Number(input), digits(topCode)) : '0'}`}
@@ -247,7 +245,6 @@ export function FxPage() {
             />
           </div>
         </div>
-        {tight && <span className="text-caption">{naverLink}</span>}
         <div className="flex flex-wrap gap-2">
           {quick.map((q) => (
             <Chip key={q} onClick={() => setInput(String(q))}>
