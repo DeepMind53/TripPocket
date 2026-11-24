@@ -3,6 +3,10 @@ import { useSyncExternalStore, type ReactNode } from 'react';
 
 /** 다음 것으로 넘어가는 간격 (사용자 요청 2026-11-10) */
 const EVERY_MS = 3000;
+/** 움직임 줄이기(휴대폰 접근성 설정)면 느리게 — 다 읽기 전에 넘어가지 않게 (docs/31 R3, 사용자 결정 6초) */
+const REDUCED_MS = 6000;
+const everyMs = () =>
+  window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? REDUCED_MS : EVERY_MS;
 
 /*
  * 앱 전체가 함께 보는 시계 하나 (docs/31 §11 R2, 2026-11-23).
@@ -19,7 +23,7 @@ function start() {
   timer = window.setInterval(() => {
     tick += 1;
     listeners.forEach((f) => f());
-  }, EVERY_MS);
+  }, everyMs());
 }
 function stop() {
   window.clearInterval(timer);

@@ -63,3 +63,20 @@ it('화면이 안 보이는 동안은 멈춘다', () => {
     vi.useRealTimers();
   }
 });
+
+it('움직임 줄이기면 6초마다 (docs/31 R3)', () => {
+  vi.useFakeTimers();
+  const orig = window.matchMedia;
+  window.matchMedia = ((q: string) => ({ matches: q.includes('reduced-motion') })) as never;
+  try {
+    render(<RollingSlot items={[<span key="a">맑음</span>, <span key="b">오늘</span>]} />);
+    const shown = () => screen.getByText(/맑음|오늘/, { selector: '.tp-roll > span' });
+    act(() => vi.advanceTimersByTime(3000));
+    expect(shown()).toHaveTextContent('맑음');
+    act(() => vi.advanceTimersByTime(3000));
+    expect(shown()).toHaveTextContent('오늘');
+  } finally {
+    window.matchMedia = orig;
+    vi.useRealTimers();
+  }
+});
