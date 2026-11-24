@@ -74,7 +74,7 @@ export function PlaceHours({
         ) : (
           <span className="text-fg-sub">{t('placeSearch.noOurReviews')}</span>
         )}
-        <span className="text-[11px] whitespace-pre-line text-fg-muted">
+        <span className="text-micro whitespace-pre-line text-fg-muted">
           {t('placeSearch.detailsFallback')}
         </span>
         <FallbackLinks links={placeDetailLinks(name ?? '', googlePlaceId)} />
@@ -103,7 +103,7 @@ export function PlaceHours({
           {t('placeSearch.outsideHours', { time })}
         </span>
       )}
-      <span className="text-[11px] text-fg-muted">{t('placeSearch.fromGoogle')}</span>
+      <span className="text-micro text-fg-muted">{t('placeSearch.fromGoogle')}</span>
     </div>
   );
 }

@@ -127,7 +127,7 @@ export function TicketCard({
                   onClick={c.onClick}
                   className={cn(
                     // 칸 값은 잘리지 않고 줄바꿈 ("11.24 15:00" → 두 줄, 좁은 화면·큰 글자, docs/29 §9)
-                    '-mx-1 max-w-full rounded-md px-1 text-left font-mono text-body-2 font-medium [overflow-wrap:break-word] active:bg-bg-subtle',
+                    '-mx-1 max-w-full rounded-chip px-1 text-left font-mono text-body-2 font-medium [overflow-wrap:break-word] active:bg-bg-subtle',
                     c.accent ? 'text-primary' : 'text-fg',
                   )}
                 >

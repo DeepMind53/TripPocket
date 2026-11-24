@@ -199,7 +199,7 @@ function EssentialLine({
         >
           <span
             className={cn(
-              'grid size-6 place-items-center rounded-md border-2',
+              'grid size-6 place-items-center rounded-chip border-2',
               row.checked ? 'border-primary bg-primary text-on-primary' : 'border-line bg-surface',
             )}
           >

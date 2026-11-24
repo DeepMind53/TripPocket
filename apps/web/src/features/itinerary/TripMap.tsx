@@ -285,7 +285,7 @@ export function TripMap({
         size === 'full'
           ? 'fixed inset-0 z-50'
           : cn(
-              'relative rounded-2xl border border-line transition-[height] duration-200',
+              'relative rounded-card border border-line transition-[height] duration-200',
               // 크게 볼 때도 지도가 위에 고정되므로 아래 일정 카드가 화면에 들어오게 (2026-10-26)
               size === 'large' ? 'h-[45dvh]' : 'h-60',
             ),

@@ -487,7 +487,7 @@ function RecCard({
               </a>
             </li>
           ))}
-          <li className="text-[11px] text-fg-muted">{t('ai.sourceNote')}</li>
+          <li className="text-micro text-fg-muted">{t('ai.sourceNote')}</li>
         </ul>
       )}
     </li>

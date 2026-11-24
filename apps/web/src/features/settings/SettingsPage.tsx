@@ -54,7 +54,7 @@ export function SettingsPage() {
       </li>
     );
   };
-  const list = 'divide-y divide-line overflow-hidden rounded-2xl border border-line bg-surface';
+  const list = 'divide-y divide-line overflow-hidden rounded-card border border-line bg-surface';
 
   return (
     <div className="mx-auto min-h-dvh max-w-[560px] pb-10">
@@ -116,7 +116,7 @@ function DefaultsBox() {
   return (
     <section
       aria-label={t('settings.saveDefaults')}
-      className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-4"
+      className="flex flex-col gap-2 rounded-card border border-line bg-surface p-4"
     >
       <Button
         fullWidth

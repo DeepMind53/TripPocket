@@ -32,7 +32,7 @@ export function EmptyDayRow({
     <section
       aria-label={title}
       data-day={date}
-      className="flex min-h-12 items-center gap-1 rounded-2xl border border-dashed border-line pr-1 pl-3"
+      className="flex min-h-12 items-center gap-1 rounded-card border border-dashed border-line pr-1 pl-3"
     >
       <h2 aria-label={title} className="tabular flex min-w-0 flex-1 items-center gap-1.5">
         <DayRoll date={date} index={index} />

@@ -93,7 +93,7 @@ export function RouteStop({
           className={cn(
             'relative z-[1] mt-0.5 grid place-items-center border-[3px] font-mono text-micro leading-none',
             dense ? 'size-5' : 'size-6',
-            memo ? 'rounded-md border-2' : 'rounded-full',
+            memo ? 'rounded-chip border-2' : 'rounded-full',
             next
               ? 'border-[var(--route-ink)] bg-[var(--route-ink)] text-on-primary shadow-[0_0_0_4px_color-mix(in_srgb,var(--route)_22%,transparent)]'
               : past

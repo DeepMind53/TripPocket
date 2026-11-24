@@ -24,7 +24,7 @@ export function NotificationGroup() {
   return (
     <section aria-label={t('push.title')} className="flex flex-col gap-2">
       <GroupTitle title={t('push.title')} />
-      <div className="flex flex-col gap-4 rounded-2xl border border-line bg-surface p-4">
+      <div className="flex flex-col gap-4 rounded-card border border-line bg-surface p-4">
         <div className="flex items-center justify-between gap-3">
           <span className="flex flex-col">
             <span className="text-body-2 font-medium">{t('push.all')}</span>

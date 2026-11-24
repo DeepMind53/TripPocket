@@ -123,6 +123,8 @@
 
   /* 형태 (docs/11 §5) */
   --radius-btn: 12px;
+  /* 작은 칸 (칩 안·지도 앱 표시 등) — 안쪽 모서리 = 바깥 − 여백 (docs/31 U6) */
+  --radius-chip: 8px;
   --radius-card: 16px;
   --radius-sheet: 20px;
 

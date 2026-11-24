@@ -124,7 +124,7 @@ export function BackupPage() {
     <div className="mx-auto min-h-dvh max-w-[560px] pb-10">
       <TopBar title={t('backup.title')} backTo="/me" />
       <div className="flex flex-col gap-6 px-5 pt-2">
-        <section className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4">
+        <section className="flex flex-col gap-3 rounded-card border border-line bg-surface p-4">
           <p className="text-body-2 text-fg-sub">{t('backup.why')}</p>
           <p className="text-caption text-fg-muted" aria-live="polite">
             {t('backup.last')}: {last ? formatSince(last) : t('backup.never')}
@@ -177,7 +177,7 @@ export function BackupPage() {
         {recent.length > 0 && (
           <section
             aria-label={t('backup.recentTitle')}
-            className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-4"
+            className="flex flex-col gap-2 rounded-card border border-line bg-surface p-4"
           >
             <h2 className="flex items-center gap-1.5 text-body-1 font-semibold">
               <History aria-hidden="true" className="size-5 text-fg-sub" />
@@ -216,7 +216,7 @@ export function BackupPage() {
 
         <ServerStorage />
 
-        <section className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4">
+        <section className="flex flex-col gap-3 rounded-card border border-line bg-surface p-4">
           <h2 className="text-body-1 font-semibold">{t('backup.storage')}</h2>
           {usage !== null && (
             <p className="text-body-2 text-fg-sub">

@@ -96,7 +96,7 @@ export function SavedMap({
                 : null;
 
   return (
-    <div className="relative h-[55vh] overflow-hidden rounded-2xl bg-bg-subtle">
+    <div className="relative h-[55vh] overflow-hidden rounded-card bg-bg-subtle">
       <div ref={el} className="absolute inset-0" />
       {asking && online && visible.length > 0 && <DomesticMapChoice />}
       {notice && (

@@ -160,7 +160,7 @@ function ItemRow({
     });
   }
   return (
-    <div className="flex items-center gap-1 rounded-lg bg-bg-subtle py-1 pr-1 pl-3">
+    <div className="flex items-center gap-1 rounded-chip bg-bg-subtle py-1 pr-1 pl-3">
       <span className="tabular w-11 text-caption text-fg-sub">{item.startTime ?? '—'}</span>
       <span className="min-w-0 flex-1 truncate text-body-2">{item.title}</span>
       <code className="text-micro text-fg-muted">{item.order}</code>

@@ -679,7 +679,7 @@ function PlanView({
 
         {mapView !== 'closed' && (
           <div className="px-5 pt-2">
-            <Suspense fallback={<div className="h-60 rounded-2xl bg-bg-subtle" />}>
+            <Suspense fallback={<div className="h-60 rounded-card bg-bg-subtle" />}>
               <TripMap
                 trip={trip}
                 items={mapItems}

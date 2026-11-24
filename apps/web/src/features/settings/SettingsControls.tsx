@@ -27,7 +27,7 @@ export function Group({
   return (
     <section aria-label={title} className="flex flex-col gap-2">
       <GroupTitle title={title} />
-      <div className="flex flex-col gap-5 rounded-2xl border border-line bg-surface p-4">
+      <div className="flex flex-col gap-5 rounded-card border border-line bg-surface p-4">
         {children}
       </div>
       {onReset && (

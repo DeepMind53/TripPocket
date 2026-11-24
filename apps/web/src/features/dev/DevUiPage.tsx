@@ -274,7 +274,7 @@ export function DevUiPage() {
                 showTicks
               />
               <p
-                className="rounded-lg bg-bg-subtle px-3 py-2 text-fg-sub"
+                className="rounded-chip bg-bg-subtle px-3 py-2 text-fg-sub"
                 style={{ fontSize: `${15 * (fontScales[fontStep] ?? 1)}px` }}
               >
                 2일차 · 센소지 09:00
@@ -381,7 +381,7 @@ function Section({ title, hint, children }: { title: string; hint?: string; chil
 function Swatch({ name, className }: { name: string; className: string }) {
   return (
     <div className="flex flex-col gap-1">
-      <span className={`h-10 rounded-lg border border-line ${className}`} />
+      <span className={`h-10 rounded-chip border border-line ${className}`} />
       <span className="truncate text-micro text-fg-muted">{name}</span>
     </div>
   );
@@ -399,7 +399,7 @@ function AppMark({
   return (
     <span
       aria-hidden="true"
-      className="grid size-7 place-items-center rounded-lg text-caption font-semibold"
+      className="grid size-7 place-items-center rounded-chip text-caption font-semibold"
       style={{ background: bg, color: dark ? '#191F28' : '#FFFFFF' }}
     >
       {children}

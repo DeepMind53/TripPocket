@@ -45,7 +45,7 @@ export function DayMiniMap({
     <svg
       aria-hidden="true"
       viewBox={`0 0 ${W} ${H}`}
-      className="h-7 w-14 shrink-0 rounded-md bg-bg-subtle"
+      className="h-7 w-14 shrink-0 rounded-chip bg-bg-subtle"
     >
       <polyline
         points={xy.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' ')}

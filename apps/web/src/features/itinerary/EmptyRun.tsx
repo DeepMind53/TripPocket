@@ -10,7 +10,7 @@ export function EmptyRun({ from, to, onOpen }: { from: Section; to: Section; onO
       type="button"
       onClick={onOpen}
       data-day={from.date!}
-      className="flex min-h-12 items-center justify-between gap-2 rounded-2xl border border-dashed border-line px-4 text-left"
+      className="flex min-h-12 items-center justify-between gap-2 rounded-card border border-dashed border-line px-4 text-left"
     >
       {/* 첫 줄 일차·일정 없음, 둘째 줄 날짜 범위 (2026-11-14 다듬기 — "없음"만 줄바꿈되던 것) */}
       <span className="flex min-w-0 flex-col py-2">

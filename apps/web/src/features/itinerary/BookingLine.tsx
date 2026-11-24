@@ -65,7 +65,7 @@ export function BookingLine({ row, onOpen }: { row: BookingRow; onOpen: () => vo
             </span>
           )}
         </span>
-        <span className="shrink-0 rounded-md bg-bg-subtle px-1.5 py-0.5 text-micro text-fg-sub">
+        <span className="shrink-0 rounded-chip bg-bg-subtle px-1.5 py-0.5 text-micro text-fg-sub">
           {t(`bookingKind.${b.kind}`)}
         </span>
       </button>

@@ -291,7 +291,7 @@ function Row({
         <span
           aria-hidden="true"
           className={cn(
-            'grid size-6 shrink-0 place-items-center rounded-md border-2',
+            'grid size-6 shrink-0 place-items-center rounded-chip border-2',
             item.checked ? 'border-success bg-success text-white' : 'border-line',
           )}
         >

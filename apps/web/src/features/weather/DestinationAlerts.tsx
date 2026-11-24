@@ -164,7 +164,7 @@ function AlertRow({ alert: a, flag }: { alert: DestinationAlert; flag: boolean }
   return (
     <li
       className={cn(
-        'flex items-start gap-2 rounded-lg border-l-4 px-2 py-1.5',
+        'flex items-start gap-2 rounded-chip border-l-4 px-2 py-1.5',
         a.level === 'red'
           ? 'border-danger bg-danger/5'
           : a.level === 'orange'

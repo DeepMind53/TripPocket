@@ -8,7 +8,7 @@ export function Skeleton({ rows = 3 }: { rows?: number }) {
   return (
     <div role="status" aria-label={t('common.loading')} className="flex flex-col gap-3 px-5 pt-3">
       {Array.from({ length: rows }, (_, i) => (
-        <div key={i} className="flex flex-col gap-2 rounded-2xl border border-line p-4">
+        <div key={i} className="flex flex-col gap-2 rounded-card border border-line p-4">
           <div className="h-4 w-1/3 animate-pulse rounded bg-bg-subtle motion-reduce:animate-none" />
           <div className="h-3 w-4/5 animate-pulse rounded bg-bg-subtle motion-reduce:animate-none" />
           <div className="h-3 w-3/5 animate-pulse rounded bg-bg-subtle motion-reduce:animate-none" />

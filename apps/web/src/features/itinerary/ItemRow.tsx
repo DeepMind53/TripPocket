@@ -117,7 +117,7 @@ export function ItemRow({
       {...(past && !now ? { 'data-route-past': '' } : {})}
       className={cn(
         'relative z-[1] grid size-6 shrink-0 place-items-center border-[3px] font-mono text-micro leading-none',
-        item.kind === 'note' ? 'rounded-md border-2' : 'rounded-full',
+        item.kind === 'note' ? 'rounded-chip border-2' : 'rounded-full',
         now
           ? 'border-[var(--route-ink)] bg-[var(--route-ink)] text-on-primary shadow-[0_0_0_4px_color-mix(in_srgb,var(--route)_22%,transparent)]'
           : past
@@ -250,7 +250,7 @@ export function ItemRow({
           {/* 종류 아이콘 칸: 종류 색 옅은 바탕 + 종류 색 아이콘 */}
           <span
             aria-hidden="true"
-            className="grid size-5 shrink-0 place-items-center rounded-md bg-[color-mix(in_srgb,var(--kind)_16%,var(--tp-surface))] text-[var(--kind)]"
+            className="grid size-5 shrink-0 place-items-center rounded-chip bg-[color-mix(in_srgb,var(--kind)_16%,var(--tp-surface))] text-[var(--kind)]"
           >
             <Icon className="size-3.5" />
           </span>

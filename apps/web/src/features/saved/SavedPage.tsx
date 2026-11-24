@@ -204,7 +204,7 @@ export function SavedPage() {
       >
         {current && (
           <div className="flex flex-col gap-3 pb-2">
-            <Suspense fallback={<div className="h-[55vh] rounded-2xl bg-bg-subtle" />}>
+            <Suspense fallback={<div className="h-[55vh] rounded-card bg-bg-subtle" />}>
               <SavedMap places={list} onSelect={setPicked} />
             </Suspense>
             {picked && (

@@ -55,7 +55,7 @@ export function MyReviewsPage() {
                 <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                   <span className="flex items-center gap-2">
                     <span className="truncate text-body-2 font-semibold">{r.placeName}</span>
-                    <span className="shrink-0 rounded-md bg-bg-subtle px-1.5 py-0.5 text-micro text-fg-sub">
+                    <span className="shrink-0 rounded-chip bg-bg-subtle px-1.5 py-0.5 text-micro text-fg-sub">
                       {t(`kind.${r.kind}`)}
                     </span>
                   </span>

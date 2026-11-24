@@ -81,7 +81,7 @@ export function TripCalendar({
       const tripList = others.filter((tr) => inMonth({ start: tr.startDate, end: tr.endDate }));
       if (list.length === 0 && tripList.length === 0) return null;
       return (
-        <ul className="flex flex-col gap-0.5 px-1 pt-2 text-[11px] leading-4 text-fg-sub">
+        <ul className="flex flex-col gap-0.5 px-1 pt-2 text-micro leading-4 text-fg-sub">
           {tripList.map((tr) => (
             <li key={tr.id} className="flex min-w-0 gap-1.5">
               <span aria-hidden="true">{tr.cover.emoji ?? '🧳'}</span>

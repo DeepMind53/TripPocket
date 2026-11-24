@@ -39,7 +39,7 @@ export function SegmentedControl<T extends string>({
           key={opt.value}
           value={opt.value}
           className={cn(
-            'h-9 rounded-lg px-2 text-caption text-fg-sub transition-colors',
+            'h-9 rounded-chip px-2 text-caption text-fg-sub transition-colors',
             'data-[state=checked]:bg-surface data-[state=checked]:font-semibold data-[state=checked]:text-fg data-[state=checked]:shadow-card',
           )}
         >
