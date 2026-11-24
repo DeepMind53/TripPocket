@@ -21,6 +21,16 @@ import {
 
 /** 준비 현황 펼침 상태 (이 기기) */
 const OPEN_KEY = 'tp-prep-open';
+/** 출발 7일 전 자동 펼침을 사용자가 접은 여행 id들 (docs/31 E1) */
+const CLOSED_KEY = 'tp-prep-closed';
+function closedTrips(): string[] {
+  try {
+    const v = JSON.parse(localStorage.getItem(CLOSED_KEY) ?? '[]') as unknown;
+    return Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : [];
+  } catch {
+    return [];
+  }
+}
 import { useEffect, useState, type ReactNode } from 'react';
 import { Link } from 'react-router';
 import { useChecklist, useTripBookings } from '../../data/hooks';
@@ -81,7 +91,9 @@ export function PrepCards({
   const base = `/trips/${trip.id}`;
   const rate = currency ? fx?.rates[currency] : undefined;
   const unit = currency && HUNDRED_UNIT.has(currency) ? 100 : 1;
-  const [open, setOpen] = useState(() => {
+  // 이번에 직접 펼치거나 접은 값 (없으면 아래 규칙)
+  const [choice, setChoice] = useState<boolean | null>(null);
+  const [remembered] = useState(() => {
     if (collapsed) return false;
     try {
       return localStorage.getItem(OPEN_KEY) === '1';
@@ -89,15 +101,7 @@ export function PrepCards({
       return false;
     }
   });
-  const toggleOpen = (v: boolean) => {
-    setOpen(v);
-    if (collapsed) return;
-    try {
-      localStorage.setItem(OPEN_KEY, v ? '1' : '0');
-    } catch {
-      // 기억 못 해도 이번에는 적용
-    }
-  };
+  const [closedHere] = useState(() => closedTrips().includes(trip.id));
   // 확인할 것 — 점 대신 첫 번째 이유를 글자로 (사용자 결정 2026-11-23: 점만으로는 뜻을 알 수 없었다)
   const attention =
     lodgings === 0
@@ -109,6 +113,22 @@ export function PrepCards({
           : essentials?.alert
             ? 'prep.attnDocs'
             : null;
+  // 출발 7일 전부터 할 일이 남았으면 처음부터 펼친다 (docs/31 E1) — 그 여행에서 접으면 접힌 채 기억
+  const autoOpen = !collapsed && daysLeft >= 0 && daysLeft <= 7 && attention !== null;
+  const open = choice ?? ((autoOpen && !closedHere) || remembered);
+  const toggleOpen = (v: boolean) => {
+    setChoice(v);
+    if (collapsed) return;
+    try {
+      localStorage.setItem(OPEN_KEY, v ? '1' : '0');
+      if (autoOpen) {
+        const rest = closedTrips().filter((id) => id !== trip.id);
+        localStorage.setItem(CLOSED_KEY, JSON.stringify(v ? rest : [...rest, trip.id].slice(-20)));
+      }
+    } catch {
+      // 기억 못 해도 이번에는 적용
+    }
+  };
 
   return (
     <section aria-label={t('prep.title')} className="flex flex-col gap-2">
@@ -152,6 +172,18 @@ export function PrepCards({
       {open && (
         <>
           <div className="grid grid-cols-2 gap-2">
+            {/* 할 일 순서와 같게: 숙소(예약) → 짐 (docs/31 E1) */}
+            <Card
+              to={`${base}/bookings`}
+              icon={Ticket}
+              label={t('prep.bookings')}
+              alert={lodgings === 0}
+            >
+              <span className="text-body-2">{t('prep.bookingCounts', { flights, lodgings })}</span>
+              {lodgings === 0 && (
+                <span className="text-caption text-warning">{t('prep.noLodging')}</span>
+              )}
+            </Card>
             <Card
               to={`${base}/checklist`}
               icon={Luggage}
@@ -172,17 +204,6 @@ export function PrepCards({
                     />
                   </span>
                 </>
-              )}
-            </Card>
-            <Card
-              to={`${base}/bookings`}
-              icon={Ticket}
-              label={t('prep.bookings')}
-              alert={lodgings === 0}
-            >
-              <span className="text-body-2">{t('prep.bookingCounts', { flights, lodgings })}</span>
-              {lodgings === 0 && (
-                <span className="text-caption text-warning">{t('prep.noLodging')}</span>
               )}
             </Card>
             <Card

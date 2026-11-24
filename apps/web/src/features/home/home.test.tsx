@@ -13,12 +13,12 @@ it('여행 전 홈: 준비 현황 4장(준비물·예약·날씨 정보·환율)
   await checklistRepo.add(tripId, 'packing', { text: '여권' });
   render(<RouterProvider router={createMemoryRouter(routes, { initialEntries: ['/'] })} />);
   const prep = await screen.findByRole('region', { name: '준비 현황' });
-  // 기본은 한 줄 요약 (docs/20 U3) — 누르면 펼침
-  const summary = within(prep).getByRole('button', { expanded: false });
+  // 출발 7일 안 + 할 일(숙소 없음)이 남아 처음부터 펼침 (docs/31 E1)
+  const summary = within(prep).getByRole('button', { name: /준비 현황/ });
   await waitFor(() => expect(summary).toHaveTextContent('0/1'));
   // 확인할 것은 점 대신 글자로 (2026-11-23)
   expect(summary).toHaveTextContent('숙소 없음');
-  fireEvent.click(summary);
+  await waitFor(() => expect(summary).toHaveAttribute('aria-expanded', 'true'));
   for (const name of ['준비물', '예약', '날씨 정보', '환율'])
     expect(within(prep).getByRole('link', { name: new RegExp(name) })).toBeInTheDocument();
   expect(within(prep).getByRole('link', { name: /예약/ })).toHaveAttribute(
@@ -35,6 +35,10 @@ it('여행 전 홈: 준비 현황 4장(준비물·예약·날씨 정보·환율)
     'href',
     `/ai?trip=${tripId}`,
   );
+  // 접으면 그 여행은 접힌 채 기억
+  fireEvent.click(summary);
+  expect(summary).toHaveAttribute('aria-expanded', 'false');
+  expect(localStorage.getItem('tp-prep-closed')).toContain(tripId);
 });
 
 it('여행 중 홈: 다음 일정 카드도 여행 모드처럼 [도보|대중교통|자동차]·[새로고침 n회 남음]·출발까지, [길찾기]·[일정 보기]는 그대로', async () => {
