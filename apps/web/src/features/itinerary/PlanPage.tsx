@@ -555,7 +555,13 @@ function PlanView({
                 // 위아래 여백 6px로 두 줄 간격을 맞춘다 (사용자 요청 2026-11-18)
                 className="flex gap-1.5 py-1.5 pl-5"
               >
-                <Chip size="sm" selected={filter === 'all'} onClick={() => setFilter('all')}>
+                {/* 고른 칩이 가장 눈에 띄게 (docs/31 U2): [전체]는 진한 바탕, 안 고른 일차 칩은 회색 + 일차 색 점만 */}
+                <Chip
+                  size="sm"
+                  selected={filter === 'all'}
+                  className={filter === 'all' ? 'bg-fg! text-bg!' : undefined}
+                  onClick={() => setFilter('all')}
+                >
                   {t('plan.all')}
                 </Chip>
                 {days.map((d, i) => (
@@ -564,14 +570,14 @@ function PlanView({
                     key={d}
                     data-chip={d}
                     aria-current={inView === d ? 'location' : undefined}
-                    // 노선 색 알약 (docs/29 §4.3): 고르면 진한 노선 색 채움, 아니면 노선 색 테두리. 버튼 구조·이름은 그대로
+                    // 노선 색 알약 (docs/29 §4.3): 고르면 진한 노선 색 채움, 아니면 회색 칩 + 노선 색 점 (docs/31 U2). 버튼 구조·이름은 그대로
                     style={routeStyle(i)}
                     className={
                       filter === i + 1
                         ? 'border-transparent! bg-[var(--route-ink)]! text-on-primary!'
                         : inView === d
                           ? 'border-primary text-primary'
-                          : 'border-[var(--route)]! text-[var(--route-ink)]!'
+                          : undefined
                     }
                     selected={filter === i + 1}
                     onClick={() => setFilter(i + 1)}

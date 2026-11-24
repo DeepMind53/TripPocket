@@ -62,11 +62,13 @@ export function DayLineTabs<T extends string>({
                 ? neutral
                   ? 'border-transparent bg-fg text-bg'
                   : 'border-transparent bg-[var(--route-ink)] text-on-primary'
-                : neutral
-                  ? 'border-line bg-surface text-fg-sub'
-                  : 'border-[var(--route)] bg-surface text-[var(--route-ink)]',
+                : 'border-line bg-surface text-fg-sub',
             )}
           >
+            {/* 안 고른 일차 칩은 회색 + 일차 색 점만 — 고른 칩이 가장 눈에 띄게 (docs/31 U2) */}
+            {!on && !neutral && (
+              <span aria-hidden="true" className="size-2 rounded-full bg-[var(--route)]" />
+            )}
             {it.today && (
               <span
                 aria-hidden="true"
