@@ -53,17 +53,18 @@ describe('예약', () => {
     const sheet = screen.getByRole('dialog', { name: '예약 추가' });
     await user.click(within(sheet).getByRole('button', { name: '+ 더 입력하기' }));
     // 항공: 수하물 있음, 취소 마감·결제·바우처 없음
-    expect(within(sheet).getByLabelText('수하물 허용량')).toBeInTheDocument();
+    expect(within(sheet).getByLabelText('기내 수하물')).toBeInTheDocument();
+    expect(within(sheet).getByLabelText('위탁 수하물')).toBeInTheDocument();
     expect(within(sheet).queryByLabelText('무료 취소 마감일')).toBeNull();
     expect(within(sheet).queryByLabelText('바우처·확인서 링크')).toBeNull();
     // 음식점: 새 칸 없음
     await user.click(within(sheet).getByRole('button', { name: '음식점' }));
-    expect(within(sheet).queryByLabelText('수하물 허용량')).toBeNull();
+    expect(within(sheet).queryByLabelText('위탁 수하물')).toBeNull();
     expect(within(sheet).queryByLabelText('무료 취소 마감일')).toBeNull();
     expect(within(sheet).queryByRole('group', { name: '결제' })).toBeNull();
     // 렌터카
     await user.click(within(sheet).getByRole('button', { name: '렌터카' }));
-    expect(within(sheet).queryByLabelText('수하물 허용량')).toBeNull();
+    expect(within(sheet).queryByLabelText('위탁 수하물')).toBeNull();
     expect(within(sheet).queryByLabelText('바우처·확인서 링크')).toBeNull();
     // 렌터카는 이름 대신 차종·차량번호 (2026-11-02)
     expect(within(sheet).queryByLabelText('이름')).toBeNull();
@@ -521,15 +522,37 @@ describe('편명으로 불러오기', () => {
     useAuth.setState({ status: 'unknown', me: null });
   });
 
-  it('출발 날짜는 점선 칸에서만 고르고, 아래 줄은 같은 날짜를 글자로 보여 준다 (2026-11-23)', async () => {
+  it('출발 날짜는 도착 날짜처럼 고칠 수 있고, 위 점선 칸과 같은 값 (2026-11-24)', async () => {
+    renderAt([`/trips/${tripId}/bookings`]);
+    await userEvent.setup().click(await screen.findByRole('button', { name: '예약 추가' }));
+    const sheet = screen.getByRole('dialog', { name: '예약 추가' });
+    const [top, row] = within(sheet).getAllByLabelText('출발 날짜');
+    expect(row).toHaveAttribute('type', 'date');
+    fireEvent.change(row!, { target: { value: '2026-10-25' } });
+    expect(top).toHaveValue('2026-10-25');
+    fireEvent.change(top!, { target: { value: '2026-10-26' } });
+    expect(row).toHaveValue('2026-10-26');
+  });
+
+  it('수하물은 기내·위탁 따로, 좌석과 한 줄 — 저장은 "위탁 23kg · 기내 7kg", 고칠 때 다시 나뉜다 (2026-11-24)', async () => {
     const user = userEvent.setup();
     renderAt([`/trips/${tripId}/bookings`]);
-    await user.click(await screen.findByRole('button', { name: '예약 추가' }));
+    await userEvent.setup().click(await screen.findByRole('button', { name: '예약 추가' }));
     const sheet = screen.getByRole('dialog', { name: '예약 추가' });
-    const inputs = within(sheet).getAllByLabelText('출발 날짜');
-    expect(inputs).toHaveLength(1);
-    fireEvent.change(inputs[0]!, { target: { value: '2026-10-25' } });
-    expect(sheet.querySelector('#bk-depart-date')).toHaveTextContent('10.25');
+    await user.type(within(sheet).getByLabelText('편명'), 'KE703');
+    await user.click(within(sheet).getByRole('button', { name: '+ 더 입력하기' }));
+    await user.type(within(sheet).getByLabelText('좌석'), '32A');
+    await user.type(within(sheet).getByLabelText('기내 수하물'), '7');
+    await user.type(within(sheet).getByLabelText('위탁 수하물'), '23');
+    await user.click(within(sheet).getByRole('button', { name: '예약 추가' }));
+    await waitFor(async () => expect(await bookingRepo.listByTrip(tripId)).toHaveLength(1));
+    const [b] = await bookingRepo.listByTrip(tripId);
+    expect(b?.details).toMatchObject({ seat: '32A', baggage: '위탁 23kg · 기내 7kg' });
+    const group = await screen.findByRole('region', { name: '항공' });
+    await user.click(within(group).getAllByRole('button', { name: /편집/ })[0]!);
+    const edit = await screen.findByRole('dialog', { name: '예약 편집' });
+    expect(within(edit).getByLabelText('기내 수하물')).toHaveValue('7kg');
+    expect(within(edit).getByLabelText('위탁 수하물')).toHaveValue('23kg');
   });
 });
 

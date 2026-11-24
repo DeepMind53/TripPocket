@@ -24,6 +24,7 @@ import { formatMonthDay } from '../../shared/lib/dateFormat';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from '../../i18n';
 import { syncBookingToPlan } from '../../data/bookingPlanner';
+import { joinBaggage, splitBaggage } from '../../domain/flightBaggage';
 import { bookingRepo, type NewBooking } from '../../data/repositories/bookingRepo';
 import {
   BottomSheet,
@@ -162,7 +163,9 @@ function BookingForm({
     breakfastDates: (b?.details?.breakfastDates ?? null) as string[] | null,
     memo: b?.memo ?? '',
     roomType: b?.details?.roomType ?? '',
-    baggage: b?.details?.baggage ?? '',
+    // 기내·위탁 따로 (사용자 요청 2026-11-24) — 저장은 한 줄 글자
+    baggageCabin: splitBaggage(b?.details?.baggage).cabin,
+    baggageChecked: splitBaggage(b?.details?.baggage).checked,
     cancelBy: b?.details?.cancelBy ?? '',
     payment: (b?.details?.payment ?? '') as '' | 'paid' | 'onsite',
     meetingPoint: b?.details?.meetingPoint ?? '',
@@ -281,7 +284,7 @@ function BookingForm({
           seat: v(f.seat),
           terminal: v(f.terminal),
           arrivalTerminal: v(f.arrivalTerminal),
-          baggage: v(f.baggage),
+          baggage: joinBaggage({ cabin: f.baggageCabin, checked: f.baggageChecked }),
         }),
       });
     }
@@ -573,8 +576,7 @@ function BookingForm({
             onDate={set('startDate')}
             onTime={set('startTime')}
             idPrefix="bk-depart"
-            // 날짜는 위 점선 칸에서만 고른다 — 같은 칸이 두 번 있어 헷갈리지 않게 글자로만 (사용자 요청 2026-11-23)
-            dateAsText
+            // 도착 날짜와 같은 칸으로 고칠 수 있게 (사용자 요청 2026-11-24) — 위 점선 칸과 같은 값이라 어느 쪽을 고쳐도 함께 바뀐다
           />
           <hr aria-hidden="true" className="my-1 border-t-2 border-dashed border-line" />
           <Row>
@@ -607,25 +609,41 @@ function BookingForm({
           />
           {more && (
             <>
-              <Field label={t('bookings.seat')}>
-                <input
-                  id="bk-seat"
-                  value={f.seat}
-                  maxLength={20}
-                  onChange={set('seat')}
-                  className={inputClass}
-                />
-              </Field>
-              <Field label={t('bookings.baggage')}>
-                <input
-                  id="bk-baggage"
-                  value={f.baggage}
-                  maxLength={60}
-                  placeholder={t('bookings.baggagePlaceholder')}
-                  onChange={set('baggage')}
-                  className={inputClass}
-                />
-              </Field>
+              {/* 좌석 · 기내 · 위탁 한 줄 (사용자 요청 2026-11-24) */}
+              <div className="grid grid-cols-3 gap-2">
+                <Field label={t('bookings.seat')}>
+                  <input
+                    id="bk-seat"
+                    value={f.seat}
+                    maxLength={20}
+                    placeholder="32A"
+                    onChange={set('seat')}
+                    className={`${inputClass} px-2`}
+                  />
+                </Field>
+                <Field label={t('bookings.baggageCabin')}>
+                  <input
+                    id="bk-baggage-cabin"
+                    value={f.baggageCabin}
+                    maxLength={25}
+                    inputMode="decimal"
+                    placeholder="7kg"
+                    onChange={set('baggageCabin')}
+                    className={`${inputClass} px-2`}
+                  />
+                </Field>
+                <Field label={t('bookings.baggageChecked')}>
+                  <input
+                    id="bk-baggage-checked"
+                    value={f.baggageChecked}
+                    maxLength={25}
+                    inputMode="decimal"
+                    placeholder="23kg"
+                    onChange={set('baggageChecked')}
+                    className={`${inputClass} px-2`}
+                  />
+                </Field>
+              </div>
             </>
           )}
         </>
@@ -1454,34 +1472,21 @@ function DateTimeRow(props: {
   onDate: (e: { target: { value: string } }) => void;
   onTime: (e: { target: { value: string } }) => void;
   idPrefix: string;
-  /** 날짜를 고치지 않고 보여 주기만 (다른 칸에서 고르는 날짜) */
-  dateAsText?: boolean;
 }) {
   const timeStep = useSettings((st) => st.timeStepMin) * 60;
   return (
     <Row>
-      {props.dateAsText ? (
-        <div className="flex min-w-0 flex-col gap-1.5">
-          <span className="text-caption font-semibold text-fg-sub">{props.dateLabel}</span>
-          <span
-            id={`${props.idPrefix}-date`}
-            className="tabular flex h-12 items-center px-1 text-body-1 text-fg"
-          >
-            {props.date ? formatMonthDay(props.date) : '-'}
-          </span>
-        </div>
-      ) : (
-        <Field label={props.dateLabel}>
-          <input
-            id={`${props.idPrefix}-date`}
-            type="date"
-            required
-            value={props.date}
-            onChange={props.onDate}
-            className={`${inputClass} tabular`}
-          />
-        </Field>
-      )}
+      <Field label={props.dateLabel}>
+        <input
+          id={`${props.idPrefix}-date`}
+          type="date"
+          required
+          value={props.date}
+          onChange={props.onDate}
+          // 좁은 화면(320px)에서 연도·일이 잘리지 않게
+          className={`${inputClass} tabular tight:px-1.5 tight:text-body-2 tight:tracking-tight`}
+        />
+      </Field>
       <Field label={props.timeLabel}>
         <TimeInput
           id={`${props.idPrefix}-time`}
