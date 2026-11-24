@@ -198,6 +198,7 @@ export function FloatingQuickButton({
           }
           onOpen();
         }}
+        data-quick-fab=""
         style={{ top, width: SIZE, height: SIZE, ...sideStyle }}
         className="fixed z-40 grid touch-none place-items-center rounded-full bg-primary text-on-primary shadow-lg transition-[left,right,top,scale,opacity] duration-200 select-none data-[compact]:scale-75 data-[compact]:opacity-60 data-[dragging]:scale-110 data-[dragging]:transition-none [&>svg]:size-6"
       >

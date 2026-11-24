@@ -137,12 +137,42 @@ describe('toast / snackbar', () => {
     expect(screen.queryByText('삭제했어요')).not.toBeInTheDocument();
   });
 
-  it('최대 3개까지만 쌓인다', () => {
+  it('알림은 쌓이지 않고 마지막 하나만 (docs/31 B1)', () => {
     for (let i = 1; i <= 5; i++) toast(`알림 ${i}`);
+    expect(useToastStore.getState().items.map((t) => t.message)).toEqual(['알림 5']);
+  });
+
+  it('같은 문구는 하나로, 시간만 다시 센다', () => {
+    vi.useFakeTimers();
+    render(<Toaster />);
+    act(() => {
+      toast('일정을 추가했어요');
+    });
+    act(() => {
+      vi.advanceTimersByTime(1500);
+      toast('일정을 추가했어요');
+    });
+    expect(screen.getAllByText('일정을 추가했어요')).toHaveLength(1);
+    act(() => {
+      vi.advanceTimersByTime(1500);
+    });
+    // 처음부터 3초 — 다시 센 2초는 아직
+    expect(screen.getByText('일정을 추가했어요')).toBeInTheDocument();
+    act(() => {
+      vi.advanceTimersByTime(600);
+    });
+    expect(screen.queryByText('일정을 추가했어요')).not.toBeInTheDocument();
+    vi.useRealTimers();
+  });
+
+  it('[실행 취소] 알림은 다른 알림에 밀려나지 않고, 시트가 열리면 일반 알림만 닫는다', () => {
+    snackbar('삭제했어요', { label: '실행 취소', onAction: () => {} });
+    toast('복사했어요');
     expect(useToastStore.getState().items.map((t) => t.message)).toEqual([
-      '알림 3',
-      '알림 4',
-      '알림 5',
+      '삭제했어요',
+      '복사했어요',
     ]);
+    useToastStore.getState().dismissPlain();
+    expect(useToastStore.getState().items.map((t) => t.message)).toEqual(['삭제했어요']);
   });
 });

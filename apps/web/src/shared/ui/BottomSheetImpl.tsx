@@ -215,7 +215,10 @@ export function BottomSheetImpl({
             </header>
             <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-4">{children}</div>
             {footer ? (
-              <footer className="border-t border-line px-5 pt-3 pb-[max(12px,env(safe-area-inset-bottom))]">
+              <footer
+                data-sheet-footer=""
+                className="border-t border-line px-5 pt-3 pb-[max(12px,env(safe-area-inset-bottom))]"
+              >
                 {footer}
               </footer>
             ) : (

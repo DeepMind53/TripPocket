@@ -57,6 +57,8 @@ it('예약 편집: PDF 붙이기(서버에도 올림) · 10MB 넘으면 거절 (
     await within(sheet).findByRole('button', { name: '바우처.pdf 지우기' }),
   ).toBeInTheDocument();
   expect(uploads).toHaveLength(1);
+  // 첫 파일의 알림이 뜬 뒤에 (알림은 하나만 보인다, docs/31 B1)
+  await screen.findByText(/붙였어요/);
   const big = new File([new Uint8Array(10 * 1024 * 1024 + 1)], 'big.pdf', {
     type: 'application/pdf',
   });

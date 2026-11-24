@@ -1,5 +1,6 @@
 import { useId, useLayoutEffect, useState } from 'react';
 import { create } from 'zustand';
+import { useToastStore } from './toastStore';
 
 /** 열려 있는 시트 순서 (맨 뒤 = 지금 보이는 시트) */
 const useSheetStack = create<{ ids: string[] }>(() => ({ ids: [] }));
@@ -13,6 +14,8 @@ export function useSheetLayer(open: boolean): { covered: boolean; stacked: boole
   const id = useId();
   useLayoutEffect(() => {
     if (!open) return;
+    // 시트가 열리면 떠 있던 일반 알림은 닫는다 — 시트 아래 버튼을 가리지 않게 (docs/31 B1)
+    useToastStore.getState().dismissPlain();
     useSheetStack.setState((s) => ({ ids: [...s.ids, id] }));
     return () => useSheetStack.setState((s) => ({ ids: s.ids.filter((x) => x !== id) }));
   }, [open, id]);

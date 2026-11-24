@@ -27,6 +27,7 @@ export function CancelSaveRow({
   return (
     // 긴 입력 시트에서도 늘 보이게 아래에 붙인다: 자판이 떠도 저장·취소가 가려지지 않게 (사용자 요청 2026-11-04)
     <div
+      data-sheet-footer=""
       className={cn(
         'sticky bottom-0 z-10 flex items-stretch gap-2 bg-surface',
         docked
