@@ -125,43 +125,5 @@ export function nextStop<T extends Pick<ItineraryItem, 'startTime' | 'kind'>>(
   );
 }
 
-const hhmmOf = (m: number) => {
-  const c = Math.max(0, m);
-  return `${String(Math.floor(c / 60)).padStart(2, '0')}:${String(c % 60).padStart(2, '0')}`;
-};
-
 /** 출발 시각 여유 (분) — 길 찾기·환승·입장 대기 (사용자 요청 2026-10-27 "마진을 조금 더") */
 export const LEAVE_MARGIN_MIN = 10;
-
-/**
- * 지금 위치에서 다음 일정까지 (사용자 요청 2026-10-27): 걸어서·대중교통 각각 몇 시에 나가면 되는지와,
- * 남은 시간보다 오래 걸리는지. 시간을 모르는 쪽은 비운다.
- * leaveBy = 더 빠른 쪽 시간 + 여유(LEAVE_MARGIN_MIN)를 빼서 "이때까지 출발", leaveNow = 그 시각이 이미 지남
- */
-export function departurePlan(
-  start: string,
-  now: string,
-  eta: { walk?: number | undefined; transit?: number | undefined },
-): {
-  left: number;
-  walkLeave?: string;
-  transitLeave?: string;
-  walkLate: boolean;
-  transitLate: boolean;
-  leaveBy?: string;
-  leaveNow: boolean;
-} {
-  const left = minutes(start) - minutes(now);
-  const times = [eta.walk, eta.transit].filter((n): n is number => n !== undefined);
-  const fastest = times.length ? Math.min(...times) : undefined;
-  const by = fastest !== undefined ? minutes(start) - fastest - LEAVE_MARGIN_MIN : undefined;
-  return {
-    left,
-    ...(by !== undefined ? { leaveBy: hhmmOf(by) } : {}),
-    leaveNow: by !== undefined && by <= minutes(now),
-    ...(eta.walk !== undefined ? { walkLeave: hhmmOf(minutes(start) - eta.walk) } : {}),
-    ...(eta.transit !== undefined ? { transitLeave: hhmmOf(minutes(start) - eta.transit) } : {}),
-    walkLate: eta.walk !== undefined && eta.walk > left,
-    transitLate: eta.transit !== undefined && eta.transit > left,
-  };
-}

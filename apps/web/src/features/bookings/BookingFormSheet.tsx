@@ -1,21 +1,41 @@
-import { InlineIcon } from '../../shared/ui/InlineIcon';
 import { useSettings } from '../../data/settingsStore';
 import { bookingDefaultTimes, switchTimes } from '../../domain/defaultTimes';
 import { attachFallback } from '../../data/limitNotice';
 import { flightLink } from '../../shared/lib/fallbackLinks';
 import { flightsApi } from '../../data/api/flights';
-import { AirportField } from './AirportField';
 import { isDomesticTrip, tripCountries } from '../../domain/tripPlace';
 import { PlaceAutocomplete } from '../common/PlaceAutocomplete';
 import { BookingScanButton } from './BookingScanButton';
+import { FlightFields } from './FlightFields';
+import { LodgingFields } from './LodgingFields';
+import {
+  buildBooking,
+  bookingEndDate,
+  CANCEL_KINDS,
+  initialBookingForm,
+  KINDS,
+  PARTY_KINDS,
+  PAYMENT_KINDS,
+  PHONE_KINDS,
+  PICK_KINDS,
+  VOUCHER_KINDS,
+} from './bookingForm';
+import {
+  ConfirmationField,
+  DateTimeRow,
+  Field,
+  inputClass,
+  MeetingField,
+  PartyField,
+  Row,
+  SpotChips,
+} from './BookingFields';
 import { applyScan } from '../../domain/bookingScan';
 import { StationField } from './StationPicker';
 import {
   addDays,
   baggageFor,
   COUNTRY_CURRENCY,
-  diffDays,
-  nightsBetween,
   transitNames,
   weekday,
   type Booking,
@@ -24,25 +44,17 @@ import {
   type PlaceSummary,
   type Trip,
 } from '@trippocket/shared';
-import { BadgePercent, CalendarRange, EggFried, Trash2, TriangleAlert } from 'lucide-react';
-import { LodgingPriceSheet } from '../lodging/LodgingPriceSheet';
-import { StayRangeSheet } from './StayRangeSheet';
+import { Trash2, TriangleAlert } from 'lucide-react';
 import { BookingDocs } from './BookingDocs';
-import { formatMonthDay } from '../../shared/lib/dateFormat';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useState } from 'react';
 import { routeEtaResult } from '../../data/api/routes';
 import { useTranslation } from '../../i18n';
 import { syncBookingToPlan } from '../../data/bookingPlanner';
 import { placesApi } from '../../data/api/places';
 import { useTripBookings } from '../../data/hooks';
 import { dropSuggestion, transferSpots, type TransferSpot } from '../../domain/transferSpots';
-import {
-  baggageHint,
-  baggageWithUnit,
-  joinBaggage,
-  splitBaggage,
-} from '../../domain/flightBaggage';
-import { bookingRepo, type NewBooking } from '../../data/repositories/bookingRepo';
+import { baggageHint } from '../../domain/flightBaggage';
+import { bookingRepo } from '../../data/repositories/bookingRepo';
 import {
   BottomSheet,
   Button,
@@ -50,7 +62,6 @@ import {
   Chip,
   ScrollRow,
   snackbar,
-  Switch,
   TimeInput,
   toast,
 } from '../../shared/ui';
@@ -59,38 +70,6 @@ import { confirmDelete, useSheetDirty } from '../../shared/ui';
 
 /** 픽업·드랍을 많이 예약하는 곳 (고르면 예약 사이트 칸에 들어감, 직접 입력도 됨) */
 const TRANSFER_SITES = ['KKday', 'Klook', '아고다', '마이리얼트립', '네이버'] as const;
-
-/**
- * 종류별 추가 칸 (사용자 요청 2026-10-28 — 종류에 필요한 칸만). 항공 수하물·렌터카 반납·보험·기차 호차는 그 종류 화면에서만
- */
-const CANCEL_KINDS = new Set<Booking['kind']>([
-  'lodging',
-  'train',
-  'car',
-  'transfer',
-  'tour',
-  'ticket',
-  'other',
-]);
-const PAYMENT_KINDS = new Set<Booking['kind']>(['lodging', 'car', 'transfer', 'tour']);
-const VOUCHER_KINDS = new Set<Booking['kind']>(['transfer', 'tour', 'ticket', 'other']);
-const PARTY_KINDS = new Set<Booking['kind']>(['tour', 'ticket']);
-/** 이름 검색으로 장소를 고르는 예약 (좌표는 start.coords에) */
-const PICK_KINDS = new Set<Booking['kind']>(['lodging', 'restaurant']);
-/** 고른 장소의 전화번호를 연락처 칸에 채우는 종류 (해외 Google은 고를 때 한 번 더 확인, 2026-11-24) */
-const PHONE_KINDS = new Set<Booking['kind']>(['lodging', 'restaurant', 'car']);
-
-const KINDS: Booking['kind'][] = [
-  'flight',
-  'lodging',
-  'restaurant',
-  'train',
-  'car',
-  'transfer',
-  'tour',
-  'ticket',
-  'other',
-];
 
 export interface BookingFormSheetProps {
   open: boolean;
@@ -130,12 +109,6 @@ export function BookingFormSheet({
   );
 }
 
-const inputClass =
-  'h-12 w-full min-w-0 rounded-btn border border-line bg-bg-subtle px-3 text-body-1 outline-none focus:border-primary';
-
-/** 빈 문자열 → undefined (저장소에서 그 항목을 지운다) */
-const v = (s: string) => (s.trim() ? s.trim() : undefined);
-
 function BookingForm({
   trip,
   booking: b,
@@ -149,51 +122,7 @@ function BookingForm({
 }) {
   const { t } = useTranslation();
   const [kind, setKind] = useState<Booking['kind']>(b?.kind ?? initialKind ?? 'flight');
-  const [f, setF] = useState({
-    title: b?.title ?? '',
-    provider: b?.provider ?? '',
-    flightNo: b?.details?.flightNo ?? '',
-    from: b?.start.place ?? '',
-    to: b?.end?.place ?? '',
-    // 장소 검색으로 고른 좌표 (이름을 고치면 지운다)
-    fromCoords: b?.start.coords as { lat: number; lng: number } | undefined,
-    toCoords: b?.end?.coords as { lat: number; lng: number } | undefined,
-    // 역을 고르면 채우는 주소 (2026-11-03)
-    fromAddress: b?.start.address,
-    toAddress: b?.end?.address,
-    carModel: b?.details?.carModel ?? '',
-    plate: b?.details?.plate ?? '',
-    startDate: b?.start.date ?? trip.startDate,
-    // 새 숙소 15:00, 새 식당 12:00 (사용자 요청 2026-11-04)
-    startTime: b ? (b.start.time ?? '') : bookingDefaultTimes(initialKind ?? 'flight').start,
-    endDate: b?.end?.date ?? '',
-    endTime: b ? (b.end?.time ?? '') : bookingDefaultTimes(initialKind ?? 'flight').end,
-    seat: b?.details?.seat ?? '',
-    terminal: b?.details?.terminal ?? '',
-    arrivalTerminal: b?.details?.arrivalTerminal ?? '',
-    confirmationNo: b?.confirmationNo ?? '',
-    address: b?.details?.address ?? '',
-    phone: b?.details?.phone ?? '',
-    priceNote: b?.priceNote ?? '',
-    partySize: b?.details?.partySize ? String(b.details.partySize) : '',
-    direction: (b?.details?.direction ?? 'pickup') as 'pickup' | 'drop',
-    breakfast: b?.details?.breakfast ?? false,
-    /** null = 모든 아침 */
-    breakfastDates: (b?.details?.breakfastDates ?? null) as string[] | null,
-    memo: b?.memo ?? '',
-    roomType: b?.details?.roomType ?? '',
-    // 기내·위탁 따로 (사용자 요청 2026-11-24) — 저장은 한 줄 글자
-    baggageCabin: splitBaggage(b?.details?.baggage).cabin,
-    baggageChecked: splitBaggage(b?.details?.baggage).checked,
-    cancelBy: b?.details?.cancelBy ?? '',
-    payment: (b?.details?.payment ?? '') as '' | 'paid' | 'onsite',
-    meetingPoint: b?.details?.meetingPoint ?? '',
-    voucherUrl: b?.details?.voucherUrl ?? '',
-    insurance: b?.details?.insurance ?? '',
-    // 투어 만나는 곳을 검색해 고른 좌표 (2026-11-24) — 일정에서 길찾기
-    meetCoords:
-      b?.kind === 'tour' ? (b.start.coords as { lat: number; lng: number } | undefined) : undefined,
-  });
+  const [f, setF] = useState(() => initialBookingForm(trip, b, initialKind));
   const transit = transitNames(tripCountries(trip));
   const tripBookings = useTripBookings(trip.id);
   const spots = transferSpots(
@@ -240,8 +169,6 @@ function BookingForm({
     hours.name === f.title &&
     !!f.startTime &&
     isOutsideHours(hours.periods, weekday(f.startDate), f.startTime);
-  const [stayOpen, setStayOpen] = useState(false);
-  const [priceOpen, setPriceOpen] = useState(false);
   // 덜 쓰는 칸은 접어 둔다 (docs/20 U4) — 고칠 때 값이 있으면 펼쳐서
   const d0 = b?.details;
   const [more, setMore] = useState(
@@ -350,195 +277,10 @@ function BookingForm({
   const set = (key: keyof typeof f) => (e: { target: { value: string } }) =>
     setF((prev) => ({ ...prev, [key]: e.target.value }));
 
-  // 숙소 체크아웃 기본값: 여행 마지막 날 (체크인보다 뒤일 때), 아니면 다음 날
-  const endDate =
-    f.endDate ||
-    (kind === 'lodging'
-      ? diffDays(f.startDate, trip.endDate) > 0
-        ? trip.endDate
-        : addDays(f.startDate, 1)
-      : f.startDate);
-
-  // 조식 아침들: 체크인 다음 날 ~ 체크아웃 날
-  const mornings: string[] = [];
-  for (let i = 1; i <= diffDays(f.startDate, endDate); i++) mornings.push(addDays(f.startDate, i));
-  const breakfastOn = (d: string) =>
-    f.breakfast && (!f.breakfastDates || f.breakfastDates.includes(d));
-
-  /** 종류별 입력값 → 저장할 예약. 문제가 있으면 안내 문구 */
-  function build(): NewBooking | string {
-    const voucher = v(f.voucherUrl);
-    if (voucher && VOUCHER_KINDS.has(kind) && !/^https:\/\/\S+$/.test(voucher))
-      return t('bookings.voucherBad');
-    // 여러 종류가 함께 쓰는 추가 칸 (그 종류에 있는 칸만)
-    const extras = {
-      cancelBy: CANCEL_KINDS.has(kind) ? v(f.cancelBy) : undefined,
-      payment: PAYMENT_KINDS.has(kind) && f.payment ? f.payment : undefined,
-      voucherUrl: VOUCHER_KINDS.has(kind) ? voucher : undefined,
-    };
-    const partyNo = Number(f.partySize);
-    const party = Number.isInteger(partyNo) && partyNo >= 1 && partyNo <= 99 ? partyNo : undefined;
-    const common = {
-      tripId: trip.id,
-      kind,
-      confirmationNo: v(f.confirmationNo),
-      memo: v(f.memo),
-    };
-    if (kind === 'flight') {
-      if (!v(f.flightNo) && !v(f.from) && !v(f.to) && !v(f.title)) return t('bookings.needFlight');
-      const title =
-        v(f.title) ??
-        t('bookings.flightTitle', {
-          flightNo: f.flightNo.trim().toUpperCase(),
-          from: f.from.trim().toUpperCase(),
-          to: f.to.trim().toUpperCase(),
-        }).trim();
-      return clean({
-        ...common,
-        title,
-        provider: v(f.provider),
-        start: clean({ date: f.startDate, time: v(f.startTime), place: v(f.from)?.toUpperCase() }),
-        end: clean({ date: endDate, time: v(f.endTime), place: v(f.to)?.toUpperCase() }),
-        details: cleanOrUndefined({
-          flightNo: v(f.flightNo)?.toUpperCase(),
-          seat: v(f.seat),
-          terminal: v(f.terminal),
-          arrivalTerminal: v(f.arrivalTerminal),
-          baggage: joinBaggage({ cabin: f.baggageCabin, checked: f.baggageChecked }),
-        }),
-      });
-    }
-    if (kind === 'transfer') {
-      return clean({
-        ...common,
-        // 이름을 비우면 "공항 픽업" / "공항 드랍"
-        title: v(f.title) ?? t(`bookings.transferTitle.${f.direction}`),
-        provider: v(f.provider),
-        // 검색·예약에서 고른 곳은 좌표도 (2026-11-24) — 일정에서 길찾기
-        start: clean({
-          date: f.startDate,
-          time: v(f.startTime),
-          place: v(f.from),
-          coords: v(f.from) ? f.fromCoords : undefined,
-        }),
-        end: v(f.to) ? clean({ date: f.startDate, place: v(f.to), coords: f.toCoords }) : undefined,
-        details: cleanOrUndefined({
-          direction: f.direction,
-          flightNo: v(f.flightNo)?.toUpperCase(),
-          phone: v(f.phone),
-          partySize: party,
-          meetingPoint: v(f.meetingPoint),
-          ...extras,
-        }),
-        priceNote: v(f.priceNote),
-      });
-    }
-    // 렌터카: 이름 대신 차종·차량번호 (사용자 요청 2026-11-02) — 둘 다 비면 "렌터카"
-    const carTitle =
-      kind === 'car'
-        ? [v(f.carModel), v(f.plate)?.toUpperCase()].filter(Boolean).join(' ') ||
-          t('bookingKind.car')
-        : undefined;
-    if (!carTitle && !v(f.title)) return t('bookings.needName');
-    if (kind === 'restaurant') {
-      return clean({
-        ...common,
-        title: f.title.trim(),
-        provider: v(f.provider),
-        start: clean({ date: f.startDate, time: v(f.startTime) }),
-        details: cleanOrUndefined({
-          address: v(f.address),
-          phone: v(f.phone),
-          partySize: party,
-        }),
-        priceNote: v(f.priceNote),
-      });
-    }
-    if (kind === 'lodging') {
-      if (diffDays(f.startDate, endDate) < 1) return t('bookings.checkOutBeforeIn');
-      return clean({
-        ...common,
-        title: f.title.trim(),
-        provider: v(f.provider),
-        start: clean({ date: f.startDate, time: v(f.startTime) }),
-        end: clean({ date: endDate, time: v(f.endTime) }),
-        details: cleanOrUndefined({
-          address: v(f.address),
-          phone: v(f.phone),
-          roomType: v(f.roomType),
-          partySize: party,
-          ...extras,
-          breakfast: f.breakfast || undefined,
-          // 모든 아침이면 날짜 목록은 저장하지 않는다 (날짜를 바꿔도 그대로 "모두")
-          breakfastDates:
-            f.breakfast && f.breakfastDates && f.breakfastDates.length < mornings.length
-              ? mornings.filter((d) => f.breakfastDates!.includes(d))
-              : undefined,
-        }),
-        priceNote: v(f.priceNote),
-      });
-    }
-    // 기차·렌터카·투어·티켓·기타
-    const placed = kind === 'train' || kind === 'car';
-    // 기차·버스 도착역 (2026-11-03): 출발 날짜와 같은 날로
-    // 도착 시각이 출발보다 이르면 다음 날 도착 (야간열차·버스)
-    const trainArrive =
-      kind === 'train' && (v(f.to) || v(f.endTime))
-        ? clean({
-            date:
-              f.startTime && f.endTime && f.endTime < f.startTime
-                ? addDays(f.startDate, 1)
-                : f.startDate,
-            time: v(f.endTime),
-            place: v(f.to),
-            coords: v(f.to) ? f.toCoords : undefined,
-            address: v(f.to) ? f.toAddress : undefined,
-          })
-        : undefined;
-    const carReturn =
-      kind === 'car' && (v(f.to) || f.endDate || v(f.endTime))
-        ? clean({
-            date: f.endDate || f.startDate,
-            time: v(f.endTime),
-            place: v(f.to),
-            coords: v(f.to) ? f.toCoords : undefined,
-          })
-        : undefined;
-    return clean({
-      ...common,
-      title: carTitle ?? f.title.trim(),
-      provider: v(f.provider),
-      start: clean({
-        date: f.startDate,
-        time: v(f.startTime),
-        place: v(f.from),
-        coords:
-          kind === 'tour'
-            ? v(f.meetingPoint)
-              ? f.meetCoords
-              : undefined
-            : (placed && v(f.from)) || PICK_KINDS.has(kind)
-              ? f.fromCoords
-              : undefined,
-        address: kind === 'train' && v(f.from) ? f.fromAddress : undefined,
-      }),
-      end: carReturn ?? trainArrive,
-      details: cleanOrUndefined({
-        seat: kind === 'train' ? v(f.seat) : undefined,
-        partySize: PARTY_KINDS.has(kind) ? party : undefined,
-        phone: kind === 'tour' || kind === 'car' ? v(f.phone) : undefined,
-        meetingPoint: kind === 'tour' ? v(f.meetingPoint) : undefined,
-        insurance: kind === 'car' ? v(f.insurance) : undefined,
-        carModel: kind === 'car' ? v(f.carModel) : undefined,
-        plate: kind === 'car' ? v(f.plate)?.toUpperCase() : undefined,
-        ...extras,
-      }),
-      priceNote: v(f.priceNote),
-    });
-  }
+  const endDate = bookingEndDate(kind, f, trip);
 
   async function submit() {
-    const input = build();
+    const input = buildBooking(kind, f, trip);
     if (typeof input === 'string') {
       toast(input);
       return;
@@ -665,173 +407,17 @@ function BookingForm({
 
       {kind === 'flight' ? (
         <>
-          {/* 출발 날짜 + 편명 → 불러오기 — 점선으로 한 묶음 (사용자 요청 2026-10-25, 날짜도 이 안에 2026-11-02) */}
-          <div className="flex flex-col gap-1.5 rounded-card border border-dashed border-primary/60 p-2.5">
-            {/* 아래 출발 날짜와 같은 값 — 어느 쪽을 고쳐도 함께 바뀐다 (사용자 요청 2026-11-02) */}
-            {/* 출발 날짜 · 편명 · 불러오기 한 줄 (사용자 요청 2026-11-02) */}
-            <div className="grid grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)_auto] items-end gap-1.5 tight:grid-cols-[minmax(0,1fr)_auto]">
-              <div className="min-w-0 tight:col-span-2">
-                <Field label={t('bookings.departDate')}>
-                  <input
-                    id="bk-lookup-date"
-                    type="date"
-                    required
-                    value={f.startDate}
-                    onChange={set('startDate')}
-                    className={`${inputClass} tabular px-2 text-body-2`}
-                  />
-                </Field>
-              </div>
-              <Field label={t('bookings.flightNo')}>
-                <input
-                  id="bk-flight"
-                  value={f.flightNo}
-                  maxLength={20}
-                  placeholder="KE703"
-                  onChange={set('flightNo')}
-                  className={`${inputClass} px-2 uppercase`}
-                />
-              </Field>
-              <Button
-                size="sm"
-                variant="secondary"
-                className="h-12 px-2"
-                loading={looking}
-                disabled={!/^[a-z0-9]{2}\s?\d{1,4}[a-z]?$/i.test(f.flightNo.trim())}
-                onClick={() => void lookupFlight()}
-              >
-                {t('bookings.lookup')}
-              </Button>
-            </div>
-            <p className="text-micro whitespace-pre-line text-fg-muted">
-              {t('bookings.lookupHint')}
-            </p>
-          </div>
-          {/* 항공사 | 예약번호 한 줄 (사용자 요청 2026-11-24) */}
-          <Row>
-            <Field label={t('bookings.provider')}>
-              <input
-                id="bk-provider"
-                value={f.provider}
-                maxLength={60}
-                onChange={set('provider')}
-                className={inputClass}
-              />
-            </Field>
-            <ConfirmationField value={f.confirmationNo} onChange={set('confirmationNo')} />
-          </Row>
-          {lookedUp && (
-            <p role="status" className="text-caption text-fg-muted">
-              {t('bookings.lookupNote')}
-            </p>
-          )}
-          {/* 출발(공항·터미널·날짜·시각) | 점선 | 도착 — 묶음으로 나눠 보기 (사용자 요청 2026-11-04) */}
-          <Row>
-            <AirportField
-              id="bk-from"
-              label={t('bookings.from')}
-              value={f.from}
-              placeholder={t('bookings.airportPlaceholder')}
-              onChange={(value) => set('from')({ target: { value } })}
-            />
-            <Field label={t('bookings.departTerminal')}>
-              <input
-                id="bk-terminal"
-                value={f.terminal}
-                maxLength={20}
-                placeholder="T1"
-                onChange={set('terminal')}
-                className={inputClass}
-              />
-            </Field>
-          </Row>
-          <DateTimeRow
-            dateLabel={t('bookings.departDate')}
-            timeLabel={t('bookings.departTime')}
-            date={f.startDate}
-            time={f.startTime}
-            onDate={set('startDate')}
-            onTime={set('startTime')}
-            idPrefix="bk-depart"
-            // 도착 날짜와 같은 칸으로 고칠 수 있게 (사용자 요청 2026-11-24) — 위 점선 칸과 같은 값이라 어느 쪽을 고쳐도 함께 바뀐다
+          <FlightFields
+            f={f}
+            setF={setF}
+            set={set}
+            endDate={endDate}
+            more={more}
+            bagHint={bagHint}
+            looking={looking}
+            lookedUp={lookedUp}
+            onLookup={() => void lookupFlight()}
           />
-          <hr aria-hidden="true" className="my-1 border-t-2 border-dashed border-line" />
-          <Row>
-            <AirportField
-              id="bk-to"
-              label={t('bookings.to')}
-              value={f.to}
-              placeholder={t('bookings.airportPlaceholder')}
-              onChange={(value) => set('to')({ target: { value } })}
-            />
-            <Field label={t('bookings.arriveTerminal')}>
-              <input
-                id="bk-arrival-terminal"
-                value={f.arrivalTerminal}
-                maxLength={20}
-                placeholder="T2"
-                onChange={set('arrivalTerminal')}
-                className={inputClass}
-              />
-            </Field>
-          </Row>
-          <DateTimeRow
-            dateLabel={t('bookings.arriveDate')}
-            timeLabel={t('bookings.arriveTime')}
-            date={endDate}
-            time={f.endTime}
-            onDate={set('endDate')}
-            onTime={set('endTime')}
-            idPrefix="bk-arrive"
-          />
-          {more && (
-            <>
-              {/* 좌석 · 기내 · 위탁 한 줄 (사용자 요청 2026-11-24) */}
-              <div className="grid grid-cols-3 gap-2">
-                <Field label={t('bookings.seat')}>
-                  <input
-                    id="bk-seat"
-                    value={f.seat}
-                    maxLength={20}
-                    placeholder="32A"
-                    onChange={set('seat')}
-                    className={`${inputClass} px-2`}
-                  />
-                </Field>
-                <Field label={t('bookings.baggageCabin')}>
-                  <input
-                    id="bk-baggage-cabin"
-                    value={f.baggageCabin}
-                    maxLength={25}
-                    inputMode="decimal"
-                    placeholder={bagHint.cabin}
-                    onChange={set('baggageCabin')}
-                    onBlur={() =>
-                      setF((cur) => ({ ...cur, baggageCabin: baggageWithUnit(cur.baggageCabin) }))
-                    }
-                    className={`${inputClass} px-2`}
-                  />
-                </Field>
-                <Field label={t('bookings.baggageChecked')}>
-                  <input
-                    id="bk-baggage-checked"
-                    value={f.baggageChecked}
-                    maxLength={25}
-                    inputMode="decimal"
-                    placeholder={bagHint.checked}
-                    onChange={set('baggageChecked')}
-                    onBlur={() =>
-                      setF((cur) => ({
-                        ...cur,
-                        baggageChecked: baggageWithUnit(cur.baggageChecked),
-                      }))
-                    }
-                    className={`${inputClass} px-2`}
-                  />
-                </Field>
-              </div>
-            </>
-          )}
         </>
       ) : (
         <>
@@ -951,170 +537,14 @@ function BookingForm({
           )}
           {kind === 'lodging' ? (
             <>
-              {/* 달력 하나로 체크인~체크아웃 (사용자 요청 2026-10-25) — 아래 날짜 칸으로 직접 고쳐도 됨 */}
-              <button
-                type="button"
-                onClick={() => setStayOpen(true)}
-                className="tabular flex items-center justify-between gap-2 rounded-card border border-dashed border-primary/60 px-3 py-2.5 text-left"
-              >
-                <span className="flex flex-col">
-                  <span className="text-caption text-fg-muted">{t('stay.button')}</span>
-                  <span className="text-body-2 font-semibold">
-                    {formatMonthDay(f.startDate)} → {formatMonthDay(endDate)}
-                    {diffDays(f.startDate, endDate) > 0 &&
-                      ` · ${t('bookings.nights', { n: nightsBetween(f.startDate, endDate) })}`}
-                  </span>
-                </span>
-                <CalendarRange aria-hidden="true" className="size-5 text-primary" />
-              </button>
-              <StayRangeSheet
-                open={stayOpen}
-                onOpenChange={setStayOpen}
+              <LodgingFields
+                f={f}
+                setF={setF}
+                set={set}
+                endDate={endDate}
+                more={more}
                 trip={trip}
-                checkIn={f.startDate}
-                checkOut={endDate}
-                onPick={(inDate, outDate) =>
-                  setF((cur) => ({ ...cur, startDate: inDate, endDate: outDate }))
-                }
               />
-              <DateTimeRow
-                dateLabel={t('bookings.checkIn')}
-                timeLabel={t('bookings.checkInTime')}
-                date={f.startDate}
-                time={f.startTime}
-                onDate={set('startDate')}
-                onTime={set('startTime')}
-                idPrefix="bk-in"
-              />
-              <DateTimeRow
-                dateLabel={t('bookings.checkOut')}
-                timeLabel={t('bookings.checkOutTime')}
-                date={endDate}
-                time={f.endTime}
-                onDate={set('endDate')}
-                onTime={set('endTime')}
-                idPrefix="bk-out"
-              />
-              {/* 실험실 "숙소 최저가": 쓰던 칸이 사라지지 않게 시트로 (docs/28 Q5) */}
-              {
-                <>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    fullWidth
-                    disabled={!f.title.trim() || endDate <= f.startDate}
-                    leading={<BadgePercent aria-hidden="true" className="size-4" />}
-                    onClick={() => setPriceOpen(true)}
-                  >
-                    {t('lodgingPrice.button')}
-                  </Button>
-                  <LodgingPriceSheet
-                    open={priceOpen}
-                    onOpenChange={setPriceOpen}
-                    initial={{
-                      name: f.title.trim(),
-                      checkIn: f.startDate,
-                      checkOut: endDate,
-                      domestic: isDomesticTrip(trip),
-                    }}
-                    // 숙소 안내 시각: 비었거나 기본값(15:00·11:00)일 때만 (2026-11-24)
-                    onHotelTimes={(h) => {
-                      const def = bookingDefaultTimes('lodging');
-                      const open = (v: string, d: string) => v === '' || v === d;
-                      const inT = open(f.startTime, def.start) ? h.checkInTime : undefined;
-                      const outT = open(f.endTime, def.end) ? h.checkOutTime : undefined;
-                      if ((!inT || inT === f.startTime) && (!outT || outT === f.endTime)) return;
-                      setF((cur) => ({
-                        ...cur,
-                        ...(inT ? { startTime: inT } : {}),
-                        ...(outT ? { endTime: outT } : {}),
-                      }));
-                      toast(t('bookings.hotelTimesFilled', { name: h.name }));
-                    }}
-                  />
-                </>
-              }
-              {/* 조식 포함 — 날짜별로 (사용자 요청 2026-10-26) */}
-              <div className="flex flex-col gap-2 rounded-card bg-bg-subtle px-3 py-2.5">
-                <div className="flex items-center justify-between gap-3">
-                  <span className="flex flex-col">
-                    <span className="text-body-2 font-medium">
-                      <InlineIcon icon={EggFried} />
-                      {t('bookings.breakfast')}
-                    </span>
-                    <span className="text-caption text-fg-muted">
-                      {t('bookings.breakfastDesc')}
-                    </span>
-                  </span>
-                  <Switch
-                    label={t('bookings.breakfast')}
-                    checked={f.breakfast}
-                    onCheckedChange={(on) =>
-                      setF((cur) => ({ ...cur, breakfast: on, breakfastDates: null }))
-                    }
-                  />
-                </div>
-                {f.breakfast && mornings.length > 0 && (
-                  <div
-                    role="group"
-                    aria-label={t('bookings.breakfastDays')}
-                    className="flex flex-wrap gap-1.5"
-                  >
-                    {mornings.map((d) => (
-                      <Chip
-                        key={d}
-                        selected={breakfastOn(d)}
-                        onClick={() =>
-                          setF((cur) => {
-                            const now = cur.breakfastDates ?? mornings;
-                            const next = now.includes(d) ? now.filter((x) => x !== d) : [...now, d];
-                            return {
-                              ...cur,
-                              breakfastDates: next.length === mornings.length ? null : next,
-                            };
-                          })
-                        }
-                      >
-                        <span className="tabular">{formatMonthDay(d)}</span>
-                      </Chip>
-                    ))}
-                  </div>
-                )}
-              </div>
-              <Field label={t('bookings.address')}>
-                <input
-                  id="bk-address"
-                  value={f.address}
-                  maxLength={200}
-                  onChange={set('address')}
-                  className={inputClass}
-                />
-              </Field>
-              <Field label={t('bookings.phone')}>
-                <input
-                  id="bk-phone"
-                  type="tel"
-                  value={f.phone}
-                  maxLength={40}
-                  onChange={set('phone')}
-                  className={inputClass}
-                />
-              </Field>
-              {more && (
-                <Row>
-                  <Field label={t('bookings.roomType')}>
-                    <input
-                      id="bk-room"
-                      value={f.roomType}
-                      maxLength={60}
-                      placeholder={t('bookings.roomPlaceholder')}
-                      onChange={set('roomType')}
-                      className={inputClass}
-                    />
-                  </Field>
-                  <PartyField value={f.partySize} onChange={set('partySize')} />
-                </Row>
-              )}
             </>
           ) : kind === 'transfer' ? (
             <>
@@ -1685,148 +1115,5 @@ function BookingForm({
         </Button>
       )}
     </form>
-  );
-}
-
-/** undefined 값을 가진 키를 뺀다 (exactOptionalPropertyTypes) */
-function clean<T extends object>(obj: T): { [K in keyof T]: Exclude<T[K], undefined> } {
-  return Object.fromEntries(Object.entries(obj).filter(([, val]) => val !== undefined)) as {
-    [K in keyof T]: Exclude<T[K], undefined>;
-  };
-}
-
-function cleanOrUndefined<T extends object>(obj: T) {
-  const c = clean(obj);
-  return Object.keys(c).length ? c : undefined;
-}
-
-type OnText = (e: { target: { value: string } }) => void;
-
-function PartyField(props: { value: string; onChange: OnText }) {
-  const { t } = useTranslation();
-  return (
-    <Field label={t('bookings.partySize')}>
-      <input
-        id="bk-party"
-        type="number"
-        inputMode="numeric"
-        min={1}
-        max={99}
-        value={props.value}
-        onChange={props.onChange}
-        className={`${inputClass} tabular`}
-      />
-    </Field>
-  );
-}
-
-function MeetingField(props: { value: string; onChange: OnText }) {
-  const { t } = useTranslation();
-  return (
-    <Field label={t('bookings.meetingPoint')}>
-      <input
-        id="bk-meeting"
-        value={props.value}
-        maxLength={100}
-        placeholder={t('bookings.meetingPlaceholder')}
-        onChange={props.onChange}
-        className={inputClass}
-      />
-    </Field>
-  );
-}
-
-/** 픽업·드랍: 이 여행에 넣은 공항·숙소 칩 */
-function SpotChips({
-  spots,
-  value,
-  onPick,
-}: {
-  spots: TransferSpot[];
-  value: string;
-  onPick: (spot: TransferSpot) => void;
-}) {
-  const { t } = useTranslation();
-  if (spots.length === 0) return null;
-  return (
-    <ScrollRow role="group" aria-label={t('bookings.spotChips')} className="-mt-3 flex gap-2 pb-1">
-      {spots.map((s) => {
-        const Icon = BOOKING_ICON[s.kind === 'airport' ? 'flight' : 'lodging'];
-        return (
-          <Chip
-            key={s.key}
-            selected={value === s.name}
-            onClick={() => onPick(s)}
-            leading={<Icon aria-hidden="true" className="size-4" />}
-          >
-            {s.name}
-          </Chip>
-        );
-      })}
-    </ScrollRow>
-  );
-}
-
-/** 예약번호 칸 — 항공은 항공사 옆, 나머지는 아래 */
-function ConfirmationField({ value, onChange }: { value: string; onChange: OnText }) {
-  const { t } = useTranslation();
-  return (
-    <Field label={t('bookings.confirmationNo')}>
-      <input
-        id="bk-no"
-        value={value}
-        maxLength={60}
-        onChange={onChange}
-        className={`${inputClass} tabular`}
-      />
-    </Field>
-  );
-}
-
-function Row({ children }: { children: ReactNode }) {
-  return <div className="grid grid-cols-2 gap-3">{children}</div>;
-}
-
-function Field({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <label className="flex min-w-0 flex-col gap-1.5">
-      <span className="text-caption font-semibold text-fg-sub">{label}</span>
-      {children}
-    </label>
-  );
-}
-
-function DateTimeRow(props: {
-  dateLabel: string;
-  timeLabel: string;
-  date: string;
-  time: string;
-  onDate: (e: { target: { value: string } }) => void;
-  onTime: (e: { target: { value: string } }) => void;
-  idPrefix: string;
-}) {
-  const timeStep = useSettings((st) => st.timeStepMin) * 60;
-  return (
-    <Row>
-      <Field label={props.dateLabel}>
-        <input
-          id={`${props.idPrefix}-date`}
-          type="date"
-          required
-          value={props.date}
-          onChange={props.onDate}
-          // 좁은 화면(320px)에서 연도·일이 잘리지 않게
-          className={`${inputClass} tabular tight:px-1.5 tight:text-body-2 tight:tracking-tight`}
-        />
-      </Field>
-      <Field label={props.timeLabel}>
-        <TimeInput
-          id={`${props.idPrefix}-time`}
-          step={timeStep}
-          value={props.time}
-          onChange={(value) => props.onTime({ target: { value } })}
-        />
-      </Field>
-    </Row>
   );
 }

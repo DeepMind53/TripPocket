@@ -1,7 +1,6 @@
 import {
   currentItemId,
   dayText,
-  departurePlan,
   isFlightLeg,
   nextStop,
   pastItemIds,
@@ -118,7 +117,7 @@ describe('isFlightLeg', () => {
   });
 });
 
-describe('nextStop · departurePlan', () => {
+describe('nextStop', () => {
   const items = [
     { id: 'a', kind: 'place' as const, startTime: '09:00' },
     { id: 'm', kind: 'note' as const, startTime: '13:00' },
@@ -130,28 +129,5 @@ describe('nextStop · departurePlan', () => {
   it('지금 뒤 첫 일정 (메모·시각 없는 것 빼고)', () => {
     expect(nextStop(items, '12:00')?.id).toBe('b');
     expect(nextStop(items, '16:00')).toBeNull();
-  });
-
-  it('걸어서·대중교통 각각 출발 시각과 늦는지', () => {
-    expect(departurePlan('13:30', '13:00', { walk: 40, transit: 20 })).toEqual({
-      left: 30,
-      walkLeave: '12:50',
-      transitLeave: '13:10',
-      walkLate: true,
-      transitLate: false,
-      // 더 빠른 대중교통 20분 + 여유 10분 → 13:00까지 출발 = 지금
-      leaveBy: '13:00',
-      leaveNow: true,
-    });
-    expect(departurePlan('13:30', '12:00', { walk: 40 })).toMatchObject({
-      leaveBy: '12:40',
-      leaveNow: false,
-    });
-    expect(departurePlan('13:30', '13:00', {})).toEqual({
-      left: 30,
-      walkLate: false,
-      transitLate: false,
-      leaveNow: false,
-    });
   });
 });
