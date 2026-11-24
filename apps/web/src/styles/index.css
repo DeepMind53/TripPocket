@@ -186,6 +186,16 @@
       'Pretendard Variable', Pretendard, 'Hiragino Sans', 'Noto Sans JP', 'Noto Sans CJK JP',
       'Yu Gothic', Meiryo, sans-serif;
   }
+  /* 누르는 동안 반응 (docs/31 U1, 2026-11-25): 반응이 없으면 한 번 더 눌러 시트가 두 번 열린다.
+     버튼 수백 곳에 클래스를 붙이는 대신 여기 한 곳에서 — 바탕색 위에 옅은 막을 겹친다(바탕·그림자는 그대로).
+     이미 active: 모양이 있는 것·꺼진 것은 건드리지 않는다. 크기를 바꾸는 눌림(scale)은 쓰지 않는다 */
+  :where(button, a[href], summary, [role='button'], label:has(> input[type='checkbox'])):not(
+      :disabled,
+      [aria-disabled='true'],
+      [class*='active:']
+    ):active {
+    background-image: linear-gradient(var(--tp-press), var(--tp-press));
+  }
   /* 숫자(시간·거리)는 자릿수 정렬 */
   .tabular {
     font-variant-numeric: tabular-nums;

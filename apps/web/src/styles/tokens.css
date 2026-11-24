@@ -11,6 +11,8 @@
   --tp-primary-weak: #eaf0ff;
   --tp-on-primary: #ffffff;
   --tp-bg: #ffffff;
+  /* 누르는 동안 겹치는 옅은 막 (docs/31 U1) */
+  --tp-press: rgb(25 31 40 / 0.06);
   --tp-bg-subtle: #f4f6f9;
   --tp-surface: #ffffff;
   --tp-line: #e5e8ee;
@@ -92,6 +94,7 @@
     --tp-primary-weak: #1b2747;
     --tp-on-primary: #0b1220; /* 밝은 파랑 위 흰 글자는 3.2:1 → 어두운 글자 (I1) */
     --tp-bg: #0f1115;
+    --tp-press: rgb(255 255 255 / 0.08);
     --tp-bg-subtle: #171a21;
     --tp-surface: #1d2129;
     --tp-line: #2a2f3a;
@@ -149,6 +152,7 @@
   --tp-primary-weak: #1b2747;
   --tp-on-primary: #0b1220;
   --tp-bg: #0f1115;
+  --tp-press: rgb(255 255 255 / 0.08);
   --tp-bg-subtle: #171a21;
   --tp-surface: #1d2129;
   --tp-line: #2a2f3a;
