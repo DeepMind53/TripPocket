@@ -89,7 +89,8 @@ export function ChecklistPage() {
       {essentials && essentials.total > 0 && (
         <Link
           to={`/trips/${tripId}/essentials`}
-          className="tabular flex items-center justify-between gap-2 rounded-card border border-dashed border-primary/60 px-4 py-3 text-body-2 font-semibold"
+          // 점선은 빈 자리·절취선 뜻이라 바로가기는 다른 줄처럼 실선 카드 (docs/31 U3)
+          className="tabular flex items-center justify-between gap-2 rounded-card border border-line bg-surface px-4 py-3 text-body-2 font-semibold"
         >
           <span>
             <InlineIcon icon={IdCard} />
