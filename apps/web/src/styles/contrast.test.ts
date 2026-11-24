@@ -86,3 +86,29 @@ describe.each([
     );
   });
 });
+
+it('다크 모드 홈 여행 카드: 표지 색을 20% 어둡게 해 흰 글자 대비가 오른다 (docs/31 U8)', () => {
+  const dark = (hex: string) =>
+    '#' +
+    [1, 3, 5]
+      .map((i) =>
+        Math.round(parseInt(hex.slice(i, i + 2), 16) * 0.8)
+          .toString(16)
+          .padStart(2, '0'),
+      )
+      .join('');
+  // 앞 8색(일차 색과 같은 표지 색): 큰 제목 기준 3:1 이상, 어둡게 한 쪽이 늘 더 높다
+  for (const c of [
+    '#2F6BFF',
+    '#FF6B4A',
+    '#12B5A5',
+    '#9B5CFF',
+    '#F5A524',
+    '#E5488A',
+    '#3BA55C',
+    '#5A6B85',
+  ]) {
+    expect(ratio('#ffffff', dark(c))).toBeGreaterThanOrEqual(3);
+    expect(ratio('#ffffff', dark(c))).toBeGreaterThan(ratio('#ffffff', c));
+  }
+});

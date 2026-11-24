@@ -229,7 +229,11 @@ export function TripCard({
       )}
       // 여행 중이면 민트(사용자 요청 2026-11-06), 아니면 여행 표지 색
       style={
-        onColor && status !== 'ongoing' ? { background: trip.cover.color ?? '#2F6BFF' } : undefined
+        onColor && status !== 'ongoing'
+          ? {
+              background: `color-mix(in srgb, ${trip.cover.color ?? '#2F6BFF'} var(--tp-cover-mix), black)`,
+            }
+          : undefined
       }
     >
       <Link to={`/trips/${trip.id}/plan`} className="flex min-w-0 flex-1 items-center gap-3 p-3">

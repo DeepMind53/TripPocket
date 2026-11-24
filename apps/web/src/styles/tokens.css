@@ -13,6 +13,8 @@
   --tp-bg: #ffffff;
   /* 누르는 동안 겹치는 옅은 막 (docs/31 U1) */
   --tp-press: rgb(25 31 40 / 0.06);
+  /* 표지 색 바탕 카드: 다크에서는 검정 쪽으로 20% — 화면에서 가장 밝은 면이 되지 않게 (docs/31 U8) */
+  --tp-cover-mix: 100%;
   --tp-bg-subtle: #f4f6f9;
   --tp-surface: #ffffff;
   --tp-line: #e5e8ee;
@@ -95,6 +97,7 @@
     --tp-on-primary: #0b1220; /* 밝은 파랑 위 흰 글자는 3.2:1 → 어두운 글자 (I1) */
     --tp-bg: #0f1115;
     --tp-press: rgb(255 255 255 / 0.08);
+    --tp-cover-mix: 80%;
     --tp-bg-subtle: #171a21;
     --tp-surface: #1d2129;
     --tp-line: #2a2f3a;
@@ -153,6 +156,7 @@
   --tp-on-primary: #0b1220;
   --tp-bg: #0f1115;
   --tp-press: rgb(255 255 255 / 0.08);
+  --tp-cover-mix: 80%;
   --tp-bg-subtle: #171a21;
   --tp-surface: #1d2129;
   --tp-line: #2a2f3a;
