@@ -3,12 +3,12 @@
 ## 1. 네이밍
 | 대상 | 규칙 | 예 |
 |---|---|---|
-| 컴포넌트 파일/이름 | PascalCase | `DayTabs.tsx`, `ItemEditSheet.tsx` |
-| 훅 | `use` + camelCase | `useTripItems.ts` |
+| 컴포넌트 파일/이름 | PascalCase | `DayLineTabs.tsx`, `ItemFormSheet.tsx` |
+| 훅 | `use` + camelCase | `useTripWeather.ts` |
 | 일반 모듈 | camelCase | `fractionalIndex.ts` |
 | 타입/Zod 스키마 | `Trip` 타입, `TripSchema` 스키마 | — |
 | 상수 | UPPER_SNAKE | `MAX_SHARE_URL_BYTES` |
-| 테스트 | 대상 옆 `*.test.ts(x)` | `settleUp.test.ts` |
+| 테스트 | 대상 옆 `*.test.ts(x)` | `dayTools.test.ts` |
 | i18n 키 | `feature.screen.element` | `itinerary.edit.titleLabel` |
 
 ## 2. TypeScript

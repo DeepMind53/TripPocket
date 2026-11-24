@@ -1,6 +1,6 @@
 # 03. 아키텍처
 
-- 문서 상태: **현행** (2026-11-12 전면 갱신 — 처음 설계안의 폴더·라우트를 실제 구조로 바꿈)
+- 문서 상태: **현행** (2026-11-12 전면 갱신, 2026-11-24 코드와 다시 맞춤)
 - 이 문서 = 전체 그림과 **왜** 그렇게 했나. 파일 단위로 **어디를** 고치나는 [`code-map.md`](code-map.md). 문서 목록은 [`README.md`](README.md)
 - 구조가 바뀌면 같은 커밋에서 이 문서와 code-map을 고친다
 
@@ -72,7 +72,7 @@ Travel_Planner/
 ├─ docs/            # README.md(목록) · code-map · 번호 문서 · adr/ · conventions/
 ├─ packages/shared/ # schema · date · order · settings · backup · sync · data(입국·공항·회화 등) · alerts · ai · lodging · ocr · vision
 ├─ apps/web/        # src/{app, features/*, data, domain, shared, i18n, styles, sw} · public · tests/e2e · scripts
-├─ apps/server/     # src/{routes, services, repositories, db, auth} · test
+├─ apps/server/     # src/{routes, services, repositories, db, auth, ops, cli} · test
 ├─ functions/       # Cloudflare Pages Functions (_proxy, _middleware)
 └─ ops/             # 홈 PC 설치·Funnel·백업·복구·재시작
 ```
@@ -94,10 +94,10 @@ Travel_Planner/
 | `/trips/:tripId/plan?day=N` | 일정 (노선·지도·날씨 주의·이동 정보) |
 | `/trips/:tripId/places`, `/bookings`, `/checklist` | 가고 싶은 곳 · 예약 · 준비물/할 일 |
 | `/trips/:tripId/essentials`, `/weather`, `/go`, `/print`, `/settings` | 출국 준비 · 날씨·특보 · 여행 모드 · 인쇄용 · 여행 설정 |
-| `/records`, `/saved`, `/me`, `/help` | 기록(도장·회고·사진 모아보기) · 저장한 장소 · 마이 · 도움말 |
+| `/records`, `/records/visits`, `/saved`, `/me`, `/help` | 기록(도장·회고·사진 모아보기) · 방문 기록(여행·도시·장소별, docs/32) · 저장한 장소 · 마이 · 도움말 |
 | `/me/profile`, `/me/reviews`, `/me/trash`, `/me/suggestions` | 개인정보 · 내 후기 · 삭제 기록 복원 · 개선 제안 |
 | `/ai`, `/fx`, `/phrases`, `/lodging-price` | AI 추천 · 환율 · 번역·회화(건강 카드) · 숙소 최저가 |
-| `/settings`, `/backup`, `/labs`, `/legal/:doc` | 설정 · 백업·복원 · 실험실 · 법적 고지 |
+| `/settings`, `/settings/:section`, `/backup`, `/labs`, `/legal/:doc` | 설정(묶음별 화면) · 백업·복원 · 실험실 · 법적 고지 |
 | `/admin/users`, `/admin/stats`, `/admin/api-usage`, `/admin/entry-check`, `/admin/lodging`, `/admin/ai`, `/admin/suggestions` | 관리자 (`AdminGate`) |
 | `/s/:shareId`, `/invite/:token`, `/login` | 보기 전용 공유 · 초대 수락 · 로그인 (로그인 없이 여는 화면) |
 | `/dev/ui`, `/dev/db` | 개발용 (개발 빌드만) |

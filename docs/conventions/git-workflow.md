@@ -25,4 +25,4 @@
 
 ## 버전
 - SemVer. `0.x` 동안은 마일스톤 완료마다 minor 증가 (`0.1.0` = M1).
-- `CHANGELOG.md`는 M1 완료 시점부터 작성.
+- 변경 기록은 `CHANGELOG.md` 대신 커밋 기록과 `PROGRESS.md`로 한다.

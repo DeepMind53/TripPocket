@@ -1,6 +1,7 @@
 # 14. AI 추천 (내 근처 맛집 · 핫플 · 놀거리)
 
-- 문서 상태: 초안 v0.1 (2026-10-22) — ⚠️ 표시는 `08-open-decisions.md` K 그룹에서 확정
+- 문서 상태: 구현됨 (2026-11-24 점검) — §5.2 호출 방식은 무료 AI로 바뀜. §5 근거·§8 입력 제한이 현행 규칙
+- 처음 초안 v0.1 (2026-10-22) — ⚠️ 표시는 `08-open-decisions.md` K 그룹에서 확정
 - 진입: 빠른 메뉴(⚡) > **✨ AI 추천**
 - 한 줄 요약: 기준 위치(가장 가까운 역 / 숙소 / 직접 입력) 주변에서 **최근에 많이 언급된** 맛집·핫플·놀거리를 공식 검색 API로 모으고, AI가 장소명을 추출·정리해 **근거 링크와 함께** 추천한다.
 
@@ -90,13 +91,10 @@ POST /api/v1/ai/recommend { anchor, categories, tripId? }      (로그인 필요
 | 광고·협찬 의심 표시 ("원고료", "제공받아" 등) | 개인정보 처리 (입력에 위치 좌표·사용자 정보 없음) |
 | 장소별 **한 줄 요약** (근거 글 내용 기반, 한국어 해요체) | |
 
-### 5.2 호출 방식
-- SDK: `@anthropic-ai/sdk` (TypeScript, 서버 `apps/server/src/services/aiRecommend.ts`)
-- 모델: **`claude-opus-5-5`** (기본) — 비용 비교 후 경량 모델(`claude-haiku-5-5`) 전환 여부는 K1에서 결정
-- 출력: **구조화 출력**(`output_config.format` + Zod 스키마, `messages.parse()`) → 서버에서 한 번 더 Zod 검증
-- `output_config.effort: "low"` (추출·분류는 단순 작업, 실측 후 조정)
-- 거절 대비: 서버 측 대체 모델 설정(`fallbacks: "default"`, 베타 헤더 `server-side-fallback-2026-07-01`) + `stop_reason` 확인
-- 시스템 프롬프트는 고정 문자열 → 프롬프트 캐싱 적용 (요청마다 바뀌는 블로그 목록은 뒤에)
+### 5.2 호출 방식 (구현: 무료 AI, 결정 L9)
+- 처음 계획(Claude API·구조화 출력)은 쓰지 않는다 — 비용 때문에 **무료 AI**로 바꿈
+- 서버 `apps/server/src/services/llm.ts`: Gemini(무료 등급) → Cloudflare Workers AI → Groq 순서, 모두 OpenAI 호환 API·`response_format: json_object`. 모두 막히면 AI 없는 집계(`services/basicRecommend.ts`)
+- 응답은 `zod/mini`로 검증하고, 없는 근거 id는 버린다. 라우트는 `apps/server/src/routes/ai.ts`
 - 입력: 블로그 글마다 `{ id, title, description, postdate }` (원문 본문은 가져오지 않음 — 요약문만)
 - 타임아웃 30초, 실패 시 "잠시 후 다시 시도해 주세요" + 캐시된 이전 결과가 있으면 표시
 

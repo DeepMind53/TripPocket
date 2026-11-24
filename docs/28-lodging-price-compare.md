@@ -274,11 +274,11 @@
 |---|---|
 | 공용 | `packages/shared` 숙소 가격 스키마 (기록 입력·기록 줄·목록 질의·참고 가격 응답) |
 | 서버 | `routes/lodging.ts` (`/api/lodging/reports`, `/api/lodging/lookup`, `/api/lodging/prices`), 관리자 라우트 |
-| 서버 | `repositories/lodgingReports.ts` (기록 DB 접근만), `db/migrations.ts` 새 표 + 정리 작업 |
-| 서버 | `services/lodgingPrice/` — `lookup.ts`(아고다 자동 찾기), `budget.ts`, `breaker.ts`, `cache.ts`, `match.ts`, `serpapi.ts` (B 단계) |
+| 서버 | `repositories/lodgingReportsRepo.ts` (기록 DB 접근만), `db/migrations.ts` 새 표 + 정리 작업 |
+| 서버 | `services/agodaLookup.ts`(아고다 자동 찾기), `services/serpapiHotels.ts`(B 단계 — 예산·차단·캐시·이름 맞추기를 한 파일에) |
 | 서버 | `services/apiUsage.ts` APIS 등록, 관리자 API 사용량 화면에 소스 상태 |
 | 웹 | `domain/lodgingLinks.ts`(A), `domain/agodaRoutes.ts`(E), `domain/lodgingReports.ts`(환산·정렬·이상값) |
-| 웹 | `data/lodgingPriceApi.ts` (요청·기기 캐시·잠금), `features/lodging/LodgingPriceSheet.tsx`, `ReportFormSheet.tsx` |
+| 웹 | `data/api/lodging.ts` (요청), `data/lodgingReports.ts`·`data/hotelPrices.ts` (기기 캐시·잠금), `features/lodging/LodgingPriceSheet.tsx`, `ReportFormSheet.tsx` |
 | 웹 | 예약 탭 숙소 카드·숙소 시트 버튼, 빠른 메뉴 바로가기, 실험실 `lodgingPrice`, i18n 키 |
 - 시트는 열 때 불러오기(지연 로딩) → 첫 화면 크기 영향 없음
 - 새 의존성 없음 목표 (서버 Node 기본 `fetch`, SQLite는 기존 `node:sqlite`)

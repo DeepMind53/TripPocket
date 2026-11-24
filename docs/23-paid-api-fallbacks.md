@@ -88,7 +88,7 @@
 
 ## 6. 공통 구조 (구현할 때)
 
-- 서버에 기능별 **제공자 순서** 한 곳: `capabilities.ts` 예) `overseasSearch: ['google_autocomplete', 'geoapify', 'nominatim']`
+- (만들지 않음 — 지금은 `services/places.ts`·`llm.ts` 등 서비스 파일마다 순서대로 시도) 서버에 기능별 **제공자 순서** 한 곳: `capabilities.ts` 예) `overseasSearch: ['google_autocomplete', 'geoapify', 'nominatim']`
   - 각 단계는 `apiAllowed(id)`로 고르고 `guardApi`·`trackApi`를 그대로 거친다 (CLAUDE.md)
   - 관리자 API 사용량 화면에 "지금 쓰는 제공자" 표시
 - 결과에 `source` 그대로 (`google`·`naver`·`kakao` + 새 `osm`) → 배지, 출처 표기

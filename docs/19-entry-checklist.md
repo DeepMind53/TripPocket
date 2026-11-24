@@ -78,7 +78,7 @@
 
 ## 4. 데이터
 
-- `packages/shared/src/data/entryRules.ts` — 나라 코드별:
+- 설계 때 이름 `entryRules.ts` → 구현은 `packages/shared/src/data/essentials.ts` (모양은 아래와 조금 다름). 나라 코드별:
   ```ts
   { code: 'JP', checkedAt: '2026-10-25', sources: [url...],
     items: [
