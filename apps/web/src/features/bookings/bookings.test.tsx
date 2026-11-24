@@ -917,9 +917,7 @@ describe('예약처 (2026-10-27)', () => {
   });
 });
 
-it('실험실 캡처로 채우기: 읽은 글에서 예약번호·편명·공항·날짜·시각을 빈 칸에 (2026-11-24)', async () => {
-  const { setLab } = await import('../../data/labsStore');
-  setLab('bookingScan', true, { silent: true });
+it('사진으로 채우기: 읽은 글에서 예약번호·편명·공항·날짜·시각을 빈 칸에 (2026-11-24)', async () => {
   vi.stubGlobal('fetch', async (url: string) =>
     url === '/api/ocr'
       ? Response.json({
@@ -934,7 +932,7 @@ it('실험실 캡처로 채우기: 읽은 글에서 예약번호·편명·공항
     await user.click(await screen.findByRole('button', { name: '예약 추가' }));
     const sheet = screen.getByRole('dialog', { name: '예약 추가' });
     const file = new File([new Uint8Array([1, 2, 3])], 'shot.jpg', { type: 'image/jpeg' });
-    await user.upload(within(sheet).getByLabelText('예약 확인 캡처로 채우기'), file);
+    await user.upload(within(sheet).getByLabelText('사진으로 예약 정보 자동 채우기'), file);
     await waitFor(() => expect(within(sheet).getByLabelText('예약번호')).toHaveValue('AB12CD'));
     expect(within(sheet).getByLabelText('편명')).toHaveValue('KE703');
     expect(within(sheet).getByLabelText('출발 공항')).toHaveValue('ICN');
@@ -942,13 +940,52 @@ it('실험실 캡처로 채우기: 읽은 글에서 예약번호·편명·공항
     expect(await screen.findByText(/캡처에서 \d+칸을 채웠어요/)).toBeInTheDocument();
   } finally {
     vi.unstubAllGlobals();
-    setLab('bookingScan', false, { silent: true });
   }
 });
 
-it('실험실 캡처로 채우기: 탑승권 바코드는 기기 안에서 읽고, 시각은 편명 불러오기로 (2026-11-24)', async () => {
-  const { setLab } = await import('../../data/labsStore');
-  setLab('bookingScan', true, { silent: true });
+it('사진으로 채우기: 항공 탭에서 숙소 사진을 고르면 숙소로 바꿔 채운다 (2026-11-24)', async () => {
+  vi.stubGlobal('fetch', async (url: string) =>
+    url === '/api/ocr'
+      ? Response.json({
+          text: [
+            'Hotel Nikko Kansai Airport',
+            '예약 번호: 4821.553.190',
+            '체크인            체크아웃',
+            '2026년 10월 25일 (일)   2026년 10월 27일 (화)',
+            '16:00 이후        10:00 이전',
+          ].join('\n'),
+          source: 'google',
+        })
+      : Response.json({}, { status: 404 }),
+  );
+  try {
+    const user = userEvent.setup();
+    renderAt([`/trips/${tripId}/bookings`]);
+    await user.click(await screen.findByRole('button', { name: '예약 추가' }));
+    const sheet = screen.getByRole('dialog', { name: '예약 추가' });
+    // 버튼은 종류 고르기보다 위에
+    const scan = within(sheet).getByRole('button', { name: '사진으로 예약 정보 자동 채우기' });
+    const lodgingChip = within(sheet).getByRole('button', { name: '숙소' });
+    expect(
+      scan.compareDocumentPosition(lodgingChip) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(within(sheet).getByRole('button', { name: '항공' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    const file = new File([new Uint8Array([1, 2, 3])], 'hotel.jpg', { type: 'image/jpeg' });
+    await user.upload(within(sheet).getByLabelText('사진으로 예약 정보 자동 채우기'), file);
+    await waitFor(() => expect(lodgingChip).toHaveAttribute('aria-pressed', 'true'));
+    expect(within(sheet).getByLabelText('숙소 이름')).toHaveValue('Hotel Nikko Kansai Airport');
+    expect(within(sheet).getByLabelText('예약번호')).toHaveValue('4821553190');
+    expect(within(sheet).getByLabelText('체크인 시간')).toHaveValue('16:00');
+    expect(within(sheet).getByLabelText('체크아웃 시간')).toHaveValue('10:00');
+  } finally {
+    vi.unstubAllGlobals();
+  }
+});
+
+it('사진으로 채우기: 탑승권 바코드는 기기 안에서 읽고, 시각은 편명 불러오기로 (2026-11-24)', async () => {
   useAuth.setState({
     status: 'user',
     me: { id: 'u', nickname: 'n', createdAt: '', providers: [] },
@@ -979,7 +1016,7 @@ it('실험실 캡처로 채우기: 탑승권 바코드는 기기 안에서 읽�
     await user.click(await screen.findByRole('button', { name: '예약 추가' }));
     const sheet = screen.getByRole('dialog', { name: '예약 추가' });
     const file = new File([new Uint8Array([1, 2, 3])], 'pass.png', { type: 'image/png' });
-    await user.upload(within(sheet).getByLabelText('예약 확인 캡처로 채우기'), file);
+    await user.upload(within(sheet).getByLabelText('사진으로 예약 정보 자동 채우기'), file);
     await waitFor(() => expect(within(sheet).getByLabelText('출발 시간')).toHaveValue('09:00'));
     expect(within(sheet).getByLabelText('예약번호')).toHaveValue('AB12CD');
     expect(within(sheet).getByLabelText('편명')).toHaveValue('KE703');
@@ -989,7 +1026,6 @@ it('실험실 캡처로 채우기: 탑승권 바코드는 기기 안에서 읽�
     expect(urls).not.toContain('/api/ocr');
   } finally {
     vi.unstubAllGlobals();
-    setLab('bookingScan', false, { silent: true });
     useAuth.setState({ status: 'unknown', me: null });
   }
 });

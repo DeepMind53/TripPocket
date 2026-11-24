@@ -7,7 +7,7 @@ import { flightsApi } from '../../data/api/flights';
 import { AirportField } from './AirportField';
 import { isDomesticTrip, tripCountries } from '../../domain/tripPlace';
 import { PlaceAutocomplete } from '../common/PlaceAutocomplete';
-import { BookingScanButton } from '../labs/BookingScanButton';
+import { BookingScanButton } from './BookingScanButton';
 import { applyScan } from '../../domain/bookingScan';
 import { StationField } from './StationPicker';
 import {
@@ -591,6 +591,46 @@ function BookingForm({
         void submit();
       }}
     >
+      {/* 사진으로 예약 정보 자동 채우기 — 종류를 고르기 전에 (사용자 요청 2026-11-24).
+          사진이 항공권이면 항공, 숙소면 숙소로 바꾸고 채운다 (고치는 예약은 종류를 그대로) */}
+      <BookingScanButton
+        kind={kind}
+        refDate={trip.startDate}
+        currency={(() => {
+          const c = tripCountries(trip).find((x) => x !== 'KR');
+          return c ? COUNTRY_CURRENCY[c] : undefined;
+        })()}
+        onScan={(scan, scanned, from) => {
+          const target =
+            !b && (KINDS as readonly string[]).includes(scanned)
+              ? (scanned as Booking['kind'])
+              : kind;
+          // 종류가 바뀌면 그 종류의 시각 초기값부터 (종류 버튼과 같게)
+          const times =
+            target !== kind
+              ? switchTimes(
+                  { start: f.startTime, end: f.endTime },
+                  bookingDefaultTimes(kind),
+                  bookingDefaultTimes(target),
+                )
+              : { start: f.startTime, end: f.endTime };
+          const base = { ...f, startTime: times.start, endTime: times.end };
+          const { patch, filled } = applyScan(target, scan, base, !b);
+          if (target !== kind) setKind(target);
+          if (filled === 0) {
+            setF(base);
+            toast(t('tool.scanNone'));
+            return;
+          }
+          const next = { ...base, ...patch };
+          setF(next);
+          toast(t(from === 'barcode' ? 'tool.scanBarcode' : 'tool.scanFilled', { n: filled }));
+          // 편명은 찾았는데 시각이 비면 편명 불러오기로 채운다 (탑승권 바코드엔 시각이 없음, 무료 조회)
+          if (target === 'flight' && next.flightNo.trim() && (!next.startTime || !next.endTime))
+            void lookupFlight(next);
+        }}
+      />
+
       <fieldset>
         <legend className="mb-2 text-caption font-semibold text-fg-sub">
           {t('bookings.kind')}
@@ -622,29 +662,6 @@ function BookingForm({
           })}
         </div>
       </fieldset>
-
-      {/* 실험실: 예약 확인 캡처로 빈 칸 채우기 (2026-11-24) */}
-      <BookingScanButton
-        kind={kind}
-        refDate={trip.startDate}
-        currency={(() => {
-          const c = tripCountries(trip).find((x) => x !== 'KR');
-          return c ? COUNTRY_CURRENCY[c] : undefined;
-        })()}
-        onScan={(scan, from) => {
-          const { patch, filled } = applyScan(kind, scan, f, !b);
-          if (filled === 0) {
-            toast(t('tool.scanNone'));
-            return;
-          }
-          const next = { ...f, ...patch };
-          setF((cur) => ({ ...cur, ...patch }));
-          toast(t(from === 'barcode' ? 'tool.scanBarcode' : 'tool.scanFilled', { n: filled }));
-          // 편명은 찾았는데 시각이 비면 편명 불러오기로 채운다 (탑승권 바코드엔 시각이 없음, 무료 조회)
-          if (kind === 'flight' && next.flightNo.trim() && (!next.startTime || !next.endTime))
-            void lookupFlight(next);
-        }}
-      />
 
       {kind === 'flight' ? (
         <>

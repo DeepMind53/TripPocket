@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { applyScan, parseBoardingPass, scanBooking, type ScanTarget } from './bookingScan';
+import {
+  applyScan,
+  guessBookingKind,
+  parseBoardingPass,
+  scanBooking,
+  type ScanTarget,
+} from './bookingScan';
 
 /** 여행 시작일 — 연도 없는 날짜("11월 3일", "03NOV")의 기준 */
 const REF = '2026-11-01';
@@ -23,8 +29,12 @@ const empty: ScanTarget = {
 };
 
 /** 새 예약 화면에서 캡처 글로 채운 칸 */
-const fill = (kind: string, lines: string[]) =>
-  applyScan(kind, scanBooking(lines.join('\n'), { kind, ref: REF }), empty, true).patch;
+const fill = (kind: string, lines: string[]) => {
+  const text = lines.join('\n');
+  // 사진만 보고도 이 종류로 알아본다 (사용자 요청 2026-11-24 "항공권이면 항공 탭으로")
+  expect(guessBookingKind(text)).toBe(kind);
+  return applyScan(kind, scanBooking(text, { kind, ref: REF }), empty, true).patch;
+};
 
 /*
  * 아래 글은 실제 예약 확인 화면을 글자 인식(같은 높이 글자는 한 줄로 묶임)으로 읽었을 때의 모양을 본떠 만든 것.
@@ -406,6 +416,14 @@ describe('글 나누기 세부', () => {
   });
   it('없는 날짜는 버린다', () => {
     expect(scanBooking('2026-02-30').dates).toEqual([]);
+  });
+  it('종류를 알 수 없으면 undefined (지금 고른 종류 그대로)', () => {
+    expect(guessBookingKind('안녕하세요\n2026-11-03')).toBeUndefined();
+  });
+  it('항공권 안의 "온라인 체크인" 안내는 숙소가 아님', () => {
+    expect(
+      guessBookingKind('KE703 ICN → NRT\n온라인 체크인은 출발 24시간 전부터\n수하물 23kg'),
+    ).toBe('flight');
   });
   it('못 찾으면 비워 둔다', () => {
     expect(scanBooking('안녕하세요')).toEqual({ airports: [], dates: [], times: [] });

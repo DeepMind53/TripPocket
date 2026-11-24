@@ -12,7 +12,6 @@ import {
   PenLine,
   Route,
   Ruler,
-  ScanText,
   Sun,
   Sunset,
   Timer,
@@ -508,21 +507,6 @@ export function FeaturePreview({ id }: { id: PreviewId }) {
           </span>
           <span className="text-caption text-primary">
             {t('tool.mapLinkFound', { lat: '35.7148', lng: '139.7967' })}
-          </span>
-        </div>
-      );
-    case 'bookingScan':
-      return (
-        <div className="flex flex-col gap-2 rounded-2xl border border-line bg-surface p-3">
-          <span className="flex items-center gap-1 text-caption font-semibold text-fg-sub">
-            <ScanText aria-hidden="true" className="size-3.5" />
-            {t('tool.scanButton')}
-          </span>
-          <span className="tabular rounded-btn border border-line bg-bg-subtle px-3 py-2 text-body-2">
-            KE703 · ICN → NRT · 11.3 09:00
-          </span>
-          <span className="text-caption whitespace-pre-line text-primary">
-            {t('tool.scanFilled', { n: 6 })}
           </span>
         </div>
       );

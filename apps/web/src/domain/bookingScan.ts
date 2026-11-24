@@ -490,6 +490,65 @@ export function scanBooking(raw: string, opts: ScanOptions = {}): BookingScan {
   };
 }
 
+/** 예약 종류별 단서 — 한 번 나올 때마다 점수 (항공권 안의 "호텔 추천"처럼 섞여도 많이 나온 쪽) */
+const KIND_HINTS: { kind: string; re: RegExp; w: number }[] = [
+  {
+    kind: 'flight',
+    re: /항공권|항공편|탑승권|편명|boarding\s*pass|e-?ticket|e-?티켓|flight|PNR|여정|좌석\s*등급|수하물|baggage|便名|搭乗/gi,
+    w: 2,
+  },
+  {
+    kind: 'lodging',
+    re: /체크\s*인|체크\s*아웃|check[\s-]*(?:in|out)|입실|퇴실|투숙|숙박|객실|room\s*type|숙소|호텔|hotel|게스트\s*하우스|료칸|チェックイン|宿泊/gi,
+    w: 2,
+  },
+  {
+    kind: 'train',
+    re: /KTX|SRT|ITX|코레일|korail|승차권|열차|호차|신칸센|新幹線|JR\s|train|기차|乗車券|号車/gi,
+    w: 3,
+  },
+  {
+    kind: 'car',
+    re: /렌터카|렌트카|rent[\s-]*a[\s-]*car|rental\s*car|rentalcars|차량\s*(?:인수|반납)|차종|대여|반납|drop[\s-]*off|レンタカー/gi,
+    w: 3,
+  },
+  {
+    kind: 'restaurant',
+    re: /식당|레스토랑|restaurant|캐치테이블|테이블링|tablecheck|opentable|다이닝|dining|코스\s*요리|오마카세|런치|디너|ディナー|ランチ/gi,
+    w: 3,
+  },
+  {
+    kind: 'transfer',
+    re: /공항\s*픽업|공항\s*샌딩|샌딩|transfer|픽업\s*샌딩|送迎/gi,
+    w: 3,
+  },
+  { kind: 'tour', re: /투어|tour|체험|activity|가이드|guide|원데이\s*클래스|ツアー/gi, w: 2 },
+  {
+    kind: 'ticket',
+    re: /입장권|이용권|admission|입장|패스|pass(?!port|enger)|티켓(?!\s*번호)|チケット|入場券/gi,
+    w: 2,
+  },
+];
+
+/**
+ * 캡처 글이 어떤 예약인지 (사용자 요청 2026-11-24 "사진이 항공권이면 항공 탭으로").
+ * 편명·공항 둘이 보이면 항공 쪽으로 더한다. 단서가 없으면 undefined (지금 고른 종류 그대로)
+ */
+export function guessBookingKind(raw: string): string | undefined {
+  const text = normalizeText(raw);
+  const score = new Map<string, number>();
+  const add = (k: string, n: number) => score.set(k, (score.get(k) ?? 0) + n);
+  for (const { kind, re, w } of KIND_HINTS) add(kind, (text.match(re)?.length ?? 0) * w);
+  if (flightOf(text)) add('flight', 3);
+  if (airportsOf(text).length >= 2) add('flight', 3);
+  // 체크인·체크아웃이 둘 다 있으면 숙소 (항공권의 "온라인 체크인"과 구분)
+  if (/체크\s*아웃|check[\s-]*out|퇴실|チェックアウト/i.test(text)) add('lodging', 4);
+  // 픽업 + 반납 = 렌터카, 공항 + 픽업(반납 없음) = 픽업·드랍
+  if (/픽업|pick[\s-]*up/i.test(text) && /반납|return/i.test(text)) add('car', 3);
+  const best = [...score.entries()].sort((a, b) => b[1] - a[1])[0];
+  return best && best[1] >= 2 ? best[0] : undefined;
+}
+
 /**
  * IATA 탑승권 바코드(BCBP, PDF417·Aztec·QR) — 기기 안에서 읽은 글 → 예약 칸.
  * "M1HONG/GILDONG        EAB12CDE ICNNRTKE 0703 307Y012A0045 100" (연도는 없어서 기준일에 가까운 해로)

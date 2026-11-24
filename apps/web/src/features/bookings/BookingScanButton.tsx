@@ -1,8 +1,12 @@
 import type { LocalDate } from '@trippocket/shared';
 import { ScanText } from 'lucide-react';
 import { useRef, useState } from 'react';
-import { useLab } from '../../data/labsStore';
-import { parseBoardingPass, scanBooking, type BookingScan } from '../../domain/bookingScan';
+import {
+  guessBookingKind,
+  parseBoardingPass,
+  scanBooking,
+  type BookingScan,
+} from '../../domain/bookingScan';
 import { useTranslation } from '../../i18n';
 import { shrinkImage } from '../../shared/lib/shrinkImage';
 import { Button, toast } from '../../shared/ui';
@@ -32,10 +36,10 @@ async function readBoardingPass(file: Blob, ref: LocalDate): Promise<BookingScan
 }
 
 /**
- * 예약 확인 캡처로 채우기 (실험실 bookingScan, 사용자 요청 2026-11-24, ADR-0012 추가):
- * 1) 탑승권 바코드가 있으면 기기 안에서 읽고 끝 (사진을 보내지 않음)
- * 2) 없으면 누를 때 고른 한 장만 글자 인식(홈 서버 → Google Vision → Azure, 안 되면 기기 안)으로 보내고,
- *    사진은 저장하지 않는다. 읽은 글은 기기에서 칸으로 나눈다 (domain/bookingScan)
+ * 사진으로 예약 정보 자동 채우기 (사용자 요청 2026-11-24, 같은 날 실험실 → 정식, ADR-0012 추가):
+ * 1) 탑승권 바코드가 있으면 기기 안에서 읽고 끝 (사진을 보내지 않음) — 항공
+ * 2) 없으면 고른 한 장만 글자 인식(홈 서버 → Google Vision → Azure, 안 되면 기기 안)으로 보내고,
+ *    사진은 저장하지 않는다. 읽은 글로 예약 종류를 알아내고(모르면 지금 종류) 기기에서 칸으로 나눈다
  */
 export function BookingScanButton({
   kind,
@@ -43,19 +47,18 @@ export function BookingScanButton({
   currency,
   onScan,
 }: {
+  /** 지금 고른 종류 — 사진에서 종류를 알 수 없을 때 */
   kind: string;
   /** 연도 없는 날짜의 기준 (여행 시작일) */
   refDate: LocalDate;
   currency: string | undefined;
-  onScan: (scan: BookingScan, from: 'barcode' | 'text') => void;
+  onScan: (scan: BookingScan, kind: string, from: 'barcode' | 'text') => void;
 }) {
   const { t } = useTranslation();
-  const on = useLab('bookingScan');
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
-  if (!on) return null;
   return (
-    <div className="flex flex-col gap-1">
+    <>
       <Button
         variant="secondary"
         fullWidth
@@ -65,7 +68,6 @@ export function BookingScanButton({
       >
         {t('tool.scanButton')}
       </Button>
-      <p className="text-micro whitespace-pre-line text-fg-muted">{t('tool.scanHint')}</p>
       <input
         ref={input}
         type="file"
@@ -79,9 +81,9 @@ export function BookingScanButton({
           setBusy(true);
           void (async () => {
             try {
-              const pass = kind === 'flight' ? await readBoardingPass(file, refDate) : undefined;
+              const pass = await readBoardingPass(file, refDate);
               if (pass) {
-                onScan(pass, 'barcode');
+                onScan(pass, 'flight', 'barcode');
                 return;
               }
               const [{ readReceipt }, img] = await Promise.all([
@@ -89,7 +91,8 @@ export function BookingScanButton({
                 shrinkImage(file),
               ]);
               const r = await readReceipt(img, currency);
-              onScan(scanBooking(r.text, { kind, ref: refDate }), 'text');
+              const k = guessBookingKind(r.text) ?? kind;
+              onScan(scanBooking(r.text, { kind: k, ref: refDate }), k, 'text');
             } catch {
               toast(t('tool.scanFailed'));
             } finally {
@@ -98,6 +101,6 @@ export function BookingScanButton({
           })();
         }}
       />
-    </div>
+    </>
   );
 }

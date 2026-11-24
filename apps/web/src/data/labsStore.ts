@@ -17,8 +17,7 @@ export const LABS = [
   'splitBill',
   'unitConvert',
   'quickTimer',
-  // 2026-11-24 예약 확인 캡처로 채우기 (사용자 요청, ADR-0012 추가) — features/labs/BookingScanButton
-  'bookingScan',
+  // 2026-11-24 정식(사용자 요청, 늘 켜짐): 사진으로 예약 정보 자동 채우기 — features/bookings/BookingScanButton
   // 2026-11-13 2차 정식(사용자 요청): 오늘의 한마디·걷기 좋은 시간·해 지기까지·더 짧은 순서는 설정 "일정"으로 (켜 둔 기기는 migrateGraduatedLabs).
   // 뺐다(사용자 결정): 숙소 알려 주기·멀리 떨어진 장소·다시 찾은 도시·서울과 기온 비교·한국 연휴 겹침·몇 년 전 오늘·예약 날짜 점검
   // 2026-11-13 정식(사용자 요청, 늘 켜짐): 회화 소리로 듣기(phrases/SpeakButton)·숙소 방향(빠른 메뉴 LodgingCompass).
