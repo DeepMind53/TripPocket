@@ -8,7 +8,7 @@
 
 ```
 휴대폰·PC 브라우저 (PWA, https://trippocket.day)
-  UI (React) ─ features ─ data/repositories ─▶ IndexedDB (Dexie v14, 1차 저장 — 서버 없이 모든 핵심 기능)
+  UI (React) ─ features ─ data/repositories ─▶ IndexedDB (Dexie v15, 1차 저장 — 서버 없이 모든 핵심 기능)
   기기 전용: 사진·영수증(photos 표), 개인정보(여권 만료 등), 최근 백업 3개(OPFS 파일) — 서버·동기화로 보내지 않음
   동기화 엔진 ─ 고친 행(dirty) 올리기 / 바뀐 행 받기 (시작·복귀·고친 뒤·30초마다)
   서비스 워커 (직접 작성, 앱 파일 미리 저장, /api·/auth는 가로채지 않음)
@@ -21,7 +21,7 @@ Cloudflare Pages ─ 정적 파일 + Functions가 /api·/auth만 전달 (비밀 
        ▼
 홈 PC: Node.js + Fastify (127.0.0.1:8787, 비밀 헤더 없으면 404)
   로그인(카카오·Google)·동기화·공유·후기·알림·예약 문서·숙소 가격 기록·사용 통계
-  SQLite(node:sqlite, 마이그레이션 23) + 첨부 파일 + 암호화 백업(매일 03:00)
+  SQLite(node:sqlite, 마이그레이션 24) + 첨부 파일 + 암호화 백업(매일 03:00)
   외부 API는 모두 services/apiUsage.ts를 거친다: 호출 직전 guardApi(멈춤·한도 확인) + trackApi(기록), 무료량 95%에서 자동 중지
     장소: 국내 네이버 → 카카오 / 해외 Google → 자동완성 → Geoapify
     AI: Gemini → Workers AI → Groq → AI 없이 · 글자 인식: Google Vision → Azure Read (→ 웹이 기기 안에서)
@@ -30,7 +30,7 @@ Cloudflare Pages ─ 정적 파일 + Functions가 /api·/auth만 전달 (비밀 
 ```
 
 - 사용자 위치는 저장·기록하지 않는다 (줄여서 계산에만). 사용자 데이터는 홈 서버로만 보낸다 (CLAUDE.md §3)
-- 결정 근거: ADR-0001~0012 ([`adr/`](adr/))
+- 결정 근거: ADR-0001~0013 ([`adr/`](adr/))
 
 ## 2. 기술 스택 (실제)
 

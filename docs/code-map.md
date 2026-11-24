@@ -55,7 +55,9 @@ Tailscale Funnel https://jin-server.tail0844c0.ts.net ─▶ 홈 PC 127.0.0.1:87
 - **좁은 화면·큰 글씨**: Tailwind `tight:` 변형(폭 340px 이하 또는 글자 115% 이상, `html[data-big-text]`). 검사 `tests/e2e/text-fit.spec.ts`
 - **새 실험 기능**: `data/labsStore.ts`의 `LABS`에 id 추가 → `ko.json` `labs.item.<id>.name/desc` → 기능 코드에서 `useLab('<id>')`. 실험을 정식으로 옮기면 `Settings`·`PLAN_FEATURES`(묶음)·`planLabels.ts`에 넣고, 켜 둔 기기 값은 `settingsStore.migrateGraduatedLabs`로 옮긴다 (2026-11-10). 새 실험은 반드시 [샘플]도: `common/previewIds.ts` + `FeaturePreview.tsx` case.
   정식 기능이 되면 `LABS`에서 빼고 `useLab` 분기를 지운다
-  - 지금 실험 7개 (2026-11-24): 아래 "2026-11-13 3차" 줄의 일정 붙여 넣기·미루기·캘린더 내보내기·지도 링크·나눠 내기·단위 바꾸기·타이머
+  - 지금 실험 10개 (2026-11-25): 아래 "2026-11-13 3차" 줄의 일정 붙여 넣기·미루기·캘린더 내보내기·지도 링크·나눠 내기·단위 바꾸기·타이머 +
+    여행 모드 3개 (docs/27 §6.2): 나갈 시각 알림 `leavePush`(`home/OngoingTrip.tsx` → `data/push.ts` `sendLeaveTime` → 서버 `PUT /api/push/leave`, `repositories/pushLeaveRepo.ts`, `pushScheduler.ts`, ADR-0013)·
+    오늘 일정 보내기 `todayShare`(`travel/TodayShareButton.tsx`, 공유 링크 `?day=`는 `share/PublicTripPage.tsx`)·모이는 곳 `meetup`(일정 `meetup` 칸 Dexie v15, `itinerary/ItemFormSheet.tsx` 스위치, `home/OngoingTrip.tsx` 카드)
 - **2026-11-13 실험실 → 정식 (사용자 요청)**: 설정 "일정·화면" `sunsetDark`(`travel/SunsetDark.tsx`)·`dayNote`·`nextStopDayColor`, 늘 켜짐: 여권 도장 이미지(`records/CountryGrid.tsx`)·여행 요약 카드(`records/TripCardSave.tsx`)·메뉴판·안내문 번역(`phrases/PhotoTranslate.tsx`)·사진 속 장소(`photos/LandmarkFinder.tsx`)·사진 분류.
 - **2026-11-13 2차 (사용자 요청)**: 회화 소리로 듣기(`phrases/SpeakButton.tsx`, 기기 speechSynthesis)·숙소 방향(빠른 메뉴 `common/LodgingCompass.tsx`, `domain/compass.ts`)은 늘 켜짐으로 정식. 금액 크게 보여 주기·일정 사이 빈 시간·여행기 글로 복사는 뺐다.
   같은 날 2차 실험 11개 중 4개는 설정 "일정"으로 정식(계산 `domain/tripHints.ts`): 오늘의 한마디 `phraseOfDay`·걷기 좋은 시간 `bestWalkTime`·해 지기까지 `daylightLeft`(묶음 "날씨와 현지 정보", 화면 `home/TodayTips.tsx` — `home/OngoingTrip.tsx`에서 지연 로딩),
@@ -73,6 +75,7 @@ Tailscale Funnel https://jin-server.tail0844c0.ts.net ─▶ 홈 PC 127.0.0.1:87
 - **숙소 최저가 (늘 켜짐, docs/28·ADR-0010)**: 웹 `features/lodging/`(`/lodging-price` 화면 + 숙소 예약 시트 안 시트), 서버 `routes/lodging.ts` + `services/agodaLookup.ts`·`serpapiHotels.ts`, 관리자 `/admin/lodging`
 - **여행 모드 (설정 "일정" `tripMode`, docs/25-travel-mode·docs/27)**: `features/travel/TravelModePage.tsx`(`/trips/:tripId/go`), 기기 설정 `data/travelModeStore.ts`
 - **시트(아래에서 올라오는 창)**: `shared/ui/BottomSheet.tsx`(처음 열 때 `BottomSheetImpl`을 불러옴). 시트 안 양식 제출은 바깥 양식으로 올라가지 않게 막는다 (2026-11-11). 시트는 한 번에 하나만 보인다 (2026-11-12): 시트 위에 시트가 열리면 `sheetStack.ts`가 열린 순서를 기억해 아래 시트를 숨기고(그려 둔 채라 입력 내용 유지) 위 시트에 "뒤로"를 둔다 — 새 시트를 만들 때 따로 할 일 없음. "뒤로"가 필요 없는 시트는 `backButton={false}`(삭제 확인 창)
+- **알림(toast) (docs/31 B1, 2026-11-25)**: `shared/ui/toastStore.ts` — 한 번에 하나(같은 문구는 시간만 다시), [실행 취소] 알림은 남김, 시트가 열리면 일반 알림 닫기(`sheetStack.ts`). `Toaster.tsx`는 시트 아래 버튼 줄(`data-sheet-footer`)·⚡ 버튼(`data-quick-fab`) 위에 띄운다
 - **새 외부 API (서버)**: `services/apiUsage.ts`의 `APIS`에 id·분류(`paid`=과금 가능 / `free`)·무료 월 사용량 추가 →
   호출 직전에 `guardApi(id)`(멈춤이면 `ApiPaused` → 503 `api_paused`), `trackApi(id)` → `ko.json` `apiUsage.name/note`.
   브라우저에서 직접 부르는 유료 API는 `routes/usage.ts`처럼 허용 여부 확인 + 사용 기록 엔드포인트를 둔다
@@ -80,7 +83,7 @@ Tailscale Funnel https://jin-server.tail0844c0.ts.net ─▶ 홈 PC 127.0.0.1:87
 - **서버 DB 표 추가**: `db/migrations.ts` 끝에 새 항목 + 테스트
 - **웹 DB 표 추가**: `data/db.ts` 버전 올림 + `data/migrations` + 마이그레이션 테스트 (CLAUDE.md)
 - **기차·버스 역 고르기 (2026-11-03)**: 예약 폼 `features/bookings/StationPicker.tsx` — 국내는 `data/krStations.ts`(앱에 넣은 역·터미널, 칩으로 노선 거르기, 도시에 하나면 자동 선택), 해외는 서버 `POST /api/places/stations` → `services/stations.ts`(Geoapify 지오코딩+Places, 7일 메모리 캐시, 사람마다 검색 한도 함께). 도착역은 `end.place`
-- **Plan B (설정 "일정·화면" `planB`, 2026-11-03 실험실에서 정식)**: 여행 `trip.dayPlans`(날짜별 대안 플랜·조건, 동기화)와 일정 `item.planId`(없으면 기본 일정), Dexie v11. 조건 판단·피로도는 `domain/dayPlan.ts`, 보일 플랜 고르기 `features/itinerary/usePlanView.ts`(일정 화면은 이 목록만 씀), 시트 `DayPlanSheet.tsx`(날짜 머리글을 누름), 아침 컨디션 체크 `ConditionCheck.tsx`(App에서 켰을 때만). 설정 "일정"은 `PLAN_FEATURE_GROUPS` 묶음(화면·알림·날씨와 현지 정보·빠른 메뉴), [지금 설정을 기본값으로 저장]은 이 기기 `tp-settings-defaults` → 되돌리기가 그 값으로(`settingsStore.resetSettings`), 컨디션·직접 고른 플랜은 기기에만 `data/dayPlanStore.ts`. 피로도 = 당일 컨디션 2 : 전날 이동 거리(장소 사이 직선거리) 1
+- **Plan B (설정 "일정·화면" `planB`, 2026-11-03 실험실에서 정식)**: 여행 `trip.dayPlans`(날짜별 대안 플랜·조건, 동기화)와 일정 `item.planId`(없으면 기본 일정), Dexie v11. 조건 판단·피로도는 `domain/dayPlan.ts`, 보일 플랜 고르기 `features/itinerary/usePlanView.ts`(일정 화면은 이 목록만 씀), 시트 `DayPlanSheet.tsx`(날짜 머리글을 누름), 아침 컨디션 체크 `ConditionCheck.tsx`(App에서 켰을 때만). 설정 "일정"은 `PLAN_FEATURE_GROUPS` 묶음(화면·알림·날씨와 현지 정보·빠른 메뉴), [지금 설정을 내 기본으로 저장]은 이 기기 `tp-settings-defaults` → 되돌리기가 그 값으로(`settingsStore.resetSettings`), 컨디션·직접 고른 플랜은 기기에만 `data/dayPlanStore.ts`. 피로도 = 당일 컨디션 2 : 전날 이동 거리(장소 사이 직선거리) 1
 - **국내 공항 정보 (2026-11-02)**: 서버 `services/airportInfo.ts`(인천 `B551177/statusOfAllFltDeOdp` = 체크인 카운터·터미널·게이트·수하물, 3일 전~6일 후 / 한국공항공사 `B551178/flight-search/info` = 게이트, 당일만) + `routes/flights.ts` `GET /api/flights/:no/airport`. 키는 `DATA_GO_KR_KEY`, 사용량 `icn_flights`·`kac_flights`. 웹 `features/bookings/FlightAirportInfo.tsx`(확인 시각은 기기에만, `data/flightAirportStore.ts`)
 - **빠른 메뉴 (2026-11-02)**: `features/common/QuickMenuSheets.tsx`. 바로가기 4칸은 `quickShortcuts.ts`(목록·주소·기기 저장) + `ShortcutEditSheet.tsx`,
   이동 정보 카드 `TravelLegCard.tsx`(규칙 `domain/travelLeg.ts`: 출국편 → 렌터카 반납 전 → 귀국편), 렌터카 `CarCard.tsx`,

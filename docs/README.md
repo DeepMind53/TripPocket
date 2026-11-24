@@ -20,7 +20,7 @@
 | [deploy](deploy.md) | 배포·키 등록 절차 | **현행** |
 | [conventions/](conventions/) | 코딩 규칙·커밋·테스트 | **현행** |
 | [08 결정 필요 항목](08-open-decisions.md) | 아직 안 정한 것 — 임의로 정하지 말고 묻는다 | **현행** |
-| [adr/](adr/) 0001~0012 | 확정 결정 (바꾸려면 새 ADR) | **현행** |
+| [adr/](adr/) 0001~0013 | 확정 결정 (바꾸려면 새 ADR) | **현행** |
 | [bugs](bugs.md) | 버그 목록 — 빈도×심각도 점수, 5 미만은 기록만 | **현행** |
 | [22 반복 작업](22-recurring-tasks.md) | 월간 갱신 목록 (앱 안 요청문과 같은 번호) | **현행** |
 | [09 서버·로그인·보안](09-server-auth-security.md) | 보안 점검표 §7 (로그인은 지금 카카오·Google) | **현행** (점검표) · 나머지 기록 |
@@ -33,13 +33,13 @@
 | [19 나라별 필수 항목](19-entry-checklist.md) | | **현행** (구현됨) |
 | [23 유료 API 대체](23-paid-api-fallbacks.md) | 무료량이 끝나면 대체 API·기능 | **현행** (구현됨) |
 | [24 여행지 특보](24-weather-disaster-alerts.md) | | **현행** (구현됨, ADR-0008) |
-| [26 무료 API 더 쓰기](26-free-apis.md) | | 현행 (1~3단계) · 남은 것: B3·B4·B6·C2·C3 |
-| [27 여행 모드 v2](27-travel-mode-v2.md) | | 현행 (1~4단계) · 남은 것: 5단계 웹 푸시·E1·E2·C5 |
+| [26 무료 API 더 쓰기](26-free-apis.md) | | 현행 (1~3단계) · B3·B4·B6·C2·C3 적용 결정 — 키·활용신청 받은 뒤 구현 |
+| [27 여행 모드 v2](27-travel-mode-v2.md) | | 현행 (1~4단계 + F1·E1·E2 실험실, ADR-0013) |
 | [28 숙소 최저가](28-lodging-price-compare.md) | | **현행** (ADR-0010) |
 | [21 유료 서비스](21-paid-services.md) | 막힐 때 고를 유료 서비스 가격 | 참고 |
 | [01 PRD](01-product-requirements.md) · [02 벤치마크](02-benchmark.md) · [04 데이터 모델](04-data-model.md) · [05 화면](05-screens-ux.md) · [06 저장·백업·공유](06-storage-backup-sharing.md) · [07 로드맵](07-roadmap.md) | 처음 설계 (2026-10-22) | 기록 — 실제 스키마는 `packages/shared/src/schema`, 화면은 코드 |
 | [13 설계 점검](13-design-review.md) · [15 구현 단계](15-implementation-steps.md) · [16 UX 개선](16-ux-ui-improvements.md) · [20 문구·UX 점검](20-copy-ux-gap-review.md) · [25 여행 모드](25-travel-mode.md) | 끝난 계획·점검 | 기록 |
-| [31 사용 불편 점검·개선 설계](31-usability-review.md) | 입력 보호·알림 가림·양식·배치 (스킬 기준 점검) | 일부 구현 (첫머리 표) · 나머지 설계 확정 |
+| [31 사용 불편 점검·개선 설계](31-usability-review.md) | 입력 보호·알림 가림·양식·배치 (스킬 기준 점검) | **현행** (구현됨, 2026-11-25) |
 | [32 방문 기록 화면](32-visit-log.md) | 기록 탭 방문 기록: 여행별·도시별·장소별 보기, 검색 | **현행** (구현됨) |
 | [design/](design/) | 시안 자료 | 기록 |
 
