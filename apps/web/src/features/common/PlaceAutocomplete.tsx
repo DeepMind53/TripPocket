@@ -97,7 +97,7 @@ export function PlaceAutocomplete({
           setState('idle');
           setAsked(q);
         }}
-        className="flex min-h-11 items-center justify-center gap-1.5 rounded-btn border border-line text-caption font-semibold text-primary active:bg-bg-subtle"
+        className="flex min-h-11 items-center justify-center gap-1.5 rounded-btn border border-line text-caption font-medium text-primary active:bg-bg-subtle"
       >
         <Search aria-hidden="true" className="size-4" />
         {t('placeSearch.searchBtn', { q })}
@@ -159,7 +159,7 @@ export function PlaceAutocomplete({
             <button
               type="button"
               onClick={() => setMoreOpen(true)}
-              className="flex w-full items-center justify-center gap-1 py-2.5 text-caption font-semibold text-primary active:bg-bg-subtle"
+              className="flex w-full items-center justify-center gap-1 py-2.5 text-caption font-medium text-primary active:bg-bg-subtle"
             >
               <Plus aria-hidden="true" className="size-4" />
               {t('placeSearch.more', { n: rest })}

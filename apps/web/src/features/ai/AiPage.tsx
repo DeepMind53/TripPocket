@@ -399,7 +399,7 @@ function RecCard({
             type="button"
             aria-expanded={open}
             onClick={() => setOpen(!open)}
-            className="flex flex-1 items-center gap-1 text-caption font-semibold text-primary"
+            className="flex flex-1 items-center gap-1 text-caption font-medium text-primary"
           >
             {t('ai.sources', { n: rec.sources.length })}
             <ChevronDown

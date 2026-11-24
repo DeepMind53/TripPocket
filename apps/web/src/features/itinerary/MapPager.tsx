@@ -41,7 +41,7 @@ export function MapPager({
           disabled={current === 0}
           onClick={() => go(-1)}
         />
-        <p className="flex-1 text-center text-caption font-semibold text-fg-sub" aria-live="polite">
+        <p className="flex-1 text-center text-caption font-medium text-fg-sub" aria-live="polite">
           {entry.day} ·{' '}
           <span className="tabular">
             {t('map.pagerPos', { n: current + 1, total: list.length })}

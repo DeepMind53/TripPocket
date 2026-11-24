@@ -417,7 +417,7 @@ export function DaySection({
               type="button"
               aria-expanded={pastOpen}
               onClick={() => setPastOpen(!pastOpen)}
-              className="flex h-9 items-center gap-1 pl-1 text-caption font-semibold text-fg-sub"
+              className="flex h-9 items-center gap-1 pl-1 text-caption font-medium text-fg-sub"
             >
               {t('travel.pastN', { n: todayPast.size })}
               <ChevronDown
@@ -530,7 +530,7 @@ export function DaySection({
           className="mb-2 -mt-1 flex items-center gap-2 rounded-btn bg-bg-subtle px-3 py-2.5 text-left"
         >
           <BedDouble aria-hidden="true" className="size-4 shrink-0 text-day-4" />
-          <span className="text-caption font-semibold text-fg-sub">{t('plan.lodging')}</span>
+          <span className="text-caption font-medium text-fg-sub">{t('plan.lodging')}</span>
           <span className="min-w-0 flex-1 truncate text-body-2 font-medium">
             {lodging.booking.title}
           </span>

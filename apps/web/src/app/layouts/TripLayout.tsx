@@ -100,7 +100,7 @@ export function TripLayout() {
                 type="button"
                 onClick={() => setShareOpen(true)}
                 aria-label={t('share.membersCount', { n: members })}
-                className="tabular flex h-9 shrink-0 items-center gap-1 rounded-full bg-primary-weak px-2.5 text-caption font-semibold text-primary"
+                className="tabular flex h-9 shrink-0 items-center gap-1 rounded-full bg-primary-weak px-2.5 text-caption font-medium text-primary"
               >
                 <Users aria-hidden="true" className="size-4" />
                 {members}

@@ -149,7 +149,7 @@ export function TemplateSheet({ open, onOpenChange, list, current, onApply }: Te
             void saveCurrent();
           }}
         >
-          <span className="text-caption font-semibold text-fg-sub">
+          <span className="text-caption font-medium text-fg-sub">
             {t('checklist.saveAsTemplate')}
           </span>
           <div className="flex gap-2">

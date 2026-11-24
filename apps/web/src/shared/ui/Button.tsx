@@ -18,20 +18,20 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantClass: Record<Variant, string> = {
-  primary: 'bg-primary text-on-primary active:bg-primary-pressed',
-  secondary: 'bg-bg-subtle text-fg active:brightness-95',
-  ghost: 'bg-transparent text-primary active:bg-primary-weak',
-  danger: 'bg-danger text-on-primary active:brightness-95',
+  primary: 'bg-primary font-semibold text-on-primary active:bg-primary-pressed',
+  secondary: 'bg-bg-subtle font-medium text-fg active:brightness-95',
+  ghost: 'bg-transparent font-medium text-primary active:bg-primary-weak',
+  danger: 'bg-danger font-semibold text-on-primary active:brightness-95',
   // 회색 바탕 + 빨간 글자: 시트 아래 [삭제]처럼 덜 눈에 띄어야 하는 지우기 (docs/31 A2 — className으로 글자색만 바꾸면 text-fg가 이긴다)
-  dangerSoft: 'bg-bg-subtle text-danger active:brightness-95',
-  cancel: 'bg-bg-subtle text-fg active:brightness-95',
+  dangerSoft: 'bg-bg-subtle font-medium text-danger active:brightness-95',
+  cancel: 'bg-bg-subtle font-medium text-fg active:brightness-95',
 };
 
-// 높이 52 / 44 / 36 (docs/11 §5)
+// 높이 52 / 44 / 36 (docs/11 §5). 굵기는 모양에서 — 주요 600, 보조 500 (docs/31 U4)
 const sizeClass: Record<Size, string> = {
-  lg: 'h-13 px-5 text-body-1 font-semibold',
-  md: 'h-11 px-4 text-body-2 font-semibold',
-  sm: 'h-9 px-3 text-caption font-semibold',
+  lg: 'h-13 px-5 text-body-1',
+  md: 'h-11 px-4 text-body-2',
+  sm: 'h-9 px-3 text-caption',
 };
 
 export function Button({

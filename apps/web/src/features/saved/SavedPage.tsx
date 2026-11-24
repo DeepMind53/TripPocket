@@ -136,7 +136,7 @@ export function SavedPage() {
               <button
                 type="button"
                 onClick={() => setShowAll(!showAll)}
-                className="mx-auto h-9 rounded-full px-4 text-caption font-semibold text-fg-sub"
+                className="mx-auto h-9 rounded-full px-4 text-caption font-medium text-fg-sub"
               >
                 {showAll ? t('saved.less') : t('saved.more', { n: groups.length - GRID })}
               </button>
@@ -146,7 +146,7 @@ export function SavedPage() {
           {current && (
             <section aria-label={label(current.code)} className="flex flex-col gap-1">
               <div className="flex items-center gap-1">
-                <h2 className="flex-1 text-caption font-semibold text-fg-muted">
+                <h2 className="flex-1 text-caption font-medium text-fg-muted">
                   {label(current.code)} · {list.length}
                 </h2>
                 <Button

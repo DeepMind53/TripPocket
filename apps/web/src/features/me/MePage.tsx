@@ -111,7 +111,7 @@ export function MePage() {
 function MenuGroup({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section aria-label={title} className="flex flex-col gap-1.5">
-      <h2 className="px-1 text-caption font-semibold text-fg-muted">{title}</h2>
+      <h2 className="px-1 text-caption font-medium text-fg-muted">{title}</h2>
       <ul className="flex flex-col divide-y divide-line overflow-hidden rounded-card border border-line">
         {children}
       </ul>
@@ -134,7 +134,7 @@ function MenuRow({ to, icon, label, step, onClick }: MenuRowProps) {
       <span aria-hidden="true" className="text-fg-sub [&>svg]:size-5">
         {icon}
       </span>
-      <span className="flex-1 text-body-2 font-medium">{label}</span>
+      <span className="flex-1 text-body-1 font-medium">{label}</span>
       <ChevronRight aria-hidden="true" className="size-5 text-fg-muted" />
     </>
   );

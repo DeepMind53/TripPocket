@@ -26,7 +26,7 @@ export function CustomFoodsField() {
   };
   return (
     <div className="flex flex-col gap-2">
-      <p className="text-caption font-semibold text-fg-sub">{t('profile.customFoods')}</p>
+      <p className="text-caption font-medium text-fg-sub">{t('profile.customFoods')}</p>
       {list.length > 0 && (
         <ul className="flex flex-col divide-y divide-line rounded-card border border-line">
           {list.map((c, i) => (

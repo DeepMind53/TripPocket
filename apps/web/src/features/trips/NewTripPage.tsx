@@ -189,9 +189,7 @@ export function NewTripPage() {
         >
           <div className="flex flex-col gap-6">
             <label className="flex flex-col gap-1.5">
-              <span className="text-caption font-semibold text-fg-sub">
-                {t('newTrip.nameLabel')}
-              </span>
+              <span className="text-caption font-medium text-fg-sub">{t('newTrip.nameLabel')}</span>
               <input
                 id="trip-title"
                 value={effectiveTitle}
@@ -201,7 +199,7 @@ export function NewTripPage() {
               />
             </label>
             <fieldset className="flex flex-col gap-2">
-              <legend className="mb-2 text-caption font-semibold text-fg-sub">
+              <legend className="mb-2 text-caption font-medium text-fg-sub">
                 {t('newTrip.emojiLabel')}
               </legend>
               <EmojiPicker
@@ -211,7 +209,7 @@ export function NewTripPage() {
               />
             </fieldset>
             <fieldset className="flex flex-col gap-2">
-              <legend className="mb-2 text-caption font-semibold text-fg-sub">
+              <legend className="mb-2 text-caption font-medium text-fg-sub">
                 {t('newTrip.colorLabel')}
               </legend>
               <div className="flex flex-wrap gap-3">
@@ -321,7 +319,7 @@ function WhereStep({
 
       {selected.length > 0 && (
         <div className="mt-4 flex flex-col gap-2">
-          <span className="text-caption font-semibold text-fg-sub">{t('newTrip.selected')}</span>
+          <span className="text-caption font-medium text-fg-sub">{t('newTrip.selected')}</span>
           <div className="flex flex-wrap gap-2">
             {selected.map((d) => (
               <Chip
@@ -401,7 +399,7 @@ function WhereStep({
         </ul>
       ) : (
         <div className="mt-5 flex flex-col gap-2">
-          <span className="text-caption font-semibold text-fg-sub">{t('newTrip.popular')}</span>
+          <span className="text-caption font-medium text-fg-sub">{t('newTrip.popular')}</span>
           <div className="flex flex-wrap gap-2">
             {popularCities().map((c) => {
               const dest: Destination = {

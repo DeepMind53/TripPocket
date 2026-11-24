@@ -57,9 +57,7 @@ export function TrashPage() {
           if (rows.length === 0) return null;
           return (
             <section key={key} aria-label={t(`trash.group.${key}`)} className="flex flex-col gap-2">
-              <h2 className="text-caption font-semibold text-fg-muted">
-                {t(`trash.group.${key}`)}
-              </h2>
+              <h2 className="text-caption font-medium text-fg-muted">{t(`trash.group.${key}`)}</h2>
               <ul className="flex flex-col divide-y divide-line rounded-card border border-line">
                 {rows.map((e) => (
                   <li key={`${e.kind}-${e.id}`} className="flex items-center gap-3 px-4 py-2.5">

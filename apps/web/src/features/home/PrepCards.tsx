@@ -142,7 +142,7 @@ export function PrepCards({
         onClick={() => toggleOpen(!open)}
         className="tabular flex items-center gap-2 rounded-card border border-line bg-surface px-3 py-2.5 text-left"
       >
-        <span className="shrink-0 text-caption font-semibold text-fg-muted">{t('prep.title')}</span>
+        <span className="shrink-0 text-caption font-medium text-fg-muted">{t('prep.title')}</span>
         <span className="min-w-0 flex-1 truncate text-caption text-fg-sub">
           {/* 짐 목록이 비어 있으면(0/0) 요약에서 뺀다 — 펼치면 [짐 목록 만들기] 그대로 (2026-11-14 다듬기) */}
           {total > 0 && (
@@ -276,7 +276,7 @@ export function PrepCards({
               to={`/trips/${trip.id}/essentials`}
               className="relative flex flex-col gap-1 rounded-card border border-line bg-surface p-3"
             >
-              <span className="flex items-center gap-1.5 text-caption font-semibold text-fg-sub">
+              <span className="flex items-center gap-1.5 text-caption font-medium text-fg-sub">
                 <IdCard aria-hidden="true" className="size-4 text-primary" />
                 {t('essentials.title')}
                 <span className="tabular ml-auto pr-4 text-body-2 font-semibold text-fg">
@@ -338,7 +338,7 @@ function Card({
       to={to}
       className="relative flex min-h-24 flex-col gap-1.5 rounded-card border border-line bg-surface p-3"
     >
-      <span className="flex items-center gap-1.5 text-caption font-semibold text-fg-sub">
+      <span className="flex items-center gap-1.5 text-caption font-medium text-fg-sub">
         <Icon aria-hidden="true" className="size-4 text-primary" />
         {label}
       </span>

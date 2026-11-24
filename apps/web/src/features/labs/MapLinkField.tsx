@@ -21,7 +21,7 @@ export function MapLinkField({
   return (
     <div className="flex flex-col gap-1">
       <label className="flex flex-col gap-1.5">
-        <span className="flex items-center gap-1 text-caption font-semibold text-fg-sub">
+        <span className="flex items-center gap-1 text-caption font-medium text-fg-sub">
           <Link2 aria-hidden="true" className="size-3.5" />
           {t('tool.mapLink')}
         </span>

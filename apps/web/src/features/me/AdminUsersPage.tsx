@@ -160,7 +160,7 @@ export function AdminUsersPage() {
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="flex flex-col gap-2">
-      <h2 className="text-caption font-semibold text-fg-muted">{title}</h2>
+      <h2 className="text-caption font-medium text-fg-muted">{title}</h2>
       <ul className="flex flex-col divide-y divide-line overflow-hidden rounded-card border border-line">
         {children}
       </ul>

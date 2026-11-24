@@ -30,7 +30,7 @@ export function SavedPick({
         aria-expanded={open}
         disabled={list.length === 0}
         onClick={() => setOpen(!open)}
-        className="flex h-10 items-center gap-1.5 self-start rounded-full border border-line px-3 text-caption font-semibold text-fg-sub disabled:cursor-not-allowed disabled:text-fg-muted"
+        className="flex h-10 items-center gap-1.5 self-start rounded-full border border-line px-3 text-caption font-medium text-fg-sub disabled:cursor-not-allowed disabled:text-fg-muted"
       >
         <Heart aria-hidden="true" className="size-4" />
         {t('saved.pick')} · {list.length}

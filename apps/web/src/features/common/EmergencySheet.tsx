@@ -98,7 +98,7 @@ export function EmergencySheet({
               href={MOFA_SAFETY_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1 text-caption font-semibold text-primary"
+              className="flex items-center gap-1 text-caption font-medium text-primary"
             >
               {t('emergency.mofa')}
               <ExternalLink aria-hidden="true" className="size-3.5" />

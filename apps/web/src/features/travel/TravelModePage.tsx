@@ -265,7 +265,7 @@ function TravelView({ trip, items: all }: { trip: Trip; items: ItineraryItem[] }
                   aria-label={t('travel.morning')}
                   className="flex flex-col gap-1 rounded-card bg-bg-subtle p-4"
                 >
-                  <span className="text-caption font-semibold text-fg-muted">
+                  <span className="text-caption font-medium text-fg-muted">
                     {t('travel.morning')}
                   </span>
                   <span className="text-body-1 font-semibold">
@@ -285,13 +285,13 @@ function TravelView({ trip, items: all }: { trip: Trip; items: ItineraryItem[] }
                   aria-label={t('travel.evening')}
                   className="flex flex-col gap-2 rounded-card bg-bg-subtle p-4"
                 >
-                  <span className="text-caption font-semibold text-fg-muted">
+                  <span className="text-caption font-medium text-fg-muted">
                     {t('travel.evening')}
                   </span>
                   <span className="text-body-1 font-semibold">
                     {t('travel.recap', { n: dayItems.length, done: visitedCount })}
                   </span>
-                  <span className="border-t border-dashed border-line pt-2 text-caption font-semibold text-fg-muted">
+                  <span className="border-t border-dashed border-line pt-2 text-caption font-medium text-fg-muted">
                     {t('travel.tomorrow')}
                   </span>
                   {tomorrowFirst ? (

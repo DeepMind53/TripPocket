@@ -74,7 +74,7 @@ export function CountryGrid({
         <button
           type="button"
           onClick={() => setAll(!all)}
-          className="mx-auto h-9 rounded-full px-4 text-caption font-semibold text-fg-sub"
+          className="mx-auto h-9 rounded-full px-4 text-caption font-medium text-fg-sub"
         >
           {all ? t('saved.less') : t('records.moreCountries', { n: sorted.length - SHOWN })}
         </button>

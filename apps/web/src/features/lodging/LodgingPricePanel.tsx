@@ -219,7 +219,7 @@ export function LodgingPricePanel({
     <div className="flex flex-col gap-4">
       {recent.length > 0 && (
         <section aria-label={t('lodgingPrice.recent')} className="flex flex-col gap-1.5">
-          <h3 className="flex items-center gap-1 text-caption font-semibold text-fg-muted">
+          <h3 className="flex items-center gap-1 text-caption font-medium text-fg-muted">
             <History aria-hidden="true" className="size-3.5" />
             {t('lodgingPrice.recent')}
           </h3>
@@ -242,7 +242,7 @@ export function LodgingPricePanel({
         }}
       >
         <label className="flex flex-col gap-1.5">
-          <span className="text-caption font-semibold text-fg-sub">{t('lodgingPrice.name')}</span>
+          <span className="text-caption font-medium text-fg-sub">{t('lodgingPrice.name')}</span>
           <input
             value={name}
             maxLength={STAY_LIMITS.nameMax}
@@ -262,7 +262,7 @@ export function LodgingPricePanel({
         />
         <div className="grid grid-cols-2 gap-2">
           <label className="flex min-w-0 flex-col gap-1.5">
-            <span className="text-caption font-semibold text-fg-sub">
+            <span className="text-caption font-medium text-fg-sub">
               {t('lodgingPrice.checkIn')}
             </span>
             <input
@@ -273,7 +273,7 @@ export function LodgingPricePanel({
             />
           </label>
           <label className="flex min-w-0 flex-col gap-1.5">
-            <span className="text-caption font-semibold text-fg-sub">
+            <span className="text-caption font-medium text-fg-sub">
               {t('lodgingPrice.checkOut')}
             </span>
             <input
@@ -287,9 +287,7 @@ export function LodgingPricePanel({
         </div>
         <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
           <span className="flex items-center gap-2">
-            <span className="text-caption font-semibold text-fg-sub">
-              {t('lodgingPrice.adults')}
-            </span>
+            <span className="text-caption font-medium text-fg-sub">{t('lodgingPrice.adults')}</span>
             <Stepper
               label={t('lodgingPrice.adults')}
               value={adults}
@@ -299,9 +297,7 @@ export function LodgingPricePanel({
             />
           </span>
           <span className="flex items-center gap-2">
-            <span className="text-caption font-semibold text-fg-sub">
-              {t('lodgingPrice.rooms')}
-            </span>
+            <span className="text-caption font-medium text-fg-sub">{t('lodgingPrice.rooms')}</span>
             <Stepper
               label={t('lodgingPrice.rooms')}
               value={rooms}
@@ -313,7 +309,7 @@ export function LodgingPricePanel({
         </div>
         {manual ? (
           <label className="flex flex-col gap-1.5">
-            <span className="text-caption font-semibold text-fg-sub">
+            <span className="text-caption font-medium text-fg-sub">
               {t('lodgingPrice.agodaLink')}
             </span>
             <span className="flex gap-2">
@@ -339,7 +335,7 @@ export function LodgingPricePanel({
           <button
             type="button"
             onClick={() => setManual(true)}
-            className="flex min-h-10 items-center self-start text-caption font-semibold text-primary"
+            className="flex min-h-10 items-center self-start text-caption font-medium text-primary"
           >
             {t('lodgingPrice.agodaManual')}
           </button>
@@ -529,7 +525,7 @@ function Results({
               {t('lodgingPrice.agodaHint')}
             </p>
             {winner && (
-              <p className="rounded-card bg-primary-weak px-3 py-2 text-caption font-semibold text-primary">
+              <p className="rounded-card bg-primary-weak px-3 py-2 text-caption font-medium text-primary">
                 {t('lodgingPrice.reports.winner', {
                   route: t(`lodgingPrice.route.${winner as AgodaRouteId}`),
                 })}
@@ -581,7 +577,7 @@ function Results({
           </p>
         )}
         <details className="rounded-card border border-line px-3">
-          <summary className="flex min-h-11 cursor-pointer items-center text-caption font-semibold text-fg-sub">
+          <summary className="flex min-h-11 cursor-pointer items-center text-caption font-medium text-fg-sub">
             {t('lodgingPrice.promoTitle', { n: AGODA_PROMOS.length })}
           </summary>
           <ul className="flex flex-col divide-y divide-line">
@@ -678,7 +674,7 @@ function LinkRow({
       </span>
       {prompt && write && (
         <span className="mb-1 flex items-center justify-between gap-2 rounded-btn bg-primary-weak px-3 py-1.5">
-          <span className="text-caption font-semibold text-primary">
+          <span className="text-caption font-medium text-primary">
             {t('lodgingPrice.report.prompt')}
           </span>
           <button
@@ -714,7 +710,7 @@ function LinkActions({
         rel="noopener noreferrer"
         aria-label={t('lodgingPrice.openLabel', { name: label })}
         onClick={onOpen}
-        className="flex h-10 shrink-0 items-center gap-1 rounded-btn bg-primary-weak px-3 text-caption font-semibold text-primary"
+        className="flex h-10 shrink-0 items-center gap-1 rounded-btn bg-primary-weak px-3 text-caption font-medium text-primary"
       >
         {t('lodgingPrice.open')}
         <ExternalLink aria-hidden="true" className="size-3.5" />

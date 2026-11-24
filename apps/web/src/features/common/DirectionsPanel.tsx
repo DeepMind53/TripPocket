@@ -24,7 +24,7 @@ export function DirectionsPanel({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">
-        <span className="text-caption font-semibold text-fg-sub">{t('dir.mode')}</span>
+        <span className="text-caption font-medium text-fg-sub">{t('dir.mode')}</span>
         <SegmentedControl
           label={t('dir.mode')}
           value={mode}

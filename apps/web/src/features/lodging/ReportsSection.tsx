@@ -68,7 +68,7 @@ export function ReportsSection({
                 type="button"
                 aria-expanded={showOther}
                 onClick={() => setShowOther((v) => !v)}
-                className="flex min-h-10 items-center text-caption font-semibold text-primary"
+                className="flex min-h-10 items-center text-caption font-medium text-primary"
               >
                 {t('lodgingPrice.reports.other', { n: state.other.length })}
               </button>

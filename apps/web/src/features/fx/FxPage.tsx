@@ -260,7 +260,7 @@ export function FxPage() {
             className="flex flex-col gap-2 rounded-card border border-line p-3"
           >
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-caption font-semibold text-fg-sub">{t('tool.splitLabel')}</span>
+              <span className="text-caption font-medium text-fg-sub">{t('tool.splitLabel')}</span>
               {[2, 3, 4, 5, 6].map((n) => (
                 <Chip key={n} selected={n === people} onClick={() => setPeople(n)}>
                   {t('tool.splitPeople', { n })}
@@ -308,13 +308,13 @@ function AmountRow(props: {
         <button
           type="button"
           onClick={props.onPick}
-          className="flex items-center gap-1 self-start text-left text-caption font-semibold text-fg-sub"
+          className="flex items-center gap-1 self-start text-left text-caption font-medium text-fg-sub"
         >
           {props.label}
           <ChevronDown aria-hidden="true" className="size-4 shrink-0" />
         </button>
       ) : (
-        <span className="text-caption font-semibold text-fg-sub">{props.label}</span>
+        <span className="text-caption font-medium text-fg-sub">{props.label}</span>
       )}
       <button
         type="button"

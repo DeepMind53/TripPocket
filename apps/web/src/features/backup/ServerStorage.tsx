@@ -54,7 +54,7 @@ export function ServerStorage() {
               type="button"
               aria-expanded={open}
               onClick={() => setOpen(!open)}
-              className="flex h-10 items-center justify-between text-caption font-semibold text-primary"
+              className="flex h-10 items-center justify-between text-caption font-medium text-primary"
             >
               {t('storage.byTrip')}
               <ChevronDown

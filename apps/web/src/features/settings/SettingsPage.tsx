@@ -41,7 +41,7 @@ export function SettingsPage() {
           className="flex min-h-12 items-center gap-2 px-4 py-2"
         >
           <span className="flex min-w-0 flex-1 flex-col">
-            <span className="text-body-2 font-medium break-keep">{item ?? label(x.title)}</span>
+            <span className="text-body-1 font-medium break-keep">{item ?? label(x.title)}</span>
             {item && <span className="text-caption text-fg-muted">{label(x.title)}</span>}
           </span>
           {!item && x.plan && (
@@ -93,7 +93,7 @@ export function SettingsPage() {
                 aria-label={t(`settings.head.${head}`)}
                 className="flex flex-col gap-2"
               >
-                <h2 className="px-1 text-caption font-semibold text-fg-muted">
+                <h2 className="px-1 text-caption font-medium text-fg-muted">
                   {t(`settings.head.${head}`)}
                 </h2>
                 <ul className={list}>
@@ -140,7 +140,7 @@ function DefaultsBox() {
             setSaved(false);
             toast(t('settings.clearedDefaults'));
           }}
-          className="self-end px-1 py-1 text-caption font-semibold text-fg-sub"
+          className="self-end px-1 py-1 text-caption font-medium text-fg-sub"
         >
           {t('settings.clearDefaults')}
         </button>

@@ -327,9 +327,7 @@ export function ItemDetailSheet({
 
           {!readOnly && onVisit && item.kind !== 'note' && (
             <div className="flex flex-col gap-1.5">
-              <span className="text-caption font-semibold text-fg-sub">
-                {t('visit.detailLabel')}
-              </span>
+              <span className="text-caption font-medium text-fg-sub">{t('visit.detailLabel')}</span>
               <SegmentedControl
                 label={t('visit.detailLabel')}
                 value={item.visit ?? 'none'}
@@ -436,7 +434,7 @@ function Action({
 function Info({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="flex flex-col gap-0.5">
-      <dt className="text-caption font-semibold text-fg-muted">{label}</dt>
+      <dt className="text-caption font-medium text-fg-muted">{label}</dt>
       <dd className="m-0 whitespace-pre-wrap">{children}</dd>
     </div>
   );
@@ -470,15 +468,9 @@ function BookingSummary({
       className="flex flex-col gap-1.5 rounded-card border border-line bg-bg-subtle/60 p-3"
     >
       <div className="flex items-center justify-between gap-2">
-        <span className="text-caption font-semibold text-fg-muted">
-          {t(`bookingKind.${b.kind}`)}
-        </span>
+        <span className="text-caption font-medium text-fg-muted">{t(`bookingKind.${b.kind}`)}</span>
         {onOpen && (
-          <button
-            type="button"
-            onClick={onOpen}
-            className="text-caption font-semibold text-primary"
-          >
+          <button type="button" onClick={onOpen} className="text-caption font-medium text-primary">
             {t('detail.openBooking')}
           </button>
         )}

@@ -112,7 +112,7 @@ export function PublicTripPage() {
             </section>
           );
         })}
-        <Link to="/" className="mt-2 text-center text-caption font-semibold text-primary">
+        <Link to="/" className="mt-2 text-center text-caption font-medium text-primary">
           {t('share.madeWith')}
         </Link>
       </div>

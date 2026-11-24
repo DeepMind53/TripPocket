@@ -27,7 +27,7 @@ export function ItemReviews({ data, kind }: { data: Data | null; kind: ReviewKin
 
   return (
     <section aria-label={t('review.sectionTitle')} className="flex flex-col gap-2">
-      <h3 className="text-caption font-semibold text-fg-muted">{t('review.sectionTitle')}</h3>
+      <h3 className="text-caption font-medium text-fg-muted">{t('review.sectionTitle')}</h3>
       {reviews.length === 0 ? (
         <p className="text-caption text-fg-muted">{t('review.none')}</p>
       ) : (
@@ -62,7 +62,7 @@ export function ItemReviews({ data, kind }: { data: Data | null; kind: ReviewKin
             <button
               type="button"
               onClick={() => setAll(true)}
-              className="self-start text-caption font-semibold text-primary"
+              className="self-start text-caption font-medium text-primary"
             >
               {t('review.more', { n: reviews.length - 3 })}
             </button>

@@ -88,7 +88,7 @@ export function HealthCardButton({ lang }: { lang: PhraseLang }) {
   const cur = open ? show[open] : null;
   return (
     <section aria-label={t('phrases.health')} className="flex flex-col gap-2">
-      <h2 className="text-caption font-semibold text-fg-muted">{t('phrases.health')}</h2>
+      <h2 className="text-caption font-medium text-fg-muted">{t('phrases.health')}</h2>
       <ul className="flex flex-col gap-2">
         {cards.map((c) => (
           <li key={c.kind}>
@@ -118,7 +118,7 @@ export function HealthCardButton({ lang }: { lang: PhraseLang }) {
             href={translate}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1 text-caption font-semibold text-primary"
+            className="flex items-center gap-1 text-caption font-medium text-primary"
           >
             {t('phrases.healthTranslate')}
             <ExternalLink aria-hidden="true" className="size-3.5" />

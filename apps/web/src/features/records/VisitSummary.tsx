@@ -33,7 +33,7 @@ export function VisitSummary({ trips }: { trips: readonly Trip[] }) {
         {items.length > 0 && (
           <Link
             to="/records/visits"
-            className="flex h-9 items-center gap-0.5 text-caption font-semibold text-fg-sub"
+            className="flex h-9 items-center gap-0.5 text-caption font-medium text-fg-sub"
           >
             {t('visit.allLink')}
             <ChevronRight aria-hidden="true" className="size-4" />

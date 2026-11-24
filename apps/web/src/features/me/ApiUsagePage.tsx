@@ -48,7 +48,7 @@ export function ApiUsagePage() {
     const rows = apis.filter((a) => !hasLimit(a));
     return (
       <section className="flex flex-col gap-3">
-        <h2 className="text-caption font-semibold text-fg-muted">{t(`apiUsage.${group}`)}</h2>
+        <h2 className="text-caption font-medium text-fg-muted">{t(`apiUsage.${group}`)}</h2>
         {group === 'free' && <p className="text-caption text-fg-muted">{t('apiUsage.freeDesc')}</p>}
         {/* 남은 무료량이 적은 것부터 (사용자 요청 2026-10-27) */}
         {apis

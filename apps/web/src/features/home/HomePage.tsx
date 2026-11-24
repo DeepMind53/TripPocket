@@ -51,7 +51,7 @@ export function HomePage() {
         {/* 앱 소개 다시 보기 (사용자 요청 2026-10-26) */}
         <Link
           to="/help"
-          className="flex min-h-11 items-center justify-center gap-1 justify-self-end rounded-btn px-2 whitespace-nowrap text-caption font-semibold text-fg-sub active:bg-bg-subtle"
+          className="flex min-h-11 items-center justify-center gap-1 justify-self-end rounded-btn px-2 whitespace-nowrap text-caption font-medium text-fg-sub active:bg-bg-subtle"
         >
           <CircleHelp aria-hidden="true" className="size-4" />
           {t('help.title')}

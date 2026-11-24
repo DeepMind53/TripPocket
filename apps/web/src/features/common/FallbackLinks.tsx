@@ -20,7 +20,7 @@ export function FallbackLinks({
           key={l.url}
           type="button"
           onClick={() => openFallback(l)}
-          className="inline-flex h-9 items-center gap-1 rounded-full border border-line bg-surface px-3 text-caption font-semibold text-primary"
+          className="inline-flex h-9 items-center gap-1 rounded-full border border-line bg-surface px-3 text-caption font-medium text-primary"
         >
           {t(`fallback.${l.id}`)}
           <ExternalLink aria-hidden="true" className="size-3.5" />

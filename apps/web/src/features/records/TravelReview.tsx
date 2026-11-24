@@ -169,7 +169,7 @@ export function TravelReview({ pastTrips }: { pastTrips: readonly Trip[] }) {
 
   return (
     <section aria-label={t('travelReview.title')} className="flex flex-col gap-2">
-      <h2 className="text-caption font-semibold text-fg-muted">{t('travelReview.title')}</h2>
+      <h2 className="text-caption font-medium text-fg-muted">{t('travelReview.title')}</h2>
       <ul className="grid grid-cols-2 gap-2">
         {shown.map((c) => (
           <li

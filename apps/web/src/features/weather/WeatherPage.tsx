@@ -81,7 +81,7 @@ export function WeatherPage() {
           aria-label={t('weatherPage.dest', { place: dest?.name ?? trip.title })}
           className="flex flex-col gap-2"
         >
-          <h2 className="text-caption font-semibold text-fg-muted">
+          <h2 className="text-caption font-medium text-fg-muted">
             {t('weatherPage.dest', { place: dest?.name ?? trip.title })}
           </h2>
           <ul className="flex flex-col divide-y divide-line rounded-card border border-line">
@@ -105,9 +105,7 @@ export function WeatherPage() {
 
         {flights.length > 0 && (
           <section aria-label={t('weatherPage.airports')} className="flex flex-col gap-2">
-            <h2 className="text-caption font-semibold text-fg-muted">
-              {t('weatherPage.airports')}
-            </h2>
+            <h2 className="text-caption font-medium text-fg-muted">{t('weatherPage.airports')}</h2>
             <ul className="flex flex-col divide-y divide-line rounded-card border border-line">
               {flights.map((b) => (
                 <FlightWeather key={b.id} flight={b} />
@@ -179,7 +177,7 @@ function DayRow({
         className="flex w-full items-center gap-3 px-4 py-2.5 text-left tight:gap-2"
       >
         <span className="flex w-20 shrink-0 flex-col">
-          <span className="text-caption font-semibold text-fg-sub">{title}</span>
+          <span className="text-caption font-medium text-fg-sub">{title}</span>
           <span className="tabular text-body-2">{formatMonthDay(date)}</span>
         </span>
         {weather && look ? (
@@ -248,7 +246,7 @@ function HourList({ hours }: { hours: { code: number[]; temp: number[] } }) {
             key={h}
             className={`flex min-h-11 items-center gap-3 px-1 ${wet ? 'bg-primary-weak/40' : ''}`}
           >
-            <span className="tabular w-12 shrink-0 text-caption font-semibold text-fg-sub">
+            <span className="tabular w-12 shrink-0 text-caption font-medium text-fg-sub">
               {t('weatherPage.hour', { h })}
             </span>
             <WeatherIcon kind={look.kind} className="size-6 shrink-0" />

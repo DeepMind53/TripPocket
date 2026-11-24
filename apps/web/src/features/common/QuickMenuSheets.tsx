@@ -362,11 +362,11 @@ function QuickMenuContent({
       {inTrip && (
         <section className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
-            <h3 className="text-caption font-semibold text-fg-muted">{t('quickMenu.shortcuts')}</h3>
+            <h3 className="text-caption font-medium text-fg-muted">{t('quickMenu.shortcuts')}</h3>
             <button
               type="button"
               onClick={() => setEditOpen(true)}
-              className="flex h-9 items-center gap-1 text-caption font-semibold text-primary"
+              className="flex h-9 items-center gap-1 text-caption font-medium text-primary"
             >
               <Pencil aria-hidden="true" className="size-3.5" />
               {t('quickMenu.edit')}
@@ -398,7 +398,7 @@ function QuickMenuContent({
           type="button"
           aria-expanded={settingsOpen}
           onClick={() => setSettingsOpen(!settingsOpen)}
-          className="flex h-10 items-center justify-between text-caption font-semibold text-fg-muted"
+          className="flex h-10 items-center justify-between text-caption font-medium text-fg-muted"
         >
           {t('quickMenu.quickSettings')}
           <ChevronDown
@@ -408,7 +408,7 @@ function QuickMenuContent({
         </button>
         {settingsOpen && (
           <>
-            <span className="text-caption font-semibold text-fg-sub">{t('quickMenu.theme')}</span>
+            <span className="text-caption font-medium text-fg-sub">{t('quickMenu.theme')}</span>
             <SegmentedControl
               label={t('quickMenu.theme')}
               value={theme}
@@ -419,7 +419,7 @@ function QuickMenuContent({
                 { value: 'system', label: t('quickMenu.themeSystem') },
               ]}
             />
-            <span className="mt-1 text-caption font-semibold text-fg-sub">
+            <span className="mt-1 text-caption font-medium text-fg-sub">
               {t('settings.directionsApp')}
             </span>
             <SegmentedControl
@@ -432,7 +432,7 @@ function QuickMenuContent({
                 { value: 'ask', label: t('quickMenu.appAsk') },
               ]}
             />
-            <span className="mt-1 text-caption font-semibold text-fg-sub">
+            <span className="mt-1 text-caption font-medium text-fg-sub">
               {t('settings.travelMode')}
             </span>
             <SegmentedControl

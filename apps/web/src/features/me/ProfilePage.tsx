@@ -46,7 +46,7 @@ export function ProfilePage() {
 
         <Group title={t('profile.groupDocs')}>
           <label className="flex flex-col gap-1.5">
-            <span className="text-caption font-semibold text-fg-sub">{t('profile.passport')}</span>
+            <span className="text-caption font-medium text-fg-sub">{t('profile.passport')}</span>
             <input
               type="date"
               className={field}
@@ -56,7 +56,7 @@ export function ProfilePage() {
             <span className="text-micro text-fg-muted">{t('profile.passportHint')}</span>
           </label>
           <label className="flex flex-col gap-1.5">
-            <span className="text-caption font-semibold text-fg-sub">{t('profile.license')}</span>
+            <span className="text-caption font-medium text-fg-sub">{t('profile.license')}</span>
             <input
               type="date"
               className={field}
@@ -64,7 +64,7 @@ export function ProfilePage() {
               onChange={(e) => updateTravelProfile({ licenseExpiry: e.target.value || null })}
             />
           </label>
-          <p className="text-caption font-semibold text-fg-sub">{t('profile.permits')}</p>
+          <p className="text-caption font-medium text-fg-sub">{t('profile.permits')}</p>
           <div className="grid grid-cols-2 gap-3 tight:grid-cols-1">
             {ENTRY_PERMITS.map((k) => (
               <label key={k} className="flex min-w-0 flex-col gap-1.5">
@@ -90,7 +90,7 @@ export function ProfilePage() {
 
         <Group title={t('profile.groupFlight')}>
           <div className="flex flex-col gap-1.5">
-            <span className="text-caption font-semibold text-fg-sub">{t('profile.seat')}</span>
+            <span className="text-caption font-medium text-fg-sub">{t('profile.seat')}</span>
             <SegmentedControl
               label={t('profile.seat')}
               value={p.seat}
@@ -107,7 +107,7 @@ export function ProfilePage() {
             type="button"
             aria-expanded={memOpen}
             onClick={() => setMemOpen(!memOpen)}
-            className="flex min-h-11 items-center gap-1.5 text-left text-caption font-semibold text-fg-sub"
+            className="flex min-h-11 items-center gap-1.5 text-left text-caption font-medium text-fg-sub"
           >
             <span className="flex-1">
               {t('profile.memberships')}
@@ -182,7 +182,7 @@ export function ProfilePage() {
         </Group>
 
         <Group title={t('profile.groupSafety')}>
-          <p className="text-caption font-semibold text-fg-sub">{t('profile.insurance')}</p>
+          <p className="text-caption font-medium text-fg-sub">{t('profile.insurance')}</p>
           <div className="grid grid-cols-2 gap-2 tight:grid-cols-1">
             <input
               aria-label={t('profile.insCompany')}
@@ -216,7 +216,7 @@ export function ProfilePage() {
               updateTravelProfile({ insurance: { ...p.insurance, phone: e.target.value } })
             }
           />
-          <p className="text-caption font-semibold text-fg-sub">{t('profile.contacts')}</p>
+          <p className="text-caption font-medium text-fg-sub">{t('profile.contacts')}</p>
           {p.contacts.map((c, i) => {
             const set = (patch: Partial<typeof c>) =>
               updateTravelProfile({
@@ -266,7 +266,7 @@ export function ProfilePage() {
         </Group>
 
         <Group title={t('profile.groupHealth')}>
-          <p className="text-caption font-semibold text-fg-sub">{t('profile.allergens')}</p>
+          <p className="text-caption font-medium text-fg-sub">{t('profile.allergens')}</p>
           <div role="group" aria-label={t('profile.allergens')} className="flex flex-wrap gap-2">
             {ALLERGENS.map((a) => (
               <Chip
@@ -281,7 +281,7 @@ export function ProfilePage() {
           </div>
           {/* "그 밖에 못 먹는 음식" 대신 알레르기·비선호 음식을 한글·영어로 직접 추가 (2026-11-02) */}
           <CustomFoodsField />
-          <p className="text-caption font-semibold text-fg-sub">{t('profile.blood')}</p>
+          <p className="text-caption font-medium text-fg-sub">{t('profile.blood')}</p>
           <div role="group" aria-label={t('profile.blood')} className="flex flex-wrap gap-2">
             {BLOOD_TYPES.map((b) => (
               <Chip
@@ -295,7 +295,7 @@ export function ProfilePage() {
             ))}
           </div>
           <label className="flex flex-col gap-1.5">
-            <span className="text-caption font-semibold text-fg-sub">{t('profile.meds')}</span>
+            <span className="text-caption font-medium text-fg-sub">{t('profile.meds')}</span>
             <input
               className={field}
               value={p.meds}
@@ -312,7 +312,7 @@ export function ProfilePage() {
         </Group>
 
         <label className="flex flex-col gap-1.5">
-          <span className="text-caption font-semibold text-fg-sub">{t('profile.memo')}</span>
+          <span className="text-caption font-medium text-fg-sub">{t('profile.memo')}</span>
           <textarea
             className={`${field} h-auto py-2`}
             rows={3}

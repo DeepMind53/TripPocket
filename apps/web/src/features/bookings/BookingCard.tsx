@@ -90,7 +90,7 @@ export function BookingCard({
             href={b.details.voucherUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex h-10 items-center gap-1 text-caption font-semibold text-primary"
+            className="flex h-10 items-center gap-1 text-caption font-medium text-primary"
           >
             {t('bookings.voucherOpen')}
             <ExternalLink aria-hidden="true" className="size-3.5" />
@@ -102,7 +102,7 @@ export function BookingCard({
         <div className="flex justify-end border-t border-dashed border-line px-4">
           <Link
             to={`/lodging-price?trip=${b.tripId}&booking=${b.id}`}
-            className="flex h-10 items-center gap-1 text-caption font-semibold text-primary"
+            className="flex h-10 items-center gap-1 text-caption font-medium text-primary"
           >
             <BadgePercent aria-hidden="true" className="size-4" />
             {t('lodgingPrice.button')}
@@ -123,7 +123,7 @@ export function BookingCard({
             type="button"
             aria-label={t('bookings.copyMember', { no: member.number })}
             onClick={() => void copyText(member.number, t('bookings.copied'))}
-            className="flex h-10 items-center gap-1 px-1 text-caption font-semibold text-primary"
+            className="flex h-10 items-center gap-1 px-1 text-caption font-medium text-primary"
           >
             <Copy aria-hidden="true" className="size-4" />
           </button>
@@ -141,7 +141,7 @@ export function BookingCard({
             type="button"
             aria-label={t('bookings.copyNo', { no: b.confirmationNo })}
             onClick={() => void copyText(b.confirmationNo as string, t('bookings.copied'))}
-            className="flex h-10 items-center gap-1 px-1 text-caption font-semibold text-primary"
+            className="flex h-10 items-center gap-1 px-1 text-caption font-medium text-primary"
           >
             <Copy aria-hidden="true" className="size-4" />
           </button>
@@ -246,7 +246,7 @@ export function LodgingBody({ booking: b }: { booking: Booking }) {
       </div>
       {/* 조식 있음·없음을 한눈에 (사용자 요청 2026-10-26) */}
       {b.details?.breakfast ? (
-        <p className="self-start rounded-full bg-primary-weak px-2 py-0.5 text-caption font-semibold text-primary">
+        <p className="self-start rounded-full bg-primary-weak px-2 py-0.5 text-caption font-medium text-primary">
           <InlineIcon icon={EggFried} className="text-current" />
           {b.details.breakfastDates
             ? t('bookings.breakfastSome', {

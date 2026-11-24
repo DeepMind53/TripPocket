@@ -43,7 +43,7 @@ export function DuplicateDaySheet({
       <div className="flex flex-col gap-3">
         {trips.length > 1 && (
           <label className="flex flex-col gap-1">
-            <span className="text-caption font-semibold text-fg-sub">{t('duplicate.trip')}</span>
+            <span className="text-caption font-medium text-fg-sub">{t('duplicate.trip')}</span>
             <select
               value={target.id}
               onChange={(e) => setTargetId(e.target.value)}

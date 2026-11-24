@@ -9,7 +9,7 @@ import { SettingsPageTitle } from './settingsPageTitle';
 export function GroupTitle({ title }: { title: string }) {
   const same = useContext(SettingsPageTitle) === title;
   return (
-    <h2 className={same ? 'sr-only' : 'px-1 text-caption font-semibold text-fg-muted'}>{title}</h2>
+    <h2 className={same ? 'sr-only' : 'px-1 text-caption font-medium text-fg-muted'}>{title}</h2>
   );
 }
 
@@ -34,7 +34,7 @@ export function Group({
         <button
           type="button"
           onClick={onReset}
-          className="self-end px-1 py-1 text-caption font-semibold text-fg-sub"
+          className="self-end px-1 py-1 text-caption font-medium text-fg-sub"
         >
           {t('settings.reset')}
         </button>
@@ -55,8 +55,8 @@ export function Field({
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between">
-        <span className="text-body-2 font-medium">{label}</span>
-        {value && <span className="text-caption font-semibold text-primary">{value}</span>}
+        <span className="text-body-1 font-medium">{label}</span>
+        {value && <span className="text-caption font-medium text-primary">{value}</span>}
       </div>
       {children}
     </div>
@@ -79,7 +79,7 @@ export function SwitchRow({
   const [open, setOpen] = useState(false);
   return (
     <div className="flex items-center justify-between gap-2 tight:flex-wrap">
-      <span className="min-w-0 flex-1 text-body-2 font-medium tight:basis-full">{label}</span>
+      <span className="min-w-0 flex-1 text-body-1 font-medium tight:basis-full">{label}</span>
       {preview && (
         <Button
           size="sm"

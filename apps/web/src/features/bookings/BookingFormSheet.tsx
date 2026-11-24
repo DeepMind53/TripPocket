@@ -374,9 +374,7 @@ function BookingForm({
       />
 
       <fieldset>
-        <legend className="mb-2 text-caption font-semibold text-fg-sub">
-          {t('bookings.kind')}
-        </legend>
+        <legend className="mb-2 text-caption font-medium text-fg-sub">{t('bookings.kind')}</legend>
         <div className="flex flex-wrap gap-2">
           {KINDS.map((k) => {
             const Icon = BOOKING_ICON[k];
@@ -549,7 +547,7 @@ function BookingForm({
           ) : kind === 'transfer' ? (
             <>
               <fieldset className="flex flex-col gap-1.5">
-                <legend className="mb-1.5 text-caption font-semibold text-fg-sub">
+                <legend className="mb-1.5 text-caption font-medium text-fg-sub">
                   {t('bookings.direction')}
                 </legend>
                 <div className="flex gap-2">
@@ -1023,7 +1021,7 @@ function BookingForm({
           )}
           {more && PAYMENT_KINDS.has(kind) && (
             <fieldset>
-              <legend className="mb-1.5 text-caption font-semibold text-fg-sub">
+              <legend className="mb-1.5 text-caption font-medium text-fg-sub">
                 {t('bookings.payment')}
               </legend>
               <div className="flex gap-2">
@@ -1087,7 +1085,7 @@ function BookingForm({
         <button
           type="button"
           onClick={() => setMore(true)}
-          className="self-start text-caption font-semibold text-primary"
+          className="self-start text-caption font-medium text-primary"
         >
           {t('bookings.more')}
         </button>

@@ -100,7 +100,7 @@ export function Row({ children }: { children: ReactNode }) {
 export function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <label className="flex min-w-0 flex-col gap-1.5">
-      <span className="text-caption font-semibold text-fg-sub">{label}</span>
+      <span className="text-caption font-medium text-fg-sub">{label}</span>
       {children}
     </label>
   );

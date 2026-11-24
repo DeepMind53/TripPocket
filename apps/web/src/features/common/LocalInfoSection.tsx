@@ -129,7 +129,7 @@ export function LocalInfoSection({ tripId }: { tripId: string }) {
     <section className="flex flex-col gap-2">
       {/* 머리말 오른쪽에 국기 + 나라 이름만 — 아래 따로 있던 "나라 대표 정보 · 참고용" 줄은 뺐다 (사용자 요청 2026-11-23).
           묶음이 여럿(도시·나라가 둘 이상)일 때만 묶음마다 이름 */}
-      <h3 className="flex flex-wrap items-baseline gap-x-1.5 text-caption font-semibold text-fg-muted">
+      <h3 className="flex flex-wrap items-baseline gap-x-1.5 text-caption font-medium text-fg-muted">
         {t('labs.localTitle')}
         {[...new Set(groups.map((g) => g.country))].map((cc) => (
           <span key={cc} className="text-fg">

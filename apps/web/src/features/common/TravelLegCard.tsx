@@ -24,9 +24,7 @@ export function TravelLegCard({
   const { t } = useTranslation();
   const b = leg.booking;
   const label = (
-    <span className="text-caption font-semibold text-primary">
-      {t(`quickMenu.leg.${leg.kind}`)}
-    </span>
+    <span className="text-caption font-medium text-primary">{t(`quickMenu.leg.${leg.kind}`)}</span>
   );
   const nextLine = next && (
     <span className="tabular truncate border-t border-dashed border-line pt-1.5 text-caption text-fg-sub">

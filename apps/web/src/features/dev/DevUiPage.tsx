@@ -347,7 +347,7 @@ export function DevUiPage() {
       >
         <div className="flex flex-col gap-3">
           <label className="flex flex-col gap-1.5">
-            <span className="text-caption font-semibold text-fg-sub">이름</span>
+            <span className="text-caption font-medium text-fg-sub">이름</span>
             <input
               className="h-12 rounded-btn border border-line bg-bg-subtle px-3 text-body-1 outline-none focus:border-primary"
               placeholder="예: 센소지"
@@ -370,7 +370,7 @@ function Section({ title, hint, children }: { title: string; hint?: string; chil
   return (
     <section className="flex flex-col gap-3">
       <div>
-        <h2 className="text-caption font-semibold tracking-wide text-fg-muted">{title}</h2>
+        <h2 className="text-caption font-medium tracking-wide text-fg-muted">{title}</h2>
         {hint && <p className="text-caption text-fg-muted">{hint}</p>}
       </div>
       {children}

@@ -44,7 +44,7 @@ export function JoinNoteForm({ token }: { token: string }) {
         });
       }}
     >
-      <label className="flex flex-col gap-1 text-caption font-semibold text-fg-sub">
+      <label className="flex flex-col gap-1 text-caption font-medium text-fg-sub">
         {t('login.joinNote.nickname')}
         <input
           value={nickname}
@@ -54,7 +54,7 @@ export function JoinNoteForm({ token }: { token: string }) {
           className={`${inputClass} h-11`}
         />
       </label>
-      <label className="flex flex-col gap-1 text-caption font-semibold text-fg-sub">
+      <label className="flex flex-col gap-1 text-caption font-medium text-fg-sub">
         {t('login.joinNote.note')}
         <textarea
           value={note}

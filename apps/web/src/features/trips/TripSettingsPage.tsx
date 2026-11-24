@@ -103,7 +103,7 @@ function TripSettingsForm({ trip, items }: { trip: Trip; items: ItineraryItem[] 
         </Field>
 
         <section className="flex flex-col gap-2">
-          <h2 className="text-caption font-semibold text-fg-sub">{t('tripSettings.period')}</h2>
+          <h2 className="text-caption font-medium text-fg-sub">{t('tripSettings.period')}</h2>
           <button
             type="button"
             onClick={() => {
@@ -123,7 +123,7 @@ function TripSettingsForm({ trip, items }: { trip: Trip; items: ItineraryItem[] 
                 <span key="length">{formatTripLength(start, end)}</span>,
               ]}
             />
-            <span className="text-caption font-semibold text-primary">
+            <span className="text-caption font-medium text-primary">
               {t('tripSettings.change')}
             </span>
           </button>
@@ -172,7 +172,7 @@ function TripSettingsForm({ trip, items }: { trip: Trip; items: ItineraryItem[] 
         </Field>
 
         <fieldset className="flex flex-col gap-2">
-          <legend className="mb-2 text-caption font-semibold text-fg-sub">
+          <legend className="mb-2 text-caption font-medium text-fg-sub">
             {t('newTrip.emojiLabel')}
           </legend>
           <EmojiPicker
@@ -183,7 +183,7 @@ function TripSettingsForm({ trip, items }: { trip: Trip; items: ItineraryItem[] 
         </fieldset>
 
         <fieldset className="flex flex-col gap-2">
-          <legend className="mb-2 text-caption font-semibold text-fg-sub">
+          <legend className="mb-2 text-caption font-medium text-fg-sub">
             {t('newTrip.colorLabel')}
           </legend>
           <div className="flex flex-wrap gap-3">
@@ -256,7 +256,7 @@ function TripSettingsForm({ trip, items }: { trip: Trip; items: ItineraryItem[] 
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <label className="flex flex-col gap-1.5">
-      <span className="text-caption font-semibold text-fg-sub">{label}</span>
+      <span className="text-caption font-medium text-fg-sub">{label}</span>
       {children}
     </label>
   );

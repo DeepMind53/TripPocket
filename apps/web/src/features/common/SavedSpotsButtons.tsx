@@ -129,7 +129,7 @@ export function SavedSpotsButtons({
         <div className="flex flex-col gap-3 pb-2">
           {notice}
           <label className="flex flex-col gap-1.5">
-            <span className="text-caption font-semibold text-fg-sub">{t('spots.name')}</span>
+            <span className="text-caption font-medium text-fg-sub">{t('spots.name')}</span>
             <input
               value={name}
               maxLength={40}

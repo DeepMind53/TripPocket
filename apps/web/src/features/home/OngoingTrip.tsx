@@ -330,7 +330,7 @@ export function OngoingTrip({
                 type="button"
                 aria-expanded={pastOpen}
                 onClick={() => setPastOpen(!pastOpen)}
-                className="flex h-9 items-center gap-1 text-caption font-semibold text-fg-sub"
+                className="flex h-9 items-center gap-1 text-caption font-medium text-fg-sub"
               >
                 {t('travel.pastN', { n: pastList.length })}
                 <ChevronDown
@@ -374,7 +374,7 @@ export function OngoingTrip({
           aria-label={t('home.lodgingTonight')}
           className="flex flex-col gap-2 rounded-card border border-line bg-surface p-4"
         >
-          <p className="flex items-center gap-2 text-caption font-semibold text-fg-muted">
+          <p className="flex items-center gap-2 text-caption font-medium text-fg-muted">
             <BedDouble aria-hidden="true" className="size-4 text-day-4" />
             {t('home.lodgingTonight')}
             <span className="tabular font-medium">

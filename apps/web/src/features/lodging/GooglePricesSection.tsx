@@ -61,7 +61,7 @@ export function GooglePricesSection({
           </ul>
           {prices.length > SHOWN && (
             <details className="rounded-card border border-line px-3">
-              <summary className="flex min-h-11 cursor-pointer items-center text-caption font-semibold text-fg-sub">
+              <summary className="flex min-h-11 cursor-pointer items-center text-caption font-medium text-fg-sub">
                 {t('lodgingPrice.google.more', { n: prices.length - SHOWN })}
               </summary>
               <ul className="flex flex-col divide-y divide-line">
@@ -87,7 +87,7 @@ export function GooglePricesSection({
           href={googleUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex h-10 items-center gap-1 self-start rounded-btn bg-primary-weak px-3 text-caption font-semibold text-primary"
+          className="flex h-10 items-center gap-1 self-start rounded-btn bg-primary-weak px-3 text-caption font-medium text-primary"
         >
           {t('lodgingPrice.google.open')}
           <ExternalLink aria-hidden="true" className="size-3.5" />

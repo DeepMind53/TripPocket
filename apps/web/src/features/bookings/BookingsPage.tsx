@@ -122,9 +122,7 @@ export function BookingsPage() {
                 aria-label={t(`bookings.${g.key}`)}
                 className="flex flex-col gap-2"
               >
-                <h2 className="text-caption font-semibold text-fg-muted">
-                  {t(`bookings.${g.key}`)}
-                </h2>
+                <h2 className="text-caption font-medium text-fg-muted">{t(`bookings.${g.key}`)}</h2>
                 <ul className="flex flex-col gap-2">
                   {list.map((b) => (
                     <BookingCard

@@ -57,7 +57,7 @@ export function NicknameSheet({
         }}
         className="flex flex-col gap-2"
       >
-        <label htmlFor="nickname" className="text-caption font-semibold text-fg-sub">
+        <label htmlFor="nickname" className="text-caption font-medium text-fg-sub">
           {t('nickname.label')}
         </label>
         <input

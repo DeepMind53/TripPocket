@@ -234,7 +234,7 @@ function ItemForm({
       }}
     >
       <fieldset>
-        <legend className="mb-2 text-caption font-semibold text-fg-sub">{t('form.kind')}</legend>
+        <legend className="mb-2 text-caption font-medium text-fg-sub">{t('form.kind')}</legend>
         <div className="flex flex-wrap gap-2">
           {ITEM_KINDS.map((k) => {
             const Icon = KIND_ICON[k];
@@ -348,7 +348,7 @@ function ItemForm({
       {/* 메모 옆 [원][달러][여행 나라 돈] — 넣은 금액의 환전 가격은 아래에 그때 환율로 (저장 안 함) */}
       <div className="flex flex-col gap-1.5">
         <div className="flex items-center justify-between gap-2">
-          <label htmlFor="item-memo" className="text-caption font-semibold text-fg-sub">
+          <label htmlFor="item-memo" className="text-caption font-medium text-fg-sub">
             {t('form.memo')}
           </label>
           <MoneyButtons tripCurrency={tripCurrency} onInsert={insertMoney} />
@@ -399,7 +399,7 @@ function withAddress(place: PlaceRef | undefined, address: string): PlaceRef | u
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <label className="flex flex-col gap-1.5">
-      <span className="text-caption font-semibold text-fg-sub">{label}</span>
+      <span className="text-caption font-medium text-fg-sub">{label}</span>
       {children}
     </label>
   );

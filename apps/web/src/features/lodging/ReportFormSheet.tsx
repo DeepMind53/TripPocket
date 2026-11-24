@@ -122,7 +122,7 @@ export function ReportFormSheet({
         </p>
         <div className="grid grid-cols-[minmax(0,1fr)_6.5rem] gap-2">
           <label className="flex min-w-0 flex-col gap-1.5">
-            <span className="text-caption font-semibold text-fg-sub">
+            <span className="text-caption font-medium text-fg-sub">
               {t('lodgingPrice.report.price')}
             </span>
             <input
@@ -135,7 +135,7 @@ export function ReportFormSheet({
             />
           </label>
           <label className="flex min-w-0 flex-col gap-1.5">
-            <span className="text-caption font-semibold text-fg-sub">
+            <span className="text-caption font-medium text-fg-sub">
               {t('lodgingPrice.report.currency')}
             </span>
             <select

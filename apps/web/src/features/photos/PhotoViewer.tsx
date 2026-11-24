@@ -110,7 +110,7 @@ export function PhotoViewer({
               </ul>
             )}
             <label className="flex flex-col gap-1">
-              <span className="text-caption font-semibold text-fg-sub">{t('photos.text')}</span>
+              <span className="text-caption font-medium text-fg-sub">{t('photos.text')}</span>
               <textarea
                 value={draft}
                 rows={6}

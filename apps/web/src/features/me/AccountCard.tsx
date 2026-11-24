@@ -88,7 +88,7 @@ export function AccountCard() {
           type="button"
           onClick={() => open('points')}
           aria-label={t('points.label', { n: (me.points ?? 0).toLocaleString() })}
-          className="tabular flex h-8 min-w-0 items-center justify-center rounded-full bg-primary-weak px-1.5 text-caption font-semibold text-primary"
+          className="tabular flex h-8 min-w-0 items-center justify-center rounded-full bg-primary-weak px-1.5 text-caption font-medium text-primary"
         >
           <span className="truncate">🅟 {(me.points ?? 0).toLocaleString()}P</span>
         </button>

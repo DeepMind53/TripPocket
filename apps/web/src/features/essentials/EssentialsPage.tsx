@@ -91,7 +91,7 @@ export function EssentialsPage() {
                         href={e.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex min-h-11 items-center gap-1 self-start text-caption font-semibold text-primary"
+                        className="inline-flex min-h-11 items-center gap-1 self-start text-caption font-medium text-primary"
                       >
                         {t('essentials.eventOpen')}
                         <ExternalLink aria-hidden="true" className="size-3.5" />
@@ -128,7 +128,7 @@ export function EssentialsPage() {
                   if (rows.length === 0) return null;
                   return (
                     <div key={level} className="flex flex-col gap-1">
-                      <h3 className="px-1 text-caption font-semibold text-fg-muted">
+                      <h3 className="px-1 text-caption font-medium text-fg-muted">
                         {t(`essentials.level.${level}`)}
                       </h3>
                       <ul className="flex flex-col divide-y divide-line rounded-card border border-line">
@@ -252,7 +252,7 @@ function EssentialLine({
             href={item.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex min-h-11 items-center gap-1 self-start text-caption font-semibold text-primary"
+            className="inline-flex min-h-11 items-center gap-1 self-start text-caption font-medium text-primary"
           >
             {t(
               row.key.startsWith(`${COMMON_KEY}:`) ? 'essentials.open' : 'essentials.openOfficial',
@@ -275,7 +275,7 @@ function PassportInput() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="self-start text-caption font-semibold text-primary"
+        className="self-start text-caption font-medium text-primary"
       >
         {t('essentials.passportAdd')}
       </button>

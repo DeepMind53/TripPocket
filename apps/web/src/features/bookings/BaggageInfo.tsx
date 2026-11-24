@@ -18,7 +18,7 @@ export function BaggageInfo({ booking: b }: { booking: Booking }) {
         type="button"
         aria-expanded={open}
         onClick={() => setOpen(!open)}
-        className="flex h-9 items-center gap-1.5 text-left text-caption font-semibold text-fg-sub"
+        className="flex h-9 items-center gap-1.5 text-left text-caption font-medium text-fg-sub"
       >
         <Luggage aria-hidden="true" className="size-4 text-primary" />
         <span className="flex-1">{t('baggage.title', { name: info.name })}</span>

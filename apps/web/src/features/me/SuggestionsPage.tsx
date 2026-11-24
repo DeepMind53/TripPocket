@@ -76,7 +76,7 @@ export function SuggestionsPage() {
           <button
             type="button"
             onClick={() => input.current?.click()}
-            className="flex min-h-11 items-center justify-center gap-1.5 rounded-card border border-dashed border-line text-caption font-semibold text-primary"
+            className="flex min-h-11 items-center justify-center gap-1.5 rounded-card border border-dashed border-line text-caption font-medium text-primary"
           >
             <ImagePlus aria-hidden="true" className="size-4" />
             {t('suggest.addImage')}
@@ -93,7 +93,7 @@ export function SuggestionsPage() {
         </Button>
 
         <section aria-label={t('suggest.mine')} className="flex flex-col gap-2 pt-2">
-          <h2 className="text-caption font-semibold text-fg-muted">{t('suggest.mine')}</h2>
+          <h2 className="text-caption font-medium text-fg-muted">{t('suggest.mine')}</h2>
           {list === 'offline' ? (
             <ServerOfflineNotice inline />
           ) : list && list.length === 0 ? (

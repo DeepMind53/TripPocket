@@ -40,7 +40,7 @@ export function BookingDocs({
   if (compact && docs.length === 0) return null;
   return (
     <section aria-label={t('docs.title')} className="flex flex-col gap-1.5">
-      <h3 className="flex items-center gap-1 text-caption font-semibold text-fg-muted">
+      <h3 className="flex items-center gap-1 text-caption font-medium text-fg-muted">
         <Paperclip aria-hidden="true" className="size-3.5" />
         {t('docs.title')}
       </h3>
@@ -153,7 +153,7 @@ export function BookingDocs({
             type="button"
             disabled={busy}
             onClick={() => input.current?.click()}
-            className="flex min-h-11 items-center justify-center gap-1.5 rounded-card border border-dashed border-line text-caption font-semibold text-primary disabled:opacity-50"
+            className="flex min-h-11 items-center justify-center gap-1.5 rounded-card border border-dashed border-line text-caption font-medium text-primary disabled:opacity-50"
           >
             <Paperclip aria-hidden="true" className="size-4" />
             {t('docs.add')}

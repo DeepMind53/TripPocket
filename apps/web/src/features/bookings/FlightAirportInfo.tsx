@@ -103,7 +103,7 @@ export function FlightAirportInfo({ booking: b }: { booking: Booking }) {
     <div className="flex items-start justify-between gap-2 border-t border-dashed border-line px-4 py-2">
       {/* 제목 바로 아래에 결과를 붙인다 — 오른쪽 확인 시각 때문에 벌어지지 않게 (사용자 요청 2026-11-04) */}
       <div className="flex min-w-0 flex-1 flex-col">
-        <span className="flex min-h-9 items-center text-caption font-semibold text-fg-sub">
+        <span className="flex min-h-9 items-center text-caption font-medium text-fg-sub">
           {t('flightAirport.title')}
         </span>
         {report ? (
@@ -123,7 +123,7 @@ export function FlightAirportInfo({ booking: b }: { booking: Booking }) {
           type="button"
           disabled={busy}
           onClick={() => void check()}
-          className="flex h-9 items-center gap-1 text-caption font-semibold text-primary disabled:opacity-50"
+          className="flex h-9 items-center gap-1 text-caption font-medium text-primary disabled:opacity-50"
         >
           <RefreshCw aria-hidden="true" className={`size-3.5 ${busy ? 'animate-spin' : ''}`} />
           {report ? t('flightAirport.recheck') : t('flightAirport.check')}

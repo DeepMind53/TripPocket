@@ -42,7 +42,7 @@ export function AirportField({
 
   return (
     <div className="relative flex min-w-0 flex-col gap-1.5">
-      <label htmlFor={id} className="text-caption font-semibold text-fg-sub">
+      <label htmlFor={id} className="text-caption font-medium text-fg-sub">
         {label}
       </label>
       <input

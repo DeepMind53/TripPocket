@@ -111,7 +111,7 @@ function Compass({ name, target }: { name: string; target: LatLng }) {
     <div className="flex flex-col items-center gap-4 pb-4">
       <div className="relative grid size-48 place-items-center rounded-full border border-line bg-bg-subtle">
         {heading === null && (
-          <span className="absolute top-2 text-caption font-semibold text-fg-muted">N</span>
+          <span className="absolute top-2 text-caption font-medium text-fg-muted">N</span>
         )}
         <Navigation2
           aria-hidden="true"

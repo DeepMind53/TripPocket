@@ -66,7 +66,7 @@ export function ShortcutEditSheet({
         <button
           type="button"
           onClick={() => setDraft(DEFAULT_SHORTCUTS)}
-          className="h-9 text-caption font-semibold text-primary"
+          className="h-9 text-caption font-medium text-primary"
         >
           {t('quickMenu.editReset')}
         </button>

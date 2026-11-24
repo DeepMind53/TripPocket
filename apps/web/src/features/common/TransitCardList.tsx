@@ -79,7 +79,7 @@ function CardView({ card: c }: { card: TransitCard }) {
           href={c.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex min-h-9 items-center gap-1 text-caption font-semibold text-primary"
+          className="flex min-h-9 items-center gap-1 text-caption font-medium text-primary"
         >
           {t('localInfo.official', { name: c.name })}
           <ExternalLink aria-hidden="true" className="size-3.5" />
