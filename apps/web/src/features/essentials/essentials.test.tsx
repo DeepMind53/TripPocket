@@ -61,10 +61,10 @@ it('필수 항목: 태국 TDAC·비자(자동)·공식 링크, 체크하면 저�
 it('홈 준비 현황에 필수 항목 칸 (완료 수·다음 할 일)', async () => {
   renderAt('/');
   const prep = await screen.findByRole('region', { name: '준비 현황' });
-  await waitFor(() =>
-    expect(within(prep).getByRole('button', { expanded: false })).toHaveTextContent(/\d+\/\d+/),
-  );
-  fireEvent.click(within(prep).getByRole('button', { expanded: false }));
+  const summary = within(prep).getByRole('button', { name: /준비 현황/ });
+  await waitFor(() => expect(summary).toHaveTextContent(/\d+\/\d+/));
+  // 출발 7일 안에 할 일이 남으면 이미 펼쳐져 있다 (docs/31 E1)
+  if (summary.getAttribute('aria-expanded') === 'false') fireEvent.click(summary);
   expect(await screen.findByRole('link', { name: /필수 항목 체크리스트/ })).toHaveTextContent(
     '다음: 디지털 입국카드 (TDAC)',
   );
