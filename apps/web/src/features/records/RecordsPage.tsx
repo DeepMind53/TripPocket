@@ -1,4 +1,4 @@
-import { BookOpen } from 'lucide-react';
+import { BookOpen, ChevronRight } from 'lucide-react';
 import { getTripStatus, nightsBetween, todayIn } from '@trippocket/shared';
 import { Link } from 'react-router';
 import { useTrips } from '../../data/hooks';
@@ -72,11 +72,13 @@ export function RecordsPage() {
         </section>
       </div>
       {past.length > 0 && <TripList only="past" />}
+      {/* 다른 글자 버튼처럼 파란 글자 + 화살표 (docs/31 N4) */}
       <Link
         to="/trips"
-        className="mx-auto mt-4 block w-fit py-2 text-body-2 font-semibold text-fg-sub"
+        className="mx-auto mt-4 flex w-fit items-center gap-0.5 py-2 text-body-2 font-semibold text-primary"
       >
         {t('records.allTrips')}
+        <ChevronRight aria-hidden="true" className="size-4" />
       </Link>
     </>
   );
