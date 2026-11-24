@@ -31,6 +31,7 @@
 | B8 | **도시별 현지 생활 정보** (`CITY_LOCAL_CHECKED_AT`) — 계속 확대 | `apps/web/src/data/cityLocal.ts`·`cityLocal2.ts` | 운영사·관광청 |
 | B9 | **대중교통 안내** (`TRANSIT_GUIDE_CHECKED_AT`) — 요금·환승·앱, "곧 바뀜" 날짜 지남 | `apps/web/src/data/transitGuide.ts` | 운영사 공식 사이트 |
 | B10 | **공휴일** — 다음 해 태국·말레이시아, 대만 TaiwanCalendar 다음 해, 한국 임시·대체공휴일 | `apps/web/src/data/holidays/*.json` (`scripts/gen-holidays.mjs`), `data/services/travelInfo.ts` | Google 캘린더 공휴일 피드, TaiwanCalendar, Nager.Date |
+| B11 | **현지 교통정보 전체 점검** (2026-11-24 사용자 요청) — B5·B7·B8·B9를 본 뒤 빠른 메뉴 "현지 정보"를 나라·도시별로 열어, 같은 도시의 카드 이름·요금·환승·추천 앱이 파일마다 어긋나지 않는지, 요금 인상·개통·폐선·카드 판매 중단·새 결제 방식(카드 터치 승차) 공지, 공항 → 숙소 길찾기 링크 형식 | `packages/shared/src/data/transit.ts`, `apps/web/src/data/transitCards.ts`·`cityLocal.ts`·`cityLocal2.ts`·`transitGuide.ts`, `ko.json` `localInfo`, `features/common/ArrivalRoute.tsx` | 운영사·관광청 공식 안내 |
 
 ## C. 앱 기능에 쓰는 외부 정보
 
@@ -98,7 +99,7 @@
 ## 정기 작업이 하는 일 (A~G)
 
 1. A~E 항목을 공식 출처로 다시 확인 (웹 검색)
-2. 바뀐 것만 고침 + 확인 날짜 상수를 그날로
+2. 바뀐 것만 고침 + 확인한 항목은 내용이 그대로여도 업데이트 날짜 상수(`*_CHECKED_AT`)를 그날로 — 앱 화면에 "YYYY-MM-DD 업데이트"로 보인다 (2026-11-24 사용자 요청)
 3. G 문서 현행화
 4. `pnpm install && pnpm check` 통과 확인
 5. 브랜치 `chore/monthly-YYYY-MM`에 커밋, PR 열기 — 본문에 바뀐 것·출처 링크·확인 못 한 것, H 체크리스트

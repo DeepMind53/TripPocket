@@ -25,7 +25,8 @@ export function monthlyUpdateRequest(month: string): string {
 - 아래 문구 중 사실과 다르거나 파일 위치·이름이 바뀐 곳이 있으면 고쳐서 반영하고, 고친 내용을 보고해 줘
 
 모든 항목은 공식 출처(정부·공관·관광청·운영사·서비스 공식 문서)로 다시 확인하고, 바뀐 것만 고쳐 줘.
-확인한 항목은 확인 날짜(*_CHECKED_AT·checkedAt)를 오늘로 바꾸고, 확인하지 못한 것은 그대로 두고 보고해 줘.
+확인한 항목은 내용이 그대로여도 업데이트 날짜(*_CHECKED_AT·checkedAt)를 오늘로 바꿔 줘 — 앱 화면에 "YYYY-MM-DD 업데이트"로 보인다.
+확인하지 못한 것은 날짜를 그대로 두고 보고해 줘.
 
 [A. 출국·안전 정보 — 틀리면 여행자가 곤란해진다]
 A1. 나라별 입국 필수 항목 (비자·무비자 기간·입국신고·전자여행허가 요금·여권 기준, 20개국)
@@ -66,6 +67,12 @@ B10. 공휴일
     - 다음 해 태국·말레이시아 데이터 (scripts/gen-holidays.mjs → apps/web/src/data/holidays)
     - 대만: TaiwanCalendar에 다음 해 파일이 올라왔는지 (apps/web/src/data/services/travelInfo.ts)
     - 한국 임시공휴일·대체공휴일이 새로 정해졌는지 (Nager.Date 반영 여부)
+B11. 현지 교통정보 전체 점검 — B5·B7·B8·B9를 따로 본 뒤, 앱에 보이는 현지 교통정보를 한 번에 다시 점검
+    - 빠른 메뉴 "현지 정보"(교통카드·결제 팁·대중교통 안내·도시별 정보·공항 → 숙소 길찾기)를 나라·도시별로 열어
+      같은 도시의 카드 이름·요금·환승·추천 앱이 파일마다 서로 다르지 않은지 대조
+      (packages/shared/src/data/transit.ts, apps/web/src/data/transitCards.ts·cityLocal.ts·cityLocal2.ts·transitGuide.ts, ko.json localInfo)
+    - 요금 인상·노선 개통·폐선·운행 중단·교통카드 판매 중단·새 결제 방식(예: 신용카드 터치 승차)이 공지됐는지 운영사 공식 안내로 확인
+    - 공항 → 숙소 길찾기 링크(Google 지도 대중교통 길찾기 주소 형식)가 아직 열리는지
 
 [C. 앱 기능에 쓰는 외부 정보]
 C1. 숙소 최저가 링크 (docs/28): apps/web/src/domain/agodaRoutes.ts (경로 21곳·할인 안내 14곳), domain/lodgingLinks.ts (예약 앱 6곳)
