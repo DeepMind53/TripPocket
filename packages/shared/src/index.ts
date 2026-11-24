@@ -138,7 +138,7 @@ export {
 } from './ai/recommend';
 export { distanceKm, formatDistance, inKorea, walkMinutes, type LatLng } from './geo/distance';
 export { cleanShortText, NICKNAME_MAX, normalizeNickname } from './user/nickname';
-export { findAirport, searchAirports, type Airport } from './data/airports';
+export { allAirports, findAirport, searchAirports, type Airport } from './data/airports';
 export { flagEmoji } from './data/flag';
 export * from './reviews/reviews';
 export * from './lodging/lodgingReports';

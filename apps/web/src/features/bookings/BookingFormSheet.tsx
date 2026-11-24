@@ -8,7 +8,7 @@ import { AirportField } from './AirportField';
 import { isDomesticTrip, tripCountries } from '../../domain/tripPlace';
 import { PlaceAutocomplete } from '../common/PlaceAutocomplete';
 import { BookingScanButton } from '../labs/BookingScanButton';
-import { applyScan, scanBooking } from '../../domain/bookingScan';
+import { applyScan } from '../../domain/bookingScan';
 import { StationField } from './StationPicker';
 import {
   addDays,
@@ -265,13 +265,14 @@ function BookingForm({
   const snapshot = JSON.stringify([kind, f]);
   const [initial] = useState(snapshot);
   useSheetDirty(!saving && snapshot !== initial);
-  async function lookupFlight() {
+  /** base: 캡처로 막 채운 값처럼 아직 화면 상태에 들어가지 않은 값으로 부를 때 */
+  async function lookupFlight(base: typeof f = f) {
     setLooking(true);
-    const res = await flightsApi.lookup(f.flightNo);
+    const res = await flightsApi.lookup(base.flightNo);
     setLooking(false);
     if (!res.ok) {
       // 한도는 안내 팝업이 따로 뜬다 — 항공편 정보 사이트를 대신 연다
-      if (res.reason === 'limit') attachFallback([flightLink(f.flightNo)]);
+      if (res.reason === 'limit') attachFallback([flightLink(base.flightNo)]);
       else toast(t(res.status === 404 ? 'bookings.lookupNone' : 'bookings.lookupFailed'));
       return;
     }
@@ -292,15 +293,15 @@ function BookingForm({
     }));
     setLookedUp(true);
     // 인천공항 터미널이 비면 인천공항 운항 정보로 (무료, 출발 3일 전~6일 후만, 2026-11-24)
-    const from = (x.from.iata ?? f.from).toUpperCase();
-    const to = (x.to.iata ?? f.to).toUpperCase();
-    const needDep = from === 'ICN' && !x.from.terminal && !f.terminal.trim();
-    const needArr = to === 'ICN' && !x.to.terminal && !f.arrivalTerminal.trim();
+    const from = (x.from.iata ?? base.from).toUpperCase();
+    const to = (x.to.iata ?? base.to).toUpperCase();
+    const needDep = from === 'ICN' && !x.from.terminal && !base.terminal.trim();
+    const needArr = to === 'ICN' && !x.to.terminal && !base.arrivalTerminal.trim();
     if (!needDep && !needArr) return;
     const r = await flightsApi.airport(x.flightNo, {
-      date: f.startDate,
+      date: base.startDate,
       ...(needDep ? { from } : {}),
-      ...(needArr ? { to, arrDate: nextDay ? addDays(f.startDate, 1) : f.startDate } : {}),
+      ...(needArr ? { to, arrDate: nextDay ? addDays(base.startDate, 1) : base.startDate } : {}),
     });
     if (!r.ok) return;
     const dep = r.data.dep?.info?.terminal;
@@ -624,18 +625,24 @@ function BookingForm({
 
       {/* 실험실: 예약 확인 캡처로 빈 칸 채우기 (2026-11-24) */}
       <BookingScanButton
+        kind={kind}
+        refDate={trip.startDate}
         currency={(() => {
           const c = tripCountries(trip).find((x) => x !== 'KR');
           return c ? COUNTRY_CURRENCY[c] : undefined;
         })()}
-        onText={(text) => {
-          const { patch, filled } = applyScan(kind, scanBooking(text), f, !b);
+        onScan={(scan, from) => {
+          const { patch, filled } = applyScan(kind, scan, f, !b);
           if (filled === 0) {
             toast(t('tool.scanNone'));
             return;
           }
+          const next = { ...f, ...patch };
           setF((cur) => ({ ...cur, ...patch }));
-          toast(t('tool.scanFilled', { n: filled }));
+          toast(t(from === 'barcode' ? 'tool.scanBarcode' : 'tool.scanFilled', { n: filled }));
+          // 편명은 찾았는데 시각이 비면 편명 불러오기로 채운다 (탑승권 바코드엔 시각이 없음, 무료 조회)
+          if (kind === 'flight' && next.flightNo.trim() && (!next.startTime || !next.endTime))
+            void lookupFlight(next);
         }}
       />
 

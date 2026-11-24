@@ -945,3 +945,51 @@ it('실험실 캡처로 채우기: 읽은 글에서 예약번호·편명·공항
     setLab('bookingScan', false, { silent: true });
   }
 });
+
+it('실험실 캡처로 채우기: 탑승권 바코드는 기기 안에서 읽고, 시각은 편명 불러오기로 (2026-11-24)', async () => {
+  const { setLab } = await import('../../data/labsStore');
+  setLab('bookingScan', true, { silent: true });
+  useAuth.setState({
+    status: 'user',
+    me: { id: 'u', nickname: 'n', createdAt: '', providers: [] },
+  });
+  const urls: string[] = [];
+  vi.stubGlobal('fetch', async (url: string) => {
+    urls.push(url);
+    if (url === '/api/flights/KE703')
+      return Response.json({
+        flightNo: 'KE703',
+        from: { iata: 'ICN', terminal: '2', time: '09:00' },
+        to: { iata: 'NRT', terminal: '1', time: '11:20' },
+      });
+    return Response.json({}, { status: 404 });
+  });
+  vi.stubGlobal('createImageBitmap', async () => ({ close() {} }));
+  vi.stubGlobal(
+    'BarcodeDetector',
+    class {
+      detect = async () => [
+        { rawValue: 'M1HONG/GILDONG MR     EAB12CD ICNNRTKE 0703 307Y034A0045 100' },
+      ];
+    },
+  );
+  try {
+    const user = userEvent.setup();
+    renderAt([`/trips/${tripId}/bookings`]);
+    await user.click(await screen.findByRole('button', { name: '예약 추가' }));
+    const sheet = screen.getByRole('dialog', { name: '예약 추가' });
+    const file = new File([new Uint8Array([1, 2, 3])], 'pass.png', { type: 'image/png' });
+    await user.upload(within(sheet).getByLabelText('예약 확인 캡처로 채우기'), file);
+    await waitFor(() => expect(within(sheet).getByLabelText('출발 시간')).toHaveValue('09:00'));
+    expect(within(sheet).getByLabelText('예약번호')).toHaveValue('AB12CD');
+    expect(within(sheet).getByLabelText('편명')).toHaveValue('KE703');
+    expect(within(sheet).getByLabelText('도착 시간')).toHaveValue('11:20');
+    expect(await screen.findByText(/탑승권 바코드로 \d+칸을 채웠어요/)).toBeInTheDocument();
+    // 사진은 글자 인식으로 보내지 않았다
+    expect(urls).not.toContain('/api/ocr');
+  } finally {
+    vi.unstubAllGlobals();
+    setLab('bookingScan', false, { silent: true });
+    useAuth.setState({ status: 'unknown', me: null });
+  }
+});

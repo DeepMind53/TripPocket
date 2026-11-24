@@ -3107,6 +3107,7 @@
     "scanButton": "예약 확인 캡처로 채우기",
     "scanHint": "사진은 글자만 읽고 저장하지 않아요\n빈 칸만 채워요",
     "scanFilled": "캡처에서 {{n}}칸을 채웠어요\n맞는지 확인해 주세요",
+    "scanBarcode": "탑승권 바코드로 {{n}}칸을 채웠어요\n사진은 보내지 않았어요",
     "scanNone": "채울 내용을 찾지 못했어요",
     "scanFailed": "글자를 읽지 못했어요\n다시 해 주세요",
     "mapLinkPlaceholder": "구글·네이버 지도 링크",
