@@ -2,7 +2,16 @@
 // 인라인 스크립트 대신 파일로 둔다 — 보안 정책(CSP)이 인라인 스크립트를 막기 때문
 try {
   var b = JSON.parse(localStorage.getItem('tp-boot') || '{}');
-  if (b.theme === 'light' || b.theme === 'dark') document.documentElement.dataset.theme = b.theme;
+  if (b.theme === 'light' || b.theme === 'dark') {
+    document.documentElement.dataset.theme = b.theme;
+    // 상태 표시줄 색도 앱 테마로 (docs/31 R6, src/shared/lib/theme.ts와 같은 값)
+    var metas = document.querySelectorAll('meta[name="theme-color"]');
+    for (var i = 0; i < metas.length; i++) {
+      metas[i].setAttribute('data-media', metas[i].getAttribute('media') || '');
+      metas[i].removeAttribute('media');
+      metas[i].setAttribute('content', b.theme === 'dark' ? '#0F1115' : '#FFFFFF');
+    }
+  }
   // 글자 크기 3단계 0.81·0.9·0.99, 기본 0.9 (2026-11-10) — 글자 토큰 배율(--tp-font)만, 화면 전체 배율은 쓰지 않는다.
   // 예전 값: 1 → 0.9, 1.15·1.3 → 0.99 (shared parseSettings와 같게)
   var f = typeof b.fontScale === 'number' ? b.fontScale : 0.9;
