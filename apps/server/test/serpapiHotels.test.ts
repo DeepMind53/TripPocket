@@ -4,7 +4,7 @@ import { createSession } from '../src/auth/session';
 import { loadConfig } from '../src/config';
 import { openDb, type Db } from '../src/db/database';
 import { priceQueryOf } from '../src/routes/lodging';
-import { parseHotels, pricesState, resetHotelPrices } from '../src/services/serpapiHotels';
+import { clockOf, parseHotels, pricesState, resetHotelPrices } from '../src/services/serpapiHotels';
 
 /** 구글 호텔 참고 가격 (docs/28 §4.3·§8) — 실제 SerpApi에는 묻지 않는다 */
 const SECRET = 's'.repeat(40);
@@ -79,6 +79,25 @@ const ask = (name = '신주쿠 그레이스리', cookie = true, extra = '') =>
       ...(cookie ? { cookie: `__Host-sid=${sid}` } : {}),
     },
   });
+
+describe('숙소 안내 체크인·체크아웃 시각 (2026-11-24)', () => {
+  it('여러 모양을 HH:mm으로', () => {
+    expect(clockOf('3:00 PM')).toBe('15:00');
+    expect(clockOf('오후 3:00')).toBe('15:00');
+    expect(clockOf('12:00 PM')).toBe('12:00');
+    expect(clockOf('오전 11:30')).toBe('11:30');
+    expect(clockOf('14:00')).toBe('14:00');
+    expect(clockOf('언제든')).toBeUndefined();
+    expect(clockOf(undefined)).toBeUndefined();
+  });
+  it('숙소 하나 응답에 있으면 함께 돌려준다', () => {
+    const r = parseHotels({ ...hotel, check_in_time: '3:00 PM', check_out_time: '11:00 AM' });
+    expect(r && 'view' in r && r.view).toMatchObject({
+      checkInTime: '15:00',
+      checkOutTime: '11:00',
+    });
+  });
+});
 
 describe('구글 호텔 참고 가격', () => {
   it('로그인 필요, 예약처마다 가장 싼 1줄을 1박 오름차순으로, 보내는 것은 이름·날짜·인원·통화뿐', async () => {

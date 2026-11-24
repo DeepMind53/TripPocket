@@ -99,6 +99,22 @@ function readPrices(list: unknown[]): HotelPriceView[] {
     .slice(0, HOTEL_PRICE_RULES.maxRows);
 }
 
+/** "3:00 PM" · "오후 3:00" · "15:00" → "15:00" (모르는 모양은 undefined) */
+export function clockOf(v: unknown): string | undefined {
+  if (typeof v !== 'string') return undefined;
+  const s = v.trim();
+  const m = /(\d{1,2})(?::(\d{2}))?/.exec(s);
+  if (!m) return undefined;
+  let h = Number(m[1]);
+  const min = Number(m[2] ?? '0');
+  const pm = /pm|오후/i.test(s);
+  const am = /am|오전/i.test(s);
+  if (pm && h < 12) h += 12;
+  if (am && h === 12) h = 0;
+  if (h > 23 || min > 59) return undefined;
+  return `${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
+}
+
 /**
  * SerpApi 응답 읽기: 숙소 하나 → 가격 / 목록 → 첫 호텔의 token / 결과 없음 → null.
  * 모양이 다르면 실패 (빈 결과로 넘기지 않는다)
@@ -114,7 +130,16 @@ export function parseHotels(body: unknown): { view: HotelPricesView } | { token:
   if (Array.isArray(b.prices) || b.type === 'hotel' || b.type === 'vacation rental') {
     const name = typeof b.name === 'string' ? b.name.trim().slice(0, 120) : '';
     if (!name) throw new Error('serpapi_shape');
-    return { view: { name, prices: readPrices(Array.isArray(b.prices) ? b.prices : []) } };
+    const checkInTime = clockOf(b.check_in_time);
+    const checkOutTime = clockOf(b.check_out_time);
+    return {
+      view: {
+        name,
+        prices: readPrices(Array.isArray(b.prices) ? b.prices : []),
+        ...(checkInTime ? { checkInTime } : {}),
+        ...(checkOutTime ? { checkOutTime } : {}),
+      },
+    };
   }
   if (Array.isArray(b.properties)) {
     const first = (b.properties as Record<string, unknown>[]).find(

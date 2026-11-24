@@ -49,10 +49,11 @@ describe('실험실', () => {
       'splitBill',
       'unitConvert',
       'quickTimer',
+      'bookingScan',
     ]);
-    expect(screen.getAllByRole('switch')).toHaveLength(7);
+    expect(screen.getAllByRole('switch')).toHaveLength(8);
     // 실험마다 [샘플] (사용자 요청 2026-11-10)
-    expect(screen.getAllByRole('button', { name: / 샘플$/ })).toHaveLength(7);
+    expect(screen.getAllByRole('button', { name: / 샘플$/ })).toHaveLength(8);
     // 정식이 됐거나 뺀 것은 실험실에 없다
     for (const name of [
       /현지 공휴일/,

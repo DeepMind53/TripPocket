@@ -113,6 +113,9 @@ export interface HotelPricesView {
   /** 구글이 고른 숙소 이름 (입력한 이름과 다를 수 있어 화면에 보여 준다) */
   name: string;
   prices: HotelPriceView[];
+  /** 숙소 안내 체크인·체크아웃 시각 HH:mm (2026-11-24 — 예약 칸이 비었거나 기본값이면 채운다) */
+  checkInTime?: string;
+  checkOutTime?: string;
 }
 export const HOTEL_PRICE_RULES = { maxRows: 12, maxNights: 30, adultsMax: 8 } as const;
 

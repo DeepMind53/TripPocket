@@ -1,4 +1,9 @@
-import { todayIn, type LodgingReportView, type LodgingSite } from '@trippocket/shared';
+import {
+  todayIn,
+  type HotelPricesView,
+  type LodgingReportView,
+  type LodgingSite,
+} from '@trippocket/shared';
 import { Clipboard, Copy, ExternalLink, History, PencilLine } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { loadReports, removeReport } from '../../data/lodgingReports';
@@ -67,7 +72,14 @@ const GROUPS: readonly Group[] = ['all', 'search', 'card', 'airline'];
  * 가격은 사용자가 눌러서 각 앱에서 보고, 본 가격을 적으면 30일 동안 모두가 본다 (docs/28 §7).
  * 서버 요청은 [검색]을 누를 때 기록 목록 1번뿐 (data/lodgingReports.ts가 잠금·5분 재사용·시간 제한·취소)
  */
-export function LodgingPricePanel({ initial }: { initial: Partial<RecentStay> }) {
+export function LodgingPricePanel({
+  initial,
+  onHotelTimes,
+}: {
+  initial: Partial<RecentStay>;
+  /** 예약 시트에서 열었을 때: 숙소 안내 체크인·체크아웃 시각을 예약 칸으로 (2026-11-24) */
+  onHotelTimes?: ((hotel: HotelPricesView) => void) | undefined;
+}) {
   const { t } = useTranslation();
   const [name, setName] = useState(initial.name ?? '');
   const [checkIn, setCheckIn] = useState(initial.checkIn ?? '');
@@ -149,6 +161,8 @@ export function LodgingPricePanel({ initial }: { initial: Partial<RecentStay> })
     setGoogle({ status: 'loading' });
     void loadHotelPrices(q, pctrl.signal).then((res) => {
       if (pctrl.signal.aborted) return;
+      if (res.ok && res.hotel && (res.hotel.checkInTime || res.hotel.checkOutTime))
+        onHotelTimes?.(res.hotel);
       setGoogle(
         res.ok
           ? { status: 'ready', hotel: res.hotel }

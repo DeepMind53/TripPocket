@@ -7,28 +7,35 @@ import { flightsApi } from '../../data/api/flights';
 import { AirportField } from './AirportField';
 import { isDomesticTrip, tripCountries } from '../../domain/tripPlace';
 import { PlaceAutocomplete } from '../common/PlaceAutocomplete';
+import { BookingScanButton } from '../labs/BookingScanButton';
+import { applyScan, scanBooking } from '../../domain/bookingScan';
 import { StationField } from './StationPicker';
 import {
   addDays,
   baggageFor,
+  COUNTRY_CURRENCY,
   diffDays,
   nightsBetween,
   transitNames,
+  weekday,
   type Booking,
+  isOutsideHours,
+  type PlaceDetails,
   type PlaceSummary,
   type Trip,
 } from '@trippocket/shared';
-import { BadgePercent, CalendarRange, EggFried, Trash2 } from 'lucide-react';
+import { BadgePercent, CalendarRange, EggFried, Trash2, TriangleAlert } from 'lucide-react';
 import { LodgingPriceSheet } from '../lodging/LodgingPriceSheet';
 import { StayRangeSheet } from './StayRangeSheet';
 import { BookingDocs } from './BookingDocs';
 import { formatMonthDay } from '../../shared/lib/dateFormat';
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
+import { routeEtaResult } from '../../data/api/routes';
 import { useTranslation } from '../../i18n';
 import { syncBookingToPlan } from '../../data/bookingPlanner';
 import { placesApi } from '../../data/api/places';
 import { useTripBookings } from '../../data/hooks';
-import { transferSpots, type TransferSpot } from '../../domain/transferSpots';
+import { dropSuggestion, transferSpots, type TransferSpot } from '../../domain/transferSpots';
 import {
   baggageHint,
   baggageWithUnit,
@@ -201,6 +208,38 @@ function BookingForm({
   };
   const timeStep = useSettings((st) => st.timeStepMin) * 60;
   const [saving, setSaving] = useState(false);
+  // 드랍 추천 출발 시각 (2026-11-24): 고른 항공편 + 숙소 → 공항 차로 가는 시간 (길 조회 1번, 기기에 7일 보관)
+  const [dropFlight, setDropFlight] = useState<{
+    date: string;
+    time: string;
+    international: boolean;
+  } | null>(null);
+  const [driveMin, setDriveMin] = useState<number | null>(null);
+  const dropFrom = kind === 'transfer' && f.direction === 'drop' ? f.fromCoords : undefined;
+  const dropTo = dropFlight ? f.toCoords : undefined;
+  useEffect(() => {
+    if (!dropFrom || !dropTo) return;
+    let alive = true;
+    void routeEtaResult(dropFrom, dropTo, !isDomesticTrip(trip), false, true).then((r) => {
+      if (alive) setDriveMin(r.eta?.drive ?? null);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [dropFrom, dropTo, trip]);
+  const dropTip =
+    dropFrom && dropTo && dropFlight && driveMin !== null
+      ? { ...dropSuggestion(dropFlight, driveMin, dropFlight.international), drive: driveMin }
+      : null;
+  const [hours, setHours] = useState<{ name: string; periods: PlaceDetails['periods'] } | null>(
+    null,
+  );
+  const outsideHours =
+    kind === 'restaurant' &&
+    !!hours &&
+    hours.name === f.title &&
+    !!f.startTime &&
+    isOutsideHours(hours.periods, weekday(f.startDate), f.startTime);
   const [stayOpen, setStayOpen] = useState(false);
   const [priceOpen, setPriceOpen] = useState(false);
   // 덜 쓰는 칸은 접어 둔다 (docs/20 U4) — 고칠 때 값이 있으면 펼쳐서
@@ -252,12 +291,35 @@ function BookingForm({
       endDate: nextDay ? addDays(prev.startDate, 1) : prev.startDate,
     }));
     setLookedUp(true);
+    // 인천공항 터미널이 비면 인천공항 운항 정보로 (무료, 출발 3일 전~6일 후만, 2026-11-24)
+    const from = (x.from.iata ?? f.from).toUpperCase();
+    const to = (x.to.iata ?? f.to).toUpperCase();
+    const needDep = from === 'ICN' && !x.from.terminal && !f.terminal.trim();
+    const needArr = to === 'ICN' && !x.to.terminal && !f.arrivalTerminal.trim();
+    if (!needDep && !needArr) return;
+    const r = await flightsApi.airport(x.flightNo, {
+      date: f.startDate,
+      ...(needDep ? { from } : {}),
+      ...(needArr ? { to, arrDate: nextDay ? addDays(f.startDate, 1) : f.startDate } : {}),
+    });
+    if (!r.ok) return;
+    const dep = r.data.dep?.info?.terminal;
+    const arr = r.data.arr?.info?.terminal;
+    setF((cur) => ({
+      ...cur,
+      ...(dep && !cur.terminal.trim() ? { terminal: dep.slice(0, 20) } : {}),
+      ...(arr && !cur.arrivalTerminal.trim() ? { arrivalTerminal: arr.slice(0, 20) } : {}),
+    }));
   }
   /** 해외(Google) 장소는 검색 결과에 전화번호가 없다 — 고를 때 한 번 확인해서 연락처 칸이 비면 채운다 */
+  // 식당은 같은 응답의 영업시간도 — 예약 시각이 영업시간 밖이면 알림 (저장하지 않음, 2026-11-24)
   async function fillGooglePhone(p: PlaceSummary, still: (cur: typeof f) => boolean) {
-    if (!PHONE_KINDS.has(kind) || p.source !== 'google' || p.phone) return;
+    if (!PHONE_KINDS.has(kind) || p.source !== 'google') return;
+    if (p.phone && kind !== 'restaurant') return;
     const r = await placesApi.googleDetails(p.id);
-    const phone = r.ok ? r.data.phone?.trim().slice(0, 40) : undefined;
+    if (r.ok && kind === 'restaurant' && r.data.periods?.length)
+      setHours({ name: p.name, periods: r.data.periods });
+    const phone = r.ok && !p.phone ? r.data.phone?.trim().slice(0, 40) : undefined;
     if (!phone) return;
     // 그사이 다른 곳을 골랐거나 직접 적었으면 그대로
     setF((cur) => (still(cur) && !cur.phone.trim() ? { ...cur, phone } : cur));
@@ -272,8 +334,17 @@ function BookingForm({
         ? { flightNo: spot.flightNo, ...(spot.date ? { startDate: spot.date } : {}) }
         : {}),
       // 픽업: 시간이 비어 있으면 그 항공편 도착 시각
-      ...(spot.time && !cur.startTime ? { startTime: spot.time } : {}),
+      ...(cur.direction === 'pickup' && spot.time && !cur.startTime
+        ? { startTime: spot.time }
+        : {}),
     }));
+    // 드랍: 공항을 고르면 그 항공편 출발 시각으로 추천 시간 계산
+    if (side === 'to')
+      setDropFlight(
+        f.direction === 'drop' && spot.time && spot.date
+          ? { date: spot.date, time: spot.time, international: !!spot.international }
+          : null,
+      );
   }
   const set = (key: keyof typeof f) => (e: { target: { value: string } }) =>
     setF((prev) => ({ ...prev, [key]: e.target.value }));
@@ -550,6 +621,23 @@ function BookingForm({
           })}
         </div>
       </fieldset>
+
+      {/* 실험실: 예약 확인 캡처로 빈 칸 채우기 (2026-11-24) */}
+      <BookingScanButton
+        currency={(() => {
+          const c = tripCountries(trip).find((x) => x !== 'KR');
+          return c ? COUNTRY_CURRENCY[c] : undefined;
+        })()}
+        onText={(text) => {
+          const { patch, filled } = applyScan(kind, scanBooking(text), f, !b);
+          if (filled === 0) {
+            toast(t('tool.scanNone'));
+            return;
+          }
+          setF((cur) => ({ ...cur, ...patch }));
+          toast(t('tool.scanFilled', { n: filled }));
+        }}
+      />
 
       {kind === 'flight' ? (
         <>
@@ -905,6 +993,20 @@ function BookingForm({
                       checkOut: endDate,
                       domestic: isDomesticTrip(trip),
                     }}
+                    // 숙소 안내 시각: 비었거나 기본값(15:00·11:00)일 때만 (2026-11-24)
+                    onHotelTimes={(h) => {
+                      const def = bookingDefaultTimes('lodging');
+                      const open = (v: string, d: string) => v === '' || v === d;
+                      const inT = open(f.startTime, def.start) ? h.checkInTime : undefined;
+                      const outT = open(f.endTime, def.end) ? h.checkOutTime : undefined;
+                      if ((!inT || inT === f.startTime) && (!outT || outT === f.endTime)) return;
+                      setF((cur) => ({
+                        ...cur,
+                        ...(inT ? { startTime: inT } : {}),
+                        ...(outT ? { endTime: outT } : {}),
+                      }));
+                      toast(t('bookings.hotelTimesFilled', { name: h.name }));
+                    }}
                   />
                 </>
               }
@@ -1090,6 +1192,31 @@ function BookingForm({
                 value={f.to}
                 onPick={(spot) => pickSpot('to', spot)}
               />
+              {dropTip && (
+                <div className="-mt-2 flex items-center justify-between gap-2 rounded-card bg-bg-subtle px-3 py-2">
+                  <span className="flex flex-col">
+                    <span className="tabular text-body-2 font-semibold">
+                      {t('bookings.dropSuggest', { time: dropTip.time })}
+                    </span>
+                    <span className="text-caption text-fg-muted">
+                      {t('bookings.dropSuggestWhy', {
+                        drive: dropTip.drive,
+                        lead: dropTip.leadHours,
+                      })}
+                    </span>
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    disabled={f.startTime === dropTip.time && f.startDate === dropTip.date}
+                    onClick={() =>
+                      setF((cur) => ({ ...cur, startDate: dropTip.date, startTime: dropTip.time }))
+                    }
+                  >
+                    {t('bookings.dropSuggestUse')}
+                  </Button>
+                </div>
+              )}
               <PlaceAutocomplete
                 query={f.to}
                 domestic={isDomesticTrip(trip)}
@@ -1149,6 +1276,15 @@ function BookingForm({
                 onTime={set('startTime')}
                 idPrefix="bk-meal"
               />
+              {outsideHours && (
+                <p
+                  role="alert"
+                  className="-mt-3 flex items-center gap-1 text-caption font-semibold text-warning"
+                >
+                  <TriangleAlert aria-hidden="true" className="size-3.5" />
+                  {t('placeSearch.outsideHours', { time: f.startTime })}
+                </p>
+              )}
               <Row>
                 <Field label={t('bookings.partySize')}>
                   <input

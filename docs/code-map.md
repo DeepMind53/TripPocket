@@ -66,6 +66,7 @@ Tailscale Funnel https://jin-server.tail0844c0.ts.net ─▶ 홈 PC 127.0.0.1:87
   더 짧은 순서 `shorterOrder`(묶음 "알림", `itinerary/ShorterOrderHint.tsx` — PlanPage DaySection). 나머지 7개(숙소 알려 주기·멀리 떨어진 장소·다시 찾은 도시·서울과 기온 비교·한국 연휴 겹침·몇 년 전 오늘·예약 날짜 점검)는 뺐다.
   지금 실험실 (2026-11-13 3차, 실제 기능 — 계산 `domain/labTools.ts`, 화면 `features/labs/`): 하루 메뉴(PlanPage) 여러 일정 붙여 넣기 `BulkAddSheet`·남은 일정 미루기 `ShiftDaySheet`(실행 취소)·캘린더로 내보내기(.ics, `backup/backupUtils.saveFile`),
   일정 입력 지도 링크로 장소 `MapLinkField`(ItemFormSheet, 링크 글자만 읽음), 환율 나눠 내기(FxPage), 빠른 메뉴 단위 바꾸기 `UnitConverter`·타이머 `QuickTimer`(끝나는 때 `timerStore` 기기 저장, 알림은 `QuickMenu.tsx`의 `TimerWatch`).
+  2026-11-24: 예약 확인 캡처로 채우기 `BookingScanButton`(BookingFormSheet, 글자 인식은 `receiptOcr.readReceipt`, 칸 나누기는 `domain/bookingScan.ts` — 기기 안에서만, ADR-0012 추가).
 - **여행 중 오늘 화면 (홈·여행 모드 공통, 2026-11-13)**: `home/OngoingTrip.tsx`(다음 일정 카드·오늘 일정표+시각별 날씨, `travel`이면 특보·숙소 카드 빼고 [일정 보기]는 여행 모드를 끄고 그날로, 나갈 시각 알림) + `home/TripStrip.tsx`(여행 카드·일정 막대). 여행 모드(`travel/TravelModePage.tsx`)는 머리·주의 줄·아침/저녁 칸·엄지 버튼만 따로. 다음 일정 아래 한 줄은 고른 이동 수단 하나만 (`travel/useNextLeg.ts`)
 - **다음 일정까지 이동 (여행 모드·여행 중 홈 공통, 2026-11-13)**: `features/travel/useNextLeg.ts`(자동 조회·[새로고침]·[자동차] 조회) + `LegControls.tsx`([도보|대중교통|자동차] + [새로고침 n회 남음]) + `DepartCountdown.tsx`. 서버 `POST /api/routes/eta` `drive: true` → `services/routes.ts` `googleDrive`/`geoapifyDrive`
 - **노선도 (설정 "일정 · 화면" `routeMap`, 2026-11-10 실험실에서 정식)**: 일차 미니맵 `itinerary/DayMiniMap.tsx` → 누르면 여행 전체 노선도 `TripRouteView.tsx`·`TripRouteSheet.tsx`

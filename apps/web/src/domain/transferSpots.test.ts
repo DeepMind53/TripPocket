@@ -1,6 +1,6 @@
 import type { Booking } from '@trippocket/shared';
 import { describe, expect, it } from 'vitest';
-import { transferSpots } from './transferSpots';
+import { dropSuggestion, transferSpots } from './transferSpots';
 
 const bk = (o: Partial<Booking>) =>
   ({ id: 'x', tripId: 't', title: 't', start: { date: '2026-11-03' }, ...o }) as Booking;
@@ -41,7 +41,23 @@ describe('픽업·드랍 빠른 선택', () => {
   it('드랍은 출발 공항', () => {
     const { airports } = transferSpots([flight, back], 'drop');
     expect(airports.map((a) => a.flightNo)).toEqual(['KE703', 'KE704']);
-    expect(airports[0]!.time).toBeUndefined();
+    expect(airports[1]).toMatchObject({ international: true });
     expect(airports[1]!.name).toMatch(/나리타.*T1$/);
+  });
+});
+
+describe('드랍 추천 출발 시각', () => {
+  it('국제선은 이륙 3시간 전 공항 도착, 10분 단위 내림', () => {
+    expect(dropSuggestion({ date: '2026-11-06', time: '12:35' }, 52, true)).toEqual({
+      date: '2026-11-06',
+      time: '08:40',
+      leadHours: 3,
+    });
+  });
+  it('국내선 1시간, 자정을 넘으면 전날', () => {
+    expect(dropSuggestion({ date: '2026-11-06', time: '01:00' }, 30, false)).toMatchObject({
+      date: '2026-11-05',
+      time: '23:30',
+    });
   });
 });

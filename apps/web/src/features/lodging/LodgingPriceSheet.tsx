@@ -1,3 +1,4 @@
+import type { HotelPricesView } from '@trippocket/shared';
 import { useTranslation } from '../../i18n';
 import type { RecentStay } from '../../data/lodgingRecent';
 import { BottomSheet } from '../../shared/ui';
@@ -10,10 +11,12 @@ export function LodgingPriceSheet({
   open,
   onOpenChange,
   initial,
+  onHotelTimes,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initial: Partial<RecentStay>;
+  onHotelTimes?: (hotel: HotelPricesView) => void;
 }) {
   const { t } = useTranslation();
   return (
@@ -23,7 +26,9 @@ export function LodgingPriceSheet({
       title={t('lodgingPrice.title')}
       autoFocusInput={false}
     >
-      <div className="pb-4">{open && <LodgingPricePanel initial={initial} />}</div>
+      <div className="pb-4">
+        {open && <LodgingPricePanel initial={initial} onHotelTimes={onHotelTimes} />}
+      </div>
     </BottomSheet>
   );
 }

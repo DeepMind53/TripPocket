@@ -10,6 +10,9 @@ import { tripRepo } from '../../data/repositories/tripRepo';
 import { Toaster } from '../../shared/ui';
 import { acceptDelete } from '../../test/confirm';
 
+// 캡처 줄이기는 브라우저 그림판이 필요해서 시험에서는 그대로 넘긴다
+vi.mock('../../shared/lib/shrinkImage', () => ({ shrinkImage: async (b: Blob) => b }));
+
 let tripId = '';
 
 /** 날짜 칸 — 일정이 바뀌면 다시 그려지므로 쓸 때마다 새로 찾는다 */
@@ -481,6 +484,44 @@ describe('빠른 메뉴 바로가기', () => {
   });
 });
 
+it('인천 출발 터미널이 비면 인천공항 운항 정보로 채운다 (2026-11-24)', async () => {
+  useAuth.setState({
+    status: 'user',
+    me: { id: 'u', nickname: 'n', createdAt: '', providers: [] },
+  });
+  const urls: string[] = [];
+  vi.stubGlobal('fetch', async (url: string) => {
+    urls.push(url);
+    if (url.startsWith('/api/flights/KE703/airport'))
+      return Response.json({
+        checkedAt: '2026-10-25T00:00:00.000Z',
+        dep: { info: { airport: 'ICN', terminal: 'T2' } },
+        arr: null,
+      });
+    if (url === '/api/flights/KE703')
+      return Response.json({
+        flightNo: 'KE703',
+        from: { iata: 'ICN', time: '09:00' },
+        to: { iata: 'NRT', terminal: '1', time: '11:20' },
+      });
+    return Response.json({}, { status: 404 });
+  });
+  try {
+    const user = userEvent.setup();
+    renderAt([`/trips/${tripId}/bookings`]);
+    await user.click(await screen.findByRole('button', { name: '예약 추가' }));
+    const sheet = screen.getByRole('dialog', { name: '예약 추가' });
+    await user.type(within(sheet).getByLabelText('편명'), 'KE703');
+    await user.click(within(sheet).getByRole('button', { name: '불러오기' }));
+    await waitFor(() => expect(within(sheet).getByLabelText('출발 터미널')).toHaveValue('T2'));
+    expect(within(sheet).getByLabelText('도착 터미널')).toHaveValue('T1');
+    expect(urls.find((u) => u.includes('/airport'))).toMatch(/from=ICN/);
+  } finally {
+    vi.unstubAllGlobals();
+    useAuth.setState({ status: 'unknown', me: null });
+  }
+});
+
 describe('편명으로 불러오기', () => {
   it('공항·터미널·시간을 채우고 "최근 운항 기준" 안내 (밤 비행이면 도착은 다음 날)', async () => {
     const { useAuth } = await import('../../data/authStore');
@@ -563,6 +604,47 @@ describe('편명으로 불러오기', () => {
   });
 });
 
+it('해외 식당: 예약 시각이 Google 영업시간 밖이면 알린다 (2026-11-24)', async () => {
+  useAuth.setState({
+    status: 'user',
+    me: { id: 'u', nickname: 'n', createdAt: '', providers: [] },
+  });
+  const id = 'ChIJ_dinner_abcdef';
+  vi.stubGlobal('fetch', async (url: string) => {
+    if (url === '/api/places/search')
+      return Response.json({
+        places: [
+          { source: 'google', id, name: '저녁 식당', address: '도쿄', coords: { lat: 1, lng: 1 } },
+        ],
+      });
+    if (url === `/api/places/google/${id}`)
+      return Response.json({
+        phone: '03-1111-2222',
+        periods: [0, 1, 2, 3, 4, 5, 6].map((day) => ({ day, open: '17:00', close: '23:00' })),
+      });
+    return Response.json({}, { status: 404 });
+  });
+  try {
+    const user = userEvent.setup();
+    renderAt([`/trips/${tripId}/bookings`]);
+    await user.click(await screen.findByRole('button', { name: '예약 추가' }));
+    const sheet = screen.getByRole('dialog', { name: '예약 추가' });
+    await user.click(within(sheet).getByRole('button', { name: '음식점' }));
+    await user.type(within(sheet).getByLabelText('음식점 이름'), '저녁 식당');
+    await user.click(await within(sheet).findByRole('option', { name: /저녁 식당/ }));
+    // 새 음식점은 12:00 — 17시에 여는 곳
+    expect(await within(sheet).findByRole('alert')).toHaveTextContent(
+      '12:00은 영업시간이 아닐 수 있어요',
+    );
+    expect(within(sheet).getByLabelText('연락처')).toHaveValue('03-1111-2222');
+    fireEvent.change(within(sheet).getByLabelText('시간'), { target: { value: '18:00' } });
+    await waitFor(() => expect(within(sheet).queryByRole('alert')).toBeNull());
+  } finally {
+    vi.unstubAllGlobals();
+    useAuth.setState({ status: 'unknown', me: null });
+  }
+});
+
 it('예약번호는 항공사 오른쪽에 (2026-11-24)', async () => {
   renderAt([`/trips/${tripId}/bookings`]);
   await userEvent.setup().click(await screen.findByRole('button', { name: '예약 추가' }));
@@ -607,6 +689,49 @@ it('해외 숙소를 고르면 확인된 전화번호를 빈 칸에 채운다 (2
   } finally {
     vi.unstubAllGlobals();
     useAuth.setState({ status: 'unknown', me: null });
+  }
+});
+
+it('드랍: 숙소 → 공항을 고르면 차로 가는 시간으로 추천 출발 시각 (2026-11-24)', async () => {
+  await bookingRepo.create({
+    tripId,
+    kind: 'flight',
+    title: 'KE124',
+    start: { date: '2026-10-27', time: '12:35', place: 'PUS' },
+    end: { date: '2026-10-27', time: '13:40', place: 'GMP' },
+    details: { flightNo: 'KE124' },
+  });
+  await bookingRepo.create({
+    tripId,
+    kind: 'lodging',
+    title: '해운대 그랜드호텔',
+    start: { date: '2026-10-24', coords: { lat: 35.16, lng: 129.16 } },
+    end: { date: '2026-10-27' },
+  });
+  vi.stubGlobal('fetch', async (url: string) =>
+    url === '/api/routes/eta'
+      ? Response.json({ drive: 52, driveKm: 30, source: 'google' })
+      : Response.json({}, { status: 404 }),
+  );
+  try {
+    const user = userEvent.setup();
+    renderAt([`/trips/${tripId}/bookings`]);
+    await user.click(await screen.findByRole('button', { name: '예약 추가' }));
+    const sheet = screen.getByRole('dialog', { name: '예약 추가' });
+    await user.click(within(sheet).getByRole('button', { name: '픽업·드랍' }));
+    await user.click(within(sheet).getByRole('button', { name: /^드랍/ }));
+    const [fromChips, toChips] = await within(sheet).findAllByRole('group', {
+      name: '예약한 공항·숙소에서 고르기',
+    });
+    await user.click(within(fromChips!).getByRole('button', { name: '해운대 그랜드호텔' }));
+    await user.click(within(toChips!).getByRole('button', { name: /김해/ }));
+    // 국내선: 12:35 − 52분 − 1시간 → 10:40
+    expect(await within(sheet).findByText('추천 출발 10:40')).toBeInTheDocument();
+    expect(within(sheet).getByText('차로 52분 · 이륙 1시간 전 도착')).toBeInTheDocument();
+    await user.click(within(sheet).getByRole('button', { name: '넣기' }));
+    expect(within(sheet).getByLabelText('시간')).toHaveValue('10:40');
+  } finally {
+    vi.unstubAllGlobals();
   }
 });
 
@@ -790,4 +915,33 @@ describe('예약처 (2026-10-27)', () => {
     await user.click(within(sheet).getByRole('button', { name: /투어/ }));
     expect(within(sheet).getByLabelText('예약처')).toBeInTheDocument();
   });
+});
+
+it('실험실 캡처로 채우기: 읽은 글에서 예약번호·편명·공항·날짜·시각을 빈 칸에 (2026-11-24)', async () => {
+  const { setLab } = await import('../../data/labsStore');
+  setLab('bookingScan', true, { silent: true });
+  vi.stubGlobal('fetch', async (url: string) =>
+    url === '/api/ocr'
+      ? Response.json({
+          text: '예약번호: AB12CD\nKE 703 ICN → NRT\n2026년 10월 25일 09:00 출발 11:20 도착',
+          source: 'google',
+        })
+      : Response.json({}, { status: 404 }),
+  );
+  try {
+    const user = userEvent.setup();
+    renderAt([`/trips/${tripId}/bookings`]);
+    await user.click(await screen.findByRole('button', { name: '예약 추가' }));
+    const sheet = screen.getByRole('dialog', { name: '예약 추가' });
+    const file = new File([new Uint8Array([1, 2, 3])], 'shot.jpg', { type: 'image/jpeg' });
+    await user.upload(within(sheet).getByLabelText('예약 확인 캡처로 채우기'), file);
+    await waitFor(() => expect(within(sheet).getByLabelText('예약번호')).toHaveValue('AB12CD'));
+    expect(within(sheet).getByLabelText('편명')).toHaveValue('KE703');
+    expect(within(sheet).getByLabelText('출발 공항')).toHaveValue('ICN');
+    expect(within(sheet).getByLabelText('출발 시간')).toHaveValue('09:00');
+    expect(await screen.findByText(/캡처에서 \d+칸을 채웠어요/)).toBeInTheDocument();
+  } finally {
+    vi.unstubAllGlobals();
+    setLab('bookingScan', false, { silent: true });
+  }
 });
