@@ -53,7 +53,7 @@ export const SETTINGS_SECTIONS: readonly SettingsSection[] = [
     title: 'settings.maps',
     items: ['settings.directionsApp', 'settings.domesticMap', 'settings.travelMode'],
   },
-  // 일정 시간 간격은 "일정 · 화면" 맨 위
+  // 일정 시간 간격은 "일정·화면" 맨 위
   planSection('view', ['settings.timeStep']),
   planSection('notice'),
   planSection('local'),

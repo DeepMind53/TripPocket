@@ -82,7 +82,7 @@ test('예약: 입력 시트에서 달력 시트를 열면 달력만 보이고, �
   await expect(form.getByRole('button', { name: '뒤로' })).toHaveCount(0);
 
   await form.getByRole('button', { name: /체크인 → 체크아웃/ }).click();
-  const stay = page.getByRole('dialog', { name: '체크인 · 체크아웃' });
+  const stay = page.getByRole('dialog', { name: '체크인·체크아웃' });
   await expect(stay).toBeVisible();
   await expect(page.getByLabel('숙소 이름')).toBeHidden();
   // "뒤로"는 손가락으로 누를 만큼 크고(44px), 제목과 왼쪽 줄이 맞는다

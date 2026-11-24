@@ -9,7 +9,7 @@ import { InlineIcon } from '../../shared/ui/InlineIcon';
 import { SpeakButton } from '../phrases/SpeakButton';
 
 /**
- * 여행 중 오늘 (홈·여행 모드 다음 일정 카드 아래, 설정 "일정 · 날씨와 현지 정보" — 2026-11-13 실험실에서 정식):
+ * 여행 중 오늘 (홈·여행 모드 다음 일정 카드 아래, 설정 "일정·날씨와 현지 정보" — 2026-11-13 실험실에서 정식):
  * 오늘의 한마디 · 걷기 좋은 시간 · 해 지기까지. 모두 기기 안 정보만
  */
 export function TodayTips({

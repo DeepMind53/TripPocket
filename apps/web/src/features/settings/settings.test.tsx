@@ -112,20 +112,15 @@ describe('설정 묶음·기본값 저장 (2026-11-03)', () => {
     );
     // 첫 화면은 묶음 목록 (2026-11-14) — 일정 기능 4묶음은 켜진 개수와 함께
     const plan = await screen.findByRole('region', { name: '일정 기능' });
-    for (const name of [
-      '일정 · 화면',
-      '일정 · 알림',
-      '일정 · 날씨와 현지 정보',
-      '일정 · 빠른 메뉴',
-    ])
+    for (const name of ['일정·화면', '일정·알림', '일정·날씨와 현지 정보', '일정·빠른 메뉴'])
       expect(within(plan).getByRole('link', { name: new RegExp(name) })).toBeInTheDocument();
     expect(
-      within(plan).getByRole('link', { name: /일정 · 빠른 메뉴s*3개 중 0개 켜짐/ }),
+      within(plan).getByRole('link', { name: /일정·빠른 메뉴s*3개 중 0개 켜짐/ }),
     ).toBeInTheDocument();
     const back = () => user.click(screen.getByRole('button', { name: '뒤로' }));
     const openQuick = async () => {
-      await user.click(await screen.findByRole('link', { name: /일정 · 빠른 메뉴/ }));
-      return screen.findByRole('region', { name: '일정 · 빠른 메뉴' });
+      await user.click(await screen.findByRole('link', { name: /일정·빠른 메뉴/ }));
+      return screen.findByRole('region', { name: '일정·빠른 메뉴' });
     };
     // 대중교통 안내 켜고 기본값으로 저장 → 끈 뒤 되돌리기 → 다시 켜짐
     let quick = await openQuick();
@@ -156,10 +151,10 @@ describe('설정 검색 (2026-11-14)', () => {
     const box = await screen.findByRole('searchbox', { name: '설정 검색' });
     await user.type(box, '날씨');
     const found = screen.getByRole('list', { name: '설정 검색' });
-    const hit = within(found).getByRole('link', { name: /날씨.*일정 · 날씨와 현지 정보/ });
+    const hit = within(found).getByRole('link', { name: /날씨.*일정·날씨와 현지 정보/ });
     expect(screen.queryByRole('region', { name: '기본' })).toBeNull();
     await user.click(hit);
-    const group = await screen.findByRole('region', { name: '일정 · 날씨와 현지 정보' });
+    const group = await screen.findByRole('region', { name: '일정·날씨와 현지 정보' });
     await waitFor(() => expect(group.querySelector('.setting-found')).not.toBeNull());
 
     // 없으면 알려 준다

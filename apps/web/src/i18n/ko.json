@@ -550,10 +550,10 @@
     "nearbyFind": "근처 찾기",
     "arrivalRoute": "공항에서 숙소 가는 길",
     "planGroup": {
-      "view": "일정 · 화면",
-      "notice": "일정 · 알림",
-      "local": "일정 · 날씨와 현지 정보",
-      "quick": "일정 · 빠른 메뉴"
+      "view": "일정·화면",
+      "notice": "일정·알림",
+      "local": "일정·날씨와 현지 정보",
+      "quick": "일정·빠른 메뉴"
     },
     "saveDefaults": "지금 설정을 내 기본으로 저장",
     "saveDefaultsDesc": "되돌리기를 누르면 이 설정으로 돌아가요\n이 기기에만 저장돼요",
@@ -1799,7 +1799,7 @@
   },
   "stay": {
     "button": "체크인 → 체크아웃 (달력에서 고르기)",
-    "title": "체크인 · 체크아웃",
+    "title": "체크인·체크아웃",
     "desc": "처음 누른 날이 체크인, 두 번째가 체크아웃이에요",
     "pickIn": "체크인 날을 눌러 주세요",
     "pickOut": "체크아웃 날을 눌러 주세요",
@@ -2056,14 +2056,14 @@
     "note": "거리는 장소 사이 직선거리예요\n미방문 일정은 빼고 셌어요",
     "nights": "숙소에서 잔 밤",
     "nightsN": "{{n}}박",
-    "split": "해외 · 국내 여행",
+    "split": "해외·국내 여행",
     "tripsSplit": "{{overseas}} · {{domestic}}",
     "thisYear": "올해 {{n}}번",
     "earliest": "가장 이른 일정",
     "latestFun": "가장 늦은 일정 {{time}}",
     "busiest": "가장 바빴던 하루",
     "cafeFood": "{{cafe}} · {{food}}",
-    "cafeFoodLabel": "카페 · 맛집",
+    "cafeFoodLabel": "카페·맛집",
     "revisits": "두 번 넘게 간 곳"
   },
   "print": {

@@ -29,3 +29,18 @@ it('나라별 필수 항목 문구도 같은 규칙', () => {
   expect(texts.length).toBeGreaterThan(50);
   expect(texts.filter((s) => midSentence.test(s) || trailingPeriod.test(s))).toEqual([]);
 });
+
+it('가운뎃점: 같은 종류 묶음은 붙이고, 다른 정보 나열만 띄운다 (docs/31 U7)', () => {
+  // 띄운 " · " 양쪽이 모두 짧은 낱말(숫자 없음)이면 묶음 이름 — "일정·화면", "카페·맛집"
+  // 예외: 관리자 통계 이름(나라 범위 · 결과 상태는 서로 다른 정보), 현지 정보 한 줄
+  const allow = /^stats\.names\.|^localInfo\./;
+  const bad = strings(ko).filter(
+    ([k, s]) =>
+      !allow.test(k) &&
+      s.split('\n').some((line) => {
+        const parts = line.split(' · ');
+        return parts.length > 1 && parts.every((x) => x.length <= 6 && !/[0-9{]/.test(x));
+      }),
+  );
+  expect(bad.map(([k, s]) => `${k}: ${s}`)).toEqual([]);
+});
