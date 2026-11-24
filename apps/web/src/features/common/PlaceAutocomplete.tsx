@@ -82,9 +82,10 @@ export function PlaceAutocomplete({
     };
   }, [term, loggedIn, domestic, near, picked]);
 
-  // 로그인했던 기기가 서버에 닿지 않을 때 — 직접 입력은 그대로
-  if (!loggedIn) return <ServerOfflineNotice inline />;
   const q = query.trim();
+  // 로그인했던 기기가 서버에 닿지 않을 때 — 직접 입력은 그대로.
+  // 이름을 2글자 이상 쳤을 때만 알린다 (docs/31 C5, 2026-11-25 사용자 결정)
+  if (!loggedIn) return q.length >= 2 ? <ServerOfflineNotice inline /> : null;
   if (q.length < 2 || q === picked) return null;
   // 해외: 검색어가 바뀌면 [검색] 버튼부터 (지난 결과는 숨김)
   if (!domestic && q !== asked)

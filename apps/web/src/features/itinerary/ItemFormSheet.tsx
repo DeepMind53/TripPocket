@@ -1,5 +1,5 @@
-import { useTrip } from '../../data/hooks';
-import { itemDefaultTimes, switchTimes } from '../../domain/defaultTimes';
+import { useTrip, useTripItems } from '../../data/hooks';
+import { itemDefaultTimes, nextStartAfter, switchTimes } from '../../domain/defaultTimes';
 import { isDomesticTrip } from '../../domain/tripPlace';
 import { PlaceAutocomplete } from '../common/PlaceAutocomplete';
 import { SavedPick } from '../saved/SavedPick';
@@ -94,7 +94,11 @@ function ItemForm({
   // 새 음식점 일정은 12:00부터 (사용자 요청 2026-11-04)
   const [startTime, setStartTime] = useState(item?.startTime ?? '');
   // 설정의 시간 입력 간격 (분 → 초)
-  const timeStep = useSettings((st) => st.timeStepMin) * 60;
+  const stepMin = useSettings((st) => st.timeStepMin);
+  const timeStep = stepMin * 60;
+  // 새 일정의 시작 = 그날 일정이 끝난 뒤 (docs/31 C3) — 일정을 불러온 뒤 한 번만, 손대기 전일 때
+  const tripItems = useTripItems(tripId);
+  const [seeded, setSeeded] = useState(!!item || !date);
   const [endTime, setEndTime] = useState(item?.endTime ?? '');
   const [address, setAddress] = useState(item?.place?.address ?? '');
   // 검색에서 고른 장소 (좌표·제공자 id). 직접 고치면 이름·주소만 바뀐다
@@ -126,7 +130,21 @@ function ItemForm({
   const [saving, setSaving] = useState(false);
   // 닫기 보호 (docs/31 A1): 처음 연 값과 다르면 닫기 전에 묻는다
   const snapshot = JSON.stringify([kind, title, startTime, endTime, address, memo, url, picked]);
-  const [initial] = useState(snapshot);
+  const [initial, setInitial] = useState(snapshot);
+  if (!seeded && tripItems) {
+    setSeeded(true);
+    const start = startTime
+      ? ''
+      : nextStartAfter(
+          tripItems.filter((i) => i.date === date && i.planId === planId),
+          stepMin,
+        );
+    if (start) {
+      setStartTime(start);
+      // 미리 채운 값은 "바뀐 내용"이 아니다 — 그대로 닫아도 묻지 않게
+      setInitial(JSON.stringify([kind, title, start, endTime, address, memo, url, picked]));
+    }
+  }
   useSheetDirty(!saving && snapshot !== initial);
 
   // 새 일정이면 종류에 맞는 시각 초기값 (직접 고친 시각은 그대로)

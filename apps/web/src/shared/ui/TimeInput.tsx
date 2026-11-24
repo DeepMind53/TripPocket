@@ -46,7 +46,8 @@ export function TimeInput({
         id={id}
         inputMode="numeric"
         autoComplete="off"
-        placeholder="09:30"
+        // 예시 숫자는 값처럼 보여 "선택"으로 (docs/31 C3)
+        placeholder={t('time.empty')}
         maxLength={8}
         aria-label={label}
         value={draft}

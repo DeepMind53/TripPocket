@@ -53,7 +53,9 @@ export function Button({
       aria-busy={loading || undefined}
       className={cn(
         'inline-flex select-none items-center justify-center gap-1.5 rounded-btn transition-[filter,background-color] duration-150',
-        'disabled:cursor-not-allowed disabled:opacity-40',
+        // 꺼진 버튼: 흐리게만 하면 바탕과 섞여 버튼인지 모른다 → 회색 바탕 + 회색 글자, 대비 3:1 이상 (docs/31 C2)
+        'disabled:cursor-not-allowed disabled:text-fg-muted',
+        variant !== 'ghost' && 'disabled:bg-bg-subtle',
         variantClass[variant],
         sizeClass[size],
         fullWidth && 'w-full',
