@@ -1,3 +1,4 @@
+import { lodgingsOfDay } from '../../domain/lodging';
 import { airportColorIndex } from '../../domain/airportColors';
 import { routeColor } from '../../shared/ui/routeColor';
 import { useSettings } from '../../data/settingsStore';
@@ -296,7 +297,9 @@ export function DaySection({
           {((canEdit && items.length > 1) ||
             ((copyDayOn || dayRouteOn || (dupOn && canEdit)) && items.length > 0) ||
             // 실험실 "여러 일정 붙여 넣기": 빈 날에도 메뉴
-            (bulkOn && canEdit && !!date)) && (
+            (bulkOn && canEdit && !!date) ||
+            // [숙소 일정 추가]: 그날 숙소가 있으면 빈 날에도 메뉴 (2026-11-25)
+            (canEdit && !!date && lodgingsOfDay([...bookingById.values()], date).length > 0)) && (
             <IconButton
               label={t('plan.dayMenu', { day: title })}
               icon={<Ellipsis />}

@@ -1,3 +1,4 @@
+import { LodgingStopsSheet } from './LodgingStopsSheet';
 import { useSettings } from '../../data/settingsStore';
 import { TravelModeGate } from '../travel/TravelModeGate';
 import { useCanEdit } from '../../data/tripRoles';
@@ -27,6 +28,7 @@ import {
   Route,
   Search,
   Sparkles,
+  BedDouble,
 } from 'lucide-react';
 import { dayText, nextStop, visitableItemIds } from '../../domain/dayTools';
 import { NextStopBar } from './NextStopBar';
@@ -267,6 +269,8 @@ function PlanView({
   const shiftOn = useLab('shiftDay');
   const icsOn = useLab('calendarExport');
   const [bulkOpen, setBulkOpen] = useRouteSheet('bulk-add');
+  // [숙소 일정 추가] (2026-11-25): 그날 숙소 출발·도착을 일정 두 줄로
+  const [lodgingStopsOpen, setLodgingStopsOpen] = useRouteSheet('lodging-stops');
   const [shiftOpen, setShiftOpen] = useRouteSheet('shift-day');
   const dirDest = useSheetArg<Destination>(['directions']) ?? null;
   // 고른 일정은 이 탭에 기억한다 — 상세 시트는 새로고침(앱 다시 열기)해도 다시 열리는데,
@@ -914,6 +918,19 @@ function PlanView({
             </span>
           </button>
         )}
+        {canEdit && menuDate && lodgingsOfDay(bookings, menuDate).length > 0 && (
+          <button
+            type="button"
+            onClick={() => switchDayMenuTo('lodging-stops')}
+            className="flex w-full items-start gap-3 rounded-btn py-3 text-left"
+          >
+            <BedDouble aria-hidden="true" className="mt-0.5 size-5 text-fg-sub" />
+            <span className="flex flex-col">
+              <span className="text-body-1">{t('lodgingStop.title')}</span>
+              <span className="text-caption text-fg-muted">{t('lodgingStop.menuDesc')}</span>
+            </span>
+          </button>
+        )}
         {bulkOn && canEdit && menuDate && (
           <button
             type="button"
@@ -989,6 +1006,17 @@ function PlanView({
         )}
       </BottomSheet>
 
+      {lodgingStopsOpen && menuDate && (
+        <LodgingStopsSheet
+          open={lodgingStopsOpen}
+          onOpenChange={setLodgingStopsOpen}
+          tripId={trip.id}
+          date={menuDate}
+          lodgings={lodgingsOfDay(bookings, menuDate)}
+          dayItems={items.filter((i) => i.date === menuDate)}
+          planId={plansView.info[menuDate]?.plan?.id}
+        />
+      )}
       {bulkOpen && menuDate && (
         <BulkAddSheet open={bulkOpen} onOpenChange={setBulkOpen} tripId={trip.id} date={menuDate} />
       )}

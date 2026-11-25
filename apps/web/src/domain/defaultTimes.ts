@@ -53,3 +53,24 @@ export function nextStartAfter(
   if (m >= 24 * 60) return '';
   return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
 }
+
+const hm = (m: number) =>
+  `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+
+/**
+ * [숙소 일정 추가]의 기본 시각 (2026-11-25 사용자 요청): 출발 = 그날 첫 일정 1시간 전(없으면 09:00),
+ * 도착 = 그날 일정이 모두 끝난 뒤 1시간(없으면 21:00). 하루 안(00:00~23:59)으로 자른다
+ */
+export function lodgingStopTimes(
+  items: readonly { startTime?: string | undefined; endTime?: string | undefined }[],
+): { depart: string; arrive: string } {
+  const starts = items.flatMap((i) => (i.startTime ? [toMin(i.startTime)] : []));
+  const depart = starts.length ? Math.max(0, Math.min(...starts) - 60) : 9 * 60;
+  const after = nextStartAfter(items, 1);
+  const arrive = after
+    ? Math.min(23 * 60 + 59, toMin(after) + 60)
+    : starts.length
+      ? 23 * 60 + 59
+      : 21 * 60;
+  return { depart: hm(depart), arrive: hm(arrive) };
+}

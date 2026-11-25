@@ -1,4 +1,10 @@
-import { bookingDefaultTimes, itemDefaultTimes, switchTimes, nextStartAfter } from './defaultTimes';
+import {
+  bookingDefaultTimes,
+  itemDefaultTimes,
+  switchTimes,
+  nextStartAfter,
+  lodgingStopTimes,
+} from './defaultTimes';
 
 it('숙소 15:00·11:00, 음식점 12:00, 그 밖은 비움', () => {
   expect(bookingDefaultTimes('lodging')).toEqual({ start: '15:00', end: '11:00' });
@@ -29,5 +35,19 @@ describe('nextStartAfter (docs/31 C3)', () => {
   it('시각 있는 일정이 없거나 24시를 넘으면 비움', () => {
     expect(nextStartAfter([{}], 10)).toBe('');
     expect(nextStartAfter([{ startTime: '23:30' }], 10)).toBe('');
+  });
+});
+
+describe('lodgingStopTimes (숙소 일정 추가)', () => {
+  it('출발 = 첫 일정 1시간 전, 도착 = 일정이 끝나고 1시간 뒤', () => {
+    expect(
+      lodgingStopTimes([
+        { startTime: '10:00', endTime: '11:30' },
+        { startTime: '18:00', endTime: '20:00' },
+      ]),
+    ).toEqual({ depart: '09:00', arrive: '21:00' });
+  });
+  it('시각 있는 일정이 없으면 09:00 · 21:00', () => {
+    expect(lodgingStopTimes([])).toEqual({ depart: '09:00', arrive: '21:00' });
   });
 });

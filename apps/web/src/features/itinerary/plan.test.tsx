@@ -482,6 +482,51 @@ it('주소 없는 일정: [주소 넣기] → 편집 시트의 주소 칸에 커
   await waitFor(() => expect(address).toHaveFocus());
 });
 
+it('[숙소 일정 추가]: 숙소를 옮기는 날은 출발·도착 숙소를 골라 맨 앞·맨 끝 일정으로 (2026-11-25)', async () => {
+  const { bookingRepo } = await import('../../data/repositories/bookingRepo');
+  const { itemRepo } = await import('../../data/repositories/itemRepo');
+  const stay = (title: string, from: string, to: string) =>
+    bookingRepo.create({
+      tripId,
+      kind: 'lodging',
+      title,
+      start: { date: from, coords: { lat: 35.69, lng: 139.7 } },
+      end: { date: to },
+    });
+  await stay('신주쿠 호텔', '2026-10-24', '2026-10-25');
+  await stay('아사쿠사 료칸', '2026-10-25', '2026-10-26');
+  await itemRepo.create({
+    tripId,
+    date: '2026-10-25',
+    kind: 'place',
+    title: '센소지',
+    startTime: '10:00',
+    endTime: '11:00',
+  });
+  const user = userEvent.setup();
+  await renderPlan();
+  await user.click(await screen.findByRole('button', { name: /2일차.*메뉴/ }));
+  await user.click(await screen.findByRole('button', { name: /숙소 일정 추가/ }));
+  const sheet = await screen.findByRole('dialog', { name: '숙소 일정 추가' });
+  // 옮기는 날: 출발은 아침 숙소(신주쿠), 도착은 오늘 밤 숙소(아사쿠사)가 기본
+  expect(within(sheet).getAllByRole('button', { name: '신주쿠 호텔' })[0]).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  expect(within(sheet).getAllByRole('button', { name: '아사쿠사 료칸' })[1]).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await user.click(within(sheet).getByRole('button', { name: '넣기' }));
+  await waitFor(async () => {
+    const day = await itemRepo.listByDay(tripId, '2026-10-25');
+    // 맨 앞 = 출발, 맨 끝 = 도착 (가운데에는 기존 일정·숙소 체크인 일정)
+    expect([day[0]?.title, day[0]?.startTime]).toEqual(['신주쿠 호텔 출발', '09:00']);
+    expect([day.at(-1)?.title, day.at(-1)?.startTime]).toEqual(['아사쿠사 료칸 도착', '12:00']);
+    expect(day.at(-1)?.place?.coords).toEqual({ lat: 35.69, lng: 139.7 });
+  });
+});
+
 it('공항 도착 일정 점선 = 탑승권 그 공항 코드 색, 다른 공항은 다른 색 (2026-11-25)', async () => {
   const { bookingRepo } = await import('../../data/repositories/bookingRepo');
   const flight = (date: string, from: string, to: string, no: string) =>
