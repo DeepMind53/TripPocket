@@ -21,6 +21,7 @@ export function ItemRow({
   past = false,
   now,
   booking,
+  arrivalColor,
   onOpen,
   onVisit,
   onConfirmFlight,
@@ -46,6 +47,8 @@ export function ItemRow({
   onConfirmFlight?: (() => void) | undefined;
   /** 예약에서 넘어온 일정이면 그 예약: 점선 테두리로 구분 (사용자 요청 2026-10-26) */
   booking?: Booking | undefined;
+  /** 공항 도착 일정의 공항 색 — 점선 테두리를 그 색으로 (탑승권 공항 코드와 같게) */
+  arrivalColor?: string | undefined;
   onOpen: () => void;
 }) {
   const { time, wide } = useTimeText();
@@ -188,10 +191,12 @@ export function ItemRow({
       onClick={onOpen}
       aria-label={label}
       aria-current={now ? 'time' : undefined}
-      style={kindStyle}
+      style={arrivalColor ? { ...kindStyle, borderColor: arrivalColor } : kindStyle}
+      data-airport-color={arrivalColor}
       className={cn(
         'flex w-full items-start gap-3 rounded-btn px-3 py-3 text-left active:bg-bg-subtle',
         booking && 'border border-dashed border-fg-muted/60',
+        arrivalColor && 'border-2',
         now && `${nowLook} border-transparent`,
         marked && 'visit-mark',
       )}

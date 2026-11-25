@@ -1,3 +1,5 @@
+import { airportColorIndex } from '../../domain/airportColors';
+import { routeColor } from '../../shared/ui/routeColor';
 import { useSettings } from '../../data/settingsStore';
 import { InlineIcon } from '../../shared/ui/InlineIcon';
 import {
@@ -171,6 +173,14 @@ export function DaySection({
   const visitOn = canEdit;
   // 출발 전날~출발 날 항공편은 [확인]을 누를 때까지 빨갛게 (이 기기 기록)
   const flightChecks = useFlightChecks();
+  const airportColors = airportColorIndex([...bookingById.values()]);
+  /** 항공 예약에서 온 "○○ 도착" 일정이면 그 도착 공항 색 */
+  const arrivalColorOf = (item: ItineraryItem) => {
+    const b = item.bookingId ? bookingById.get(item.bookingId) : undefined;
+    if (b?.kind !== 'flight' || item.transport || !b.end?.place) return undefined;
+    const i = airportColors.get(b.end.place.trim().toUpperCase());
+    return i === undefined ? undefined : routeColor(i).line;
+  };
   const recheck = new Set(
     flightsToReconfirm([...bookingById.values()], todayIn(timezone), flightChecks).map((b) => b.id),
   );
@@ -450,6 +460,8 @@ export function DaySection({
                   past={!!past?.has(item.id) || !!item.done}
                   now={item.id === nowId}
                   booking={item.bookingId ? bookingById.get(item.bookingId) : undefined}
+                  // 공항 도착 일정: 탑승권 공항 코드와 같은 색 점선 (2026-11-25 사용자 요청)
+                  arrivalColor={arrivalColorOf(item)}
                   onOpen={() => onOpen(item)}
                   // 고른 뒤에도 버튼은 남고 고른 것만 칠해진다 (사용자 요청 2026-11-06)
                   onVisit={visitable?.has(item.id) ? (v) => onVisitItem(item, v) : undefined}

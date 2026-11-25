@@ -482,6 +482,35 @@ it('주소 없는 일정: [주소 넣기] → 편집 시트의 주소 칸에 커
   await waitFor(() => expect(address).toHaveFocus());
 });
 
+it('공항 도착 일정 점선 = 탑승권 그 공항 코드 색, 다른 공항은 다른 색 (2026-11-25)', async () => {
+  const { bookingRepo } = await import('../../data/repositories/bookingRepo');
+  const flight = (date: string, from: string, to: string, no: string) =>
+    bookingRepo.create({
+      tripId,
+      kind: 'flight',
+      title: no,
+      start: { date, time: '09:00', place: from },
+      end: { date, time: '11:00', place: to },
+      details: { flightNo: no },
+    });
+  await flight('2026-10-24', 'ICN', 'NRT', 'KE703');
+  await flight('2026-10-26', 'HND', 'CJJ', 'KE720');
+  await renderPlan();
+  const arrival = async (re: RegExp) =>
+    (await screen.findByText(re)).closest('[data-item-row]') as HTMLElement;
+  const nrt = await arrival(/나리타.*도착|NRT.*도착/);
+  const cjj = await arrival(/청주.*도착|CJJ.*도착/);
+  await waitFor(() => expect(nrt.getAttribute('data-airport-color')).toBeTruthy());
+  expect(cjj.getAttribute('data-airport-color')).toBeTruthy();
+  expect(nrt.getAttribute('data-airport-color')).not.toBe(cjj.getAttribute('data-airport-color'));
+  // 탑승권의 CJJ 코드와 같은 색
+  const cjjCode = screen
+    .getAllByText('CJJ')
+    .map((el) => el.closest('[data-airport-color]')?.getAttribute('data-airport-color'))
+    .find(Boolean);
+  expect(cjj.getAttribute('data-airport-color')).toBe(cjjCode);
+});
+
 it('장소 이름·주소를 꾹 누르면 복사, 이때는 상세가 열리지 않는다 · 짧게 누르면 상세 (2026-11-25)', async () => {
   const { itemRepo } = await import('../../data/repositories/itemRepo');
   await itemRepo.create({
