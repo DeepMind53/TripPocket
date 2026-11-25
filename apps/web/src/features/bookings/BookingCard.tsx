@@ -22,6 +22,10 @@ import { membershipFor, useTravelProfile } from '../../data/travelProfile';
 import { FlightAirportInfo } from './FlightAirportInfo';
 import { BaggageInfo } from './BaggageInfo';
 import { FlightDelay } from './FlightDelay';
+import { useTripBookings } from '../../data/hooks';
+import { routeColor } from '../../shared/ui/routeColor';
+import { cn } from '../../shared/lib/cn';
+import { airportColorIndex } from '../../domain/airportColors';
 
 /** S-16 예약 카드. 항공 = 탑승권 모양, 숙소 = 체크인·체크아웃 (docs/05 §3 S-09) */
 export function BookingCard({
@@ -154,6 +158,12 @@ export function BookingCard({
 /** 탑승권 모양 항공편 (예약 탭·일정 화면·일정 상세가 함께 씀) */
 export function FlightTicket({ booking: b }: { booking: Booking }) {
   const { t } = useTranslation();
+  // 공항마다 색 점선 — 갈 때·올 때 공항이 다르면 색이 달라 바로 보인다 (2026-11-25 사용자 요청)
+  const colors = airportColorIndex(useTripBookings(b.tripId));
+  const colorOf = (code: string | undefined) => {
+    const i = code ? colors.get(code.trim().toUpperCase()) : undefined;
+    return i === undefined ? undefined : routeColor(i).line;
+  };
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between gap-2 text-caption text-fg-sub">
@@ -164,7 +174,12 @@ export function FlightTicket({ booking: b }: { booking: Booking }) {
         <span className="tabular">{formatMonthDay(b.start.date)}</span>
       </div>
       <div className="tabular flex items-center gap-3">
-        <Point code={b.start.place} time={b.start.time} terminal={b.details?.terminal} />
+        <Point
+          code={b.start.place}
+          time={b.start.time}
+          terminal={b.details?.terminal}
+          color={colorOf(b.start.place)}
+        />
         <span aria-hidden="true" className="h-px flex-1 border-t border-dashed border-fg-muted" />
         <Plane aria-hidden="true" className="size-4 text-fg-muted" />
         <span aria-hidden="true" className="h-px flex-1 border-t border-dashed border-fg-muted" />
@@ -173,6 +188,7 @@ export function FlightTicket({ booking: b }: { booking: Booking }) {
           time={b.end?.time}
           terminal={b.details?.arrivalTerminal}
           align="end"
+          color={colorOf(b.end?.place)}
         />
       </div>
       {(b.details?.seat || b.details?.baggage) && (
@@ -195,16 +211,26 @@ function Point({
   time,
   terminal,
   align = 'start',
+  color,
 }: {
   code: string | undefined;
   time: string | undefined;
   terminal?: string | undefined;
   align?: 'start' | 'end';
+  /** 공항 색 (같은 여행 항공이 둘 이상일 때) — 점선 테두리 */
+  color?: string | undefined;
 }) {
   const { time: fmt } = useTimeText();
   return (
     <span className={`flex flex-col ${align === 'end' ? 'items-end' : ''}`}>
-      <span className="font-mono text-[28px] leading-none font-medium tracking-tight">
+      <span
+        data-airport-color={color}
+        className={cn(
+          'font-mono text-[28px] leading-none font-medium tracking-tight',
+          color && 'rounded-chip border-2 border-dashed px-1 py-0.5',
+        )}
+        style={color ? { borderColor: color } : undefined}
+      >
         {code || '—'}
       </span>
       <span className="mt-1 text-body-2 text-fg-sub">{fmt(time) ?? '--:--'}</span>

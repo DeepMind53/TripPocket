@@ -1029,3 +1029,32 @@ it('사진으로 채우기: 탑승권 바코드는 기기 안에서 읽고, 시�
     useAuth.setState({ status: 'unknown', me: null });
   }
 });
+
+it('항공 둘 이상: 공항마다 색 점선 — 나리타 도착·하네다 출발은 색이 다르고 인천끼리는 같다 (2026-11-25)', async () => {
+  const flight = (date: string, from: string, to: string, no: string) =>
+    bookingRepo.create({
+      tripId,
+      kind: 'flight',
+      title: no,
+      start: { date, time: '09:00', place: from },
+      end: { date, time: '11:00', place: to },
+      details: { flightNo: no },
+    });
+  await flight('2026-10-24', 'ICN', 'NRT', 'KE703');
+  await flight('2026-10-27', 'HND', 'ICN', 'KE720');
+  renderAt([`/trips/${tripId}/bookings`]);
+  await screen.findAllByText('NRT');
+  const color = (code: string) =>
+    screen
+      .getAllByText(code)
+      .map((el) => el.closest('[data-airport-color]') as HTMLElement | null)
+      .filter(Boolean)
+      .map((el) => el!.getAttribute('data-airport-color'));
+  // 여행 예약을 불러온 뒤 색이 붙는다
+  await waitFor(() => expect(color('ICN')).toHaveLength(2));
+  const [icnGo, icnBack] = color('ICN');
+  expect(icnGo).toBeTruthy();
+  expect(icnGo).toBe(icnBack);
+  expect(color('NRT')[0]).not.toBe(color('HND')[0]);
+  expect(color('NRT')[0]).not.toBe(icnGo);
+});
