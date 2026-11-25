@@ -77,7 +77,7 @@ describe('사용자 관리', () => {
     renderAt('/me');
     await user.click(await screen.findByRole('link', { name: '사용자 관리' }));
     const pending = (await screen.findByText('친구')).closest('li')!;
-    await user.click(within(pending).getByRole('button', { name: '승인' }));
+    await user.click(within(pending).getByRole('button', { name: '허용' }));
     expect(calls).toContain('POST /api/admin/requests/naver%3AN-2/approve');
     expect(await screen.findByText('새 가입 요청이 없어요')).toBeInTheDocument();
 

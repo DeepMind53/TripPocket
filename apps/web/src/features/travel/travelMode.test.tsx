@@ -155,7 +155,7 @@ it('여행 모드: 아침에는 브리핑, 저녁에는 정리와 내일 미리�
   vi.setSystemTime(new Date('2026-11-03T05:00:00Z')); // 오사카 14:00
   open(`/trips/${trip.id}/go`);
   const evening = await screen.findByRole('region', { name: '오늘 정리' });
-  expect(within(evening).getByText('오늘 2곳 중 0곳 다녀옴')).toBeInTheDocument();
+  expect(within(evening).getByText('오늘 2곳 중 0곳 방문')).toBeInTheDocument();
   expect(within(evening).getByText('09:00 유니버설 스튜디오')).toBeInTheDocument();
   expect(
     within(screen.getByRole('navigation', { name: '자주 쓰는 버튼' })).getByRole('button', {

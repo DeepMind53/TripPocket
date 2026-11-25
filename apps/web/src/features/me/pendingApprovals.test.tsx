@@ -36,7 +36,8 @@ it('허용·거절할 요청 팝업 (2026-11-25): 가입·참여 요청을 보�
   const sheet = await screen.findByRole('dialog', { name: '확인할 요청 2건' });
   expect(within(sheet).getByText('친구예요')).toBeInTheDocument();
   expect(within(sheet).getByText('도쿄 · 보기 권한')).toBeInTheDocument();
-  await user.click(within(sheet).getByRole('button', { name: '승인' }));
+  // 가입·참여 모두 [허용] — 첫 번째가 가입 요청
+  await user.click(within(sheet).getAllByRole('button', { name: '허용' })[0]!);
   await waitFor(() =>
     expect(screen.getByRole('dialog', { name: '확인할 요청 1건' })).toBeInTheDocument(),
   );

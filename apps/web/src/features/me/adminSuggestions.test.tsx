@@ -60,7 +60,7 @@ it('지우기: 확인 창에서 [삭제]를 눌러야 지운다', async () => {
   const card = (await screen.findByText('새로 온 제안')).closest('article')!;
   await user.click(within(card).getByRole('button', { name: '제안 지우기' }));
   const dialog = await screen.findByRole('dialog', { name: '삭제할까요?' });
-  expect(dialog).toHaveTextContent('이 제안을 삭제해요');
+  expect(dialog).toHaveTextContent('이 제안을 지워요');
   await user.click(within(dialog).getByRole('button', { name: '삭제' }));
   await waitFor(() => expect(screen.queryByText('새로 온 제안')).toBeNull());
   expect(calls).toContain('DELETE /api/admin/suggestions/a');
