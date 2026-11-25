@@ -137,6 +137,26 @@ describe('일정 지도', () => {
     expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({ id: 'B' }));
     expect(screen.queryByText(/키를 아직/)).not.toBeInTheDocument();
   });
+
+  it('핀 번호 = 일정 목록 번호: 좌표 없는 4번(예약 액티비티)은 건너뛰고 5번은 5번 (2026-11-25 제보)', async () => {
+    const d = '2026-11-01';
+    render(
+      <TripMap
+        trip={trip}
+        items={[
+          item('1', d, 'a', { lat: 35.7, lng: 139.7 }),
+          item('2', d, 'b', { lat: 35.71, lng: 139.71 }),
+          item('3', d, 'c', { lat: 35.72, lng: 139.72 }),
+          item('4 액티비티 예약', d, 'd'),
+          item('5', d, 'e', { lat: 35.73, lng: 139.73 }),
+        ]}
+        dayIndexOf={() => 0}
+        onSelect={() => {}}
+      />,
+    );
+    await waitFor(() => expect(calls.markers).toHaveLength(4));
+    expect(calls.markers.map((m) => m.label)).toEqual(['1', '2', '3', '5']);
+  });
 });
 
 describe('일정 지도 — 크게·전체 화면', () => {

@@ -654,9 +654,12 @@ function PlanView({
                     days={days.map((d, index) => ({
                       index,
                       date: formatMonthDay(d),
+                      // 번호는 목록과 같게 — 메모도 세고 노선도에서는 빼기만 (2026-11-25)
                       stops: items
-                        .filter((i) => i.date === d && i.kind !== 'note')
-                        .map((i) => i.title),
+                        .filter((i) => i.date === d)
+                        .map((i, n) => ({ i, n: n + 1 }))
+                        .filter(({ i }) => i.kind !== 'note')
+                        .map(({ i, n }) => ({ name: i.title, n })),
                     }))}
                   />
                 </Suspense>

@@ -6,8 +6,11 @@ export interface RouteDay {
   index: number;
   /** 날짜 ("11.12 (목)") */
   date: string;
-  /** 그날 역 이름 (메모 빼고 순서대로) */
-  stops: readonly string[];
+  /**
+   * 그날 역 (메모 빼고 순서대로). n = 일정 목록의 번호 — 메모가 끼어 있어도 목록과 같은 번호 (2026-11-25).
+   * 이름만 주면 1번부터 센다 (샘플)
+   */
+  stops: readonly (string | { name: string; n: number })[];
 }
 
 /**
@@ -40,16 +43,16 @@ export function TripRouteView({ days }: { days: readonly RouteDay[] }) {
                 className="absolute top-[10.5px] right-8 left-8 h-[3px] rounded-full bg-[var(--route)]"
               />
               <ol aria-label={t('plan.dayN', { n: d.index + 1 })} className="relative flex">
-                {d.stops.map((name, i) => (
+                {d.stops.map((stop, i) => (
                   <li key={i} className="flex w-16 shrink-0 flex-col items-center gap-1">
                     <span
                       aria-hidden="true"
                       className="grid size-6 place-items-center rounded-full border-[3px] border-[var(--route)] bg-surface font-mono text-micro leading-none text-[var(--route-ink)]"
                     >
-                      {i + 1}
+                      {typeof stop === 'string' ? i + 1 : stop.n}
                     </span>
                     <span className="line-clamp-2 px-0.5 text-center text-micro text-fg-sub">
-                      {name}
+                      {typeof stop === 'string' ? stop : stop.name}
                     </span>
                   </li>
                 ))}

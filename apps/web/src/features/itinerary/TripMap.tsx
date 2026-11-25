@@ -138,19 +138,34 @@ export function TripMap({
   }, [provider, online, trip.destinations]);
 
   // 화면이 다시 그려질 때마다 바뀌는 함수·배열 대신, 실제 장소가 바뀔 때만 핀을 다시 그린다
-  const latest = useRef({ visible, dayIndexOf, onSelect });
+  // 핀 번호 = 아래 일정 목록의 번호 (사용자 제보 2026-11-25): 좌표 없는 일정(예약에서 온 액티비티·메모 등)도
+  // 그날 순서에 세고 번호만 건너뛴다 — 1·2·3·5번이 지도에 4번으로 당겨지지 않게
+  const numberOf = useMemo(() => {
+    const byDay = new Map<LocalDate, ItineraryItem[]>();
+    for (const i of items) if (i.date) byDay.set(i.date, [...(byDay.get(i.date) ?? []), i]);
+    const out = new Map<string, number>();
+    for (const list of byDay.values())
+      [...list]
+        .sort((a, b) => compareKeys(a.order, b.order))
+        .forEach((i, n) => out.set(i.id, n + 1));
+    return out;
+  }, [items]);
+  const latest = useRef({ visible, dayIndexOf, onSelect, numberOf });
   useEffect(() => {
-    latest.current = { visible, dayIndexOf, onSelect };
+    latest.current = { visible, dayIndexOf, onSelect, numberOf };
   });
   const signature = visible
-    .map((i) => `${i.id}:${i.date}:${i.order}:${i.place?.coords?.lat},${i.place?.coords?.lng}`)
+    .map(
+      (i) =>
+        `${i.id}:${i.date}:${i.order}:${numberOf.get(i.id)}:${i.place?.coords?.lat},${i.place?.coords?.lng}`,
+    )
     .join('|');
 
   // 핀·순서선 (장소·순서가 바뀔 때)
   useEffect(() => {
     const h = handle.current;
     if (!h || status !== 'ready') return;
-    const { visible, dayIndexOf, onSelect } = latest.current;
+    const { visible, dayIndexOf, onSelect, numberOf } = latest.current;
     const byDay = new Map<LocalDate, ItineraryItem[]>();
     for (const i of visible) byDay.set(i.date!, [...(byDay.get(i.date!) ?? []), i]);
     const markers: MapMarker[] = [];
@@ -163,7 +178,7 @@ export function TripMap({
         markers.push({
           id: i.id,
           position: i.place!.coords!,
-          label: String(n + 1),
+          label: String(numberOf.get(i.id) ?? n + 1),
           color,
           ink,
           title: i.title,

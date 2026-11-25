@@ -25,3 +25,22 @@ it('장소 있는 날이 없으면 안내', () => {
   render(<TripRouteView days={[{ index: 0, date: '11.12 (목)', stops: [] }]} />);
   expect(screen.getByText('아직 장소가 있는 날이 없어요')).toBeInTheDocument();
 });
+
+it('노선도 번호도 일정 목록과 같게: 메모가 끼면 번호를 건너뛴다 (2026-11-25)', () => {
+  render(
+    <TripRouteView
+      days={[
+        {
+          index: 0,
+          date: '11.12 (목)',
+          stops: [
+            { name: '공항', n: 1 },
+            { name: '호텔', n: 3 },
+          ],
+        },
+      ]}
+    />,
+  );
+  const stops = screen.getByRole('list', { name: '1일차' }).querySelectorAll('li');
+  expect([...stops].map((li) => li.textContent)).toEqual(['1공항', '3호텔']);
+});
