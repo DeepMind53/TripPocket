@@ -46,6 +46,19 @@ describe('영수증 글자 상자 → 보이는 줄 (열마다 따로 읽힌 것
     expect(tilted.cy).toBeCloseTo(cy, 0);
   });
 
+  it('영문·숫자 낱말은 간격이 좁아도 띄운다, 한자·가나 한 글자씩은 붙인다 (2026-11-25)', () => {
+    // 작은 글자: 높이 6, 낱말 사이 1px
+    const boxes = [
+      box('EASYCARD', 10, 10, 40, 6),
+      box('COMF', 51, 10, 20, 6),
+      box('悠', 10, 40, 6, 6),
+      box('遊', 17, 40, 6, 6),
+      box('卡', 24, 40, 6, 6),
+      box('Adult', 31, 40, 20, 6),
+    ];
+    expect(rowsFromBoxes(boxes)).toBe('EASYCARD COMF\n悠遊卡Adult');
+  });
+
   it('살짝 기울여 찍어도 (5도) 줄이 섞이지 않는다', () => {
     const a = (5 * Math.PI) / 180;
     // 금액은 같은 줄을 따라 오른쪽으로 280 — 기울기만큼 아래로 내려가 있다 (다음 줄보다 낮게)

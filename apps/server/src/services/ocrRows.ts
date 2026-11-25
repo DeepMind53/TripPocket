@@ -100,9 +100,12 @@ export function rowBoxes(boxes: readonly TextBox[]): OcrRow[] {
     const items = [...r.items].sort((a, b) => a.cx - b.cx);
     let line = items[0]!.text;
     for (let i = 1; i < items.length; i++) {
-      // 붙어 있는 글자(일본어·중국어 한 글자씩 온 경우)는 띄우지 않는다
+      // 붙어 있는 글자(일본어·중국어 한 글자씩 온 경우)는 띄우지 않는다.
+      // 영문·숫자 낱말끼리는 늘 띄운다 — 인식 서비스가 낱말마다 따로 주는데, 작은 글자는 간격이 좁아
+      // "EASYCARD COMF"가 "EASYCARDCOMF"로 붙었다 (2026-11-25 점검)
       const gap = items[i]!.left - items[i - 1]!.right;
-      line += (gap > 0.3 * r.h ? ' ' : '') + items[i]!.text;
+      const latin = /[A-Za-z0-9]$/.test(line) && /^[A-Za-z0-9]/.test(items[i]!.text);
+      line += (latin || gap > 0.3 * r.h ? ' ' : '') + items[i]!.text;
     }
     const left = Math.min(...items.map((p) => p.left));
     const right = Math.max(...items.map((p) => p.right));
