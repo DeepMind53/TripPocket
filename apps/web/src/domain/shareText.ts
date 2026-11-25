@@ -7,6 +7,7 @@ import {
 } from '@trippocket/shared';
 import { formatMonthDay, formatPeriod } from '../shared/lib/dateFormat';
 import { bookingRowsForDay } from './lodging';
+import { weatherText, type PrintWeather } from './dayPrint';
 
 /**
  * 카톡에 붙여넣기 좋은 일정 요약 (S-25 텍스트로 복사·이미지로 저장). 예약번호·메모는 넣지 않는다 (docs/08 D1).
@@ -24,6 +25,8 @@ export function tripToText(
   items: readonly ItineraryItem[],
   bookings: readonly Booking[],
   time: (t: string | undefined) => string | undefined = (t) => t,
+  /** 날짜 옆 날씨 (2026-11-25): 예보·지난 날 실제 날씨·작년 같은 날 기록 */
+  weather: Readonly<Record<string, PrintWeather>> = {},
 ): string {
   const lines = [
     `${trip.cover.emoji ?? ''} ${trip.title}`.trim(),
@@ -60,7 +63,8 @@ export function tripToText(
         (b.end?.date ?? addDays(b.start.date, 1)) > date,
     );
     if (day.length === 0 && !lodging) return;
-    lines.push('', `[${i + 1}일차 ${formatMonthDay(date)}]`, ...day);
+    const w = weatherText(weather[date]);
+    lines.push('', `[${i + 1}일차 ${formatMonthDay(date)}]${w ? ` ${w}` : ''}`, ...day);
     if (lodging) lines.push(`🛏 ${lodging.title}`);
   });
   // 여행 기간 밖 날짜에 남은 일정도 빠뜨리지 않는다 (기간을 줄인 경우)

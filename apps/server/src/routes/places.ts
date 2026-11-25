@@ -20,6 +20,8 @@ import { naverSearchKeys } from '../services/naverBlog';
 import { findStations } from '../services/stations';
 import { apiAllowed } from '../services/apiUsage';
 import { statsRepo } from '../repositories/statsRepo';
+import { userDailyRepo } from '../repositories/userDailyRepo';
+import { fetchStaticMap, STATIC_MAP_MAX_POINTS } from '../services/staticMap';
 
 /**
  * 사람마다 하루 검색 수 (카카오·네이버는 하루 무료량이 있어서).
@@ -159,6 +161,49 @@ export function placesRoutes(app: FastifyInstance, config: Config, db: Db): void
     }
     return { places, google: usedGoogle, ...(fallback ? { fallback } : {}) };
   });
+
+  // 일정표 상세 출력의 일차 지도 (2026-11-25): 번호 핀 + 순서선 그림. 서버는 그림을 저장하지 않고 바로 넘긴다.
+  // p = "위도,경도,번호;…" (일정 장소 좌표 — 사용자 위치 아님), c = 노선 색 6자리. 한 사람 하루 60장
+  const mapUsage = userDailyRepo(db, 'static_map');
+  app.get<{ Querystring: { p?: string; c?: string } }>(
+    '/api/maps/static',
+    auth,
+    async (req, reply) => {
+      if (!config.GOOGLE_PLACES_KEY) return reply.code(503).send({ error: 'not_configured' });
+      const color = /^[0-9a-fA-F]{6}$/.test(req.query.c ?? '') ? req.query.c! : '2F6BFF';
+      const points = (req.query.p ?? '')
+        .split(';')
+        .map((s) => s.split(',').map(Number))
+        .filter(
+          (v): v is [number, number, number] =>
+            v.length === 3 &&
+            v.every(Number.isFinite) &&
+            Math.abs(v[0]!) <= 90 &&
+            Math.abs(v[1]!) <= 180 &&
+            Number.isInteger(v[2]) &&
+            v[2]! >= 1 &&
+            v[2]! <= 99,
+        )
+        .slice(0, STATIC_MAP_MAX_POINTS)
+        .map(([lat, lng, n]) => ({ lat, lng, n }));
+      if (points.length === 0) return reply.code(400).send({ error: 'bad_request' });
+      const userId = req.user!.userId;
+      if (mapUsage.used(userId) >= 60) return reply.code(429).send({ error: 'static_map_daily' });
+      if (!apiAllowed('google_static_maps')) return reply.code(503).send({ error: 'api_paused' });
+      try {
+        const img = await fetchStaticMap(points, color, config.GOOGLE_PLACES_KEY);
+        mapUsage.bump(userId);
+        // 같은 지도는 이 기기 브라우저가 하루 동안 다시 쓴다 (서버·공용 캐시에는 남기지 않음)
+        return reply
+          .header('cache-control', 'private, max-age=86400')
+          .type(img.type)
+          .send(img.body);
+      } catch (e) {
+        req.log.warn(`static map 실패: ${String(e).slice(0, 80)}`);
+        return reply.code(502).send({ error: 'upstream' });
+      }
+    },
+  );
 
   // 평점·영업시간: 고른 Google 장소를 볼 때만 (저장 금지, 매번 조회 — docs/10 §2.1)
   app.get<{ Params: { id: string } }>('/api/places/google/:id', auth, async (req, reply) => {

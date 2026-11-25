@@ -16,6 +16,7 @@ export type ApiId =
   | 'google_autocomplete'
   | 'google_details_basic'
   | 'google_routes'
+  | 'google_static_maps'
   | 'geoapify'
   | 'openfreemap'
   | 'google_maps_js'
@@ -100,6 +101,8 @@ export const APIS: readonly ApiDef[] = [
   { id: 'google_details_basic', group: 'paid', freeMonthly: 10000, tz: 'America/Los_Angeles' },
   // 출발 시각(실험실, 2026-10-26): Routes API Compute Routes Essentials 월 1만 무료 — 걷기·대중교통 2건씩
   { id: 'google_routes', group: 'paid', freeMonthly: 10000, tz: 'America/Los_Angeles' },
+  // 일정표 상세 출력의 일차 지도 (2026-11-25): Maps Static API Essentials 월 10,000장 무료 (2025-03 요금 기준)
+  { id: 'google_static_maps', group: 'paid', freeMonthly: 10000, tz: 'America/Los_Angeles' },
   // 영수증 글자 인식 (ADR-0012, 2026-11-11): Cloud Vision Document Text Detection 월 1,000장 무료, 넘으면 1,000장당 $1.50
   { id: 'google_vision', group: 'paid', freeMonthly: 1000, tz: 'America/Los_Angeles' },
   // 사진 속 장소·사진 분류 (2026-11-11 실험실): 기능마다 월 1,000장 따로 무료, 넘으면 1,000장당 $1.50

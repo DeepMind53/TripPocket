@@ -893,6 +893,62 @@ describe('실험실', () => {
     print.mockRestore();
   });
 
+  it('일정표 간단·상세 (2026-11-25): 상세는 일차 지도(목록 번호)·해 뜨고 지는 시각·시간 범위·예약번호·체크인', async () => {
+    const user = userEvent.setup();
+    const trip = await tripRepo.create({
+      title: '도쿄',
+      destinations: [
+        { name: '도쿄', kind: 'city', countryCode: 'JP', coords: { lat: 35.68, lng: 139.69 } },
+      ],
+      startDate: '2026-11-12',
+      endDate: '2026-11-13',
+      timezone: 'Asia/Tokyo',
+      cover: {},
+    });
+    const { bookingRepo } = await import('../../data/repositories/bookingRepo');
+    await bookingRepo.create({
+      tripId: trip.id,
+      kind: 'lodging',
+      title: '신주쿠 호텔',
+      confirmationNo: 'H123',
+      start: { date: '2026-11-12', time: '15:00' },
+      end: { date: '2026-11-13', time: '11:00' },
+      details: { address: '신주쿠 1-1' },
+    });
+    for (const [order, title, coords] of [
+      ['a', '센소지', { lat: 35.7148, lng: 139.7967 }],
+      ['b', '액티비티', undefined],
+      ['c', '스카이트리', { lat: 35.7101, lng: 139.8107 }],
+    ] as const)
+      await itemRepo.create({
+        tripId: trip.id,
+        date: '2026-11-12',
+        kind: 'place',
+        title,
+        startTime: order === 'a' ? '09:00' : undefined,
+        endTime: order === 'a' ? '10:30' : undefined,
+        ...(coords ? { place: { name: title, coords } } : {}),
+      });
+    render(
+      <RouterProvider
+        router={createMemoryRouter(routes, { initialEntries: [`/trips/${trip.id}/print`] })}
+      />,
+    );
+    // 간단: 지도 없음
+    expect(await screen.findByText('센소지')).toBeInTheDocument();
+    expect(screen.queryByRole('img', { name: /지도/ })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('radio', { name: '상세' }));
+    const map = await screen.findByRole('img', { name: '1일차 · 11.12 (목) 지도' });
+    // 핀 번호는 일정 목록과 같게 — 좌표 없는 2번은 건너뛰고 1·3
+    expect(decodeURIComponent(map.getAttribute('src')!)).toContain(
+      'p=35.71480,139.79670,1;35.71010,139.81070,3',
+    );
+    // 이틀 여행이라 날마다 한 줄
+    expect(screen.getAllByText(/^해 뜸 \d{2}:\d{2} · 해 짐 \d{2}:\d{2}$/)).toHaveLength(2);
+    expect(screen.getByText('09:00–10:30')).toBeInTheDocument();
+    expect(screen.getByText(/숙소 · 신주쿠 호텔 · 신주쿠 1-1 · 체크인 15:00/)).toBeInTheDocument();
+  });
+
   it('샘플 테스트: 모든 사용자, 누르면 일본·대만·한국 샘플을 만들어 도쿄(여행 중)를 열고 지울 수 있다 · 24시간 지나면 자동 삭제', async () => {
     const user = userEvent.setup();
     const me = { id: 'u', nickname: '사용자', createdAt: '', providers: [] };

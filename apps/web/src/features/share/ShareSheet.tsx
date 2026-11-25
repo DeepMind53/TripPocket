@@ -14,6 +14,7 @@ import { bookingRepo } from '../../data/repositories/bookingRepo';
 import { itemRepo } from '../../data/repositories/itemRepo';
 import { backupFileName, createTripBackup } from '../../data/services/backupService';
 import { tripToText } from '../../domain/shareText';
+import { useTripWeather } from '../common/useTripWeather';
 import { useTranslation } from '../../i18n';
 import { useTimeText } from '../../shared/hooks/useTimeText';
 import { copyText } from '../../shared/lib/clipboard';
@@ -36,6 +37,8 @@ export function ShareSheet({
   const { t } = useTranslation();
   const { time } = useTimeText();
   const loggedIn = useAuth((s) => s.status === 'user');
+  // 글·이미지의 날짜 옆 날씨 (2026-11-25)
+  const weather = useTripWeather(trip);
   const [link, setLink] = useState<ShareLink | null>(null);
   const [sensitive, setSensitive] = useState(false);
   const [members, setMembers] = useState<Member[] | null>(null);
@@ -60,6 +63,7 @@ export function ShareSheet({
       await itemRepo.listByTrip(trip.id),
       await bookingRepo.listByTrip(trip.id),
       time,
+      weather,
     );
   const run = async (fn: () => Promise<void>) => {
     setBusy(true);
