@@ -482,6 +482,36 @@ it('주소 없는 일정: [주소 넣기] → 편집 시트의 주소 칸에 커
   await waitFor(() => expect(address).toHaveFocus());
 });
 
+it('장소 이름·주소를 꾹 누르면 복사, 이때는 상세가 열리지 않는다 · 짧게 누르면 상세 (2026-11-25)', async () => {
+  const { itemRepo } = await import('../../data/repositories/itemRepo');
+  await itemRepo.create({
+    tripId,
+    date: '2026-10-24',
+    kind: 'place',
+    title: '센소지',
+    place: { name: '센소지', address: '아사쿠사 2-3-1' },
+  });
+  const writeText = vi.fn(async () => {});
+  Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+  await renderPlan();
+  const hold = async (el: Element) => {
+    fireEvent.pointerDown(el, { clientX: 10, clientY: 10 });
+    await new Promise((r) => setTimeout(r, 650));
+    fireEvent.pointerUp(el);
+    fireEvent.click(el);
+  };
+  await hold(await screen.findByText('센소지'));
+  expect(writeText).toHaveBeenLastCalledWith('센소지');
+  await hold(screen.getByText(/아사쿠사 2-3-1/));
+  expect(writeText).toHaveBeenLastCalledWith('아사쿠사 2-3-1');
+  expect(screen.queryByRole('dialog', { name: '센소지' })).not.toBeInTheDocument();
+  // 이름·주소에서 꾹 누르면 편집 모드로 바뀌지 않는다 (줄의 다른 곳은 지금처럼 편집 모드)
+  expect(screen.queryByText(/손잡이/)).not.toBeInTheDocument();
+  // 짧게 누르면 지금처럼 상세
+  fireEvent.click(screen.getByText('센소지'));
+  expect(await screen.findByRole('dialog', { name: '센소지' })).toBeInTheDocument();
+});
+
 it('실험실 "모이는 곳·시각" (docs/27 E2): 편집에서 표시를 켜면 저장된다', async () => {
   const { itemRepo } = await import('../../data/repositories/itemRepo');
   const { setLab } = await import('../../data/labsStore');

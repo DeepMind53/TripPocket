@@ -1,3 +1,4 @@
+import { useLongPressCopy } from '../../shared/hooks/useLongPressCopy';
 import { InlineIcon } from '../../shared/ui/InlineIcon';
 import { useTimeText } from '../../shared/hooks/useTimeText';
 import { type Booking, type ItineraryItem } from '@trippocket/shared';
@@ -59,6 +60,12 @@ export function ItemRow({
   // 방문은 그대로 둔다 (번호 자리에 ✓, 사용자 요청 2026-10-27)
   const marked = item.visit === 'skipped';
   const [showHistory, setShowHistory] = useState(false);
+  // 이름·주소 꾹 눌러 복사 (2026-11-25 사용자 요청) — 짧게 누르면 지금처럼 상세
+  const copyName = useLongPressCopy(
+    item.kind === 'note' ? undefined : item.title,
+    t('detail.nameCopied'),
+  );
+  const copyAddress = useLongPressCopy(item.place?.address, t('detail.addressCopied'));
   const visitedLook = item.visit === 'visited';
   const wrap = (row: ReactNode) => (
     <li className="relative flex flex-col gap-1">
@@ -210,8 +217,9 @@ export function ItemRow({
         ) : (
           <span className="flex flex-wrap items-center gap-x-2">
             <span
+              {...copyName}
               className={cn(
-                'text-body-1 text-pretty',
+                'text-body-1 text-pretty select-none [-webkit-touch-callout:none]',
                 item.done && !visitedLook && 'line-through',
                 now && 'font-semibold',
               )}
@@ -262,7 +270,12 @@ export function ItemRow({
             </span>
           ) : (
             item.kind !== 'note' &&
-            item.place?.address && <span className="truncate"> · {item.place.address}</span>
+            item.place?.address && (
+              <span {...copyAddress} className="truncate select-none [-webkit-touch-callout:none]">
+                {' · '}
+                {item.place.address}
+              </span>
+            )
           )}
         </span>
         {/* 메모가 있으면 첫 줄만 (사용자 요청 2026-10-27) */}

@@ -1,3 +1,4 @@
+import { useLongPressCopy } from '../../shared/hooks/useLongPressCopy';
 import { useTrip } from '../../data/hooks';
 import { useTimeText } from '../../shared/hooks/useTimeText';
 import type { Visit } from '../../domain/visit';
@@ -119,6 +120,8 @@ export function ItemDetailSheet({
   );
   const mine = reviews?.mine ?? null;
   const address = item?.place?.address;
+  // 주소 꾹 눌러 복사 (2026-11-25, 일정 줄과 같게)
+  const holdAddress = useLongPressCopy(address, t('detail.addressCopied'));
   // 종류별 맞춤 (docs/16 D1): 이동·메모는 주소가 없으면 주소·지도 관련을 숨긴다
   const isMove = item?.kind === 'transport';
   const isNote = item?.kind === 'note';
@@ -251,7 +254,11 @@ export function ItemDetailSheet({
           <dl className="flex flex-col gap-3 text-body-2">
             {placeLike && (
               <Info label={t('form.address')}>
-                {address ?? (
+                {address ? (
+                  <span {...holdAddress} className="select-none [-webkit-touch-callout:none]">
+                    {address}
+                  </span>
+                ) : (
                   <span className="flex flex-col items-start gap-1">
                     <span className="text-fg-muted">{t('detail.noAddress')}</span>
                     {!readOnly && (
