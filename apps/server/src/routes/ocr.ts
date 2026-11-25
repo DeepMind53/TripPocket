@@ -5,7 +5,7 @@ import type { Db } from '../db/database';
 import { requireUser } from '../auth/session';
 import { userDailyRepo } from '../repositories/userDailyRepo';
 import { apiAllowed } from '../services/apiUsage';
-import { azureOcr, googleOcr } from '../services/ocr';
+import { azureOcr, googleOcr, type OcrRead } from '../services/ocr';
 
 /**
  * 영수증 글자 인식 (ADR-0012, 실험실 "사진·영수증" — 2026-11-11). 로그인 필요, 사람마다 하루 20장.
@@ -33,7 +33,7 @@ export function ocrRoutes(app: FastifyInstance, config: Config, db: Db): void {
       if (n >= OCR_DAILY_LIMIT)
         return reply.code(429).send({ error: 'ocr_daily', limit: OCR_DAILY_LIMIT, left: 0 });
       const gkey = config.GOOGLE_VISION_KEY ?? config.GOOGLE_PLACES_KEY;
-      const tries: [OcrResult['source'], () => Promise<string>][] = [];
+      const tries: [OcrResult['source'], () => Promise<OcrRead>][] = [];
       if (gkey && apiAllowed('google_vision')) tries.push(['google', () => googleOcr(image, gkey)]);
       if (config.AZURE_VISION_ENDPOINT && config.AZURE_VISION_KEY && apiAllowed('azure_read')) {
         const { AZURE_VISION_ENDPOINT: ep, AZURE_VISION_KEY: key } = config;
@@ -41,9 +41,9 @@ export function ocrRoutes(app: FastifyInstance, config: Config, db: Db): void {
       }
       for (const [source, run] of tries) {
         try {
-          const text = await run();
+          const { text, rows } = await run();
           usage.bump(userId);
-          const result: OcrResult = { text, source, left: OCR_DAILY_LIMIT - n - 1 };
+          const result: OcrResult = { text, rows, source, left: OCR_DAILY_LIMIT - n - 1 };
           return result;
         } catch (e) {
           // 오류 이름만 (사진·글은 남기지 않는다)

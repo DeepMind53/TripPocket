@@ -125,4 +125,21 @@ describe('사진 기능 (실험실, ADR-0012)', () => {
     expect(over.statusCode).toBe(429);
     expect(over.json()).toMatchObject({ error: 'vision_daily', feature: 'labels', left: 0 });
   });
+
+  it('글만 번역 (영수증 품목, 2026-11-25): 로그인 필요, 사진 없이 줄 글자만 AI로, 이상한 값 400', async () => {
+    const send = (payload: object, cookie: string | null = `__Host-sid=${sid}`) =>
+      app.inject({
+        method: 'POST',
+        url: '/api/vision/translate-text',
+        headers: { [PROXY_HEADER]: SECRET, origin: ORIGIN, ...(cookie ? { cookie } : {}) },
+        payload,
+      });
+    expect((await send({ lines: ['a'] }, null)).statusCode).toBe(401);
+    expect((await send({ lines: [] })).statusCode).toBe(400);
+    expect((await send({ lines: [1] })).statusCode).toBe(400);
+    const res = await send({ lines: ['ラーメン 980円', 'ビール 600円'] });
+    expect(res.json()).toEqual({ ko: ['라멘 980엔', '맥주 600엔'], left: 39 });
+    // 글자 인식(사진)은 부르지 않는다
+    expect(calls.some((c) => c.url.includes('vision.googleapis.com'))).toBe(false);
+  });
 });

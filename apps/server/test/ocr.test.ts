@@ -78,7 +78,13 @@ describe('영수증 글자 인식 (ADR-0012)', () => {
   it('Google Vision 먼저 — 키는 주소창이 아니라 머리글로, 결과 글과 남은 횟수', async () => {
     await start({ GOOGLE_VISION_KEY: 'gv' });
     const res = await ocr(JPEG);
-    expect(res.json()).toEqual({ text: 'ラーメン 980\n合計 980', source: 'google', left: 19 });
+    // 글자 상자가 없는 응답이면 줄만 (자리 없음)
+    expect(res.json()).toEqual({
+      text: 'ラーメン 980\n合計 980',
+      rows: [{ text: 'ラーメン 980' }, { text: '合計 980' }],
+      source: 'google',
+      left: 19,
+    });
     expect(calls[0]!.url).toBe('https://vision.googleapis.com/v1/images:annotate');
     expect(calls[0]!.headers['x-goog-api-key']).toBe('gv');
   });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { aPoly, gPoly, rowsFromBoxes, type TextBox } from '../src/services/ocrRows';
+import { aPoly, gPoly, rowBoxes, rowsFromBoxes, type TextBox } from '../src/services/ocrRows';
 
 /** 가로 글자 상자 (x, y = 왼쪽 위, 기울기 a 라디안) */
 function box(text: string, x: number, y: number, w: number, h = 20, a = 0): TextBox {
@@ -22,6 +22,28 @@ describe('영수증 글자 상자 → 보이는 줄 (열마다 따로 읽힌 것
       box('¥1,190', 290, 121, 60),
     ];
     expect(rowsFromBoxes(boxes)).toBe('一蘭\nラーメン ¥980\n替玉 ¥210\n合計 ¥1,190');
+  });
+
+  it('줄마다 사진 속 자리 (사진 위에 번역 덮기, 2026-11-25): 가운데·폭·높이·기울기', () => {
+    const rows = rowBoxes([box('ラーメン', 10, 40, 80), box('¥980', 300, 42, 50)]);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]!.text).toBe('ラーメン ¥980');
+    const b = rows[0]!.box!;
+    // 왼쪽 10 ~ 오른쪽 350, 높이 20, 가운데 높이 약 51
+    expect(b.w).toBeCloseTo(340, 0);
+    expect(b.h).toBeCloseTo(20, 0);
+    expect(b.cx).toBeCloseTo(180, 0);
+    expect(b.cy).toBeGreaterThan(49);
+    expect(b.cy).toBeLessThan(53);
+    expect(b.a).toBeCloseTo(0, 2);
+    // 5도 기울인 줄: 가운데는 사진 좌표로 되돌아온다
+    const a = (5 * Math.PI) / 180;
+    const tilted = rowBoxes([box('아메리카노', 10, 40, 100, 20, a)])[0]!.box!;
+    expect(tilted.a).toBeCloseTo(a, 2);
+    const cx = 10 + 50 * Math.cos(a) - 10 * Math.sin(a);
+    const cy = 40 + 50 * Math.sin(a) + 10 * Math.cos(a);
+    expect(tilted.cx).toBeCloseTo(cx, 0);
+    expect(tilted.cy).toBeCloseTo(cy, 0);
   });
 
   it('살짝 기울여 찍어도 (5도) 줄이 섞이지 않는다', () => {

@@ -4,6 +4,8 @@
  * 같은 높이에 있는 글자를 한 줄로 모으면 "라멘 ¥980"처럼 이름과 금액이 다시 한 줄이 된다.
  * 사진을 살짝 기울여 찍어도 되게, 글자 상자의 기울기 가운데값만큼 되돌린 뒤 묶는다
  */
+import type { OcrRow } from '@trippocket/shared';
+
 export interface Pt {
   x: number;
   y: number;
@@ -33,8 +35,18 @@ function median(v: number[]): number {
 }
 
 export function rowsFromBoxes(boxes: readonly TextBox[]): string {
+  return rowBoxes(boxes)
+    .map((r) => r.text)
+    .join('\n');
+}
+
+/**
+ * 줄마다 글과 사진 속 자리 (사진 위에 번역 덮기, 2026-11-25 사용자 요청 "글씨만 따로 보면 헷갈림").
+ * box = 사진 픽셀 기준 가운데(cx, cy)·폭·높이·기울기(라디안) — 사진 좌표일 뿐 사용자 위치와는 상관없다
+ */
+export function rowBoxes(boxes: readonly TextBox[]): OcrRow[] {
   const ok = boxes.filter((b) => b.text.trim() && b.poly.length >= 4);
-  if (!ok.length) return '';
+  if (!ok.length) return [];
   // 글자 방향 (왼쪽 위 → 오른쪽 위)의 가운데값 = 사진 기울기
   const angle = median(
     ok.map((b) => Math.atan2(b.poly[1]!.y - b.poly[0]!.y, b.poly[1]!.x - b.poly[0]!.x)),
@@ -78,18 +90,34 @@ export function rowsFromBoxes(boxes: readonly TextBox[]): string {
     } else rows.push({ cy: p.cy, h: p.h, items: [p] });
   }
 
-  return rows
-    .map((r) => {
-      const items = [...r.items].sort((a, b) => a.cx - b.cx);
-      let line = items[0]!.text;
-      for (let i = 1; i < items.length; i++) {
-        // 붙어 있는 글자(일본어·중국어 한 글자씩 온 경우)는 띄우지 않는다
-        const gap = items[i]!.left - items[i - 1]!.right;
-        line += (gap > 0.3 * r.h ? ' ' : '') + items[i]!.text;
-      }
-      return line;
-    })
-    .join('\n');
+  // 되돌린 좌표 → 사진 좌표 (기울기만큼 다시 돌림)
+  const back = (p: Pt): Pt => ({
+    x: p.x * Math.cos(angle) - p.y * Math.sin(angle),
+    y: p.x * Math.sin(angle) + p.y * Math.cos(angle),
+  });
+  const round = (n: number) => Math.round(n * 10) / 10;
+  return rows.map((r) => {
+    const items = [...r.items].sort((a, b) => a.cx - b.cx);
+    let line = items[0]!.text;
+    for (let i = 1; i < items.length; i++) {
+      // 붙어 있는 글자(일본어·중국어 한 글자씩 온 경우)는 띄우지 않는다
+      const gap = items[i]!.left - items[i - 1]!.right;
+      line += (gap > 0.3 * r.h ? ' ' : '') + items[i]!.text;
+    }
+    const left = Math.min(...items.map((p) => p.left));
+    const right = Math.max(...items.map((p) => p.right));
+    const c = back({ x: (left + right) / 2, y: r.cy });
+    return {
+      text: line,
+      box: {
+        cx: round(c.x),
+        cy: round(c.y),
+        w: round(right - left),
+        h: round(r.h),
+        a: Math.round(angle * 1000) / 1000,
+      },
+    };
+  });
 }
 
 /** Google Vision 꼭짓점 (0인 값은 응답에서 빠진다) */
