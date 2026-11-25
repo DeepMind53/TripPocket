@@ -47,6 +47,74 @@ export function meRoutes(app: FastifyInstance, db: Db, config: Config): void {
     };
   });
 
+  /**
+   * 내가 허용·거절해야 할 요청 (2026-11-25 사용자 요청 "승인 또는 거절할 때까지 접속마다 팝업"):
+   * 관리자 = 대기 중 가입 요청, 여행 소유자 = 내 여행 참여 요청. 고르면 기존 승인·거절 경로로 처리한다
+   */
+  app.get('/api/me/pending-approvals', auth, async (req, reply) => {
+    reply.header('cache-control', 'no-store');
+    const userId = req.user!.userId;
+    const isAdmin = !!(
+      db.prepare('SELECT is_admin FROM users WHERE id = ?').get(userId) as
+        { is_admin: number } | undefined
+    )?.is_admin;
+    const joins = isAdmin
+      ? (
+          db
+            .prepare(
+              "SELECT provider, provider_user_id, nickname, note, requested_at FROM join_requests WHERE status = 'pending' ORDER BY requested_at",
+            )
+            .all() as {
+            provider: string;
+            provider_user_id: string;
+            nickname: string;
+            note: string | null;
+            requested_at: string;
+          }[]
+        ).map((r) => ({
+          id: `${r.provider}:${r.provider_user_id}`,
+          nickname: r.nickname,
+          ...(r.note ? { note: r.note } : {}),
+          requestedAt: r.requested_at,
+        }))
+      : [];
+    const trips = (
+      db
+        .prepare(
+          `SELECT r.trip_id, r.user_id, r.role, r.requested_at, u.nickname, t.data_json
+           FROM trip_join_requests r
+           JOIN trip_members m ON m.trip_id = r.trip_id AND m.user_id = ? AND m.role = 'owner'
+           JOIN users u ON u.id = r.user_id
+           LEFT JOIN records t ON t.table_name = 'trips' AND t.id = r.trip_id
+           ORDER BY r.requested_at`,
+        )
+        .all(userId) as {
+        trip_id: string;
+        user_id: string;
+        role: 'editor' | 'viewer';
+        requested_at: string;
+        nickname: string;
+        data_json: string | null;
+      }[]
+    ).map((r) => {
+      let title = '';
+      try {
+        title = String((JSON.parse(r.data_json ?? '{}') as { title?: unknown }).title ?? '');
+      } catch {
+        // 여행 글을 못 읽어도 요청은 보여 준다
+      }
+      return {
+        tripId: r.trip_id,
+        tripTitle: title,
+        userId: r.user_id,
+        nickname: r.nickname,
+        role: r.role,
+        requestedAt: r.requested_at,
+      };
+    });
+    return { joins, trips };
+  });
+
   // 내 설정 (계정에 저장 — 기기를 바꿔도 같게). 기기별 설정(테마·글자 크기·진동)은 받지도 주지도 않는다
   app.get('/api/me/settings', auth, async (req, reply) => {
     reply.header('cache-control', 'no-store');

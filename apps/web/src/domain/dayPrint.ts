@@ -16,7 +16,7 @@ export interface PrintWeather {
   past?: true | undefined;
 }
 
-/** "맑음 12°/20°" + 지난 날이면 "· 실제 날씨", 작년 기록이면 "· 25년 같은 날" */
+/** "맑음 12°/20°" + 지난 날이면 "· 지난 날씨", 작년 기록이면 "· 작년 기록" */
 export function weatherText(w: PrintWeather | undefined): string | null {
   if (!w) return null;
   const base = `${weatherLook(w.code).label} ${formatTemps(w)}`;

@@ -1060,6 +1060,15 @@
     "keywordPick": "블로그 인기 키워드 \"{{keyword}}\" · 글 {{n}}개",
     "alsoGoogle": "Google에서도 찾음"
   },
+  "approvals": {
+    "title": "확인할 요청 {{n}}건",
+    "desc": "고를 때까지 앱을 열 때마다 보여요",
+    "joins": "가입 요청",
+    "trips": "여행 참여 요청",
+    "tripLine": "{{trip}} · {{role}} 권한",
+    "requestedOn": "{{date}} 요청",
+    "later": "나중에"
+  },
   "admin": {
     "title": "사용자 관리",
     "desc": "새 사람은 승인해야 쓸 수 있어요\n사용 중지하면 바로 로그아웃돼요",
@@ -1717,7 +1726,7 @@
     "noLodging": "숙소 예약이 없어요",
     "weather": "날씨 정보",
     "weatherLater": "예보는 출발 2주 전부터 보여요",
-    "weatherPast": "과거 {{yy}}년 날씨 정보\n예보는 출발 2주 전부터 보여요",
+    "weatherPast": "작년 기록\n예보는 출발 2주 전부터 보여요",
     "weatherForecast": "{{date}} 예보 날씨",
     "weatherDays": "{{n}}일",
     "weatherDaysLabel": "{{look}} {{n}}일",
@@ -1733,8 +1742,8 @@
     "attnDocs": "서류 확인"
   },
   "weather": {
-    "pastShort": "과거 날씨",
-    "lastYearLabel": "작년({{year}}년) 같은 날 날씨: {{look}} {{temps}}",
+    "pastShort": "작년 기록",
+    "lastYearLabel": "작년 기록({{year}}년): {{look}} {{temps}}",
     "forecastLabel": "날씨 예보: {{look}} {{temps}}",
     "observedLabel": "지난 날씨: {{look}} {{temps}}"
   },
@@ -2092,8 +2101,8 @@
     "modeDetail": "상세",
     "modeSimpleDesc": "날짜별 일정·숙소·예약번호에 날씨를 붙여요",
     "modeDetailDesc": "일차마다 지도·시간·장소·주소·메모·예약까지\n[인쇄]에서 PDF로 저장을 고르세요",
-    "weatherActual": "실제 날씨",
-    "weatherLastYear": "{{yy}}년 같은 날",
+    "weatherActual": "지난 날씨",
+    "weatherLastYear": "작년 기록",
     "holiday": "현지 공휴일 · {{name}}",
     "sun": "해 뜸 {{rise}} · 해 짐 {{set}}",
     "mapAlt": "{{day}} 지도",

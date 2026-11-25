@@ -35,6 +35,9 @@ const NicknameSheet = lazy(async () => ({
 const AccountChoiceSheet = lazy(async () => ({
   default: (await import('../features/me/AccountChoiceSheet')).AccountChoiceSheet,
 }));
+const PendingApprovals = lazy(async () => ({
+  default: (await import('../features/me/PendingApprovals')).PendingApprovals,
+}));
 const AdminMonthlyNotice = lazy(async () => ({
   default: (await import('../features/me/AdminMonthlyNotice')).AdminMonthlyNotice,
 }));
@@ -168,6 +171,12 @@ export function App() {
       {signedIn && planOn && (
         <Suspense fallback={null}>
           <ConditionCheck />
+        </Suspense>
+      )}
+      {/* 허용·거절할 가입·참여 요청 — 고를 때까지 접속마다 (2026-11-25) */}
+      {signedIn && (
+        <Suspense fallback={null}>
+          <PendingApprovals />
         </Suspense>
       )}
       {isAdmin && (

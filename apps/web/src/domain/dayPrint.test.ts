@@ -3,8 +3,8 @@ import { mapPointsParam, weatherText } from './dayPrint';
 
 it('날씨 한 줄: 예보 · 지난 날 실제 날씨 · 작년 같은 날 기록', () => {
   expect(weatherText({ code: 0, min: 11.6, max: 20.2 })).toBe('맑음 12°/20°');
-  expect(weatherText({ code: 61, min: 8, max: 14, past: true })).toBe('비 8°/14° · 실제 날씨');
-  expect(weatherText({ code: 3, min: 5, max: 12, year: 2025 })).toBe('흐림 5°/12° · 25년 같은 날');
+  expect(weatherText({ code: 61, min: 8, max: 14, past: true })).toBe('비 8°/14° · 지난 날씨');
+  expect(weatherText({ code: 3, min: 5, max: 12, year: 2025 })).toBe('흐림 5°/12° · 작년 기록');
   expect(weatherText(undefined)).toBeNull();
 });
 
