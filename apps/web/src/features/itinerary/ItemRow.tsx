@@ -22,6 +22,7 @@ export function ItemRow({
   now,
   booking,
   arrivalColor,
+  nearLodging = false,
   onOpen,
   onVisit,
   onConfirmFlight,
@@ -49,6 +50,8 @@ export function ItemRow({
   booking?: Booking | undefined;
   /** 공항 도착 일정의 공항 색 — 점선 테두리를 그 색으로 (탑승권 공항 코드와 같게) */
   arrivalColor?: string | undefined;
+  /** 그날 숙소와 1km 안 — 이름 옆 "(숙소 근처)" */
+  nearLodging?: boolean | undefined;
   onOpen: () => void;
 }) {
   const { time, wide } = useTimeText();
@@ -233,6 +236,12 @@ export function ItemRow({
               {/* 공항 픽업·드랍은 예약처를 제목 옆에 (사용자 요청 2026-10-27) */}
               {booking?.kind === 'transfer' && booking.provider && (
                 <span className="text-body-2 font-normal text-fg-sub"> ({booking.provider})</span>
+              )}
+              {nearLodging && (
+                <span className="text-caption font-normal text-fg-muted">
+                  {' '}
+                  {t('plan.nearLodging')}
+                </span>
               )}
             </span>
             {history && history.length > 0 && (

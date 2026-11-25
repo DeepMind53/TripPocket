@@ -1,5 +1,13 @@
 import type { Booking, ItineraryItem } from '@trippocket/shared';
-import { bookingRowsForDay, lodgingForNight, minutesUntil, nextItem, nowTimeIn } from './lodging';
+import {
+  bookingRowsForDay,
+  isNearLodging,
+  lodgingForNight,
+  lodgingsOfDay,
+  minutesUntil,
+  nextItem,
+  nowTimeIn,
+} from './lodging';
 
 const base = {
   tripId: 't',
@@ -118,5 +126,41 @@ describe('숙소 조식 (사용자 요청 2026-10-26)', () => {
       breakfastOn([stay({ breakfast: true, breakfastDates: ['2026-11-03'] })], '2026-11-03'),
     ).not.toBeNull();
     expect(breakfastOn([stay({ breakfast: false })], '2026-11-02')).toBeNull();
+  });
+});
+
+describe('숙소 근처 (2026-11-25)', () => {
+  const hotel = {
+    id: 'h',
+    kind: 'lodging',
+    title: '호텔',
+    start: { date: '2026-11-01', coords: { lat: 35.69, lng: 139.7 } },
+    end: { date: '2026-11-03' },
+  } as Booking;
+  const at = (lat: number, kind: ItineraryItem['kind'] = 'food') =>
+    ({
+      id: 'i',
+      kind,
+      title: 't',
+      place: { name: 't', coords: { lat, lng: 139.7 } },
+    }) as ItineraryItem;
+  it('직선 1km 안이면 근처, 넘으면 아님 · 숙소 일정·메모·좌표 없는 일정은 빼고', () => {
+    expect(isNearLodging(at(35.695), [hotel])).toBe(true); // 약 0.56km
+    expect(isNearLodging(at(35.71), [hotel])).toBe(false); // 약 2.2km
+    expect(isNearLodging(at(35.69, 'lodging'), [hotel])).toBe(false);
+    expect(isNearLodging({ id: 'x', kind: 'food', title: 'x' } as ItineraryItem, [hotel])).toBe(
+      false,
+    );
+  });
+  it('그날 숙소: 아침에 나오는 숙소 먼저, 오늘 밤 숙소 다음 (옮기는 날 둘 다)', () => {
+    const next = {
+      ...hotel,
+      id: 'n',
+      title: '료칸',
+      start: { date: '2026-11-03' },
+      end: { date: '2026-11-05' },
+    } as Booking;
+    expect(lodgingsOfDay([hotel, next], '2026-11-03').map((b) => b.id)).toEqual(['h', 'n']);
+    expect(lodgingsOfDay([hotel, next], '2026-11-02').map((b) => b.id)).toEqual(['h']);
   });
 });

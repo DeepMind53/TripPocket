@@ -1,4 +1,4 @@
-import { lodgingsOfDay } from '../../domain/lodging';
+import { isNearLodging, lodgingsOfDay } from '../../domain/lodging';
 import { airportColorIndex } from '../../domain/airportColors';
 import { routeColor } from '../../shared/ui/routeColor';
 import { useSettings } from '../../data/settingsStore';
@@ -175,6 +175,7 @@ export function DaySection({
   // 출발 전날~출발 날 항공편은 [확인]을 누를 때까지 빨갛게 (이 기기 기록)
   const flightChecks = useFlightChecks();
   const airportColors = airportColorIndex([...bookingById.values()]);
+  const dayLodgings = date ? lodgingsOfDay([...bookingById.values()], date) : [];
   /** 항공 예약에서 온 "○○ 도착" 일정이면 그 도착 공항 색 */
   const arrivalColorOf = (item: ItineraryItem) => {
     const b = item.bookingId ? bookingById.get(item.bookingId) : undefined;
@@ -465,6 +466,8 @@ export function DaySection({
                   booking={item.bookingId ? bookingById.get(item.bookingId) : undefined}
                   // 공항 도착 일정: 탑승권 공항 코드와 같은 색 점선 (2026-11-25 사용자 요청)
                   arrivalColor={arrivalColorOf(item)}
+                  // 숙소와 1km 안이면 이름 옆 "(숙소 근처)" (2026-11-25 사용자 요청)
+                  nearLodging={isNearLodging(item, dayLodgings)}
                   onOpen={() => onOpen(item)}
                   // 고른 뒤에도 버튼은 남고 고른 것만 칠해진다 (사용자 요청 2026-11-06)
                   onVisit={visitable?.has(item.id) ? (v) => onVisitItem(item, v) : undefined}

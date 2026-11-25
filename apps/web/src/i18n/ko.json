@@ -238,6 +238,7 @@
     "routeShortened": "약 {{km}} 줄였어요",
     "breakfast": "{{name}} 조식",
     "arriveAt": "{{airport}} 도착",
+    "nearLodging": "(숙소 근처)",
     "localHoliday": "현지 공휴일 · {{name}}",
     "lateNight": "{{time}}까지 일정이 있어요\n막차·택시를 미리 확인하세요"
   },

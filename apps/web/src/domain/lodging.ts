@@ -1,5 +1,6 @@
 import {
   addDays,
+  distanceKm,
   diffDays,
   type Booking,
   type ItineraryItem,
@@ -145,4 +146,20 @@ export function lodgingsOfDay(bookings: readonly Booking[], date: LocalDate): Bo
   const night = lodgingForNight(bookings, date)?.booking;
   if (night && !out.some((b) => b.id === night.id)) out.push(night);
   return out;
+}
+
+/** 숙소와 직선거리 이만큼 안이면 "(숙소 근처)" (2026-11-25 사용자 요청) */
+export const NEAR_LODGING_KM = 1;
+
+/**
+ * 일정 장소가 그날 숙소와 1km 안인가 (숙소 일정·숙소 예약에서 온 일정은 빼고).
+ * 좌표가 있는 장소·숙소만 — 없으면 false
+ */
+export function isNearLodging(item: ItineraryItem, lodgings: readonly Booking[]): boolean {
+  const c = item.place?.coords;
+  if (!c || item.kind === 'lodging' || item.kind === 'note') return false;
+  return lodgings.some(
+    (b) =>
+      b.start.coords && b.id !== item.bookingId && distanceKm(c, b.start.coords) <= NEAR_LODGING_KM,
+  );
 }
