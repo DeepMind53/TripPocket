@@ -59,7 +59,7 @@ export async function mountGoogle(
           position: m.position,
           title: m.title,
           icon: {
-            url: pinSvg(m.label, m.color, m.ink),
+            url: pinSvg(m.label, m.color, m.ink, m.shape),
             scaledSize: new g.Size(30, 30),
             anchor: new g.Point(15, 15),
           },

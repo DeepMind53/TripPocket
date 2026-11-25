@@ -132,3 +132,17 @@ export function breakfastOn(bookings: readonly Booking[], date: LocalDate): Book
   }
   return null;
 }
+
+/**
+ * 그날 관련 숙소 (2026-11-25 사용자 요청 — 지도 숙소 핀·[숙소 일정 추가]):
+ * 아침에 나오는 숙소(전날 밤 묵은 곳 = 오늘 체크아웃) 먼저, 그다음 오늘 밤 숙소. 같은 숙소면 하나만.
+ * 숙소를 옮기는 날은 둘 다 — 골라서 쓴다
+ */
+export function lodgingsOfDay(bookings: readonly Booking[], date: LocalDate): Booking[] {
+  const out: Booking[] = [];
+  const morning = lodgingForNight(bookings, addDays(date, -1))?.booking;
+  if (morning) out.push(morning);
+  const night = lodgingForNight(bookings, date)?.booking;
+  if (night && !out.some((b) => b.id === night.id)) out.push(night);
+  return out;
+}

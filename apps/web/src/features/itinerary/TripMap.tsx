@@ -56,6 +56,7 @@ const LONG_PRESS_MOVE = 10;
 export function TripMap({
   trip,
   items,
+  lodgings = [],
   dayIndexOf,
   onSelect,
   size = 'small',
@@ -64,6 +65,8 @@ export function TripMap({
 }: {
   trip: Trip;
   items: readonly ItineraryItem[];
+  /** 그날 묵는 숙소 (예약) — 번호 없는 숙소 핀 (2026-11-25 사용자 요청) */
+  lodgings?: readonly { id: string; title: string; position: LatLng }[];
   dayIndexOf: (date: LocalDate) => number;
   onSelect: (item: ItineraryItem) => void;
   /** small = 일정 위 작은 지도(누르면 크게), large = 화면 대부분, full = 지도만 전체 화면 (꾹 누르기) */
@@ -150,22 +153,25 @@ export function TripMap({
         .forEach((i, n) => out.set(i.id, n + 1));
     return out;
   }, [items]);
-  const latest = useRef({ visible, dayIndexOf, onSelect, numberOf });
+  const lodgingPins = provider === 'google' || domestic ? lodgings : [];
+  const latest = useRef({ visible, dayIndexOf, onSelect, numberOf, lodgingPins });
   useEffect(() => {
-    latest.current = { visible, dayIndexOf, onSelect, numberOf };
+    latest.current = { visible, dayIndexOf, onSelect, numberOf, lodgingPins };
   });
-  const signature = visible
-    .map(
-      (i) =>
-        `${i.id}:${i.date}:${i.order}:${numberOf.get(i.id)}:${i.place?.coords?.lat},${i.place?.coords?.lng}`,
-    )
-    .join('|');
+  const signature =
+    visible
+      .map(
+        (i) =>
+          `${i.id}:${i.date}:${i.order}:${numberOf.get(i.id)}:${i.place?.coords?.lat},${i.place?.coords?.lng}`,
+      )
+      .join('|') +
+    `#${lodgingPins.map((l) => `${l.id}:${l.position.lat},${l.position.lng}`).join('|')}`;
 
   // 핀·순서선 (장소·순서가 바뀔 때)
   useEffect(() => {
     const h = handle.current;
     if (!h || status !== 'ready') return;
-    const { visible, dayIndexOf, onSelect, numberOf } = latest.current;
+    const { visible, dayIndexOf, onSelect, numberOf, lodgingPins } = latest.current;
     const byDay = new Map<LocalDate, ItineraryItem[]>();
     for (const i of visible) byDay.set(i.date!, [...(byDay.get(i.date!) ?? []), i]);
     const markers: MapMarker[] = [];
@@ -186,9 +192,22 @@ export function TripMap({
       );
       paths.push({ color, points: sorted.map((i) => i.place!.coords!) });
     }
+    // 숙소 핀: 번호 없이 침대 그림 (진한 회색 — 일차 색과 겹치지 않게)
+    for (const l of lodgingPins)
+      markers.push({
+        id: `lodging:${l.id}`,
+        position: l.position,
+        label: '',
+        color: '#4e5968',
+        title: l.title,
+        shape: 'lodging',
+      });
     h.setMarkers(markers);
     h.drawPaths(paths);
-    h.fitBounds(fitPoints(visible).map((i) => i.place!.coords!));
+    h.fitBounds([
+      ...fitPoints(visible).map((i) => i.place!.coords!),
+      ...lodgingPins.map((l) => l.position),
+    ]);
     h.onMarkerClick((id) => {
       const item = visible.find((i) => i.id === id);
       if (item) onSelect(item);

@@ -71,7 +71,7 @@ export async function mountNaver(
           position: ll(m.position),
           title: m.title,
           icon: {
-            url: pinSvg(m.label, m.color, m.ink),
+            url: pinSvg(m.label, m.color, m.ink, m.shape),
             size: new n.Size(30, 30),
             scaledSize: new n.Size(30, 30),
             anchor: new n.Point(15, 15),

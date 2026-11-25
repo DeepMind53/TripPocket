@@ -17,6 +17,8 @@ export interface MapMarker {
   /** 번호 글자색 (흰 바탕 위 4.5:1). 없으면 color */
   ink?: string;
   title: string;
+  /** stop = 일정 번호 점, lodging = 숙소 (번호 없이 침대 그림, 2026-11-25) */
+  shape?: 'stop' | 'lodging';
 }
 
 export interface MapHandle {

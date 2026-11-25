@@ -31,7 +31,17 @@ export function loadScript(src: string, ready: () => boolean): Promise<void> {
 }
 
 /** 원 안에 숫자가 있는 핀 (SVG) — 두 제공자 모두 이미지로 쓴다 */
-export function pinSvg(label: string, color: string, ink: string = color): string {
+export function pinSvg(
+  label: string,
+  color: string,
+  ink: string = color,
+  shape: 'stop' | 'lodging' = 'stop',
+): string {
+  // 숙소: 진한 둥근 네모 + 흰 침대 그림 (번호 없음) — 일정 번호 점과 한눈에 구분 (2026-11-25)
+  if (shape === 'lodging') {
+    const bed = `<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30"><rect x="1" y="1" width="28" height="28" rx="8" fill="white"/><rect x="3.5" y="3.5" width="23" height="23" rx="6" fill="${color}"/><g transform="translate(7 7) scale(0.667)" fill="none" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20v-8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v8"/><path d="M4 10V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v4"/><path d="M12 4v6"/><path d="M2 18h20"/></g></svg>`;
+    return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(bed)}`;
+  }
   // 일정의 역 점과 같은 모양 (docs/29 §7.6): 흰 바탕 + 노선 색 고리 + 진한 노선 색 번호, 바깥 흰 테두리로 지도 위에서도 또렷하게
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30"><circle cx="15" cy="15" r="14" fill="white"/><circle cx="15" cy="15" r="10.5" fill="white" stroke="${color}" stroke-width="4"/><text x="15" y="19.5" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="700" fill="${ink}">${label}</text></svg>`;
   return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;

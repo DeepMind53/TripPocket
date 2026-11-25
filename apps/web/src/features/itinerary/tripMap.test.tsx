@@ -138,6 +138,31 @@ describe('일정 지도', () => {
     expect(screen.queryByText(/키를 아직/)).not.toBeInTheDocument();
   });
 
+  it('예약한 숙소는 번호 없는 숙소 핀으로 따로 (2026-11-25)', async () => {
+    // 국내 여행: 숙소 좌표가 Google이 아니어서 어느 지도에나 보인다 (해외는 Google 지도에서만)
+    const seoul = {
+      ...trip,
+      timezone: 'Asia/Seoul',
+      destinations: [{ name: '서울', kind: 'city', countryCode: 'KR' }],
+    } as Trip;
+    render(
+      <TripMap
+        trip={seoul}
+        items={[item('A', '2026-11-01', 'a', { lat: 35.7, lng: 139.7 })]}
+        lodgings={[{ id: 'h1', title: '신주쿠 호텔', position: { lat: 35.69, lng: 139.7 } }]}
+        dayIndexOf={() => 0}
+        onSelect={() => {}}
+      />,
+    );
+    await waitFor(() => expect(calls.markers).toHaveLength(2));
+    expect(calls.markers[1]).toMatchObject({
+      id: 'lodging:h1',
+      label: '',
+      shape: 'lodging',
+      title: '신주쿠 호텔',
+    });
+  });
+
   it('핀 번호 = 일정 목록 번호: 좌표 없는 4번(예약 액티비티)은 건너뛰고 5번은 5번 (2026-11-25 제보)', async () => {
     const d = '2026-11-01';
     render(

@@ -62,6 +62,7 @@ import {
 import {
   bookingRowsForDay,
   lodgingForNight,
+  lodgingsOfDay,
   breakfastOn,
   bookingForItem,
 } from '../../domain/lodging';
@@ -319,6 +320,15 @@ function PlanView({
 
   // 지도에 넘기는 일정(날짜 순) · 크게 보기 카드 목록 (날짜 있는 일정만, 그날 안 번호와 색)
   const mapItems = sections.flatMap((s) => items.filter((i) => i.date === s.date));
+  // 지도 숙소 핀 (2026-11-25): 보이는 날의 숙소 — 좌표가 있는 예약만, 같은 숙소는 한 번
+  const mapLodgings = [
+    ...new Map(
+      sections
+        .flatMap((s) => (s.date ? lodgingsOfDay(bookings, s.date) : []))
+        .filter((b) => b.start.coords)
+        .map((b) => [b.id, { id: b.id, title: b.title, position: b.start.coords! }] as const),
+    ).values(),
+  ];
   const pagerList = sections.flatMap((s) =>
     s.date
       ? items
@@ -692,6 +702,7 @@ function PlanView({
               <TripMap
                 trip={trip}
                 items={mapItems}
+                lodgings={mapLodgings}
                 dayIndexOf={dayIndexOf}
                 // 크게 볼 때 핀을 누르면 아래 카드를 그 일정으로, 작게 볼 때는 바로 상세
                 onSelect={(i) => (mapView === 'small' ? openDetail(i) : setPagerId(i.id))}
