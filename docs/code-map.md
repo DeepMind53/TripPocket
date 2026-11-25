@@ -76,6 +76,11 @@ Tailscale Funnel https://jin-server.tail0844c0.ts.net ─▶ 홈 PC 127.0.0.1:87
 - **숙소 최저가 (늘 켜짐, docs/28·ADR-0010)**: 웹 `features/lodging/`(`/lodging-price` 화면 + 숙소 예약 시트 안 시트), 서버 `routes/lodging.ts` + `services/agodaLookup.ts`·`serpapiHotels.ts`, 관리자 `/admin/lodging`
 - **여행 모드 (설정 "일정" `tripMode`, docs/25-travel-mode·docs/27)**: `features/travel/TravelModePage.tsx`(`/trips/:tripId/go`), 기기 설정 `data/travelModeStore.ts`
 - **시트(아래에서 올라오는 창)**: `shared/ui/BottomSheet.tsx`(처음 열 때 `BottomSheetImpl`을 불러옴). 시트 안 양식 제출은 바깥 양식으로 올라가지 않게 막는다 (2026-11-11). 시트는 한 번에 하나만 보인다 (2026-11-12): 시트 위에 시트가 열리면 `sheetStack.ts`가 열린 순서를 기억해 아래 시트를 숨기고(그려 둔 채라 입력 내용 유지) 위 시트에 "뒤로"를 둔다 — 새 시트를 만들 때 따로 할 일 없음. "뒤로"가 필요 없는 시트는 `backButton={false}`(삭제 확인 창)
+- **일정표 출력 (2026-11-25)**: `itinerary/PrintPage.tsx`([간단|상세], 브라우저 인쇄 → PDF 저장) + 하루 칸 `PrintDay.tsx`. 날짜 옆 날씨·작년 기록 문구 `domain/dayPrint.ts` `weatherText`(공유 글·이미지 `domain/shareText.ts`도 같은 함수), 상세 지도 점 `mapPointsParam`(번호 = 일정 목록 번호)
+- **지도·노선도 번호 = 일정 목록 번호 (2026-11-25)**: `TripMap.tsx` `numberOf`, `TripRouteView` 역 `n` — 좌표 없는 일정·메모도 세고 건너뛴다
+- **허용·거절할 요청 팝업 (2026-11-25)**: `me/PendingApprovals.tsx`(App에서 로그인하면 늘) ← 서버 `GET /api/me/pending-approvals`(관리자 = 가입 요청, 소유자 = 여행 참여 요청). 고를 때까지 앱을 열 때마다, [나중에]는 이번 실행만
+- **공항 색 (2026-11-25)**: `domain/airportColors.ts` — 한 여행 항공이 둘 이상이면 공항마다 노선 색 점선(`BookingCard` `FlightTicket`의 `Point`)
+- **꾹 눌러 복사 (2026-11-25)**: `shared/hooks/useLongPressCopy.ts` — 일정 줄 이름·주소, 일정 상세 주소. 줄의 다른 곳을 꾹 누르면 지금처럼 편집 모드
 - **알림(toast) (docs/31 B1, 2026-11-25)**: `shared/ui/toastStore.ts` — 한 번에 하나(같은 문구는 시간만 다시), [실행 취소] 알림은 남김, 시트가 열리면 일반 알림 닫기(`sheetStack.ts`). `Toaster.tsx`는 시트 아래 버튼 줄(`data-sheet-footer`)·⚡ 버튼(`data-quick-fab`) 위에 띄운다
 - **새 외부 API (서버)**: `services/apiUsage.ts`의 `APIS`에 id·분류(`paid`=과금 가능 / `free`)·무료 월 사용량 추가 →
   호출 직전에 `guardApi(id)`(멈춤이면 `ApiPaused` → 503 `api_paused`), `trackApi(id)` → `ko.json` `apiUsage.name/note`.
@@ -143,6 +148,7 @@ Tailscale Funnel https://jin-server.tail0844c0.ts.net ─▶ 홈 PC 127.0.0.1:87
 | google_autocomplete | 과금 가능 | 월 10,000 | **검색 백업**(docs/23·ADR-0007): Text Search 무료량이 끝나면 Autocomplete (New). 세션 토큰 |
 | google_details_basic | 과금 가능 | 월 10,000 | 자동완성에서 고른 장소의 주소·좌표 — Place Details **Essentials** (FieldMask: formattedAddress,location) |
 | google_routes | 과금 가능 | 월 10,000 | 다음 일정 바·구간 시간: Compute Routes Essentials(걷기·대중교통 2건씩, FieldMask: routes.duration. [자동차]를 고를 때만 DRIVE 1건, FieldMask: routes.duration,routes.distanceMeters — 2026-11-13). Google 좌표가 낀 구간만 — 나머지는 Geoapify 먼저. 둘 다 없으면 웹이 직선거리로 어림(팝업 없음). `services/routes.ts`·`POST /api/routes/eta` |
+| google_static_maps | 과금 가능 | 월 10,000 | 일정표 상세 출력의 일차 지도(2026-11-25): Maps Static API Essentials, 번호 핀(1~9) + 순서선. `services/staticMap.ts`·`GET /api/maps/static`(한 사람 하루 60장, 기기에만 하루 캐시). **Google Cloud 콘솔에서 Maps Static API를 켜야 함** — 꺼져 있으면 지도 없이 출력 |
 | google_vision | 과금 가능 | 월 1,000 | 영수증 글자 인식(ADR-0012): Document Text Detection, [영수증 분석]을 누를 때만, 한 사람 하루 20장. 키 `GOOGLE_VISION_KEY`(없으면 `GOOGLE_PLACES_KEY`). `services/ocr.ts`·`POST /api/ocr` |
 | azure_read | 무료 | 월 5,000 | 영수증 백업: Azure AI Vision Read F0 (분당 20). **2028-09-25 서비스 종료 예정**(Image Analysis 4.0, `APIS`의 `retires` → 관리자 화면에 표시). 키 `AZURE_VISION_ENDPOINT`·`AZURE_VISION_KEY`. 둘 다 안 되면 웹이 기기 안 Tesseract.js |
 | google_vision_landmark | 과금 가능 | 월 1,000 | 사진 속 장소(ADR-0012): Landmark Detection, 이름만(좌표 버림), 하루 20장. `POST /api/vision/landmark` |
