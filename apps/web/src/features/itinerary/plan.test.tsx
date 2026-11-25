@@ -61,7 +61,7 @@ describe('일정 화면', () => {
     });
     await renderPlan('?day=1');
     const alert = await screen.findByRole('alert');
-    expect(alert).toHaveTextContent('반드시 항공편 일정을 재확인해 주세요');
+    expect(alert).toHaveTextContent('일정을 다시 확인해 주세요');
     const row = screen.getByRole('button', { name: /KE703/ });
     expect(row.className).toContain('flight-alert');
     await user.click(within(alert).getByRole('button', { name: '확인' }));
