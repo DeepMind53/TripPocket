@@ -42,6 +42,26 @@ const PhotoBackupSchema = z.object({
   text: z.optional(z.string()),
   textSource: z.optional(z.enum(['google', 'azure', 'device'])),
   tag: z.optional(z.enum(['food', 'scenery', 'building', 'people', 'other'])),
+  /** 영수증 줄 자리·번역 (2026-11-25) — 예전 파일에는 없음 */
+  rows: z.optional(
+    z
+      .array(
+        z.object({
+          text: z.string(),
+          ko: z.optional(z.nullable(z.string())),
+          box: z.optional(
+            z.object({
+              cx: z.number(),
+              cy: z.number(),
+              w: z.number(),
+              h: z.number(),
+              a: z.number(),
+            }),
+          ),
+        }),
+      )
+      .check(z.maxLength(300)),
+  ),
 });
 export type PhotoBackup = z.infer<typeof PhotoBackupSchema>;
 

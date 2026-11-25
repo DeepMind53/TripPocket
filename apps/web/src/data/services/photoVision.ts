@@ -18,6 +18,22 @@ export async function translatePhoto(image: Blob): Promise<PhotoTranslation | Vi
   return r.ok ? r.data : r.reason === 'error' ? fail(r.code) : 'unavailable';
 }
 
+/**
+ * 글만 번역 (영수증 품목 이름, 2026-11-25 — ADR-0012 추가): 사진은 보내지 않고 읽은 줄 글자만.
+ * 결과는 기기에만 저장한다
+ */
+export async function translateText(lines: readonly string[]): Promise<string[] | VisionError> {
+  const r = await api<{ ko: string[] }>('/api/vision/translate-text', {
+    method: 'POST',
+    body: JSON.stringify({ lines }),
+  });
+  if (r.ok)
+    return Array.isArray(r.data.ko) && r.data.ko.length === lines.length
+      ? r.data.ko
+      : 'unavailable';
+  return r.reason === 'error' && r.code === 'translate_daily' ? 'limit' : 'unavailable';
+}
+
 export async function photoNames(
   image: Blob,
   feature: 'landmark' | 'labels',

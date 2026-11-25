@@ -71,6 +71,7 @@ Tailscale Funnel https://jin-server.tail0844c0.ts.net ─▶ 홈 PC 127.0.0.1:87
 - **노선도 (설정 "일정·화면" `routeMap`, 2026-11-10 실험실에서 정식)**: 일차 미니맵 `itinerary/DayMiniMap.tsx` → 누르면 여행 전체 노선도 `TripRouteView.tsx`·`TripRouteSheet.tsx`
 - **사진·영수증 (늘 켜짐, ADR-0012, 2026-11-11 실험실에서 정식)**: 기기 전용 `photos` 표·`data/repositories/photoRepo.ts`, 찍기 `features/photos/PhotoCaptureButtons.tsx`,
   상세 `ItemPhotos.tsx`·`PhotoViewer.tsx`([다시 분석] 포함), 기록 탭 모아보기 `records/PhotoAlbum.tsx`(사진·영수증 전부, 지운 일정 사진은 "일정 없음", 눌러서 지우기·옮기기·[분류하기]),
+  사진 위에 번역 덮기(2026-11-25) `photos/TranslatedPhoto.tsx`(자리 계산 `domain/photoText.ts`, 서버 줄 자리 `ocrRows.ts` `rowBoxes`, 영수증 줄 번역 `POST /api/vision/translate-text` → 기기 `photos.rows`, Dexie v16) — 메뉴판 번역 `phrases/PhotoTranslate.tsx`·영수증 `photos/PhotoViewer.tsx`,
   글자 인식 `data/services/receiptOcr.ts`(서버 `routes/ocr.ts` → `services/ocr.ts`, 글자 상자를 같은 높이끼리 줄로 묶는 `services/ocrRows.ts`) → `deviceOcr.ts`(Tesseract, 한 열 모드), 품목 표 `domain/receipt.ts`(이름·금액 짝짓기, 수량·세금 표시·할인 처리)
 - **숙소 최저가 (늘 켜짐, docs/28·ADR-0010)**: 웹 `features/lodging/`(`/lodging-price` 화면 + 숙소 예약 시트 안 시트), 서버 `routes/lodging.ts` + `services/agodaLookup.ts`·`serpapiHotels.ts`, 관리자 `/admin/lodging`
 - **여행 모드 (설정 "일정" `tripMode`, docs/25-travel-mode·docs/27)**: `features/travel/TravelModePage.tsx`(`/trips/:tripId/go`), 기기 설정 `data/travelModeStore.ts`

@@ -8,7 +8,7 @@
 
 ```
 휴대폰·PC 브라우저 (PWA, https://trippocket.day)
-  UI (React) ─ features ─ data/repositories ─▶ IndexedDB (Dexie v15, 1차 저장 — 서버 없이 모든 핵심 기능)
+  UI (React) ─ features ─ data/repositories ─▶ IndexedDB (Dexie v16, 1차 저장 — 서버 없이 모든 핵심 기능)
   기기 전용: 사진·영수증(photos 표), 개인정보(여권 만료 등), 최근 백업 3개(OPFS 파일) — 서버·동기화로 보내지 않음
   동기화 엔진 ─ 고친 행(dirty) 올리기 / 바뀐 행 받기 (시작·복귀·고친 뒤·30초마다)
   서비스 워커 (직접 작성, 앱 파일 미리 저장, /api·/auth는 가로채지 않음)

@@ -5,6 +5,9 @@ import type { PhotoRow } from '../../data/db';
 import { itemRepo } from '../../data/repositories/itemRepo';
 import { photoRepo } from '../../data/repositories/photoRepo';
 import { readReceipt } from '../../data/services/receiptOcr';
+import { translateText } from '../../data/services/photoVision';
+import { needsTranslation } from '../../domain/photoText';
+import { TranslatedPhoto } from './TranslatedPhoto';
 import { parseReceipt } from '../../domain/receipt';
 import { useTranslation } from '../../i18n';
 import { formatMonthDay } from '../../shared/lib/dateFormat';
@@ -44,18 +47,36 @@ export function PhotoViewer({
   const parsed = photo.text !== undefined ? parseReceipt(draft) : null;
   const sum = parsed?.lines.reduce((a, l) => a + l.price, 0) ?? 0;
 
+  /** 품목 이름을 한국어로 (2026-11-25, ADR-0012 추가): 사진은 보내지 않고 읽은 줄 글자만 */
+  const translate = async (rows: NonNullable<PhotoRow['rows']>) => {
+    const ko = await translateText(rows.map((r) => r.text));
+    if (ko === 'limit') toast(t('photos.translateLimit'));
+    else if (ko === 'unavailable') toast(t('photos.translateFailed'));
+    else
+      await photoRepo.setRows(
+        photo.id,
+        rows.map((r, i) => ({ ...r, ko: ko[i] ?? null })),
+      );
+  };
+
   const analyze = async () => {
     setBusy(true);
     try {
       const r = await readReceipt(photo.blob, currency);
-      await photoRepo.setText(photo.id, r.text, r.source);
+      // 화면 글을 먼저 — 저장이 끝나 표가 다시 그려질 때 빈 글로 계산되지 않게
       setDraft(r.text);
+      await photoRepo.setText(photo.id, r.text, r.source);
+      await photoRepo.setRows(photo.id, r.rows);
+      if (needsTranslation(r.rows.map((x) => x.text))) await translate(r.rows);
     } catch {
       toast(t('photos.analyzeFailed'));
     } finally {
       setBusy(false);
     }
   };
+  const rows = photo.rows;
+  const untranslated =
+    !!rows?.length && !rows.some((r) => r.ko) && needsTranslation(rows.map((r) => r.text));
 
   return (
     <BottomSheet
@@ -66,7 +87,25 @@ export function PhotoViewer({
       autoFocusInput={false}
     >
       <div className="flex flex-col gap-4 pb-2">
-        <img src={url} alt="" className="max-h-[50dvh] w-full rounded-card object-contain" />
+        {/* 영수증 줄 자리가 있고 번역이 있으면 사진 위에 덮기 (2026-11-25) */}
+        {rows?.some((r) => r.box && r.ko) ? (
+          <TranslatedPhoto url={url} lines={rows} />
+        ) : (
+          <img src={url} alt="" className="max-h-[50dvh] w-full rounded-card object-contain" />
+        )}
+        {untranslated && (
+          <Button
+            variant="secondary"
+            fullWidth
+            loading={busy}
+            onClick={() => {
+              setBusy(true);
+              void translate(rows).finally(() => setBusy(false));
+            }}
+          >
+            {t('photos.translate')}
+          </Button>
+        )}
 
         {photo.kind === 'receipt' && photo.text === undefined && (
           <div className="flex flex-col gap-1.5">

@@ -1,7 +1,12 @@
-import type { OcrResult } from '@trippocket/shared';
+import type { OcrResult, OcrRow } from '@trippocket/shared';
 import { api } from '../api/client';
 
-export type ReceiptText = { text: string; source: 'google' | 'azure' | 'device' };
+export type ReceiptText = {
+  text: string;
+  source: 'google' | 'azure' | 'device';
+  /** 줄마다 사진 속 자리 (사진 위에 번역 덮기) */
+  rows: OcrRow[];
+};
 
 /** 여행 나라에 맞춘 기기 인식 언어 (한국어·영어는 늘) */
 export function deviceLangs(currency: string | undefined): string[] {
@@ -26,7 +31,12 @@ export async function readReceipt(image: Blob, currency: string | undefined): Pr
     body: image,
     headers: { 'content-type': 'image/jpeg' },
   });
-  if (res.ok && res.data.text.trim()) return { text: res.data.text, source: res.data.source };
+  if (res.ok && res.data.text.trim())
+    return {
+      text: res.data.text,
+      source: res.data.source,
+      rows: res.data.rows ?? res.data.text.split('\n').map((text) => ({ text })),
+    };
   const { deviceOcr } = await import('./deviceOcr');
-  return { text: await deviceOcr(image, deviceLangs(currency)), source: 'device' };
+  return { ...(await deviceOcr(image, deviceLangs(currency))), source: 'device' };
 }

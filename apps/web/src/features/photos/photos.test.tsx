@@ -113,11 +113,29 @@ it('photoRepo로 붙인 영수증: 상세에서 [영수증 분석] → 서버 �
     'URL',
     Object.assign(URL, { createObjectURL: () => 'blob:x', revokeObjectURL: () => {} }),
   );
-  vi.stubGlobal('fetch', async (u: string) =>
-    String(u).includes('/api/ocr')
-      ? Response.json({ text: 'ラーメン 980\n替玉 210\n合計 1,190', source: 'google', left: 19 })
-      : Response.json({}),
-  );
+  const sent: string[] = [];
+  vi.stubGlobal('fetch', async (u: string, init?: RequestInit) => {
+    sent.push(String(u));
+    if (String(u).includes('/api/ocr'))
+      return Response.json({
+        text: 'ラーメン 980\n替玉 210\n合計 1,190',
+        rows: [
+          { text: 'ラーメン 980', box: { cx: 100, cy: 20, w: 180, h: 20, a: 0 } },
+          { text: '替玉 210', box: { cx: 100, cy: 50, w: 180, h: 20, a: 0 } },
+          { text: '合計 1,190', box: { cx: 100, cy: 80, w: 180, h: 20, a: 0 } },
+        ],
+        source: 'google',
+        left: 19,
+      });
+    if (String(u).includes('/api/vision/translate-text')) {
+      // 사진이 아니라 줄 글자만 간다 (ADR-0012 추가)
+      expect(JSON.parse(String(init?.body))).toEqual({
+        lines: ['ラーメン 980', '替玉 210', '合計 1,190'],
+      });
+      return Response.json({ ko: ['라멘 980', '면 추가 210', '합계 1,190'], left: 39 });
+    }
+    return Response.json({});
+  });
   const user = userEvent.setup();
   render(
     <RouterProvider
@@ -131,8 +149,19 @@ it('photoRepo로 붙인 영수증: 상세에서 [영수증 분석] → 서버 �
   const table = await within(viewer).findByRole('region', { name: '품목' });
   expect(within(table).getByText('ラーメン')).toBeInTheDocument();
   expect(within(table).getByText('1,190')).toBeInTheDocument();
-  const [saved] = await db.photos.toArray();
-  expect(Object.keys(saved!).sort()).toEqual(
-    ['blob', 'createdAt', 'id', 'itemId', 'kind', 'text', 'textSource', 'tripId'].sort(),
+  // 일본어 영수증이면 품목 이름 번역을 기기에 함께 (사진 위에 덮기, 2026-11-25)
+  await waitFor(async () =>
+    expect((await db.photos.toArray())[0]!.rows?.map((r) => r.ko)).toEqual([
+      '라멘 980',
+      '면 추가 210',
+      '합계 1,190',
+    ]),
   );
+  const [saved] = await db.photos.toArray();
+  // 금액·합계 칸은 따로 저장하지 않는다 (줄 글·번역·자리만)
+  expect(Object.keys(saved!).sort()).toEqual(
+    ['blob', 'createdAt', 'id', 'itemId', 'kind', 'rows', 'text', 'textSource', 'tripId'].sort(),
+  );
+  expect(sent.some((u) => u.includes('/api/vision/translate-text'))).toBe(true);
+  expect(await within(viewer).findByRole('button', { name: '원문 보기' })).toBeInTheDocument();
 });

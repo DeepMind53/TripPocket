@@ -2403,6 +2403,9 @@
     "empty": "아직 장소가 있는 날이 없어요"
   },
   "photos": {
+    "translate": "품목 이름 한국어로 보기",
+    "translateLimit": "오늘 번역을 다 썼어요\n내일 다시 쓸 수 있어요",
+    "translateFailed": "번역하지 못했어요\n잠시 뒤 다시 해 주세요",
     "title": "사진·영수증",
     "localOnly": "이 기기에만 저장돼요",
     "photo": "사진",
@@ -3046,7 +3049,16 @@
     "limit": "오늘 사진 번역을 다 썼어요\n내일 다시 쓸 수 있어요",
     "failed": "번역하지 못했어요\n잠시 뒤 다시 해 주세요",
     "empty": "사진에서 글자를 찾지 못했어요",
-    "noAi": "번역이 안 된 줄은 원문 그대로예요\n잠시 뒤 다시 해 보세요"
+    "noAi": "번역이 안 된 줄은 원문 그대로예요\n잠시 뒤 다시 해 보세요",
+    "view": "보는 방법",
+    "viewPhoto": "사진 위에",
+    "viewList": "목록",
+    "showOriginal": "원문 보기",
+    "showKo": "번역 보기",
+    "zoomIn": "크게",
+    "zoomOut": "작게",
+    "tapHint": "번역을 누르면 원문과 함께 크게 보여요",
+    "lineLabel": "{{text}} — {{ko}}"
   },
   "landmark": {
     "title": "사진 속 장소",

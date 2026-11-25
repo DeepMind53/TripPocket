@@ -62,6 +62,7 @@ async function photosForBackup(): Promise<PhotoBackup[]> {
     if (rest.text !== undefined) p.text = rest.text;
     if (rest.textSource !== undefined) p.textSource = rest.textSource;
     if (rest.tag !== undefined) p.tag = rest.tag;
+    if (rest.rows !== undefined) p.rows = rest.rows;
     out.push(p);
   }
   return out;

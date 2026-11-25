@@ -27,6 +27,11 @@ export const photoRepo = {
     await db.photos.update(id, { text, textSource: source });
   },
 
+  /** 영수증 줄 자리·번역 (사진 위에 번역 덮기) */
+  async setRows(id: string, rows: PhotoRow['rows']): Promise<void> {
+    await db.photos.update(id, { rows });
+  },
+
   /** 사진 분류 묶음 */
   async setTag(id: string, tag: NonNullable<PhotoRow['tag']>): Promise<void> {
     await db.photos.update(id, { tag });

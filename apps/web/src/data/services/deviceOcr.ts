@@ -1,3 +1,4 @@
+import type { OcrRow } from '@trippocket/shared';
 import { createWorker, PSM } from 'tesseract.js';
 import coreUrl from 'tesseract.js-core/tesseract-core-simd-lstm.wasm.js?url';
 import workerUrl from 'tesseract.js/dist/worker.min.js?url';
@@ -7,7 +8,10 @@ import workerUrl from 'tesseract.js/dist/worker.min.js?url';
  * 엔진은 우리 주소에서, 언어 파일은 처음 한 번 jsDelivr에서 받아 기기에 보관한다 (그 뒤로는 오프라인).
  * 이 파일은 [분석]을 눌렀는데 서버 인식이 안 될 때만 불러온다 (첫 화면·미리 받기에 없음)
  */
-export async function deviceOcr(image: Blob, langs: readonly string[]): Promise<string> {
+export async function deviceOcr(
+  image: Blob,
+  langs: readonly string[],
+): Promise<{ text: string; rows: OcrRow[] }> {
   const worker = await createWorker([...langs], 1, {
     workerPath: workerUrl,
     corePath: coreUrl,
@@ -19,8 +23,22 @@ export async function deviceOcr(image: Blob, langs: readonly string[]): Promise<
       tessedit_pageseg_mode: PSM.SINGLE_COLUMN,
       preserve_interword_spaces: '1',
     });
-    const { data } = await worker.recognize(image);
-    return data.text;
+    // 줄마다 자리도 (사진 위에 번역 덮기, 2026-11-25) — 기기 인식은 기울기를 0으로 본다
+    const { data } = await worker.recognize(image, {}, { text: true, blocks: true });
+    const rows: OcrRow[] = (data.blocks ?? [])
+      .flatMap((b) => b.paragraphs.flatMap((p) => p.lines))
+      .filter((l) => l.text.trim())
+      .map((l) => ({
+        text: l.text.trim(),
+        box: {
+          cx: (l.bbox.x0 + l.bbox.x1) / 2,
+          cy: (l.bbox.y0 + l.bbox.y1) / 2,
+          w: l.bbox.x1 - l.bbox.x0,
+          h: l.bbox.y1 - l.bbox.y0,
+          a: 0,
+        },
+      }));
+    return { text: data.text, rows };
   } finally {
     await worker.terminate();
   }

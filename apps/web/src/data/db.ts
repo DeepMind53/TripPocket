@@ -9,6 +9,7 @@ import type {
   ItineraryItem,
   SavedPlace,
   Trip,
+  OcrBox,
 } from '@trippocket/shared';
 
 /** 서버에 아직 보내지 않은 변경 표시 (로컬 전용, 15단계 동기화에서 사용) */
@@ -38,6 +39,13 @@ export interface AttachmentRow {
  * 일정 사진·영수증 (실험실 "사진·영수증", ADR-0012 — 2026-11-11). **이 기기에만**: 서버·동기화·백업 JSON 어디에도 넣지 않는다.
  * 영수증은 읽은 글(text)만 저장하고 품목·금액은 볼 때 계산한다 (금액 저장 안 함 규칙)
  */
+/** 사진 속 글자 줄: 글·한국어(번역 못 했으면 null, 안 했으면 없음)·자리 */
+export interface PhotoTextRow {
+  text: string;
+  ko?: string | null | undefined;
+  box?: OcrBox | undefined;
+}
+
 export interface PhotoRow {
   id: string;
   tripId: string;
@@ -53,6 +61,8 @@ export interface PhotoRow {
   textSource?: 'google' | 'azure' | 'device' | undefined;
   /** 사진 분류 묶음 (실험실 photoLabels — 누른 사진만, domain/photoTags.ts) */
   tag?: 'food' | 'scenery' | 'building' | 'people' | 'other' | undefined;
+  /** 영수증 줄마다 사진 속 자리와 한국어 (사진 위에 번역 덮기, 2026-11-25). 분석 전·예전 영수증은 없음 */
+  rows?: PhotoTextRow[] | undefined;
 }
 
 export interface KeyValueRow {
@@ -117,6 +127,8 @@ export class TripPocketDB extends Dexie {
     this.version(14).stores({});
     // v15 (2026-11-25): 일정 모이기 표시(meetup, docs/27 E2) — 인덱스 없음, 예전 행은 표시 없음
     this.version(15).stores({});
+    // v16 (2026-11-25): 영수증 줄 자리·번역(rows) — 사진 위에 번역 덮기. 인덱스 없음, 예전 영수증은 다시 분석하면 생김
+    this.version(16).stores({});
   }
 }
 
