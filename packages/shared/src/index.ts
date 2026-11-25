@@ -62,6 +62,7 @@ export {
   SYNC_BATCH,
   SYNC_TABLES,
   TRIP_SCOPED,
+  PERSONAL_TRIP_SCOPED,
   USER_SCOPED,
   type PullResult,
   type TripRole,

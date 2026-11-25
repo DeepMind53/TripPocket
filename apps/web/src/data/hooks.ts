@@ -1,4 +1,4 @@
-import type { SavedPlace } from '@trippocket/shared';
+import type { DayNote, SavedPlace } from '@trippocket/shared';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useAuth } from './authStore';
 import type {
@@ -9,6 +9,7 @@ import type {
   Trip,
 } from '@trippocket/shared';
 import { bookingRepo } from './repositories/bookingRepo';
+import { dayNoteRepo } from './repositories/dayNoteRepo';
 import { checklistRepo, type ListKind, type PrepList } from './repositories/checklistRepo';
 import { templateRepo } from './repositories/templateRepo';
 import { itemRepo } from './repositories/itemRepo';
@@ -93,4 +94,14 @@ export function useTemplates(list: PrepList): ChecklistTemplate[] | undefined {
 
 export function useSavedPlaces(): SavedPlace[] | undefined {
   return useLiveQuery(() => savedPlaceRepo.listActive(), []);
+}
+
+/** 내 하루 한 줄 기록 (계정마다 따로, 2026-11-25). 여행이 없으면 빈 목록 */
+export function useTripDayNotes(tripId: string | undefined): DayNote[] | undefined {
+  return useLiveQuery(async () => (tripId ? dayNoteRepo.listByTrip(tripId) : []), [tripId]);
+}
+
+/** 모든 여행의 내 하루 한 줄 (기록 탭) */
+export function useAllDayNotes(): DayNote[] | undefined {
+  return useLiveQuery(() => dayNoteRepo.listAll(), []);
 }

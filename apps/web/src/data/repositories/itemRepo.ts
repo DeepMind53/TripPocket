@@ -10,6 +10,13 @@ import {
 import { nowIso } from '../clock';
 import { db, toDomain, type Stored } from '../db';
 import { visitPatch, type Visit } from '../../domain/visit';
+import { markRepo, marksOf, withMark } from './markRepo';
+
+/** 읽은 일정에 내 방문·다녀옴 표시를 덮어 쓴다 (2026-11-25 — 계정마다 따로, markRepo) */
+async function withMarks(rows: readonly Row[]): Promise<ItineraryItem[]> {
+  const marks = await marksOf(rows.map((r) => r.tripId));
+  return rows.map((r) => withMark(toDomain(r), marks.get(r.id)));
+}
 
 export type NewItem = Omit<
   ItineraryItem,
@@ -34,8 +41,10 @@ async function dayRows(tripId: string, date: LocalDate | null): Promise<Row[]> {
 export const itemRepo = {
   /** 해당 날짜 맨 뒤에 추가 (index를 주면 그 자리에) */
   async create(input: NewItem, index?: number): Promise<ItineraryItem> {
-    return db.transaction('rw', db.items, async () => {
-      const siblings = await dayRows(input.tripId, input.date);
+    // 방문·다녀옴은 일정이 아니라 내 기록에 (2026-11-25)
+    const { visit, done, ...base } = input;
+    const created = await db.transaction('rw', db.items, async () => {
+      const siblings = await dayRows(base.tripId, base.date);
       const at = Math.max(0, Math.min(index ?? siblings.length, siblings.length));
       const prev = siblings[at - 1]?.order ?? null;
       const next = siblings[at]?.order ?? null;
@@ -46,7 +55,7 @@ export const itemRepo = {
           : keyBetween(prev, next);
       const now = nowIso();
       const item = ItineraryItemSchema.parse({
-        ...input,
+        ...base,
         id: uuidv7(),
         order,
         createdAt: now,
@@ -55,11 +64,13 @@ export const itemRepo = {
       await db.items.add({ ...item, dirty: 1 });
       return item;
     });
+    if (visit || done) await markRepo.set(created, { visit, done });
+    return withMark(created, visit || done ? ({ visit, done } as never) : undefined);
   },
 
   async get(id: string): Promise<ItineraryItem | undefined> {
     const row = await db.items.get(id);
-    return row && !row.deletedAt ? toDomain(row) : undefined;
+    return row && !row.deletedAt ? (await withMarks([row]))[0] : undefined;
   },
 
   /** 여행의 모든 일정: 날짜 순(가고 싶은 곳은 맨 뒤) → 정렬 키 순 */
@@ -77,7 +88,7 @@ export const itemRepo = {
       }
       return compareKeys(a.order, b.order) || compareKeys(a.id, b.id);
     });
-    return rows.map(toDomain);
+    return withMarks(rows);
   },
 
   /** 여러 여행의 일정 (기록 탭 회고) */
@@ -87,48 +98,56 @@ export const itemRepo = {
       .anyOf([...tripIds])
       .filter((r) => !r.deletedAt)
       .toArray();
-    return rows.map(toDomain);
+    return withMarks(rows);
   },
 
   /** 방문 기록을 남긴 일정 전부 (기록 탭) — 날짜 최근 순 */
   async listVisited(): Promise<ItineraryItem[]> {
     // 지운 여행 안의 기록은 빼고 (여행만 지우면 안의 일정은 그대로 남는다)
     const live = new Set((await db.trips.filter((t) => !t.deletedAt).primaryKeys()).map(String));
-    const rows = await db.items
-      .filter(
-        (r) => !r.deletedAt && r.visit !== undefined && r.kind !== 'note' && live.has(r.tripId),
-      )
-      .toArray();
+    // 내 방문 기록만 (계정마다 따로, 2026-11-25) — 일행이 남긴 표시는 세지 않는다
+    const ids = [...new Set((await markRepo.listWithVisit()).map((m) => m.itemId))];
+    const rows = (await db.items.bulkGet(ids)).filter(
+      (r): r is Row => !!r && !r.deletedAt && r.kind !== 'note' && live.has(r.tripId),
+    );
     rows.sort((a, b) => compareKeys(b.date ?? '', a.date ?? '') || compareKeys(a.order, b.order));
-    return rows.map(toDomain);
+    return withMarks(rows);
   },
 
   async listByDay(tripId: string, date: LocalDate | null): Promise<ItineraryItem[]> {
-    return (await dayRows(tripId, date)).map(toDomain);
+    return withMarks(await dayRows(tripId, date));
   },
 
   async update(id: string, patch: ItemPatch): Promise<ItineraryItem> {
-    return db.transaction('rw', db.items, async () => {
+    const { visit: _pv, done: _pd, ...rest } = patch;
+    // 방문·다녀옴은 내 기록에만 (계정마다 따로, 2026-11-25) — 보기 전용 여행에서도 내 표시는 남길 수 있다
+    if ('done' in patch || 'visit' in patch) {
       const row = await db.items.get(id);
       if (!row || row.deletedAt) throw new Error(`일정을 찾을 수 없어요: ${id}`);
-      // 다녀옴(done)과 방문 기록(visit)은 함께 바뀐다 (domain/visit.ts)
-      const linked =
-        row.kind === 'note'
-          ? {}
-          : 'done' in patch || 'visit' in patch
-            ? visitPatch(row, { done: patch.done, visit: patch.visit })
-            : {};
+      if (row.kind !== 'note') {
+        const current = (await withMarks([row]))[0]!;
+        // 다녀옴(done)과 방문 기록(visit)은 함께 바뀐다 (domain/visit.ts)
+        const linked = visitPatch(current, { done: patch.done, visit: patch.visit });
+        const pick = <K extends 'visit' | 'done'>(k: K) =>
+          k in linked ? linked[k] : k in patch ? patch[k] : current[k];
+        await markRepo.set(row, { visit: pick('visit'), done: pick('done') });
+      }
+      if (Object.keys(rest).length === 0) return (await this.get(id))!;
+    }
+    await db.transaction('rw', db.items, async () => {
+      const row = await db.items.get(id);
+      if (!row || row.deletedAt) throw new Error(`일정을 찾을 수 없어요: ${id}`);
+      const { visit: _rv, done: _rd, ...base } = toDomain(row);
       const merged: Record<string, unknown> = {
-        ...toDomain(row),
-        ...patch,
-        ...linked,
+        ...base,
+        ...rest,
         updatedAt: nowIso(),
       };
       for (const key of Object.keys(merged)) if (merged[key] === undefined) delete merged[key];
       const item = ItineraryItemSchema.parse(merged);
       await db.items.put({ ...item, dirty: 1 });
-      return item;
     });
+    return (await this.get(id))!;
   },
 
   /**
@@ -160,9 +179,9 @@ export const itemRepo = {
 
   /** 지난 일정의 방문 기록: 방문·미방문, null이면 기록 지우기 (다녀옴도 함께) */
   async setVisit(id: string, visit: Visit | null): Promise<ItineraryItem> {
-    const row = await db.items.get(id);
-    if (!row) throw new Error(`일정을 찾을 수 없어요: ${id}`);
-    return this.update(id, visitPatch(row, { visit }));
+    const current = await this.get(id);
+    if (!current) throw new Error(`일정을 찾을 수 없어요: ${id}`);
+    return this.update(id, visitPatch(current, { visit }));
   },
 
   /**

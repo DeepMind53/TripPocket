@@ -1,7 +1,10 @@
 import * as z from 'zod/mini';
+import { uuidv7 } from '../id/uuidv7';
 import {
   BookingSchema,
   ChecklistItemSchema,
+  DayNoteSchema,
+  ItemMarkSchema,
   ChecklistTemplateSchema,
   ItineraryItemSchema,
   SavedPlaceSchema,
@@ -22,6 +25,9 @@ export const BACKUP_TABLES = {
   checklistItems: ChecklistItemSchema,
   savedPlaces: SavedPlaceSchema,
   checklistTemplates: ChecklistTemplateSchema,
+  // 내 기록 (2026-11-25): 방문·다녀옴 표시, 하루 한 줄 — 공유 여행이어도 나만. 예전 백업에는 없음
+  itemMarks: ItemMarkSchema,
+  dayNotes: DayNoteSchema,
 } as const;
 export type BackupTable = keyof typeof BACKUP_TABLES;
 export const BACKUP_TABLE_NAMES = Object.keys(BACKUP_TABLES) as BackupTable[];
@@ -99,6 +105,48 @@ function migrateBackup(
   return data;
 }
 
+/**
+ * 예전 백업(2026-11-25 이전)의 방문·다녀옴(일정 visit·done)과 하루 한 줄(여행 dayNotes)을 내 기록 표로 옮긴다.
+ * 백업을 가져오는 사람의 기록이 된다. 같은 일정에 이미 내 표시가 있으면 그것을 쓴다
+ */
+function splitPersonal(data: Record<BackupTable, Record<string, unknown>[]>): void {
+  const marked = new Set(data.itemMarks.map((m) => m.itemId));
+  for (const item of data.items) {
+    const { visit, done } = item;
+    if (visit === undefined && done === undefined) continue;
+    delete item.visit;
+    delete item.done;
+    if (marked.has(item.id) || item.deletedAt || (!visit && done !== true)) continue;
+    data.itemMarks.push({
+      // 일정 id를 그대로 — 같은 백업을 여러 번 가져와도 한 줄
+      id: item.id,
+      tripId: item.tripId,
+      itemId: item.id,
+      ...(visit ? { visit } : {}),
+      ...(done === true ? { done: true } : {}),
+      createdAt: item.updatedAt,
+      updatedAt: item.updatedAt,
+    });
+  }
+  for (const trip of data.trips) {
+    const notes = trip.dayNotes as { date: string; text: string }[] | undefined;
+    if (!notes) continue;
+    delete trip.dayNotes;
+    const have = new Set(data.dayNotes.filter((n) => n.tripId === trip.id).map((n) => n.date));
+    if (trip.deletedAt) continue;
+    for (const n of notes)
+      if (!have.has(n.date))
+        data.dayNotes.push({
+          id: uuidv7(),
+          tripId: trip.id,
+          date: n.date,
+          text: n.text,
+          createdAt: trip.updatedAt,
+          updatedAt: trip.updatedAt,
+        });
+  }
+}
+
 const Head = z.object({
   format: z.literal(BACKUP_FORMAT),
   schemaVersion: z.number(),
@@ -124,14 +172,14 @@ export function parseBackup(text: string): ParsedBackup {
   );
 
   const data = {} as Extract<ParsedBackup, { ok: true }>['data'];
-  const counts = {} as Record<BackupTable, number>;
   for (const t of BACKUP_TABLE_NAMES) {
     const parsed = z.array(BACKUP_TABLES[t]).safeParse(raw[t] ?? []);
     if (!parsed.success) return { ok: false, reason: 'invalid' };
-    const rows = parsed.data as { id: string; updatedAt?: string; deletedAt?: unknown }[];
-    data[t] = rows;
-    counts[t] = rows.filter((r) => !r.deletedAt).length;
+    data[t] = parsed.data as { id: string; updatedAt?: string; deletedAt?: unknown }[];
   }
+  splitPersonal(data as unknown as Record<BackupTable, Record<string, unknown>[]>);
+  const counts = {} as Record<BackupTable, number>;
+  for (const t of BACKUP_TABLE_NAMES) counts[t] = data[t].filter((r) => !r.deletedAt).length;
   const settings = Settings.safeParse(raw.settings ?? []);
   if (!settings.success) return { ok: false, reason: 'invalid' };
   const photos = z.array(PhotoBackupSchema).safeParse(raw.photos ?? []);

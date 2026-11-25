@@ -48,6 +48,7 @@ import { airWarnings } from '../../domain/air';
 import { placeTips } from '../../domain/localInfo';
 import { weatherCautionsAt } from '../../domain/weather';
 import { DayNoteField } from './DayNoteField';
+import { useTripDayNotes } from '../../data/hooks';
 import { ShorterOrderHint } from './ShorterOrderHint';
 import { type DayPlanInfo } from './usePlanView';
 import { distanceKm, formatDistance, walkMinutes } from '@trippocket/shared';
@@ -147,6 +148,8 @@ export function DaySection({
   hideWhenEmpty: boolean;
 }) {
   const { t } = useTranslation();
+  const myNotes = useTripDayNotes(noteTrip && date ? noteTrip.id : undefined);
+  const savedNote = myNotes?.find((n) => n.date === date)?.text ?? '';
   // 설정 "일정" (2026-10-27 실험실에서 정식)
   const legs = useSettings((st) => st.legDistance);
   // 실험실 "일정 사이 빈 시간" (2026-11-13)
@@ -520,12 +523,8 @@ export function DaySection({
       </ol>
       {/* 더 짧은 순서 (설정 "일정", 2026-11-13 실험실에서 정식) */}
       {date && items.length > 2 && <ShorterOrderHint items={items} />}
-      {noteTrip && date && (
-        <DayNoteField
-          key={noteTrip.dayNotes?.find((n) => n.date === date)?.text ?? ''}
-          trip={noteTrip}
-          date={date}
-        />
+      {noteTrip && date && myNotes && (
+        <DayNoteField key={savedNote} tripId={noteTrip.id} date={date} saved={savedNote} />
       )}
       {canEdit && (
         <button

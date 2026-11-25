@@ -159,3 +159,56 @@ describe('백업 — 사진·영수증 넣기 (2026-11-13)', () => {
     expect(parseBackup(JSON.stringify(bad))).toEqual({ ok: false, reason: 'invalid' });
   });
 });
+
+it('예전 백업의 방문 표시·하루 한 줄은 가져오는 사람의 내 기록이 된다 (2026-11-25)', () => {
+  const T = '2026-10-23T00:00:00.000Z';
+  const TRIP = '00000000-0000-7000-8000-000000000001';
+  const ITEM = '00000000-0000-7000-8000-000000000002';
+  const p = parseBackup(
+    JSON.stringify({
+      format: 'trippocket-backup',
+      schemaVersion: 1,
+      exportedAt: T,
+      data: {
+        trips: [
+          {
+            id: TRIP,
+            title: '도쿄',
+            destinations: [],
+            startDate: '2026-10-24',
+            endDate: '2026-10-25',
+            timezone: 'Asia/Tokyo',
+            cover: {},
+            dayNotes: [{ date: '2026-10-24', text: '좋았다' }],
+            createdAt: T,
+            updatedAt: T,
+          },
+        ],
+        items: [
+          {
+            id: ITEM,
+            tripId: TRIP,
+            date: '2026-10-24',
+            order: 'a0',
+            kind: 'place',
+            title: '센소지',
+            visit: 'visited',
+            done: true,
+            createdAt: T,
+            updatedAt: T,
+          },
+        ],
+      },
+    }),
+  );
+  if (!p.ok) throw new Error('백업을 못 읽음');
+  expect(p.data.items[0]).not.toHaveProperty('visit');
+  expect(p.data.trips[0]).not.toHaveProperty('dayNotes');
+  expect(p.data.itemMarks).toEqual([
+    expect.objectContaining({ itemId: ITEM, tripId: TRIP, visit: 'visited', done: true }),
+  ]);
+  expect(p.data.dayNotes).toEqual([
+    expect.objectContaining({ tripId: TRIP, date: '2026-10-24', text: '좋았다' }),
+  ]);
+  expect(p.counts.itemMarks).toBe(1);
+});

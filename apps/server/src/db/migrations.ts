@@ -364,4 +364,56 @@ export const MIGRATIONS: readonly string[] = [
   );
   CREATE INDEX push_leave_date ON push_leave(date);
   `,
+  // 25: 내 기록 분리 (2026-11-25 사용자 요청 "개인별로 달라야 하는 것은 계정별로") — 일정의 방문·다녀옴 표시와
+  // 여행의 하루 한 줄(dayNotes)을 **여행 주인의** 개인 행(itemMarks·dayNotes)으로 옮기고, 함께 보는 행에서는 지운다.
+  // 지운 행은 rev를 올려 일행 기기에서도 사라지게 한다 (사용자 결정: 예전 표시는 여행 주인 것으로)
+  `
+  CREATE TEMP TABLE _mk AS
+    SELECT r.id AS item_id, r.trip_id AS trip_id,
+      COALESCE((SELECT m.user_id FROM trip_members m WHERE m.trip_id = r.trip_id AND m.role = 'owner'), r.owner_user_id) AS owner,
+      json_extract(r.data_json, '$.visit') AS visit,
+      CASE WHEN json_extract(r.data_json, '$.done') = 1 THEN 1 ELSE 0 END AS done
+    FROM records r
+    WHERE r.table_name = 'items' AND r.deleted_at IS NULL AND r.trip_id IS NOT NULL
+      AND (json_extract(r.data_json, '$.visit') IS NOT NULL OR json_extract(r.data_json, '$.done') = 1);
+  CREATE TEMP TABLE _dn AS
+    SELECT r.id AS trip_id,
+      COALESCE((SELECT m.user_id FROM trip_members m WHERE m.trip_id = r.id AND m.role = 'owner'), r.owner_user_id) AS owner,
+      json_extract(j.value, '$.date') AS date, json_extract(j.value, '$.text') AS text
+    FROM records r, json_each(r.data_json, '$.dayNotes') j
+    WHERE r.table_name = 'trips' AND r.deleted_at IS NULL;
+  CREATE TEMP TABLE _now AS SELECT strftime('%Y-%m-%dT%H:%M:%fZ', 'now') AS t, (SELECT value FROM counters WHERE name = 'rev') AS base;
+  CREATE TEMP TABLE _ids AS
+    SELECT 'mk' AS kind, rowid AS rid,
+      lower(hex(randomblob(4))) || '-' || lower(hex(randomblob(2))) || '-4' || substr(lower(hex(randomblob(2))), 2) || '-' ||
+      substr('89ab', 1 + abs(random()) % 4, 1) || substr(lower(hex(randomblob(2))), 2) || '-' || lower(hex(randomblob(6))) AS id
+    FROM _mk
+    UNION ALL
+    SELECT 'dn', rowid,
+      lower(hex(randomblob(4))) || '-' || lower(hex(randomblob(2))) || '-4' || substr(lower(hex(randomblob(2))), 2) || '-' ||
+      substr('89ab', 1 + abs(random()) % 4, 1) || substr(lower(hex(randomblob(2))), 2) || '-' || lower(hex(randomblob(6)))
+    FROM _dn;
+  INSERT INTO records (table_name, id, trip_id, owner_user_id, data_json, updated_at, deleted_at, rev)
+    SELECT 'itemMarks', i.id, k.trip_id, k.owner,
+      json_patch('{}', json_object('id', i.id, 'createdAt', n.t, 'updatedAt', n.t, 'tripId', k.trip_id, 'itemId', k.item_id,
+        'visit', k.visit, 'done', CASE WHEN k.done = 1 THEN json('true') ELSE NULL END)),
+      n.t, NULL, n.base + row_number() OVER (ORDER BY k.rowid)
+    FROM _mk k JOIN _ids i ON i.kind = 'mk' AND i.rid = k.rowid, _now n;
+  INSERT INTO records (table_name, id, trip_id, owner_user_id, data_json, updated_at, deleted_at, rev)
+    SELECT 'dayNotes', i.id, d.trip_id, d.owner,
+      json_object('id', i.id, 'createdAt', n.t, 'updatedAt', n.t, 'tripId', d.trip_id, 'date', d.date, 'text', d.text),
+      n.t, NULL, n.base + (SELECT COUNT(*) FROM _mk) + row_number() OVER (ORDER BY d.rowid)
+    FROM _dn d JOIN _ids i ON i.kind = 'dn' AND i.rid = d.rowid, _now n
+    WHERE d.date IS NOT NULL AND d.text IS NOT NULL;
+  CREATE TEMP TABLE _strip AS
+    SELECT table_name, id FROM records
+    WHERE (table_name = 'items' AND (json_extract(data_json, '$.visit') IS NOT NULL OR json_extract(data_json, '$.done') IS NOT NULL))
+       OR (table_name = 'trips' AND json_extract(data_json, '$.dayNotes') IS NOT NULL);
+  UPDATE records SET
+    data_json = json_remove(data_json, '$.visit', '$.done', '$.dayNotes'),
+    rev = (SELECT MAX(rev) FROM records) + (SELECT COUNT(*) FROM _strip s2 WHERE s2.rowid <= (SELECT s.rowid FROM _strip s WHERE s.table_name = records.table_name AND s.id = records.id))
+  WHERE (table_name, id) IN (SELECT table_name, id FROM _strip);
+  UPDATE counters SET value = (SELECT MAX(rev) FROM records) WHERE name = 'rev' AND (SELECT MAX(rev) FROM records) > value;
+  DROP TABLE _mk; DROP TABLE _dn; DROP TABLE _now; DROP TABLE _ids; DROP TABLE _strip;
+  `,
 ];

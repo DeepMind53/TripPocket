@@ -7,6 +7,7 @@ import {
   type LocalDate,
 } from '@trippocket/shared';
 import { bookingRepo } from './repositories/bookingRepo';
+import { dayNoteRepo } from './repositories/dayNoteRepo';
 import { checklistRepo, type PrepList } from './repositories/checklistRepo';
 import { itemRepo } from './repositories/itemRepo';
 import { savedPlaceRepo, SavedLimitError } from './repositories/savedPlaceRepo';
@@ -298,9 +299,9 @@ async function createJapan(): Promise<string> {
         conditions: [{ type: 'fatigue', value: 4 }],
       },
     ],
-    // 하루 한 줄 기록 (실험실, 2026-11-10)
-    dayNotes: [{ date: today, text: '아사쿠사 멘치카츠가 오늘의 발견' }],
   });
+  // 하루 한 줄 기록 (실험실, 2026-11-10 — 내 기록, 2026-11-25)
+  await dayNoteRepo.set(trip.id, today, '아사쿠사 멘치카츠가 오늘의 발견');
   for (const [i, s] of [
     P('도쿄 국립박물관', 'place', 35.7188, 139.7765, '도쿄 다이토구 우에노 공원 13-9'),
     P('선샤인 시티', 'shopping', 35.729, 139.7193, '도쿄 도시마구 히가시이케부쿠로 3-1'),
@@ -524,13 +525,12 @@ async function createKorea(): Promise<void> {
     const it = await makeItem(trip.id, day(n), s, time);
     await itemRepo.setVisit(it.id, visit);
   }
-  await tripRepo.update(trip.id, {
-    dayNotes: [
-      { date: s0, text: '협재 바다 색이 사진보다 예뻤다' },
-      { date: day(1), text: '일출봉은 아침 일찍 가길 잘했다' },
-      { date: day(2), text: '오설록 녹차 롤케이크 또 먹고 싶다' },
-    ],
-  });
+  for (const [date, text] of [
+    [s0, '협재 바다 색이 사진보다 예뻤다'],
+    [day(1), '일출봉은 아침 일찍 가길 잘했다'],
+    [day(2), '오설록 녹차 롤케이크 또 먹고 싶다'],
+  ] as const)
+    await dayNoteRepo.set(trip.id, date, text);
   await addPrep(trip.id, 'packing', [
     ['운전면허증', '서류', true],
     ['선크림', '세면도구', true],

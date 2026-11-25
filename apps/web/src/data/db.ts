@@ -2,6 +2,7 @@ import { assertEditable } from './tripRoles';
 import Dexie, { type EntityTable } from 'dexie';
 import { upgradeToV2 } from './migrations/v2';
 import { upgradeToV6 } from './migrations/v6';
+import { upgradeToV17 } from './migrations/v17';
 import type {
   Booking,
   ChecklistItem,
@@ -10,6 +11,8 @@ import type {
   SavedPlace,
   Trip,
   OcrBox,
+  ItemMark,
+  DayNote,
 } from '@trippocket/shared';
 
 /** 서버에 아직 보내지 않은 변경 표시 (로컬 전용, 15단계 동기화에서 사용) */
@@ -87,6 +90,10 @@ export class TripPocketDB extends Dexie {
   syncState!: EntityTable<KeyValueRow, 'key'>;
   attachments!: EntityTable<AttachmentRow, 'id'>;
   photos!: EntityTable<PhotoRow, 'id'>;
+  /** 내 기록 (2026-11-25): 방문·다녀옴 표시 — 공유 여행이어도 나만 */
+  itemMarks!: EntityTable<Stored<ItemMark>, 'id'>;
+  /** 내 하루 한 줄 기록 (2026-11-25, 예전에는 여행의 dayNotes) */
+  dayNotes!: EntityTable<Stored<DayNote>, 'id'>;
 
   constructor(name = 'trippocket') {
     super(name);
@@ -129,6 +136,13 @@ export class TripPocketDB extends Dexie {
     this.version(15).stores({});
     // v16 (2026-11-25): 영수증 줄 자리·번역(rows) — 사진 위에 번역 덮기. 인덱스 없음, 예전 영수증은 다시 분석하면 생김
     this.version(16).stores({});
+    // v17 (2026-11-25): 내 기록 — 방문·다녀옴(itemMarks)·하루 한 줄(dayNotes)을 일정·여행에서 떼어 계정마다 따로 (migrations/v17)
+    this.version(17)
+      .stores({
+        itemMarks: 'id, tripId, itemId, updatedAt, dirty',
+        dayNotes: 'id, tripId, [tripId+date], updatedAt, dirty',
+      })
+      .upgrade(upgradeToV17);
   }
 }
 

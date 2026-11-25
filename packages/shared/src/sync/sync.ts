@@ -13,6 +13,11 @@ export const SYNC_TABLES = Object.keys(BACKUP_TABLES) as SyncTable[];
 export const TRIP_SCOPED: readonly SyncTable[] = ['items', 'bookings', 'checklistItems'];
 /** 사람에게 딸린 표 (본인만) */
 export const USER_SCOPED: readonly SyncTable[] = ['savedPlaces', 'checklistTemplates'];
+/**
+ * 여행 안의 내 기록 (2026-11-25 사용자 요청): 여행 멤버(보기 전용 포함)면 자기 것만 쓰고, **자기 것만 받는다**.
+ * 일행에게는 내려주지 않는다 — 방문 표시·방문 횟수·하루 한 줄이 사람마다 따로
+ */
+export const PERSONAL_TRIP_SCOPED: readonly SyncTable[] = ['itemMarks', 'dayNotes'];
 
 export const SYNC_BATCH = 500;
 

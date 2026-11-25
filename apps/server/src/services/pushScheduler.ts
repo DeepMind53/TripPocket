@@ -130,13 +130,25 @@ export function planPushes(db: Db, now: Date): PlannedPush[] {
             )
             .all(trip.id) as { data_json: string }[]
         ).map((r) => JSON.parse(r.data_json) as ItemData);
+        // 다녀옴은 사람마다 따로 (내 기록 itemMarks, 2026-11-25) — 이 사람이 다녀온 일정은 알리지 않는다
+        const doneByMe = new Set(
+          (
+            db
+              .prepare(
+                `SELECT json_extract(data_json, '$.itemId') AS item FROM records
+                 WHERE table_name = 'itemMarks' AND trip_id = ? AND owner_user_id = ? AND deleted_at IS NULL
+                   AND json_extract(data_json, '$.done') = 1`,
+              )
+              .all(trip.id, userId) as { item: string }[]
+          ).map((m) => m.item),
+        );
         const leaves = new Map(
           pushLeaveRepo(db)
             .forTripDay(userId, trip.id, today)
             .map((l) => [l.itemId, l.leaveAt]),
         );
         for (const it of items) {
-          if (it.date !== today || !it.startTime || it.done) continue;
+          if (it.date !== today || !it.startTime || it.done || doneByMe.has(it.id)) continue;
           const leaveAt = leaves.get(it.id);
           if (leaveAt) {
             const late = minutes(local) - minutes(leaveAt);

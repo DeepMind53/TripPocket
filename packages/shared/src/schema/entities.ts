@@ -258,6 +258,28 @@ export const ChecklistItemSchema = z.object({
 });
 export type ChecklistItem = z.infer<typeof ChecklistItemSchema>;
 
+/**
+ * 내 일정 표시 (2026-11-25 사용자 요청 "개인별로 달라야 하는 것은 계정별로"): 방문·미방문·다녀옴.
+ * 공유 여행이어도 **나만** 보고 동기화한다 (서버가 다른 사람에게 내려주지 않음). 한 사람·일정마다 한 줄
+ */
+export const ItemMarkSchema = z.object({
+  ...baseFields,
+  tripId: IdSchema,
+  itemId: IdSchema,
+  visit: z.optional(z.enum(['visited', 'skipped'])),
+  done: z.optional(z.boolean()),
+});
+export type ItemMark = z.infer<typeof ItemMarkSchema>;
+
+/** 내 하루 한 줄 기록 (2026-11-25, 예전에는 여행의 dayNotes — 일행이 함께 봤다) */
+export const DayNoteSchema = z.object({
+  ...baseFields,
+  tripId: IdSchema,
+  date: LocalDateSchema,
+  text: nonEmpty(140),
+});
+export type DayNote = z.infer<typeof DayNoteSchema>;
+
 export const SavedPlaceSchema = z.object({
   ...baseFields,
   name: nonEmpty(100),

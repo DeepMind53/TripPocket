@@ -2,6 +2,7 @@ import {
   parseRecord,
   SAVED_PLACES_MAX,
   TRIP_SCOPED,
+  PERSONAL_TRIP_SCOPED,
   USER_SCOPED,
   type PullResult,
   type PushResult,
@@ -67,6 +68,12 @@ export function syncRepo(db: Db, onApplied: (table: SyncTable, op: SyncOp) => vo
       // 여행 삭제는 소유자만
       if (record.deletedAt && role !== 'owner') return { ok: false };
       return canEdit(role) ? { ok: true, tripId: record.id } : { ok: false };
+    }
+    if (PERSONAL_TRIP_SCOPED.includes(table)) {
+      // 내 기록 (방문 표시·하루 한 줄, 2026-11-25): 여행 멤버면(보기 전용도) 자기 것만 쓴다
+      if (!record.tripId || !roleOf(userId, record.tripId)) return { ok: false };
+      if (existing && existing.owner_user_id !== userId) return { ok: false };
+      return { ok: true, tripId: record.tripId };
     }
     if (table === 'checklistItems') {
       // 준비물·할 일·필수 항목은 사람마다 따로 (2026-10-27): 여행 멤버면(보기 전용도) 자기 것만 쓴다
@@ -196,9 +203,11 @@ export function syncRepo(db: Db, onApplied: (table: SyncTable, op: SyncOp) => vo
            table_name = 'checklistItems' AND owner_user_id != ?
            AND json_extract(data_json, '$.sharedAt') IS NULL
          )
+         -- 내 기록은 일행에게 내려주지 않는다 (사람마다 따로, 2026-11-25)
+         AND NOT (table_name IN ('itemMarks', 'dayNotes') AND owner_user_id != ?)
          ORDER BY rev LIMIT ?`,
       )
-      .all(since, userId, userId, userId, limit + 1) as {
+      .all(since, userId, userId, userId, userId, limit + 1) as {
       table_name: SyncTable;
       data_json: string;
       rev: number;
