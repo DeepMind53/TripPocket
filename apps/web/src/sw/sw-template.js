@@ -70,13 +70,20 @@ self.addEventListener('fetch', (event) => {
     );
     return;
   }
+  // 회화 음성 (2026-11-26): 소리는 "몇 바이트부터"(Range)로 나눠 달라고 한다 — 아이폰 사파리는 206 조각이 아니면 틀지 않는다.
+  // 저장본(없으면 통째로 받아 tp-phrases에 저장)에서 요청한 조각만 잘라 준다
+  if (url.pathname.startsWith('/phrases/')) {
+    event.respondWith(phraseAudio(req, url));
+    return;
+  }
   // 파일: 저장본 먼저, 없으면 받아서 저장 (이름에 해시가 있어 바뀌지 않음)
   event.respondWith(
     caches.match(req, MATCH).then(
       (hit) =>
         hit ||
         fetch(req).then((res) => {
-          if (res.ok && res.type === 'basic') {
+          // 206(조각) 응답은 저장할 수 없다
+          if (res.status === 200 && res.type === 'basic') {
             const copy = res.clone();
             void caches.open(RUNTIME).then((c) => c.put(req, copy));
           }
@@ -85,6 +92,48 @@ self.addEventListener('fetch', (event) => {
     ),
   );
 });
+
+/** 회화 음성: 저장본(없으면 받아서 저장) → Range 요청이면 그 조각만 206으로 */
+async function phraseAudio(req, url) {
+  const cache = await caches.open('tp-phrases');
+  let res = await cache.match(url.pathname);
+  if (!res) {
+    try {
+      // Range 없이 통째로 받는다 (조각은 저장할 수 없다)
+      const full = await fetch(url.pathname);
+      if (full.status !== 200) return full;
+      await cache.put(url.pathname, full.clone());
+      res = full;
+    } catch {
+      return fetch(req);
+    }
+  }
+  const range = req.headers.get('range');
+  if (!range) return res;
+  const buf = await res.arrayBuffer();
+  const size = buf.byteLength;
+  const m = /bytes=(\d*)-(\d*)/.exec(range);
+  let start = 0;
+  let end = size - 1;
+  if (m && m[1]) {
+    start = Number(m[1]);
+    if (m[2]) end = Math.min(Number(m[2]), size - 1);
+  } else if (m && m[2]) {
+    start = Math.max(0, size - Number(m[2]));
+  }
+  if (start >= size) {
+    return new Response(null, { status: 416, headers: { 'Content-Range': `bytes */${size}` } });
+  }
+  return new Response(buf.slice(start, end + 1), {
+    status: 206,
+    headers: {
+      'Content-Type': res.headers.get('Content-Type') || 'audio/mpeg',
+      'Content-Range': `bytes ${start}-${end}/${size}`,
+      'Content-Length': String(end - start + 1),
+      'Accept-Ranges': 'bytes',
+    },
+  });
+}
 
 // 알림 (docs/20 G1): 서버가 보낸 웹 푸시 → 알림 표시, 누르면 그 화면
 self.addEventListener('push', (event) => {

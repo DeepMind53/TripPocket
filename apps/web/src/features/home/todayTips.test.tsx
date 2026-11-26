@@ -194,3 +194,19 @@ it('더 짧은 순서 (설정 "일정"): 바꾸지 않고 알려만', () => {
   rerender(<ShorterOrderHint items={items} />);
   expect(screen.getByText(/순서를 바꾸면 약 [\d.]+km 짧아요/)).toHaveTextContent('A → B → C');
 });
+
+it('소리로 듣기: 빨리 다시 눌러 앞 재생이 끊겨도(AbortError) 앞 문장을 기기 목소리로 읽지 않는다', async () => {
+  vi.spyOn(HTMLMediaElement.prototype, 'play').mockImplementation(() =>
+    Promise.reject(new DOMException('interrupted', 'AbortError')),
+  );
+  const speak = vi.fn();
+  vi.stubGlobal('speechSynthesis', {
+    speaking: false,
+    getVoices: () => [],
+    cancel: () => {},
+    speak,
+  });
+  render(<SpeakButton text="ありがとう" lang="ja" />);
+  await userEvent.setup().click(screen.getByRole('button', { name: '소리로 듣기' }));
+  expect(speak).not.toHaveBeenCalled();
+});

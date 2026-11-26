@@ -17,6 +17,8 @@ const ALIASES: Record<string, readonly string[]> = {
 
 /** 미리 만든 음성 파일을 트는 플레이어 하나 (매번 새로 만들면 잦은 탭에 소리가 꼬인다) */
 let player: HTMLAudioElement | null = null;
+/** 마지막으로 누른 재생 차례 — 지난 누름의 실패는 무시 */
+let playSeq = 0;
 
 /** 읽는 중인 문장 — 크롬은 참조가 없으면 읽다가 정리해 버려 소리가 끊긴다 */
 let current: SpeechSynthesisUtterance | null = null;
@@ -111,8 +113,10 @@ export function SpeakButton({ text, lang }: { text: string; lang: string }) {
     playThroughSilentSwitch();
     if (typeof Audio === 'undefined') return speakWithDevice(text, lang, noVoice);
     player ??= new Audio();
+    player.preload = 'auto';
     player.pause();
     player.src = phraseAudioUrl(lang, text);
+    const seq = ++playSeq;
     // 누른 그 순간에 바로 튼다 (아이폰은 누른 동작 안에서 시작한 소리만 허락)
     const played = player.play() as Promise<void> | undefined;
     if (!played) return speakWithDevice(text, lang, noVoice);
@@ -121,7 +125,11 @@ export function SpeakButton({ text, lang }: { text: string; lang: string }) {
       () => {
         if (window.speechSynthesis?.speaking) window.speechSynthesis.cancel();
       },
-      () => speakWithDevice(text, lang, noVoice),
+      (e: unknown) => {
+        // 다시 눌러 앞의 재생이 끊긴 것(AbortError)·지난 누름은 실패가 아니다 — 앞 문장을 기기 목소리로 읽지 않게
+        if (seq !== playSeq || (e instanceof DOMException && e.name === 'AbortError')) return;
+        speakWithDevice(text, lang, noVoice);
+      },
     );
   };
   return (
