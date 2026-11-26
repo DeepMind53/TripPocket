@@ -4,13 +4,43 @@ import type { ItineraryItem, Trip } from '@trippocket/shared';
 import { updateSettings } from '../../data/settingsStore';
 import { ShorterOrderHint } from '../itinerary/ShorterOrderHint';
 import { SpeakButton } from '../phrases/SpeakButton';
+import { phraseAudioUrl } from '../../domain/phraseAudio';
 import { TodayTips } from './TodayTips';
 import { useToastStore } from '../../shared/ui/toastStore';
 
 const OFF = { phraseOfDay: false, bestWalkTime: false, daylightLeft: false, shorterOrder: false };
+// 아래 기기 읽기 시험은 음성 파일을 못 튼 경우 (jsdom은 소리를 틀지 못한다)
+beforeEach(() => {
+  vi.spyOn(HTMLMediaElement.prototype, 'play').mockImplementation(() =>
+    Promise.reject(new Error('no audio')),
+  );
+  vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {});
+});
 afterEach(() => {
   updateSettings(OFF);
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+});
+
+it('소리로 듣기: 미리 만든 음성 파일을 먼저 틀고, 틀면 기기 읽기는 쓰지 않는다 (2026-11-26)', async () => {
+  const played: string[] = [];
+  vi.spyOn(HTMLMediaElement.prototype, 'play').mockImplementation(function (
+    this: HTMLMediaElement,
+  ) {
+    played.push(this.src);
+    return Promise.resolve();
+  });
+  const speak = vi.fn();
+  vi.stubGlobal('speechSynthesis', {
+    speaking: false,
+    getVoices: () => [],
+    cancel: () => {},
+    speak,
+  });
+  render(<SpeakButton text="ありがとう" lang="ja" />);
+  await userEvent.setup().click(screen.getByRole('button', { name: '소리로 듣기' }));
+  expect(played[0]).toContain(phraseAudioUrl('ja', 'ありがとう'));
+  expect(speak).not.toHaveBeenCalled();
 });
 
 it('회화 소리로 듣기 (정식, 늘 켜짐): 그 말 목소리로 읽고 목소리가 없으면 안내', async () => {

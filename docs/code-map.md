@@ -108,6 +108,11 @@ Tailscale Funnel https://jin-server.tail0844c0.ts.net ─▶ 홈 PC 127.0.0.1:87
 - **월간 갱신 요청문**: 주기적으로 확인할 정보를 넣으면 `features/me/monthlyUpdate.ko.ts`와 docs/22에 같은 번호로 함께 더한다
 - **백업·복원**: `features/backup/BackupPage.tsx`, 파일 저장·열기 `backupUtils.ts`(PC 크롬·엣지는 저장 창 `id`로 폴더 기억, 휴대폰은 공유 시트·파일 입력), 이 기기 최근 백업 3개 `data/services/localBackups.ts`(OPFS 파일 — Dexie 표 아님), 형식·검사 shared `backup/`
 
+### 여행 회화·음성 (2026-11-26 20개 언어 × 20문장)
+- 문장: `packages/shared/src/data/phrases.ts` (나라 → 언어 `COUNTRY_LANG`)
+- 음성: 미리 만든 mp3 `apps/web/public/phrases/` (이름 = `domain/phraseAudio.ts` 해시). 문장을 고치면 `apps/web`에서 `node scripts/gen-phrase-audio.mjs` (Edge 신경망 음성, 중국어 학습 앱의 모듈을 빌려 씀 — `EDGE_TTS_JS`). 시험 `phraseAudio.test.ts`가 빠진·남은 파일을 잡는다
+- 재생: `features/phrases/SpeakButton.tsx` 파일 먼저 → 실패하면 기기 읽기. 여행을 열면 그 나라 말 20개를 `data/phraseAudioCache.ts`가 미리 받아 `tp-phrases` 저장 칸에 (업데이트해도 남음)
+
 ### 투어·티켓을 기존 일정에 연결 (2026-11-26)
 - 규칙: `data/bookingAttach.ts` (`attachBooking`·`detachBooking`), 후보 고르기: `domain/bookingAttach.ts`
 - 예약 `attachedItemId` + 일정 `bookingId`. 연결한 일정은 이름·시간·장소 그대로 — `syncBookingToPlan`이 덮어쓰지 않고, 예약을 지워도 일정은 남는다(`bookingRepo.softDelete`)

@@ -41,7 +41,8 @@ self.addEventListener('activate', (event) => {
       .then((keys) =>
         Promise.all(
           // 새 버전: 예전 앱 파일·지난 파일 저장본을 지운다 (글꼴은 쓸 때 다시 저장)
-          keys.filter((k) => k !== SHELL).map((k) => caches.delete(k)),
+          // 회화 음성(tp-phrases, 여행지 말만 미리 받은 것)은 남긴다 — 파일 이름에 문장 해시가 있어 바뀌지 않는다
+          keys.filter((k) => k !== SHELL && k !== 'tp-phrases').map((k) => caches.delete(k)),
         ),
       )
       .then(() => self.clients.claim()),

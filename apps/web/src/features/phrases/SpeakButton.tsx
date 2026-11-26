@@ -1,9 +1,10 @@
 import { Volume2 } from 'lucide-react';
 import { useTranslation } from '../../i18n';
 import { toast } from '../../shared/ui';
+import { phraseAudioUrl, spokenPhrase } from '../../domain/phraseAudio';
 
 /** 언어 코드 → 읽기 목소리 언어. 지역이 붙은 말(zh-HK 광둥어 등)은 같은 지역 목소리만, 나머지는 앞 두 글자가 같은 것 */
-const VOICE_LANG: Record<string, string> = { en: 'en-US' };
+const VOICE_LANG: Record<string, string> = { en: 'en-US', fil: 'fil-PH' };
 
 /**
  * 같은 말의 다른 이름 — 안드로이드 구글 음성은 중국어를 cmn(표준어)·yue(광둥어)로 알려 준다 (2026-11-24)
@@ -13,6 +14,9 @@ const ALIASES: Record<string, readonly string[]> = {
   'zh-tw': ['cmn-tw', 'cmn-hant-tw', 'zh-hant-tw'],
   'zh-hk': ['yue-hk', 'yue-hant-hk', 'zh-hant-hk'],
 };
+
+/** 미리 만든 음성 파일을 트는 플레이어 하나 (매번 새로 만들면 잦은 탭에 소리가 꼬인다) */
+let player: HTMLAudioElement | null = null;
 
 /** 읽는 중인 문장 — 크롬은 참조가 없으면 읽다가 정리해 버려 소리가 끊긴다 */
 let current: SpeechSynthesisUtterance | null = null;
@@ -85,20 +89,40 @@ function say(
   }, 300);
 }
 
+/** 기기 읽기 기능으로 읽기 — 음성 파일을 못 틀었을 때만 (예전 방식) */
+function speakWithDevice(text: string, lang: string, noVoice: () => void) {
+  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return noVoice();
+  const voices = window.speechSynthesis.getVoices();
+  const voice = pickVoice(voices, lang);
+  // 목소리 목록을 아직 못 받은 기기(처음 한 번)는 언어만 정해 읽게 둔다
+  if (voices.length > 0 && !voice) return noVoice();
+  say(spokenPhrase(lang, text), lang, voice, noVoice);
+}
+
 /**
- * 회화 소리로 듣기 (2026-11-13, 실험실에서 정식 — 사용자 요청): 기기 읽기 기능(speechSynthesis)으로 현지어 문장을 읽는다.
- * 앱에 들어 있는 정해진 문장만 읽는다 (사용자 글은 읽지 않음). 목소리가 없는 기기는 안내만
+ * 회화 소리로 듣기 (2026-11-13 정식): 앱에 들어 있는 정해진 문장만 읽는다 (사용자 글은 읽지 않음).
+ * 2026-11-26 사용자 요청 "소리를 직접 만들어서 넣어 줘": 미리 만든 음성 파일(public/phrases, 앱 설치 때 함께 받음 —
+ * 비행기 모드에서도 들림)을 먼저 튼다. 못 틀면 기기 읽기 기능, 그것도 없으면 안내
  */
 export function SpeakButton({ text, lang }: { text: string; lang: string }) {
   const { t } = useTranslation();
-  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return null;
   const speak = () => {
-    const voices = window.speechSynthesis.getVoices();
-    const voice = pickVoice(voices, lang);
-    // 목소리 목록을 아직 못 받은 기기(처음 한 번)는 언어만 정해 읽게 둔다
-    if (voices.length > 0 && !voice) return toast(t('phrases.noVoice'));
+    const noVoice = () => toast(t('phrases.noVoice'));
     playThroughSilentSwitch();
-    say(text, lang, voice, () => toast(t('phrases.noVoice')));
+    if (typeof Audio === 'undefined') return speakWithDevice(text, lang, noVoice);
+    player ??= new Audio();
+    player.pause();
+    player.src = phraseAudioUrl(lang, text);
+    // 누른 그 순간에 바로 튼다 (아이폰은 누른 동작 안에서 시작한 소리만 허락)
+    const played = player.play() as Promise<void> | undefined;
+    if (!played) return speakWithDevice(text, lang, noVoice);
+    played.then(
+      // 기기 읽기로 읽던 소리가 있으면 멈춘다 (겹치지 않게)
+      () => {
+        if (window.speechSynthesis?.speaking) window.speechSynthesis.cancel();
+      },
+      () => speakWithDevice(text, lang, noVoice),
+    );
   };
   return (
     <button

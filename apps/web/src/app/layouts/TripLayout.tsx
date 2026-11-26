@@ -16,7 +16,8 @@ import {
   Trash2,
   Users,
 } from 'lucide-react';
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
+import { prefetchPhraseAudio } from '../../data/phraseAudioCache';
 import { useTranslation } from '../../i18n';
 import { Link, Outlet, useNavigate, useParams } from 'react-router';
 import { useTrip } from '../../data/hooks';
@@ -55,6 +56,13 @@ export function TripLayout() {
   const [searchOpen, setSearchOpen] = useRouteSheet('trip-search');
   const travelLab = useSettings((s) => s.tripMode);
   useBottomInset(trip ? TAB_BAR_HEIGHT : 0);
+  // 여행지 말 회화 음성을 한가할 때 미리 받아 둔다 (2026-11-26, 현지에서 인터넷 없이도 들리게)
+  const countries = trip ? trip.destinations.map((d) => d.countryCode).join(',') : '';
+  useEffect(() => {
+    if (!countries) return;
+    const idle = window.requestIdleCallback ?? ((cb: () => void) => window.setTimeout(cb, 3000));
+    idle(() => void prefetchPhraseAudio(countries.split(',')));
+  }, [countries]);
 
   if (trip === null) {
     return (
