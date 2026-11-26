@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 /** sw-template.js의 phraseAudio()만 꺼내 시험 (서비스 워커 전체는 브라우저에서만 돈다) */
-function loadPhraseAudio(store: Map<string, Response>, net: (u: string) => Response) {
+function loadPhraseAudio(store: Map<string, Response>, net: (u: never) => Response) {
   const src = readFileSync(resolve(__dirname, 'sw-template.js'), 'utf8');
   const start = src.indexOf('async function phraseAudio');
   const body = src.slice(start, src.indexOf('\n}\n', start) + 2);
@@ -12,7 +12,7 @@ function loadPhraseAudio(store: Map<string, Response>, net: (u: string) => Respo
       put: async (k: string, r: Response) => void store.set(k, r),
     }),
   };
-  const fetch = async (u: string) => net(u);
+  const fetch = async (u: never) => net(u);
   return new Function('caches', 'fetch', `${body}; return phraseAudio;`)(caches, fetch) as (
     req: Request,
     url: URL,
@@ -38,13 +38,20 @@ describe('서비스 워커 회화 음성 (2026-11-26 아이폰 소리 안 남)',
     expect(all.headers.get('Content-Length')).toBe('100');
   });
 
-  it('저장본이 없으면 통째로 받아 저장하고, 조각을 준다', async () => {
+  it('아직 안 받은 소리·받기 목록은 서버로 그대로 보낸다 (저장은 앱의 [받기]만, 중국어 학습 앱과 같게)', async () => {
     const store = new Map<string, Response>();
-    const fn = loadPhraseAudio(store, mp3);
+    const asked: string[] = [];
+    const fn = loadPhraseAudio(store, (u: unknown) => {
+      asked.push(u instanceof Request ? new URL(u.url).pathname : String(u));
+      return new Response('net', { status: 206 });
+    });
     const url = new URL('https://x.dev/phrases/th-2.mp3');
     const res = await fn(new Request(url, { headers: { Range: 'bytes=90-' } }), url);
     expect(res.status).toBe(206);
-    expect(res.headers.get('Content-Range')).toBe('bytes 90-99/100');
-    expect(store.has('/phrases/th-2.mp3')).toBe(true);
+    expect(await res.text()).toBe('net');
+    expect(store.size).toBe(0);
+    const list = new URL('https://x.dev/phrases/manifest.json');
+    await fn(new Request(list), list);
+    expect(asked).toEqual(['/phrases/th-2.mp3', '/phrases/manifest.json']);
   });
 });

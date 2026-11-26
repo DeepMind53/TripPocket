@@ -23,3 +23,9 @@ export const phraseAudioUrl = (lang: string, text: string) =>
  */
 export const spokenPhrase = (lang: string, text: string) =>
   lang === 'th' ? text.replace(/ครับ\/(ค่ะ|คะ)/g, '$1') : text;
+
+/** 소리 데이터 크기 글자: 1MB 아래는 KB, 그 위는 소수 한 자리 MB */
+export const audioSize = (bytes: number): string =>
+  bytes < 1024 * 1024
+    ? `${Math.max(1, Math.round(bytes / 1024))}KB`
+    : `${(bytes / 1024 / 1024).toFixed(1)}MB`;

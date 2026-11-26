@@ -71,7 +71,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
   // 회화 음성 (2026-11-26): 소리는 "몇 바이트부터"(Range)로 나눠 달라고 한다 — 아이폰 사파리는 206 조각이 아니면 틀지 않는다.
-  // 저장본(없으면 통째로 받아 tp-phrases에 저장)에서 요청한 조각만 잘라 준다
+  // 받아 둔 저장본(tp-phrases, 앱의 [받기]가 채움)에서 요청한 조각만 잘라 준다
   if (url.pathname.startsWith('/phrases/')) {
     event.respondWith(phraseAudio(req, url));
     return;
@@ -93,21 +93,12 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
-/** 회화 음성: 저장본(없으면 받아서 저장) → Range 요청이면 그 조각만 206으로 */
+/** 회화 음성: 받아 둔 저장본 → Range 요청이면 그 조각만 206으로. 없으면 서버에서 */
 async function phraseAudio(req, url) {
-  const cache = await caches.open('tp-phrases');
-  let res = await cache.match(url.pathname);
-  if (!res) {
-    try {
-      // Range 없이 통째로 받는다 (조각은 저장할 수 없다)
-      const full = await fetch(url.pathname);
-      if (full.status !== 200) return full;
-      await cache.put(url.pathname, full.clone());
-      res = full;
-    } catch {
-      return fetch(req);
-    }
-  }
+  // 중국어 학습 앱 sw.js와 같게: 받아 둔 소리면 저장본(조각 요청은 206), 아직 안 받은 소리·받기 목록은 서버에서 바로
+  if (!url.pathname.endsWith('.mp3')) return fetch(req);
+  const res = await (await caches.open('tp-phrases')).match(url.pathname);
+  if (!res) return fetch(req);
   const range = req.headers.get('range');
   if (!range) return res;
   const buf = await res.arrayBuffer();

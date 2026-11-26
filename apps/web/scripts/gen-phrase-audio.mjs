@@ -7,7 +7,7 @@
  *
  *   node scripts/gen-phrase-audio.mjs          (apps/web 에서)
  */
-import { existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { PHRASE_IDS, PHRASE_LANGS } from '../../../packages/shared/src/data/phrases.ts';
 import { phraseAudioFile, spokenPhrase } from '../src/domain/phraseAudio.ts';
@@ -55,6 +55,8 @@ async function synth(text, voice) {
 }
 mkdirSync(OUT, { recursive: true });
 const want = new Set();
+/** 받기 목록 (manifest.json): 언어 → [파일, 바이트] — 앱이 받은 뒤 크기를 맞춰 본다 (중국어 학습 앱과 같게) */
+const langOf = new Map();
 let made = 0;
 let todo = [];
 for (const lang of PHRASE_LANGS) {
@@ -64,6 +66,7 @@ for (const lang of PHRASE_LANGS) {
     const text = lang.phrases[id];
     const file = phraseAudioFile(lang.code, text);
     want.add(file);
+    langOf.set(file, lang.code);
     if (existsSync(`${OUT}/${file}`)) continue;
     todo.push({ file, text: spokenPhrase(lang.code, text), voice, label: `${lang.code} ${id}` });
   }
@@ -93,3 +96,9 @@ for (const f of readdirSync(OUT))
   }
 console.log(`새로 ${made}개, 못 만듦 ${todo.length}개, 지움 ${removed}개, 전체 ${want.size}개`);
 if (todo.length > 0) process.exitCode = 1;
+const langs = {};
+for (const [file, code] of langOf)
+  if (existsSync(`${OUT}/${file}`))
+    (langs[code] ??= []).push([file, statSync(`${OUT}/${file}`).size]);
+writeFileSync(`${OUT}/manifest.json`, JSON.stringify({ langs }) + '\n');
+console.log('받기 목록 manifest.json 씀');

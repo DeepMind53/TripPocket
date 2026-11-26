@@ -1,4 +1,4 @@
-import { existsSync, readdirSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { PHRASE_IDS, PHRASE_LANGS } from '@trippocket/shared';
 import { phraseAudioFile, phraseAudioUrl, spokenPhrase } from './phraseAudio';
@@ -28,5 +28,18 @@ describe('회화 음성 파일 (2026-11-26)', () => {
         expect(existsSync(resolve(DIR, f)), `${l.code} ${id}`).toBe(true);
       }
     expect(readdirSync(DIR).filter((f) => f.endsWith('.mp3') && !want.has(f))).toEqual([]);
+  });
+
+  it('받기 목록(manifest.json)이 모든 문장 파일과 실제 크기를 담는다 (문장을 고치면 scripts/gen-phrase-audio.mjs)', () => {
+    const m = JSON.parse(readFileSync(resolve(DIR, 'manifest.json'), 'utf8')) as {
+      langs: Record<string, [string, number][]>;
+    };
+    for (const l of PHRASE_LANGS) {
+      const files = new Map(m.langs[l.code] ?? []);
+      for (const id of PHRASE_IDS) {
+        const f = phraseAudioFile(l.code, l.phrases[id]);
+        expect(files.get(f), `${l.code} ${id}`).toBe(statSync(resolve(DIR, f)).size);
+      }
+    }
   });
 });

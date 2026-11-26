@@ -1,73 +1,152 @@
-import { PHRASE_IDS, phraseLangFor } from '@trippocket/shared';
-import { phraseAudioUrl } from '../domain/phraseAudio';
-
-/** 회화 음성 저장 칸 — 앱을 업데이트해도 지우지 않는다 (sw-template.js activate가 남겨 둠) */
-export const PHRASE_CACHE = 'tp-phrases';
-
-const done = new Set<string>();
+import { phraseLangFor } from '@trippocket/shared';
 
 /**
- * 여행지 말의 회화 음성 20개를 미리 받아 둔다 (2026-11-26): 전체 400개(약 5MB)를 설치 때 받지 않고,
- * 여행을 열 때 그 나라 말만(약 250KB) 한가할 때 받는다 → 현지에서 비행기 모드여도 들린다.
- * 이미 받은 파일은 건너뛴다. 인터넷이 없거나 실패하면 조용히 넘어간다 (누를 때 다시 받음)
+ * 회화 소리 데이터 — 중국어 학습 앱(Study_Taiwan_Chinese lib/tts-cache.web.ts)과 같은 방식 (2026-11-26 사용자 요청):
+ * - 받기 목록 /phrases/manifest.json (언어 → [파일, 바이트], scripts/gen-phrase-audio.mjs가 만든다)
+ * - [받기]를 누르면 여러 개씩 받아 크기를 맞춰 본 뒤 기기 저장소(Cache Storage 'tp-phrases')에 넣는다
+ * - 재생은 같은 주소 /phrases/… 로 — 서비스 워커(sw-template.js)가 저장본에서 응답 (아이폰 Range 요청은 206 조각)
+ * 저장소는 앱을 업데이트해도 지우지 않는다 (sw-template.js activate가 남겨 둠)
  */
-export async function prefetchPhraseAudio(countryCodes: readonly (string | undefined)[]) {
-  if (typeof caches === 'undefined' || !navigator.onLine) return;
-  const langs = [
-    ...new Set(countryCodes.map((c) => phraseLangFor(c)).filter((l) => l !== undefined)),
-  ];
-  for (const lang of langs) {
-    if (done.has(lang.code)) continue;
-    done.add(lang.code);
-    try {
-      const cache = await caches.open(PHRASE_CACHE);
-      for (const id of PHRASE_IDS) {
-        const url = phraseAudioUrl(lang.code, lang.phrases[id]);
-        if (!(await cache.match(url))) await cache.add(url);
-      }
-    } catch {
-      done.delete(lang.code);
-    }
-  }
+export const PHRASE_CACHE = 'tp-phrases';
+const BASE = '/phrases/';
+const CONC = 6;
+
+type Manifest = { langs: Record<string, [file: string, bytes: number][]> };
+export interface AudioStatus {
+  /** 받은 개수 / 전체 */
+  have: number;
+  total: number;
+  /** 전체 바이트 · 받은 바이트 */
+  bytes: number;
+  haveBytes: number;
 }
 
-/** 기기 저장소에서 꺼내 바로 틀 수 있게 만든 소리 (주소 → blob: 주소). 누른 그 순간 바로 틀려고 메모리에 둔다 */
-const ready = new Map<string, string>();
-const loading = new Map<string, Promise<string>>();
+let manifest: Promise<Manifest> | null = null;
+/** 기기에 받아 둔 파일 이름 (재생할 때 바로 묻는다) */
+let saved: Set<string> | null = null;
+const hasCaches = () => typeof caches !== 'undefined';
 
-/** 이미 꺼내 둔 소리면 그 주소 (없으면 undefined) — 누른 동작 안에서 바로 틀 때 */
-export const readyPhraseAudio = (url: string): string | undefined => ready.get(url);
+function loadManifest(): Promise<Manifest> {
+  manifest ??= fetch(`${BASE}manifest.json`, { cache: 'no-cache' })
+    .then((r) => {
+      if (!r.ok) throw new Error(`받기 목록 ${r.status}`);
+      return r.json() as Promise<Manifest>;
+    })
+    .catch((e: unknown) => {
+      manifest = null;
+      throw e;
+    });
+  return manifest;
+}
+
+/** 기기에 받아 둔 소리 목록을 읽는다 (처음 한 번) */
+export async function initPhraseAudio(): Promise<Set<string>> {
+  if (saved) return saved;
+  const names = new Set<string>();
+  if (hasCaches()) {
+    try {
+      for (const req of await (await caches.open(PHRASE_CACHE)).keys())
+        names.add(new URL(req.url).pathname.slice(BASE.length));
+    } catch {
+      // 저장소를 못 읽으면 받은 것 없음으로
+    }
+  }
+  saved = names;
+  return names;
+}
+
+/** 이 소리 파일을 기기에 받아 두었나 (재생 전에 바로 묻는다 — 목록을 아직 안 읽었으면 false) */
+export const isPhraseAudioSaved = (url: string) => !!saved?.has(url.slice(BASE.length));
+
+/** 언어별(없으면 전체) 받은 개수·크기 */
+export async function phraseAudioStatus(langs?: readonly string[]): Promise<AudioStatus> {
+  const [m, have] = await Promise.all([loadManifest(), initPhraseAudio()]);
+  const st: AudioStatus = { have: 0, total: 0, bytes: 0, haveBytes: 0 };
+  for (const [code, files] of Object.entries(m.langs)) {
+    if (langs && !langs.includes(code)) continue;
+    for (const [file, bytes] of files) {
+      st.total++;
+      st.bytes += bytes;
+      if (have.has(file)) {
+        st.have++;
+        st.haveBytes += bytes;
+      }
+    }
+  }
+  return st;
+}
+
+export type AudioProgress = { done: number; total: number };
+const running = new Map<string, Promise<AudioStatus>>();
 
 /**
- * 회화 소리 준비 (2026-11-26 사용자 요청 "음원이 없을 때 누르면 한 번 받아 기기에 저장해 두고 재생"):
- * 기기 저장소(tp-phrases)에 있으면 꺼내고, 없으면 통째로 한 번 받아 저장한 뒤 꺼낸다.
- * <audio>에 주소 대신 기기 안 데이터를 넘겨 서비스 워커·조각 요청(Range)을 거치지 않는다
+ * 소리 받기: 아직 없는 파일만 여러 개씩 받아 크기를 맞춰 보고 저장한다 (중국어 학습 앱 syncTtsCache와 같게).
+ * 크기가 다르면(끊긴 다운로드) 저장하지 않고 다음에 다시. 같은 언어를 동시에 두 번 받지 않는다
  */
-export function loadPhraseAudio(url: string): Promise<string> {
-  const hit = ready.get(url);
-  if (hit) return Promise.resolve(hit);
-  const running = loading.get(url);
-  if (running) return running;
+export function downloadPhraseAudio(
+  langs?: readonly string[],
+  onProgress?: (p: AudioProgress) => void,
+): Promise<AudioStatus> {
+  const key = langs ? [...langs].sort().join(',') : '*';
+  const now = running.get(key);
+  if (now) return now;
   const job = (async () => {
-    let res: Response | undefined;
-    const cache = typeof caches === 'undefined' ? undefined : await caches.open(PHRASE_CACHE);
-    res = await cache?.match(url);
-    if (!res) {
-      const got = await fetch(url);
-      if (!got.ok) throw new Error(`소리 파일 없음 ${got.status}`);
-      await cache?.put(url, got.clone()).catch(() => undefined);
-      res = got;
-    }
-    const blob = await res.blob();
-    const local = URL.createObjectURL(blob.type ? blob : new Blob([blob], { type: 'audio/mpeg' }));
-    ready.set(url, local);
-    return local;
-  })().finally(() => loading.delete(url));
-  loading.set(url, job);
+    if (!hasCaches()) throw new Error('이 브라우저는 소리 저장을 지원하지 않음');
+    // 저장 공간이 모자랄 때 브라우저가 임의로 지우지 않게 (홈 화면 앱·크롬은 대개 허용)
+    void navigator.storage?.persist?.().catch(() => false);
+    const [m, have] = await Promise.all([loadManifest(), initPhraseAudio()]);
+    const cache = await caches.open(PHRASE_CACHE);
+    const todo = Object.entries(m.langs)
+      .filter(([code]) => !langs || langs.includes(code))
+      .flatMap(([, files]) => files)
+      .filter(([file]) => !have.has(file));
+    let done = 0;
+    let cursor = 0;
+    onProgress?.({ done, total: todo.length });
+    const worker = async () => {
+      while (cursor < todo.length) {
+        const [file, bytes] = todo[cursor++]!;
+        try {
+          const res = await fetch(BASE + file);
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const blob = await res.blob();
+          if (blob.size !== bytes) throw new Error('크기가 다름');
+          await cache.put(
+            BASE + file,
+            new Response(blob, {
+              headers: { 'Content-Type': 'audio/mpeg', 'Content-Length': String(blob.size) },
+            }),
+          );
+          have.add(file);
+        } catch {
+          // 다음 [받기] 때 다시
+        }
+        onProgress?.({ done: ++done, total: todo.length });
+      }
+    };
+    await Promise.all(Array.from({ length: CONC }, worker));
+    return phraseAudioStatus(langs);
+  })().finally(() => running.delete(key));
+  running.set(key, job);
   return job;
 }
 
-/** 이 말의 회화 소리를 미리 꺼내 둔다 (회화 화면을 열 때) — 실패는 조용히 */
-export function warmPhraseAudio(urls: readonly string[]): void {
-  for (const u of urls) void loadPhraseAudio(u).catch(() => undefined);
+/** 받아 둔 회화 소리를 모두 지운다 (설정) */
+export async function clearPhraseAudio(): Promise<void> {
+  if (hasCaches()) await caches.delete(PHRASE_CACHE).catch(() => false);
+  saved = new Set();
+}
+
+/**
+ * 여행을 열 때 여행지 말 소리를 조용히 받아 둔다 (2026-11-26) — 현지에서 인터넷 없이도 들리게.
+ * 인터넷이 없거나 실패하면 그냥 넘어간다 (회화 화면 [받기]·누를 때 다시)
+ */
+export function prefetchPhraseAudio(countryCodes: readonly (string | undefined)[]): void {
+  if (!hasCaches() || !navigator.onLine) return;
+  const langs = [
+    ...new Set(
+      countryCodes.map((c) => phraseLangFor(c)?.code).filter((c): c is string => c !== undefined),
+    ),
+  ];
+  if (langs.length) void downloadPhraseAudio(langs).catch(() => undefined);
 }

@@ -1953,6 +1953,13 @@
   },
   "phrases": {
     "title": "번역·회화",
+    "audioOffer": "{{lang}} 소리 {{n}}개 · {{size}}",
+    "audioGet": "받기",
+    "audioLoading": "받는 중 {{done}}/{{total}}",
+    "audioDone": "{{lang}} 소리 받음",
+    "audioDataTitle": "회화 소리 데이터",
+    "audioDataValue": "{{total}}개 중 {{have}}개 · {{size}}",
+    "audioDataDone": "{{have}}개 받음 · {{size}}",
     "health": "건강 카드",
     "healthTranslate": "이 내용 번역해서 보기",
     "healthNote": "번역은 참고용이에요\n중요하면 직원에게 한 번 더 확인하세요",

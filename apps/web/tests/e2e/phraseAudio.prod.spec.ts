@@ -4,7 +4,7 @@ import { expect, test } from './fixtures';
 /**
  * 회화 소리 (2026-11-26 사용자 제보 "갤럭시·아이폰에서 소리로 듣기 소리가 안 난다"):
  * 배포 빌드(서비스 워커 포함)에서 실제 버튼을 눌러 소리가 재생되는지 — 갤럭시(Chromium)·아이폰(WebKit) 두 엔진.
- * 처음 누르면 한 번 받아 기기에 저장하고 틀고, 그다음엔 인터넷이 없어도 기기에서 바로 튼다
+ * 중국어 학습 앱처럼 [받기]로 기기에 받아 두고, 같은 주소로 튼다(서비스 워커가 저장본으로) — 인터넷이 없어도
  */
 
 async function install(page: Page) {
@@ -42,7 +42,7 @@ const plays = (page: Page) =>
     () => (window as unknown as { plays: { src: string; ok?: boolean; err?: string }[] }).plays,
   );
 
-test('소리로 듣기: 처음엔 받아 저장하고 틀고, 비행기 모드에서도 기기에서 바로 튼다', async ({
+test('소리 받기 → 소리로 듣기: 받아 둔 소리를 틀고, 비행기 모드에서도 기기에서 튼다', async ({
   page,
   context,
   browserName,
@@ -53,12 +53,17 @@ test('소리로 듣기: 처음엔 받아 저장하고 틀고, 비행기 모드�
   await install(page);
   await page.goto('/phrases');
   await page.getByRole('radio', { name: '일본어' }).click();
+  // 중국어 학습 앱처럼: [받기] → 받는 중 → 받음
+  const row = page.locator('[data-phrase-audio]');
+  await expect(row).toContainText(/일본어 소리 20개/);
+  await row.getByRole('button', { name: '받기' }).click();
+  await expect(row).toHaveText('일본어 소리 받음');
   await page.getByRole('button', { name: /감사합니다/ }).click();
   await page.getByRole('button', { name: '소리로 듣기' }).click();
   await expect
     .poll(async () => (await plays(page)).at(-1)?.ok ?? (await plays(page)).at(-1)?.err)
     .toBe(true);
-  expect((await plays(page)).at(-1)?.src).toMatch(/^blob:/);
+  expect((await plays(page)).at(-1)?.src).toMatch(/\/phrases\/ja-[0-9a-f]{8}\.mp3$/);
 
   // 인터넷이 끊겨도: 화면을 새로 열고 같은 문장을 다시 들어도 기기 저장소에서
   await context.setOffline(true);

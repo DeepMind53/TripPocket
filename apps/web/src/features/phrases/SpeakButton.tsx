@@ -1,6 +1,10 @@
 import { LoaderCircle, Volume2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { loadPhraseAudio, readyPhraseAudio, warmPhraseAudio } from '../../data/phraseAudioCache';
+import {
+  downloadPhraseAudio,
+  initPhraseAudio,
+  isPhraseAudioSaved,
+} from '../../data/phraseAudioCache';
 import { useTranslation } from '../../i18n';
 import { toast } from '../../shared/ui';
 import { phraseAudioUrl, spokenPhrase } from '../../domain/phraseAudio';
@@ -103,8 +107,8 @@ function speakWithDevice(text: string, lang: string, noVoice: () => void) {
   say(spokenPhrase(lang, text), lang, voice, noVoice);
 }
 
-/** 기기 안 소리를 튼다. 다시 눌러 끊긴 것(AbortError)·지난 누름·막힌 자동 재생(NotAllowedError, 다음 누름에 됨)은 실패가 아니다 */
-function playLocal(src: string, seq: number, fail: () => void) {
+/** 소리를 튼다 (받아 둔 것은 서비스 워커가 기기 저장본으로 응답). 다시 눌러 끊긴 것(AbortError)·지난 누름·막힌 자동 재생(NotAllowedError, 다음 누름에 됨)은 실패가 아니다 */
+function playAudio(src: string, seq: number, fail: () => void) {
   if (!player || seq !== playSeq) return;
   player.pause();
   player.src = src;
@@ -126,15 +130,16 @@ function playLocal(src: string, seq: number, fail: () => void) {
 
 /**
  * 회화 소리로 듣기 (2026-11-13 정식): 앱에 들어 있는 정해진 문장만 읽는다 (사용자 글은 읽지 않음).
- * 2026-11-26 사용자 요청: 미리 만든 음성 파일(public/phrases)을 쓴다 — 기기에 없으면 누를 때 한 번 받아 기기 저장소에
- * 넣고(받는 동안 아이콘이 돈다) 튼다. 그다음부터는 기기에서 바로 (비행기 모드에서도). 못 틀면 기기 읽기 기능, 그것도 없으면 안내
+ * 2026-11-26 사용자 요청 "중국어 학습 앱과 같게 받은 뒤 재생": 미리 만든 음성 파일(public/phrases)을 기기에 받아 두고
+ * 같은 주소로 튼다(서비스 워커가 저장본으로 응답 — 비행기 모드에서도). 아직 안 받았으면 누를 때 그 말 소리를 먼저 받고
+ * (받는 동안 아이콘이 돈다) 튼다. 못 틀면 기기 읽기 기능, 그것도 없으면 안내
  */
 export function SpeakButton({ text, lang }: { text: string; lang: string }) {
   const { t } = useTranslation();
   const url = phraseAudioUrl(lang, text);
   const [busy, setBusy] = useState(false);
-  // 보이면 미리 꺼내 둔다 — 누른 그 순간 바로 틀 수 있게 (아이폰은 누른 동작 안에서 시작한 소리만 허락)
-  useEffect(() => warmPhraseAudio([url]), [url]);
+  // 받아 둔 목록을 미리 읽어 둔다 — 누른 그 순간 바로 틀 수 있게 (아이폰은 누른 동작 안에서 시작한 소리만 허락)
+  useEffect(() => void initPhraseAudio(), []);
   const speak = () => {
     const noVoice = () => toast(t('phrases.noVoice'));
     const fail = () => speakWithDevice(text, lang, noVoice);
@@ -142,15 +147,12 @@ export function SpeakButton({ text, lang }: { text: string; lang: string }) {
     if (typeof Audio === 'undefined') return fail();
     player ??= new Audio();
     const seq = ++playSeq;
-    const local = readyPhraseAudio(url);
-    if (local) return playLocal(local, seq, fail);
-    // 기기에 아직 없음: 한 번 받아 저장한 뒤 튼다
+    if (isPhraseAudioSaved(url)) return playAudio(url, seq, fail);
+    // 기기에 아직 없음: 그 말 소리를 먼저 받아 저장한 뒤 튼다 (못 받았어도 인터넷이 되면 서버에서 바로)
     setBusy(true);
-    loadPhraseAudio(url)
-      .then((src) => playLocal(src, seq, fail))
-      .catch(() => {
-        if (seq === playSeq) fail();
-      })
+    downloadPhraseAudio([lang])
+      .catch(() => undefined)
+      .then(() => playAudio(url, seq, fail))
       .finally(() => setBusy(false));
   };
   return (

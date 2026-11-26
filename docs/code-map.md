@@ -111,7 +111,8 @@ Tailscale Funnel https://jin-server.tail0844c0.ts.net ─▶ 홈 PC 127.0.0.1:87
 ### 여행 회화·음성 (2026-11-26 20개 언어 × 20문장)
 - 문장: `packages/shared/src/data/phrases.ts` (나라 → 언어 `COUNTRY_LANG`)
 - 음성: 미리 만든 mp3 `apps/web/public/phrases/` (이름 = `domain/phraseAudio.ts` 해시). 문장을 고치면 `apps/web`에서 `node scripts/gen-phrase-audio.mjs` (Edge 신경망 음성, 중국어 학습 앱의 모듈을 빌려 씀 — `EDGE_TTS_JS`). 시험 `phraseAudio.test.ts`가 빠진·남은 파일을 잡는다
-- 재생: `features/phrases/SpeakButton.tsx` — 기기 저장소(`tp-phrases`)의 소리를 꺼내 blob: 주소로 바로 튼다(서비스 워커·조각 요청을 거치지 않음, CSP `media-src blob:`). 기기에 없으면 누를 때 한 번 받아 저장(`data/phraseAudioCache.ts` `loadPhraseAudio`, 받는 동안 아이콘이 돈다). 못 틀면 기기 읽기. 여행을 열면 그 나라 말 20개를 미리 받고, 회화 화면을 열면 그 말 20개를 꺼내 둔다
+- 받기·재생 (중국어 학습 앱과 같은 방식): 받기 목록 `public/phrases/manifest.json`(언어 → [파일, 바이트]) → `data/phraseAudioCache.ts` `downloadPhraseAudio`가 6개씩 받아 크기를 맞춰 보고 기기 저장소 `tp-phrases`에 → 재생은 같은 주소 `/phrases/…`를 서비스 워커(`sw-template.js` phraseAudio)가 저장본으로 응답(Range는 206). 안 받은 소리는 서버에서 바로
+- 화면: 회화 화면 위 [받기] 줄(`features/phrases/PhraseAudioRow.tsx`, 그 말 20개) · 설정 데이터 화면 "회화 소리 데이터"(`features/settings/PhraseAudioGroup.tsx`, 400개 받기·지우기) · [소리로 듣기](`SpeakButton.tsx`)는 안 받았으면 그 말을 먼저 받고 튼다. 여행을 열면 여행지 말을 조용히 받는다(`prefetchPhraseAudio`)
 - 화면 시험: `tests/e2e/phraseAudio.prod.spec.ts` (배포 빌드, 갤럭시 엔진. 윈도용 시험 WebKit은 소리를 못 틀어 건너뜀)
 
 ### 투어·티켓을 기존 일정에 연결 (2026-11-26)

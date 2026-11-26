@@ -19,6 +19,7 @@ import { MAP_KEYS } from '../../shared/maps';
 import { resetQuickButtonPosition } from '../common/FloatingQuickButton';
 import { MapAppMark } from '../common/MapAppMark';
 import { DeviceDataGroup } from './DeviceDataGroup';
+import { PhraseAudioGroup } from './PhraseAudioGroup';
 import { NotificationGroup } from './NotificationGroup';
 import { PLAN_LABELS } from './planLabels';
 import { Field, Group, SwitchRow } from './SettingsControls';
@@ -368,6 +369,8 @@ function SectionBody({ id }: { id: string }) {
     case 'data':
       return (
         <>
+          {/* 회화 소리 데이터 (2026-11-26) — 받기·지우기 */}
+          <PhraseAudioGroup />
           <DeviceDataGroup />
           <Group title={t('settings.data')} onReset={() => resetSettings(['backupReminderDays'])}>
             <div className="flex items-center justify-between gap-3 tight:flex-wrap">

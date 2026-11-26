@@ -10,9 +10,8 @@ import {
 
 const EN = PHRASE_LANGS.find((l) => l.code === 'en')!;
 import { ExternalLink } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { warmPhraseAudio } from '../../data/phraseAudioCache';
-import { phraseAudioUrl } from '../../domain/phraseAudio';
+import { useState } from 'react';
+import { PhraseAudioRow } from './PhraseAudioRow';
 import { useSearchParams } from 'react-router';
 import { useTrip } from '../../data/hooks';
 import { useTranslation } from '../../i18n';
@@ -36,11 +35,6 @@ export function PhrasesPage() {
   const [picked, setPicked] = useState<string | null>(null);
   const lang = PHRASE_LANGS.find((l) => l.code === (picked ?? tripLang?.code ?? 'en'))!;
   const [show, setShow] = useState<PhraseId | null>(null);
-  // 이 말의 회화 소리 20개를 기기에서 꺼내 두거나 한 번 받아 저장 (2026-11-26) — 누르면 바로 들리게
-  useEffect(
-    () => warmPhraseAudio(PHRASE_IDS.map((id) => phraseAudioUrl(lang.code, lang.phrases[id]))),
-    [lang],
-  );
   const papago = papagoUrl(lang);
 
   return (
@@ -91,6 +85,8 @@ export function PhrasesPage() {
         <HealthCardButton lang={lang} />
         {/* 메뉴판·안내문 사진 번역 (2026-11-11 실험실 → 2026-11-13 정식, 사용자 요청) */}
         <PhotoTranslate />
+        {/* 이 말 소리 받기 (2026-11-26, 중국어 학습 앱과 같게 받은 뒤 기기에서 재생) */}
+        <PhraseAudioRow lang={lang} />
         <ul
           aria-label={t('phrases.list', { lang: lang.name })}
           className="flex flex-col divide-y divide-line rounded-card border border-line"
