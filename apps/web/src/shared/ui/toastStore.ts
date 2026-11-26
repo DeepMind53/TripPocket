@@ -13,6 +13,11 @@ export interface ToastItem {
   duration: number;
   /** 같은 알림이 다시 오면 늘린다 — 표시 시간을 처음부터 다시 센다 */
   bump?: number;
+  /**
+   * 하단 탭 바로 위에 고정 (업데이트 안내처럼 오래 떠 있는 것, 2026-11-26 사용자 요청) —
+   * ⚡ 버튼·시트 버튼 줄을 피해 올라가지 않고, 다른 알림이 와도 닫히지 않는다
+   */
+  pinned?: boolean;
 }
 
 interface ToastState {
@@ -42,9 +47,10 @@ export const useToastStore = create<ToastState>((set, get) => ({
     }
     const id = nextId++;
     set((s) => {
-      const undo = s.items.filter((t) => t.action);
+      const pinned = s.items.filter((t) => t.pinned);
+      const undo = s.items.filter((t) => t.action && !t.pinned);
       const keep = item.action ? [] : undo.slice(-1);
-      return { items: [...keep, { ...item, id }] };
+      return { items: [...pinned, ...keep, { ...item, id }] };
     });
     return id;
   },

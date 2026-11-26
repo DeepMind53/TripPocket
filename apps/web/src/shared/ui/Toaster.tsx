@@ -25,30 +25,57 @@ function avoidBottom(): number | null {
   return null;
 }
 
-/** 앱 루트에 한 번 배치. 하단 탭바 위(--tp-bottom-inset)에, 시트 버튼 줄·⚡ 버튼이 있으면 그 위에 */
+/** 하단 탭 바로 위 (탭이 없는 화면은 화면 아래) */
+const TAB_BOTTOM = 'calc(var(--tp-bottom-inset) + 16px + env(safe-area-inset-bottom))';
+
+/**
+ * 앱 루트에 한 번 배치. 하단 탭바 위(--tp-bottom-inset)에, 시트 버튼 줄·⚡ 버튼이 있으면 그 위에.
+ * 고정 알림(업데이트 안내, pinned)은 늘 하단 탭 바로 위 — 일반 알림은 그 위로 쌓는다 (2026-11-26)
+ */
 export function Toaster() {
   const items = useToastStore((s) => s.items);
+  const pinned = items.filter((i) => i.pinned);
+  const normal = items.filter((i) => !i.pinned);
   const box = useRef<HTMLDivElement>(null);
+  const pinBox = useRef<HTMLDivElement>(null);
   // 화면 요소 위치를 재서 바로 스타일에 (렌더를 다시 돌리지 않게)
   useLayoutEffect(() => {
-    if (items.length) box.current?.style.setProperty('--toast-lift', `${avoidBottom() ?? 0}px`);
+    if (!items.length) return;
+    box.current?.style.setProperty('--toast-lift', `${avoidBottom() ?? 0}px`);
+    const h = pinBox.current?.offsetHeight ?? 0;
+    box.current?.style.setProperty('--toast-pin', `${h ? h + GAP : 0}px`);
   }, [items]);
   return (
-    <div
-      role="status"
-      aria-live="polite"
-      ref={box}
-      data-toaster=""
-      className="pointer-events-none fixed inset-x-0 z-[60] mx-auto flex w-full max-w-[560px] flex-col gap-2 px-4"
-      style={{
-        bottom:
-          'max(calc(var(--tp-bottom-inset) + 16px + env(safe-area-inset-bottom)), var(--toast-lift, 0px))',
-      }}
-    >
-      {items.map((item) => (
-        <ToastView key={item.id} item={item} />
-      ))}
-    </div>
+    <>
+      <div
+        role="status"
+        aria-live="polite"
+        ref={box}
+        data-toaster=""
+        className="pointer-events-none fixed inset-x-0 z-[60] mx-auto flex w-full max-w-[560px] flex-col gap-2 px-4"
+        style={{
+          bottom: `max(calc(${TAB_BOTTOM} + var(--toast-pin, 0px)), var(--toast-lift, 0px))`,
+        }}
+      >
+        {normal.map((item) => (
+          <ToastView key={item.id} item={item} />
+        ))}
+      </div>
+      {pinned.length > 0 && (
+        <div
+          role="status"
+          aria-live="polite"
+          ref={pinBox}
+          data-toaster-pinned=""
+          className="pointer-events-none fixed inset-x-0 z-[60] mx-auto flex w-full max-w-[560px] flex-col gap-2 px-4"
+          style={{ bottom: TAB_BOTTOM }}
+        >
+          {pinned.map((item) => (
+            <ToastView key={item.id} item={item} />
+          ))}
+        </div>
+      )}
+    </>
   );
 }
 

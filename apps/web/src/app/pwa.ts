@@ -72,6 +72,8 @@ export function setupPwa(): void {
         message: i18n.t('pwa.updateReady'),
         action: { label: i18n.t('pwa.update'), onAction: () => worker.postMessage('SKIP_WAITING') },
         duration: 10 * 60_000,
+        // 하단 탭 바로 위에 고정 (2026-11-26 사용자 요청 — 처음 뜬 높이에 남아 엉뚱한 자리에 보였다)
+        pinned: true,
       });
     };
     if (reg.waiting) offer(reg.waiting);
