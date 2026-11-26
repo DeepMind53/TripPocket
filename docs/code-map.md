@@ -111,7 +111,8 @@ Tailscale Funnel https://jin-server.tail0844c0.ts.net ─▶ 홈 PC 127.0.0.1:87
 ### 여행 회화·음성 (2026-11-26 20개 언어 × 20문장)
 - 문장: `packages/shared/src/data/phrases.ts` (나라 → 언어 `COUNTRY_LANG`)
 - 음성: 미리 만든 mp3 `apps/web/public/phrases/` (이름 = `domain/phraseAudio.ts` 해시). 문장을 고치면 `apps/web`에서 `node scripts/gen-phrase-audio.mjs` (Edge 신경망 음성, 중국어 학습 앱의 모듈을 빌려 씀 — `EDGE_TTS_JS`). 시험 `phraseAudio.test.ts`가 빠진·남은 파일을 잡는다
-- 재생: `features/phrases/SpeakButton.tsx` 파일 먼저 → 실패하면 기기 읽기. 여행을 열면 그 나라 말 20개를 `data/phraseAudioCache.ts`가 미리 받아 `tp-phrases` 저장 칸에 (업데이트해도 남음)
+- 재생: `features/phrases/SpeakButton.tsx` — 기기 저장소(`tp-phrases`)의 소리를 꺼내 blob: 주소로 바로 튼다(서비스 워커·조각 요청을 거치지 않음, CSP `media-src blob:`). 기기에 없으면 누를 때 한 번 받아 저장(`data/phraseAudioCache.ts` `loadPhraseAudio`, 받는 동안 아이콘이 돈다). 못 틀면 기기 읽기. 여행을 열면 그 나라 말 20개를 미리 받고, 회화 화면을 열면 그 말 20개를 꺼내 둔다
+- 화면 시험: `tests/e2e/phraseAudio.prod.spec.ts` (배포 빌드, 갤럭시 엔진. 윈도용 시험 WebKit은 소리를 못 틀어 건너뜀)
 
 ### 투어·티켓을 기존 일정에 연결 (2026-11-26)
 - 규칙: `data/bookingAttach.ts` (`attachBooking`·`detachBooking`), 후보 고르기: `domain/bookingAttach.ts`

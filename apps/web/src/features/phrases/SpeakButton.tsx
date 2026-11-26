@@ -1,4 +1,6 @@
-import { Volume2 } from 'lucide-react';
+import { LoaderCircle, Volume2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { loadPhraseAudio, readyPhraseAudio, warmPhraseAudio } from '../../data/phraseAudioCache';
 import { useTranslation } from '../../i18n';
 import { toast } from '../../shared/ui';
 import { phraseAudioUrl, spokenPhrase } from '../../domain/phraseAudio';
@@ -101,44 +103,68 @@ function speakWithDevice(text: string, lang: string, noVoice: () => void) {
   say(spokenPhrase(lang, text), lang, voice, noVoice);
 }
 
+/** 기기 안 소리를 튼다. 다시 눌러 끊긴 것(AbortError)·지난 누름·막힌 자동 재생(NotAllowedError, 다음 누름에 됨)은 실패가 아니다 */
+function playLocal(src: string, seq: number, fail: () => void) {
+  if (!player || seq !== playSeq) return;
+  player.pause();
+  player.src = src;
+  const played = player.play() as Promise<void> | undefined;
+  if (!played) return;
+  played.then(
+    // 기기 읽기로 읽던 소리가 있으면 멈춘다 (겹치지 않게)
+    () => {
+      if (window.speechSynthesis?.speaking) window.speechSynthesis.cancel();
+    },
+    (e: unknown) => {
+      if (seq !== playSeq) return;
+      if (e instanceof DOMException && (e.name === 'AbortError' || e.name === 'NotAllowedError'))
+        return;
+      fail();
+    },
+  );
+}
+
 /**
  * 회화 소리로 듣기 (2026-11-13 정식): 앱에 들어 있는 정해진 문장만 읽는다 (사용자 글은 읽지 않음).
- * 2026-11-26 사용자 요청 "소리를 직접 만들어서 넣어 줘": 미리 만든 음성 파일(public/phrases, 앱 설치 때 함께 받음 —
- * 비행기 모드에서도 들림)을 먼저 튼다. 못 틀면 기기 읽기 기능, 그것도 없으면 안내
+ * 2026-11-26 사용자 요청: 미리 만든 음성 파일(public/phrases)을 쓴다 — 기기에 없으면 누를 때 한 번 받아 기기 저장소에
+ * 넣고(받는 동안 아이콘이 돈다) 튼다. 그다음부터는 기기에서 바로 (비행기 모드에서도). 못 틀면 기기 읽기 기능, 그것도 없으면 안내
  */
 export function SpeakButton({ text, lang }: { text: string; lang: string }) {
   const { t } = useTranslation();
+  const url = phraseAudioUrl(lang, text);
+  const [busy, setBusy] = useState(false);
+  // 보이면 미리 꺼내 둔다 — 누른 그 순간 바로 틀 수 있게 (아이폰은 누른 동작 안에서 시작한 소리만 허락)
+  useEffect(() => warmPhraseAudio([url]), [url]);
   const speak = () => {
     const noVoice = () => toast(t('phrases.noVoice'));
+    const fail = () => speakWithDevice(text, lang, noVoice);
     playThroughSilentSwitch();
-    if (typeof Audio === 'undefined') return speakWithDevice(text, lang, noVoice);
+    if (typeof Audio === 'undefined') return fail();
     player ??= new Audio();
-    player.preload = 'auto';
-    player.pause();
-    player.src = phraseAudioUrl(lang, text);
     const seq = ++playSeq;
-    // 누른 그 순간에 바로 튼다 (아이폰은 누른 동작 안에서 시작한 소리만 허락)
-    const played = player.play() as Promise<void> | undefined;
-    if (!played) return speakWithDevice(text, lang, noVoice);
-    played.then(
-      // 기기 읽기로 읽던 소리가 있으면 멈춘다 (겹치지 않게)
-      () => {
-        if (window.speechSynthesis?.speaking) window.speechSynthesis.cancel();
-      },
-      (e: unknown) => {
-        // 다시 눌러 앞의 재생이 끊긴 것(AbortError)·지난 누름은 실패가 아니다 — 앞 문장을 기기 목소리로 읽지 않게
-        if (seq !== playSeq || (e instanceof DOMException && e.name === 'AbortError')) return;
-        speakWithDevice(text, lang, noVoice);
-      },
-    );
+    const local = readyPhraseAudio(url);
+    if (local) return playLocal(local, seq, fail);
+    // 기기에 아직 없음: 한 번 받아 저장한 뒤 튼다
+    setBusy(true);
+    loadPhraseAudio(url)
+      .then((src) => playLocal(src, seq, fail))
+      .catch(() => {
+        if (seq === playSeq) fail();
+      })
+      .finally(() => setBusy(false));
   };
   return (
     <button
       type="button"
       onClick={speak}
+      aria-busy={busy || undefined}
       className="flex h-12 items-center gap-2 rounded-full bg-primary-weak px-5 text-body-2 font-semibold text-primary"
     >
-      <Volume2 aria-hidden="true" className="size-5" />
+      {busy ? (
+        <LoaderCircle aria-hidden="true" className="size-5 animate-spin" />
+      ) : (
+        <Volume2 aria-hidden="true" className="size-5" />
+      )}
       {t('phrases.speak')}
     </button>
   );

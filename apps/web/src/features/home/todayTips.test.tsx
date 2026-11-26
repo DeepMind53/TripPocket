@@ -22,7 +22,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-it('소리로 듣기: 미리 만든 음성 파일을 먼저 틀고, 틀면 기기 읽기는 쓰지 않는다 (2026-11-26)', async () => {
+it('소리로 듣기: 기기에 없으면 한 번 받아 저장하고 틀고, 다음부터는 기기에서 바로 (2026-11-26)', async () => {
   const played: string[] = [];
   vi.spyOn(HTMLMediaElement.prototype, 'play').mockImplementation(function (
     this: HTMLMediaElement,
@@ -30,6 +30,12 @@ it('소리로 듣기: 미리 만든 음성 파일을 먼저 틀고, 틀면 기�
     played.push(this.src);
     return Promise.resolve();
   });
+  const fetched: string[] = [];
+  vi.stubGlobal('fetch', async (u: string) => {
+    fetched.push(u);
+    return new Response(new Uint8Array([1, 2, 3]), { headers: { 'Content-Type': 'audio/mpeg' } });
+  });
+  vi.stubGlobal('URL', Object.assign(URL, { createObjectURL: () => 'blob:local-1' }));
   const speak = vi.fn();
   vi.stubGlobal('speechSynthesis', {
     speaking: false,
@@ -37,9 +43,15 @@ it('소리로 듣기: 미리 만든 음성 파일을 먼저 틀고, 틀면 기�
     cancel: () => {},
     speak,
   });
-  render(<SpeakButton text="ありがとう" lang="ja" />);
-  await userEvent.setup().click(screen.getByRole('button', { name: '소리로 듣기' }));
-  expect(played[0]).toContain(phraseAudioUrl('ja', 'ありがとう'));
+  render(<SpeakButton text="こんにちは、テスト" lang="ja" />);
+  const user = userEvent.setup();
+  await user.click(screen.getByRole('button', { name: '소리로 듣기' }));
+  await vi.waitFor(() => expect(played).toEqual(['blob:local-1']));
+  // 화면에 보일 때 미리 받은 것 하나만 — 누를 때 다시 받지 않는다
+  expect(fetched).toEqual([phraseAudioUrl('ja', 'こんにちは、テスト')]);
+  await user.click(screen.getByRole('button', { name: '소리로 듣기' }));
+  expect(played).toEqual(['blob:local-1', 'blob:local-1']);
+  expect(fetched).toHaveLength(1);
   expect(speak).not.toHaveBeenCalled();
 });
 
@@ -199,6 +211,11 @@ it('소리로 듣기: 빨리 다시 눌러 앞 재생이 끊겨도(AbortError) �
   vi.spyOn(HTMLMediaElement.prototype, 'play').mockImplementation(() =>
     Promise.reject(new DOMException('interrupted', 'AbortError')),
   );
+  vi.stubGlobal(
+    'fetch',
+    async () => new Response(new Uint8Array([1]), { headers: { 'Content-Type': 'audio/mpeg' } }),
+  );
+  vi.stubGlobal('URL', Object.assign(URL, { createObjectURL: () => 'blob:local-2' }));
   const speak = vi.fn();
   vi.stubGlobal('speechSynthesis', {
     speaking: false,
@@ -206,7 +223,8 @@ it('소리로 듣기: 빨리 다시 눌러 앞 재생이 끊겨도(AbortError) �
     cancel: () => {},
     speak,
   });
-  render(<SpeakButton text="ありがとう" lang="ja" />);
+  render(<SpeakButton text="ありがとう、またね" lang="ja" />);
   await userEvent.setup().click(screen.getByRole('button', { name: '소리로 듣기' }));
+  await new Promise((r) => setTimeout(r, 50));
   expect(speak).not.toHaveBeenCalled();
 });
