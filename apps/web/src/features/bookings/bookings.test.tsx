@@ -129,6 +129,23 @@ describe('예약', () => {
     );
   });
 
+  it('투어·티켓: 예약번호와 바우처 열기를 한 줄에 (2026-11-26)', async () => {
+    await bookingRepo.create({
+      tripId,
+      kind: 'ticket',
+      title: '스카이캡슐',
+      confirmationNo: 'SKY123',
+      start: { date: '2026-10-25' },
+      details: { voucherUrl: 'https://x.example/v' },
+    });
+    renderAt([`/trips/${tripId}/bookings`]);
+    const link = await screen.findByRole('link', { name: '바우처 열기' });
+    const row = link.parentElement!;
+    expect(row).toHaveTextContent('SKY123');
+    expect(within(row).getByRole('button', { name: /SKY123/ })).toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: '바우처 열기' })).toHaveLength(1);
+  });
+
   it('티켓: [일정 장소]에서 기존 일정을 고르면 새 칸 없이 그 일정에 연결 (2026-11-26)', async () => {
     const temple = await itemRepo.create({
       tripId,

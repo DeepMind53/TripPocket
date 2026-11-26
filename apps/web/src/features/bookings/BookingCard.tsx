@@ -47,6 +47,9 @@ export function BookingCard({
       : undefined,
   );
   const ticket = b.kind === 'flight' || b.kind === 'train';
+  // 투어·티켓: 예약번호와 바우처 열기를 한 줄에 (사용자 요청 2026-11-26)
+  const voucherInline =
+    (b.kind === 'tour' || b.kind === 'ticket') && !!b.confirmationNo && !!b.details?.voucherUrl;
   // 탑승권 양 끝 반원 홈: 카드를 실제로 도려낸다 (마스크) — 구멍을 덧그리면 카드 테두리 선이 홈 안에 남는다 (사용자 제보 2026-11-10).
   // 홈 높이 = 절취선 위치라 실제 위치를 재서 --perf-y로
   const { cardRef, perfRef } = useTicketNotch<HTMLLIElement, HTMLDivElement>();
@@ -88,7 +91,7 @@ export function BookingCard({
           className="mx-4 border-t-[1.5px] border-dashed border-line"
         />
       )}
-      {b.details?.voucherUrl && (
+      {b.details?.voucherUrl && !voucherInline && (
         <div className="flex justify-end border-t border-dashed border-line px-4">
           <a
             href={b.details.voucherUrl}
@@ -135,7 +138,7 @@ export function BookingCard({
       )}
       {b.confirmationNo && (
         <div className="flex items-center justify-between gap-2 border-t border-dashed border-line px-4 py-1.5">
-          <span className="tabular text-caption text-fg-sub">
+          <span className="tabular min-w-0 truncate text-caption text-fg-sub">
             {t('bookings.confirmationNo')}{' '}
             <strong className="font-mono font-medium tracking-wide whitespace-nowrap text-primary">
               {b.confirmationNo}
@@ -145,10 +148,21 @@ export function BookingCard({
             type="button"
             aria-label={t('bookings.copyNo', { no: b.confirmationNo })}
             onClick={() => void copyText(b.confirmationNo as string, t('bookings.copied'))}
-            className="flex h-10 items-center gap-1 px-1 text-caption font-medium text-primary"
+            className="flex h-10 shrink-0 items-center gap-1 px-1 text-caption font-medium text-primary"
           >
             <Copy aria-hidden="true" className="size-4" />
           </button>
+          {voucherInline && b.details?.voucherUrl && (
+            <a
+              href={b.details.voucherUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ml-auto flex h-10 shrink-0 items-center gap-1 text-caption font-medium text-primary"
+            >
+              {t('bookings.voucherOpen')}
+              <ExternalLink aria-hidden="true" className="size-3.5" />
+            </a>
+          )}
         </div>
       )}
     </li>
