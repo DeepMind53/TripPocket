@@ -235,3 +235,30 @@ it('소리로 듣기: 빨리 다시 눌러 앞 재생이 끊겨도(AbortError) �
   await new Promise((r) => setTimeout(r, 50));
   expect(speak).not.toHaveBeenCalled();
 });
+
+it('소리로 듣기: 재생이 막히면(NotAllowedError) 아무 반응 없이 끝나지 않고 기기 읽기로 (갤럭시 제보 2026-11-26)', async () => {
+  vi.spyOn(HTMLMediaElement.prototype, 'play').mockImplementation(() =>
+    Promise.reject(new DOMException('blocked', 'NotAllowedError')),
+  );
+  const spoken: string[] = [];
+  vi.stubGlobal(
+    'SpeechSynthesisUtterance',
+    class {
+      lang = '';
+      voice: unknown = null;
+      rate = 1;
+      constructor(public text: string) {}
+    },
+  );
+  vi.stubGlobal('speechSynthesis', {
+    speaking: false,
+    pending: false,
+    paused: false,
+    getVoices: () => [{ lang: 'ja-JP', name: 'Kyoko', localService: true, default: true }],
+    cancel: () => {},
+    speak: (u: { text: string }) => spoken.push(u.text),
+  });
+  render(<SpeakButton text="ありがとう、どうも" lang="ja" />);
+  await userEvent.setup().click(screen.getByRole('button', { name: '소리로 듣기' }));
+  await vi.waitFor(() => expect(spoken).toEqual(['ありがとう、どうも']));
+});

@@ -21,7 +21,7 @@ const ALIASES: Record<string, readonly string[]> = {
   'zh-hk': ['yue-hk', 'yue-hant-hk', 'zh-hant-hk'],
 };
 
-/** 미리 만든 음성 파일을 트는 플레이어 하나 (매번 새로 만들면 잦은 탭에 소리가 꼬인다) */
+/** 지금 트는 소리 요소 (다음 누름에 멈추고 놓는다) */
 let player: HTMLAudioElement | null = null;
 /** 마지막으로 누른 재생 차례 — 지난 누름의 실패는 무시 */
 let playSeq = 0;
@@ -99,7 +99,8 @@ function say(
 
 /** 기기 읽기 기능으로 읽기 — 음성 파일을 못 틀었을 때만 (예전 방식) */
 function speakWithDevice(text: string, lang: string, noVoice: () => void) {
-  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return noVoice();
+  // 읽기 기능이 없거나 비어 있는 브라우저(앱 안 브라우저 등)는 안내만
+  if (typeof window === 'undefined' || !window.speechSynthesis) return noVoice();
   const voices = window.speechSynthesis.getVoices();
   const voice = pickVoice(voices, lang);
   // 목소리 목록을 아직 못 받은 기기(처음 한 번)는 언어만 정해 읽게 둔다
@@ -109,10 +110,17 @@ function speakWithDevice(text: string, lang: string, noVoice: () => void) {
 
 /** 소리를 튼다 (받아 둔 것은 서비스 워커가 기기 저장본으로 응답). 다시 눌러 끊긴 것(AbortError)·지난 누름·막힌 자동 재생(NotAllowedError, 다음 누름에 됨)은 실패가 아니다 */
 function playAudio(src: string, seq: number, fail: () => void) {
-  if (!player || seq !== playSeq) return;
-  player.pause();
-  player.src = src;
-  const played = player.play() as Promise<void> | undefined;
+  if (seq !== playSeq) return;
+  // 중국어 학습 앱(expo-audio 웹)과 같게: 누를 때마다 새 소리 요소를 만들어 바로 튼다 — 앞 요소는 멈추고 놓는다
+  // (한 요소를 멈추고 주소만 바꿔 다시 틀면 갤럭시에서 아무 소리도 안 나는 일이 있었다, 2026-11-26)
+  if (player) {
+    player.pause();
+    player.removeAttribute('src');
+    player.load();
+  }
+  const audio = new Audio(src);
+  player = audio;
+  const played = audio.play() as Promise<void> | undefined;
   if (!played) return;
   played.then(
     // 기기 읽기로 읽던 소리가 있으면 멈춘다 (겹치지 않게)
@@ -120,9 +128,9 @@ function playAudio(src: string, seq: number, fail: () => void) {
       if (window.speechSynthesis?.speaking) window.speechSynthesis.cancel();
     },
     (e: unknown) => {
-      if (seq !== playSeq) return;
-      if (e instanceof DOMException && (e.name === 'AbortError' || e.name === 'NotAllowedError'))
-        return;
+      // 다시 눌러 앞 재생이 끊긴 것·지난 누름은 실패가 아니다
+      if (seq !== playSeq || (e instanceof DOMException && e.name === 'AbortError')) return;
+      // 그 밖(막힘·형식 오류 등)은 기기 읽기로, 그것도 안 되면 안내 — 아무 반응 없이 끝나지 않게
       fail();
     },
   );
@@ -144,7 +152,6 @@ export function SpeakButton({ text, lang }: { text: string; lang: string }) {
     const fail = () => speakWithDevice(text, lang, noVoice);
     playThroughSilentSwitch();
     if (typeof Audio === 'undefined') return fail();
-    player ??= new Audio();
     const seq = ++playSeq;
     // 누른 그 순간에 바로 튼다 — 받아 둔 소리는 서비스 워커가 기기 저장본으로, 아직 안 받은 소리는 서버에서 바로.
     // (먼저 다 받고 틀면 몇 초 뒤라 아이폰이 "누른 동작이 아님"으로 막는다 — 2026-11-26 점검에서 발견)

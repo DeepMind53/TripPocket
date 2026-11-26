@@ -112,3 +112,23 @@ test('소리 받기만: [받기] → 받음 → 기기 저장소에 20개 — �
   );
   expect(saved).toHaveLength(20);
 });
+
+test('소리를 못 틀면 큰 글씨 화면 위로 안내가 보인다 — 아무 반응 없이 끝나지 않게 (갤럭시 제보 2026-11-26)', async ({
+  page,
+  context,
+}) => {
+  await install(page);
+  // 소리 파일도, 기기 읽기 기능도 없는 기기 (서비스 워커 요청도 막으려고 context에)
+  await context.route('**/phrases/*.mp3', (r) => r.fulfill({ status: 404, body: '' }));
+  await page.addInitScript(() => {
+    Object.defineProperty(window, 'speechSynthesis', { value: undefined });
+  });
+  await page.goto('/phrases');
+  await page.getByRole('radio', { name: '독일어' }).click();
+  await page.getByRole('button', { name: /감사합니다/ }).click();
+  await page.getByRole('button', { name: '소리로 듣기' }).click();
+  const note = page.getByText(/목소리가 없어요/);
+  await expect(note).toBeVisible();
+  // 다른 것에 가려져 있으면 눌리지 않는다 (큰 글씨 화면 위에 있는지)
+  await note.click({ trial: true });
+});

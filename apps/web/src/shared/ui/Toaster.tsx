@@ -75,7 +75,7 @@ export function Toaster() {
         aria-live="polite"
         ref={box}
         data-toaster=""
-        className="pointer-events-none fixed inset-x-0 z-[60] mx-auto flex w-full max-w-[560px] flex-col gap-2 px-4"
+        className="pointer-events-none fixed inset-x-0 z-[80] mx-auto flex w-full max-w-[560px] flex-col gap-2 px-4"
         style={{
           bottom: `max(calc(${TAB_BOTTOM} + var(--toast-pin, 0px)), var(--toast-lift, 0px))`,
         }}
@@ -90,7 +90,7 @@ export function Toaster() {
           aria-live="polite"
           ref={pinBox}
           data-toaster-pinned=""
-          className="pointer-events-none fixed inset-x-0 z-[60] mx-auto flex w-full max-w-[560px] flex-col gap-2 px-4"
+          className="pointer-events-none fixed inset-x-0 z-[80] mx-auto flex w-full max-w-[560px] flex-col gap-2 px-4"
           style={{ bottom: TAB_BOTTOM }}
         >
           {pinned.map((item) => (
