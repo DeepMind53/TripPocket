@@ -2,6 +2,7 @@ import {
   currentItemId,
   dayText,
   isFlightLeg,
+  legSources,
   nextStop,
   pastItemIds,
   visitableItemIds,
@@ -129,5 +130,32 @@ describe('nextStop', () => {
   it('지금 뒤 첫 일정 (메모·시각 없는 것 빼고)', () => {
     expect(nextStop(items, '12:00')?.id).toBe('b');
     expect(nextStop(items, '16:00')).toBeNull();
+  });
+});
+
+describe('legSources — 사이에 낀 예약·이동은 건너뛰고 앞 장소 기준 (2026-11-26)', () => {
+  const at = { lat: 35.7, lng: 139.7 };
+  const it_ = (id: string, kind: string, coords = true) =>
+    ({ id, kind, ...(coords ? { place: { name: id, coords: at } } : {}) }) as Parameters<
+      typeof legSources
+    >[0][number];
+  it('티켓(좌표 없음)·항공·메모를 건너뛰고 앞 장소에서 잰다', () => {
+    const m = legSources([
+      it_('a', 'place'),
+      it_('ticket', 'activity', false),
+      it_('b', 'food'),
+      it_('flight', 'transport'),
+      it_('memo', 'note'),
+      it_('c', 'place'),
+    ]);
+    expect(m.get('b')?.id).toBe('a');
+    expect(m.get('c')?.id).toBe('b');
+    expect(m.has('a')).toBe(false);
+    expect(m.has('ticket')).toBe(false);
+    expect(m.has('flight')).toBe(false);
+  });
+  it('앞에 장소가 없으면 재지 않는다', () => {
+    const m = legSources([it_('flight', 'transport'), it_('a', 'place')]);
+    expect(m.size).toBe(0);
   });
 });

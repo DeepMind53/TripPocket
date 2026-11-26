@@ -7,6 +7,30 @@ export const FAR_LEG_KM = 200;
 export const isFlightLeg = (from: Pick<ItineraryItem, 'transport'>) =>
   from.transport?.mode === 'flight';
 
+/**
+ * 거리를 잴 기준 장소인지: 좌표가 있는 장소 일정. 이동(항공·기차·버스 등)·메모, 좌표 없는 일정(티켓 등)은 건너뛴다
+ * (사용자 요청 2026-11-26 "중간에 예약 티켓이나 항공이 있으면 빼고 전 장소 기준으로")
+ */
+const isLegAnchor = (i: Pick<ItineraryItem, 'kind' | 'place'>) =>
+  !!i.place?.coords && i.kind !== 'transport' && i.kind !== 'note';
+
+/**
+ * 장소마다 거리를 잴 앞 장소: 일정 id → 바로 앞의 기준 장소. 사이에 낀 예약·이동·메모는 건너뛴다.
+ * 거리 줄은 그 장소 바로 위에 보인다
+ */
+export function legSources<T extends Pick<ItineraryItem, 'id' | 'kind' | 'place'>>(
+  items: readonly T[],
+): Map<string, T> {
+  const out = new Map<string, T>();
+  let prev: T | undefined;
+  for (const i of items) {
+    if (!isLegAnchor(i)) continue;
+    if (prev) out.set(i.id, prev);
+    prev = i;
+  }
+  return out;
+}
+
 const minutes = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5));
 
 /** 실험실 "하루 일정 글로 복사": 카톡 등에 붙여 넣을 글 (제목 줄 + 한 줄에 일정 하나) */

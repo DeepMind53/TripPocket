@@ -28,7 +28,13 @@ import {
   SunMedium,
   TreePalm,
 } from 'lucide-react';
-import { currentItemId, pastItemIds, visitableItemIds, FAR_LEG_KM } from '../../domain/dayTools';
+import {
+  currentItemId,
+  legSources,
+  pastItemIds,
+  visitableItemIds,
+  FAR_LEG_KM,
+} from '../../domain/dayTools';
 import { DayMiniMap } from './DayMiniMap';
 import { type Visit } from '../../domain/visit';
 import { flightSignature, flightsToReconfirm } from '../../domain/flightCheck';
@@ -152,6 +158,8 @@ export function DaySection({
   const savedNote = myNotes?.find((n) => n.date === date)?.text ?? '';
   // 설정 "일정" (2026-10-27 실험실에서 정식)
   const legs = useSettings((st) => st.legDistance);
+  // 사이에 낀 예약·이동은 건너뛰고 앞 장소 기준으로 (2026-11-26)
+  const legFrom = legs ? legSources(items) : null;
   // 실험실 "일정 사이 빈 시간" (2026-11-13)
   // 2026-10-27 정식: 하루 일정 글로 복사·하루 동선 지도
   const copyDayOn = true;
@@ -482,7 +490,9 @@ export function DaySection({
                       : undefined;
                   })()}
                 />
-                {legs && <LegLine from={item} to={items[i + 1]} />}
+                {legFrom && items[i + 1] && legFrom.get(items[i + 1]!.id) && (
+                  <LegLine from={legFrom.get(items[i + 1]!.id)!} to={items[i + 1]} />
+                )}
               </>
             )}
           </Fragment>
