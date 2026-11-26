@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import {
   clearPhraseAudio,
   downloadPhraseAudio,
+  onPhraseAudioChange,
   phraseAudioStatus,
   type AudioProgress,
   type AudioStatus,
@@ -20,9 +21,13 @@ export function PhraseAudioGroup() {
   const [progress, setProgress] = useState<AudioProgress | null>(null);
   const [armed, setArmed] = useState(false);
   useEffect(() => {
-    void phraseAudioStatus()
-      .then(setStatus)
-      .catch(() => setStatus(null));
+    const read = () =>
+      void phraseAudioStatus()
+        .then(setStatus)
+        .catch(() => setStatus(null));
+    read();
+    // 회화 화면·[소리로 듣기]가 받으면 다시 센다
+    return onPhraseAudioChange(read);
   }, []);
   // 두 번 눌러야 지움 (3초 안에, 기기 데이터 정리와 같게)
   useEffect(() => {

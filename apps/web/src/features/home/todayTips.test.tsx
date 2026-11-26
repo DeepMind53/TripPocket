@@ -22,7 +22,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-it('소리로 듣기: 안 받았으면 그 말 소리를 먼저 받아 기기에 저장하고 틀고, 다음부터는 바로 (중국어 학습 앱과 같게, 2026-11-26)', async () => {
+it('소리로 듣기: 안 받았으면 누른 그 순간 바로 틀고 그 말 소리를 뒤에서 받아 저장, 다음부터는 저장본으로 (2026-11-26)', async () => {
   const url = phraseAudioUrl('ja', 'こんにちは、テスト');
   const file = url.slice('/phrases/'.length);
   const played: string[] = [];

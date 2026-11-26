@@ -2,6 +2,7 @@ import type { PhraseLang } from '@trippocket/shared';
 import { useEffect, useState } from 'react';
 import {
   downloadPhraseAudio,
+  onPhraseAudioChange,
   phraseAudioStatus,
   type AudioProgress,
   type AudioStatus,
@@ -19,11 +20,16 @@ export function PhraseAudioRow({ lang }: { lang: PhraseLang }) {
   const [progress, setProgress] = useState<AudioProgress | null>(null);
   useEffect(() => {
     let alive = true;
-    void phraseAudioStatus([lang.code])
-      .then((s) => alive && setStatus(s))
-      .catch(() => alive && setStatus(null));
+    const read = () =>
+      void phraseAudioStatus([lang.code])
+        .then((s) => alive && setStatus(s))
+        .catch(() => alive && setStatus(null));
+    read();
+    // [소리로 듣기]가 뒤에서 받거나 설정에서 지우면 다시 센다
+    const off = onPhraseAudioChange(read);
     return () => {
       alive = false;
+      off();
     };
   }, [lang.code]);
   if (!status) return null;
@@ -45,11 +51,18 @@ export function PhraseAudioRow({ lang }: { lang: PhraseLang }) {
           ? t('phrases.audioLoading', progress)
           : done
             ? t('phrases.audioDone', { lang: lang.name })
-            : t('phrases.audioOffer', {
-                lang: lang.name,
-                n: status.total,
-                size: audioSize(status.bytes),
-              })}
+            : status.have > 0
+              ? // 일부만 받았을 때 (끊긴 다운로드) — [받기]로 나머지
+                t('phrases.audioDataValue', {
+                  total: status.total,
+                  have: status.have,
+                  size: audioSize(status.bytes),
+                })
+              : t('phrases.audioOffer', {
+                  lang: lang.name,
+                  n: status.total,
+                  size: audioSize(status.bytes),
+                })}
       </span>
       {!done && (
         <button

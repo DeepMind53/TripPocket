@@ -1,5 +1,5 @@
-import { LoaderCircle, Volume2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { Volume2 } from 'lucide-react';
+import { useEffect } from 'react';
 import {
   downloadPhraseAudio,
   initPhraseAudio,
@@ -131,14 +131,13 @@ function playAudio(src: string, seq: number, fail: () => void) {
 /**
  * 회화 소리로 듣기 (2026-11-13 정식): 앱에 들어 있는 정해진 문장만 읽는다 (사용자 글은 읽지 않음).
  * 2026-11-26 사용자 요청 "중국어 학습 앱과 같게 받은 뒤 재생": 미리 만든 음성 파일(public/phrases)을 기기에 받아 두고
- * 같은 주소로 튼다(서비스 워커가 저장본으로 응답 — 비행기 모드에서도). 아직 안 받았으면 누를 때 그 말 소리를 먼저 받고
- * (받는 동안 아이콘이 돈다) 튼다. 못 틀면 기기 읽기 기능, 그것도 없으면 안내
+ * 같은 주소로 튼다(서비스 워커가 저장본으로 응답 — 비행기 모드에서도). 아직 안 받았으면 누른 그 순간 서버에서 바로 틀고
+ * 그 말 소리를 뒤에서 받아 둔다. 못 틀면 기기 읽기 기능, 그것도 없으면 안내
  */
 export function SpeakButton({ text, lang }: { text: string; lang: string }) {
   const { t } = useTranslation();
   const url = phraseAudioUrl(lang, text);
-  const [busy, setBusy] = useState(false);
-  // 받아 둔 목록을 미리 읽어 둔다 — 누른 그 순간 바로 틀 수 있게 (아이폰은 누른 동작 안에서 시작한 소리만 허락)
+  // 받아 둔 목록을 미리 읽어 둔다
   useEffect(() => void initPhraseAudio(), []);
   const speak = () => {
     const noVoice = () => toast(t('phrases.noVoice'));
@@ -147,26 +146,19 @@ export function SpeakButton({ text, lang }: { text: string; lang: string }) {
     if (typeof Audio === 'undefined') return fail();
     player ??= new Audio();
     const seq = ++playSeq;
-    if (isPhraseAudioSaved(url)) return playAudio(url, seq, fail);
-    // 기기에 아직 없음: 그 말 소리를 먼저 받아 저장한 뒤 튼다 (못 받았어도 인터넷이 되면 서버에서 바로)
-    setBusy(true);
-    downloadPhraseAudio([lang])
-      .catch(() => undefined)
-      .then(() => playAudio(url, seq, fail))
-      .finally(() => setBusy(false));
+    // 누른 그 순간에 바로 튼다 — 받아 둔 소리는 서비스 워커가 기기 저장본으로, 아직 안 받은 소리는 서버에서 바로.
+    // (먼저 다 받고 틀면 몇 초 뒤라 아이폰이 "누른 동작이 아님"으로 막는다 — 2026-11-26 점검에서 발견)
+    playAudio(url, seq, fail);
+    // 아직 안 받았으면 그 말 소리를 뒤에서 받아 둔다 (다음부터는 인터넷 없이도)
+    if (!isPhraseAudioSaved(url)) void downloadPhraseAudio([lang]).catch(() => undefined);
   };
   return (
     <button
       type="button"
       onClick={speak}
-      aria-busy={busy || undefined}
       className="flex h-12 items-center gap-2 rounded-full bg-primary-weak px-5 text-body-2 font-semibold text-primary"
     >
-      {busy ? (
-        <LoaderCircle aria-hidden="true" className="size-5 animate-spin" />
-      ) : (
-        <Volume2 aria-hidden="true" className="size-5" />
-      )}
+      <Volume2 aria-hidden="true" className="size-5" />
       {t('phrases.speak')}
     </button>
   );

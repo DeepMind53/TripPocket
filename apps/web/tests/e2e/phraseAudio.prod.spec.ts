@@ -76,3 +76,39 @@ test('소리 받기 → 소리로 듣기: 받아 둔 소리를 틀고, 비행기
     .toBe(true);
   await context.setOffline(false);
 });
+
+test('받기 전에 소리로 듣기: 누른 그 순간 바로 틀고, 뒤에서 그 말 소리를 받아 [받기] 줄이 받음으로 바뀐다', async ({
+  page,
+  browserName,
+}) => {
+  test.skip(browserName === 'webkit', '시험용 WebKit(윈도)은 소리 재생을 지원하지 않음');
+  await recordPlays(page);
+  await install(page);
+  await page.goto('/phrases');
+  await page.getByRole('radio', { name: '프랑스어' }).click();
+  const row = page.locator('[data-phrase-audio]');
+  await expect(row).toContainText(/프랑스어 소리 20개/);
+  await page.getByRole('button', { name: /감사합니다/ }).click();
+  await page.getByRole('button', { name: '소리로 듣기' }).click();
+  await expect
+    .poll(async () => (await plays(page)).at(-1)?.ok ?? (await plays(page)).at(-1)?.err)
+    .toBe(true);
+  expect((await plays(page)).at(-1)?.src).toMatch(/\/phrases\/fr-[0-9a-f]{8}\.mp3$/);
+  await page.keyboard.press('Escape');
+  await expect(row).toHaveText('프랑스어 소리 받음');
+});
+
+test('소리 받기만: [받기] → 받음 → 기기 저장소에 20개 — 아이폰 엔진에서도 (재생은 빼고)', async ({
+  page,
+}) => {
+  await install(page);
+  await page.goto('/phrases');
+  await page.getByRole('radio', { name: '스페인어' }).click();
+  const row = page.locator('[data-phrase-audio]');
+  await row.getByRole('button', { name: '받기' }).click();
+  await expect(row).toHaveText('스페인어 소리 받음', { timeout: 30_000 });
+  const saved = await page.evaluate(async () =>
+    (await (await caches.open('tp-phrases')).keys()).filter((r) => r.url.includes('/phrases/es-')),
+  );
+  expect(saved).toHaveLength(20);
+});

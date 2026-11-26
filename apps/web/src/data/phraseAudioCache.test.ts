@@ -59,3 +59,24 @@ it('전체 받은 양과 지우기 (설정)', async () => {
   expect(await m.phraseAudioStatus()).toMatchObject({ have: 0 });
   expect(m.isPhraseAudioSaved('/phrases/ja-1.mp3')).toBe(false);
 });
+
+it('잠깐 끊긴 파일은 한 번 더 받아 저장하고, 받을 때마다 알린다', async () => {
+  const store = setup({ 'ja-1.mp3': 3 });
+  const real = globalThis.fetch;
+  let first = true;
+  vi.stubGlobal('fetch', async (u: string, init?: RequestInit) => {
+    if (u.endsWith('.mp3') && first) {
+      first = false;
+      throw new TypeError('network');
+    }
+    return real(u, init);
+  });
+  const m = await fresh();
+  let told = 0;
+  const off = m.onPhraseAudioChange(() => told++);
+  const st = await m.downloadPhraseAudio(['ja']);
+  off();
+  expect(st.have).toBe(1);
+  expect(store.has('/phrases/ja-1.mp3')).toBe(true);
+  expect(told).toBeGreaterThan(0);
+});

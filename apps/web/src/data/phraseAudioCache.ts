@@ -10,6 +10,7 @@ import { phraseLangFor } from '@trippocket/shared';
 export const PHRASE_CACHE = 'tp-phrases';
 const BASE = '/phrases/';
 const CONC = 6;
+const FILE_TIMEOUT_MS = 15_000;
 
 type Manifest = { langs: Record<string, [file: string, bytes: number][]> };
 export interface AudioStatus {
@@ -77,6 +78,27 @@ export async function phraseAudioStatus(langs?: readonly string[]): Promise<Audi
 }
 
 export type AudioProgress = { done: number; total: number };
+
+/** 파일 하나 받기 — 휴대폰 망에서 멈춰 버린 요청이 "받는 중"을 끝없이 잡지 않게 15초에서 끊는다 */
+async function fetchAudio(url: string): Promise<Blob> {
+  const stop = new AbortController();
+  const timer = setTimeout(() => stop.abort(), FILE_TIMEOUT_MS);
+  try {
+    const res = await fetch(url, { signal: stop.signal });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.blob();
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+const listeners = new Set<() => void>();
+/** 받은 소리가 바뀌면 알려 준다 (회화 화면 [받기] 줄·설정이 다시 센다) — 끊는 함수를 돌려준다 */
+export function onPhraseAudioChange(fn: () => void): () => void {
+  listeners.add(fn);
+  return () => listeners.delete(fn);
+}
+const notify = () => listeners.forEach((fn) => fn());
 const running = new Map<string, Promise<AudioStatus>>();
 
 /**
@@ -106,22 +128,24 @@ export function downloadPhraseAudio(
     const worker = async () => {
       while (cursor < todo.length) {
         const [file, bytes] = todo[cursor++]!;
-        try {
-          const res = await fetch(BASE + file);
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
-          const blob = await res.blob();
-          if (blob.size !== bytes) throw new Error('크기가 다름');
-          await cache.put(
-            BASE + file,
-            new Response(blob, {
-              headers: { 'Content-Type': 'audio/mpeg', 'Content-Length': String(blob.size) },
-            }),
-          );
-          have.add(file);
-        } catch {
-          // 다음 [받기] 때 다시
+        // 한 번 실패하면 한 번 더 (휴대폰 망에서 잠깐 끊길 때)
+        for (let attempt = 0; attempt < 2 && !have.has(file); attempt++) {
+          try {
+            const blob = await fetchAudio(BASE + file);
+            if (blob.size !== bytes) throw new Error('크기가 다름');
+            await cache.put(
+              BASE + file,
+              new Response(blob, {
+                headers: { 'Content-Type': 'audio/mpeg', 'Content-Length': String(blob.size) },
+              }),
+            );
+            have.add(file);
+          } catch {
+            // 다음 시도, 그래도 안 되면 다음 [받기] 때
+          }
         }
         onProgress?.({ done: ++done, total: todo.length });
+        notify();
       }
     };
     await Promise.all(Array.from({ length: CONC }, worker));
@@ -135,6 +159,7 @@ export function downloadPhraseAudio(
 export async function clearPhraseAudio(): Promise<void> {
   if (hasCaches()) await caches.delete(PHRASE_CACHE).catch(() => false);
   saved = new Set();
+  notify();
 }
 
 /**
