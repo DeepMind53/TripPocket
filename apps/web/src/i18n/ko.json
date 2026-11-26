@@ -266,6 +266,8 @@
     "noTrip": "이 나라로 가는 여행이 없어요\n여행을 만들면 일정에 담을 수 있어요"
   },
   "bookings": {
+    "attachStop": "일정 장소",
+    "attachNew": "새 일정으로 넣기",
     "emptyTitle": "예약을 모아두세요",
     "emptyDesc": "항공권, 숙소 예약을 모아두면 여행 중에 바로 꺼내볼 수 있어요",
     "emptyCta": "예약 추가",
@@ -665,6 +667,8 @@
     "needMemo": "메모 내용을 적어 주세요"
   },
   "detail": {
+    "linkBooking": "예약 연결",
+    "linkNone": "연결 안 함",
     "directions": "길찾기",
     "copyAddress": "주소 복사",
     "addressCopied": "주소를 복사했어요",

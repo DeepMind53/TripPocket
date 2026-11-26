@@ -129,6 +129,29 @@ describe('예약', () => {
     );
   });
 
+  it('티켓: [일정 장소]에서 기존 일정을 고르면 새 칸 없이 그 일정에 연결 (2026-11-26)', async () => {
+    const temple = await itemRepo.create({
+      tripId,
+      date: '2026-10-24',
+      kind: 'place',
+      title: '해동용궁사',
+    });
+    const user = userEvent.setup();
+    renderAt([`/trips/${tripId}/bookings`]);
+    await user.click(await screen.findByRole('button', { name: '예약 추가' }));
+    const sheet = screen.getByRole('dialog', { name: '예약 추가' });
+    await user.click(within(sheet).getByRole('button', { name: '티켓' }));
+    await user.type(within(sheet).getByLabelText('이름'), '용궁사 입장권');
+    const pick = within(sheet).getByLabelText('일정 장소');
+    expect(within(pick).getByRole('option', { name: '새 일정으로 넣기' })).toBeInTheDocument();
+    await user.selectOptions(pick, temple.id);
+    await user.click(within(sheet).getByRole('button', { name: '예약 추가' }));
+    await screen.findByRole('button', { name: '용궁사 입장권 편집' });
+    await waitFor(async () => expect((await itemRepo.get(temple.id))?.bookingId).toBeTruthy());
+    const items = await itemRepo.listByTrip(tripId);
+    expect(items.map((i) => i.title)).toEqual(['해동용궁사']);
+  });
+
   it('공항은 도시·공항 이름으로 찾아 고르고, 출발·도착 터미널을 따로 넣는다 · 시간은 숫자로 친다', async () => {
     const user = userEvent.setup();
     renderAt([`/trips/${tripId}/bookings`]);

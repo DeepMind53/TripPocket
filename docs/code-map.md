@@ -108,6 +108,11 @@ Tailscale Funnel https://jin-server.tail0844c0.ts.net ─▶ 홈 PC 127.0.0.1:87
 - **월간 갱신 요청문**: 주기적으로 확인할 정보를 넣으면 `features/me/monthlyUpdate.ko.ts`와 docs/22에 같은 번호로 함께 더한다
 - **백업·복원**: `features/backup/BackupPage.tsx`, 파일 저장·열기 `backupUtils.ts`(PC 크롬·엣지는 저장 창 `id`로 폴더 기억, 휴대폰은 공유 시트·파일 입력), 이 기기 최근 백업 3개 `data/services/localBackups.ts`(OPFS 파일 — Dexie 표 아님), 형식·검사 shared `backup/`
 
+### 투어·티켓을 기존 일정에 연결 (2026-11-26)
+- 규칙: `data/bookingAttach.ts` (`attachBooking`·`detachBooking`), 후보 고르기: `domain/bookingAttach.ts`
+- 예약 `attachedItemId` + 일정 `bookingId`. 연결한 일정은 이름·시간·장소 그대로 — `syncBookingToPlan`이 덮어쓰지 않고, 예약을 지워도 일정은 남는다(`bookingRepo.softDelete`)
+- 화면: 예약 입력 [일정 장소](`features/bookings/AttachStopField.tsx`), 일정 상세 [예약 연결](`features/itinerary/ItemBookingLink.tsx`)
+
 ### 내 기록 (계정마다 따로, ADR-0014)
 - 방문·미방문·다녀옴: `data/repositories/markRepo.ts` (표 `itemMarks`). `itemRepo`가 읽을 때 덮어 쓰고, `update`·`setVisit`의 visit·done은 여기로만 저장
 - 하루 한 줄: `data/repositories/dayNoteRepo.ts` (표 `dayNotes`, 훅 `useTripDayNotes`·`useAllDayNotes`). `trip.dayNotes`는 예전 백업 호환용으로만 남음

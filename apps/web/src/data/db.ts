@@ -143,6 +143,8 @@ export class TripPocketDB extends Dexie {
         dayNotes: 'id, tripId, [tripId+date], updatedAt, dirty',
       })
       .upgrade(upgradeToV17);
+    // v18 (2026-11-26): 투어·티켓 예약을 기존 일정에 연결(attachedItemId) — 인덱스 없음, 예전 예약은 연결 없음
+    this.version(18).stores({});
   }
 }
 

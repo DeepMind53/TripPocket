@@ -1,5 +1,7 @@
 import { useLongPressCopy } from '../../shared/hooks/useLongPressCopy';
 import { useTrip } from '../../data/hooks';
+import { isAttachableStop } from '../../domain/bookingAttach';
+import { ItemBookingLink } from './ItemBookingLink';
 import { useTimeText } from '../../shared/hooks/useTimeText';
 import type { Visit } from '../../domain/visit';
 import type { Booking, ItineraryItem } from '@trippocket/shared';
@@ -207,6 +209,13 @@ export function ItemDetailSheet({
               compact={readOnly || !docTrip}
             />
           )}
+
+          {/* 투어·티켓 예약 연결 (2026-11-26) — 예약이 없거나 이 일정에 연결한 예약일 때만 */}
+          {!readOnly &&
+            isAttachableStop(item) &&
+            (!booking || booking.attachedItemId === item.id) && (
+              <ItemBookingLink item={item} linkedId={booking?.id} />
+            )}
 
           {/* 누를 수 없는 버튼은 보이지 않게 — 종류·정보에 맞는 것만 (docs/16 D1) */}
           <div className="grid grid-cols-4 gap-2 [&:has(>:nth-child(5))]:grid-cols-5">

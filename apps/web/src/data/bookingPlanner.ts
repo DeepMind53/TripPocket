@@ -52,7 +52,8 @@ export async function syncBookingToPlan(
   arriveLabel: (airport: string) => string,
 ): Promise<number> {
   const booking = await bookingRepo.get(bookingId);
-  if (!booking || !booking.plannedAt) return 0;
+  // 기존 일정에 연결한 투어·티켓은 그 일정을 그대로 둔다 (2026-11-26 사용자 결정)
+  if (!booking || !booking.plannedAt || booking.attachedItemId) return 0;
   const linked = (await itemRepo.listByTrip(booking.tripId)).filter(
     (i) => i.bookingId === bookingId,
   );

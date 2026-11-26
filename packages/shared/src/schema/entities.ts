@@ -235,6 +235,11 @@ export const BookingSchema = z.object({
   priceNote: z.optional(z.string().check(z.maxLength(100))),
   /** 일정표에 처음 한 번 넣은 시각 (2026-10-26) — 있으면 다시 넣지 않는다 */
   plannedAt: z.optional(IsoDateTimeSchema),
+  /**
+   * 기존 일정에 연결한 투어·티켓 (2026-11-26 사용자 요청): 그 일정(item.bookingId도 이 예약)은 이름·시간·장소를 그대로 둔다.
+   * 예약을 고쳐도 일정을 덮어쓰지 않고, 예약을 지워도 그 일정은 남는다
+   */
+  attachedItemId: z.optional(IdSchema),
   memo: z.optional(z.string().check(z.maxLength(2000))),
 });
 export type Booking = z.infer<typeof BookingSchema>;

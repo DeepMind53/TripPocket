@@ -67,8 +67,12 @@ export const bookingRepo = {
   async softDelete(id: string): Promise<void> {
     const now = nowIso();
     await db.transaction('rw', db.bookings, db.items, async () => {
+      const attached = (await db.bookings.get(id))?.attachedItemId;
       await db.bookings.update(id, { deletedAt: now, updatedAt: now, dirty: 1 });
-      const linked = await db.items.filter((i) => i.bookingId === id && !i.deletedAt).primaryKeys();
+      // 기존 일정에 연결한 투어·티켓이면 그 일정은 남긴다 (2026-11-26)
+      const linked = await db.items
+        .filter((i) => i.bookingId === id && !i.deletedAt && i.id !== attached)
+        .primaryKeys();
       for (const itemId of linked)
         await db.items.update(itemId, { deletedAt: now, updatedAt: now, dirty: 1 });
     });

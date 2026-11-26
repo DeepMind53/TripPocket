@@ -6,6 +6,10 @@ import { flightsApi } from '../../data/api/flights';
 import { isDomesticTrip, tripCountries } from '../../domain/tripPlace';
 import { PlaceAutocomplete } from '../common/PlaceAutocomplete';
 import { BookingScanButton } from './BookingScanButton';
+import { AttachStopField } from './AttachStopField';
+import { attachBooking, detachBooking } from '../../data/bookingAttach';
+import { ATTACH_KINDS } from '../../domain/bookingAttach';
+import { nowIso } from '../../data/clock';
 import { FlightFields } from './FlightFields';
 import { LodgingFields } from './LodgingFields';
 import {
@@ -137,6 +141,8 @@ function BookingForm({
   };
   const timeStep = useSettings((st) => st.timeStepMin) * 60;
   const [saving, setSaving] = useState(false);
+  // 투어·티켓을 기존 일정에 연결 (2026-11-26) — "" = 새 일정 칸으로
+  const [attachTo, setAttachTo] = useState(b?.attachedItemId ?? '');
   // 드랍 추천 출발 시각 (2026-11-24): 고른 항공편 + 숙소 → 공항 차로 가는 시간 (길 조회 1번, 기기에 7일 보관)
   const [dropFlight, setDropFlight] = useState<{
     date: string;
@@ -300,11 +306,19 @@ function BookingForm({
           priceNote: input.priceNote,
           memo: input.memo,
         });
-        // 일정표에 들어간 그 예약 일정도 고친 내용으로 (사용자 요청 2026-10-26)
+        const want = ATTACH_KINDS.has(input.kind) ? attachTo : '';
+        if (want && want !== b.attachedItemId) await attachBooking(b.id, want);
+        else if (!want && b.attachedItemId) await detachBooking(b.id, true);
+        // 일정표에 들어간 그 예약 일정도 고친 내용으로 (사용자 요청 2026-10-26) — 연결한 일정은 그대로
         await syncBookingToPlan(b.id, (airport) => t('plan.arriveAt', { airport }));
         toast(t('form.saved'));
       } else {
-        await bookingRepo.create(input);
+        const want = ATTACH_KINDS.has(input.kind) ? attachTo : '';
+        // 연결하면 처음부터 일정표에 넣은 것으로 — 새 칸이 따로 생기지 않게
+        const created = await bookingRepo.create(
+          want ? { ...input, attachedItemId: want, plannedAt: nowIso() } : input,
+        );
+        if (want) await attachBooking(created.id, want);
         toast(t('bookings.added'));
       }
       onDone();
@@ -952,6 +966,15 @@ function BookingForm({
                     }
                   />
                 </>
+              )}
+              {ATTACH_KINDS.has(kind) && (
+                <AttachStopField
+                  tripId={trip.id}
+                  attachedItemId={b?.attachedItemId}
+                  date={f.startDate}
+                  value={attachTo}
+                  onChange={setAttachTo}
+                />
               )}
               {PARTY_KINDS.has(kind) && (
                 <Row>
